@@ -15,12 +15,12 @@ from numpy import nanmin, nanmax, zeros, NaN
 from operator import itemgetter
 from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
 
-from ds_tools.nlp import spacy_utils, text_utils
-from ds_tools.nlp.spacy_utils import (normalized_str, get_main_verbs_of_sent,
-                                      get_subjects_of_verb, get_objects_of_verb,
-                                      get_span_for_compound_noun,
-                                      get_span_for_verb_auxiliaries)
-from ds_tools.nlp.regexes_etc import NUMERIC_NE_TYPES, REPORTING_VERBS
+from textacy import spacy_utils, text_utils
+from textacy.spacy_utils import (normalized_str, get_main_verbs_of_sent,
+                                 get_subjects_of_verb, get_objects_of_verb,
+                                 get_span_for_compound_noun,
+                                 get_span_for_verb_auxiliaries)
+from textacy.regexes_etc import NUMERIC_NE_TYPES, REPORTING_VERBS
 
 
 def words(doc,

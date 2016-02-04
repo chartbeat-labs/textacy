@@ -7,7 +7,7 @@ import re
 
 from cld2 import detect as cld2_detect
 
-from ds_tools.nlp.regexes_etc import ACRONYM_REGEX
+from textacy.regexes_etc import ACRONYM_REGEX
 
 
 def is_acronym(token, exclude=None):

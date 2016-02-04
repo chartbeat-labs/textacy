@@ -8,8 +8,8 @@ from spacy.parts_of_speech import NOUN, VERB
 from spacy.tokens.token import Token as spacy_token
 from spacy.tokens.span import Span as spacy_span
 
-from ds_tools.nlp.text_utils import is_acronym
-from ds_tools.nlp.regexes_etc import AUX_DEPS, SUBJ_DEPS, OBJ_DEPS
+from textacy.text_utils import is_acronym
+from textacy.regexes_etc import AUX_DEPS, SUBJ_DEPS, OBJ_DEPS
 
 
 def is_plural_noun(token):

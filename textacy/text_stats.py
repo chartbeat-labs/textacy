@@ -8,7 +8,7 @@ import numpy as np
 
 from math import sqrt
 
-from ds_tools.nlp import data
+from textacy import data
 
 
 def get_term_freqs(term_doc_matrix, normalized=True):

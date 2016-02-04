@@ -2,9 +2,9 @@ from __future__ import absolute_import
 
 import logging
 
-from ds_tools.nlp.preprocess import preprocess_text
-from ds_tools.nlp.texts import TextDoc, TextCorpus
-from ds_tools.nlp import data
+from textacy.preprocess import preprocess_text
+from textacy.texts import TextDoc, TextCorpus
+from textacy import data
 
 __all__ = [
     'preprocess_text',

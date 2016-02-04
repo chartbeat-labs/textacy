@@ -15,8 +15,8 @@ from operator import attrgetter
 from spacy.tokens.token import Token as spacy_token
 from spacy.tokens.span import Span as spacy_span
 
-from ds_tools.nlp import (data, extract, spacy_utils, text_stats, text_utils,
-                          transform, keyterms)
+from textacy import (data, extract, spacy_utils, text_stats, text_utils,
+                     transform, keyterms)
 
 
 class TextDoc(object):

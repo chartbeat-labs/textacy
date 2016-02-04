@@ -5,7 +5,7 @@ emotional valence, etc.
 from collections import defaultdict
 from spacy.parts_of_speech import ADJ, ADV, NOUN, VERB
 
-from ds_tools.nlp import data
+from textacy import data
 
 # TODO: Do something smarter for averaging emotional valences.
 
