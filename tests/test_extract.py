@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import re
 import unittest
 
-from ds_tools.nlp import data, extract, preprocess, regexes_etc
+from textacy import data, extract, preprocess, regexes_etc
 
 
 class ExtractTestCase(unittest.TestCase):

@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
-from ds_tools.nlp import preprocess
+from textacy import preprocess
 
 
 class PreprocessTestCase(unittest.TestCase):

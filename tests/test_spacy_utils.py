@@ -2,7 +2,7 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
-from ds_tools.nlp import data, spacy_utils
+from textacy import data, spacy_utils
 
 
 class SpacyUtilsTestCase(unittest.TestCase):

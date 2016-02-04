@@ -4,8 +4,8 @@ import numpy as np
 from scipy.sparse import coo_matrix
 import unittest
 
-from ds_tools.nlp import text_stats
-from ds_tools.nlp.texts import TextCorpus
+from textacy import text_stats
+from textacy.texts import TextCorpus
 
 
 class TextStatsTestCase(unittest.TestCase):

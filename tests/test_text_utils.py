@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
-from ds_tools.nlp import text_utils
+from textacy import text_utils
 
 GOOD_ACRONYMS = [
     'LGTM', 'U.S.A.', 'PEP8', 'LGBTQQI2S', 'TF-IDF', 'D3', '3D', '3-D',

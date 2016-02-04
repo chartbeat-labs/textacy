@@ -3,10 +3,10 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
-from ds_tools.nlp.regexes_etc import (ACRONYM_REGEX, URL_REGEX, EMAIL_REGEX,
-                                      PHONE_REGEX, NUMBERS_REGEX, PUNCT_REGEX,
-                                      LINEBREAK_REGEX, NONBREAKING_SPACE_REGEX,
-                                      SHORT_URL_REGEX)
+from textacy.regexes_etc import (ACRONYM_REGEX, URL_REGEX, EMAIL_REGEX,
+                                 PHONE_REGEX, NUMBERS_REGEX, PUNCT_REGEX,
+                                 LINEBREAK_REGEX, NONBREAKING_SPACE_REGEX,
+                                 SHORT_URL_REGEX)
 
 
 GOOD_ACRONYMS = [
