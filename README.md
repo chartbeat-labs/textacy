@@ -2,7 +2,7 @@
 
 - elevator pitch
 - key features outline
-- installation instructions
+- installation instructions / requirements
 - quick start / complete usage example
 - link(s) to full documentation
 
@@ -27,3 +27,17 @@ corpus = TextCorpus.from_texts(texts, lang="en")
 ### Maintainers
 
 - Burton DeWilde (<burton@chartbeat.net>)
+
+
+### TODOs
+
+- TODO: extract: return generators rather than lists?
+- TODO: texts: figure out what to do when documents are modified in-place (`doc.merge`)
+- TODO: texts: ^ related: when docs modified, erase cached_property attributes so they'll be re-caclulated
+- TODO: texts: ^related: update doc merge functions when Honnibal updates API
+- TODO: texts: what to do when new doc added to textcorpus does not have same language?
+- TODO: texts: have textdocs inherit `_term_doc_freqs` from textcorpus?
+- TODO: texts: add `doc_to_bag_of_terms()` func to transform?
+- TODO: transform: condense csc matrix by mapping stringstore term ints to incremented vals, starting at 0
+- TODO: drop scipy dependency and switch to honnibal's own sparse matrices
+- TODO: preprocess: add basic tests for unidecode and ftfy functions
