@@ -1,4 +1,11 @@
-*.pyc
-*.pyo
+# compiled code
+*.py[co]
+
+# OS X
 .DS_Store
+
+# distribution / packaging
+*.egg-info/
+
+# sphinx documentation
 docs/build/*

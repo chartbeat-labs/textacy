@@ -31,6 +31,7 @@ corpus = TextCorpus.from_texts(texts, lang="en")
 
 ### TODOs
 
+- TODO: reduce dependencies on large external packages (e.g. pandas)
 - TODO: extract: return generators rather than lists?
 - TODO: texts: figure out what to do when documents are modified in-place (`doc.merge`)
 - TODO: texts: ^ related: when docs modified, erase cached_property attributes so they'll be re-caclulated
