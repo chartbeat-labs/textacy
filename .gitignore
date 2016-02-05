@@ -5,6 +5,8 @@
 .DS_Store
 
 # distribution / packaging
+build/
+dist/
 *.egg-info/
 
 # sphinx documentation

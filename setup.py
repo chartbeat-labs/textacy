@@ -48,4 +48,5 @@ setup(
         'spacy>=0.100.0',
         'unidecode',
         ],
+    test_requires=['nose'],
 )
