@@ -41,7 +41,6 @@ setup(
         'networkx',
         'nltk',
         'numpy>=1.8.0',
-        'pandas',
         'pyphen',
         'scipy',
         'scikit-learn',

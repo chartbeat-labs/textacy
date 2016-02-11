@@ -3,6 +3,7 @@ Functions to load and cache language data and other NLP resources.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import csv
 import logging
 import json
 import os
@@ -10,7 +11,6 @@ import pyphen
 
 from cachetools import cached, Cache, hashkey
 from functools import partial
-from pandas import read_csv
 
 
 logger = logging.getLogger(__name__)
@@ -113,5 +113,9 @@ def load_depechemood(data_dir=None, weighting='normfreq'):
     # let's make sure this file exists...
     _ = os.path.isfile(fname)
     logger.info('Loading DepecheMood lexicon from %s', fname)
-    return json.loads(read_csv(
-        fname, sep='\t', index_col='Lemma#PoS').to_json(orient='index'))
+    with open(fname, 'r') as csvfile:
+        csvreader = csv.reader(csvfile, delimiter='\t')
+        rows = list(csvreader)
+    cols = rows[0]
+    return {row[0]: {cols[i]: float(row[i]) for i in range(1, 9)}
+            for row in rows[1:]}
