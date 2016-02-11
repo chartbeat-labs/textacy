@@ -1,6 +1,6 @@
-## textacy: second-order natural language processing built on Spacy
+## textacy: higher-level NLP built on Spacy
 
-`textacy` is a Python library for performing second-order natural language processing (NLP) tasks, built on the high-performance [`Spacy`](https://spacy.io/) library. With the basics -- tokenization, part-of-speech tagging, parsing -- offloaded to another library, `textacy` focuses on tasks enabled by the availability of tokenized, POS-tagged, and parsed text: keyterm extraction, readability statistics, emotional valence analysis, quotation attribution, and more.
+`textacy` is a Python library for performing higher-level natural language processing (NLP) tasks, built on the high-performance [`Spacy`](https://spacy.io/) library. With the basics --- tokenization, part-of-speech tagging, parsing --- offloaded to another library, `textacy` focuses on tasks facilitated by the availability of tokenized, POS-tagged, and parsed text: keyterm extraction, readability statistics, emotional valence analysis, quotation attribution, and more.
 
 ### Features
 
@@ -85,16 +85,16 @@ TextDoc(1667 tokens)
 - text classification
 - media frames analysis
 
-### TODOs
+### TODO
 
-- TODO: reduce dependencies on large external packages (e.g. pandas)
-- TODO: extract: return generators rather than lists?
-- TODO: texts: figure out what to do when documents are modified in-place (`doc.merge`)
-- TODO: texts: ^ related: when docs modified, erase cached_property attributes so they'll be re-caclulated
-- TODO: texts: ^related: update doc merge functions when Honnibal updates API
-- TODO: texts: what to do when new doc added to textcorpus does not have same language?
-- TODO: texts: have textdocs inherit `_term_doc_freqs` from textcorpus?
-- TODO: texts: add `doc_to_bag_of_terms()` func to transform?
-- TODO: transform: condense csc matrix by mapping stringstore term ints to incremented vals, starting at 0
-- TODO: drop scipy dependency and switch to honnibal's own sparse matrices
-- TODO: preprocess: add basic tests for unidecode and ftfy functions
+- reduce dependencies on large external packages (e.g. pandas)
+- extract: return generators rather than lists?
+- texts: figure out what to do when documents are modified in-place (`doc.merge`)
+- texts: ^ related: when docs modified, erase cached_property attributes so they'll be re-caclulated
+- texts: ^related: update doc merge functions when Honnibal updates API
+- texts: what to do when new doc added to textcorpus does not have same language?
+- texts: have textdocs inherit `_term_doc_freqs` from textcorpus?
+- texts: add `doc_to_bag_of_terms()` func to transform?
+- transform: condense csc matrix by mapping stringstore term ints to incremented vals, starting at 0
+- drop scipy dependency and switch to honnibal's own sparse matrices
+- preprocess: add basic tests for unidecode and ftfy functions
