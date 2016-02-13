@@ -91,11 +91,34 @@ Project Links
 - `textacy @ ReadTheDocs <http://textacy.readthedocs.org/en/latest/>`_
 
 
-Table of Contents
------------------
+Authors
+-------
 
-.. toctree::
-   :maxdepth: 2
+- Burton DeWilde (<burton@chartbeat.net>)
 
-   license
-   api_reference
+
+Unofficial Roadmap
+------------------
+
+- import/export for common formats
+- topic modeling via gensim and/or sklearn
+- distributional representations (word2vec etc.) via either gensim or spacy
+- basic dictionary-based methods (sentiment analysis?)
+- text classification
+- media frames analysis
+
+
+TODO
+----
+
+- reduce dependencies on large external packages (e.g. pandas)
+- extract: return generators rather than lists?
+- texts: figure out what to do when documents are modified in-place (`doc.merge`)
+- texts: ^ related: when docs modified, erase cached_property attributes so they'll be re-caclulated
+- texts: ^related: update doc merge functions when Honnibal updates API
+- texts: what to do when new doc added to textcorpus does not have same language?
+- texts: have textdocs inherit `_term_doc_freqs` from textcorpus?
+- texts: add `doc_to_bag_of_terms()` func to transform?
+- transform: condense csc matrix by mapping stringstore term ints to incremented vals, starting at 0
+- drop scipy dependency and switch to honnibal's own sparse matrices
+- preprocess: add basic tests for unidecode and ftfy functions

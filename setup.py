@@ -1,21 +1,25 @@
-from codecs import open
-from os import path
+import io
+import os
+
 from setuptools import setup, find_packages
 
 
-# Get the long description from the README file
-with open(path.join(path.abspath(path.dirname(__file__)), 'README.md'), encoding='utf-8') as f:
-    long_description = f.read()
+def read_file(fname, encoding='utf-8'):
+    path = os.path.join(os.path.dirname(__file__), fname)
+    return io.open(path, encoding=encoding).read()
+
 
 setup(
     name='textacy',
     version='0.1.1',
-
     description='Higher-level text processing, built on Spacy',
-    long_description=long_description,
+    long_description=read_file('README.rst'),
+
     url='https://github.com/chartbeat-labs/textacy',
+    download_url='https://pypi.python.org/pypi/textacy',
+
     author='Burton DeWilde',
-    author_email='burtondewilde@gmail.com',
+    author_email='burtdewilde@gmail.com',
     license='Apache',
 
     classifiers = [
@@ -47,5 +51,4 @@ setup(
         'spacy>=0.100.0',
         'unidecode',
         ],
-    test_requires=['nose'],
 )
