@@ -16,7 +16,7 @@ def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting='norm
     AFRAID, AMUSED, ANGRY, ANNOYED, DONT_CARE, HAPPY, INSPIRED, SAD.
 
     Args:
-        words (list[:class:`spacy.Token()`]): list of words for which to get
+        words (list(``spacy.Token``)): list of words for which to get
             average emotional valence; note that only nouns, adjectives, adverbs,
             and verbs will be counted
         threshold (float, optional): minimum emotional valence score for which to
@@ -30,9 +30,9 @@ def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting='norm
         dict: mapping of emotion (str) to average valence score (float)
 
     References:
-        Data available at https://github.com/marcoguerini/DepecheMood/releases
-        Staiano and Guerini. DepecheMood: a Lexicon for Emotion Analysis from
-            Crowd-Annotated News. 2014.
+        .. [DepecheMood] Staiano and Guerini. DepecheMood: a Lexicon for Emotion
+           Analysis from Crowd-Annotated News. 2014.
+           Data available at https://github.com/marcoguerini/DepecheMood/releases
     """
     dm = data.load_depechemood(data_dir=dm_data_dir, weighting=dm_weighting)
     pos_to_letter = {NOUN: 'n', ADJ: 'a', ADV: 'r', VERB: 'v'}

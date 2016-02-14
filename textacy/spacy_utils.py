@@ -17,7 +17,7 @@ def is_plural_noun(token):
     Returns True if token is a plural noun, False otherwise.
 
     Args:
-        token (:class:`spacy.Token()`): parent document must have POS information
+        token (``spacy.Token``): parent document must have POS information
 
     Returns:
         bool
@@ -33,7 +33,7 @@ def is_negated_verb(token):
     False otherwise.
 
     Args:
-        token (:class:`spacy.Token()`): parent document must have parse information
+        token (``spacy.Token``): parent document must have parse information
 
     Returns:
         bool
@@ -56,7 +56,7 @@ def preserve_case(token):
     Returns True if `token` is a proper noun or acronym, False otherwise.
 
     Args:
-        token (:class:`spacy.Token()`): parent document must have POS information
+        token (``spacy.Token``): parent document must have POS information
 
     Returns:
         bool
@@ -75,7 +75,7 @@ def normalized_str(token):
     text for everything else.
 
     Args:
-        token (:class:`spacy.Token()` or :class:`spacy.Span()`)
+        token (``spacy.Token`` or ``spacy.Span``)
 
     Returns:
         str
@@ -98,8 +98,8 @@ def merge_spans(spans, doc):
     NB: This modifies `doc` in-place!
 
     Args:
-        spans (iterable[:class:`spacy.Span()`])
-        doc (:class:`spacy.Doc()`)
+        spans (iterable(``spacy.Span``))
+        doc (``spacy.Doc``)
     """
     for span_tuple in (_span_to_tuple(span) for span in spans):
         doc.merge(*span_tuple)

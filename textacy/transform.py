@@ -28,10 +28,10 @@ def terms_to_semantic_network(terms,
     """
     Convert an ordered list of non-overlapping terms into a semantic network,
     where each terms is represented by a node with edges linking it to other terms
-    that co-occur within `window_width` terms of itself.
+    that co-occur within ``window_width`` terms of itself.
 
     Args:
-        terms (list(str) or list(:class:`spacy.Token()`))
+        terms (list(str) or list(``spacy.Token``))
         window_width (int, optional): size of sliding window over `terms` that
             determines which are said to co-occur; if = 2, only adjacent terms
             will have edges in network
@@ -44,12 +44,12 @@ def terms_to_semantic_network(terms,
         :class:`networkx.Graph()`
 
     Notes:
-        * Be sure to filter out stopwords, punctuation, certain parts of speech, etc.
+        - Be sure to filter out stopwords, punctuation, certain parts of speech, etc.
           from the terms list before passing it to this function
-        * Multi-word terms, such as named entities and compound nouns, must be merged
+        - Multi-word terms, such as named entities and compound nouns, must be merged
           into single strings or spacy.Tokens beforehand
-        * If terms are already strings, be sure to normalize so that like terms
-          are counted together (see :func:`spacy_utils.normalized_str`)
+        - If terms are already strings, be sure to normalize so that like terms
+          are counted together (see :func:`normalized_str() <textacy.spacy_utils.normalized_str>`)
     """
     if window_width < 2:
         raise ValueError('Window width must be >= 2.')
@@ -99,13 +99,13 @@ def sents_to_semantic_network(sents,
 
     Returns:
         :class:`networkx.Graph()`: nodes are the integer indexes of the sentences
-            in the input `sents` list, _not_ the actual text of the sentences!
+            in the input ``sents`` list, *not* the actual text of the sentences!
 
     Notes:
         * If passing sentences as strings, be sure to filter out stopwords, punctuation,
           certain parts of speech, etc. beforehand
         * Consider normalizing the strings so that like terms are counted together
-          (see :func:`spacy_utils.normalized_str`)
+          (see :func:`normalized_str() <textacy.spacy_utils.normalized_str>`)
     """
     n_sents = len(sents)
     if isinstance(sents[0], str):
@@ -138,11 +138,11 @@ def corpus_to_term_doc_matrix(corpus, weighting='tf',
                               ngram_range=(1, 1), include_nes=False,
                               include_nps=False, include_kts=False):
     """
-    Transform a collection of spacy docs (`corpus`) into a sparse CSR matrix, where
+    Transform a collection of spacy docs (``corpus``) into a sparse CSR matrix, where
     each row i corresponds to a doc, each column j corresponds to a unique term.
 
     Args:
-        corpus (:class:`texts.TextCorpus`)
+        corpus (:class:`TextCorpus <textacy.texts.TextCorpus>`)
         weighting (str {'tf', 'tfidf'}, optional): if 'tf', matrix values (i, j)
             correspond to the number of occurrences of term j in doc i; if 'tfidf',
             term frequencies (tf) are multiplied by their corresponding inverse
@@ -157,15 +157,15 @@ def corpus_to_term_doc_matrix(corpus, weighting='tf',
         min_df (float or int, optional): if float, value is the fractional proportion
             of the total number of documents, which must be in [0.0, 1.0]; if int,
             value is the absolute number; filter terms whose document frequency
-            is less than `min_df`
+            is less than ``min_df``
         max_df (float or int, optional): if float, value is the fractional proportion
             of the total number of documents, which must be in [0.0, 1.0]; if int,
             value is the absolute number; filter terms whose document frequency
-            is greater than `max_df`
+            is greater than ``max_df``
         min_ic (float, optional): filter terms whose information content is less
             than `min_ic`; value must be in [0.0, 1.0]
         max_n_terms (int, optional): only include terms whose document frequency
-            is within the top `max_n_terms`
+            is within the top ``max_n_terms``
         ngram_range (tuple(int, int), optional): range of ngrams to include as
             terms; default is unigrams only
         include_nes (bool, optional): if True, include named entities as terms
@@ -177,9 +177,9 @@ def corpus_to_term_doc_matrix(corpus, weighting='tf',
 
     Returns:
         tuple(:class:`scipy.sparse.csr_matrix`, dict): 2-tuple of a weighted
-            `term_doc_matrix` (an N X M matrix, where N is the # of docs, M is
+            ``term_doc_matrix`` (an N X M matrix, where N is the # of docs, M is
             the # of unique terms, and value (n, m) is the weight of term m
-            in doc n) and an `id_to_term` mapping (dict with unique integer
+            in doc n) and an ``id_to_term`` mapping (dict with unique integer
             term identifiers as keys and the corresponding normalized strings
             as values)
     """
@@ -237,7 +237,7 @@ def corpus_to_cscmatrix(corpus, lemmatize=False):
     and values (i, j) correspond to the number of occurrences of term i in doc j.
 
     Args:
-        corpus (list(:class:`spacy.Doc()`))
+        corpus (list(``spacy.Doc``))
         lemmatize (bool, optional)
 
     Returns:

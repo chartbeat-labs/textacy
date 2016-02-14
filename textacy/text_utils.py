@@ -55,7 +55,7 @@ def detect_language(text):
     """
     Detect the most likely language of a text and return its 2-letter code
     (see https://cloud.google.com/translate/v2/using_rest#language-params).
-    Uses the `cld2-cffi` package (https://pypi.python.org/pypi/cld2-cffi);
+    Uses the `cld2-cffi <https://pypi.python.org/pypi/cld2-cffi>`_ package;
     to take advantage of optional params, call :func:`cld2.detect()` directly.
 
     Args:
@@ -74,11 +74,11 @@ def detect_language(text):
 def keyword_in_context(text, keyword, ignore_case=True,
                        window_width=50, print_only=True):
     """
-    Search for `keyword` in `text` via regular expression, return or print strings
-    spanning `window_width` characters before and after each occurrence of keyword.
+    Search for ``keyword`` in ``text`` via regular expression, return or print strings
+    spanning ``window_width`` characters before and after each occurrence of keyword.
 
     Args:
-        text (str): text in which to search for `keyword`
+        text (str): text in which to search for ``keyword``
         keyword (str): technically, any valid regular expression string should work,
             but usually this is a single word or short phrase: "spam", "spam and eggs";
             to account for variations, use regex: "[Ss]pam (and|&) [Ee]ggs?"

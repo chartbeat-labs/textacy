@@ -27,10 +27,10 @@ def get_term_freqs(term_doc_matrix, normalized=True):
 
     Returns:
         :class:`numpy.ndarray`: length is equal to the number of unique terms,
-            i.e. columns in `term_doc_matrix`
+            i.e. columns in ``term_doc_matrix``
 
     Raises:
-        ValueError: if `term_doc_matrix` doesn't have any non-zero entries
+        ValueError: if ``term_doc_matrix`` doesn't have any non-zero entries
     """
     if term_doc_matrix.nnz == 0:
         raise ValueError('term-document matrix must have at least 1 non-zero entry')
@@ -57,10 +57,10 @@ def get_doc_freqs(term_doc_matrix, normalized=True):
 
     Returns:
         :class:`numpy.ndarray`: length is equal to the number of unique terms,
-            i.e. columns in `term_doc_matrix`
+            i.e. columns in ``term_doc_matrix``
 
     Raises:
-        ValueError: if `term_doc_matrix` doesn't have any non-zero entries
+        ValueError: if ``term_doc_matrix`` doesn't have any non-zero entries
     """
     if term_doc_matrix.nnz == 0:
         raise ValueError('term-document matrix must have at least 1 non-zero entry')
@@ -86,10 +86,10 @@ def get_information_content(term_doc_matrix):
 
     Returns:
         :class:`numpy.ndarray`: length is equal to the number of unique terms,
-            i.e. columns in `term_doc_matrix`
+            i.e. columns in ``term_doc_matrix``
 
     Raises:
-        ValueError: if `term_doc_matrix` doesn't have any non-zero entries
+        ValueError: if ``term_doc_matrix`` doesn't have any non-zero entries
     """
     dfs = get_doc_freqs(term_doc_matrix, normalized=True)
     ics = -dfs * np.log2(dfs) - (1 - dfs) * np.log2(1 - dfs)
@@ -101,8 +101,8 @@ def filter_terms_by_df(term_doc_matrix, id_to_term,
                        max_df=1.0, min_df=1, max_n_terms=None):
     """
     Filter out terms that are too common and/or too rare (by document frequency),
-    and compactify the top `max_n_terms` in the `id_to_term` mapping accordingly.
-    Borrows heavily from the sklearn.feature_extraction.text module.
+    and compactify the top ``max_n_terms`` in the ``id_to_term`` mapping accordingly.
+    Borrows heavily from the ``sklearn.feature_extraction.text`` module.
 
     Args:
         term_doc_matrix (:class:`scipy.sparse.csr_matrix`): N X M matrix, where
@@ -112,20 +112,20 @@ def filter_terms_by_df(term_doc_matrix, id_to_term,
         min_df (float in [0.0, 1.0] or int, optional): if float, value is the
             fractional proportion of the total number of documents and must be
             in [0.0, 1.0]; if int, value is the absolute number; filter terms
-            whose document frequency is less than `min_df`
+            whose document frequency is less than ``min_df``
         max_df (float in [0.0, 1.0] or int, optional): if float, value is the
             fractional proportion of the total number of documents and must be
             in [0.0, 1.0]; if int, value is the absolute number; filter terms
-            whose document frequency is greater than `max_df`
+            whose document frequency is greater than ``max_df``
         max_n_terms (int, optional): only include terms whose *term* frequency
             is within the top `max_n_terms`
 
     Returns:
         (:class:`scipy.sparse.csr_matrix`, dict): 2-tuple of the filtered
-            `term_doc_matrix` and `id_to_term`
+            ``term_doc_matrix`` and ``id_to_term``
 
     Raises:
-        ValueError: if `max_df` or `min_df` or `max_n_terms` < 0
+        ValueError: if ``max_df`` or ``min_df`` or ``max_n_terms`` < 0
     """
     if max_df == 1.0 and min_df == 1 and max_n_terms is None:
         return term_doc_matrix, id_to_term
@@ -170,8 +170,8 @@ def filter_terms_by_ic(term_doc_matrix, id_to_term,
                        min_ic=0.0, max_n_terms=None):
     """
     Filter out terms that are too common and/or too rare (by information content),
-    and compactify the top `max_n_terms` in the `id_to_term` mapping accordingly.
-    Borrows heavily from the sklearn.feature_extraction.text module.
+    and compactify the top ``max_n_terms`` in the ``id_to_term`` mapping accordingly.
+    Borrows heavily from the ``sklearn.feature_extraction.text`` module.
 
     Args:
         term_doc_matrix (:class:`scipy.sparse.csr_matrix`)
@@ -180,14 +180,14 @@ def filter_terms_by_ic(term_doc_matrix, id_to_term,
         min_ic (float, optional): filter terms whose information content is less
             than this value; must be in [0.0, 1.0]
         max_n_terms (int, optional): only include terms whose information content
-            is within the top `max_n_terms`
+            is within the top ``max_n_terms``
 
     Returns:
         (:class:`scipy.sparse.csr_matrix`, dict): 2-tuple of the filtered
-            `term_doc_matrix` and `id_to_term`
+            ``term_doc_matrix`` and ``id_to_term``
 
     Raises:
-        ValueError: if `min_ic` not in [0.0, 1.0] or `max_n_terms` < 0
+        ValueError: if ``min_ic`` not in [0.0, 1.0] or ``max_n_terms`` < 0
     """
     if min_ic == 0.0 and max_n_terms is None:
         return term_doc_matrix, id_to_term
@@ -231,13 +231,13 @@ def readability_stats(doc):
     Also includes constituent values needed to compute the stats, e.g. word count.
 
     Args:
-        doc (:class:`texts.TextDoc()`)
+        doc (:class:`texts.TextDoc() <textacy.texts.TextDoc>`)
 
     Returns:
         dict: mapping of readability statistic name (str) to value (int or float)
 
     Raises:
-        NotImplementedError: if `doc` is not English language. sorry.
+        NotImplementedError: if ``doc`` is not English language. sorry.
     """
     if doc.lang != 'en':
         raise NotImplementedError('non-English NLP is not ready yet, sorry')

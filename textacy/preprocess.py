@@ -2,7 +2,7 @@
 """
 Functions that modify raw text *in-place*, replacing contractions, URLs, emails,
 phone numbers, and currency symbols with standardized forms. These should be
-applied before processing by spacy (http://spacy.io), but be warned: preprocessing
+applied before processing by `Spacy <http://spacy.io>`_, but be warned: preprocessing
 may affect the interpretation of the text -- and spacy's processing of it.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -20,7 +20,7 @@ from textacy.regexes_etc import (CURRENCIES, URL_REGEX, SHORT_URL_REGEX, EMAIL_R
 
 def fix_bad_unicode(text, normalization='NFC'):
     """
-    Fix unicode text that's "broken" using ftfy (http://ftfy.readthedocs.org/);
+    Fix unicode text that's "broken" using `ftfy <http://ftfy.readthedocs.org/>`_;
     this includes mojibake, HTML entities and other code cruft,
     and non-standard forms for display purposes.
 
@@ -54,7 +54,7 @@ def transliterate_unicode(text):
 
 def normalize_whitespace(text):
     """
-    Given str `text`, replace one or more spacings with a single space, and one
+    Given ``text`` str, replace one or more spacings with a single space, and one
     or more linebreaks with a single newline. Also strip leading/trailing whitespace.
     """
     return NONBREAKING_SPACE_REGEX.sub(' ', LINEBREAK_REGEX.sub(r'\n', text)).strip()
@@ -62,7 +62,7 @@ def normalize_whitespace(text):
 
 def unpack_contractions(text):
     """
-    Replace *English* contractions in `text` with their unshortened forms.
+    Replace *English* contractions in ``text`` str with their unshortened forms.
     N.B. The "'d" and "'s" forms are ambiguous (had/would, is/has/possessive),
     so are left as-is.
     """
@@ -82,33 +82,33 @@ def unpack_contractions(text):
 
 
 def replace_urls(text, replace_with='*URL*'):
-    """Replace all URLs in str `text` with str `replace_with`."""
+    """Replace all URLs in ``text`` str with ``replace_with`` str."""
     return URL_REGEX.sub(replace_with, SHORT_URL_REGEX.sub(replace_with, text))
 
 
 def replace_emails(text, replace_with='*EMAIL*'):
-    """Replace all emails in str `text` with str `replace_with`."""
+    """Replace all emails in ``text`` str with ``replace_with`` str."""
     return EMAIL_REGEX.sub(replace_with, text)
 
 
 def replace_phone_numbers(text, replace_with='*PHONE*'):
-    """Replace all phone numbers in str `text` with str `replace_with`."""
+    """Replace all phone numbers in ``text`` str with ``replace_with`` str."""
     return PHONE_REGEX.sub(replace_with, text)
 
 
 def replace_numbers(text, replace_with='*NUMBER*'):
-    """Replace all numbers in str `text` with str `replace_with`."""
+    """Replace all numbers in ``text`` str with ``replace_with`` str."""
     return NUMBERS_REGEX.sub(replace_with, text)
 
 
 def remove_punct(text):
-    """Remove all punctuation from str `text` (replace punct marks with empty string)."""
+    """Remove all punctuation from ``text`` str (replace punct marks with empty string)."""
     return PUNCT_REGEX.sub('', text)
 
 
 def replace_currency_symbols(text, replace_with=None):
     """
-    Replace all currency symbols in str `text` with string specified by `replace_with`.
+    Replace all currency symbols in ``text`` str with string specified by ``replace_with`` str.
 
     Args:
         text (str): raw text
@@ -130,7 +130,7 @@ def replace_currency_symbols(text, replace_with=None):
 
 def remove_accents(text, method='unicode'):
     """
-    Remove accents from any accented unicode characters in str `text`, either by
+    Remove accents from any accented unicode characters in ``text`` str, either by
     transforming them into ascii equivalents or removing them entirely.
 
     Args:
@@ -145,7 +145,7 @@ def remove_accents(text, method='unicode'):
         str
 
     Raises:
-        ValueError: if `method` is not in {'unicode', 'ascii'}
+        ValueError: if ``method`` is not in {'unicode', 'ascii'}
     """
     if method == 'unicode':
         return ''.join(c for c in unicodedata.normalize('NFKD', text)
@@ -192,7 +192,7 @@ def preprocess_text(text, fix_unicode=False, lowercase=False, transliterate=Fals
             is redundant
 
     Returns:
-        str: input `text` processed according to function args
+        str: input ``text`` processed according to function args
     """
     if fix_unicode is True:
         text = fix_bad_unicode(text, normalization='NFC')

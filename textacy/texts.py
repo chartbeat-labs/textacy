@@ -27,7 +27,7 @@ class TextDoc(object):
 
     Args:
         text (str)
-        spacy_pipeline (:class:`spacy.<lang>.<Lang>()`, optional)
+        spacy_pipeline (``spacy.<lang>.<Lang>()``, optional)
         lang (str, optional)
         metadata (dict, optional)
     """
@@ -115,8 +115,8 @@ class TextDoc(object):
             binary (bool optional): if True, set all (non-zero) term freqs equal to 1
 
         Returns:
-            :class:`collections.Counter()`: mapping of term ids to corresponding
-                term weights
+            :class:`collections.Counter <collections.Counter>`: mapping of term ids
+                to corresponding term weights
         """
         term_weights = self.term_counts(
             lemmatize=lemmatize, ngram_range=ngram_range, include_nes=include_nes,
@@ -151,14 +151,14 @@ class TextDoc(object):
         Extract an ordered list of words from a spacy-parsed doc, optionally
         filtering words by part-of-speech (etc.) and frequency.
 
-        See :func:`extract.words()` for all function kwargs.
+        See :func:`extract.words() <textacy.extract.words>` for all function kwargs.
         """
         return extract.words(self.spacy_doc, **kwargs)
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'ngrams'))
     def ngrams(self, n, **kwargs):
         """
-        Extract an ordered list of n-grams (`n` consecutive words) from doc,
+        Extract an ordered list of n-grams (``n`` consecutive words) from doc,
         optionally filtering n-grams by the types and parts-of-speech of the
         constituent words.
 
@@ -166,7 +166,7 @@ class TextDoc(object):
             n (int): number of tokens to include in n-grams;
                 1 => unigrams, 2 => bigrams
 
-        See :func:`extract.ngrams()` for all function kwargs.
+        See :func:`extract.ngrams() <textacy.extract.ngrams>` for all function kwargs.
         """
         return extract.ngrams(self.spacy_doc, n, **kwargs)
 
@@ -176,7 +176,8 @@ class TextDoc(object):
         Extract an ordered list of named entities (PERSON, ORG, LOC, etc.) from
         doc, optionally filtering by the entity types and frequencies.
 
-        See :func:`extract.named_entities()` for all function kwargs.
+        See :func:`extract.named_entities() <textacy.extract.named_entities>`
+        for all function kwargs.
         """
         return extract.named_entities(self.spacy_doc, **kwargs)
 
@@ -186,7 +187,8 @@ class TextDoc(object):
         Extract an ordered list of noun phrases from doc, optionally
         filtering by frequency and dropping leading determiners.
 
-        See :func:`extract.noun_phrases()` for all function kwargs.
+        See :func:`extract.noun_phrases() <textacy.extract.noun_phrases>`
+        for all function kwargs.
         """
         return extract.noun_phrases(self.spacy_doc, **kwargs)
 
@@ -199,19 +201,17 @@ class TextDoc(object):
         Args:
             pattern (str): Pattern of consecutive POS tags whose corresponding words
                 are to be extracted, inspired by the regex patterns used in NLTK's
-                `nltk.chunk.regexp`. Tags are uppercase, from the universal tag set;
+                ``nltk.chunk.regexp``. Tags are uppercase, from the universal tag set;
                 delimited by < and >, which are basically converted to parentheses
                 with spaces as needed to correctly extract matching word sequences;
                 white space in the input doesn't matter.
 
-                Examples (see `regexes_etc.POS_REGEX_PATTERNS`):
+                Examples (see :obj:`POS_REGEX_PATTERNS <textacy.regexes_etc.POS_REGEX_PATTERNS>`):
 
                 * noun phrase: r'<DET>? (<NOUN>+ <ADP|CONJ>)* <NOUN>+'
                 * compound nouns: r'<NOUN>+'
                 * verb phrase: r'<VERB>?<ADV>*<VERB>+'
                 * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
-
-        See :func:`data.get_pos_regex_pattern()` for common examples.
         """
         return extract.pos_regex_matches(self.spacy_doc, pattern)
 
@@ -230,7 +230,8 @@ class TextDoc(object):
         if available, from doc. If multiple definitions are found for a given acronym,
         only the most frequently occurring definition is returned.
 
-        See :func:`extract.acronyms_and_definitions()` for all function kwargs.
+        See :func:`extract.acronyms_and_definitions() <textacy.extract.acronyms_and_definitions>`
+        for all function kwargs.
         """
         return extract.acronyms_and_definitions(self.spacy_doc, **kwargs)
 
@@ -244,7 +245,8 @@ class TextDoc(object):
             entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
                 "global warming", "Python")
 
-        See :func:`extract.semistructured_statements()` for all function kwargs.
+        See :func:`extract.semistructured_statements() <textacy.extract.semistructured_statements>`
+        for all function kwargs.
         """
         return extract.semistructured_statements(
             self.spacy_doc, entity, **kwargs)
@@ -270,7 +272,7 @@ class TextDoc(object):
                 representing the fraction of top-ranked terms to return as keyterms
 
         Raises:
-            ValueError: if `algorithm` not in {'sgrank', 'textrank', 'singlerank'}
+            ValueError: if ``algorithm`` not in {'sgrank', 'textrank', 'singlerank'}
         """
         if algorithm == 'sgrank':
             return keyterms.sgrank(self.spacy_doc, window_width=1500, n_keyterms=n)
@@ -302,8 +304,8 @@ class TextDoc(object):
             include_kts (bool, optional): if True, include key terms in terms list
 
         Returns:
-            :class:`collections.Counter()`: mapping of unique term ids to
-                corresponding term counts
+            :class:`collections.Counter() <collections.Counter>`: mapping of unique
+                term ids to corresponding term counts
         """
         if lemmatize == 'auto':
             get_id = lambda x: self.spacy_stringstore[spacy_utils.normalized_str(x)]
@@ -339,7 +341,7 @@ class TextDoc(object):
         Get the number of occurrences ("count") of term in doc.
 
         Args:
-            term (str or `spacy.Token` or `spacy.Span`)
+            term (str or ``spacy.Token`` or ``spacy.Span``)
 
         Returns:
             int
@@ -395,7 +397,7 @@ class TextDoc(object):
         return sum(1 for _ in self.spacy_doc.sents)
 
     def n_paragraphs(self, pattern=r'\n\n+'):
-        """The number of paragraphs in the document, as delimited by `pattern`."""
+        """The number of paragraphs in the document, as delimited by ``pattern``."""
         return sum(1 for _ in re.finditer(pattern, self.text)) + 1
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'readability_stats'))
@@ -405,15 +407,15 @@ class TextDoc(object):
 
 class TextCorpus(object):
     """
-    A collection of :class:`TextDoc`s with some syntactic sugar and functions
-    to compute corpus statistics.
+    A collection of :class:`TextDoc <textacy.texts.TextDoc>` s with some syntactic
+    sugar and functions to compute corpus statistics.
 
     Initalize with a particular language (English by default).
-    Add documents to corpus by `TextCorpus.add_text()`.
+    Add documents to corpus by :meth:`TextCorpus.add_text() <textacy.texts.TextCorpus.add_text>`.
 
-    Iterate over corpus docs with `for doc in TextCorpus`. Access individual docs
-    by index (e.g. `TextCorpus[0]` or `TextCorpus[0:10]`) or by boolean condition
-    specified by lambda function (e.g. `TextCorpus.get_docs(lambda x: len(x) > 100)`).
+    Iterate over corpus docs with ``for doc in TextCorpus``. Access individual docs
+    by index (e.g. ``TextCorpus[0]`` or ``TextCorpus[0:10]``) or by boolean condition
+    specified by lambda function (e.g. ``TextCorpus.get_docs(lambda x: len(x) > 100)``).
     """
     def __init__(self, lang='en'):
         self.lang = lang
@@ -440,15 +442,15 @@ class TextCorpus(object):
     @classmethod
     def from_texts(cls, texts, lang='en'):
         """
-        Convenience function for creating a `TextCorpus` from an iterable of
-        text strings. NOTE: Only useful for texts without additional metadata.
+        Convenience function for creating a :class:`TextCorpus <textacy.texts.TextCorpus>`
+        from an iterable of text strings. NOTE: Only useful for texts without additional metadata.
 
         Args:
             texts (iterable(str))
             lang (str, optional)
 
         Returns:
-            :class:`TextCorpus`
+            :class:`TextCorpus <textacy.texts.TextCorpus>`
         """
         textcorpus = cls(lang=lang)
         for text in texts:
@@ -457,17 +459,19 @@ class TextCorpus(object):
 
     def add_text(self, text, lang='en', metadata=None):
         """
-        Create a :class:`TextDoc` from `text` and `metadata`, then add it to the corpus.
+        Create a :class:`TextDoc <textacy.texts.TextDoc>` from ``text`` and ``metadata``,
+        then add it to the corpus.
 
         Args:
-            text (str): raw text document to add to corpus as newly instantiated `TextDoc`
+            text (str): raw text document to add to corpus as newly instantiated
+                :class:`TextDoc <textacy.texts.TextDoc>`
             lang (str, optional):
             metadata (dict, optional): dictionary of document metadata, such as::
 
                 {"title": "My Great Doc", "author": "Burton DeWilde"}
 
-                NOTE: may be useful for retrieval via :func:`get_docs()`, e.g.
-                `TextCorpus.get_docs(lambda x: x.metadata["title"] == "My Great Doc")`
+                NOTE: may be useful for retrieval via :func:`get_docs() <textacy.texts.TextCorpus.get_docs>`,
+                e.g. ``TextCorpus.get_docs(lambda x: x.metadata["title"] == "My Great Doc")``
         """
         doc = TextDoc(text, spacy_pipeline=self.spacy_pipeline,
                       lang=lang, metadata=metadata)
@@ -479,15 +483,15 @@ class TextCorpus(object):
 
     def add_doc(self, textdoc, print_warning=True):
         """
-        Add an existing :class:`TextDoc` to the corpus as-is. NB: If `textdoc` is
-        already added to this or another `TextCorpus`, a warning message will be
-        printed and the `corpus_index` attribute will be overwritten, but you
-        won't be prevented from adding the doc.
+        Add an existing :class:`TextDoc <textacy.texts.TextDoc>` to the corpus as-is.
+        NB: If ``textdoc`` is already added to this or another :class:`TextCorpus <textacy.texts.TextCorpus>`,
+        a warning message will be printed and the ``corpus_index`` attribute will be
+        overwritten, but you won't be prevented from adding the doc.
 
         Args:
-            textdoc ():class:`TextDoc`)
+            textdoc (:class:`TextDoc <textacy.texts.TextDoc>`)
             print_warning (bool, optional): if True, print a warning message if
-                `textdoc` already added to a corpus; otherwise, don't ever print
+                ``textdoc`` already added to a corpus; otherwise, don't ever print
                 the warning and live dangerously
         """
         if hasattr(textdoc, 'corpus_index'):
@@ -502,8 +506,8 @@ class TextCorpus(object):
 
     def get_docs(self, match_condition, limit=None):
         """
-        Iterate over all docs in corpus and return all (or N=`limit`) for which
-        `match_condition(doc) is True`.
+        Iterate over all docs in corpus and return all (or N = ``limit``) for which
+        ``match_condition(doc) is True``.
 
         Args:
             match_condition (func): function that operates on a :class:`TextDoc`
@@ -513,7 +517,8 @@ class TextCorpus(object):
                 to return
 
         Yields:
-            class:`TextDoc`: one per doc passing `match_condition` up to `limit` docs
+            :class:`TextDoc <textacy.texts.TextDoc>`: one per doc passing ``match_condition``
+                up to ``limit`` docs
         """
         if limit is None:
             for doc in self:
@@ -529,22 +534,22 @@ class TextCorpus(object):
                     yield doc
 
     def remove_doc(self, index):
-        """Remove the document at `index` from the corpus, and decrement the
-        `corpus_index` attribute on all docs that come after it in the corpus."""
+        """Remove the document at ``index`` from the corpus, and decrement the
+        ``corpus_index`` attribute on all docs that come after it in the corpus."""
         for doc in self[index + 1:]:
             doc.corpus_index -= 1
         del self[index]
 
     def remove_docs(self, match_condition, limit=None):
         """
-        Remove all (or N=`limit`) docs in corpus for which `match_condition(doc) is True`.
-        Re-set all remaining doc' `corpus_index` attributes at the end.
+        Remove all (or N = ``limit``) docs in corpus for which ``match_condition(doc) is True``.
+        Re-set all remaining docs' ``corpus_index`` attributes at the end.
 
         Args:
-            match_condition (func): function that operates on a :class:`TextDoc`
-                and returns a boolean value; e.g. `lambda x: len(x) > 100` matches
+            match_condition (func): function that operates on a :class:`TextDoc <textacy.texts.TextDoc>`
+                and returns a boolean value; e.g. ``lambda x: len(x) > 100`` matches
                 all docs with more than 100 tokens
-            limit (int, optional): if not `None`, maximum number of matched docs
+            limit (int, optional): if not None, maximum number of matched docs
                 to remove
         """
         remove_indexes = [doc.corpus_index

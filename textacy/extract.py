@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Functions to extract various elements of interest from documents already parsed
-by spacy (http://spacy.io/), such as n-grams, named entities, subject-verb-object
+by `Spacy <http://spacy.io/>`_, such as n-grams, named entities, subject-verb-object
 triples, and acronyms.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -31,7 +31,7 @@ def words(doc,
     filtering words by part-of-speech (etc.) and frequency.
 
     Args:
-        doc (:class:`spacy.Doc()` or :class:`spacy.Span()`)
+        doc (``spacy.Doc`` or ``spacy.Span``)
         filter_stops (bool, optional): if True, remove stop words from word list
         filter_punct (bool, optional): if True, remove punctuation from word list
         filter_nums (bool, optional): if True, remove number-like words
@@ -44,7 +44,7 @@ def words(doc,
             `min_freq` times
 
     Returns:
-        list[:class:`spacy.Token()`]
+        list[``spacy.Token``]
     """
     words_ = (w for w in doc)
     if filter_stops is True:
@@ -75,7 +75,7 @@ def ngrams(doc, n,
     constituent words.
 
     Args:
-        doc (:class:`spacy.Doc()` or :class:`spacy.Span()`)
+        doc (``spacy.Doc`` or ``spacy.Span``)
         n (int): number of tokens per n-gram; 2 gives bigrams, 3 gives trigrams, etc.
         filter_stops (bool, optional): if True, remove ngrams that start or end
             with a stop word
@@ -93,7 +93,7 @@ def ngrams(doc, n,
             `min_freq` times
 
     Returns:
-        list[:class:`spacy.Span()`]
+        list[``spacy.Span``]
 
     Raises:
         ValueError: if `n` < 1
@@ -135,7 +135,7 @@ def named_entities(doc,
     spacy-parsed doc, optionally filtering by the entity types and frequencies.
 
     Args:
-        doc (:class:`spacy.Doc()`)
+        doc (``spacy.Doc``)
         good_ne_types (set[str] or 'numeric', optional): named entity types to
             include; if "numeric", all numeric entity types are included
         bad_ne_types (set[str] or 'numeric', optional): named entity types to
@@ -146,7 +146,7 @@ def named_entities(doc,
             from named entities (e.g. "the United States" => "United States")
 
     Returns:
-        list[:class:`spacy.Span()`]
+        list[``spacy.Span``]
     """
     nes = doc.ents
     if good_ne_types:
@@ -177,14 +177,14 @@ def noun_phrases(doc, drop_determiners=True, min_freq=1):
     filtering by frequency and dropping leading determiners.
 
     Args:
-        doc (:class:`spacy.Doc()`)
+        doc (``spacy.Doc``)
         drop_determiners (bool, optional): remove leading determiners (e.g. "the")
             from phrases (e.g. "the quick brown fox" => "quick brown fox")
         min_freq (int, optional): remove NPs that occur in `doc` fewer than
             `min_freq` times
 
     Returns:
-        list[:class:`spacy.Span()`]
+        list[``spacy.Span``]
     """
     nps = doc.noun_chunks
     if drop_determiners is True:
@@ -205,7 +205,7 @@ def pos_regex_matches(doc, pattern):
     part-of-speech tags match the specified regex pattern.
 
     Args:
-        doc (:class:`spacy.Doc()` or :class:`spacy.Span()`)
+        doc (``spacy.Doc`` or ``spacy.Span``)
         pattern (str): Pattern of consecutive POS tags whose corresponding words
             are to be extracted, inspired by the regex patterns used in NLTK's
             `nltk.chunk.regexp`. Tags are uppercase, from the universal tag set;
@@ -221,7 +221,7 @@ def pos_regex_matches(doc, pattern):
             * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
 
     Returns:
-        list[:class:`spacy.Span()`]
+        list[``spacy.Span``]
     """
     # standardize and transform the regular expression pattern...
     pattern = re.sub(r'\s', '', pattern)
@@ -240,7 +240,7 @@ def subject_verb_object_triples(doc):
     doc. Note that this only works for SVO languages.
 
     Args:
-        doc (:class:`spacy.Doc()` or :class:`spacy.Span()`): either a spacy document
+        doc (``spacy.Doc`` or ``spacy.Span``): either a spacy document
             or a sentence thereof
 
     Returns:
@@ -295,7 +295,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
     only the most frequently occurring definition is returned.
 
     Args:
-        doc (:class:`spacy.Doc()` or :class:`spacy.Span()`)
+        doc (``spacy.Doc`` or ``spacy.Span``)
         known_acro_defs (dict, optional): if certain acronym/definition pairs
             are known, pass them in as {acronym (str): definition (str)};
             algorithm will not attempt to find new definitions
@@ -381,7 +381,7 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
 
     Args:
         acronym (str): acronym for which definition is sought
-        window (:class:`spacy.Span()`): a span of tokens from which definition
+        window (``spacy.Span``): a span of tokens from which definition
             extraction will be attempted
         threshold (float, optional): minimum "confidence" in definition required
             for acceptance; valid values in [0.0, 1.0]; higher value => stricter threshold
@@ -536,7 +536,7 @@ def semistructured_statements(doc, entity, cue='be', ignore_entity_case=True,
     (entity, cue, fragment) triple. This is similar to subject-verb-object triples.
 
     Args:
-        doc (:class:`spacy.Doc()`)
+        doc (``spacy.Doc``)
         entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
             "global warming", "Python")
         cue (str, optional): verb lemma with which `entity` is associated
@@ -657,7 +657,7 @@ def direct_quotations(doc):
     or mixed quotations) using rules and patterns. English only.
 
     Args:
-        doc (:class:`spacy.Doc()`)
+        doc (``spacy.Doc``)
 
     Returns:
         list[(:class:`spacy.Span`,

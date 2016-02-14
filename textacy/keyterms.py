@@ -22,31 +22,31 @@ from textacy.transform import terms_to_semantic_network
 
 def sgrank(doc, window_width=1500, n_keyterms=10, idf=None):
     """
-    Extract key terms from a document using the SGRank algorithm.
+    Extract key terms from a document using the [SGRank]_ algorithm.
 
     Args:
-        doc (:class:`spacy.Doc()`)
+        doc (``spacy.Doc``)
         window_width (int, optional): width of sliding window in which term
             co-occurrences are said to occur
         n_keyterms (int or float, optional): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
             representing the fraction of top-ranked terms to return as keyterms
         idf (dict, optional): mapping of
-            {`spacy_utils.normalized_str(term)`: inverse document frequency}
+            {`normalized_str(term) <textacy.spacy_utils.normalized_str>`: inverse document frequency}
             for re-weighting of unigrams (n-grams with n > 1 have df assumed = 1);
             NOTE: results are better with idf information
 
     Returns:
-        list[(str, float)]: sorted list of top `n_keyterms` key terms and their
+        list[(str, float)]: sorted list of top ``n_keyterms`` key terms and their
             corresponding SGRank scores
 
     Raises:
-        ValueError: if `n_keyterms` is a float but not in (0.0, 1.0]
+        ValueError: if ``n_keyterms`` is a float but not in (0.0, 1.0]
 
     References:
-        Danesh, Sumner, and Martin. "SGRank: Combining Statistical and Graphical
-            Methods to Improve the State of the Art in Unsupervised Keyphrase
-            Extraction". Lexical and Computational Semantics (* SEM 2015) (2015): 117.
+        .. [SGRank] Danesh, Sumner, and Martin. "SGRank: Combining Statistical and
+           Graphical Methods to Improve the State of the Art in Unsupervised Keyphrase
+           Extraction". Lexical and Computational Semantics (* SEM 2015) (2015): 117.
     """
     if isinstance(n_keyterms, float):
         if not 0.0 < n_keyterms <= 1.0:
@@ -153,21 +153,21 @@ def sgrank(doc, window_width=1500, n_keyterms=10, idf=None):
 
 def textrank(doc, n_keyterms=10):
     """
-    Convenience function for calling :func:`key_terms_from_semantic_network` with
-    the parameter values used in the TextRank algorithm.
+    Convenience function for calling :func:`key_terms_from_semantic_network <textacy.keyterms.key_terms_from_semantic_network>`
+    with the parameter values used in the [TextRank]_ algorithm.
 
     Args:
-        doc (:class:`spacy.Doc()`)
+        doc (``spacy.Doc``)
         n_keyterms (int or float, optional): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
             representing the fraction of top-ranked terms to return as keyterms
 
     Returns:
-        see :func:`key_terms_from_semantic_network`.
+        See :func:`key_terms_from_semantic_network`.
 
     References:
-        Mihalcea, R., & Tarau, P. (2004, July). TextRank: Bringing order into texts.
-            Association for Computational Linguistics.
+        .. [TextRank] Mihalcea, R., & Tarau, P. (2004, July). TextRank: Bringing
+           order into texts. Association for Computational Linguistics.
     """
     return key_terms_from_semantic_network(
         doc, window_width=2, edge_weighting='binary', ranking_algo='pagerank',
@@ -176,11 +176,11 @@ def textrank(doc, n_keyterms=10):
 
 def singlerank(doc, n_keyterms=10):
     """
-    Convenience function for calling :func:`key_terms_from_semantic_network` with
-    the parameter values used in the SingleRank algorithm.
+    Convenience function for calling :func:`key_terms_from_semantic_network <textacy.keyterms.key_terms_from_semantic_network>`
+    with the parameter values used in the [SingleRank]_ algorithm.
 
     Args:
-        doc (:class:`spacy.Doc()`)
+        doc (``spacy.Doc``)
         n_keyterms (int or float, optional): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
             representing the fraction of top-ranked terms to return as keyterms
@@ -189,10 +189,10 @@ def singlerank(doc, n_keyterms=10):
         see :func:`key_terms_from_semantic_network`.
 
     References:
-        Hasan, K. S., & Ng, V. (2010, August). Conundrums in unsupervised keyphrase
-            extraction: making sense of the state-of-the-art. In Proceedings of
-            the 23rd International Conference on Computational Linguistics:
-            Posters (pp. 365-373). Association for Computational Linguistics.
+        .. [SingleRank] Hasan, K. S., & Ng, V. (2010, August). Conundrums in unsupervised
+           keyphrase extraction: making sense of the state-of-the-art. In Proceedings
+           of the 23rd International Conference on Computational Linguistics:
+           Posters (pp. 365-373). Association for Computational Linguistics.
     """
     return key_terms_from_semantic_network(
         doc, window_width=10, edge_weighting='cooc_freq', ranking_algo='pagerank',
@@ -207,7 +207,7 @@ def key_terms_from_semantic_network(doc, window_width=2, edge_weighting='binary'
     terms, connected by edges and weights specified by parameters.
 
     Args:
-        doc (:class:`spacy.Doc()`):
+        doc (``spacy.Doc``):
         window_width (int, optional): width of sliding window in which term
             co-occurrences are said to occur
         edge_weighting (str {'binary', 'cooc_freq'}, optional): method used to
@@ -228,11 +228,11 @@ def key_terms_from_semantic_network(doc, window_width=2, edge_weighting='binary'
             representing the fraction of top-ranked terms to return as keyterms
 
     Returns:
-        list[(str, float)]: sorted list of top `n_keyterms` key terms and their
-            corresponding SGRank scores
+        list((str, float)): sorted list of top ``n_keyterms`` key terms and their
+            corresponding ranking scores
 
     Raises:
-        ValueError: if `n_keyterms` is a float but not in (0.0, 1.0]
+        ValueError: if ``n_keyterms`` is a float but not in (0.0, 1.0]
     """
     word_list = [spacy_utils.normalized_str(word) for word in doc]
     good_word_list = [spacy_utils.normalized_str(word)
@@ -289,7 +289,7 @@ def aggregate_term_variants(terms,
     and ordering variants of each other, as well as acronyms and fuzzy string matches.
 
     Args:
-        terms (set[str]): set of unique terms with potential duplicates
+        terms (set(str)): set of unique terms with potential duplicates
         acro_defs (dict, optional): if not None, terms that are acronyms will be
             aggregated with their definitions and terms that are definitions will
             be aggregated with their acronyms
@@ -298,7 +298,7 @@ def aggregate_term_variants(terms,
             `FuzzyWuzzy <https://pypi.python.org/pypi/fuzzywuzzy>`_
 
     Returns:
-        list[set]: each item is a set of aggregated terms
+        list(set): each item is a set of aggregated terms
 
     Notes:
         Partly inspired by aggregation of variants discussed in
@@ -399,11 +399,11 @@ def aggregate_term_variants(terms,
 
 def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
     """
-    Rank nodes in a network using the BestCoverage algorithm that attempts to
+    Rank nodes in a network using the [BestCoverage]_ algorithm that attempts to
     balance between node centrality and diversity.
 
     Args:
-        graph (:class:`networkx.Graph()`)
+        graph (:class:`networkx.Graph <networkx.Graph>`)
         k (int): number of results to return for top-k search
         c (int, optional): *l* parameter for *l*-step expansion; best if 1 or 2
         alpha (float, optional): float in [0.0, 1.0] specifying how much of
@@ -412,15 +412,15 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
             more emphasis on diversity
 
     Returns:
-        dict: top `k` nodes as ranked by bestcoverage algorithm; keys as node
+        dict: top ``k`` nodes as ranked by bestcoverage algorithm; keys as node
             identifiers, values as corresponding ranking scores
 
     References:
-        Küçüktunç, O., Saule, E., Kaya, K., & Çatalyürek, Ü. V. (2013, May).
-        Diversified recommendation on graphs: pitfalls, measures, and algorithms.
-        In Proceedings of the 22nd international conference on World Wide Web (pp. 715-726).
-        International World Wide Web Conferences Steering Committee.
-        http://www2013.wwwconference.org/proceedings/p715.pdf
+        .. [BestCoverage] Küçüktunç, O., Saule, E., Kaya, K., & Çatalyürek, Ü. V.
+           (2013, May). Diversified recommendation on graphs: pitfalls, measures,
+           and algorithms. In Proceedings of the 22nd international conference on
+           World Wide Web (pp. 715-726). International World Wide Web Conferences
+           Steering Committee. http://www2013.wwwconference.org/proceedings/p715.pdf
     """
     alpha = float(alpha)
 
@@ -503,26 +503,25 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
 
 def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
     """
-    Rank nodes in a network using the DivRank algorithm that attempts to
+    Rank nodes in a network using the [DivRank]_ algorithm that attempts to
     balance between node centrality and diversity.
 
     Args:
-        graph (:class:`networkx.Graph()`):
+        graph (:class:`networkx.Graph <networkx.Graph>`):
         r (:class:`numpy.array`, optional): the "personalization vector";
-            by default, `r = ones(1, n)/n`
+            by default, ``r = ones(1, n)/n``
         lambda_ (float, optional): must be in [0.0, 1.0]
         alpha (float, optional): controls the strength of self-links;
             must be in [0.0, 1.0]
 
     Returns:
-        list[tuple]: list of (node, score) tuples ordered by (desc.) divrank score
+        list[tuple]: list of (node, score) tuples ordered by desc. divrank score
 
     References:
-        Mei, Q., Guo, J., & Radev, D. (2010, July).
-        Divrank: the interplay of prestige and diversity in information networks.
-        In Proceedings of the 16th ACM SIGKDD international conference on
-        Knowledge discovery and data mining (pp. 1009-1018). ACM.
-        http://clair.si.umich.edu/~radev/papers/SIGKDD2010.pdf
+        .. [DivRank] Mei, Q., Guo, J., & Radev, D. (2010, July). Divrank: the interplay
+           of prestige and diversity in information networks. In Proceedings of the
+           16th ACM SIGKDD international conference on Knowledge discovery and data
+           mining (pp. 1009-1018). ACM. http://clair.si.umich.edu/~radev/papers/SIGKDD2010.pdf
     """
     # check function arguments
     if len(graph) == 0:
