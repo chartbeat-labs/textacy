@@ -46,7 +46,7 @@ def words(doc,
     Returns:
         list[``spacy.Token``]
     """
-    words_ = (w for w in doc)
+    words_ = (w for w in doc if not w.is_space)
     if filter_stops is True:
         words_ = (w for w in words_ if not w.is_stop)
     if filter_punct is True:
