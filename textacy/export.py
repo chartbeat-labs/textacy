@@ -85,6 +85,9 @@ def doc_to_conll(doc, save_to=False):
 
     Returns:
         str or None
+
+    Notes:
+        See http://universaldependencies.org/docs/format.html for details.
     """
     rows = []
     for j, sent in enumerate(doc.sents):
