@@ -7,6 +7,7 @@ import re
 
 from cld2 import detect as cld2_detect
 
+from textacy.compat import PY2, str
 from textacy.regexes_etc import ACRONYM_REGEX
 
 
@@ -64,7 +65,10 @@ def detect_language(text):
     Returns:
         str
     """
-    is_reliable, _, best_guesses = cld2_detect(text.encode('utf8'), bestEffort=True)
+    if PY2:
+        is_reliable, _, best_guesses = cld2_detect(str(text).encode('utf8'), bestEffort=True)
+    else:
+        is_reliable, _, best_guesses = cld2_detect(str(text), bestEffort=True)
     if is_reliable is False:
         msg = '**WARNING: Text language detected with low confidence; best guesses: {}'
         print(msg.format(best_guesses))

@@ -17,6 +17,7 @@ from spacy.tokens.span import Span as spacy_span
 from spacy.tokens.token import Token as spacy_token
 
 from textacy import extract, text_stats
+from textacy.compat import str
 from textacy.spacy_utils import normalized_str
 
 # TODO: bag-of-words? bag-of-concepts? gensim-compatible corpus and dictionary?
