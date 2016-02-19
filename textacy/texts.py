@@ -30,18 +30,22 @@ class TextDoc(object):
         spacy_pipeline (``spacy.<lang>.<Lang>()``, optional)
         lang (str, optional)
         metadata (dict, optional)
+        max_cachesize (int, optional)
     """
-    # initialize as class attribute so they're shared across instances
-    spacy_pipeline = None
-    spacy_vocab = None
-    spacy_stringstore = None
-
     def __init__(self, text, spacy_pipeline=None, lang='auto',
                  metadata=None, max_cachesize=5):
-        self.lang = text_utils.detect_language(text) if lang == 'auto' else lang
         self.metadata = {} if metadata is None else metadata
-        self.spacy_pipeline = data.load_spacy_pipeline(lang=self.lang) \
-            if spacy_pipeline is None else spacy_pipeline
+        self.lang = text_utils.detect_language(text) if lang == 'auto' else lang
+        if spacy_pipeline is None:
+            self.spacy_pipeline = data.load_spacy_pipeline(lang=self.lang)
+        else:
+            # check for match between text and supplied spacy pipeline language
+            if spacy_pipeline.lang != self.lang:
+                msg = 'TextDoc.lang {} != spacy_pipeline.lang {}'.format(
+                    self.lang, spacy_pipeline.lang)
+                raise ValueError(msg)
+            else:
+                self.spacy_pipeline = spacy_pipeline
         self.spacy_vocab = self.spacy_pipeline.vocab
         self.spacy_stringstore = self.spacy_vocab.strings
         self.spacy_doc = self.spacy_pipeline(text)
@@ -49,17 +53,24 @@ class TextDoc(object):
         self._cache = LRUCache(max_cachesize)
 
     def __repr__(self):
-        return 'TextDoc({} tokens)'.format(self.n_tokens)
-
-    def __iter__(self):
-        for tok in self.spacy_doc:
-            yield tok
+        return 'TextDoc({} tokens: {})'.format(
+            len(self.spacy_doc), repr(self.text[:50].replace('\n',' ').strip() + '...'))
 
     def __len__(self):
         return self.n_tokens
 
     def __getitem__(self, index):
         return self.spacy_doc[index]
+
+    def __iter__(self):
+        for tok in self.spacy_doc:
+            yield tok
+
+    @property
+    def tokens(self):
+        """Yield the document's tokens as tokenized by spacy; same as ``__iter__``."""
+        for tok in self.spacy_doc:
+            yield tok
 
     @property
     def sents(self):
@@ -73,7 +84,7 @@ class TextDoc(object):
     @property
     def text(self):
         """Return the document's raw text."""
-        return self.spacy_doc.string
+        return self.spacy_doc.text_with_ws
 
     @property
     def tokenized_text(self):
@@ -410,14 +421,14 @@ class TextCorpus(object):
     A collection of :class:`TextDoc <textacy.texts.TextDoc>` s with some syntactic
     sugar and functions to compute corpus statistics.
 
-    Initalize with a particular language (English by default).
+    Initalize with a particular language.
     Add documents to corpus by :meth:`TextCorpus.add_text() <textacy.texts.TextCorpus.add_text>`.
 
     Iterate over corpus docs with ``for doc in TextCorpus``. Access individual docs
     by index (e.g. ``TextCorpus[0]`` or ``TextCorpus[0:10]``) or by boolean condition
     specified by lambda function (e.g. ``TextCorpus.get_docs(lambda x: len(x) > 100)``).
     """
-    def __init__(self, lang='en'):
+    def __init__(self, lang):
         self.lang = lang
         self.spacy_pipeline = data.load_spacy_pipeline(lang=self.lang)
         self.spacy_vocab = self.spacy_pipeline.vocab
@@ -429,35 +440,35 @@ class TextCorpus(object):
     def __repr__(self):
         return 'TextCorpus({} docs, {} tokens)'.format(self.n_docs, self.n_tokens)
 
-    def __iter__(self):
-        for doc in self.docs:
-            yield doc
-
     def __len__(self):
         return self.n_docs
 
     def __getitem__(self, index):
         return self.docs[index]
 
+    def __iter__(self):
+        for doc in self.docs:
+            yield doc
+
     @classmethod
-    def from_texts(cls, texts, lang='en'):
+    def from_texts(cls, texts, lang):
         """
         Convenience function for creating a :class:`TextCorpus <textacy.texts.TextCorpus>`
         from an iterable of text strings. NOTE: Only useful for texts without additional metadata.
 
         Args:
             texts (iterable(str))
-            lang (str, optional)
+            lang (str)
 
         Returns:
             :class:`TextCorpus <textacy.texts.TextCorpus>`
         """
         textcorpus = cls(lang=lang)
         for text in texts:
-            textcorpus.add_text(text)
+            textcorpus.add_text(text, lang=lang)
         return textcorpus
 
-    def add_text(self, text, lang='en', metadata=None):
+    def add_text(self, text, lang='auto', metadata=None):
         """
         Create a :class:`TextDoc <textacy.texts.TextDoc>` from ``text`` and ``metadata``,
         then add it to the corpus.
@@ -494,6 +505,9 @@ class TextCorpus(object):
                 ``textdoc`` already added to a corpus; otherwise, don't ever print
                 the warning and live dangerously
         """
+        if textdoc.lang != self.lang:
+            msg = 'TextDoc.lang {} != TextCorpus.lang {}'.format(textdoc.lang, self.lang)
+            raise ValueError(msg)
         if hasattr(textdoc, 'corpus_index'):
             textdoc = copy.deepcopy(textdoc)
             if print_warning is True:
