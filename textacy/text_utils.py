@@ -64,7 +64,7 @@ def detect_language(text):
     Returns:
         str
     """
-    is_reliable, _, best_guesses = cld2_detect(text, bestEffort=True)
+    is_reliable, _, best_guesses = cld2_detect(text.encode('utf8'), bestEffort=True)
     if is_reliable is False:
         msg = '**WARNING: Text language detected with low confidence; best guesses: {}'
         print(msg.format(best_guesses))
