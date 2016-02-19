@@ -90,28 +90,15 @@ def normalized_str(token):
         raise TypeError(msg)
 
 
-def merge_spans(spans, doc):
+def merge_spans(spans):
     """
-    Merge spans so that each only takes up a single token. Since each Span is
-    a view into the doc, merging one invalidates the others. (This will get fixed!)
-    The temporary solution is to gather the information first, before merging.
-    NB: This modifies `doc` in-place!
+    Merge spans *in-place* within parent doc so that each takes up a single token.
 
     Args:
         spans (iterable(``spacy.Span``))
-        doc (``spacy.Doc``)
     """
-    for span_tuple in (_span_to_tuple(span) for span in spans):
-        doc.merge(*span_tuple)
-
-
-def _span_to_tuple(span):
-    start = span[0].idx
-    end = span[-1].idx + len(span[-1])
-    tag = span.root.tag_
-    text = span.text
-    label = span.label_
-    return (start, end, tag, text, label)
+    for span in spans:
+        span.merge(span.root.tag_, span.text, span.root.ent_type_)
 
 
 def get_main_verbs_of_sent(sent):
