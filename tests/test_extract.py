@@ -38,7 +38,7 @@ class ExtractTestCase(unittest.TestCase):
             'much', 'in', 'common', '.', 'They', 'have', 'managed', 'billions',
             'of']
         observed = [tok.orth_ for tok in extract.words(
-            self.spacy_doc, filter_stops=False, filter_punct=False, filter_nums=False)[:25]]
+            self.spacy_doc, filter_stops=False, filter_punct=False, filter_nums=False)][:25]
         self.assertEqual(observed, expected)
 
     def test_words_filter(self):
@@ -48,7 +48,7 @@ class ExtractTestCase(unittest.TestCase):
             'billions', 'dollars', 'capital', 'earning', 'vast', 'fortunes',
             'invested', 'millions', 'art', 'millions', 'political']
         observed = [tok.orth_ for tok in extract.words(
-            self.spacy_doc, filter_stops=True, filter_punct=True, filter_nums=True)[:25]]
+            self.spacy_doc, filter_stops=True, filter_punct=True, filter_nums=True)][:25]
         self.assertEqual(observed, expected)
 
     def test_words_good_tags(self):
@@ -59,7 +59,7 @@ class ExtractTestCase(unittest.TestCase):
             'tax', 'loophole', 'them', 'millions']
         observed = [tok.orth_ for tok in extract.words(
             self.spacy_doc, filter_stops=False, filter_punct=False, filter_nums=False,
-            good_pos_tags={'NOUN'})[:25]]
+            good_pos_tags={'NOUN'})][:25]
         self.assertEqual(observed, expected)
 
     def test_words_min_freq(self):
@@ -69,11 +69,12 @@ class ExtractTestCase(unittest.TestCase):
             'millions', 'in', '—', 'and', 'millions', 'more', 'in']
         observed = [tok.orth_ for tok in extract.words(
             self.spacy_doc, filter_stops=False, filter_punct=False, filter_nums=False,
-            min_freq=3)[:25]]
+            min_freq=3)][:25]
         self.assertEqual(observed, expected)
 
     def test_ngrams_less_than_1(self):
-        self.assertRaises(ValueError, extract.ngrams, self.spacy_doc, 0)
+        with self.assertRaises(ValueError):
+            list(extract.ngrams(self.spacy_doc, 0))
 
     def test_ngrams_1(self):
         expected = [
@@ -81,7 +82,7 @@ class ExtractTestCase(unittest.TestCase):
             'Louis', 'Moore', 'Bacon', 'and', 'Steven', 'A.', 'Cohen', 'have',
             'much', 'in', 'common', '.', 'They', 'have', 'managed', 'billions', 'of']
         observed = [span.orth_ for span in extract.ngrams(
-            self.spacy_doc, 1, filter_stops=False, filter_punct=False, filter_nums=False)[:25]]
+            self.spacy_doc, 1, filter_stops=False, filter_punct=False, filter_nums=False)][:25]
         self.assertEqual(observed, expected)
 
     def test_ngrams_2(self):
@@ -92,7 +93,7 @@ class ExtractTestCase(unittest.TestCase):
             'in common', 'common.', '. They', 'They have', 'have managed',
             'managed billions', 'billions of', 'of dollars']
         observed = [span.orth_ for span in extract.ngrams(
-            self.spacy_doc, 2, filter_stops=False, filter_punct=False, filter_nums=False)[:25]]
+            self.spacy_doc, 2, filter_stops=False, filter_punct=False, filter_nums=False)][:25]
         self.assertEqual(observed, expected)
 
     def test_ngrams_filter(self):
@@ -104,7 +105,7 @@ class ExtractTestCase(unittest.TestCase):
             'debate rising', 'higher taxes', 'richest Americans', 'astonishingly effective',
             'effective apparatus', 'income defense', 'defense industry']
         observed = [span.orth_ for span in extract.ngrams(
-            self.spacy_doc, 2, filter_stops=True, filter_punct=True, filter_nums=True)[:25]]
+            self.spacy_doc, 2, filter_stops=True, filter_punct=True, filter_nums=True)][:25]
         self.assertEqual(observed, expected)
 
     def test_ngrams_min_freq(self):
@@ -115,7 +116,7 @@ class ExtractTestCase(unittest.TestCase):
             ', who', 'who give', 'to Republicans', ', and', ', who', 'on the']
         observed = [span.orth_ for span in extract.ngrams(
             self.spacy_doc, 2, filter_stops=False, filter_punct=False, filter_nums=False,
-            min_freq=3)[:25]]
+            min_freq=3)][:25]
         self.assertEqual(observed, expected)
 
     def test_ngrams_good_tag(self):
@@ -128,7 +129,7 @@ class ExtractTestCase(unittest.TestCase):
             'tax system', 'Bill Clinton']
         observed = [span.orth_ for span in extract.ngrams(
             self.spacy_doc, 2, filter_stops=False, filter_punct=False, filter_nums=False,
-            good_pos_tags={'NOUN'})[:25]]
+            good_pos_tags={'NOUN'})][:25]
         self.assertEqual(observed, expected)
 
     def test_named_entities(self):
@@ -167,35 +168,35 @@ class ExtractTestCase(unittest.TestCase):
             self.spacy_doc, drop_determiners=False) if ent[0].pos_ == 'DET']
         self.assertEqual(observed, expected)
 
-    def test_noun_phrases(self):
+    def test_noun_chunks(self):
         expected = [
             'hedge fund', 'Daniel S. Loeb', 'Steven A. Cohen', 'They', 'billions',
             'dollars', 'capital', 'vast fortunes', 'They', 'millions', 'art', 'millions',
             'political candidates', 'esoteric tax loophole', 'them', 'millions', 'taxes',
             'money', 'Bermuda', 'inequality', 'its highest levels', 'nearly a century',
             'public debate', 'government', 'it']
-        observed = [np.text for np in extract.noun_phrases(
+        observed = [nc.text for nc in extract.noun_chunks(
             self.spacy_doc, drop_determiners=True)][:25]
         self.assertEqual(observed, expected)
 
-    def test_noun_phrases_determiner(self):
+    def test_noun_chunks_determiner(self):
         expected = [
             'The hedge fund', 'Daniel S. Loeb', 'Steven A. Cohen', 'They', 'billions',
             'dollars', 'capital', 'vast fortunes', 'They', 'millions', 'art', 'millions',
             'political candidates', 'an esoteric tax loophole', 'them', 'millions',
             'taxes', 'the money', 'Bermuda', 'inequality', 'its highest levels',
             'nearly a century', 'public debate', 'the government', 'it']
-        observed = [np.text for np in extract.noun_phrases(
+        observed = [nc.text for nc in extract.noun_chunks(
             self.spacy_doc, drop_determiners=False)][:25]
         self.assertEqual(observed, expected)
 
-    def test_noun_phrases_min_freq(self):
+    def test_noun_chunks_min_freq(self):
         expected = [
             'hedge fund', 'They', 'dollars', 'They', 'millions', 'millions', 'them',
             'millions', 'taxes', 'it', 'their fortunes', 'it', 'who', 'them', 'influence',
             'who', 'Republicans', 'who', 'same time', 'them', 'effect', 'their income',
             'millions', 'dollars', 'who']
-        observed = [np.text for np in extract.noun_phrases(
+        observed = [nc.text for nc in extract.noun_chunks(
             self.spacy_doc, drop_determiners=True, min_freq=2)][:25]
         self.assertEqual(observed, expected)
 
@@ -223,7 +224,7 @@ class ExtractTestCase(unittest.TestCase):
             'agency, deemed, to be', 'that, saved, fund', 'that, saved, billion',
             'Some, contributed, thousands']
         observed = [', '.join(item.text for item in triple) for triple in
-                    extract.subject_verb_object_triples(self.spacy_doc)[:25]]
+                    extract.subject_verb_object_triples(self.spacy_doc)][:25]
         self.assertEqual(observed, expected)
 
     def test_acronyms_and_definitions(self):

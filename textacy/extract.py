@@ -27,7 +27,7 @@ def words(doc,
           filter_stops=True, filter_punct=True, filter_nums=False,
           good_pos_tags=None, bad_pos_tags=None, min_freq=1):
     """
-    Extract an ordered list of words from a spacy-parsed doc, optionally
+    Extract an ordered sequence of words from a spacy-parsed doc, optionally
     filtering words by part-of-speech (etc.) and frequency.
 
     Args:
@@ -43,8 +43,9 @@ def words(doc,
         min_freq (int, optional): remove words that occur in `doc` fewer than
             `min_freq` times
 
-    Returns:
-        list[``spacy.Token``]
+    Yields:
+        ``spacy.Token``: the next token from ``doc`` passing specified filters
+            in order of appearance in the document
     """
     words_ = (w for w in doc if not w.is_space)
     if filter_stops is True:
@@ -63,14 +64,15 @@ def words(doc,
         words_ = (w for w in words_
                   if freqs[normalized_str(w)] >= min_freq)
 
-    return list(words_)
+    for word in words_:
+        yield word
 
 
 def ngrams(doc, n,
            filter_stops=True, filter_punct=True, filter_nums=False,
            good_pos_tags=None, bad_pos_tags=None, min_freq=1):
     """
-    Extract an ordered list of n-grams (`n` consecutive words) from a spacy-parsed
+    Extract an ordered sequence of n-grams (``n`` consecutive words) from a spacy-parsed
     doc, optionally filtering n-grams by the types and parts-of-speech of the
     constituent words.
 
@@ -92,14 +94,15 @@ def ngrams(doc, n,
         min_freq (int, optional): remove ngrams that occur in `doc` fewer than
             `min_freq` times
 
-    Returns:
-        list[``spacy.Span``]
+    Yields:
+        ``spacy.Span``: the next ngram from ``doc`` passing all specified filters,
+            in order of appearance in the document
 
     Raises:
-        ValueError: if `n` < 1
+        ValueError: if ``n`` < 1
     """
     if n < 1:
-        raise ValueError('`n` must be greater than or equal to 1.')
+        raise ValueError('n must be greater than or equal to 1')
 
     ngrams_ = (doc[i: i + n]
                for i in range(len(doc) - n + 1))
@@ -124,14 +127,15 @@ def ngrams(doc, n,
         ngrams_ = (ngram for ngram in ngrams_
                    if freqs[normalized_str(ngram)] >= min_freq)
 
-    return list(ngrams_)
+    for ngram in ngrams_:
+        yield ngram
 
 
 def named_entities(doc,
                    good_ne_types=None, bad_ne_types=None, min_freq=1,
                    drop_determiners=True):
     """
-    Extract an ordered list of named entities (PERSON, ORG, LOC, etc.) from a
+    Extract an ordered sequence of named entities (PERSON, ORG, LOC, etc.) from a
     spacy-parsed doc, optionally filtering by the entity types and frequencies.
 
     Args:
@@ -145,8 +149,9 @@ def named_entities(doc,
         drop_determiners (bool, optional): remove leading determiners (e.g. "the")
             from named entities (e.g. "the United States" => "United States")
 
-    Returns:
-        list[``spacy.Span``]
+    Yields:
+        ``spacy.Span``: the next named entity from ``doc`` passing all specified
+            filters in order of appearance in the document
     """
     nes = doc.ents
     if good_ne_types:
@@ -168,35 +173,38 @@ def named_entities(doc,
         nes = (ne for ne in nes
                if freqs[ne.text] >= min_freq)
 
-    return list(nes)
+    for ne in nes:
+        yield ne
 
 
-def noun_phrases(doc, drop_determiners=True, min_freq=1):
+def noun_chunks(doc, drop_determiners=True, min_freq=1):
     """
-    Extract an ordered list of noun phrases from a spacy-parsed doc, optionally
+    Extract an ordered sequence of noun chunks from a spacy-parsed doc, optionally
     filtering by frequency and dropping leading determiners.
 
     Args:
         doc (``spacy.Doc``)
         drop_determiners (bool, optional): remove leading determiners (e.g. "the")
             from phrases (e.g. "the quick brown fox" => "quick brown fox")
-        min_freq (int, optional): remove NPs that occur in `doc` fewer than
+        min_freq (int, optional): remove chunks that occur in `doc` fewer than
             `min_freq` times
 
-    Returns:
-        list[``spacy.Span``]
+    Yields:
+        ``spacy.Span``: the next noun chunk from ``doc`` in order of appearance
+             in the document
     """
-    nps = doc.noun_chunks
+    ncs = doc.noun_chunks
     if drop_determiners is True:
-        nps = (np if np[0].pos != DET else np[1:]
-               for np in nps)
+        ncs = (nc if nc[0].pos != DET else nc[1:]
+               for nc in ncs)
     if min_freq > 1:
-        nps = list(nps)
-        freqs = itertoolz.frequencies(normalized_str(np) for np in nps)
-        nps = (np for np in nps
-               if freqs[normalized_str(np)] >= min_freq)
+        ncs = list(ncs)
+        freqs = itertoolz.frequencies(normalized_str(nc) for nc in ncs)
+        ncs = (nc for nc in ncs
+               if freqs[normalized_str(nc)] >= min_freq)
 
-    return list(nps)
+    for nc in ncs:
+        yield nc
 
 
 def pos_regex_matches(doc, pattern):
@@ -220,8 +228,9 @@ def pos_regex_matches(doc, pattern):
             * verb phrase: r'<VERB>?<ADV>*<VERB>+'
             * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
 
-    Returns:
-        list[``spacy.Span``]
+    Yields:
+        ``spacy.Span``: the next span of consecutive tokens from ``doc`` whose
+            parts-of-speech match ``pattern``, in order of apperance
     """
     # standardize and transform the regular expression pattern...
     pattern = re.sub(r'\s', '', pattern)
@@ -230,22 +239,22 @@ def pos_regex_matches(doc, pattern):
 
     tags = ' ' + ' '.join(tok.pos_ for tok in doc)
 
-    return [doc[tags[0:m.start()].count(' '):tags[0:m.end()].count(' ')]
-            for m in re.finditer(pattern, tags)]
+    for m in re.finditer(pattern, tags):
+        yield doc[tags[0:m.start()].count(' '):tags[0:m.end()].count(' ')]
 
 
 def subject_verb_object_triples(doc):
     """
-    Extract an ordered list of subject-verb-object (SVO) triples from a spacy-parsed
-    doc. Note that this only works for SVO languages.
+    Extract an ordered sequence of subject-verb-object (SVO) triples from a
+    spacy-parsed doc. Note that this only works for SVO languages.
 
     Args:
         doc (``spacy.Doc`` or ``spacy.Span``): either a spacy document
             or a sentence thereof
 
-    Returns:
-        list[(`spacy.Span()`,`spacy.Span()`,`spacy.Span()`)]:
-            where each element is a (subject, verb, object) 3-tuple
+    Yields:
+        (``spacy.Span``, ``spacy.Span``, ``spacy.Span``): the next 3-tuple from ``doc``
+            representing a (subject, verb, object) triple, in order of apperance
 
     # TODO: What to do about questions, where it may be VSO instead of SVO?
     # TODO: What about non-adjacent verb negations?
@@ -256,7 +265,6 @@ def subject_verb_object_triples(doc):
     except AttributeError:
         sents = [doc]
 
-    svos = []
     for sent in sents:
         start_i = sent[0].i
 
@@ -283,9 +291,8 @@ def subject_verb_object_triples(doc):
                     else:
                         span = (obj.i, obj.i)
                     obj = sent[span[0] - start_i: span[1] - start_i + 1]
-                    svos.append((subj, verb, obj))
 
-    return svos
+                    yield (subj, verb, obj)
 
 
 def acronyms_and_definitions(doc, known_acro_defs=None):
@@ -545,11 +552,9 @@ def semistructured_statements(doc, entity, cue='be', ignore_entity_case=True,
         min_n_words (int, optional): min number of tokens allowed in a matching fragment
         max_n_words (int, optional): max number of tokens allowed in a matching fragment
 
-    Returns:
-        list[(:class:`spacy.Span` or :class:`spacy.Token`,
-              :class:`spacy.Span` or :class:`spacy.Token`,
-              :class:`spacy.Span`)]:
-              where each element is a (element, cue, fragment) 3-tuple
+    Yields:
+        (``spacy.Span`` or ``spacy.Token``, ``spacy.Span`` or ``spacy.Token``, ``spacy.Span``):
+              where each element is a matching (entity, cue, fragment) triple
 
     Notes:
         Inspired by N. Diakopoulos, A. Zhang, A. Salway. Visual Analytics of
@@ -579,7 +584,6 @@ def semistructured_statements(doc, entity, cue='be', ignore_entity_case=True,
             return False
         return True
 
-    statements = []
     for sent in doc.sents:
         for tok in sent:
 
@@ -646,9 +650,7 @@ def semistructured_statements(doc, entity, cue='be', ignore_entity_case=True,
                 min_frag_i += 1
             the_fragment = doc[min_frag_i: max_frag_i + 1]
 
-            statements.append((the_entity, the_cue, the_fragment))
-
-    return statements
+            yield (the_entity, the_cue, the_fragment)
 
 
 def direct_quotations(doc):
@@ -659,20 +661,16 @@ def direct_quotations(doc):
     Args:
         doc (``spacy.Doc``)
 
-    Returns:
-        list[(:class:`spacy.Span`,
-              :class:`spacy.Token`,
-              :class:`spacy.Span`)]:
-              where each element is a (speaker, reporting verb, quotation) 3-tuple
+    Yields:
+        (``spacy.Span``, ``spacy.Token``, ``spacy.Span``): next quotation in ``doc``
+            represented as a (speaker, reporting verb, quotation) 3-tuple
 
     Notes:
         Loosely inspired by Krestel, Bergler, Witte. "Minding the Source: Automatic
         Tagging of Reported Speech in Newspaper Articles".
 
     TODO: Better approach would use ML, but needs a training dataset.
-    TODO: why are "''" pairs giving problems -- is it just Friedman?!
     """
-    quotations = []
     quote_end_punct = {',', '.', '?', '!'}
     quote_indexes = set(itertoolz.concat(
         (m.start(), m.end() - 1) for m in re.finditer(r"(\".*?\")|(''.*?'')|(``.*?'')", doc.string)))
@@ -739,7 +737,5 @@ def direct_quotations(doc):
             span = get_span_for_compound_noun(rv_subj)
             speaker = doc[span[0]: span[1] + 1]
 
-            quotations.append((speaker, rv, quote))
+            yield (speaker, rv, quote)
             break
-
-    return quotations

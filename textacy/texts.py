@@ -192,16 +192,16 @@ class TextDoc(object):
         """
         return extract.named_entities(self.spacy_doc, **kwargs)
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'noun_phrases'))
-    def noun_phrases(self, **kwargs):
+    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'noun_chunks'))
+    def noun_chunks(self, **kwargs):
         """
         Extract an ordered list of noun phrases from doc, optionally
         filtering by frequency and dropping leading determiners.
 
-        See :func:`extract.noun_phrases() <textacy.extract.noun_phrases>`
+        See :func:`extract.noun_chunks() <textacy.extract.noun_chunks>`
         for all function kwargs.
         """
-        return extract.noun_phrases(self.spacy_doc, **kwargs)
+        return extract.noun_chunks(self.spacy_doc, **kwargs)
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'pos_regex_matches'))
     def pos_regex_matches(self, pattern):
@@ -337,7 +337,7 @@ class TextDoc(object):
                 get_id(ne) for ne in self.named_entities())
         if include_nps is True:
             self._term_counts = self._term_counts | Counter(
-                get_id(np) for np in self.noun_phrases())
+                get_id(np) for np in self.noun_chunks())
         if include_kts is True:
             # HACK: key terms are currently returned as strings
             # TODO: cache key terms, and return them as spacy spans
