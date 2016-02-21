@@ -4,6 +4,9 @@ from __future__ import absolute_import, unicode_literals
 import re
 import unittest
 
+import numpy as np
+from spacy import attrs
+
 from textacy import data, extract, preprocess, regexes_etc
 
 
@@ -13,50 +16,57 @@ class ExtractTestCase(unittest.TestCase):
         self.maxDiff = None
         spacy_pipeline = data.load_spacy_pipeline(lang='en')
         text = """
-            The hedge fund magnates Daniel S. Loeb, Louis Moore Bacon and Steven A. Cohen have much in common. They have managed billions of dollars in capital, earning vast fortunes. They have invested millions in art — and millions more in political candidates.
-            Moreover, each has exploited an esoteric tax loophole that saved them millions in taxes. The trick? Route the money to Bermuda and back.
-            With inequality at its highest levels in nearly a century and public debate rising over whether the government should respond to it through higher taxes on the wealthy, the very richest Americans have financed a sophisticated and astonishingly effective apparatus for shielding their fortunes. Some call it the "income defense industry," consisting of a high-priced phalanx of lawyers, estate planners, lobbyists and anti-tax activists who exploit and defend a dizzying array of tax maneuvers, virtually none of them available to taxpayers of more modest means.
-            In recent years, this apparatus has become one of the most powerful avenues of influence for wealthy Americans of all political stripes, including Mr. Loeb and Mr. Cohen, who give heavily to Republicans, and the liberal billionaire George Soros, who has called for higher levies on the rich while at the same time using tax loopholes to bolster his own fortune.
-            All are among a small group providing much of the early cash for the 2016 presidential campaign.
-            Operating largely out of public view — in tax court, through arcane legislative provisions, and in private negotiations with the Internal Revenue Service — the wealthy have used their influence to steadily whittle away at the government's ability to tax them. The effect has been to create a kind of private tax system, catering to only several thousand Americans.
-            The impact on their own fortunes has been stark. Two decades ago, when Bill Clinton was elected president, the 400 highest-earning taxpayers in America paid nearly 27 percent of their income in federal taxes, according to I.R.S. data. By 2012, when President Obama was re-elected, that figure had fallen to less than 17 percent, which is just slightly more than the typical family making $100,000 annually, when payroll taxes are included for both groups.
-            The ultra-wealthy "literally pay millions of dollars for these services," said Jeffrey A. Winters, a political scientist at Northwestern University who studies economic elites, "and save in the tens or hundreds of millions in taxes."
-            Some of the biggest current tax battles are being waged by some of the most generous supporters of 2016 candidates. They include the families of the hedge fund investors Robert Mercer, who gives to Republicans, and James Simons, who gives to Democrats; as well as the options trader Jeffrey Yass, a libertarian-leaning donor to Republicans.
-            Mr. Yass's firm is litigating what the agency deemed to be tens of millions of dollars in underpaid taxes. Renaissance Technologies, the hedge fund Mr. Simons founded and which Mr. Mercer helps run, is currently under review by the I.R.S. over a loophole that saved their fund an estimated $6.8 billion in taxes over roughly a decade, according to a Senate investigation. Some of these same families have also contributed hundreds of thousands of dollars to conservative groups that have attacked virtually any effort to raises taxes on the wealthy.
-            In the heat of the presidential race, the influence of wealthy donors is being tested. At stake are the Obama administration's limited 2013 tax increase on high earners — the first in two decades — and an I.R.S. initiative to ensure that, in effect, the higher rate sticks by cracking down on tax avoidance by the wealthy.
-            While Democrats like Bernie Sanders and Hillary Clinton have pledged to raise taxes on these voters, virtually every Republican has advanced policies that would vastly reduce their tax bills, sometimes to as little as 10 percent of their income.
-            At the same time, most Republican candidates favor eliminating the inheritance tax, a move that would allow the new rich, and the old, to bequeath their fortunes intact, solidifying the wealth gap far into the future. And several have proposed a substantial reduction — or even elimination — in the already deeply discounted tax rates on investment gains, a foundation of the most lucrative tax strategies.
-            "There's this notion that the wealthy use their money to buy politicians; more accurately, it's that they can buy policy, and specifically, tax policy," said Jared Bernstein, a senior fellow at the left-leaning Center on Budget and Policy Priorities who served as chief economic adviser to Vice President Joseph R. Biden Jr. "That's why these egregious loopholes exist, and why it's so hard to close them."
+            Two weeks ago, I was in Kuwait participating in an I.M.F. seminar for Arab educators. For 30 minutes, we discussed the impact of technology trends on education in the Middle East. And then an Egyptian education official raised his hand and asked if he could ask me a personal question: "I heard Donald Trump say we need to close mosques in the United States," he said with great sorrow. "Is that what we want our kids to learn?"
             """
-        # self.spacy_doc = spacy_pipeline(preprocess.normalize_whitespace(text))
-        self.spacy_doc = spacy_pipeline(re.sub(r'\s+', ' ', text))
+        self.spacy_doc = spacy_pipeline(text.strip())
+        cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
+        values = np.array(
+            [[425, 1, 1499956], [443, 1, 392], [447, 3, 365], [416, 2, 407], [445, 1, 393],
+            [455, 0, 53503], [432, -1, 405], [441, -1, 401], [456, -3, 364], [432, -1, 405],
+            [426, 2, 379], [441, 1, 9480], [440, -3, 401], [432, -1, 405], [433, 1, 367],
+            [443, -2, 401], [419, -11, 407], [432, 5, 405], [425, 1, 1499956], [443, -2, 401],
+            [416, 2, 407], [445, 1, 393], [455, 0, 53503], [426, 1, 379], [440, -2, 380],
+            [432, -1, 405], [440, 1, 9480], [443, -2, 401], [432, -4, 405], [440, -1, 401],
+            [432, -1, 405], [426, 2, 379], [441, 1, 9480], [441, -3, 401], [419, -12, 407],
+            [424, 6, 372], [447, 5, 365], [426, 3, 379], [433, 2, 367], [440, 1, 9480],
+            [440, 1, 393], [455, 0, 53503], [446, 1, 402], [440, -2, 380], [424, -3, 372],
+            [455, -4, 375], [432, 3, 387], [445, 2, 393], [437, 1, 370], [454, -4, 373],
+            [445, -1, 93813], [426, 2, 379], [433, 1, 367], [440, -4, 380], [420, -1, 407],
+            [465, 2, 407], [445, 1, 393], [455, -4, 63716], [441, 1, 9480], [441, 1, 393],
+            [458, -3, 373], [445, 1, 393], [458, -2, 373], [452, 1, 370], [454, -2, 411],
+            [443, -1, 380], [432, -2, 405], [426, 2, 379], [441, 1, 9480], [441, -3, 401],
+            [416, 3, 407], [415, 2, 407], [445, 1, 393], [455, 0, 53503], [432, -1, 405],
+            [433, 1, 367], [440, -2, 401], [419, -4, 407], [465, 0, 53503], [459, 0, 53503],
+            [426, -1, 393], [461, 2, 380], [445, 1, 393], [458, -3, 373], [446, 1, 402],
+            [443, 2, 393], [452, 1, 370], [454, -4, 373], [419, -9, 407], [415, -10, 407],
+            [415, -11, 407]], dtype='int32')
+        self.spacy_doc.from_array(cols, values)
 
     def test_words(self):
         expected = [
-            'The', 'hedge', 'fund', 'magnates', 'Daniel', 'S.', 'Loeb', ',',
-            'Louis', 'Moore', 'Bacon', 'and', 'Steven', 'A.', 'Cohen', 'have',
-            'much', 'in', 'common', '.', 'They', 'have', 'managed', 'billions',
-            'of']
+            'Two', 'weeks', 'ago', ',', 'I', 'was', 'in', 'Kuwait', 'participating',
+            'in', 'an', 'I.M.F.', 'seminar', 'for', 'Arab', 'educators', '.', 'For',
+            '30', 'minutes', ',', 'we', 'discussed', 'the', 'impact']
         observed = [tok.orth_ for tok in extract.words(
             self.spacy_doc, filter_stops=False, filter_punct=False, filter_nums=False)][:25]
         self.assertEqual(observed, expected)
 
     def test_words_filter(self):
         expected = [
-            'hedge', 'fund', 'magnates', 'Daniel', 'S.', 'Loeb', 'Louis',
-            'Moore', 'Bacon', 'Steven', 'A.', 'Cohen', 'common', 'managed',
-            'billions', 'dollars', 'capital', 'earning', 'vast', 'fortunes',
-            'invested', 'millions', 'art', 'millions', 'political']
+            'weeks', 'ago', 'Kuwait', 'participating', 'I.M.F.', 'seminar', 'Arab',
+            'educators', 'minutes', 'discussed', 'impact', 'technology', 'trends',
+            'education', 'Middle', 'East', 'Egyptian', 'education', 'official',
+            'raised', 'hand', 'asked', 'ask', 'personal', 'question']
         observed = [tok.orth_ for tok in extract.words(
             self.spacy_doc, filter_stops=True, filter_punct=True, filter_nums=True)][:25]
         self.assertEqual(observed, expected)
 
     def test_words_good_tags(self):
         expected = [
-            'hedge', 'fund', 'Daniel', 'S.', 'Loeb', 'Louis', 'Moore', 'Bacon',
-            'Steven', 'A.', 'Cohen', 'They', 'billions', 'dollars', 'capital',
-            'fortunes', 'They', 'millions', 'art', 'millions', 'candidates',
-            'tax', 'loophole', 'them', 'millions']
+            'weeks', 'I', 'Kuwait', 'I.M.F.', 'seminar', 'educators', 'minutes',
+            'we', 'impact', 'technology', 'trends', 'education', 'Middle', 'East',
+            'education', 'official', 'hand', 'he', 'me', 'question', 'I', 'Donald',
+            'Trump', 'we', 'mosques']
         observed = [tok.orth_ for tok in extract.words(
             self.spacy_doc, filter_stops=False, filter_punct=False, filter_nums=False,
             good_pos_tags={'NOUN'})][:25]
@@ -64,12 +74,12 @@ class ExtractTestCase(unittest.TestCase):
 
     def test_words_min_freq(self):
         expected = [
-            'The', 'hedge', 'fund', ',', 'and', 'have', 'in', '.', 'They',
-            'have', 'of', 'dollars', 'in', ',', 'fortunes', '.', 'They', 'have',
-            'millions', 'in', '—', 'and', 'millions', 'more', 'in']
+            ',', 'I', 'was', 'in', 'in', 'an', 'for', '.', 'For', ',', 'we', 'the',
+            'education', 'in', 'the', '.', 'And', 'an', 'education', 'and', 'asked',
+            'he', 'ask', '"', 'I']
         observed = [tok.orth_ for tok in extract.words(
             self.spacy_doc, filter_stops=False, filter_punct=False, filter_nums=False,
-            min_freq=3)][:25]
+            min_freq=2)][:25]
         self.assertEqual(observed, expected)
 
     def test_ngrams_less_than_1(self):
@@ -78,156 +88,131 @@ class ExtractTestCase(unittest.TestCase):
 
     def test_ngrams_1(self):
         expected = [
-            'The', 'hedge', 'fund', 'magnates', 'Daniel', 'S.', 'Loeb', ',',
-            'Louis', 'Moore', 'Bacon', 'and', 'Steven', 'A.', 'Cohen', 'have',
-            'much', 'in', 'common', '.', 'They', 'have', 'managed', 'billions', 'of']
+            'Two', 'weeks', 'ago', ',', 'I', 'was', 'in', 'Kuwait', 'participating',
+            'in', 'an', 'I.M.F.', 'seminar', 'for', 'Arab', 'educators', '.', 'For',
+            '30', 'minutes', ',', 'we', 'discussed', 'the', 'impact']
         observed = [span.orth_ for span in extract.ngrams(
             self.spacy_doc, 1, filter_stops=False, filter_punct=False, filter_nums=False)][:25]
         self.assertEqual(observed, expected)
 
     def test_ngrams_2(self):
         expected = [
-            'The hedge', 'hedge fund', 'fund magnates', 'magnates Daniel', 'Daniel S.',
-            'S. Loeb', 'Loeb,', ', Louis', 'Louis Moore', 'Moore Bacon', 'Bacon and',
-            'and Steven', 'Steven A.', 'A. Cohen', 'Cohen have', 'have much', 'much in',
-            'in common', 'common.', '. They', 'They have', 'have managed',
-            'managed billions', 'billions of', 'of dollars']
+            'Two weeks', 'weeks ago', 'ago,', ', I', 'I was', 'was in', 'in Kuwait',
+            'Kuwait participating', 'participating in', 'in an', 'an I.M.F.', 'I.M.F. seminar',
+            'seminar for', 'for Arab', 'Arab educators', 'educators.', '. For', 'For 30',
+            '30 minutes', 'minutes,', ', we', 'we discussed', 'discussed the', 'the impact',
+            'impact of']
         observed = [span.orth_ for span in extract.ngrams(
             self.spacy_doc, 2, filter_stops=False, filter_punct=False, filter_nums=False)][:25]
         self.assertEqual(observed, expected)
 
     def test_ngrams_filter(self):
         expected = [
-            'hedge fund', 'fund magnates', 'magnates Daniel', 'Daniel S.', 'S. Loeb',
-            'Louis Moore', 'Moore Bacon', 'Steven A.', 'A. Cohen', 'managed billions',
-            'earning vast', 'vast fortunes', 'invested millions', 'political candidates',
-            'esoteric tax', 'tax loophole', 'highest levels', 'public debate',
-            'debate rising', 'higher taxes', 'richest Americans', 'astonishingly effective',
-            'effective apparatus', 'income defense', 'defense industry']
+            'weeks ago', 'Kuwait participating', 'I.M.F. seminar', 'Arab educators',
+            'technology trends', 'Middle East', 'Egyptian education', 'education official',
+            'official raised', 'personal question', 'heard Donald', 'Donald Trump',
+            'close mosques', 'United States', 'great sorrow']
         observed = [span.orth_ for span in extract.ngrams(
-            self.spacy_doc, 2, filter_stops=True, filter_punct=True, filter_nums=True)][:25]
+            self.spacy_doc, 2, filter_stops=True, filter_punct=True, filter_nums=True)]
         self.assertEqual(observed, expected)
 
     def test_ngrams_min_freq(self):
-        expected = [
-            'The hedge', 'hedge fund', '. They', 'of dollars', 'fortunes.', '. They',
-            'millions in', 'millions in', 'in taxes', 'taxes.', '. The', 'taxes on',
-            'on the', 'the wealthy', ', the', 'fortunes.', ',"', 'of the', 'the most',
-            ', who', 'who give', 'to Republicans', ', and', ', who', 'on the']
+        expected = ['in the', 'in the']
         observed = [span.orth_ for span in extract.ngrams(
             self.spacy_doc, 2, filter_stops=False, filter_punct=False, filter_nums=False,
-            min_freq=3)][:25]
+            min_freq=2)]
         self.assertEqual(observed, expected)
 
     def test_ngrams_good_tag(self):
         expected = [
-            'hedge fund', 'Daniel S.', 'S. Loeb', 'Louis Moore', 'Moore Bacon',
-            'Steven A.', 'A. Cohen', 'tax loophole', 'them millions', 'income defense',
-            'defense industry', 'estate planners', 'tax activists', 'activists who',
-            'tax maneuvers', 'Mr. Loeb', 'Mr. Cohen', 'billionaire George', 'George Soros',
-            'tax loopholes', 'tax court', 'Internal Revenue', 'Revenue Service',
-            'tax system', 'Bill Clinton']
+            'I.M.F. seminar', 'technology trends', 'Middle East', 'education official',
+            'Donald Trump', 'United States', 'what we']
         observed = [span.orth_ for span in extract.ngrams(
             self.spacy_doc, 2, filter_stops=False, filter_punct=False, filter_nums=False,
-            good_pos_tags={'NOUN'})][:25]
+            good_pos_tags={'NOUN'})]
         self.assertEqual(observed, expected)
 
     def test_named_entities(self):
         expected = [
-            'Daniel S. Loeb', 'Louis Moore Bacon', 'Steven A. Cohen', 'billions of dollars',
-            'millions', 'millions', 'millions', 'Bermuda', 'nearly a century', 'Americans',
-            'recent years', 'Americans', 'Loeb', 'Cohen', 'Republicans', 'George Soros',
-            '2016', 'Internal Revenue Service', 'several thousand', 'Americans',
-            'Two decades ago', 'Bill Clinton', '400', 'America', 'nearly 27 percent']
+            'Two weeks ago', 'Kuwait', 'Arab', '30 minutes', 'Middle East', 'Egyptian',
+            'Donald Trump', 'United States']
         observed = [ent.text for ent in extract.named_entities(
-            self.spacy_doc, drop_determiners=True)][:25]
+            self.spacy_doc, drop_determiners=True)]
         self.assertEqual(observed, expected)
 
     def test_named_entities_good(self):
-        expected = [
-            'Daniel S. Loeb', 'Louis Moore Bacon', 'Steven A. Cohen', 'Loeb', 'Cohen',
-            'George Soros', 'Bill Clinton', 'Obama', 'Jeffrey A. Winters', 'Robert Mercer',
-            'James Simons', 'Jeffrey Yass', 'Yass', 'Simons', 'Mercer', 'Hillary Clinton',
-            'Jared Bernstein', 'Joseph R. Biden Jr.']
+        expected = ['Kuwait', 'Donald Trump', 'United States']
         observed = [ent.text for ent in extract.named_entities(
-            self.spacy_doc, good_ne_types={'PERSON'}, drop_determiners=True)][:25]
+            self.spacy_doc, good_ne_types={'PERSON', 'GPE'}, drop_determiners=True)]
         self.assertEqual(observed, expected)
 
     def test_named_entities_min_freq(self):
-        expected = [
-            'millions', 'millions', 'millions', 'Americans', 'Americans', 'Republicans',
-            '2016', 'Americans', 'Obama', '2016', 'Republicans', 'Democrats', 'Republicans',
-            'Obama', 'Democrats', 'Republican', 'Republican']
+        expected = []
         observed = [ent.text for ent in extract.named_entities(
             self.spacy_doc, drop_determiners=True, min_freq=2)]
         self.assertEqual(observed, expected)
 
     def test_named_entities_determiner(self):
-        expected = ['the Internal Revenue Service', 'an estimated $6.8 billion']
+        expected = ['the Middle East', 'the United States']
         observed = [ent.text for ent in extract.named_entities(
             self.spacy_doc, drop_determiners=False) if ent[0].pos_ == 'DET']
         self.assertEqual(observed, expected)
 
     def test_noun_chunks(self):
         expected = [
-            'hedge fund', 'Daniel S. Loeb', 'Steven A. Cohen', 'They', 'billions',
-            'dollars', 'capital', 'vast fortunes', 'They', 'millions', 'art', 'millions',
-            'political candidates', 'esoteric tax loophole', 'them', 'millions', 'taxes',
-            'money', 'Bermuda', 'inequality', 'its highest levels', 'nearly a century',
-            'public debate', 'government', 'it']
+            'I', 'Kuwait', 'I.M.F. seminar', 'Arab educators', '30 minutes', 'we',
+            'impact', 'technology trends', 'education', 'Middle East', 'Egyptian education official',
+            'his hand', 'he', 'personal question', 'I', 'Donald Trump', 'we', 'mosques',
+            'United States', 'he', 'great sorrow', 'what', 'we', 'our kids']
         observed = [nc.text for nc in extract.noun_chunks(
-            self.spacy_doc, drop_determiners=True)][:25]
+            self.spacy_doc, drop_determiners=True)]
         self.assertEqual(observed, expected)
 
     def test_noun_chunks_determiner(self):
         expected = [
-            'The hedge fund', 'Daniel S. Loeb', 'Steven A. Cohen', 'They', 'billions',
-            'dollars', 'capital', 'vast fortunes', 'They', 'millions', 'art', 'millions',
-            'political candidates', 'an esoteric tax loophole', 'them', 'millions',
-            'taxes', 'the money', 'Bermuda', 'inequality', 'its highest levels',
-            'nearly a century', 'public debate', 'the government', 'it']
+            'I', 'Kuwait', 'an I.M.F. seminar', 'Arab educators', '30 minutes', 'we',
+            'the impact', 'technology trends', 'education', 'the Middle East',
+            'an Egyptian education official', 'his hand', 'he', 'a personal question',
+            'I', 'Donald Trump', 'we', 'mosques', 'the United States', 'he', 'great sorrow',
+            'what', 'we', 'our kids']
         observed = [nc.text for nc in extract.noun_chunks(
-            self.spacy_doc, drop_determiners=False)][:25]
+            self.spacy_doc, drop_determiners=False)]
         self.assertEqual(observed, expected)
 
     def test_noun_chunks_min_freq(self):
-        expected = [
-            'hedge fund', 'They', 'dollars', 'They', 'millions', 'millions', 'them',
-            'millions', 'taxes', 'it', 'their fortunes', 'it', 'who', 'them', 'influence',
-            'who', 'Republicans', 'who', 'same time', 'them', 'effect', 'their income',
-            'millions', 'dollars', 'who']
+        expected = ['I', 'we', 'he', 'I', 'we', 'he', 'we']
         observed = [nc.text for nc in extract.noun_chunks(
-            self.spacy_doc, drop_determiners=True, min_freq=2)][:25]
+            self.spacy_doc, drop_determiners=True, min_freq=2)]
         self.assertEqual(observed, expected)
 
     def test_pos_regex_matches(self):
         expected = [
-            'The hedge fund', 'Daniel S. Loeb', 'Louis Moore Bacon', 'Steven A. Cohen',
-            'common. They', 'billions', 'dollars', 'capital', 'vast fortunes', 'They',
-            'millions', 'art', 'millions', 'political candidates', 'an esoteric tax loophole',
-            'them millions', 'taxes', 'The trick', 'Route', 'the money', 'Bermuda',
-            'inequality', 'its highest levels', 'a century', 'public debate']
+            'Two weeks', 'I', 'Kuwait', 'an I.M.F. seminar', 'Arab educators', '30 minutes',
+            'we', 'the impact', 'technology trends', 'education', 'the Middle East',
+            'an Egyptian education official', 'his hand', 'he', 'me', 'a personal question',
+            'I', 'Donald Trump', 'we', 'mosques', 'the United States', 'he', 'great sorrow',
+            'that what we', 'our kids to']
         observed = [span.text for span in extract.pos_regex_matches(
-            self.spacy_doc, regexes_etc.POS_REGEX_PATTERNS['en']['NP'])][:25]
+            self.spacy_doc, regexes_etc.POS_REGEX_PATTERNS['en']['NP'])]
         self.assertEqual(observed, expected)
 
     def test_subject_verb_object_triples(self):
         expected = [
-            'They, have managed, billions', 'They, have invested, millions',
-            'each, has exploited, tax loophole', 'that, saved, them', 'that, saved, millions',
-            'Americans, have financed, apparatus', 'Some, call, it', 'Some, call, income defense industry',
-            'Some, call, consisting', 'apparatus, has become, one', 'who, give, to',
-            'wealthy, have used, influence', 'wealthy, have used, whittle',
-            'Bill Clinton, was elected, president', 'taxpayers, paid, percent',
-            'family, making, 100,000', 'wealthy, pay, millions', 'who, studies, elites',
-            'They, include, families', 'who, gives, to', 'who, gives, to',
-            'agency, deemed, to be', 'that, saved, fund', 'that, saved, billion',
-            'Some, contributed, thousands']
+            'we, discussed, impact', 'education official, raised, hand', 'he, could ask, me',
+            'he, could ask, question', 'we, need, to close']
         observed = [', '.join(item.text for item in triple) for triple in
-                    extract.subject_verb_object_triples(self.spacy_doc)][:25]
+                    extract.subject_verb_object_triples(self.spacy_doc)]
         self.assertEqual(observed, expected)
 
     def test_acronyms_and_definitions(self):
-        expected = {'I.R.S.': ''}
+        expected = {'I.M.F.': ''}
         observed = extract.acronyms_and_definitions(self.spacy_doc)
+        self.assertEqual(observed, expected)
+
+    def test_direct_quotations(self):
+        expected = [
+            'he, said, "I heard Donald Trump say we need to close mosques in the United States,"',
+            'he, said, "Is that what we want our kids to learn?"']
+        observed = [', '.join(item.text for item in triple) for triple in
+                    extract.direct_quotations(self.spacy_doc)]
         self.assertEqual(observed, expected)

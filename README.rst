@@ -179,7 +179,6 @@ Unofficial Roadmap
 TODO
 ----
 
-- extract: return generators rather than lists?
 - texts: figure out what to do when documents are modified in-place (`doc.merge`)
 - texts: ^ related: when docs modified, erase cached_property attributes so they'll be re-caclulated
 - texts: have textdocs inherit `_term_doc_freqs` from textcorpus?
