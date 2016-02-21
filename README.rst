@@ -179,8 +179,6 @@ Unofficial Roadmap
 TODO
 ----
 
-- texts: figure out what to do when documents are modified in-place (`doc.merge`)
-- texts: ^ related: when docs modified, erase cached_property attributes so they'll be re-caclulated
 - texts: have textdocs inherit `_term_doc_freqs` from textcorpus?
 - texts: add `doc_to_bag_of_terms()` func to transform?
 - transform: condense csc matrix by mapping stringstore term ints to incremented vals, starting at 0

@@ -14,9 +14,12 @@ from functools import partial
 from operator import attrgetter
 from spacy.tokens.token import Token as spacy_token
 from spacy.tokens.span import Span as spacy_span
+from threading import RLock
 
 from textacy import (data, extract, spacy_utils, text_stats, text_utils,
                      transform, keyterms)
+
+LOCK = RLock()
 
 
 class TextDoc(object):
@@ -50,7 +53,7 @@ class TextDoc(object):
         self.spacy_stringstore = self.spacy_vocab.strings
         self.spacy_doc = self.spacy_pipeline(text)
         self._term_counts = Counter()
-        self._cache = LRUCache(max_cachesize)
+        self._cache = LRUCache(maxsize=max_cachesize)
 
     def __repr__(self):
         return 'TextDoc({} tokens: {})'.format(
@@ -77,6 +80,20 @@ class TextDoc(object):
         """Yield the document's sentences as segmented by spacy."""
         for sent in self.spacy_doc.sents:
             yield sent
+
+    def merge(self, spans):
+        """
+        Merge spans *in-place* within doc so that each takes up a single token.
+        Note: All cached methods on this doc will be cleared.
+
+        Args:
+            spans (iterable(``spacy.Span``)): for example, the results from
+                :func:`extract.named_entities() <textacy.extract.named_entities>`
+                or :func:`extract.pos_regex_matches() <textacy.extract.pos_regex_matches>`
+        """
+        with LOCK:
+            self._cache.clear()
+        spacy_utils.merge_spans(spans)
 
     ###############
     # DOC AS TEXT #
@@ -162,9 +179,9 @@ class TextDoc(object):
         Extract an ordered list of words from a spacy-parsed doc, optionally
         filtering words by part-of-speech (etc.) and frequency.
 
-        See :func:`extract.words() <textacy.extract.words>` for all function kwargs.
+        .. seealso:: :func:`extract.words() <textacy.extract.words>` for all function kwargs.
         """
-        return extract.words(self.spacy_doc, **kwargs)
+        return list(extract.words(self.spacy_doc, **kwargs))
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'ngrams'))
     def ngrams(self, n, **kwargs):
@@ -177,9 +194,9 @@ class TextDoc(object):
             n (int): number of tokens to include in n-grams;
                 1 => unigrams, 2 => bigrams
 
-        See :func:`extract.ngrams() <textacy.extract.ngrams>` for all function kwargs.
+        .. seealso:: :func:`extract.ngrams() <textacy.extract.ngrams>` for all function kwargs.
         """
-        return extract.ngrams(self.spacy_doc, n, **kwargs)
+        return list(extract.ngrams(self.spacy_doc, n, **kwargs))
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'named_entities'))
     def named_entities(self, **kwargs):
@@ -187,10 +204,10 @@ class TextDoc(object):
         Extract an ordered list of named entities (PERSON, ORG, LOC, etc.) from
         doc, optionally filtering by the entity types and frequencies.
 
-        See :func:`extract.named_entities() <textacy.extract.named_entities>`
+        .. seealso:: :func:`extract.named_entities() <textacy.extract.named_entities>`
         for all function kwargs.
         """
-        return extract.named_entities(self.spacy_doc, **kwargs)
+        return list(extract.named_entities(self.spacy_doc, **kwargs))
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'noun_chunks'))
     def noun_chunks(self, **kwargs):
@@ -198,10 +215,10 @@ class TextDoc(object):
         Extract an ordered list of noun phrases from doc, optionally
         filtering by frequency and dropping leading determiners.
 
-        See :func:`extract.noun_chunks() <textacy.extract.noun_chunks>`
+        .. seealso:: :func:`extract.noun_chunks() <textacy.extract.noun_chunks>`
         for all function kwargs.
         """
-        return extract.noun_chunks(self.spacy_doc, **kwargs)
+        return list(extract.noun_chunks(self.spacy_doc, **kwargs))
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'pos_regex_matches'))
     def pos_regex_matches(self, pattern):
@@ -224,7 +241,7 @@ class TextDoc(object):
                 * verb phrase: r'<VERB>?<ADV>*<VERB>+'
                 * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
         """
-        return extract.pos_regex_matches(self.spacy_doc, pattern)
+        return list(extract.pos_regex_matches(self.spacy_doc, pattern))
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'subject_verb_object_triples'))
     def subject_verb_object_triples(self):
@@ -232,7 +249,7 @@ class TextDoc(object):
         Extract an *un*ordered list of distinct subject-verb-object (SVO) triples
         from doc.
         """
-        return extract.subject_verb_object_triples(self.spacy_doc)
+        return list(extract.subject_verb_object_triples(self.spacy_doc))
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'acronyms_and_definitions'))
     def acronyms_and_definitions(self, **kwargs):
@@ -241,7 +258,7 @@ class TextDoc(object):
         if available, from doc. If multiple definitions are found for a given acronym,
         only the most frequently occurring definition is returned.
 
-        See :func:`extract.acronyms_and_definitions() <textacy.extract.acronyms_and_definitions>`
+        .. seealso:: :func:`extract.acronyms_and_definitions() <textacy.extract.acronyms_and_definitions>`
         for all function kwargs.
         """
         return extract.acronyms_and_definitions(self.spacy_doc, **kwargs)
@@ -256,11 +273,11 @@ class TextDoc(object):
             entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
                 "global warming", "Python")
 
-        See :func:`extract.semistructured_statements() <textacy.extract.semistructured_statements>`
+        .. seealso:: :func:`extract.semistructured_statements() <textacy.extract.semistructured_statements>`
         for all function kwargs.
         """
-        return extract.semistructured_statements(
-            self.spacy_doc, entity, **kwargs)
+        return list(extract.semistructured_statements(
+            self.spacy_doc, entity, **kwargs))
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'direct_quotations'))
     def direct_quotations(self):
@@ -268,7 +285,7 @@ class TextDoc(object):
         Baseline, not-great attempt at direction quotation extraction (no indirect
         or mixed quotations) using rules and patterns. English only.
         """
-        return extract.direct_quotations(self.spacy_doc)
+        return list(extract.direct_quotations(self.spacy_doc))
 
     @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'key_terms'))
     def key_terms(self, algorithm='sgrank', n=10):
