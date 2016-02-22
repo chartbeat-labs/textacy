@@ -54,3 +54,6 @@ Other Stuff!
 
 .. automodule:: textacy.export
     :members:
+
+.. automodule:: textacy.corpora.wikipedia
+    :members:
