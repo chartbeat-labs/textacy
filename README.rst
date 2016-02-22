@@ -168,14 +168,14 @@ Authors
 Unofficial Roadmap
 ------------------
 
-[x] import/export for common formats
-[ ] serialization and streaming to/from disk
-[ ] topic modeling via ``gensim`` and/or ``sklearn``
-[ ] distributional representations (word2vec etc.) via either ``gensim`` or ``spacy``
-[ ] document similarity/clustering (?)
-[ ] basic dictionary-based methods e.g. sentiment analysis (?)
-[ ] text classification
-[ ] media frames analysis
+- [x] import/export for common formats
+- [ ] serialization and streaming to/from disk
+- [ ] topic modeling via ``gensim`` and/or ``sklearn``
+- [ ] distributional representations (word2vec etc.) via either ``gensim`` or ``spacy``
+- [ ] document similarity/clustering (?)
+- [ ] basic dictionary-based methods e.g. sentiment analysis (?)
+- [ ] text classification
+- [ ] media frames analysis
 
 
 TODO
