@@ -1,6 +1,13 @@
 Changelog
 =========
 
+Latest
+------
+
+Changes:
+
+- Added ``corpora`` subpackage with ``wikipedia.py`` module; functions for streaming pages from a Wikipedia db dump as plain text or structured data
+
 0.1.3 (2016-02-22)
 ------------------
 
