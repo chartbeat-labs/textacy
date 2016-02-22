@@ -4,12 +4,16 @@ Set of small utility functions that take Spacy objects as input.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from itertools import takewhile
+import logging
 from spacy.parts_of_speech import NOUN, VERB
 from spacy.tokens.token import Token as spacy_token
 from spacy.tokens.span import Span as spacy_span
 
 from textacy.text_utils import is_acronym
 from textacy.regexes_etc import AUX_DEPS, SUBJ_DEPS, OBJ_DEPS
+
+
+logger = logging.getLogger(__name__)
 
 
 def is_plural_noun(token):
@@ -98,7 +102,10 @@ def merge_spans(spans):
         spans (iterable(``spacy.Span``))
     """
     for span in spans:
-        span.merge(span.root.tag_, span.text, span.root.ent_type_)
+        try:
+            span.merge(span.root.tag_, span.text, span.root.ent_type_)
+        except IndexError as e:
+            logger.error(e)
 
 
 def get_main_verbs_of_sent(sent):
