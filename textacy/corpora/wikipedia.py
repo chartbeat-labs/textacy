@@ -9,7 +9,18 @@ from gensim.corpora.dictionary import Dictionary
 from gensim.corpora.wikicorpus import extract_pages, filter_wiki, WikiCorpus
 
 
-def get_wiki_pages_plaintext(fname, min_len=100, max_n_pages=None):
+def _iterate_over_pages(fname):
+    """
+    Iterate over the pages in a Wikipedia articles database dump (*articles.xml.bz2),
+    yielding one (page id, title, page content) 3-tuple at a time.
+    """
+    dictionary = Dictionary()
+    wiki = WikiCorpus(fname, lemmatize=False, dictionary=dictionary)
+    for title, content, page_id in extract_pages(bz2.BZ2File(wiki.fname), wiki.filter_namespaces):
+        yield (page_id, title, content)
+
+
+def get_pages_plaintext(fname, min_len=100, max_n_pages=None):
     """
     Iterate over the pages in a Wikipedia articles database dump (*articles.xml.bz2),
     yielding one (page id, title, plaintext) 3-tuple at a time.
@@ -31,19 +42,16 @@ def get_wiki_pages_plaintext(fname, min_len=100, max_n_pages=None):
     cruft_re = re.compile(r'\n\* ?')
 
     n_pages = 0
-    dictionary = Dictionary()
-    wiki = WikiCorpus(fname, lemmatize=False, dictionary=dictionary)
-
-    for title, text, page_id in extract_pages(bz2.BZ2File(wiki.fname), wiki.filter_namespaces):
-        proc_text = cruft_re.sub(
+    for page_id, title, content in _iterate_over_pages(fname):
+        plaintext = cruft_re.sub(
             r'', newline_re.sub(
                 r'\n', header_re.sub(
                     r'\1', quotation_re.sub(
-                        r'', filter_wiki(text)))))
-        if len(proc_text) < min_len:
+                        r'', filter_wiki(content)))))
+        if len(plaintext) < min_len:
             continue
         n_pages += 1
         if max_n_pages is not None and n_pages > max_n_pages:
             break
 
-        yield (page_id, title, proc_text)
+        yield (page_id, title, plaintext)
