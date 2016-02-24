@@ -5,12 +5,10 @@ import bz2
 from functools import partial
 import gzip
 import io
-import logging
 import os
 
 import ijson
 
-logger = logging.getLogger(__name__)
 
 JSON_DECODER = JSONDecoder()
 

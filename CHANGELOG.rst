@@ -7,6 +7,7 @@ Latest
 Changes:
 
 - Added ``corpora`` subpackage with ``wikipedia.py`` module; functions for streaming pages from a Wikipedia db dump as plain text or structured data
+- Added ``fileio.py`` module with functions for reading content from disk in common formats, including a variety of JSON formats and (compressed) text
 
 0.1.3 (2016-02-22)
 ------------------
