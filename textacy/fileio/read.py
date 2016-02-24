@@ -9,6 +9,7 @@ import json
 import os
 
 import ijson
+from spacy.tokens.doc import Doc
 
 
 JSON_DECODER = json.JSONDecoder()
@@ -131,16 +132,31 @@ def read_file_lines(filename, mode='rt', encoding=None):
             yield f
 
 
-def get_filenames_in_dir(dirname, mode='rt', encoding='utf8',
-                         file_type=None, subdirs=False):
+def read_spacy_docs(spacy_vocab, filename):
+    """
+    Stream ``spacy.Doc`` s from disk at ``filename`` where they were serialized
+    using Spacy's ``spacy.Doc.to_bytes()`` functionality.
+
+    Args:
+        spacy_vocab (``spacy.Vocab``): the spacy vocab object used to serialize
+            the docs in ``filename``
+        filename (str): /path/to/file on disk from which spacy docs will be streamed
+
+    Yields:
+        the next deserialized ``spacy.Doc``
+    """
+    with io.open(filename, mode='rb') as f:
+        for bytes_string in Doc.read_bytes(f):
+            yield Doc(spacy_vocab).from_bytes(bytes_string)
+
+
+def get_filenames_in_dir(dirname, file_type=None, subdirs=False):
     """
     Yield the full names of files under directory ``dirname``, optionally
     filtering for a certain file type and crawling all subdirectories.
 
     Args:
         dirname (str): /path/to/dir on disk where files to read are saved
-        mode (str, optional): mode with which to open files; default is probably correct
-        encoding (str, optional): encoding with which to open files
         file_type (str, optional): if files only of a certain type are wanted,
             specify the file extension (e.g. ".txt")
         subdirs (bool, optional): if True, iterate through all files in subdirectories

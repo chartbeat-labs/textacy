@@ -95,3 +95,18 @@ def write_file_lines(objects, filename, mode='wt', encoding=None):
     with _open(filename, mode=mode, encoding=encoding) as f:
         for obj in objects:
             f.write(obj +'\n')
+
+
+def write_spacy_docs(spacy_docs, filename):
+    """
+    Serialize a sequence of ``spacy.Doc`` s to disk at ``filename`` using Spacy's
+    ``spacy.Doc.to_bytes()`` functionality.
+
+    Args:
+        spacy_docs (iterable(``spacy.Doc``)): sequence of spacy docs to serialize
+            to disk at ``filename``
+        filename (str): /path/to/file on disk from which spacy docs will be streamed
+    """
+    with io.open(filename, mode='wb') as f:
+        for doc in spacy_docs:
+            f.write(doc.to_bytes())
