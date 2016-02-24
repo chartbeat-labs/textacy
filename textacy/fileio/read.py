@@ -5,34 +5,35 @@ import bz2
 from functools import partial
 import gzip
 import io
+import json
 import os
 
 import ijson
 
 
-JSON_DECODER = JSONDecoder()
+JSON_DECODER = json.JSONDecoder()
 
 
-def read_json_items(filename, mode='rt', encoding=None, prefix=''):
+def read_json(filename, mode='rt', encoding=None, prefix=''):
     """
     Iterate over JSON objects matching the field given by ``prefix``.
-    Useful for reading a large JSON array one item (with
-    ``prefix='item'``) or sub-item (``prefix='item.fieldname'``) at a time.
+    Useful for reading a large JSON array one item (with ``prefix='item'``)
+    or sub-item (``prefix='item.fieldname'``) at a time.
 
     Args:
         filename (str): /path/to/file on disk from which json items will be streamed,
             such as items in a JSON array; for example::
 
                 [
-                    {"idx": 0, "field": "foo"},
-                    {"idx": 1, "field": "bar"}
+                    {"title": "Harrison Bergeron", "text": "The year was 2081, and everybody was finally equal."},
+                    {"title": "2BR02B", "text": "Everything was perfectly swell."}
                 ]
 
         mode (str, optional)
         encoding (str, optional)
-        prefix (str, optional): if '', the entire JSON object will be read in;
-            if 'item', each item in a top-level array will be read in successively
-            if 'item.idx', each array item's 'idx' value will be read in successively
+        prefix (str, optional): if '', the entire JSON object will be read in at once;
+            if 'item', each item in a top-level array will be read in successively;
+            if 'item.text', each array item's 'text' value will be read in successively
 
     Yields:
         next matching JSON object; could be a dict, list, int, float, str,
@@ -42,8 +43,11 @@ def read_json_items(filename, mode='rt', encoding=None, prefix=''):
         Refer to ``ijson`` at https://pypi.python.org/pypi/ijson/ for usage details.
     """
     with io.open(filename, mode=mode, encoding=encoding) as f:
-        for item in ijson.items(f, prefix):
-            yield item
+        if prefix == '':
+            yield json.load(f)
+        else:
+            for item in ijson.items(f, prefix):
+                yield item
 
 
 def read_json_lines(filename, mode='rt', encoding=None):
@@ -55,14 +59,14 @@ def read_json_lines(filename, mode='rt', encoding=None):
         filename (str): /path/to/file on disk from which json objects will be streamed,
             where each line in the file must be its own json object; for example::
 
-                {"idx": 0, "field": "foo"}\n
-                {"idx": 1, "field": "bar"}
+                {"title": "Harrison Bergeron", "text": "The year was 2081, and everybody was finally equal."}\n
+                {"title": "2BR02B", "text": "Everything was perfectly swell."}
 
         mode (str, optional)
         encoding (str, optional)
 
     Yields:
-        dict: next valid JSON object, converted to a Python dictionary
+        dict: next valid JSON object, converted to native Python equivalent
     """
     with io.open(filename, mode=mode, encoding=encoding) as f:
         for line in f:
@@ -79,14 +83,14 @@ def read_json_mash(filename, mode='rt', encoding=None, buffersize=2048):
             where all json objects are mashed together, end-to-end, on a single line,;
             for example::
 
-                {"idx": 0, "field": "foo"}{"idx": 1, "field": "bar"}
+                {"title": "Harrison Bergeron", "text": "The year was 2081, and everybody was finally equal."}{"title": "2BR02B", "text": "Everything was perfectly swell."}
 
         mode (str, optional)
         encoding (str, optional)
         buffersize (int, optional): number of bytes to read in as a chunk
 
     Yields:
-        dict: next valid JSON object, converted to a Python dictionary
+        dict: next valid JSON object, converted to native Python equivalent
     """
     with io.open(filename, mode=mode, encoding=encoding) as f:
         buffer = ''
