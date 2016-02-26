@@ -12,7 +12,7 @@ __all__ = [
     'TextCorpus'
 ]
 
-__version__ = '0.1.1'
+__version__ = '0.1.4'
 
 logger = logging.getLogger('textacy')
 if len(logger.handlers) == 0:  # To ensure reload() doesn't add another one
