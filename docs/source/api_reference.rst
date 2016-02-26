@@ -62,8 +62,5 @@ Other Stuff!
 .. automodule:: textacy.lexicon_methods
     :members:
 
-.. automodule:: textacy.export
-    :members:
-
 .. automodule:: textacy.corpora.wikipedia
     :members:
