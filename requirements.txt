@@ -3,6 +3,7 @@ cld2-cffi
 cytoolz
 ftfy
 fuzzywuzzy
+gensim>=0.12.4
 ijson
 networkx
 nltk

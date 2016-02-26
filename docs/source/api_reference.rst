@@ -34,6 +34,16 @@ Utilities
 .. automodule:: textacy.math_utils
     :members:
 
+File IO
+-------
+
+.. automodule:: textacy.fileio.read
+    :members:
+
+.. automodule:: textacy.fileio.write
+    :members:
+
+
 Other Stuff!
 ------------
 
@@ -56,7 +66,4 @@ Other Stuff!
     :members:
 
 .. automodule:: textacy.corpora.wikipedia
-    :members:
-
-.. automodule:: textacy.fileio
     :members:
