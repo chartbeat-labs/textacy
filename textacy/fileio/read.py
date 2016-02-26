@@ -9,7 +9,7 @@ import json
 import os
 
 import ijson
-from spacy.tokens.doc import Doc
+from spacy.tokens.doc import Doc as SpacyDoc
 
 
 JSON_DECODER = json.JSONDecoder()
@@ -146,8 +146,8 @@ def read_spacy_docs(spacy_vocab, filename):
         the next deserialized ``spacy.Doc``
     """
     with io.open(filename, mode='rb') as f:
-        for bytes_string in Doc.read_bytes(f):
-            yield Doc(spacy_vocab).from_bytes(bytes_string)
+        for bytes_string in SpacyDoc.read_bytes(f):
+            yield SpacyDoc(spacy_vocab).from_bytes(bytes_string)
 
 
 def get_filenames_in_dir(dirname, file_type=None, subdirs=False):
