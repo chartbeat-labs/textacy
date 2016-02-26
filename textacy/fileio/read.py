@@ -129,7 +129,7 @@ def read_file_lines(filename, mode='rt', encoding=None):
         else io.open
     with _open(filename, mode=mode, encoding=encoding) as f:
         for line in f:
-            yield f
+            yield line
 
 
 def read_spacy_docs(spacy_vocab, filename):

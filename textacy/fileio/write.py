@@ -77,7 +77,7 @@ def write_file_lines(lines, filename, mode='wt', encoding=None):
             f.write(line +'\n')
 
 
-def write_spacy_docs(spacy_docs, filename, encoding=None):
+def write_spacy_docs(spacy_docs, filename):
     """
     Serialize a sequence of ``spacy.Doc`` s to disk at ``filename`` using Spacy's
     ``spacy.Doc.to_bytes()`` functionality.
@@ -86,7 +86,6 @@ def write_spacy_docs(spacy_docs, filename, encoding=None):
         spacy_docs (``spacy.Doc`` or iterable(``spacy.Doc``)): a single spacy doc
             or a sequence of spacy docs to serialize to disk at ``filename``
         filename (str): /path/to/file on disk from which spacy docs will be streamed
-        encoding (str, optional)
     """
     if isinstance(spacy_docs, SpacyDoc):
         spacy_docs = [spacy_docs]
@@ -109,7 +108,7 @@ def write_conll(spacy_doc, filename, encoding=None):
         See http://universaldependencies.org/docs/format.html for details.
     """
     rows = []
-    for j, sent in enumerate(doc.sents):
+    for j, sent in enumerate(spacy_doc.sents):
         sent_i = sent.start
         sent_id = j + 1
         rows.append('# sent_id {}'.format(sent_id))
