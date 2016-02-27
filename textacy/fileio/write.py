@@ -5,9 +5,16 @@ import bz2
 import gzip
 import io
 import json
+import os
 
 import ijson
 from spacy.tokens.doc import Doc as SpacyDoc
+
+
+def _make_dirs(filename):
+    head, tail = os.path.split(filename)
+    if not os.path.exists(head):
+        os.makedirs(head)
 
 
 def write_json(json_object, filename, mode='wt', encoding=None):
@@ -27,6 +34,7 @@ def write_json(json_object, filename, mode='wt', encoding=None):
         mode (str, optional)
         encoding (str, optional)
     """
+    _make_dirs(filename)
     with io.open(filename, mode=mode, encoding=encoding) as f:
         json.dump(json_object, f, ensure_ascii=False)
 
@@ -47,6 +55,7 @@ def write_json_lines(json_objects, filename, mode='wt', encoding=None):
         mode (str, optional)
         encoding (str, optional)
     """
+    _make_dirs(filename)
     with io.open(filename, mode=mode, encoding=encoding) as f:
         for json_object in json_objects:
             f.write(json.dumps(json_object, ensure_ascii=False) + '\n')
@@ -55,8 +64,10 @@ def write_json_lines(json_objects, filename, mode='wt', encoding=None):
 def write_file(content, filename, mode='wt', encoding=None):
     """
     Write ``content`` to disk at ``filename``. Files with appropriate extensions
-    are compressed with gzip or bz2 automatically.
+    are compressed with gzip or bz2 automatically. Any intermediate folders
+    not found on disk are automatically created.
     """
+    _make_dirs(filename)
     _open = gzip.open if filename.endswith('.gz') \
         else bz2.open if filename.endswith('.bz2') \
         else io.open
@@ -68,7 +79,9 @@ def write_file_lines(lines, filename, mode='wt', encoding=None):
     """
     Write the content in ``lines`` to disk at ``filename``, line by line. Files
     with appropriate extensions are compressed with gzip or bz2 automatically.
+    Any intermediate folders not found on disk are automatically created.
     """
+    _make_dirs(filename)
     _open = gzip.open if filename.endswith('.gz') \
         else bz2.open if filename.endswith('.bz2') \
         else io.open
@@ -87,6 +100,7 @@ def write_spacy_docs(spacy_docs, filename):
             or a sequence of spacy docs to serialize to disk at ``filename``
         filename (str): /path/to/file on disk from which spacy docs will be streamed
     """
+    _make_dirs(filename)
     if isinstance(spacy_docs, SpacyDoc):
         spacy_docs = [spacy_docs]
     with io.open(filename, mode='wb') as f:
