@@ -13,7 +13,7 @@ from spacy.tokens.doc import Doc as SpacyDoc
 
 def _make_dirs(filename):
     head, tail = os.path.split(filename)
-    if not os.path.exists(head):
+    if head and not os.path.exists(head):
         os.makedirs(head)
 
 

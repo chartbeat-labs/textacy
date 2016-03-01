@@ -5,7 +5,7 @@ Module to facilitate topic modeling with gensim. For example::
     ...          textacy.corpora.wikipedia.get_plaintext_pages('enwiki-latest-pages-articles.xml.bz2', max_n_pages=1000))
     >>> proc_texts = (proc_text for proc_text in preprocess_texts(texts))
     >>> spacy_docs = (spacy_doc for spacy_doc in
-    ...               texts_to_spacy_docs(proc_texts, merge_nes=True, merge_nps=False))
+    ...               texts_to_spacy_docs(proc_texts, 'en', merge_nes=True, merge_nps=False))
     >>> textacy.fileio.write_spacy_docs(spacy_docs, 'wiki_spacy_docs.bin')
     >>> spacy_docs = (spacy_doc for spacy_doc in
     ...               textacy.fileio.read_spacy_docs(textacy.data.load_spacy_pipeline().vocab, 'wiki_spacy_docs.bin'))
@@ -50,16 +50,17 @@ def texts_to_spacy_docs(texts, lang, merge_nes=False, merge_ncs=False):
 
     Args:
         texts (iterable(str))
-        lang (str, {'en'})
-        merge_nes (bool, optional)
-        merge_ncs (bool, optional)
+        lang (str, {'en'}): language of the input text, needed for initializing
+            a spacy nlp pipeline
+        merge_nes (bool, optional): if True, merge named entities into single tokens
+        merge_ncs (bool, optional): if True, merge noun chunks into single tokens
 
     Yields:
         ``spacy.Doc``
     """
     spacy_nlp = data.load_spacy_pipeline(
-        lang=lang, entity=merge_nes, parser=merge_nps)
-    for spacy_doc in spacy_nlp.pipe(texts, tag=True, parse=merge_nps, entity=merge_nes,
+        lang=lang, entity=merge_nes, parser=merge_ncs)
+    for spacy_doc in spacy_nlp.pipe(texts, tag=True, parse=merge_ncs, entity=merge_nes,
                                     n_threads=2, batch_size=1000):
         if merge_nes is True:
             spacy_utils.merge_spans(
@@ -133,7 +134,7 @@ def term_lists_to_gensim_corpus(term_lists,
         if keep_top_n > 0:
             filter_params['keep_n'] = keep_top_n
         gdict.filter_extremes(**filter_params)
-        return (gdict, [gdict.doc2bow(term_list, allow_update=False) for term_list in term_lists])
+        return ([gdict.doc2bow(term_list, allow_update=False) for term_list in term_lists], gdict)
     else:
         gdict = GensimDictionary()
         return ([gdict.doc2bow(term_list, allow_update=True) for term_list in term_lists], gdict)
@@ -179,7 +180,6 @@ def _train_lda(corpus, dictionary, n_topics, n_passes, save=False):
         # TODO: make this py2-3 compatible a la
         # https://github.com/piskvorky/gensim/wiki/Recipes-&-FAQ#q9-how-do-i-load-a-model-in-python-3-that-was-trained-and-saved-using-python-2
         lda.save(save)
-    # get top N terms per topic
 
     # transform documents into topic representation
     # normalize such that sum of topic contributions per doc = 1
@@ -189,14 +189,31 @@ def _train_lda(corpus, dictionary, n_topics, n_passes, save=False):
     doc_topics = doc_topics / np.sum(doc_topics, axis=1, keepdims=True)
 
 
-def get_top_topic_terms(model, n_terms=20, n_topics=-1):
+def get_top_topic_terms(model, n_topics=-1, n_terms=20):
     """
+    Get the top ``n_terms`` terms by weight per topic in ``model``.
+
+    Args:
+        model (``gensim.models.<model>``)
+        n_topics (int, optional): number of topics for which to return top terms;
+            if -1, all topics' terms are returned
+        n_terms (int, optional): number of terms to return per topic
+
+    Returns:
+        list(list(str))
     """
-    return [[term for term, _ in topic]
-            for _, topic in
-            model.show_topics(num_topics=n_topics, num_words=n_top_terms,
-                              log=False, formatted=False)
-            ]
+    try:  # LDA
+        return [[term for term, _ in topic]
+                for _, topic in model.show_topics(
+                    num_topics=n_topics, num_words=n_terms,
+                    log=False, formatted=False)
+                ]
+    except TypeError:  # HDP
+        return [[term for term, _ in topic]
+                for _, topic in model.show_topics(
+                    topics=n_topics, topn=n_terms,
+                    log=False, formatted=False)
+                ]
 
 
 def get_top_topic_docs(model, corpus, n_topics=-1):
@@ -208,9 +225,9 @@ def get_top_topic_docs(model, corpus, n_topics=-1):
                       for i in range(n_topics)]
 
 
-def train_topic_model(corpus, dictionary, algorithm, n_topics,
+def train_topic_model(corpus, dictionary, model_type, n_topics,
                       n_top_terms=25, n_top_docs=10,
-                      save_to_disk=None,
+                      save=False,
                       **kwargs):
     """
     Train a topic model (NMF, LDA, or HDP) on a corpus, return a summary of the
@@ -220,12 +237,11 @@ def train_topic_model(corpus, dictionary, algorithm, n_topics,
         corpus (list of list of 2-tuples)
         dictionary (id:term mapping):
             e.g. gensim.corpora.dictionary.Dictionary instance
-        model (str, {'nmf', 'lda', 'hdp'}):
-            topic model(s) to train/save
+        model_type (str, {'nmf', 'lda', 'hdp'}): type of topic model to train
         n_topics (int, optional): number of topics in the model
         n_top_terms (int, optional): number of top-weighted terms to save with each topic
         n_top_docs (int, optional): number of top-weighted documents to save with each topic
-        save_to_disk (str, optional):
+        save (str, optional):
             gives /path/to/fname where topic model can be saved to disk
         **kwargs :
             max_nmf_iter : int, optional
@@ -237,17 +253,17 @@ def train_topic_model(corpus, dictionary, algorithm, n_topics,
             each dict corresponds to one topic in the model
             with keys `topic_id`, `topic_weight`, `key_terms`, `key_docs`
     """
-    import joblib
     fname = model + '-' + str(n_topics) + '-topics'
-    if model == 'nmf':
+    if model_type == 'nmf':
+        import joblib
         # train model
         csr_corpus = gensim.matutils.corpus2csc(corpus).transpose()
         nmf = NMF(n_components=n_topics,
                   random_state=1,
                   max_iter=kwargs.get('max_nmf_iter', 400)
                   ).fit(csr_corpus)
-        if save_to_disk is not None:
-            joblib.dump(nmf, save_to_disk, compress=3)
+        if save:
+            joblib.dump(nmf, save, compress=3)
         # get top N terms per topic
         topic_top_terms = [[dictionary[i] for i in np.argsort(topic)[::-1][:n_top_terms]]
                            for topic in nmf.components_]
@@ -256,14 +272,14 @@ def train_topic_model(corpus, dictionary, algorithm, n_topics,
         doc_topics = nmf.transform(csr_corpus)
         doc_topics = doc_topics / np.sum(doc_topics, axis=1, keepdims=True)
 
-    elif model == 'lda':
+    elif model_type == 'lda':
         # train model
         lda = gensim.models.LdaModel(corpus,
                                      num_topics=n_topics,
                                      id2word=dictionary,
                                      passes=kwargs.get('n_lda_passes', 10))
-        if save_to_disk is not None:
-            lda.save(save_to_disk)
+        if save:
+            lda.save(save)
         # get top N terms per topic
         topic_top_terms = [[sw[0] for sw in topic]
             for topic_idx, topic in lda.show_topics(num_topics=-1, num_words=n_top_terms, log=False, formatted=False)]
@@ -274,15 +290,15 @@ def train_topic_model(corpus, dictionary, algorithm, n_topics,
         doc_topics = np.array([gensim.matutils.sparse2full(lda[doc], n_topics) for doc in corpus])
         doc_topics = doc_topics / np.sum(doc_topics, axis=1, keepdims=True)
 
-    elif model == 'hdp':
+    elif model_type == 'hdp':
         # train model
         hdp = gensim.models.HdpModel(corpus, dictionary,
                                      T=n_topics, K=kwargs.get('hdp_K', 5),
                                      var_converge=0.000000001,
                                      kappa=0.8)
         hdp.optimal_ordering()
-        if save_to_disk is not None:
-            hdp.save(save_to_disk)
+        if save:
+            hdp.save(save)
         # get top N terms per topic
         topic_top_terms = [[sw[0] for sw in topic[1]]
             for topic in hdp.show_topics(topics=-1, topn=n_top_terms, log=False, formatted=False)]
