@@ -12,6 +12,9 @@ NEWLINE_RE = re.compile(r'\n{2,5}')
 HEADER_RE = re.compile(r'={2,5}(.*?)={2,5}')
 QUOTE_RE = re.compile(r"'{2,3}")
 CRUFT_RE = re.compile(r'\n\* ?')
+IGNORED_NAMESPACES = {'Wikipedia', 'Category', 'File', 'Portal', 'Template',
+                      'MediaWiki', 'User', 'Help', 'Book', 'Draft',
+                      'WikiProject', 'Special', 'Talk'}
 
 
 def _iterate_over_pages(fname):
@@ -20,7 +23,8 @@ def _iterate_over_pages(fname):
     yielding one (page id, title, page content) 3-tuple at a time.
     """
     dictionary = Dictionary()
-    wiki = WikiCorpus(fname, lemmatize=False, dictionary=dictionary)
+    wiki = WikiCorpus(fname, lemmatize=False, dictionary=dictionary,
+                      filter_namespaces=IGNORED_NAMESPACES)
     for title, content, page_id in extract_pages(bz2.BZ2File(wiki.fname), wiki.filter_namespaces):
         yield (page_id, title, content)
 
