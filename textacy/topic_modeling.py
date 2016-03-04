@@ -19,24 +19,28 @@ Module to facilitate topic modeling with gensim. For example::
     ...                            n_top_terms=25, n_top_docs=10,
     ...                            save_to_disk=None)
 """
-import gensim
-from gensim.corpora.dictionary import Dictionary as GensimDictionary
 import numpy as np
-from sklearn.decomposition import NMF
+from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
+from sklearn.externals import joblib
 
 from textacy import data, extract, fileio, preprocess, spacy_utils
 
+
+logger = logging.getLogger(__name__)
+
 # TODO: what to do about lang?
+
 
 def preprocess_texts(texts):
     """
-    Default preprocessing for raw texts before topic modeling.
+    Default preprocessing for raw texts before topic modeling: no URLs, emails, or
+    phone numbers, plus normalized whitespace.
 
     Args:
         texts (iterable(str))
 
     Yields:
-        str
+        str: next preprocessed ``text`` in ``texts``
     """
     for text in texts:
         yield preprocess.preprocess_text(
@@ -56,7 +60,7 @@ def texts_to_spacy_docs(texts, lang, merge_nes=False, merge_ncs=False):
         merge_ncs (bool, optional): if True, merge noun chunks into single tokens
 
     Yields:
-        ``spacy.Doc``
+        ``spacy.Doc``: doc processed from next text in ``texts``
     """
     spacy_nlp = data.load_spacy_pipeline(
         lang=lang, entity=merge_nes, parser=merge_ncs)
@@ -171,153 +175,147 @@ def optimize_n_topics():
     raise NotImplementedError('burton is working on it...')
 
 
-def _train_lda(corpus, dictionary, n_topics, n_passes, save=False):
+def train_topic_model(doc_term_matrix, model_type, n_topics,
+                      save=False, **kwargs):
     """
+    Train a topic model (NMF, LDA, or LSA) on a corpus represented as a document-
+    term matrix and return the trained model; optionally save the model to disk.
+
+    Args:
+        doc_term_matrix (array-like or sparse matrix): corpus represented as a
+            document-term matrix with shape n_docs x n_terms; NOTE: LDA expects
+            tf-weighting, while NMF and LSA may do better with tfidf-weighting!
+        model_type (str, {'nmf', 'lda', 'lsa'}): type of topic model to train
+        n_topics (int): number of topics in the model to be trained
+        save (str, optional): if not False, gives /path/to/filename where trained
+            topic model will be saved to disk using `joblib <https://pythonhosted.org/joblib/index.html>`_`
+        **kwargs:
+            model-specific keyword arguments; if not specified, default values are
+            used; see the models' scikit-learn documentation
+
+    Returns:
+        ``sklearn.decomposition.<model>``
+
+    Raises:
+        ValueError: if ``model_type`` not in ``{'nmf', 'lda', 'lsa'}``
+
+    Notes:
+        - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.NMF.html
+        - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.LatentDirichletAllocation.html
+        - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
     """
-    lda = gensim.models.LdaModel(corpus, id2word=dictionary,
-                                 num_topics=n_topics, passes=n_passes)
+    if model_type == 'nmf':
+        model = NMF(
+            n_components=n_topics, alpha=0.1, l1_ratio=0.5,
+            max_iter=kwargs.get('max_iter', 200),
+            random_state=kwargs.get('random_state', 1),
+            shuffle=kwargs.get('shuffle', False)
+            ).fit(doc_term_matrix)
+    elif model_type == 'lda':
+        model = LatentDirichletAllocation(
+            n_topics=n_topics,
+            max_iter=kwargs.get('max_iter', 10),
+            random_state=kwargs.get('random_state', 1),
+            learning_method=kwargs.get('learning_method', 'online'),
+            learning_offset=kwargs.get('learning_offset', 10.0),
+            batch_size=kwargs.get('batch_size', 128),
+            n_jobs=kwargs.get('n_jobs', 1)
+            ).fit(doc_term_matrix)
+    elif model_type == 'lsa':
+        model = TruncatedSVD(
+            n_components=n_topics, algorithm='randomized',
+            n_iter=kwargs.get('n_iter', 5),
+            random_state=kwargs.get('random_state', 1)
+            ).fit(doc_term_matrix)
+    else:
+        msg = 'model_type "{}" invalid; must be in {}'.format(
+            model_type, {'nmf', 'lda', 'lsa'})
+        raise ValueError(msg)
+
     if save:
-        # TODO: make this py2-3 compatible a la
-        # https://github.com/piskvorky/gensim/wiki/Recipes-&-FAQ#q9-how-do-i-load-a-model-in-python-3-that-was-trained-and-saved-using-python-2
-        lda.save(save)
+        filenames = joblib.dump(model, save, compress=3)
+        logger.info('{} model saved to {}'.format(model_type, save))
 
-    # transform documents into topic representation
-    # normalize such that sum of topic contributions per doc = 1
-    # ^ this is approximately true already, except gensim truncates low-weighted topics
-    # resulting in sum(topic_weights) ~ 0.95
-    doc_topics = np.array([gensim.matutils.sparse2full(lda[doc], n_topics) for doc in corpus])
-    doc_topics = doc_topics / np.sum(doc_topics, axis=1, keepdims=True)
+    return model
 
 
-def get_top_topic_terms(model, n_topics=-1, n_terms=20):
+def get_top_topic_terms(model, vocab, n_topics=-1, n_terms=10, weights=False):
     """
     Get the top ``n_terms`` terms by weight per topic in ``model``.
 
     Args:
-        model (``gensim.models.<model>``)
+        model (``sklearn.decomposition.<model>``)
+        vocab (list(str) or dict): object that returns the term string corresponding
+            to term id ``i`` through ``feature_names[i]``; could be a list of strings
+            where the index represents the term id, such as that returned by
+            ``sklearn.feature_extraction.text.CountVectorizer.get_feature_names()``,
+            or a mapping of term id: term string
         n_topics (int, optional): number of topics for which to return top terms;
             if -1, all topics' terms are returned
-        n_terms (int, optional): number of terms to return per topic
+        n_terms (int, optional): number of top terms to return per topic
+        weights (bool, optional): if True, terms are returned with their corresponding
+            topic weights; otherwise, terms are returned without weights
 
     Returns:
-        list(list(str))
+        list(list(str)) or list(list((str, float))):
+            the ith list of terms or (term, weight) tuples corresponds to topic i
     """
-    try:  # LDA
-        return [[term for term, _ in topic]
-                for _, topic in model.show_topics(
-                    num_topics=n_topics, num_words=n_terms,
-                    log=False, formatted=False)
-                ]
-    except TypeError:  # HDP
-        return [[term for term, _ in topic]
-                for _, topic in model.show_topics(
-                    topics=n_topics, topn=n_terms,
-                    log=False, formatted=False)
-                ]
+    if n_topics == -1:
+        n_topics = len(model.components_)
+    if weights is False:
+        return [[vocab[i] for i in np.argsort(topic)[:-n_terms - 1:-1]]
+                for topic in model.components_[:n_topics]]
+    else:
+        return [[(vocab[i], topic[i]) for i in np.argsort(topic)[:-n_terms - 1:-1]]
+                for topic in model.components_[:n_topics]]
 
 
-def get_top_topic_docs(model, corpus, n_topics=-1):
+def get_top_topic_docs(model, doc_term_matrix, n_topics=-1, n_docs=10, weights=False):
     """
-    """
-    doc_topics = np.array([gensim.matutils.sparse2full(model[doc], n_topics) for doc in corpus])
-    doc_topics = doc_topics / np.sum(doc_topics, axis=1, keepdims=True)
-    topic_top_docs = [list(np.argsort(doc_topics[:, i])[::-1][:n_top_docs])
-                      for i in range(n_topics)]
-
-
-def train_topic_model(corpus, dictionary, model_type, n_topics,
-                      n_top_terms=25, n_top_docs=10,
-                      save=False,
-                      **kwargs):
-    """
-    Train a topic model (NMF, LDA, or HDP) on a corpus, return a summary of the
-    model as JSON.
+    Get the top ``n_docs`` docs by weight per topic in ``model``. Documents in
+    ``doc_term_matrix`` are transformed by the trained ``model`` into topic space,
+    normalizing such that topic contributions per doc sum to 1.
 
     Args:
-        corpus (list of list of 2-tuples)
-        dictionary (id:term mapping):
-            e.g. gensim.corpora.dictionary.Dictionary instance
-        model_type (str, {'nmf', 'lda', 'hdp'}): type of topic model to train
-        n_topics (int, optional): number of topics in the model
-        n_top_terms (int, optional): number of top-weighted terms to save with each topic
-        n_top_docs (int, optional): number of top-weighted documents to save with each topic
-        save (str, optional):
-            gives /path/to/fname where topic model can be saved to disk
-        **kwargs :
-            max_nmf_iter : int, optional
-            n_lda_passes : int, optional
-            hdp_K : int, optional
+        model (``sklearn.decomposition.<model>``)
+        doc_term_matrix (array-like or sparse matrix): corpus represented as a
+            document-term matrix with shape n_docs x n_terms; NOTE: LDA expects
+            tf-weighting, while NMF and LSA may do better with tfidf-weighting!
+        n_topics (int, optional): number of topics for which to return top docs;
+            if -1, all topics' docs are returned
+        n_docs (int, optional): number of top docs to return per topic
+        weights (bool, optional): if True, docs are returned with their corresponding
+            (normalized) topic weights; otherwise, docs are returned without weights
 
     Returns:
-        list(dict):
-            each dict corresponds to one topic in the model
-            with keys `topic_id`, `topic_weight`, `key_terms`, `key_docs`
+        list(list(str)) or list(list((str, float))):
+            the ith list of docs or (doc, weight) tuples corresponds to topic i
     """
-    fname = model + '-' + str(n_topics) + '-topics'
-    if model_type == 'nmf':
-        import joblib
-        # train model
-        csr_corpus = gensim.matutils.corpus2csc(corpus).transpose()
-        nmf = NMF(n_components=n_topics,
-                  random_state=1,
-                  max_iter=kwargs.get('max_nmf_iter', 400)
-                  ).fit(csr_corpus)
-        if save:
-            joblib.dump(nmf, save, compress=3)
-        # get top N terms per topic
-        topic_top_terms = [[dictionary[i] for i in np.argsort(topic)[::-1][:n_top_terms]]
-                           for topic in nmf.components_]
-        # transform documents into topic representation
-        # normalize such that sum of topic contributions per doc = 1
-        doc_topics = nmf.transform(csr_corpus)
-        doc_topics = doc_topics / np.sum(doc_topics, axis=1, keepdims=True)
+    if n_topics == -1:
+        n_topics = len(model.components_)
+    doc_topic_distr = model.transform(doc_term_matrix)
+    doc_topic_distr = doc_topic_distr / np.sum(doc_topic_distr, axis=1, keepdims=True)
+    if weights is False:
+        return [[doc_idx
+                 for doc_idx in np.argsort(doc_topic_distr[:, i])[:-n_docs - 1:-1]]
+                for i, _ in enumerate(model.components_[:n_topics])]
+    else:
+        return [[(doc_idx, doc_topic_distr[doc_idx, i])
+                 for doc_idx in np.argsort(doc_topic_distr[:, i])[:-n_docs - 1:-1]]
+                for i, _ in enumerate(model.components_[:n_topics])]
 
-    elif model_type == 'lda':
-        # train model
-        lda = gensim.models.LdaModel(corpus,
-                                     num_topics=n_topics,
-                                     id2word=dictionary,
-                                     passes=kwargs.get('n_lda_passes', 10))
-        if save:
-            lda.save(save)
-        # get top N terms per topic
-        topic_top_terms = [[sw[0] for sw in topic]
-            for topic_idx, topic in lda.show_topics(num_topics=-1, num_words=n_top_terms, log=False, formatted=False)]
-        # transform documents into topic representation
-        # normalize such that sum of topic contributions per doc = 1
-        # ^ this is approximately true already, except gensim truncates low-weighted topics
-        # resulting in sum(topic_weights) ~ 0.95
-        doc_topics = np.array([gensim.matutils.sparse2full(lda[doc], n_topics) for doc in corpus])
-        doc_topics = doc_topics / np.sum(doc_topics, axis=1, keepdims=True)
 
-    elif model_type == 'hdp':
-        # train model
-        hdp = gensim.models.HdpModel(corpus, dictionary,
-                                     T=n_topics, K=kwargs.get('hdp_K', 5),
-                                     var_converge=0.000000001,
-                                     kappa=0.8)
-        hdp.optimal_ordering()
-        if save:
-            hdp.save(save)
-        # get top N terms per topic
-        topic_top_terms = [[sw[0] for sw in topic[1]]
-            for topic in hdp.show_topics(topics=-1, topn=n_top_terms, log=False, formatted=False)]
-        # transform documents into topic representation
-        # normalize such that sum of topic contributions per doc = 1
-        # ^ this is approximately true already, except gensim truncates low-weighted topics
-        # resulting in sum(topic_weights) ~ 0.95
-        doc_topics = np.array([gensim.matutils.sparse2full(hdp[doc], n_topics) for doc in corpus])
-        doc_topics = doc_topics / np.sum(doc_topics, axis=1, keepdims=True)
 
-    # get *normalized* topic weights in corpus
-    topic_weights = [sum(doc_topics[:,i]) for i in range(n_topics)]
-    topic_weights = [tw / sum(topic_weights) for tw in topic_weights]
-    # get top documents per topic
-    topic_top_docs = [list(np.argsort(doc_topics[:,i])[::-1][:n_top_docs])
-                      for i in range(n_topics)]
-
-    return [{'topic_id': i,
-             'topic_weight': topic_weights[i],
-             'key_terms': topic_top_terms[i],
-             'key_docs': topic_top_docs[i]}
-             for i in range(n_topics)]
+#
+# # get *normalized* topic weights in corpus
+# topic_weights = [sum(doc_topics[:,i]) for i in range(n_topics)]
+# topic_weights = [tw / sum(topic_weights) for tw in topic_weights]
+# # get top documents per topic
+# topic_top_docs = [list(np.argsort(doc_topics[:,i])[::-1][:n_top_docs])
+#                   for i in range(n_topics)]
+#
+# return [{'topic_id': i,
+#          'topic_weight': topic_weights[i],
+#          'key_terms': topic_top_terms[i],
+#          'key_docs': topic_top_docs[i]}
+#          for i in range(n_topics)]
