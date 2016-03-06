@@ -1,4 +1,7 @@
 """
+Represent a collection of spacy-processed texts as a document-term matrix of shape
+(# docs, # unique terms), with a variety of filtering, normalization, and term
+weighting schemes for the values.
 """
 import collections
 import itertools
@@ -18,21 +21,25 @@ def build_doc_term_matrix(spacy_docs, spacy_vocab,
                           normalize=True, sublinear_tf=False, smooth_idf=True,
                           min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None):
     """
-    TODO
+    Build a document-term matrix of shape (# docs, # unique terms) from a sequence
+    of spacy docs, optionally lemmatizing and filtering terms, with a variety of
+    weighting and normalization schemes for the matrix values.
 
     Args:
         spacy_docs (iterable(``spacy.Doc``))
         spacy_vocab (``spacy.Vocab``)
-        lemmatize (bool, optional)
-        filter_stops (bool, optional)
-        filter_punct (bool, optional)
-        filter_nums (bool, optional)
-        weighting (str {'tf', 'tfidf', 'binary'}, optional): if 'tf', matrix values (i, j)
-            correspond to the number of occurrences of term j in doc i; if 'tfidf',
-            term frequencies (tf) are multiplied by their corresponding inverse
-            document frequencies (idf)
+        lemmatize (bool, optional): if True, lemmatize all terms; if False, use
+            the forms of the terms as they appear in text
+        filter_stops (bool, optional): if True, filter out stop words
+        filter_punct (bool, optional): if True, filter out punctuation terms
+        filter_nums (bool, optional): if True, filter out number-like terms
+        weighting (str {'tf', 'tfidf', 'binary'}, optional): if 'tf', matrix values
+            (i, j) correspond to the number of occurrences of term j in doc i; if
+            'tfidf', term frequencies (tf) are multiplied by their corresponding
+            inverse document frequencies (idf); if 'binary', all non-zero values
+            are set equal to 1
         normalize (bool, optional): if True, normalize term frequencies by the
-            L1 norms of the vectors
+            L2 norms of the vectors
         binarize (bool, optional): if True, set all term frequencies greater than
             0 equal to 1
         sublinear_tf (bool, optional): if True, apply sub-linear term-frequency
