@@ -19,6 +19,7 @@ Module to facilitate topic modeling with gensim. For example::
     ...                            n_top_terms=25, n_top_docs=10,
     ...                            save_to_disk=None)
 """
+import logging
 import numpy as np
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 from sklearn.externals import joblib
@@ -171,7 +172,13 @@ def weight_gensim_corpus(corpus, weighting='tfidf'):
     return corpus
 
 
-def optimize_n_topics():
+def evaluate_topic_model():
+    """
+    References:
+        .. Röder, Michael, Andreas Both, and Alexander Hinneburg. "Exploring the
+            space of topic coherence measures." Proceedings of the eighth ACM
+            international conference on Web search and data mining. ACM, 2015.
+    """
     raise NotImplementedError('burton is working on it...')
 
 
@@ -239,7 +246,7 @@ def train_topic_model(doc_term_matrix, model_type, n_topics,
     return model
 
 
-def get_doc_topic_distr(model, doc_term_matrix, normalize=True):
+def get_doc_topic_matrix(model, doc_term_matrix, normalize=True):
     """
     Transform a document-term matrix into a document-topic matrix, where rows
     correspond to documents and columns to the topics in ``model``.
@@ -255,11 +262,11 @@ def get_doc_topic_distr(model, doc_term_matrix, normalize=True):
     Returns:
         ``numpy.ndarray``: document-topic matrix with shape (n_docs, n_topics)
     """
-    doc_topic_distr = model.transform(doc_term_matrix)
+    doc_topic_matrix = model.transform(doc_term_matrix)
     if normalize is True:
-        return doc_topic_distr / np.sum(doc_topic_distr, axis=1, keepdims=True)
+        return doc_topic_matrix / np.sum(doc_topic_matrix, axis=1, keepdims=True)
     else:
-        return doc_topic_distr
+        return doc_topic_matrix
 
 
 def get_top_topic_terms(model, vocab, n_topics=-1, n_terms=10, weights=False):
@@ -293,14 +300,14 @@ def get_top_topic_terms(model, vocab, n_topics=-1, n_terms=10, weights=False):
                 for topic in model.components_[:n_topics]]
 
 
-def get_top_topic_docs(doc_topic_distr, n_topics=-1, n_docs=10, weights=False):
+def get_top_topic_docs(doc_topic_matrix, n_topics=-1, n_docs=10, weights=False):
     """
-    Get the top ``n_docs`` docs by weight per topic in ``doc_topic_distr``.
+    Get the top ``n_docs`` docs by weight per topic in ``doc_topic_matrix``.
 
     Args:
-        doc_topic_distr (numpy.ndarray): document-topic matrix with shape
+        doc_topic_matrix (numpy.ndarray): document-topic matrix with shape
             (n_docs, n_topics), the result of calling
-            :func:`get_doc_topic_distr() <textacy.topic_modeling.get_doc_topic_distr>`
+            :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
         n_topics (int, optional): number of topics for which to return top docs;
             if -1, all topics' docs are returned
         n_docs (int, optional): number of top docs to return per topic
@@ -312,26 +319,26 @@ def get_top_topic_docs(doc_topic_distr, n_topics=-1, n_docs=10, weights=False):
             (doc, weight) tuples corresponds to topic i
     """
     if n_topics == -1:
-        n_topics = doc_topic_distr.shape[1]
+        n_topics = doc_topic_matrix.shape[1]
 
     if weights is False:
         return [[doc_idx
-                 for doc_idx in np.argsort(doc_topic_distr[:, i])[:-n_docs - 1:-1]]
-                for i in range(min(doc_topic_distr.shape[1], n_topics))]
+                 for doc_idx in np.argsort(doc_topic_matrix[:, i])[:-n_docs - 1:-1]]
+                for i in range(min(doc_topic_matrix.shape[1], n_topics))]
     else:
-        return [[(doc_idx, doc_topic_distr[doc_idx, i])
-                 for doc_idx in np.argsort(doc_topic_distr[:, i])[:-n_docs - 1:-1]]
-                for i in range(min(doc_topic_distr.shape[1], n_topics))]
+        return [[(doc_idx, doc_topic_matrix[doc_idx, i])
+                 for doc_idx in np.argsort(doc_topic_matrix[:, i])[:-n_docs - 1:-1]]
+                for i in range(min(doc_topic_matrix.shape[1], n_topics))]
 
 
-def get_top_doc_topics(doc_topic_distr, n_docs=-1, n_topics=3, weights=False):
+def get_top_doc_topics(doc_topic_matrix, n_docs=-1, n_topics=3, weights=False):
     """
-    Get the top ``n_topics`` topics by weight per doc in ``doc_topic_distr``.
+    Get the top ``n_topics`` topics by weight per doc in ``doc_topic_matrix``.
 
     Args:
-        doc_topic_distr (numpy.ndarray): document-topic matrix with shape
+        doc_topic_matrix (numpy.ndarray): document-topic matrix with shape
             (n_docs, n_topics), the result of calling
-            :func:`get_doc_topic_distr() <textacy.topic_modeling.get_doc_topic_distr>`
+            :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
         n_docs (int, optional): number of docs for which to return top topics;
             if -1, all docs' top topics are returned
         n_topics (int, optional): number of top topics to return per doc
@@ -343,30 +350,30 @@ def get_top_doc_topics(doc_topic_distr, n_docs=-1, n_topics=3, weights=False):
             (topic, weight) tuples corresponds to doc i
     """
     if n_docs == -1:
-        n_docs = doc_topic_distr.shape[0]
+        n_docs = doc_topic_matrix.shape[0]
 
     if weights is False:
         return [[topic_idx
-                 for topic_idx in np.argsort(doc_topic_distr[i, :])[:-n_topics - 1:-1]]
-                for i in range(min(doc_topic_distr.shape[0], n_docs))]
+                 for topic_idx in np.argsort(doc_topic_matrix[i, :])[:-n_topics - 1:-1]]
+                for i in range(min(doc_topic_matrix.shape[0], n_docs))]
     else:
-        return [[(topic_idx, doc_topic_distr[i, topic_idx])
-                 for topic_idx in np.argsort(doc_topic_distr[i, :])[:-n_topics - 1:-1]]
-                for i in range(min(doc_topic_distr.shape[0], n_docs))]
+        return [[(topic_idx, doc_topic_matrix[i, topic_idx])
+                 for topic_idx in np.argsort(doc_topic_matrix[i, :])[:-n_topics - 1:-1]]
+                for i in range(min(doc_topic_matrix.shape[0], n_docs))]
 
 
-def get_topic_weights(doc_topic_distr):
+def get_topic_weights(doc_topic_matrix):
     """
     Get the overall weight of topics across an entire corpus. Note: Values depend
-    on whether topic weights per document in ``doc_topic_distr`` were normalized,
+    on whether topic weights per document in ``doc_topic_matrix`` were normalized,
     or not. I suppose either way makes sense... o_O
 
     Args:
-        doc_topic_distr (numpy.ndarray): document-topic matrix with shape
+        doc_topic_matrix (numpy.ndarray): document-topic matrix with shape
             (n_docs, n_topics), the result of calling
-            :func:`get_doc_topic_distr() <textacy.topic_modeling.get_doc_topic_distr>`
+            :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
 
     Returns:
         ``numpy.ndarray``: the ith element is the ith topic's overall weight
     """
-    return doc_topic_distr.sum(axis=0) / doc_topic_distr.sum(axis=0).sum()
+    return doc_topic_matrix.sum(axis=0) / doc_topic_matrix.sum(axis=0).sum()
