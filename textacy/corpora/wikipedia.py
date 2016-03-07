@@ -8,10 +8,10 @@ import re
 from gensim.corpora.dictionary import Dictionary
 from gensim.corpora.wikicorpus import extract_pages, filter_wiki, WikiCorpus
 
-NEWLINE_RE = re.compile(r'\n{2,5}')
-HEADER_RE = re.compile(r'={2,5}(.*?)={2,5}')
-QUOTE_RE = re.compile(r"'{2,3}")
-CRUFT_RE = re.compile(r'\n\* ?')
+WIKI_NEWLINE_RE = re.compile(r'\n{2,5}')
+WIKI_HEADER_RE = re.compile(r'={2,5}(.*?)={2,5}')
+WIKI_QUOTE_RE = re.compile(r"'{2,3}")
+WIKI_CRUFT_RE = re.compile(r'\n\* ?')
 
 
 def _iterate_over_pages(fname):
@@ -27,7 +27,11 @@ def _iterate_over_pages(fname):
 
 
 def _get_plaintext(content):
-    return CRUFT_RE.sub(r'', NEWLINE_RE.sub(r'\n', HEADER_RE.sub(r'\1', QUOTE_RE.sub(r'', filter_wiki(content))))).strip()
+    return WIKI_CRUFT_RE.sub(
+        r'', WIKI_NEWLINE_RE.sub(
+            r'\n', WIKI_HEADER_RE.sub(
+                r'\1', WIKI_QUOTE_RE.sub(
+                    r'', filter_wiki(content))))).strip()
 
 
 def _parse_content(content, parser, metadata=True):

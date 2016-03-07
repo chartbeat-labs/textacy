@@ -13,6 +13,8 @@ from sklearn.preprocessing import normalize as normalize_mat
 from spacy import attrs
 from spacy.strings import StringStore
 
+from textacy.texts import TextCorpus
+
 
 def build_doc_term_matrix(spacy_docs, spacy_vocab,
                           lemmatize=True,
@@ -26,7 +28,7 @@ def build_doc_term_matrix(spacy_docs, spacy_vocab,
     weighting and normalization schemes for the matrix values.
 
     Args:
-        spacy_docs (iterable(``spacy.Doc``))
+        spacy_docs (iterable(``spacy.Doc``) or :class:`TextCorpus <textacy.texts.TextCorpus>`)
         spacy_vocab (``spacy.Vocab``)
         lemmatize (bool, optional): if True, lemmatize all terms; if False, use
             the forms of the terms as they appear in text
@@ -67,6 +69,9 @@ def build_doc_term_matrix(spacy_docs, spacy_vocab,
         dict: id to term mapping, where keys are unique integers as term ids and
             values are corresponding strings
     """
+    if isinstance(spacy_docs, TextCorpus):
+        spacy_docs = (textdoc.spacy_doc for textdoc in spacy_docs)
+
     stringstore = StringStore()
     data = []; rows = []; cols = []
     for row_idx, spacy_doc in enumerate(spacy_docs):
@@ -84,7 +89,10 @@ def build_doc_term_matrix(spacy_docs, spacy_vocab,
         if filter_nums is True:
             bow = ((lex, count) for lex, count in bow if not lex.like_num)
 
-        bow = [(stringstore[lex.orth_], count) for lex, count in bow
+        # the "-1" here and a few lines later is needed to compensate for the
+        # empty string that always occupies index 0 in the stringstore; it causes
+        # an empty first col in the doc-term matrix later on, which we don't want
+        bow = [(stringstore[lex.orth_] - 1, count) for lex, count in bow
                if not lex.is_space]
 
         data.extend(count for _, count in bow)
@@ -92,7 +100,8 @@ def build_doc_term_matrix(spacy_docs, spacy_vocab,
         rows.extend(itertools.repeat(row_idx, times=len(bow)))
 
     doc_term_matrix = sp.coo_matrix((data, (rows, cols)), dtype=np.int64).tocsr()
-    id_to_term = {i: s for i, s in enumerate(stringstore)}
+    # ignore the zero-index empty string in stringstore, as above
+    id_to_term = {i - 1: s for i, s in enumerate(stringstore) if i != 0}
 
     # filter terms by document frequency or information content?
     if max_df != 1.0 or min_df != 1 or max_n_terms is not None:
@@ -124,7 +133,8 @@ def build_doc_term_matrix(spacy_docs, spacy_vocab,
 
 def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
     """
-    TODO
+    Apply inverse document frequency (idf) weighting to a term-frequency (tf)
+    weighted document-term matrix, optionally smoothing idf values.
 
     Args:
         doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
@@ -132,6 +142,11 @@ def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
         smooth_idf (bool, optional): if True, add 1 to all document frequencies,
             equivalent to adding a single document to the corpus containing every
             unique term
+
+    Returns:
+        :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
+            of shape (# docs, # unique terms), where value (i, j) is the tfidf
+            weight of term j in doc i
     """
     dfs = get_doc_freqs(doc_term_matrix, normalized=False)
     n_docs = doc_term_matrix.shape[0]

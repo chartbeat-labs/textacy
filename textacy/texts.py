@@ -16,8 +16,8 @@ from spacy.tokens.token import Token as spacy_token
 from spacy.tokens.span import Span as spacy_span
 from threading import RLock
 
-from textacy import (data, extract, spacy_utils, text_stats, text_utils,
-                     transform, keyterms)
+from textacy import data, extract, spacy_utils, text_stats, text_utils, keyterms
+from textacy.representations import vsm
 
 LOCK = RLock()
 
@@ -592,7 +592,7 @@ class TextCorpus(object):
             doc.corpus_index = i
 
     def to_term_doc_matrix(self, weighting='tf',
-                           normalize=True, binarize=False, smooth_idf=True,
+                           normalize=True, smooth_idf=True, sublinear_tf=False,
                            min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None,
                            ngram_range=(1, 1), include_nes=False,
                            include_nps=False, include_kts=False):
@@ -601,8 +601,8 @@ class TextCorpus(object):
         to a doc, each column j corresponds to a unique term, and matrix values
         (i, j) correspond to the tf or tf-idf weighting of term j in doc i.
         """
-        return transform.corpus_to_term_doc_matrix(
-            self, weighting=weighting, normalize=normalize, binarize=binarize,
-            smooth_idf=smooth_idf, min_df=min_df, max_df=max_df, min_ic=min_ic,
-            max_n_terms=max_n_terms, ngram_range=ngram_range,
-            include_nes=include_nes, include_nps=include_nps, include_kts=include_kts)
+        return vsm.build_doc_term_matrix(
+            self, self.spacy_vocab, weighting=weighting, normalize=normalize,
+            smooth_idf=smooth_idf, sublinear_tf=sublinear_tf
+             min_df=min_df, max_df=max_df, min_ic=min_ic,
+            max_n_terms=max_n_terms)

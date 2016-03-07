@@ -6,13 +6,13 @@ triples, and acronyms.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from collections import defaultdict
+from itertools import takewhile
+from operator import itemgetter
 import re
 
-from collections import defaultdict
 from cytoolz import itertoolz
-from itertools import takewhile
 from numpy import nanmin, nanmax, zeros, NaN
-from operator import itemgetter
 from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
 
 from textacy import spacy_utils, text_utils
