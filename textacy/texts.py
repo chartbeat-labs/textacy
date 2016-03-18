@@ -603,6 +603,6 @@ class TextCorpus(object):
         """
         return vsm.build_doc_term_matrix(
             self, self.spacy_vocab, weighting=weighting, normalize=normalize,
-            smooth_idf=smooth_idf, sublinear_tf=sublinear_tf
-             min_df=min_df, max_df=max_df, min_ic=min_ic,
+            smooth_idf=smooth_idf, sublinear_tf=sublinear_tf,
+            min_df=min_df, max_df=max_df, min_ic=min_ic,
             max_n_terms=max_n_terms)

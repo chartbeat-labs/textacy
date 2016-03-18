@@ -10,6 +10,6 @@ numpy>=1.8.0
 pyphen
 scipy
 scikit-learn>=0.17.0
-spacy>=0.100.5
+spacy>=0.100.6
 unidecode
 cymem==1.30

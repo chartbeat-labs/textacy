@@ -6,7 +6,9 @@ from functools import partial
 import gzip
 import io
 import json
+from numpy import load as np_load
 import os
+from scipy.sparse import csc_matrix, csr_matrix
 
 import ijson
 from spacy.tokens.doc import Doc as SpacyDoc
@@ -148,6 +150,26 @@ def read_spacy_docs(spacy_vocab, filename):
     with io.open(filename, mode='rb') as f:
         for bytes_string in SpacyDoc.read_bytes(f):
             yield SpacyDoc(spacy_vocab).from_bytes(bytes_string)
+
+
+def read_sparse_csr_matrix(filename):
+    """
+    Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
+    at ``filename``, and return an instantiated ``scipy.sparse.csr_matrix``.
+    """
+    npz_file = np_load(filename)
+    return csr_matrix((npz_file['data'], npz_file['indices'], npz_file['indptr']),
+                      shape=npz_file['shape'])
+
+
+def read_sparse_csc_matrix(filename):
+    """
+    Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
+    at ``filename``, and return an instantiated ``scipy.sparse.csc_matrix``.
+    """
+    npz_file = np_load(filename)
+    return csc_matrix((npz_file['data'], npz_file['indices'], npz_file['indptr']),
+                      shape=npz_file['shape'])
 
 
 def get_filenames_in_dir(dirname, file_type=None, subdirs=False):
