@@ -20,10 +20,10 @@ from textacy.representations import network, vsm
 
 class TextDoc(object):
     """
-    Pair the content of a document with its associated metadata, where the content
-    has been tokenized, tagged, parsed, etc. by spaCy. Also keep references to the
-    id-to-token mapping used by spaCy to efficiently represent the content. If
-    initialized from plain text, this processing is performed automatically.
+    Pairing of the content of a document with its associated metadata, where the
+    content has been tokenized, tagged, parsed, etc. by spaCy. Also keep references
+    to the id-to-token mapping used by spaCy to efficiently represent the content.
+    If initialized from plain text, this processing is performed automatically.
 
     ``TextDoc`` also provides a convenient interface to information extraction,
     different doc representations, statistical measures of the content, and more.
@@ -356,7 +356,7 @@ class TextDoc(object):
     # STATISTICS #
 
     def term_counts(self, lemmatize='auto', ngram_range=(1, 1),
-                    include_nes=False, include_nps=False, include_kts=False):
+                    include_nes=False, include_ncs=False, include_kts=False):
         """
         Get the number of occurrences ("counts") of each unique term in doc;
         terms may be words, n-grams, named entities, noun phrases, and key terms.
@@ -368,7 +368,7 @@ class TextDoc(object):
             ngram_range (tuple(int), optional): (min n, max n) values for n-grams
                 to include in terms list; default (1, 1) only includes unigrams
             include_nes (bool, optional): if True, include named entities in terms list
-            include_nps (bool, optional): if True, include noun phrases in terms list
+            include_ncs (bool, optional): if True, include noun chunks in terms list
             include_kts (bool, optional): if True, include key terms in terms list
 
         Returns:
@@ -392,9 +392,9 @@ class TextDoc(object):
         if include_nes is True:
             self._term_counts = self._term_counts | Counter(
                 get_id(ne) for ne in self.named_entities())
-        if include_nps is True:
+        if include_ncs is True:
             self._term_counts = self._term_counts | Counter(
-                get_id(np) for np in self.noun_chunks())
+                get_id(nc) for nc in self.noun_chunks())
         if include_kts is True:
             # HACK: key terms are currently returned as strings
             # TODO: cache key terms, and return them as spacy spans
@@ -468,21 +468,29 @@ class TextDoc(object):
         """The number of paragraphs in the document, as delimited by ``pattern``."""
         return sum(1 for _ in re.finditer(pattern, self.text)) + 1
 
+    @property
     def readability_stats(self):
         return text_stats.readability_stats(self)
 
 
 class TextCorpus(object):
     """
-    A collection of :class:`TextDoc <textacy.texts.TextDoc>` s with some syntactic
-    sugar and functions to compute corpus statistics.
+    An ordered collection of :class:`TextDoc <textacy.texts.TextDoc>` s, all of
+    the same language and sharing a single spaCy pipeline and vocabulary. Tracks
+    overall corpus statistics and provides a convenient interface to alternate
+    corpus representations.
 
-    Initalize with a particular language.
-    Add documents to corpus by :meth:`TextCorpus.add_text() <textacy.texts.TextCorpus.add_text>`.
+    Args:
+        lang (str): 2-letter code of corpus' language, used to initialize spaCy;
+            see https://cloud.google.com/translate/v2/using_rest#language-params
+
+    Add texts to corpus one-by-one with :meth:`TextCorpus.add_text() <textacy.texts.TextCorpus.add_text>`,
+    or all at once with :meth:`TextCorpus.from_texts() <textacy.texts.TextCorpus.from_texts>`.
+    Can also add already-instantiated TextDocs via :meth:`TextCorpus.add_doc() <textacy.texts.TextCorpus.add_doc>`.
 
     Iterate over corpus docs with ``for doc in TextCorpus``. Access individual docs
     by index (e.g. ``TextCorpus[0]`` or ``TextCorpus[0:10]``) or by boolean condition
-    specified by lambda function (e.g. ``TextCorpus.get_docs(lambda x: len(x) > 100)``).
+    specified by a function (e.g. ``TextCorpus.get_docs(lambda x: len(x) > 100)``).
     """
     def __init__(self, lang):
         self.lang = lang
@@ -652,7 +660,7 @@ class TextCorpus(object):
         for i, doc in enumerate(self):
             doc.corpus_index = i
 
-    def to_term_doc_matrix(self, weighting='tf',
+    def as_term_doc_matrix(self, weighting='tf', lemmatize=True,
                            normalize=True, smooth_idf=True, sublinear_tf=False,
                            min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None,
                            ngram_range=(1, 1), include_nes=False,
@@ -663,7 +671,8 @@ class TextCorpus(object):
         (i, j) correspond to the tf or tf-idf weighting of term j in doc i.
         """
         return vsm.build_doc_term_matrix(
-            self, self.spacy_vocab, weighting=weighting, normalize=normalize,
-            smooth_idf=smooth_idf, sublinear_tf=sublinear_tf,
+            self, self.spacy_vocab,
+            lemmatize=lemmatize, weighting=weighting,
+            normalize=normalize, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf,
             min_df=min_df, max_df=max_df, min_ic=min_ic,
             max_n_terms=max_n_terms)

@@ -5,12 +5,14 @@ import bz2
 from functools import partial
 import gzip
 import io
+from itertools import tee, starmap
 import json
-from numpy import load as np_load
 import os
-from scipy.sparse import csc_matrix, csr_matrix
 
+from cytoolz.itertoolz import cons, pluck
 import ijson
+from numpy import load as np_load
+from scipy.sparse import csc_matrix, csr_matrix
 from spacy.tokens.doc import Doc as SpacyDoc
 
 
@@ -107,6 +109,48 @@ def read_json_mash(filename, mode='rt', encoding=None, buffersize=2048):
                 # not enough data to decode => read another chunk
                 except ValueError:
                     break
+
+
+def split_content_and_metadata(items, content_field, itemwise=True):
+    """
+    Split content (text) from associated metadata, but keep them paired together,
+    for convenient loading into a ``TextDoc`` (with ``itemwise = True``) or
+    ``TextCorpus.from_texts()`` (with ``itemwise = False``).
+
+    Args:
+        items (iterable(dict)): an iterable of dicts, e.g. as read from disk by
+            :func:`read_json_lines() <textacy.fileio.read.read_json_lines>`
+        content_field (str): key of the field in each item containing content (text)
+        itemwise (bool, optional): if True, content + metadata are paired item-wise
+            as an iterable of (content, metadata) 2-tuples; if False, content +
+            metadata are paired by position in two parallel iterables in the form of
+            a (iterable(content), iterable(metadata)) 2-tuple
+
+    Returns:
+        generator(tuple(str, dict)): if ``itemwise = True``
+        tuple(iterable(str), iterable(dict)): if ``itemwise = False``
+    """
+    if itemwise is True:
+        return ((item.pop(content_field), item) for item in items)
+    else:
+        return _unzip(((item.pop(content_field), item) for item in docs))
+
+
+def _unzip(seq):
+    """
+    Borrowed from ``toolz.sandbox.core.unzip``, but using cytoolz instead of toolz
+    to avoid the additional dependency.
+    """
+    seq = iter(seq)
+    # check how many iterators we need
+    try:
+        first = tuple(next(seq))
+    except StopIteration:
+        return tuple()
+    # and create them
+    niters = len(first)
+    seqs = tee(cons(first, seq), niters)
+    return tuple(starmap(pluck, enumerate(seqs)))
 
 
 def read_file(filename, mode='rt', encoding=None):
