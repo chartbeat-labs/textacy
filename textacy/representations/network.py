@@ -8,6 +8,8 @@ import itertools
 from cytoolz import itertoolz
 import networkx as nx
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
+from spacy.tokens.span import Span as spacy_span
+from spacy.tokens.token import Token as spacy_token
 
 from textacy.compat import str
 from textacy import extract
@@ -47,6 +49,8 @@ def terms_to_semantic_network(terms,
     if window_width < 2:
         raise ValueError('Window width must be >= 2')
 
+    # when len(terms) < window_width, cytoolz throws a StopIteration error
+    window_width = min(window_width, len(terms))
     if isinstance(terms[0], str):
         windows = itertoolz.sliding_window(window_width, terms)
     elif isinstance(terms[0], spacy_token):
