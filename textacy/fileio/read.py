@@ -1,7 +1,8 @@
 """
 Module with functions for reading content from disk in common formats.
 """
-import bz2
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 from functools import partial
 import gzip
 import io
@@ -15,6 +16,7 @@ from numpy import load as np_load
 from scipy.sparse import csc_matrix, csr_matrix
 from spacy.tokens.doc import Doc as SpacyDoc
 
+from textacy.compat import bzip_open
 
 JSON_DECODER = json.JSONDecoder()
 
@@ -115,25 +117,43 @@ def split_content_and_metadata(items, content_field, itemwise=True):
     """
     Split content (text) from associated metadata, but keep them paired together,
     for convenient loading into a ``TextDoc`` (with ``itemwise = True``) or
-    ``TextCorpus.from_texts()`` (with ``itemwise = False``).
+    ``TextCorpus.from_texts()`` (with ``itemwise = False``). Output format depends
+    on the form of the input items (dicts vs. lists) and the value for ``itemwise``.
 
     Args:
-        items (iterable(dict)): an iterable of dicts, e.g. as read from disk by
-            :func:`read_json_lines() <textacy.fileio.read.read_json_lines>`
-        content_field (str): key of the field in each item containing content (text)
+        items (iterable(dict) or iterable(list)): an iterable of dicts, e.g. as
+            read from disk by :func:`read_json_lines() <textacy.fileio.read.read_json_lines>`,
+            or an iterable of lists, e.g. as streamed from a Wikipedia database dump::
+
+                >>> ([pageid, title, text] for pageid, title, text in
+                ...  textacy.corpora.wikipedia.get_plaintext_pages(<WIKIFILE>))
+
+        content_field (str or int): if str, key in each dict item whose value is
+            the item's content (text); if int, index of the value in each list item
+            corresponding to the item's content (text)
         itemwise (bool, optional): if True, content + metadata are paired item-wise
             as an iterable of (content, metadata) 2-tuples; if False, content +
             metadata are paired by position in two parallel iterables in the form of
             a (iterable(content), iterable(metadata)) 2-tuple
 
     Returns:
-        generator(tuple(str, dict)): if ``itemwise = True``
-        tuple(iterable(str), iterable(dict)): if ``itemwise = False``
+        generator(tuple(str, dict)): if ``itemwise`` is True and ``items`` is an
+            iterable of dicts; the first element in each tuple is the item's content,
+            the second element is its metadata as a dictionary
+        generator(tuple(str, list)): if ``itemwise`` is True and ``items`` is an
+            iterable of lists; the first element in each tuple is the item's content,
+            the second element is its metadata as a list
+        tuple(iterable(str), iterable(dict)): if ``itemwise`` is False and ``items``
+            is an iterable of dicts; the first element of the tuple is an iterable
+            of items' contents, the second is an iterable of their metadata dictss
+        tuple(iterable(str), iterable(list)): if ``itemwise`` is False and ``items``
+            is an iterable of lists; the first element of the tuple is an iterable
+            of items' contents, the second is an iterable of their metadata lists
     """
     if itemwise is True:
         return ((item.pop(content_field), item) for item in items)
     else:
-        return _unzip(((item.pop(content_field), item) for item in docs))
+        return _unzip(((item.pop(content_field), item) for item in items))
 
 
 def _unzip(seq):
@@ -159,10 +179,14 @@ def read_file(filename, mode='rt', encoding=None):
     automatically.
     """
     _open = gzip.open if filename.endswith('.gz') \
-        else bz2.open if filename.endswith('.bz2') \
+        else bzip_open if filename.endswith('.bz2') \
         else io.open
-    with _open(filename, mode=mode, encoding=encoding) as f:
-        return f.read()
+    try:
+        with _open(filename, mode=mode, encoding=encoding) as f:
+            return f.read()
+    except TypeError:  # Py2's bz2.BZ2File doesn't accept `encoding` ...
+        with _open(filename, mode=mode) as f:
+            return f.read()
 
 
 def read_file_lines(filename, mode='rt', encoding=None):
@@ -171,11 +195,16 @@ def read_file_lines(filename, mode='rt', encoding=None):
     are handled automatically.
     """
     _open = gzip.open if filename.endswith('.gz') \
-        else bz2.open if filename.endswith('.bz2') \
+        else bzip_open if filename.endswith('.bz2') \
         else io.open
-    with _open(filename, mode=mode, encoding=encoding) as f:
-        for line in f:
-            yield line
+    try:
+        with _open(filename, mode=mode, encoding=encoding) as f:
+            for line in f:
+                yield line
+    except TypeError:  # Py2's bz2.BZ2File doesn't accept `encoding` ...
+        with _open(filename, mode=mode) as f:
+            for line in f:
+                yield line
 
 
 def read_spacy_docs(spacy_vocab, filename):

@@ -106,6 +106,8 @@ def ngrams(doc, n,
 
     ngrams_ = (doc[i: i + n]
                for i in range(len(doc) - n + 1))
+    ngrams_ = (ngram for ngram in ngrams_
+               if not any(w.is_space for w in ngram))
     if filter_stops is True:
         ngrams_ = (ngram for ngram in ngrams_
                    if not ngram[0].is_stop and not ngram[-1].is_stop)

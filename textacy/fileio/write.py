@@ -1,6 +1,8 @@
 """
 Module with functions for writing content to disk in common formats.
 """
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import bz2
 import gzip
 import io
@@ -11,6 +13,8 @@ from scipy.sparse import csc_matrix, csr_matrix
 
 import ijson
 from spacy.tokens.doc import Doc as SpacyDoc
+
+from textacy.compat import bzip_open
 
 
 def _make_dirs(filename):
@@ -71,10 +75,14 @@ def write_file(content, filename, mode='wt', encoding=None):
     """
     _make_dirs(filename)
     _open = gzip.open if filename.endswith('.gz') \
-        else bz2.open if filename.endswith('.bz2') \
+        else bzip_open if filename.endswith('.bz2') \
         else io.open
-    with _open(filename, mode=mode, encoding=encoding) as f:
-        f.write(content)
+    try:
+        with _open(filename, mode=mode, encoding=encoding) as f:
+            f.write(content)
+    except TypeError:  # Py2's bz2.BZ2File doesn't accept `encoding` ...
+        with _open(filename, mode=mode) as f:
+            f.write(content)
 
 
 def write_file_lines(lines, filename, mode='wt', encoding=None):
@@ -85,12 +93,16 @@ def write_file_lines(lines, filename, mode='wt', encoding=None):
     """
     _make_dirs(filename)
     _open = gzip.open if filename.endswith('.gz') \
-        else bz2.open if filename.endswith('.bz2') \
+        else bzip_open if filename.endswith('.bz2') \
         else io.open
-    with _open(filename, mode=mode, encoding=encoding) as f:
-        for line in lines:
-            f.write(line +'\n')
-
+    try:
+        with _open(filename, mode=mode, encoding=encoding) as f:
+            for line in lines:
+                f.write(line +'\n')
+    except TypeError:  # Py2's bz2.BZ2File doesn't accept `encoding` ...
+        with _open(filename, mode=mode) as f:
+            for line in lines:
+                f.write(line +'\n')
 
 def write_spacy_docs(spacy_docs, filename):
     """

@@ -68,9 +68,9 @@ def _parse_content(content, parser, metadata=True):
                 if section_idx == 0:
                     sec['level'] = 1
             # strip out references, tables, and file/image links
-            for obj in section.ifilter_tags(matches=_filter_tags, recursive=False):
+            for obj in section.ifilter_tags(matches=_filter_tags, recursive=True):
                 section.remove(obj)
-            for obj in section.filter_wikilinks():
+            for obj in section.ifilter_wikilinks(recursive=True):
                 try:
                     obj_title = str(obj.title)
                     if obj_title.startswith('File:') or obj_title.startswith('Image:'):

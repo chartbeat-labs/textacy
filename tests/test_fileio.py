@@ -9,6 +9,7 @@ from scipy import sparse as sp
 from spacy import attrs
 
 from textacy import data, fileio
+from textacy.compat import PY2, str
 
 
 class FileIOTestCase(unittest.TestCase):
@@ -66,8 +67,10 @@ class FileIOTestCase(unittest.TestCase):
     def test_read_write_file_lines_bz2(self):
         expected = [sent.text for sent in self.spacy_doc.sents]
         filename = os.path.join(self.tempdir, 'test_read_write_file_lines.txt.bz2')
-        fileio.write_file_lines(expected, filename)
-        observed = [line.strip() for line in fileio.read_file_lines(filename)]
+        fileio.write_file_lines(expected, filename,
+                                mode='wb' if PY2 else 'wt')
+        observed = [line.strip() for line
+                    in fileio.read_file_lines(filename, mode='r' if PY2 else 'rt')]
         self.assertEqual(observed, expected)
 
     def test_read_write_json(self):
