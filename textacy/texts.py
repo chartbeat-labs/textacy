@@ -5,10 +5,11 @@ collections (corpora).
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from collections import Counter
 import copy
 import re
 
-from collections import Counter
+from cytoolz import itertoolz
 from spacy.tokens.doc import Doc as sdoc
 from spacy.tokens.token import Token as stoken
 from spacy.tokens.span import Span as sspan
@@ -141,7 +142,7 @@ class TextDoc(object):
     def as_bag_of_terms(self, weighting='tf', normalized=True, binary=False,
                         idf=None, lemmatize='auto',
                         ngram_range=(1, 1),
-                        include_nes=False, include_nps=False, include_kts=False):
+                        include_nes=False, include_ncs=False, include_kts=False):
         """
         Represent doc as a "bag of terms", an unordered set of (term id, term weight)
         pairs, where term weight may be by TF or TF*IDF.
@@ -156,7 +157,7 @@ class TextDoc(object):
             ngram_range (tuple(int), optional): (min n, max n) values for n-grams
                 to include in terms list; default (1, 1) only includes unigrams
             include_nes (bool, optional): if True, include named entities in terms list
-            include_nps (bool, optional): if True, include noun phrases in terms list
+            include_ncs (bool, optional): if True, include noun chunks in terms list
             include_kts (bool, optional): if True, include key terms in terms list
             normalized (bool, optional): if True, normalize term freqs by the
                 total number of unique terms
@@ -168,7 +169,7 @@ class TextDoc(object):
         """
         term_weights = self.term_counts(
             lemmatize=lemmatize, ngram_range=ngram_range, include_nes=include_nes,
-            include_nps=include_nps, include_kts=include_kts)
+            include_ncs=include_ncs, include_kts=include_kts)
 
         if binary is True:
             term_weights = Counter({key: 1 for key in term_weights.keys()})
@@ -221,6 +222,79 @@ class TextDoc(object):
         else:
             msg = 'nodes "{}" not valid; must be in {}'.format(nodes, {'terms', 'sents'})
             raise ValueError(msg)
+
+    def as_terms_list(self, words=True, ngrams=(2, 3), named_entities=True,
+                      dedupe=True, lemmatize=True, **kwargs):
+        """
+        Represent doc as a sequence of terms -- which aren't necessarily in order --
+        including words (unigrams), ngrams (for a range of n), and named entities.
+        NOTE: Despite the name, this is a generator function; to get a *list* of terms,
+        just wrap the call like ``list(doc.as_terms_list())``.
+
+        Args:
+            words (bool, optional): if True (default), include words in the terms list
+            ngrams (tuple(int), optional): include a range of ngrams in the terms list;
+                default is ``(2, 3)``, i.e. bigrams and trigrams are included; if
+                ngrams aren't wanted, set to False-y
+
+                NOTE: if n=1 (words) is included here and ``words`` is True, n=1 is skipped
+            named_entities (bool, optional): if True (default), include named entities
+                in the terms list
+            dedupe (bool, optional): if True (default), named entities are added first
+                to the terms list, and any words or ngrams that exactly overlap with
+                previously added entities are skipped to prevent double-counting;
+                since words and ngrams (n > 1) are inherently exclusive, this only
+                applies to entities; you almost certainly want this to be True
+            lemmatize (bool, optional): if True (default), lemmatize all terms;
+                otherwise, return the text as it appeared
+            kwargs:
+                filter_stops (bool)
+                filter_punct (bool)
+                filter_nums (bool)
+                good_pos_tags (set(str))
+                bad_pos_tags (set(str))
+                min_freq (int)
+                good_ne_types (set(str))
+                bad_ne_types (set(str))
+                drop_determiners (bool)
+
+        Yields:
+            str: the next term in the terms list
+        """
+        all_terms = []
+        # special case: ensure that named entities aren't double-counted when
+        # adding words or ngrams that were already added as named entities
+        if dedupe is True and named_entities is True and (words is True or ngrams):
+            ents = list(self.named_entities(**kwargs))
+            ent_idxs = {(ent.start, ent.end) for ent in ents}
+            all_terms.append(ents)
+            if words is True:
+                all_terms.append((word for word in self.words(**kwargs)
+                                  if (word.idx, word.idx + 1) not in ent_idxs))
+            if ngrams:
+                for n in range(ngrams[0], ngrams[1] + 1):
+                    if n == 1 and words is True:
+                        continue
+                    all_terms.append((ngram for ngram in self.ngrams(n, **kwargs)
+                                      if (ngram.start, ngram.end) not in ent_idxs))
+        # otherwise add everything in, duplicates and all
+        else:
+            if named_entities is True:
+                all_terms.append(self.named_entities(**kwargs))
+            if words is True:
+                all_terms.append(self.words(**kwargs))
+            if ngrams:
+                for n in range(ngrams[0], ngrams[1] + 1):
+                    if n == 1 and words is True:
+                        continue
+                    all_terms.append(self.ngrams(n, **kwargs))
+
+        if lemmatize is True:
+            for term in itertoolz.concat(all_terms):
+                yield term.lemma_
+        else:
+            for term in itertoolz.concat(all_terms):
+                yield term.text
 
     ##########################
     # INFORMATION EXTRACTION #
@@ -451,18 +525,19 @@ class TextDoc(object):
         return len(self.spacy_doc)
 
     @property
+    def n_words(self):
+        """
+        The number of words in the document -- i.e. the number of tokens, excluding
+        punctuation and whitespace.
+        """
+        return sum(1 for _ in self.words(filter_stops=False,
+                                         filter_punct=True,
+                                         filter_nums=False))
+
+    @property
     def n_sents(self):
         """The number of sentences in the document."""
         return sum(1 for _ in self.spacy_doc.sents)
-
-    def n_words(self, filter_stops=False, filter_punct=True, filter_nums=False):
-        """
-        The number of words in the document, with optional filtering of stop words,
-        punctuation (on by default), and numbers.
-        """
-        return sum(1 for _ in self.words(filter_stops=filter_stops,
-                                         filter_punct=filter_punct,
-                                         filter_nums=filter_nums))
 
     def n_paragraphs(self, pattern=r'\n\n+'):
         """The number of paragraphs in the document, as delimited by ``pattern``."""
@@ -660,19 +735,19 @@ class TextCorpus(object):
         for i, doc in enumerate(self):
             doc.corpus_index = i
 
-    def as_term_doc_matrix(self, weighting='tf', lemmatize=True,
+    def as_doc_term_matrix(self, terms_lists, weighting='tf',
                            normalize=True, smooth_idf=True, sublinear_tf=False,
-                           min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None,
-                           ngram_range=(1, 1), include_nes=False,
-                           include_nps=False, include_kts=False):
+                           min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None):
         """
         Transform corpus into a sparse CSR matrix, where each row i corresponds
         to a doc, each column j corresponds to a unique term, and matrix values
         (i, j) correspond to the tf or tf-idf weighting of term j in doc i.
+
+        .. seealso:: :func:`build_doc_term_matrix <textacy.representations.vsm.build_doc_term_matrix>`
         """
-        return vsm.build_doc_term_matrix(
-            self, self.spacy_vocab,
-            lemmatize=lemmatize, weighting=weighting,
+        self.doc_term_matrix, self.id_to_term = vsm.build_doc_term_matrix(
+            terms_lists, weighting=weighting,
             normalize=normalize, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf,
             min_df=min_df, max_df=max_df, min_ic=min_ic,
             max_n_terms=max_n_terms)
+        return (self.doc_term_matrix, self.id_to_term)

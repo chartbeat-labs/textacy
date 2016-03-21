@@ -3,6 +3,8 @@ Represent a collection of spacy-processed texts as a document-term matrix of sha
 (# docs, # unique terms), with a variety of filtering, normalization, and term
 weighting schemes for the values.
 """
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import collections
 import itertools
 
@@ -10,31 +12,31 @@ import numpy as np
 import scipy.sparse as sp
 from sklearn.preprocessing import binarize as binarize_mat
 from sklearn.preprocessing import normalize as normalize_mat
-from spacy import attrs
 from spacy.strings import StringStore
 
-from textacy.texts import TextCorpus
 
-
-def build_doc_term_matrix(spacy_docs, spacy_vocab,
-                          lemmatize=True,
-                          filter_stops=True, filter_punct=True, filter_nums=False,
+def build_doc_term_matrix(terms_lists,
                           weighting='tf',
-                          normalize=True, sublinear_tf=False, smooth_idf=True,
+                          normalize=False, sublinear_tf=False, smooth_idf=True,
                           min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None):
     """
     Build a document-term matrix of shape (# docs, # unique terms) from a sequence
-    of spacy docs, optionally lemmatizing and filtering terms, with a variety of
+    of documents, each represented as a sequence of (str) terms, with a variety of
     weighting and normalization schemes for the matrix values.
 
     Args:
-        spacy_docs (iterable(``spacy.Doc``) or :class:`TextCorpus <textacy.texts.TextCorpus>`)
-        spacy_vocab (``spacy.Vocab``)
-        lemmatize (bool, optional): if True, lemmatize all terms; if False, use
-            the forms of the terms as they appear in text
-        filter_stops (bool, optional): if True, filter out stop words
-        filter_punct (bool, optional): if True, filter out punctuation terms
-        filter_nums (bool, optional): if True, filter out number-like terms
+        terms_lists (iterable(iterable(str))): a sequence of documents, each as a
+            sequence of (str) terms; note that the terms in each doc are to be
+            counted, so these probably shouldn't be sets containing *unique* terms;
+            example inputs::
+
+                >>> ([tok.lemma_ for tok in spacy_doc]
+                ...  for spacy_doc in spacy_docs)
+                >>> ((ne.text for ne in doc.named_entities())
+                ...  for doc in textcorpus)
+                >>> (tuple(ng.text for ng in itertools.chain.from_iterable(doc.ngrams(i) for i in range(1, 3)))
+                ...  for doc in docs)
+
         weighting (str {'tf', 'tfidf', 'binary'}, optional): if 'tf', matrix values
             (i, j) correspond to the number of occurrences of term j in doc i; if
             'tfidf', term frequencies (tf) are multiplied by their corresponding
@@ -69,39 +71,24 @@ def build_doc_term_matrix(spacy_docs, spacy_vocab,
         dict: id to term mapping, where keys are unique integers as term ids and
             values are corresponding strings
     """
-    if isinstance(spacy_docs, TextCorpus):
-        spacy_docs = (textdoc.spacy_doc for textdoc in spacy_docs)
-
     stringstore = StringStore()
     data = []; rows = []; cols = []
-    for row_idx, spacy_doc in enumerate(spacy_docs):
-        if lemmatize is True:
-            bow = ((spacy_vocab[tok_id], count)
-                   for tok_id, count in spacy_doc.count_by(attrs.LEMMA).items())
-        else:
-            bow = ((spacy_vocab[tok_id], count)
-                   for tok_id, count in spacy_doc.count_by(attrs.ORTH).items())
+    for row_idx, terms_list in enumerate(terms_lists):
 
-        if filter_stops is True:
-            bow = ((lex, count) for lex, count in bow if not lex.is_stop)
-        if filter_punct is True:
-            bow = ((lex, count) for lex, count in bow if not lex.is_punct)
-        if filter_nums is True:
-            bow = ((lex, count) for lex, count in bow if not lex.like_num)
-
-        # the "-1" here and a few lines later is needed to compensate for the
-        # empty string that always occupies index 0 in the stringstore; it causes
-        # an empty first col in the doc-term matrix later on, which we don't want
-        bow = [(stringstore[lex.orth_] - 1, count) for lex, count in bow
-               if not lex.is_space]
+        # an empty string always occupies index 0 in the stringstore, which causes
+        # an empty first col in the doc-term matrix that we don't want;
+        # so, we subtract 1 from the stringstore's assigned id
+        bow = tuple((stringstore[term] - 1, count)
+                    for term, count in collections.Counter(terms_list).items())
 
         data.extend(count for _, count in bow)
-        cols.extend(tok_id for tok_id, _ in bow)
+        cols.extend(term_id for term_id, _ in bow)
         rows.extend(itertools.repeat(row_idx, times=len(bow)))
 
-    doc_term_matrix = sp.coo_matrix((data, (rows, cols)), dtype=np.int64).tocsr()
-    # ignore the zero-index empty string in stringstore, as above
-    id_to_term = {i - 1: s for i, s in enumerate(stringstore) if i != 0}
+    doc_term_matrix = sp.coo_matrix((data, (rows, cols)), dtype=int).tocsr()
+    # ignore the 0-index empty string in stringstore, as above
+    id_to_term = {term_id - 1: term for term_id, term in enumerate(stringstore)
+                  if term_id != 0}
 
     # filter terms by document frequency or information content?
     if max_df != 1.0 or min_df != 1 or max_n_terms is not None:
