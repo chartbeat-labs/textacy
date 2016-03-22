@@ -79,7 +79,8 @@ def build_doc_term_matrix(terms_lists,
         # an empty first col in the doc-term matrix that we don't want;
         # so, we subtract 1 from the stringstore's assigned id
         bow = tuple((stringstore[term] - 1, count)
-                    for term, count in collections.Counter(terms_list).items())
+                    for term, count in collections.Counter(terms_list).items()
+                    if term)
 
         data.extend(count for _, count in bow)
         cols.extend(term_id for term_id, _ in bow)

@@ -245,16 +245,22 @@ def read_sparse_csc_matrix(filename):
                       shape=npz_file['shape'])
 
 
-def get_filenames_in_dir(dirname, file_type=None, subdirs=False):
+def get_filenames(dirname, match_substr=None, ignore_substr=None,
+                  extension=None, ignore_invisible=True, recursive=False):
     """
-    Yield the full names of files under directory ``dirname``, optionally
-    filtering for a certain file type and crawling all subdirectories.
+    Yield the full paths of files on disk under directory ``dirname``, optionally
+    filtering for or against particular substrings or file extensions. and crawling all subdirectories.
 
     Args:
         dirname (str): /path/to/dir on disk where files to read are saved
-        file_type (str, optional): if files only of a certain type are wanted,
+        match_substr (str, optional): match only files with given substring
+        ignore_substr (str, optional): match only files *without* given substring
+        extension (str, optional): if files only of a certain type are wanted,
             specify the file extension (e.g. ".txt")
-        subdirs (bool, optional): if True, iterate through all files in subdirectories
+        ignore_invisible (bool, optional): if True, ignore invisible files, i.e.
+            those that begin with a period
+        recursive (bool, optional): if True, iterate recursively through all files
+            in subdirectories; otherwise, only return files directly under ``dirname``
 
     Yields:
         str: next file's name, including the full path on disk
@@ -265,15 +271,29 @@ def get_filenames_in_dir(dirname, file_type=None, subdirs=False):
     if not os.path.exists(dirname):
         raise IOError('directory {} does not exist'.format(dirname))
 
-    for dirpath, dirnames, filenames in os.walk(dirname):
-        if dirpath.startswith('.'):
-            continue
-        for filename in filenames:
-            if filename.startswith('.'):
-                continue
-            if file_type and not file_type.endswith(file_type):
-                continue
-            yield os.path.join(dirpath, filename)
+    def is_good_file(filename, filepath):
+        if ignore_invisible and filename.startswith('.'):
+            return False
+        if match_substr and match_substr not in filename:
+            return False
+        if ignore_substr and ignore_substr in filename:
+            return False
+        if extension and not os.path.splitext(filename)[-1] == extension:
+            return False
+        if not os.path.isfile(os.path.join(filepath, filename)):
+            return False
+        return True
 
-        if subdirs is False:
-            break
+    if recursive is True:
+        for dirpath, dirnames, filenames in os.walk(dirname):
+            if ignore_invisible and dirpath.startswith('.'):
+                continue
+            for filename in filenames:
+                if filename.startswith('.'):
+                    continue
+                if is_good_file(filename, dirpath):
+                    yield os.path.join(dirpath, filename)
+    else:
+        for filename in os.listdir(dirname):
+            if is_good_file(filename, dirname):
+                yield os.path.join(dirname, filename)
