@@ -1,1 +1,1 @@
-from textacy.corpora import wikipedia
+from . import wikipedia

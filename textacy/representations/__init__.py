@@ -1,1 +1,1 @@
-from textacy.representations import network, vsm
+from . import network, vsm
