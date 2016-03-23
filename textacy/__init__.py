@@ -6,12 +6,13 @@ import logging
 from textacy import corpora
 from textacy import fileio
 from textacy import representations
+from textacy import tm
 # top-level modules
 from textacy import compat, data, math_utils, regexes_etc
 from textacy import lexicon_methods, preprocess, text_stats, text_utils
 from textacy import spacy_utils
 from textacy import extract
-from textacy import export, keyterms#, topic_modeling
+from textacy import export, keyterms
 from textacy import texts
 
 from textacy.texts import TextDoc, TextCorpus
