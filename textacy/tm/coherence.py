@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 """
+Work-in-progress, use at your own risk.
+
 References:
     .. Röder, Michael, Andreas Both, and Alexander Hinneburg. "Exploring the
         space of topic coherence measures." Proceedings of the eighth ACM

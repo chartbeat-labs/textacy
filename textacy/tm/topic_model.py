@@ -22,11 +22,11 @@ Train and apply a topic model to vectorized texts. For example::
     ...     print('topic {}:'.format(topic_idx), '   '.join(top_terms))
     >>> for topic_idx, top_docs in model.top_topic_docs(doc_topic_matrix, top_n=5):
     ...     print('\n{}'.format(topic_idx))
-    ...     for j in docs:
+    ...     for j in top_docs:
     ...         print(corpus[j].metadata['title'])
     >>> for doc_idx, topics in model.top_doc_topics(doc_topic_matrix, docs=range(5), top_n=2):
     ...     print('{}: {}'.format(corpus[doc_idx].metadata['title'], topics))
-    >>> for i, val in enumerate(model.get_topic_weights(doc_topic_matrix)):
+    >>> for i, val in enumerate(model.topic_weights(doc_topic_matrix)):
     ...     print(i, val)
     >>> # assess topic quality through a coherence metric
     >>> # WIP...
@@ -67,7 +67,7 @@ class TopicModel(object):
         if isinstance(model, (NMF, LatentDirichletAllocation, TruncatedSVD)):
             self.model = model
         else:
-            self.init_model(model, n_topics=10, **kwargs)
+            self.init_model(model, n_topics=n_topics, **kwargs)
 
     def init_model(self, model, n_topics=10, **kwargs):
         if model == 'nmf':
@@ -114,7 +114,7 @@ class TopicModel(object):
         if isinstance(self.model, LatentDirichletAllocation):
             self.model.partial_fit(doc_term_matrix)
         else:
-            raise TypeError('only LatentDirichletAllocation models have partial fit')
+            raise TypeError('only LatentDirichletAllocation models have partial_fit')
 
     def transform(self, doc_term_matrix):
         return self.model.transform(doc_term_matrix)
@@ -270,7 +270,7 @@ class TopicModel(object):
                 yield (doc_idx,
                        tuple((topic_idx, doc_topic_matrix[doc_idx, topic_idx]) for topic_idx in top_topic_idxs))
 
-    def get_topic_weights(self, doc_topic_matrix):
+    def topic_weights(self, doc_topic_matrix):
         """
         Get the overall weight of topics across an entire corpus. Note: Values depend
         on whether topic weights per document in ``doc_topic_matrix`` were normalized,
