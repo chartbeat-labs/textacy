@@ -18,16 +18,18 @@ Train and apply a topic model to vectorized texts. For example::
     >>> model.fit(doc_term_matrix)
     >>> # transform the corpus and interpret our model
     >>> doc_topic_matrix = model.transform(doc_term_matrix)
-    >>> for i, top_terms in enumerate(model.get_top_topic_terms(id2term)):
-    ...     print('topic {}:'.format(i), '   '.join(top_terms))
-    >>> for i, docs in enumerate(model.get_top_topic_docs(doc_topic_matrix, n_docs=5)):
-    ...     print('\n{}'.format(i))
+    >>> for topic_idx, top_terms in model.top_topic_terms(id2term, top_n=10):
+    ...     print('topic {}:'.format(topic_idx), '   '.join(top_terms))
+    >>> for topic_idx, top_docs in model.top_topic_docs(doc_topic_matrix, top_n=5):
+    ...     print('\n{}'.format(topic_idx))
     ...     for j in docs:
     ...         print(corpus[j].metadata['title'])
+    >>> for doc_idx, topics in model.top_doc_topics(doc_topic_matrix, docs=range(5), top_n=2):
+    ...     print('{}: {}'.format(corpus[doc_idx].metadata['title'], topics))
     >>> for i, val in enumerate(model.get_topic_weights(doc_topic_matrix)):
     ...     print(i, val)
     >>> # assess topic quality through a coherence metric
-    >>> # TBD
+    >>> # WIP...
     >>> # persist our topic model to disk
     >>> model.save('nmf-20topics.model')
 """
@@ -117,6 +119,10 @@ class TopicModel(object):
     def transform(self, doc_term_matrix):
         return self.model.transform(doc_term_matrix)
 
+    @property
+    def n_topics(self):
+        return len(self.model.components_)
+
     def get_doc_topic_matrix(self, doc_term_matrix, normalize=True):
         """
         Transform a document-term matrix into a document-topic matrix, where rows
@@ -138,95 +144,131 @@ class TopicModel(object):
         else:
             return doc_topic_matrix
 
-    def get_top_topic_terms(self, vocab, n_topics=-1, n_terms=10, weights=False):
+    def top_topic_terms(self, id2term, topics=-1, top_n=10, weights=False):
         """
-        Get the top ``n_terms`` terms by weight per topic in ``model``.
+        Get the top ``top_n`` terms by weight per topic in ``model``.
 
         Args:
-            vocab (list(str) or dict): object that returns the term string corresponding
-                to term id ``i`` through ``feature_names[i]``; could be a list of strings
+            id2term (list(str) or dict): object that returns the term string corresponding
+                to term id ``i`` through ``id2term[i]``; could be a list of strings
                 where the index represents the term id, such as that returned by
                 ``sklearn.feature_extraction.text.CountVectorizer.get_feature_names()``,
                 or a mapping of term id: term string
-            n_topics (int, optional): number of topics for which to return top terms;
-                if -1, all topics' terms are returned
-            n_terms (int, optional): number of top terms to return per topic
+            topics (int or seq(int), optional): topic(s) for which to return top terms;
+                if -1 (default), all topics' terms are returned
+            top_n (int, optional): number of top terms to return per topic
             weights (bool, optional): if True, terms are returned with their corresponding
                 topic weights; otherwise, terms are returned without weights
 
-        Returns:
-            list(list(str)) or list(list((str, float))):
-                the ith list of terms or (term, weight) tuples corresponds to topic i
-        """
-        if n_topics == -1:
-            n_topics = len(self.model.components_)
-        if weights is False:
-            return [[vocab[i] for i in np.argsort(topic)[:-n_terms - 1:-1]]
-                    for topic in self.model.components_[:n_topics]]
-        else:
-            return [[(vocab[i], topic[i]) for i in np.argsort(topic)[:-n_terms - 1:-1]]
-                    for topic in self.model.components_[:n_topics]]
+        Yields:
+            tuple(int, tuple(str)) or tuple(int, tuple((str, float))):
+                next tuple corresponding to a topic; the first element is the topic's
+                index; if ``weights`` is False, the second element is a tuple of str
+                representing the top ``top_n`` related terms; otherwise, the second
+                is a tuple of (str, float) pairs representing the top ``top_n``
+                related terms and their associated weights wrt the topic; for example::
 
-    def get_top_topic_docs(self, doc_topic_matrix,
-                           n_topics=-1, n_docs=10, weights=False):
+                    >>> list(TopicModel.top_topic_terms(id2term, topics=(0, 1), top_n=2, weights=False))
+                    [(0, ('foo', 'bar')), (1, ('bat', 'baz'))]
+                    >>> list(TopicModel.top_topic_terms(id2term, topics=0, top_n=2, weights=True))
+                    [(0, (('foo', 0.1415), ('bar', 0.0986)))]
         """
-        Get the top ``n_docs`` docs by weight per topic in ``doc_topic_matrix``.
+        if topics == -1:
+            topics = range(self.n_topics)
+        elif isinstance(topics, int):
+            topics = (topics,)
+
+        for topic_idx in topics:
+            topic = self.model.components_[topic_idx]
+            if weights is False:
+                yield (topic_idx,
+                       tuple(id2term[i] for i in np.argsort(topic)[:-top_n - 1:-1]))
+            else:
+                yield (topic_idx,
+                       tuple((id2term[i], topic[i]) for i in np.argsort(topic)[:-top_n - 1:-1]))
+
+    def top_topic_docs(self, doc_topic_matrix,
+                       topics=-1, top_n=10, weights=False):
+        """
+        Get the top ``top_n`` docs by weight per topic in ``doc_topic_matrix``.
 
         Args:
             doc_topic_matrix (numpy.ndarray): document-topic matrix with shape
                 (n_docs, n_topics), the result of calling
                 :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
-            n_topics (int, optional): number of topics for which to return top docs;
+            topics (seq(int) or int, optional): topic(s) for which to return top docs;
                 if -1, all topics' docs are returned
-            n_docs (int, optional): number of top docs to return per topic
+            top_n (int, optional): number of top docs to return per topic
             weights (bool, optional): if True, docs are returned with their corresponding
                 (normalized) topic weights; otherwise, docs are returned without weights
 
-        Returns:
-            list(list(str)) or list(list((str, float))): the ith list of docs or
-                (doc, weight) tuples corresponds to topic i
-        """
-        if n_topics == -1:
-            n_topics = doc_topic_matrix.shape[1]
+        Yields:
+            tuple(int, tuple(int)) or tuple(int, tuple(int, float)):
+                next tuple corresponding to a topic; the first element is the topic's
+                index; if ``weights`` is False, the second element is a tuple of ints
+                representing the top ``top_n`` related docs; otherwise, the second
+                is a tuple of (int, float) pairs representing the top ``top_n``
+                related docs and their associated weights wrt the topic; for example::
 
-        if weights is False:
-            return [[doc_idx
-                     for doc_idx in np.argsort(doc_topic_matrix[:, i])[:-n_docs - 1:-1]]
-                    for i in range(min(doc_topic_matrix.shape[1], n_topics))]
-        else:
-            return [[(doc_idx, doc_topic_matrix[doc_idx, i])
-                     for doc_idx in np.argsort(doc_topic_matrix[:, i])[:-n_docs - 1:-1]]
-                    for i in range(min(doc_topic_matrix.shape[1], n_topics))]
-
-    def get_top_doc_topics(self, doc_topic_matrix, n_docs=-1, n_topics=3, weights=False):
+                    >>> list(TopicModel.top_doc_terms(dtm, topics=(0, 1), top_n=2, weights=False))
+                    [(0, (4, 2)), (1, (1, 3))]
+                    >>> list(TopicModel.top_doc_terms(dtm, topics=0, top_n=2, weights=True))
+                    [(0, ((4, 0.3217), (2, 0.2154)))]
         """
-        Get the top ``n_topics`` topics by weight per doc in ``doc_topic_matrix``.
+        if topics == -1:
+            topics = range(self.n_topics)
+        elif isinstance(topics, int):
+            topics = (topics,)
+
+        for topic_idx in topics:
+            top_doc_idxs = np.argsort(doc_topic_matrix[:, topic_idx])[:-top_n - 1:-1]
+            if weights is False:
+                yield (topic_idx,
+                       tuple(doc_idx for doc_idx in top_doc_idxs))
+            else:
+                yield (topic_idx,
+                       tuple((doc_idx, doc_topic_matrix[doc_idx, topic_idx]) for doc_idx in top_doc_idxs))
+
+    def top_doc_topics(self, doc_topic_matrix, docs=-1, top_n=3, weights=False):
+        """
+        Get the top ``top_n`` topics by weight per doc for ``docs`` in ``doc_topic_matrix``.
 
         Args:
             doc_topic_matrix (numpy.ndarray): document-topic matrix with shape
                 (n_docs, n_topics), the result of calling
                 :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
-            n_docs (int, optional): number of docs for which to return top topics;
+            docs (seq(int) or int, optional): docs for which to return top topics;
                 if -1, all docs' top topics are returned
-            n_topics (int, optional): number of top topics to return per doc
+            top_n (int, optional): number of top topics to return per doc
             weights (bool, optional): if True, docs are returned with their corresponding
                 (normalized) topic weights; otherwise, docs are returned without weights
 
-        Returns:
-            list(list(str)) or list(list((str, float))): the ith list of topics or
-                (topic, weight) tuples corresponds to doc i
-        """
-        if n_docs == -1:
-            n_docs = doc_topic_matrix.shape[0]
+        Yields:
+            tuple(int, tuple(int)) or tuple(int, tuple(int, float)):
+                next tuple corresponding to a doc; the first element is the doc's
+                index; if ``weights`` is False, the second element is a tuple of ints
+                representing the top ``top_n`` related topics; otherwise, the second
+                is a tuple of (int, float) pairs representing the top ``top_n``
+                related topics and their associated weights wrt the doc; for example::
 
-        if weights is False:
-            return [[topic_idx
-                     for topic_idx in np.argsort(doc_topic_matrix[i, :])[:-n_topics - 1:-1]]
-                    for i in range(min(doc_topic_matrix.shape[0], n_docs))]
-        else:
-            return [[(topic_idx, doc_topic_matrix[i, topic_idx])
-                     for topic_idx in np.argsort(doc_topic_matrix[i, :])[:-n_topics - 1:-1]]
-                    for i in range(min(doc_topic_matrix.shape[0], n_docs))]
+                    >>> list(TopicModel.top_doc_topics(dtm, docs=(0, 1), top_n=2, weights=False))
+                    [(0, (1, 4)), (1, (3, 2))]
+                    >>> list(TopicModel.top_doc_topics(dtm, docs=0, top_n=2, weights=True))
+                    [(0, ((1, 0.2855), (4, 0.2412)))]
+        """
+        if docs == -1:
+            docs = range(doc_topic_matrix.shape[0])
+        elif isinstance(docs, int):
+            docs = (docs,)
+
+        for doc_idx in docs:
+            top_topic_idxs = np.argsort(doc_topic_matrix[doc_idx, :])[:-top_n - 1:-1]
+            if weights is False:
+                yield (doc_idx,
+                       tuple(topic_idx for topic_idx in top_topic_idxs))
+            else:
+                yield (doc_idx,
+                       tuple((topic_idx, doc_topic_matrix[doc_idx, topic_idx]) for topic_idx in top_topic_idxs))
 
     def get_topic_weights(self, doc_topic_matrix):
         """

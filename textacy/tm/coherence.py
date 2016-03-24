@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 References:
     .. Röder, Michael, Andreas Both, and Alexander Hinneburg. "Exploring the
@@ -15,14 +16,13 @@ import numpy as np
 import scipy.sparse as sp
 from spacy.strings import StringStore
 
-# WIP WIP WIP
 
-def get_tm_coherence(model, id2term, n_terms=10,
-                     segmentation='one-set',
-                     probabilities='sliding-window',
-                     direct_confirmation='npmi',
-                     indirect_confirmation='cosine',
-                     aggregation='mean'):
+def get_model_coherence(model, id2term, n_terms=10,
+                        segmentation='one-set',
+                        probabilities='sliding-window',
+                        direct_confirmation='npmi',
+                        indirect_confirmation='cosine',
+                        aggregation='mean'):
     """
     """
     all_sims = []
