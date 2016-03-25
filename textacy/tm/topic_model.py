@@ -121,7 +121,10 @@ class TopicModel(object):
 
     @property
     def n_topics(self):
-        return len(self.model.components_)
+        try:
+            return self.model.n_topics
+        except AttributeError:
+            return self.model.n_components
 
     def get_doc_topic_matrix(self, doc_term_matrix, normalize=True):
         """

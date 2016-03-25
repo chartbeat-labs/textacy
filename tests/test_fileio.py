@@ -29,6 +29,7 @@ class FileIOTestCase(unittest.TestCase):
         self.spacy_doc.from_array(cols, values)
         self.tempdir = tempfile.mkdtemp(
             prefix='test_fileio', dir=os.path.dirname(os.path.abspath(__file__)))
+        self.tests_dir = os.path.split(__file__)[0]
 
     def test_write_conll(self):
         expected = "# sent_id 1\n1\tThe\tthe\tDET\tDT\t_\t2\tdet\t_\t_\n2\tyear\tyear\tNOUN\tNN\t_\t3\tnsubj\t_\t_\n3\twas\tbe\tVERB\tVBD\t_\t0\troot\t_\t_\n4\t2081\t2081\tNUM\tCD\t_\t3\tattr\t_\tSpaceAfter=No\n5\t,\t,\tPUNCT\t,\t_\t3\tpunct\t_\t_\n6\tand\tand\tCONJ\tCC\t_\t3\tcc\t_\t_\n7\teverybody\teverybody\tNOUN\tNN\t_\t8\tnsubj\t_\t_\n8\twas\tbe\tVERB\tVBD\t_\t3\tconj\t_\t_\n9\tfinally\tfinally\tADV\tRB\t_\t8\tadvmod\t_\t_\n10\tequal\tequal\tADJ\tJJ\t_\t8\tacomp\t_\tSpaceAfter=No\n11\t.\t.\tPUNCT\t.\t_\t8\tpunct\t_\t_\n\n# sent_id 2\n1\tThey\tthey\tNOUN\tPRP\t_\t2\tnsubj\t_\t_\n2\twere\tbe\tVERB\tVBD\t_\t0\troot\t_\tSpaceAfter=No\n3\tn't\tn't\tADV\tRB\t_\t5\tpreconj\t_\t_\n4\tonly\tonly\tADV\tRB\t_\t3\tadvmod\t_\t_\n5\tequal\tequal\tADJ\tJJ\t_\t2\tacomp\t_\t_\n6\tbefore\tbefore\tADP\tIN\t_\t5\tprep\t_\t_\n7\tGod\tgod\tNOUN\tNNP\t_\t6\tpobj\t_\t_\n8\tand\tand\tCONJ\tCC\t_\t7\tcc\t_\t_\n9\tthe\tthe\tDET\tDT\t_\t10\tdet\t_\t_\n10\tlaw\tlaw\tNOUN\tNN\t_\t7\tconj\t_\tSpaceAfter=No\n11\t.\t.\tPUNCT\t.\t_\t2\tpunct\t_\t_\n\n# sent_id 3\n1\tThey\tthey\tNOUN\tPRP\t_\t2\tnsubj\t_\t_\n2\twere\tbe\tVERB\tVBD\t_\t0\troot\t_\t_\n3\tequal\tequal\tADJ\tJJ\t_\t2\tacomp\t_\t_\n4\tevery\tevery\tDET\tDT\t_\t6\tdet\t_\t_\n5\twhich\twhich\tADJ\tWDT\t_\t6\tdet\t_\t_\n6\tway\tway\tNOUN\tNN\t_\t2\tnpadvmod\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t2\tpunct\t_\tSpaceAfter=No\n"
@@ -137,6 +138,32 @@ class FileIOTestCase(unittest.TestCase):
         fileio.write_sparse_matrix(expected, filename, compressed=True)
         observed = fileio.read_sparse_csc_matrix(filename)
         self.assertEqual(abs(observed - expected).nnz, 0)
+
+    def test_get_filenames(self):
+        expected = sorted(os.path.join(self.tests_dir, fname)
+                          for fname in os.listdir(self.tests_dir)
+                          if os.path.isfile(os.path.join(self.tests_dir, fname)))
+        observed = sorted(fileio.get_filenames(self.tests_dir,
+                                               ignore_invisible=False,
+                                               recursive=False))
+        self.assertEqual(observed, expected)
+
+    def test_get_filenames_ignore_invisible(self):
+        self.assertTrue(
+            len(list(fileio.get_filenames(self.tests_dir, ignore_invisible=True))) \
+                < len(list(fileio.get_filenames(self.tests_dir, ignore_invisible=False))))
+
+    def test_get_filenames_ignore_substr(self):
+        self.assertTrue(
+            len(list(fileio.get_filenames(self.tests_dir,
+                                          ignore_substr='test_',
+                                          ignore_invisible=True))) == 0)
+
+    def test_get_filenames_match_substr(self):
+        self.assertTrue(
+            len(list(fileio.get_filenames(self.tests_dir,
+                                          match_substr='fileio',
+                                          extension='.py'))) == 1)
 
     def tearDown(self):
         for fname in os.listdir(self.tempdir):
