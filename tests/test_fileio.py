@@ -1,7 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
-import tempfile
 import os
+import tempfile
 import unittest
 
 import numpy as np

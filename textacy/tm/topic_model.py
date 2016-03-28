@@ -31,7 +31,7 @@ Train and apply a topic model to vectorized texts. For example::
     >>> # assess topic quality through a coherence metric
     >>> # WIP...
     >>> # persist our topic model to disk
-    >>> model.save('nmf-20topics.model')
+    >>> model.save('nmf-20topics.pkl')
 """
 import logging
 import numpy as np
@@ -105,7 +105,8 @@ class TopicModel(object):
     @classmethod
     def load(cls, filename):
         model = joblib.load(filename)
-        return cls(model, n_topics=len(model.components_))
+        n_topics = model.n_topics if hasattr(model, 'n_topics') else model.n_components
+        return cls(model, n_topics=n_topics)
 
     def fit(self, doc_term_matrix):
         self.model.fit(doc_term_matrix)
