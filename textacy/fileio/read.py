@@ -285,7 +285,7 @@ def get_filenames(dirname, match_substr=None, ignore_substr=None,
         return True
 
     if recursive is True:
-        for dirpath, dirnames, filenames in os.walk(dirname):
+        for dirpath, _, filenames in os.walk(dirname):
             if ignore_invisible and dirpath.startswith('.'):
                 continue
             for filename in filenames:

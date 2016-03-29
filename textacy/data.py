@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import csv
 import logging
-import json
 import os
 import pyphen
 

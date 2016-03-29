@@ -64,6 +64,3 @@ Other Stuff!
 
 .. automodule:: textacy.corpora.wikipedia
     :members:
-
-.. automodule:: textacy.corpora.wikipedia
-    :members:

@@ -3,7 +3,6 @@ Module with functions for writing content to disk in common formats.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import bz2
 import gzip
 import io
 import json
@@ -11,14 +10,13 @@ from numpy import savez, savez_compressed
 import os
 from scipy.sparse import csc_matrix, csr_matrix
 
-import ijson
 from spacy.tokens.doc import Doc as SpacyDoc
 
 from textacy.compat import bzip_open
 
 
 def _make_dirs(filename):
-    head, tail = os.path.split(filename)
+    head, _ = os.path.split(filename)
     if head and not os.path.exists(head):
         os.makedirs(head)
 

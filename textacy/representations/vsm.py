@@ -171,7 +171,7 @@ def get_term_freqs(doc_term_matrix, normalized=True):
     """
     if doc_term_matrix.nnz == 0:
         raise ValueError('term-document matrix must have at least 1 non-zero entry')
-    n_docs, n_terms = doc_term_matrix.shape
+    _, n_terms = doc_term_matrix.shape
     tfs = np.asarray(doc_term_matrix.sum(axis=0)).ravel()
     if normalized is True:
         return tfs / n_terms

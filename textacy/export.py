@@ -2,7 +2,6 @@
 Module for exporting textacy/spacy objects into "third-party" formats.
 """
 from collections import Counter
-import io
 from operator import itemgetter
 
 from gensim.corpora.dictionary import Dictionary

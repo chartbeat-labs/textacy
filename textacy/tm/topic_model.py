@@ -38,9 +38,6 @@ import numpy as np
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 from sklearn.externals import joblib
 
-from textacy import data, extract, fileio, preprocess, spacy_utils
-from textacy.compat import str
-
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +96,7 @@ class TopicModel(object):
             raise ValueError(msg)
 
     def save(self, filename):
-        filenames = joblib.dump(self.model, filename, compress=3)
+        _ = joblib.dump(self.model, filename, compress=3)
         logger.info('{} model saved to {}'.format(self.model, filename))
 
     @classmethod

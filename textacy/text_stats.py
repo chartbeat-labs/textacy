@@ -6,8 +6,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from math import sqrt
 
-import numpy as np
-
 from textacy import data
 
 
