@@ -8,10 +8,10 @@ import re
 from gensim.corpora.dictionary import Dictionary
 from gensim.corpora.wikicorpus import extract_pages, filter_wiki, WikiCorpus
 
-NEWLINE_RE = re.compile(r'\n{2,5}')
-HEADER_RE = re.compile(r'={2,5}(.*?)={2,5}')
-QUOTE_RE = re.compile(r"'{2,3}")
-CRUFT_RE = re.compile(r'\n\* ?')
+WIKI_NEWLINE_RE = re.compile(r'\n{2,5}')
+WIKI_HEADER_RE = re.compile(r'={2,5}(.*?)={2,5}')
+WIKI_QUOTE_RE = re.compile(r"'{2,3}")
+WIKI_CRUFT_RE = re.compile(r'\n\* ?')
 
 
 def _iterate_over_pages(fname):
@@ -20,13 +20,18 @@ def _iterate_over_pages(fname):
     yielding one (page id, title, page content) 3-tuple at a time.
     """
     dictionary = Dictionary()
-    wiki = WikiCorpus(fname, lemmatize=False, dictionary=dictionary)
+    wiki = WikiCorpus(fname, lemmatize=False, dictionary=dictionary,
+                      filter_namespaces={'0'})
     for title, content, page_id in extract_pages(bz2.BZ2File(wiki.fname), wiki.filter_namespaces):
         yield (page_id, title, content)
 
 
 def _get_plaintext(content):
-    return CRUFT_RE.sub(r'', NEWLINE_RE.sub(r'\n', HEADER_RE.sub(r'\1', QUOTE_RE.sub(r'', filter_wiki(content))))).strip()
+    return WIKI_CRUFT_RE.sub(
+        r'', WIKI_NEWLINE_RE.sub(
+            r'\n', WIKI_HEADER_RE.sub(
+                r'\1', WIKI_QUOTE_RE.sub(
+                    r'', filter_wiki(content))))).strip()
 
 
 def _parse_content(content, parser, metadata=True):
@@ -63,9 +68,9 @@ def _parse_content(content, parser, metadata=True):
                 if section_idx == 0:
                     sec['level'] = 1
             # strip out references, tables, and file/image links
-            for obj in section.ifilter_tags(matches=_filter_tags, recursive=False):
+            for obj in section.ifilter_tags(matches=_filter_tags, recursive=True):
                 section.remove(obj)
-            for obj in section.filter_wikilinks():
+            for obj in section.ifilter_wikilinks(recursive=True):
                 try:
                     obj_title = str(obj.title)
                     if obj_title.startswith('File:') or obj_title.startswith('Image:'):

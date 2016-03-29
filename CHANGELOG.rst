@@ -1,6 +1,17 @@
 Changelog
 =========
 
+0.1.4 (2016-02-26)
+------------------
+
+Changes:
+
+- Added ``corpora`` subpackage with ``wikipedia.py`` module; functions for streaming pages from a Wikipedia db dump as plain text or structured data
+- Added ``fileio`` subpackage with functions for reading/writing content from/to disk in common formats
+  - JSON formats, both standard and streaming-friendly
+  - text, optionally compressed
+  - spacy documents to/from binary
+
 0.1.3 (2016-02-22)
 ------------------
 
