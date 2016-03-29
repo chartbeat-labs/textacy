@@ -26,7 +26,7 @@ class TopicModelTestCase(unittest.TestCase):
         textcorpus = TextCorpus.from_texts('en', texts)
         term_lists = [doc.as_terms_list(words=True, ngrams=False, named_entities=False)
                       for doc in textcorpus]
-        self.doc_term_matrix, self.id_to_word = build_doc_term_matrix(
+        self.doc_term_matrix, self.id2term = build_doc_term_matrix(
             term_lists,
             weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
             min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
@@ -60,7 +60,7 @@ class TopicModelTestCase(unittest.TestCase):
         self.assertEqual(observed, expected)
 
     def test_get_doc_topic_matrix(self):
-        expected = np.array([ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.])
+        expected = np.array([1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0])
         observed = self.model.get_doc_topic_matrix(self.doc_term_matrix,
                                                    normalize=True).sum(axis=1)
         self.assertTrue(np.equal(observed, expected).all())
@@ -70,6 +70,33 @@ class TopicModelTestCase(unittest.TestCase):
         observed = self.model.get_doc_topic_matrix(self.doc_term_matrix,
                                                    normalize=False)
         self.assertTrue(np.equal(observed, expected).all())
+
+    def test_top_topic_terms_topics(self):
+        self.assertEqual(
+            len(list(self.model.top_topic_terms(self.id2term, topics=-1))),
+            self.model.n_topics)
+        self.assertEqual(
+            len(list(self.model.top_topic_terms(self.id2term, topics=0))), 1)
+        self.assertEqual(
+            [topic_idx for topic_idx, _
+             in self.model.top_topic_terms(self.id2term, topics=(1, 2, 3))],
+            [1, 2, 3])
+
+    def test_top_topic_terms_top_n(self):
+        self.assertEqual(
+            len(list(self.model.top_topic_terms(self.id2term, topics=0, top_n=10))[0][1]),
+            10)
+        self.assertEqual(
+            len(list(self.model.top_topic_terms(self.id2term, topics=0, top_n=5))[0][1]),
+            5)
+
+    def test_top_topic_terms_weights(self):
+        observed = list(self.model.top_topic_terms(self.id2term, topics=-1,
+                                                   top_n=10, weights=True))
+        self.assertTrue(isinstance(observed[0][1][0], tuple))
+        for topic_idx, term_weights in observed:
+            for i in range(len(term_weights) - 1):
+                self.assertTrue(term_weights[i][1] >= term_weights[i+1][1])
 
     def tearDown(self):
         for fname in os.listdir(self.tempdir):
