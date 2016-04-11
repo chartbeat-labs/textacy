@@ -14,6 +14,7 @@ Features
 - Unsupervised key term extraction (specific algorithms such as SGRank or TextRank, as well as a general semantic network-based approach)
 - Conversion of individual documents into common representations (bag of words), as well as corpora (term-document matrix, with TF or TF-IDF weighting, and filtering by these metrics or IC)
 - Common utility functions for identifying a text's language, displaying key words in context (KWIC), truecasing words, and higher-level navigation of a parse tree
+- Sklearn-style topic modeling with LSA, LDA, or NMF, including functions to interpret the results of trained models
 
 And more!
 
@@ -169,8 +170,9 @@ Unofficial Roadmap
 ------------------
 
 - [x] import/export for common formats
-- [ ] serialization and streaming to/from disk
-- [ ] topic modeling via ``gensim`` and/or ``sklearn``
+- [x] serialization and streaming to/from disk
+- [x] topic modeling via ``gensim`` and/or ``sklearn``
+- [ ] data viz for text analysis
 - [ ] distributional representations (word2vec etc.) via either ``gensim`` or ``spacy``
 - [ ] document similarity/clustering (?)
 - [ ] basic dictionary-based methods e.g. sentiment analysis (?)
@@ -182,7 +184,5 @@ TODO
 ----
 
 - texts: have textdocs inherit `_term_doc_freqs` from textcorpus?
-- texts: add `doc_to_bag_of_terms()` func to transform?
-- transform: condense csc matrix by mapping stringstore term ints to incremented vals, starting at 0
-- drop scipy dependency and switch to honnibal's own sparse matrices
-- preprocess: add basic tests for unidecode and ftfy functions
+- drop scipy dependency and switch to honnibal's own sparse matrices?
+- preprocess: add basic tests for unidecode and ftfy functions?
