@@ -22,6 +22,15 @@ Information Extraction
 .. automodule:: textacy.keyterms
     :members:
 
+Document Representations
+------------------------
+
+.. automodule:: textacy.representations.network
+    :members:
+
+.. automodule:: textacy.representations.vsm
+    :members:
+
 Topic Modeling
 --------------
 
@@ -56,9 +65,6 @@ Other Stuff!
     :members:
 
 .. automodule:: textacy.text_stats
-    :members:
-
-.. automodule:: textacy.transform
     :members:
 
 .. automodule:: textacy.data

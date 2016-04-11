@@ -24,7 +24,7 @@ Changes:
 
 Bugfixes:
 
-- ``textstats.readability_stats()`` no longer filters out stop words (h/t @henningko)
+- ``textstats.readability_stats()`` no longer filters out stop words (@henningko #7)
 - Wikipedia article processing now recursively removes nested markup
 - ``extract.ngrams()`` now filters out ngrams with any space-only tokens
 - functions with ``include_nps`` kwarg changed to ``include_ncs``, to match the renaming of the associated function from ``extract.noun_phrases()`` to ``extract.noun_chunks()``
