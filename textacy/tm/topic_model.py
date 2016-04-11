@@ -287,8 +287,8 @@ class TopicModel(object):
         """
         return doc_topic_matrix.sum(axis=0) / doc_topic_matrix.sum(axis=0).sum()
 
-    def get_topic_coherence(self, topic_idx):
-        raise NotImplementedError()
-
-    def get_model_coherence(self):
-        raise NotImplementedError()
+    # def get_topic_coherence(self, topic_idx):
+    #     raise NotImplementedError()
+    #
+    # def get_model_coherence(self):
+    #     raise NotImplementedError()

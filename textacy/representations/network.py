@@ -4,6 +4,7 @@ whole sentences.
 """
 import collections
 import itertools
+import logging
 
 from cytoolz import itertoolz
 import networkx as nx
@@ -14,6 +15,9 @@ from spacy.tokens.token import Token as spacy_token
 from textacy.compat import str
 from textacy import extract
 from textacy.spacy_utils import normalized_str
+
+
+logger = logging.getLogger(__name__)
 
 
 def terms_to_semantic_network(terms,
@@ -49,8 +53,14 @@ def terms_to_semantic_network(terms,
     if window_width < 2:
         raise ValueError('Window width must be >= 2')
 
-    # when len(terms) < window_width, cytoolz throws a StopIteration error
-    window_width = min(window_width, len(terms))
+    # if len(terms) < window_width, cytoolz throws a StopIteration error
+    # which we don't want
+    if len(terms) < window_width:
+        logger.warning(
+            'input terms list is smaller than window width ({} < {})'.format(
+                len(terms), window_width))
+        window_width = len(terms)
+
     if isinstance(terms[0], str):
         windows = itertoolz.sliding_window(window_width, terms)
     elif isinstance(terms[0], spacy_token):

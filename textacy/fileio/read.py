@@ -145,7 +145,7 @@ def split_content_and_metadata(items, content_field, itemwise=True):
             the second element is its metadata as a list
         tuple(iterable(str), iterable(dict)): if ``itemwise`` is False and ``items``
             is an iterable of dicts; the first element of the tuple is an iterable
-            of items' contents, the second is an iterable of their metadata dictss
+            of items' contents, the second is an iterable of their metadata dicts
         tuple(iterable(str), iterable(list)): if ``itemwise`` is False and ``items``
             is an iterable of lists; the first element of the tuple is an iterable
             of items' contents, the second is an iterable of their metadata lists
