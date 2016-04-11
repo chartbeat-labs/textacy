@@ -50,6 +50,5 @@ setup(
         'scikit-learn',
         'spacy>=0.100.0',
         'unidecode',
-        'cymem==1.31'
         ],
 )
