@@ -1,63 +1,86 @@
+# -*- coding: utf-8 -*-
 """
 Object-oriented interface for processing individual text documents as well as
-collections (corpora). Wraps other modules' functionality with some amount of
-caching, for efficiency.
+collections (corpora).
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from collections import Counter
 import copy
 import re
 
-from cachetools import cachedmethod, LRUCache, hashkey
-from collections import Counter
-from functools import partial
-from operator import attrgetter
-from spacy.tokens.token import Token as spacy_token
-from spacy.tokens.span import Span as spacy_span
-from threading import RLock
+from cytoolz import itertoolz
+from spacy.tokens.doc import Doc as sdoc
+from spacy.tokens.token import Token as stoken
+from spacy.tokens.span import Span as sspan
 
-from textacy import (data, extract, spacy_utils, text_stats, text_utils,
-                     transform, keyterms)
-
-LOCK = RLock()
+from textacy.compat import str, zip
+from textacy import data, extract, spacy_utils, text_stats, text_utils, keyterms
+from textacy.representations import network, vsm
 
 
 class TextDoc(object):
     """
-    Class that tokenizes, tags, and parses a text document, and provides an easy
-    interface to information extraction, alternative document representations,
-    and statistical measures of the text.
+    Pairing of the content of a document with its associated metadata, where the
+    content has been tokenized, tagged, parsed, etc. by spaCy. Also keep references
+    to the id-to-token mapping used by spaCy to efficiently represent the content.
+    If initialized from plain text, this processing is performed automatically.
+
+    ``TextDoc`` also provides a convenient interface to information extraction,
+    different doc representations, statistical measures of the content, and more.
 
     Args:
-        text (str)
-        spacy_pipeline (``spacy.<lang>.<Lang>()``, optional)
-        lang (str, optional)
-        metadata (dict, optional)
-        max_cachesize (int, optional)
+        text_or_sdoc (str or ``spacy.Doc``): text or spacy doc containing the
+            content of this ``TextDoc``; if str, it is automatically processed
+            by spacy before assignment to the ``TextDoc.spacy_doc`` attribute
+        spacy_pipeline (``spacy.<lang>.<Lang>()``, optional): if a spacy pipeline
+            has already been loaded or used to make the input ``spacy.Doc``, pass
+            it in here to speed things up a touch; in general, only one of these
+            pipelines should be loaded per process
+        lang (str, optional): if doc's language is known, give its 2-letter code
+            (https://cloud.google.com/translate/v2/using_rest#language-params);
+            if None (default), lang will be automatically inferred from text
+        metadata (dict, optional): dictionary of relevant information about the
+            input ``text_or_sdoc``, e.g.::
+
+                {'title': 'A Search for Second-generation Leptoquarks in pp Collisions at √s = 7 TeV with the ATLAS Detector',
+                 'author': 'Burton DeWilde', 'pub_date': '2012-08-01'}
     """
-    def __init__(self, text, spacy_pipeline=None, lang='auto',
-                 metadata=None, max_cachesize=5):
+    def __init__(self, text_or_sdoc, spacy_pipeline=None, lang=None, metadata=None):
         self.metadata = {} if metadata is None else metadata
-        self.lang = text_utils.detect_language(text) if lang == 'auto' else lang
-        if spacy_pipeline is None:
-            self.spacy_pipeline = data.load_spacy_pipeline(lang=self.lang)
-        else:
-            # check for match between text and supplied spacy pipeline language
-            if spacy_pipeline.lang != self.lang:
-                msg = 'TextDoc.lang {} != spacy_pipeline.lang {}'.format(
-                    self.lang, spacy_pipeline.lang)
-                raise ValueError(msg)
-            else:
-                self.spacy_pipeline = spacy_pipeline
-        self.spacy_vocab = self.spacy_pipeline.vocab
-        self.spacy_stringstore = self.spacy_vocab.strings
-        self.spacy_doc = self.spacy_pipeline(text)
         self._term_counts = Counter()
-        self._cache = LRUCache(maxsize=max_cachesize)
+
+        if isinstance(text_or_sdoc, str):
+            self.lang = text_utils.detect_language(text_or_sdoc) if not lang else lang
+            if spacy_pipeline is None:
+                spacy_pipeline = data.load_spacy_pipeline(lang=self.lang)
+            # check for match between text and passed spacy_pipeline language
+            else:
+                if spacy_pipeline.lang != self.lang:
+                    msg = 'TextDoc.lang {} != spacy_pipeline.lang {}'.format(
+                        self.lang, spacy_pipeline.lang)
+                    raise ValueError(msg)
+            self.spacy_vocab = spacy_pipeline.vocab
+            self.spacy_stringstore = self.spacy_vocab.strings
+            self.spacy_doc = spacy_pipeline(text_or_sdoc)
+
+        elif isinstance(text_or_sdoc, sdoc):
+            self.lang = spacy_pipeline.lang if spacy_pipeline is not None else \
+                text_utils.detect_language(text_or_sdoc.text_with_ws)
+            self.spacy_vocab = text_or_sdoc.vocab
+            self.spacy_stringstore = self.spacy_vocab.strings
+            self.spacy_doc = text_or_sdoc
+
+        else:
+            msg = 'TextDoc must be initialized with {}, not {}'.format(
+                {str, sdoc}, type(text_or_sdoc))
+            raise ValueError(msg)
 
     def __repr__(self):
-        return 'TextDoc({} tokens: {})'.format(
-            len(self.spacy_doc), repr(self.text[:50].replace('\n',' ').strip() + '...'))
+        snippet = self.text[:50].replace('\n',' ')
+        if len(snippet) == 50:
+            snippet = snippet[:47] + '...'
+        return 'TextDoc({} tokens; "{}")'.format(len(self.spacy_doc), snippet)
 
     def __len__(self):
         return self.n_tokens
@@ -91,8 +114,6 @@ class TextDoc(object):
                 :func:`extract.named_entities() <textacy.extract.named_entities>`
                 or :func:`extract.pos_regex_matches() <textacy.extract.pos_regex_matches>`
         """
-        with LOCK:
-            self._cache.clear()
         spacy_utils.merge_spans(spans)
 
     ###############
@@ -121,7 +142,7 @@ class TextDoc(object):
     def as_bag_of_terms(self, weighting='tf', normalized=True, binary=False,
                         idf=None, lemmatize='auto',
                         ngram_range=(1, 1),
-                        include_nes=False, include_nps=False, include_kts=False):
+                        include_nes=False, include_ncs=False, include_kts=False):
         """
         Represent doc as a "bag of terms", an unordered set of (term id, term weight)
         pairs, where term weight may be by TF or TF*IDF.
@@ -136,7 +157,7 @@ class TextDoc(object):
             ngram_range (tuple(int), optional): (min n, max n) values for n-grams
                 to include in terms list; default (1, 1) only includes unigrams
             include_nes (bool, optional): if True, include named entities in terms list
-            include_nps (bool, optional): if True, include noun phrases in terms list
+            include_ncs (bool, optional): if True, include noun chunks in terms list
             include_kts (bool, optional): if True, include key terms in terms list
             normalized (bool, optional): if True, normalize term freqs by the
                 total number of unique terms
@@ -148,7 +169,7 @@ class TextDoc(object):
         """
         term_weights = self.term_counts(
             lemmatize=lemmatize, ngram_range=ngram_range, include_nes=include_nes,
-            include_nps=include_nps, include_kts=include_kts)
+            include_ncs=include_ncs, include_kts=include_kts)
 
         if binary is True:
             term_weights = Counter({key: 1 for key in term_weights.keys()})
@@ -164,29 +185,132 @@ class TextDoc(object):
 
         return term_weights
 
-    def as_bag_of_concepts(self):
-        raise NotImplementedError()
+    def as_semantic_network(self, nodes='terms',
+                            edge_weighting='default', window_width=10):
+        """
+        Represent doc as a semantic network, where nodes are either 'terms' or
+        'sents', and edges between nodes may be weighted in different ways.
 
-    def as_semantic_network(self):
-        raise NotImplementedError()
+        Args:
+            nodes (str, {'terms', 'sents'}): type of doc component to use as nodes
+                in the semantic network
+            edge_weighting (str, optional): type of weighting to apply to edges
+                between nodes; if ``nodes == 'terms'``, options are {'cooc_freq', 'binary'},
+                if ``nodes == 'sents'``, options are {'cosine', 'jaccard'}; if
+                'default', 'cooc_freq' or 'cosine' will be automatically used
+            window_width (int, optional): size of sliding window over terms that
+                determines which are said to co-occur; only applicable if 'terms'
+
+        Returns:
+            :class:`networkx.Graph <networkx.Graph>`: where nodes represent either
+                terms or sentences in doc; edges, the relationships between them
+
+        .. seealso:: :func:`network.terms_to_semantic_network() <textacy.representations.network.terms_to_semantic_network>`
+        .. seealso:: :func:`network.sents_to_semantic_network() <textacy.representations.network.sents_to_semantic_network>`
+        """
+        if nodes == 'terms':
+            if edge_weighting == 'default':
+                edge_weighting = 'cooc_freq'
+            return network.terms_to_semantic_network(
+                list(self.words()), window_width=window_width,
+                edge_weighting=edge_weighting)
+        elif nodes == 'sents':
+            if edge_weighting == 'default':
+                edge_weighting = 'cosine'
+            return network.sents_to_semantic_network(
+                list(self.sents), edge_weighting=edge_weighting)
+        else:
+            msg = 'nodes "{}" not valid; must be in {}'.format(nodes, {'terms', 'sents'})
+            raise ValueError(msg)
+
+    def as_terms_list(self, words=True, ngrams=(2, 3), named_entities=True,
+                      dedupe=True, lemmatize=True, **kwargs):
+        """
+        Represent doc as a sequence of terms -- which aren't necessarily in order --
+        including words (unigrams), ngrams (for a range of n), and named entities.
+        NOTE: Despite the name, this is a generator function; to get a *list* of terms,
+        just wrap the call like ``list(doc.as_terms_list())``.
+
+        Args:
+            words (bool, optional): if True (default), include words in the terms list
+            ngrams (tuple(int), optional): include a range of ngrams in the terms list;
+                default is ``(2, 3)``, i.e. bigrams and trigrams are included; if
+                ngrams aren't wanted, set to False-y
+
+                NOTE: if n=1 (words) is included here and ``words`` is True, n=1 is skipped
+            named_entities (bool, optional): if True (default), include named entities
+                in the terms list
+            dedupe (bool, optional): if True (default), named entities are added first
+                to the terms list, and any words or ngrams that exactly overlap with
+                previously added entities are skipped to prevent double-counting;
+                since words and ngrams (n > 1) are inherently exclusive, this only
+                applies to entities; you almost certainly want this to be True
+            lemmatize (bool, optional): if True (default), lemmatize all terms;
+                otherwise, return the text as it appeared
+            kwargs:
+                filter_stops (bool)
+                filter_punct (bool)
+                filter_nums (bool)
+                good_pos_tags (set(str))
+                bad_pos_tags (set(str))
+                min_freq (int)
+                good_ne_types (set(str))
+                bad_ne_types (set(str))
+                drop_determiners (bool)
+
+        Yields:
+            str: the next term in the terms list
+        """
+        all_terms = []
+        # special case: ensure that named entities aren't double-counted when
+        # adding words or ngrams that were already added as named entities
+        if dedupe is True and named_entities is True and (words is True or ngrams):
+            ents = list(self.named_entities(**kwargs))
+            ent_idxs = {(ent.start, ent.end) for ent in ents}
+            all_terms.append(ents)
+            if words is True:
+                all_terms.append((word for word in self.words(**kwargs)
+                                  if (word.idx, word.idx + 1) not in ent_idxs))
+            if ngrams:
+                for n in range(ngrams[0], ngrams[1] + 1):
+                    if n == 1 and words is True:
+                        continue
+                    all_terms.append((ngram for ngram in self.ngrams(n, **kwargs)
+                                      if (ngram.start, ngram.end) not in ent_idxs))
+        # otherwise add everything in, duplicates and all
+        else:
+            if named_entities is True:
+                all_terms.append(self.named_entities(**kwargs))
+            if words is True:
+                all_terms.append(self.words(**kwargs))
+            if ngrams:
+                for n in range(ngrams[0], ngrams[1] + 1):
+                    if n == 1 and words is True:
+                        continue
+                    all_terms.append(self.ngrams(n, **kwargs))
+
+        if lemmatize is True:
+            for term in itertoolz.concat(all_terms):
+                yield term.lemma_
+        else:
+            for term in itertoolz.concat(all_terms):
+                yield term.text
 
     ##########################
     # INFORMATION EXTRACTION #
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'words'))
     def words(self, **kwargs):
         """
-        Extract an ordered list of words from a spacy-parsed doc, optionally
+        Extract an ordered sequence of words from a spacy-parsed doc, optionally
         filtering words by part-of-speech (etc.) and frequency.
 
         .. seealso:: :func:`extract.words() <textacy.extract.words>` for all function kwargs.
         """
-        return list(extract.words(self.spacy_doc, **kwargs))
+        return extract.words(self.spacy_doc, **kwargs)
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'ngrams'))
     def ngrams(self, n, **kwargs):
         """
-        Extract an ordered list of n-grams (``n`` consecutive words) from doc,
+        Extract an ordered sequence of n-grams (``n`` consecutive words) from doc,
         optionally filtering n-grams by the types and parts-of-speech of the
         constituent words.
 
@@ -196,31 +320,28 @@ class TextDoc(object):
 
         .. seealso:: :func:`extract.ngrams() <textacy.extract.ngrams>` for all function kwargs.
         """
-        return list(extract.ngrams(self.spacy_doc, n, **kwargs))
+        return extract.ngrams(self.spacy_doc, n, **kwargs)
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'named_entities'))
     def named_entities(self, **kwargs):
         """
-        Extract an ordered list of named entities (PERSON, ORG, LOC, etc.) from
+        Extract an ordered sequence of named entities (PERSON, ORG, LOC, etc.) from
         doc, optionally filtering by the entity types and frequencies.
 
         .. seealso:: :func:`extract.named_entities() <textacy.extract.named_entities>`
         for all function kwargs.
         """
-        return list(extract.named_entities(self.spacy_doc, **kwargs))
+        return extract.named_entities(self.spacy_doc, **kwargs)
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'noun_chunks'))
     def noun_chunks(self, **kwargs):
         """
-        Extract an ordered list of noun phrases from doc, optionally
+        Extract an ordered sequence of noun phrases from doc, optionally
         filtering by frequency and dropping leading determiners.
 
         .. seealso:: :func:`extract.noun_chunks() <textacy.extract.noun_chunks>`
         for all function kwargs.
         """
-        return list(extract.noun_chunks(self.spacy_doc, **kwargs))
+        return extract.noun_chunks(self.spacy_doc, **kwargs)
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'pos_regex_matches'))
     def pos_regex_matches(self, pattern):
         """
         Extract sequences of consecutive tokens from a spacy-parsed doc whose
@@ -241,17 +362,15 @@ class TextDoc(object):
                 * verb phrase: r'<VERB>?<ADV>*<VERB>+'
                 * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
         """
-        return list(extract.pos_regex_matches(self.spacy_doc, pattern))
+        return extract.pos_regex_matches(self.spacy_doc, pattern)
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'subject_verb_object_triples'))
     def subject_verb_object_triples(self):
         """
-        Extract an *un*ordered list of distinct subject-verb-object (SVO) triples
+        Extract an *un*ordered sequence of distinct subject-verb-object (SVO) triples
         from doc.
         """
-        return list(extract.subject_verb_object_triples(self.spacy_doc))
+        return extract.subject_verb_object_triples(self.spacy_doc)
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'acronyms_and_definitions'))
     def acronyms_and_definitions(self, **kwargs):
         """
         Extract a collection of acronyms and their most likely definitions,
@@ -263,7 +382,6 @@ class TextDoc(object):
         """
         return extract.acronyms_and_definitions(self.spacy_doc, **kwargs)
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'semistructured_statements'))
     def semistructured_statements(self, entity, **kwargs):
         """
         Extract "semi-structured statements" from doc, each as a (entity, cue, fragment)
@@ -276,18 +394,15 @@ class TextDoc(object):
         .. seealso:: :func:`extract.semistructured_statements() <textacy.extract.semistructured_statements>`
         for all function kwargs.
         """
-        return list(extract.semistructured_statements(
-            self.spacy_doc, entity, **kwargs))
+        return extract.semistructured_statements(self.spacy_doc, entity, **kwargs)
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'direct_quotations'))
     def direct_quotations(self):
         """
         Baseline, not-great attempt at direction quotation extraction (no indirect
         or mixed quotations) using rules and patterns. English only.
         """
-        return list(extract.direct_quotations(self.spacy_doc))
+        return extract.direct_quotations(self.spacy_doc)
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'key_terms'))
     def key_terms(self, algorithm='sgrank', n=10):
         """
         Extract key terms from a document using `algorithm`.
@@ -314,9 +429,8 @@ class TextDoc(object):
     ##############
     # STATISTICS #
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'term_counts'))
     def term_counts(self, lemmatize='auto', ngram_range=(1, 1),
-                    include_nes=False, include_nps=False, include_kts=False):
+                    include_nes=False, include_ncs=False, include_kts=False):
         """
         Get the number of occurrences ("counts") of each unique term in doc;
         terms may be words, n-grams, named entities, noun phrases, and key terms.
@@ -328,7 +442,7 @@ class TextDoc(object):
             ngram_range (tuple(int), optional): (min n, max n) values for n-grams
                 to include in terms list; default (1, 1) only includes unigrams
             include_nes (bool, optional): if True, include named entities in terms list
-            include_nps (bool, optional): if True, include noun phrases in terms list
+            include_ncs (bool, optional): if True, include noun chunks in terms list
             include_kts (bool, optional): if True, include key terms in terms list
 
         Returns:
@@ -352,9 +466,9 @@ class TextDoc(object):
         if include_nes is True:
             self._term_counts = self._term_counts | Counter(
                 get_id(ne) for ne in self.named_entities())
-        if include_nps is True:
+        if include_ncs is True:
             self._term_counts = self._term_counts | Counter(
-                get_id(np) for np in self.noun_chunks())
+                get_id(nc) for nc in self.noun_chunks())
         if include_kts is True:
             # HACK: key terms are currently returned as strings
             # TODO: cache key terms, and return them as spacy spans
@@ -379,11 +493,11 @@ class TextDoc(object):
             term_text = term
             term_id = self.spacy_stringstore[term_text]
             term_len = term_text.count(' ') + 1
-        elif isinstance(term, spacy_token):
+        elif isinstance(term, stoken):
             term_text = spacy_utils.normalized_str(term)
             term_id = self.spacy_stringstore[term_text]
             term_len = 1
-        elif isinstance(term, spacy_span):
+        elif isinstance(term, sspan):
             term_text = spacy_utils.normalized_str(term)
             term_id = self.spacy_stringstore[term_text]
             term_len = len(term)
@@ -410,14 +524,15 @@ class TextDoc(object):
         """The number of tokens in the document -- including punctuation."""
         return len(self.spacy_doc)
 
-    def n_words(self, filter_stops=False, filter_punct=True, filter_nums=False):
+    @property
+    def n_words(self):
         """
-        The number of words in the document, with optional filtering of stop words,
-        punctuation (on by default), and numbers.
+        The number of words in the document -- i.e. the number of tokens, excluding
+        punctuation and whitespace.
         """
-        return len(self.words(filter_stops=filter_stops,
-                              filter_punct=filter_punct,
-                              filter_nums=filter_nums))
+        return sum(1 for _ in self.words(filter_stops=False,
+                                         filter_punct=True,
+                                         filter_nums=False))
 
     @property
     def n_sents(self):
@@ -428,22 +543,29 @@ class TextDoc(object):
         """The number of paragraphs in the document, as delimited by ``pattern``."""
         return sum(1 for _ in re.finditer(pattern, self.text)) + 1
 
-    @cachedmethod(attrgetter('_cache'), key=partial(hashkey, 'readability_stats'))
+    @property
     def readability_stats(self):
         return text_stats.readability_stats(self)
 
 
 class TextCorpus(object):
     """
-    A collection of :class:`TextDoc <textacy.texts.TextDoc>` s with some syntactic
-    sugar and functions to compute corpus statistics.
+    An ordered collection of :class:`TextDoc <textacy.texts.TextDoc>` s, all of
+    the same language and sharing a single spaCy pipeline and vocabulary. Tracks
+    overall corpus statistics and provides a convenient interface to alternate
+    corpus representations.
 
-    Initalize with a particular language.
-    Add documents to corpus by :meth:`TextCorpus.add_text() <textacy.texts.TextCorpus.add_text>`.
+    Args:
+        lang (str): 2-letter code of corpus' language, used to initialize spaCy;
+            see https://cloud.google.com/translate/v2/using_rest#language-params
+
+    Add texts to corpus one-by-one with :meth:`TextCorpus.add_text() <textacy.texts.TextCorpus.add_text>`,
+    or all at once with :meth:`TextCorpus.from_texts() <textacy.texts.TextCorpus.from_texts>`.
+    Can also add already-instantiated TextDocs via :meth:`TextCorpus.add_doc() <textacy.texts.TextCorpus.add_doc>`.
 
     Iterate over corpus docs with ``for doc in TextCorpus``. Access individual docs
     by index (e.g. ``TextCorpus[0]`` or ``TextCorpus[0:10]``) or by boolean condition
-    specified by lambda function (e.g. ``TextCorpus.get_docs(lambda x: len(x) > 100)``).
+    specified by a function (e.g. ``TextCorpus.get_docs(lambda x: len(x) > 100)``).
     """
     def __init__(self, lang):
         self.lang = lang
@@ -452,10 +574,11 @@ class TextCorpus(object):
         self.spacy_stringstore = self.spacy_vocab.strings
         self.docs = []
         self.n_docs = 0
+        self.n_sents = 0
         self.n_tokens = 0
 
     def __repr__(self):
-        return 'TextCorpus({} docs, {} tokens)'.format(self.n_docs, self.n_tokens)
+        return 'TextCorpus({} docs; {} tokens)'.format(self.n_docs, self.n_tokens)
 
     def __len__(self):
         return self.n_docs
@@ -468,24 +591,37 @@ class TextCorpus(object):
             yield doc
 
     @classmethod
-    def from_texts(cls, texts, lang):
+    def from_texts(cls, lang, texts, metadata=None, n_threads=2, batch_size=1000):
         """
         Convenience function for creating a :class:`TextCorpus <textacy.texts.TextCorpus>`
-        from an iterable of text strings. NOTE: Only useful for texts without additional metadata.
+        from an iterable of text strings.
 
         Args:
-            texts (iterable(str))
             lang (str)
+            texts (iterable(str))
+            metadata (iterable(dict), optional)
+            n_threads (int, optional)
+            batch_size (int, optional)
 
         Returns:
             :class:`TextCorpus <textacy.texts.TextCorpus>`
         """
         textcorpus = cls(lang=lang)
-        for text in texts:
-            textcorpus.add_text(text, lang=lang)
+        spacy_docs = textcorpus.spacy_pipeline.pipe(
+            texts, n_threads=n_threads, batch_size=batch_size)
+        if metadata is not None:
+            for spacy_doc, md in zip(spacy_docs, metadata):
+                textcorpus.add_doc(TextDoc(spacy_doc, lang=lang,
+                                           spacy_pipeline=textcorpus.spacy_pipeline,
+                                           metadata=md))
+        else:
+            for spacy_doc in spacy_docs:
+                textcorpus.add_doc(TextDoc(spacy_doc, lang=lang,
+                                           spacy_pipeline=textcorpus.spacy_pipeline,
+                                           metadata=None))
         return textcorpus
 
-    def add_text(self, text, lang='auto', metadata=None):
+    def add_text(self, text, lang=None, metadata=None):
         """
         Create a :class:`TextDoc <textacy.texts.TextDoc>` from ``text`` and ``metadata``,
         then add it to the corpus.
@@ -507,9 +643,10 @@ class TextCorpus(object):
         doc.corpus = self
         self.docs.append(doc)
         self.n_docs += 1
+        self.n_sents += doc.n_sents
         self.n_tokens += doc.n_tokens
 
-    def add_doc(self, textdoc, print_warning=True):
+    def add_doc(self, doc, print_warning=True):
         """
         Add an existing :class:`TextDoc <textacy.texts.TextDoc>` to the corpus as-is.
         NB: If ``textdoc`` is already added to this or another :class:`TextCorpus <textacy.texts.TextCorpus>`,
@@ -517,23 +654,30 @@ class TextCorpus(object):
         overwritten, but you won't be prevented from adding the doc.
 
         Args:
-            textdoc (:class:`TextDoc <textacy.texts.TextDoc>`)
+            doc (:class:`TextDoc <textacy.texts.TextDoc>`)
             print_warning (bool, optional): if True, print a warning message if
-                ``textdoc`` already added to a corpus; otherwise, don't ever print
+                ``doc`` already added to a corpus; otherwise, don't ever print
                 the warning and live dangerously
         """
-        if textdoc.lang != self.lang:
-            msg = 'TextDoc.lang {} != TextCorpus.lang {}'.format(textdoc.lang, self.lang)
+        if doc.lang != self.lang:
+            msg = 'TextDoc.lang {} != TextCorpus.lang {}'.format(doc.lang, self.lang)
             raise ValueError(msg)
-        if hasattr(textdoc, 'corpus_index'):
-            textdoc = copy.deepcopy(textdoc)
+        if hasattr(doc, 'corpus_index'):
+            doc = copy.deepcopy(doc)
             if print_warning is True:
                 print('**WARNING: TextDoc already associated with a TextCorpus; adding anyway...')
-        textdoc.corpus_index = self.n_docs
-        textdoc.corpus = self
-        self.docs.append(textdoc)
+        doc.corpus_index = self.n_docs
+        doc.corpus = self
+        self.docs.append(doc)
         self.n_docs += 1
-        self.n_tokens += textdoc.n_tokens
+        self.n_sents += doc.n_sents
+        self.n_tokens += doc.n_tokens
+
+    def get_doc(self, index):
+        """
+        Get a single doc by its position ``index`` in the corpus.
+        """
+        return self.docs[index]
 
     def get_docs(self, match_condition, limit=None):
         """
@@ -591,18 +735,19 @@ class TextCorpus(object):
         for i, doc in enumerate(self):
             doc.corpus_index = i
 
-    def to_term_doc_matrix(self, weighting='tf',
-                           normalize=True, binarize=False, smooth_idf=True,
-                           min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None,
-                           ngram_range=(1, 1), include_nes=False,
-                           include_nps=False, include_kts=False):
+    def as_doc_term_matrix(self, terms_lists, weighting='tf',
+                           normalize=True, smooth_idf=True, sublinear_tf=False,
+                           min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None):
         """
         Transform corpus into a sparse CSR matrix, where each row i corresponds
         to a doc, each column j corresponds to a unique term, and matrix values
         (i, j) correspond to the tf or tf-idf weighting of term j in doc i.
+
+        .. seealso:: :func:`build_doc_term_matrix <textacy.representations.vsm.build_doc_term_matrix>`
         """
-        return transform.corpus_to_term_doc_matrix(
-            self, weighting=weighting, normalize=normalize, binarize=binarize,
-            smooth_idf=smooth_idf, min_df=min_df, max_df=max_df, min_ic=min_ic,
-            max_n_terms=max_n_terms, ngram_range=ngram_range,
-            include_nes=include_nes, include_nps=include_nps, include_kts=include_kts)
+        self.doc_term_matrix, self.id_to_term = vsm.build_doc_term_matrix(
+            terms_lists, weighting=weighting,
+            normalize=normalize, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf,
+            min_df=min_df, max_df=max_df, min_ic=min_ic,
+            max_n_terms=max_n_terms)
+        return (self.doc_term_matrix, self.id_to_term)

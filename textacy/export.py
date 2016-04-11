@@ -1,9 +1,12 @@
 """
 Module for exporting textacy/spacy objects into "third-party" formats.
 """
-import io
+from collections import Counter
+from operator import itemgetter
 
 from gensim.corpora.dictionary import Dictionary
+from spacy import attrs
+from spacy.strings import StringStore
 
 from textacy import extract
 
@@ -40,13 +43,14 @@ def doc_to_gensim(doc, lemmatize=True,
     return (gdict, gdoc)
 
 
-def docs_to_gensim(docs, lemmatize=True,
+def docs_to_gensim(spacy_docs, spacy_vocab, lemmatize=True,
                    filter_stops=True, filter_punct=True, filter_nums=False):
     """
     Convert multiple ``spacy.Doc`` s into a gensim dictionary and bag-of-words corpus.
 
     Args:
-        docs (list(``spacy.Doc``))
+        spacy_docs (list(``spacy.Doc``))
+        spacy_vocab (``spacy.Vocab``)
         lemmatize (bool): if True, use lemmatized strings for words; otherwise,
             use the original form of the string as it appears in ``doc``
         filter_stops (bool): if True, remove stop words from word list
@@ -61,14 +65,35 @@ def docs_to_gensim(docs, lemmatize=True,
     """
     gdict = Dictionary()
     gcorpus = []
-    for doc in docs:
-        words = extract.words(doc,
-                              filter_stops=filter_stops,
-                              filter_punct=filter_punct,
-                              filter_nums=filter_nums)
+    stringstore = StringStore()
+    doc_freqs = Counter()
+
+    for spacy_doc in spacy_docs:
         if lemmatize is True:
-            gcorpus.append(gdict.doc2bow((word.lemma_ for word in words), allow_update=True))
+            bow = ((spacy_vocab[tok_id], count)
+                   for tok_id, count in spacy_doc.count_by(attrs.LEMMA).items())
         else:
-            gcorpus.append(gdict.doc2bow((word.orth_ for word in words), allow_update=True))
+            bow = ((spacy_vocab[tok_id], count)
+                   for tok_id, count in spacy_doc.count_by(attrs.ORTH).items())
+
+        if filter_stops is True:
+            bow = ((lex, count) for lex, count in bow if not lex.is_stop)
+        if filter_punct is True:
+            bow = ((lex, count) for lex, count in bow if not lex.is_punct)
+        if filter_nums is True:
+            bow = ((lex, count) for lex, count in bow if not lex.like_num)
+
+        bow = sorted(((stringstore[lex.orth_], count) for lex, count in bow),
+                     key=itemgetter(0))
+
+        doc_freqs.update(tok_id for tok_id, _ in bow)
+        gdict.num_docs += 1
+        gdict.num_pos += sum(count for _, count in bow)
+        gdict.num_nnz += len(bow)
+
+        gcorpus.append(bow)
+
+    gdict.token2id = {s: i for i, s in enumerate(stringstore)}
+    gdict.dfs = dict(doc_freqs)
 
     return (gdict, gcorpus)

@@ -17,7 +17,7 @@ from math import log, sqrt
 from operator import itemgetter
 
 from textacy import extract, spacy_utils
-from textacy.transform import terms_to_semantic_network
+from textacy.representations.network import terms_to_semantic_network
 
 
 def sgrank(doc, window_width=1500, n_keyterms=10, idf=None):
