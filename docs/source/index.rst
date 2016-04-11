@@ -14,6 +14,7 @@ Features
 - Unsupervised key term extraction (specific algorithms such as SGRank or TextRank, as well as a general semantic network-based approach)
 - Conversion of individual documents into common representations (bag of words), as well as corpora (term-document matrix, with TF or TF-IDF weighting, and filtering by these metrics or IC)
 - Common utility functions for identifying a text's language, displaying key words in context (KWIC), truecasing words, and higher-level navigation of a parse tree
+- Sklearn-style topic modeling with LSA, LDA, or NMF, including functions to interpret the results of trained models
 
 And more!
 

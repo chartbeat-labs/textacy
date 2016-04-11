@@ -22,6 +22,12 @@ Information Extraction
 .. automodule:: textacy.keyterms
     :members:
 
+Topic Modeling
+--------------
+
+.. automodule:: textacy.tm.topic_model
+    :members:
+
 Utilities
 ---------
 
