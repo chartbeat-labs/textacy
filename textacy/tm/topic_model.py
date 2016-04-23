@@ -302,8 +302,13 @@ class TopicModel(object):
                      topics=-1, sort_topics_by='weight', highlight_topics=None,
                      n_terms=25, top_terms_by='topic_weight', sort_terms_by='seriation'):
         """
+        Make a "termite" plot for assessing topic models using a tabular layout
+        to promote comparison of terms both within and across topics.
+
         Args:
-            doc_term_matrix (``np.ndarray``-like)
+            doc_term_matrix (``np.ndarray``-like or sparse matrix): corpus
+                represented as a document-term matrix with shape (n_docs, n_terms);
+                may have tf- or tfidf-weighting
             id2term (list(str) or dict): object that returns the term string corresponding
                 to term id ``i`` through ``id2term[i]``; could be a list of strings
                 where the index represents the term id, such as that returned by
@@ -311,11 +316,31 @@ class TopicModel(object):
                 or a mapping of term id: term string
             topics (seq(int) or int, optional): topic(s) to include in termite plot;
                 if -1, all topics are included
-            sort_topics_by ({'index', 'weight'}, optional)
-            highlight_topics (seq(int) or int, optional)
-            n_terms (int, optional)
-            top_terms_by ({'topic_weight', 'corpus_weight'}, optional)
-            sort_terms_by ({'seriation', 'weight', 'index', 'alphabetical'}, optional)
+            sort_topics_by ({'index', 'weight'}, optional):
+            highlight_topics (seq(int) or int, optional): indices for up to 6 topics
+                to visually highlight in the plot with contrasting colors
+            n_terms (int, optional): number of top terms to include in termite plot
+            top_terms_by ({'topic_weight', 'corpus_weight'}, optional): value used
+                to rank terms; the top-ranked ``n_terms`` are included in the plot
+            sort_terms_by ({'seriation', 'weight', 'index', 'alphabetical'}, optional):
+                method used to vertically sort the selected top ``n_terms`` terms;
+                the default ("seriation") groups similar terms together, which
+                facilitates cross-topic assessment
+
+        Returns:
+            ``matplotlib.axes.Axes.axis``: axis on which termite plot is plotted
+
+        Raises:
+            ValueError: if more than 6 topics are selected for highlighting, or
+                an invalid value is passed for the sort_topics_by, top_terms_by,
+                and/or sort_terms_by params
+
+        References:
+            .. Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
+                Visualization techniques for assessing textual topic models."
+                Proceedings of the International Working Conference on Advanced
+                Visual Interfaces. ACM, 2012.
+            .. for sorting by "seriation", see https://arxiv.org/abs/1406.5370
         """
         if highlight_topics is not None:
             if isinstance(highlight_topics, int):
@@ -339,7 +364,9 @@ class TopicModel(object):
                                in np.argsort(self.topic_weights(self.transform(doc_term_matrix)))[::-1]
                                if topic_ind in topic_inds)
         else:
-            raise ValueError()
+            msg = 'invalid sort_topics_by value; must be in {}'.format(
+                {'index', 'weight'})
+            raise ValueError(msg)
 
         # get column index of any topics to highlight in termite plot
         highlight_cols = tuple(i for i in range(len(topic_inds))
@@ -351,7 +378,9 @@ class TopicModel(object):
         elif top_terms_by == 'topic_weight':
             term_inds = np.argsort(self.model.components_.sum(axis=0))[:-n_terms - 1:-1]
         else:
-            raise ValueError()
+            msg = 'invalid top_terms_by value; must be in {}'.format(
+                {'corpus_weight', 'topic_weight'})
+            raise ValueError(msg)
 
         # get top term indices in sorted order
         if sort_terms_by == 'weight':
@@ -361,7 +390,6 @@ class TopicModel(object):
         elif sort_terms_by == 'alphabetical':
             term_inds = sorted(term_inds, key=lambda x: id2term[x])
         elif sort_terms_by == 'seriation':
-            # https://arxiv.org/abs/1406.5370
             topic_term_weights_mat = np.array(
                 np.array([self.model.components_[topic_ind][term_inds]
                           for topic_ind in topic_inds])).T
@@ -378,7 +406,9 @@ class TopicModel(object):
             # get permutation corresponding to sorting the 2nd eigenvector
             term_inds = [term_inds[i] for i in np.argsort(fiedler)]
         else:
-            raise ValueError()
+            msg = 'invalid sort_terms_by value; must be in {}'.format(
+                {'weight', 'index', 'alphabetical', 'seriation'})
+            raise ValueError(msg)
 
         # get topic and term labels
         topic_labels = tuple('topic {}'.format(topic_ind) for topic_ind in topic_inds)
@@ -388,7 +418,6 @@ class TopicModel(object):
         term_topic_weights = np.array([self.model.components_[topic_ind][term_inds]
                                       for topic_ind in topic_inds]).T
 
-        #return (term_topic_weights, topic_labels, term_labels, highlight_cols)
-
-        ax = viz.termite_plot(
-            term_topic_weights, topic_labels, term_labels, highlight_cols=highlight_cols)
+        return viz.termite_plot(
+            term_topic_weights, topic_labels, term_labels,
+            highlight_cols=highlight_cols)

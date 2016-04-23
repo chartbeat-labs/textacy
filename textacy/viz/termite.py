@@ -40,15 +40,35 @@ COLOR_PAIRS = (((0.65098041296005249, 0.80784314870834351, 0.89019608497619629),
 
 def termite_plot(values_mat, col_labels, row_labels, highlight_cols=None):
     """
+    Make a "termite" plot, typically used for assessing topic models with a tabular
+    layout that promotes comparison of terms both within and across topics.
+
     Args:
-        values_mat (``np.ndarray``-like)
-        col_labels (seq(str))
-        row_labels(seq(str))
-        highlight_cols (int or seq(int), optional)
+        values_mat (``np.ndarray`` or matrix): matrix of values with shape
+            (# row labels, # col labels) used to size the dots on the grid
+        col_labels (seq(str)): labels used to identify x-axis ticks on the grid
+        row_labels(seq(str)): labels used to identify y-axis ticks on the grid
+        highlight_cols (int or seq(int), optional): indices for up to 6 columns
+            to visually highlight in the plot with contrasting colors
 
     Returns:
-        ``matplotlib.axis``
+        ``matplotlib.axes.Axes.axis``: axis on which termite plot is plotted
+
+    Raises:
+        ValueError: if more than 6 columns are selected for highlighting
+
+    References:
+        .. Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
+            Visualization techniques for assessing textual topic models."
+            Proceedings of the International Working Conference on Advanced
+            Visual Interfaces. ACM, 2012.
     """
+    if highlight_cols is not None:
+        if isinstance(highlight_cols, int):
+            highlight_cols = (highlight_cols,)
+        elif len(highlight_cols) > 6:
+            raise ValueError('no more than 6 columns may be highlighted at once')
+
     n_rows = len(row_labels)
     n_cols = len(col_labels)
     max_val = np.max(values_mat)
