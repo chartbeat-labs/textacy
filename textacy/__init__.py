@@ -11,6 +11,7 @@ from textacy import corpora
 from textacy import fileio
 from textacy import representations
 from textacy import tm
+from textacy import viz
 # top-level modules
 from textacy import compat, data, math_utils, regexes_etc
 from textacy import lexicon_methods, preprocess, text_stats, text_utils
