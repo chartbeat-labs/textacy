@@ -11,3 +11,6 @@ dist/
 
 # sphinx documentation
 docs/build/*
+
+# other stuff
+.coverage
