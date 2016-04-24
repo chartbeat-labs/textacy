@@ -300,7 +300,8 @@ class TopicModel(object):
 
     def termite_plot(self, doc_term_matrix, id2term,
                      topics=-1, sort_topics_by='weight', highlight_topics=None,
-                     n_terms=25, top_terms_by='topic_weight', sort_terms_by='seriation'):
+                     n_terms=25, rank_terms_by='topic_weight', sort_terms_by='seriation',
+                     save=False):
         """
         Make a "termite" plot for assessing topic models using a tabular layout
         to promote comparison of terms both within and across topics.
@@ -320,19 +321,20 @@ class TopicModel(object):
             highlight_topics (seq(int) or int, optional): indices for up to 6 topics
                 to visually highlight in the plot with contrasting colors
             n_terms (int, optional): number of top terms to include in termite plot
-            top_terms_by ({'topic_weight', 'corpus_weight'}, optional): value used
+            rank_terms_by ({'topic_weight', 'corpus_weight'}, optional): value used
                 to rank terms; the top-ranked ``n_terms`` are included in the plot
             sort_terms_by ({'seriation', 'weight', 'index', 'alphabetical'}, optional):
                 method used to vertically sort the selected top ``n_terms`` terms;
                 the default ("seriation") groups similar terms together, which
                 facilitates cross-topic assessment
+            save (str, optional): give the full /path/to/fname on disk to save figure
 
         Returns:
             ``matplotlib.axes.Axes.axis``: axis on which termite plot is plotted
 
         Raises:
             ValueError: if more than 6 topics are selected for highlighting, or
-                an invalid value is passed for the sort_topics_by, top_terms_by,
+                an invalid value is passed for the sort_topics_by, rank_terms_by,
                 and/or sort_terms_by params
 
         References:
@@ -341,6 +343,10 @@ class TopicModel(object):
                 Proceedings of the International Working Conference on Advanced
                 Visual Interfaces. ACM, 2012.
             .. for sorting by "seriation", see https://arxiv.org/abs/1406.5370
+
+        .. seealso:: :func:`viz.termite_plot <textacy.viz.termite.termite_plot>`
+
+        TODO: `rank_terms_by` other metrics, e.g. topic salience or relevance
         """
         if highlight_topics is not None:
             if isinstance(highlight_topics, int):
@@ -373,12 +379,12 @@ class TopicModel(object):
                                if topic_inds[i] in highlight_topics)
 
         # get top term indices
-        if top_terms_by == 'corpus_weight':
+        if rank_terms_by == 'corpus_weight':
             term_inds = np.argsort(np.ravel(doc_term_matrix.sum(axis=0)))[:-n_terms - 1:-1]
-        elif top_terms_by == 'topic_weight':
+        elif rank_terms_by == 'topic_weight':
             term_inds = np.argsort(self.model.components_.sum(axis=0))[:-n_terms - 1:-1]
         else:
-            msg = 'invalid top_terms_by value; must be in {}'.format(
+            msg = 'invalid rank_terms_by value; must be in {}'.format(
                 {'corpus_weight', 'topic_weight'})
             raise ValueError(msg)
 
@@ -420,4 +426,4 @@ class TopicModel(object):
 
         return viz.termite_plot(
             term_topic_weights, topic_labels, term_labels,
-            highlight_cols=highlight_cols)
+            highlight_cols=highlight_cols, save=save)

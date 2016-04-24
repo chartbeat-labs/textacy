@@ -38,7 +38,8 @@ COLOR_PAIRS = (((0.65098041296005249, 0.80784314870834351, 0.89019608497619629),
                 (0.69411766529083252, 0.3490196168422699, 0.15686275064945221)))
 
 
-def termite_plot(values_mat, col_labels, row_labels, highlight_cols=None):
+def termite_plot(values_mat, col_labels, row_labels,
+                 highlight_cols=None, save=False):
     """
     Make a "termite" plot, typically used for assessing topic models with a tabular
     layout that promotes comparison of terms both within and across topics.
@@ -50,6 +51,7 @@ def termite_plot(values_mat, col_labels, row_labels, highlight_cols=None):
         row_labels(seq(str)): labels used to identify y-axis ticks on the grid
         highlight_cols (int or seq(int), optional): indices for up to 6 columns
             to visually highlight in the plot with contrasting colors
+        save (str, optional): give the full /path/to/fname on disk to save figure
 
     Returns:
         ``matplotlib.axes.Axes.axis``: axis on which termite plot is plotted
@@ -62,6 +64,8 @@ def termite_plot(values_mat, col_labels, row_labels, highlight_cols=None):
             Visualization techniques for assessing textual topic models."
             Proceedings of the International Working Conference on Advanced
             Visual Interfaces. ACM, 2012.
+
+    .. seealso:: :func:`TopicModel.termite_plot <textacy.tm.TopicModel.termite_plot>`
     """
     if highlight_cols is not None:
         if isinstance(highlight_cols, int):
@@ -76,7 +80,7 @@ def termite_plot(values_mat, col_labels, row_labels, highlight_cols=None):
                         for i, hc in enumerate(highlight_cols)}
 
     with plt.rc_context(RC_PARAMS):
-        _, ax = plt.subplots(figsize=(pow(n_cols, 0.8), pow(n_rows, 0.66)))
+        fig, ax = plt.subplots(figsize=(pow(n_cols, 0.8), pow(n_rows, 0.66)))
 
         _ = ax.set_yticks(range(n_rows))
         yticklabels = ax.set_yticklabels(row_labels,
@@ -118,5 +122,8 @@ def termite_plot(values_mat, col_labels, row_labels, highlight_cols=None):
 
             _ = ax.set_xlim(left=-1, right=n_cols)
             _ = ax.set_ylim(bottom=-1, top=n_rows)
+
+    if save:
+        fig.savefig(save, bbox_inches='tight', dpi=100)
 
     return ax
