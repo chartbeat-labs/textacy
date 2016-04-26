@@ -19,17 +19,20 @@ Train and apply a topic model to vectorized texts. For example::
     >>> # transform the corpus and interpret our model
     >>> doc_topic_matrix = model.transform(doc_term_matrix)
     >>> for topic_idx, top_terms in model.top_topic_terms(id2term, top_n=10):
-    ...     print('topic {}:'.format(topic_idx), '   '.join(top_terms))
+    ...     print('topic', topic_idx, ':', '   '.join(top_terms))
     >>> for topic_idx, top_docs in model.top_topic_docs(doc_topic_matrix, top_n=5):
-    ...     print('\n{}'.format(topic_idx))
+    ...     print(topic_idx)
     ...     for j in top_docs:
     ...         print(corpus[j].metadata['title'])
     >>> for doc_idx, topics in model.top_doc_topics(doc_topic_matrix, docs=range(5), top_n=2):
-    ...     print('{}: {}'.format(corpus[doc_idx].metadata['title'], topics))
+    ...     print(corpus[doc_idx].metadata['title'], ':', topics)
     >>> for i, val in enumerate(model.topic_weights(doc_topic_matrix)):
     ...     print(i, val)
+    >>> # visualize the model
+    >>> model.termite_plot(doc_term_matrix, id2term,
+    ...                    topics=-1,  n_terms=25, sort_terms_by='seriation')
     >>> # assess topic quality through a coherence metric
-    >>> # WIP...
+    >>> # TODO...
     >>> # persist our topic model to disk
     >>> model.save('nmf-20topics.pkl')
 """
