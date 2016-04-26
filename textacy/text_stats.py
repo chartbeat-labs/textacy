@@ -31,7 +31,7 @@ def readability_stats(doc):
 
     n_sents = doc.n_sents
 
-    words = doc.words(filter_punct=True, filter_stops=False, filter_nums=False)
+    words = list(doc.words(filter_punct=True, filter_stops=False, filter_nums=False))
     n_words = len(words)
     n_unique_words = len({word.lower for word in words})
     n_chars = sum(len(word) for word in words)

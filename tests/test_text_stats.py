@@ -1,20 +1,28 @@
 from __future__ import absolute_import, unicode_literals
 
-import numpy as np
-from scipy.sparse import coo_matrix
 import unittest
 
 from textacy import text_stats
+from textacy import TextDoc
 
 
 class TextStatsTestCase(unittest.TestCase):
 
     def setUp(self):
+        self.spacy_doc = TextDoc('Testing: 1, 2, 3.')
         self.n_chars = 2855
         self.n_syllables = 857
         self.n_words = 441
         self.n_polysyllable_words = 104
         self.n_sents = 21
+
+    def test_readability_stats(self):
+        self.assertIsInstance(text_stats.readability_stats(self.spacy_doc), dict)
+
+    def test_readability_stats_lang(self):
+        self.spacy_doc.lang = 'es'
+        self.assertRaises(
+            NotImplementedError, text_stats.readability_stats, self.spacy_doc)
 
     def test_flesch_kincaid_grade_level(self):
         self.assertAlmostEqual(
