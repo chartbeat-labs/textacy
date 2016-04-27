@@ -1,6 +1,10 @@
 from __future__ import absolute_import
 
 import logging
+import os
+
+__version__ = '0.2.0'
+__data_dir__ = os.path.join(os.path.dirname(__file__), 'resources')
 
 # subpackages
 from textacy import corpora
@@ -16,8 +20,6 @@ from textacy import export, keyterms
 from textacy import texts
 
 from textacy.texts import TextDoc, TextCorpus
-
-__version__ = '0.2.0'
 
 logger = logging.getLogger('textacy')
 if len(logger.handlers) == 0:  # To ensure reload() doesn't add another one
