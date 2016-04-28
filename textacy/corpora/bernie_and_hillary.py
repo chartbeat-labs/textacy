@@ -2,9 +2,9 @@
 Download to and load from disk a corpus of (all?) speeches given by Bernie Sanders
 and Hillary Clinton on the floor of Congress between January 1996 and February 2016.
 
-The corpus contains just over 3000 documents: 2200 given by Bernie, 800 by Hillary
-(Bernie has been a member of Congress significantly longer than Hillary was). Each
-document contains 6 fields:
+The corpus contains just over 3000 documents: 2200 by Bernie, 800 by Hillary
+(Bernie has been a member of Congress significantly longer than Hillary was).
+It is comprised of about 1.9 million tokens. Each document contains 6 fields:
 
     - text: full(?) text of the speech
     - title: title of the speech, in all caps

@@ -134,7 +134,7 @@ def load_depechemood(data_dir=None, download_if_missing=True,
             rows = list(csvreader)
     except (OSError, IOError):
         if download_if_missing is True:
-            _download_depeche_mood(os.path.split(data_dir)[0])
+            _download_depechemood(os.path.split(data_dir)[0])
             with io.open(fname, mode='rt') as csvfile:
                 csvreader = csv.reader(csvfile, delimiter='\t')
                 rows = list(csvreader)
@@ -148,7 +148,7 @@ def load_depechemood(data_dir=None, download_if_missing=True,
             for row in rows[1:]}
 
 
-def _download_depeche_mood(data_dir):
+def _download_depechemood(data_dir):
     """
     Download the DepecheMood dataset from GitHub, save to disk as .txt files.
 
