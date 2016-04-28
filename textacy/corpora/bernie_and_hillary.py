@@ -73,7 +73,7 @@ def fetch_bernie_and_hillary(data_dir=DEFAULT_DATA_DIR,
     Args:
         data_dir (str, optional): path on disk from which corpus will be loaded
         download_if_missing (bool, optional): if True and corpus not found on disk,
-            it will be automatically downloaded from S3
+            it will be automatically downloaded from S3 and saved to disk
         shuffle (bool, optional): if True, randomly shuffle order of documents;
             if False, documents are sorted chronologically
 
@@ -95,6 +95,7 @@ def fetch_bernie_and_hillary(data_dir=DEFAULT_DATA_DIR,
         else:
             logger.exception('unable to load corpus from %s', fname)
             raise
+    logger.info('loading corpus from %s', fname)
 
     if shuffle is True:
         random.shuffle(data)
