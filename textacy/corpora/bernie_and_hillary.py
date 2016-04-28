@@ -1,5 +1,22 @@
 """
-TODO
+Download to and load from disk a corpus of (all?) speeches given by Bernie Sanders
+and Hillary Clinton on the floor of Congress between January 1996 and February 2016.
+
+The corpus contains just over 3000 documents: 2200 given by Bernie, 800 by Hillary
+(Bernie has been a member of Congress significantly longer than Hillary was). Each
+document contains 6 fields:
+
+    - text: full(?) text of the speech
+    - title: title of the speech, in all caps
+    - date: date on which the speech was given, as an ISO-standard string
+    - speaker: name of the speaker; either "Bernard Sanders" or "Hillary Clinton"
+    - congress: number of the Congress in which the speech was given; ranges
+        continuously between 104 and 114
+    - chamber: chamber of Congress in which the speech was given; almost all are
+        either "House" or "Senate", with a small number of "Extensions"
+
+The source for this corpus is the Sunlight Foundation's
+`Capitol Words API <http://sunlightlabs.github.io/Capitol-Words/>`_.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -8,8 +25,10 @@ import os
 import random
 try:
     from urllib.request import urlopen
+    from urllib.error import HTTPError
 except ImportError:
     from urllib2 import urlopen
+    from urllib2 import HTTPError
 
 import textacy
 from textacy.fileio import read_json_lines, write_file
@@ -19,22 +38,27 @@ logger = logging.getLogger(__name__)
 
 URL = 'https://s3.amazonaws.com/chartbeat-labs/bernie_and_hillary.json'
 FNAME = 'bernie_and_hillary.json'
-DEFAULT_DATA_DIR = os.path.join(textacy.__data_dir__, 'bnh')
+DEFAULT_DATA_DIR = os.path.join(textacy.__data_dir__, 'bernie_and_hillary')
 
 
-def download_bernie_and_hillary(data_dir=DEFAULT_DATA_DIR):
+def _download_bernie_and_hillary(data_dir=DEFAULT_DATA_DIR):
     """
     Download the Bernie & Hillary corpus from S3, save to disk as JSON lines.
 
     Args:
         data_dir (str, optional): path on disk where corpus will be saved
+
+    Raises:
+        HTTPError: if something goes wrong with the download
     """
-    opener = urlopen(URL)
-    if opener.getcode() != 200:
-        logger.error('unable to download corpus from %s', URL)
-    else:
-        logger.info('corpus downloaded from %s (10 MB)', URL)
-    data = opener.read().decode('utf8')
+    try:
+        data = urlopen(URL).read()
+    except HTTPError as e:
+        logger.exception(
+            'unable to download corpus from %s; status code %s', URL, e.code)
+        raise
+    logger.info('corpus downloaded from %s (10 MB)', URL)
+    data = data.decode('utf8')
     fname = os.path.join(data_dir, FNAME)
     write_file(data, fname, mode='wt', encoding=None)
 
@@ -55,16 +79,23 @@ def fetch_bernie_and_hillary(data_dir=DEFAULT_DATA_DIR,
 
     Returns:
         list(dict)
+
+    Raises:
+        IOError: if file is not found on disk and `download_if_missing` is False
+        HTTPError: if file is not found on disk, `download_if_missing` is True,
+            and something goes wrong with the download
     """
     fname = os.path.join(data_dir, FNAME)
-    if not os.path.exists(fname):
+    try:
+        data = list(read_json_lines(fname, mode='rt', encoding=None))
+    except IOError:
         if download_if_missing is True:
-            download_bernie_and_hillary(data_dir=data_dir)
+            _download_bernie_and_hillary(data_dir=data_dir)
+            data = list(read_json_lines(fname, mode='rt', encoding=None))
         else:
-            logger.error('unable to load corpus from %s', fname)
-            return
+            logger.exception('unable to load corpus from %s', fname)
+            raise
 
-    data = list(read_json_lines(fname, mode='rt', encoding=None))
     if shuffle is True:
         random.shuffle(data)
 
