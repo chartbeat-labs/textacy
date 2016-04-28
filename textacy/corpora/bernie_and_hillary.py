@@ -88,7 +88,7 @@ def fetch_bernie_and_hillary(data_dir=DEFAULT_DATA_DIR,
     fname = os.path.join(data_dir, FNAME)
     try:
         data = list(read_json_lines(fname, mode='rt', encoding=None))
-    except IOError:
+    except (OSError, IOError):
         if download_if_missing is True:
             _download_bernie_and_hillary(data_dir=data_dir)
             data = list(read_json_lines(fname, mode='rt', encoding=None))

@@ -28,6 +28,12 @@ class CorporaTestCase(unittest.TestCase):
         self.assertIsInstance(bnh, list)
         self.assertEqual(len(bnh), 3066)
 
+    def test_fetch_bernie_and_hillary_shuffle(self):
+        bnh = bernie_and_hillary.fetch_bernie_and_hillary(
+            data_dir=self.tempdir, shuffle=True)
+        # technically, this test has a failure probability of 1/3066
+        self.assertNotEqual(bnh[0]['date'], '1996-01-04')
+
     def tearDown(self):
         for fname in os.listdir(self.tempdir):
             os.remove(os.path.join(self.tempdir, fname))
