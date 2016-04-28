@@ -1,4 +1,7 @@
 """
+Wikipedia Corpus
+----------------
+
 Functions to read, iterate over, and extract text and/or structured information
 from Wikipedia article database dumps or the Wikimedia API.
 """
