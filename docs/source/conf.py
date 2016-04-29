@@ -57,7 +57,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'textacy'
-copyright = '2016, Burton DeWilde'
+copyright = '2016 Chartbeat, Inc.'
 author = 'Burton DeWilde'
 
 # The version info for the project you're documenting, acts as replacement for
