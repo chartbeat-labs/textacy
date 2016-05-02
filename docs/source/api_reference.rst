@@ -1,14 +1,14 @@
 API Reference
 =============
 
-Raw Text Preprocessing
+Text Preprocessing
 ----------------------
 
 .. automodule:: textacy.preprocess
     :members:
 
-Text Classes
-------------
+OOP Interface
+-------------
 
 .. automodule:: textacy.texts
     :members:
@@ -46,6 +46,15 @@ File IO
 .. automodule:: textacy.fileio.write
     :members:
 
+Corpora
+-------
+
+.. automodule:: textacy.corpora.bernie_and_hillary
+    :members:
+
+.. automodule:: textacy.corpora.wikipedia
+    :members:
+
 Utilities
 ---------
 
@@ -71,7 +80,4 @@ Other Stuff!
     :members:
 
 .. automodule:: textacy.lexicon_methods
-    :members:
-
-.. automodule:: textacy.corpora.wikipedia
     :members:
