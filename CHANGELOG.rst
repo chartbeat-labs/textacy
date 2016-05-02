@@ -10,6 +10,11 @@ Changes:
 - Modified ``data.load_depechemood`` function, now downloads data from GitHub source if not found on disk
 - Removed ``resources/`` directory from GitHub, hence all the downloading
 
+Bugfixes:
+
+- ``textstats.readability_stats()`` now correctly gets the number of words in a doc from its generator function (@gryBox #8)
+
+
 0.2.0 (2016-04-11)
 ------------------
 
