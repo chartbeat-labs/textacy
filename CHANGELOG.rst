@@ -1,6 +1,15 @@
 Changelog
 =========
 
+Latest (WIP)
+------------
+
+Changes:
+
+- Added ``corpora/bernie_and_hillary.py`` module, which handles downloading to and loading from disk a corpus of congressional speeches by Bernie Sanders and Hillary Clinton
+- Modified ``data.load_depechemood`` function, now downloads data from GitHub source if not found on disk
+- Removed ``resources/`` directory from GitHub, hence all the downloading
+
 0.2.0 (2016-04-11)
 ------------------
 
