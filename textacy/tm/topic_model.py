@@ -302,7 +302,7 @@ class TopicModel(object):
     #     raise NotImplementedError()
 
     def termite_plot(self, doc_term_matrix, id2term,
-                     topics=-1, sort_topics_by='weight', highlight_topics=None,
+                     topics=-1, sort_topics_by='index', highlight_topics=None,
                      n_terms=25, rank_terms_by='topic_weight', sort_terms_by='seriation',
                      save=False):
         """
@@ -356,6 +356,8 @@ class TopicModel(object):
                 highlight_topics = (highlight_topics,)
             elif len(highlight_topics) > 6:
                 raise ValueError('no more than 6 topics may be highlighted at once')
+        else:
+            highlight_topics = tuple()
 
         # get topics indices
         if topics == -1:
@@ -427,6 +429,6 @@ class TopicModel(object):
         term_topic_weights = np.array([self.model.components_[topic_ind][term_inds]
                                       for topic_ind in topic_inds]).T
 
-        return viz.termite_plot(
+        return viz.draw_termite_plot(
             term_topic_weights, topic_labels, term_labels,
             highlight_cols=highlight_cols, save=save)

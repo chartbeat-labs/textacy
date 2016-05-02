@@ -38,8 +38,8 @@ COLOR_PAIRS = (((0.65098041296005249, 0.80784314870834351, 0.89019608497619629),
                 (0.69411766529083252, 0.3490196168422699, 0.15686275064945221)))
 
 
-def termite_plot(values_mat, col_labels, row_labels,
-                 highlight_cols=None, save=False):
+def draw_termite_plot(values_mat, col_labels, row_labels,
+                      highlight_cols=None, save=False):
     """
     Make a "termite" plot, typically used for assessing topic models with a tabular
     layout that promotes comparison of terms both within and across topics.
@@ -122,6 +122,8 @@ def termite_plot(values_mat, col_labels, row_labels,
 
             _ = ax.set_xlim(left=-1, right=n_cols)
             _ = ax.set_ylim(bottom=-1, top=n_rows)
+
+            ax.invert_yaxis()  # otherwise, values/labels go from bottom to top
 
     if save:
         fig.savefig(save, bbox_inches='tight', dpi=100)
