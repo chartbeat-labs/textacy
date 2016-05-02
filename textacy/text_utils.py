@@ -8,7 +8,10 @@ import re
 from cld2 import detect as cld2_detect
 
 from textacy.compat import PY2, str
-from textacy.regexes_etc import ACRONYM_REGEX
+from textacy.regexes_etc import (ACRONYM_REGEX, DANGLING_PARENS_TERM_RE,
+                                 LEAD_HYPHEN_TERM_RE, LEAD_TAIL_CRUFT_TERM_RE,
+                                 NEG_DIGIT_TERM_RE, NONBREAKING_SPACE_REGEX,
+                                 WEIRD_HYPHEN_SPACE_TERM_RE, WEIRD_APOSTR_SPACE_TERM_RE)
 
 
 def is_acronym(token, exclude=None):
@@ -110,3 +113,45 @@ def keyword_in_context(text, keyword, ignore_case=True,
                  match.group(),
                  text[match.end(): match.end() + window_width])
                 for match in re.finditer(keyword, text, flags=flags))
+
+
+def clean_terms(terms):
+    """
+    Clean up a sequence of single- or multi-word strings: strip leading/trailing
+    junk chars, handle dangling parens and odd hyphenation, etc.
+
+    Args:
+        terms (iterable[str]): sequence of n-grams such as "presidency", "epic failure",
+            "George W. Bush" that
+
+    Yields:
+        str: same as input `terms` but with the cruft stripped out, excluding terms
+            that were _entirely_ cruft
+
+    .. warning:: Terms with (intentionally) unusual punctuation may get "cleaned"
+        into a form that changes or obscures the original meaning of the term.
+    """
+    # get rid of leading/trailing junk characters
+    terms = (LEAD_TAIL_CRUFT_TERM_RE.sub('', term)
+             for term in terms)
+    terms = (LEAD_HYPHEN_TERM_RE.sub(r'\1', term)
+             for term in terms)
+    # handle dangling/backwards parens, don't allow '(' or ')' to appear without the other
+    terms = ('' if term.count(')') != term.count('(') or term.find(')') < term.find('(')
+             else term if '(' not in term
+             else DANGLING_PARENS_TERM_RE.sub(r'\1\2\3', term)
+             for term in terms)
+    # handle oddly separated hyphenated words
+    terms = (term if '-' not in term
+             else NEG_DIGIT_TERM_RE.sub(r'\1\2', WEIRD_HYPHEN_SPACE_TERM_RE.sub(r'\1', term))
+             for term in terms)
+    # handle oddly separated apostrophe'd words
+    terms = (WEIRD_APOSTR_SPACE_TERM_RE.sub(r'\1\2',  term)
+             if "'" in term else term
+             for term in terms)
+    # normalize whitespace
+    terms = (NONBREAKING_SPACE_REGEX.sub(' ', term).strip()
+             for term in terms)
+    for term in terms:
+        if re.search(r'\w', term):
+            yield term
