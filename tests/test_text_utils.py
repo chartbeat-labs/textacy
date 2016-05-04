@@ -11,6 +11,14 @@ GOOD_ACRONYMS = [
 BAD_ACRONYMS = [
     'A', 'GHz', '1a', 'D o E', 'Ms', 'Ph.D', '3-Dim.', 'the', 'FooBar', '1', ' ', '']
 
+CRUFTY_TERMS = ['( foo bar )',
+                'foo -bar', '- 123.4',
+                '.-foo bar', '?!foo', 'bar?!',
+                "foo 's bar", "foo 'll bar",
+                '  foo   bar   ', 'foo bar.   ']
+GOOD_TERMS = ['foo (bar)', 'foo?', 'bar!', '-123.4']
+BAD_TERMS = ['(foo bar', 'foo) bar', '?>,!-.', '', 'foo) (bar']
+
 LANG_SENTS = [
     ('en', 'This sentence is in English.'),
     ('es', 'Esta oración es en Español.'),
@@ -84,3 +92,17 @@ class TextUtilsTestCase(unittest.TestCase):
         expected = [('No llores porque ya se ', 'terminó', ', sonríe porque sucedió.')]
         for o, e in zip(observed, expected):
             self.assertEqual(o, e)
+
+    def test_clean_terms_good(self):
+        observed = list(text_utils.clean_terms(GOOD_TERMS))
+        self.assertEqual(observed, GOOD_TERMS)
+
+    def test_clean_terms_bad(self):
+        observed = list(text_utils.clean_terms(BAD_TERMS))
+        self.assertEqual(observed, [])
+
+    def test_clean_terms_crufty(self):
+        observed = list(text_utils.clean_terms(CRUFTY_TERMS))
+        expected = ['(foo bar)', 'foo-bar', '-123.4', 'foo bar', 'foo', 'bar?!',
+                    "foo's bar", "foo'll bar", 'foo bar', 'foo bar.']
+        self.assertEqual(observed, expected)
