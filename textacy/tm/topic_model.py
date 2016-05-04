@@ -19,24 +19,32 @@ Train and apply a topic model to vectorized texts. For example::
     >>> # transform the corpus and interpret our model
     >>> doc_topic_matrix = model.transform(doc_term_matrix)
     >>> for topic_idx, top_terms in model.top_topic_terms(id2term, top_n=10):
-    ...     print('topic {}:'.format(topic_idx), '   '.join(top_terms))
+    ...     print('topic', topic_idx, ':', '   '.join(top_terms))
     >>> for topic_idx, top_docs in model.top_topic_docs(doc_topic_matrix, top_n=5):
-    ...     print('\n{}'.format(topic_idx))
+    ...     print(topic_idx)
     ...     for j in top_docs:
     ...         print(corpus[j].metadata['title'])
     >>> for doc_idx, topics in model.top_doc_topics(doc_topic_matrix, docs=range(5), top_n=2):
-    ...     print('{}: {}'.format(corpus[doc_idx].metadata['title'], topics))
+    ...     print(corpus[doc_idx].metadata['title'], ':', topics)
     >>> for i, val in enumerate(model.topic_weights(doc_topic_matrix)):
     ...     print(i, val)
+    >>> # visualize the model
+    >>> model.termite_plot(doc_term_matrix, id2term,
+    ...                    topics=-1,  n_terms=25, sort_terms_by='seriation')
     >>> # assess topic quality through a coherence metric
-    >>> # WIP...
+    >>> # TODO...
     >>> # persist our topic model to disk
     >>> model.save('nmf-20topics.pkl')
 """
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import logging
+
 import numpy as np
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 from sklearn.externals import joblib
+
+from textacy import viz
 
 
 logger = logging.getLogger(__name__)
@@ -292,3 +300,136 @@ class TopicModel(object):
     #
     # def get_model_coherence(self):
     #     raise NotImplementedError()
+
+    def termite_plot(self, doc_term_matrix, id2term,
+                     topics=-1, sort_topics_by='index', highlight_topics=None,
+                     n_terms=25, rank_terms_by='topic_weight', sort_terms_by='seriation',
+                     save=False):
+        """
+        Make a "termite" plot for assessing topic models using a tabular layout
+        to promote comparison of terms both within and across topics.
+
+        Args:
+            doc_term_matrix (``np.ndarray``-like or sparse matrix): corpus
+                represented as a document-term matrix with shape (n_docs, n_terms);
+                may have tf- or tfidf-weighting
+            id2term (list(str) or dict): object that returns the term string corresponding
+                to term id ``i`` through ``id2term[i]``; could be a list of strings
+                where the index represents the term id, such as that returned by
+                ``sklearn.feature_extraction.text.CountVectorizer.get_feature_names()``,
+                or a mapping of term id: term string
+            topics (seq(int) or int, optional): topic(s) to include in termite plot;
+                if -1, all topics are included
+            sort_topics_by ({'index', 'weight'}, optional):
+            highlight_topics (seq(int) or int, optional): indices for up to 6 topics
+                to visually highlight in the plot with contrasting colors
+            n_terms (int, optional): number of top terms to include in termite plot
+            rank_terms_by ({'topic_weight', 'corpus_weight'}, optional): value used
+                to rank terms; the top-ranked ``n_terms`` are included in the plot
+            sort_terms_by ({'seriation', 'weight', 'index', 'alphabetical'}, optional):
+                method used to vertically sort the selected top ``n_terms`` terms;
+                the default ("seriation") groups similar terms together, which
+                facilitates cross-topic assessment
+            save (str, optional): give the full /path/to/fname on disk to save figure
+
+        Returns:
+            ``matplotlib.axes.Axes.axis``: axis on which termite plot is plotted
+
+        Raises:
+            ValueError: if more than 6 topics are selected for highlighting, or
+                an invalid value is passed for the sort_topics_by, rank_terms_by,
+                and/or sort_terms_by params
+
+        References:
+            .. Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
+                Visualization techniques for assessing textual topic models."
+                Proceedings of the International Working Conference on Advanced
+                Visual Interfaces. ACM, 2012.
+            .. for sorting by "seriation", see https://arxiv.org/abs/1406.5370
+
+        .. seealso:: :func:`viz.termite_plot <textacy.viz.termite.termite_plot>`
+
+        TODO: `rank_terms_by` other metrics, e.g. topic salience or relevance
+        """
+        if highlight_topics is not None:
+            if isinstance(highlight_topics, int):
+                highlight_topics = (highlight_topics,)
+            elif len(highlight_topics) > 6:
+                raise ValueError('no more than 6 topics may be highlighted at once')
+
+        # get topics indices
+        if topics == -1:
+            topic_inds = tuple(range(self.n_topics))
+        elif isinstance(topics, int):
+            topic_inds = (topics,)
+        else:
+            topic_inds = tuple(topics)
+
+        # get topic indices in sorted order
+        if sort_topics_by == 'index':
+            topic_inds = sorted(topic_inds)
+        elif sort_topics_by == 'weight':
+            topic_inds = tuple(topic_ind for topic_ind
+                               in np.argsort(self.topic_weights(self.transform(doc_term_matrix)))[::-1]
+                               if topic_ind in topic_inds)
+        else:
+            msg = 'invalid sort_topics_by value; must be in {}'.format(
+                {'index', 'weight'})
+            raise ValueError(msg)
+
+        # get column index of any topics to highlight in termite plot
+        if highlight_topics is not None:
+            highlight_cols = tuple(i for i in range(len(topic_inds))
+                                   if topic_inds[i] in highlight_topics)
+        else:
+            highlight_cols = None
+
+        # get top term indices
+        if rank_terms_by == 'corpus_weight':
+            term_inds = np.argsort(np.ravel(doc_term_matrix.sum(axis=0)))[:-n_terms - 1:-1]
+        elif rank_terms_by == 'topic_weight':
+            term_inds = np.argsort(self.model.components_.sum(axis=0))[:-n_terms - 1:-1]
+        else:
+            msg = 'invalid rank_terms_by value; must be in {}'.format(
+                {'corpus_weight', 'topic_weight'})
+            raise ValueError(msg)
+
+        # get top term indices in sorted order
+        if sort_terms_by == 'weight':
+            pass
+        elif sort_terms_by == 'index':
+            term_inds = sorted(term_inds)
+        elif sort_terms_by == 'alphabetical':
+            term_inds = sorted(term_inds, key=lambda x: id2term[x])
+        elif sort_terms_by == 'seriation':
+            topic_term_weights_mat = np.array(
+                np.array([self.model.components_[topic_ind][term_inds]
+                          for topic_ind in topic_inds])).T
+            # calculate similarity matrix
+            topic_term_weights_sim = np.dot(topic_term_weights_mat, topic_term_weights_mat.T)
+            # substract minimum of sim mat in order to keep sim mat nonnegative
+            topic_term_weights_sim = topic_term_weights_sim - topic_term_weights_sim.min()
+            # compute Laplacian matrice and its 2nd eigenvector
+            L = np.diag(sum(topic_term_weights_sim, 1)) - topic_term_weights_sim
+            D, V = np.linalg.eigh(L)
+            D = D[np.argsort(D)]
+            V = V[:, np.argsort(D)]
+            fiedler = V[:, 1]
+            # get permutation corresponding to sorting the 2nd eigenvector
+            term_inds = [term_inds[i] for i in np.argsort(fiedler)]
+        else:
+            msg = 'invalid sort_terms_by value; must be in {}'.format(
+                {'weight', 'index', 'alphabetical', 'seriation'})
+            raise ValueError(msg)
+
+        # get topic and term labels
+        topic_labels = tuple('topic {}'.format(topic_ind) for topic_ind in topic_inds)
+        term_labels = tuple(id2term[term_ind] for term_ind in term_inds)
+
+        # get topic-term weights to size dots
+        term_topic_weights = np.array([self.model.components_[topic_ind][term_inds]
+                                      for topic_ind in topic_inds]).T
+
+        return viz.draw_termite_plot(
+            term_topic_weights, topic_labels, term_labels,
+            highlight_cols=highlight_cols, save=save)
