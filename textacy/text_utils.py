@@ -121,11 +121,11 @@ def clean_terms(terms):
     junk chars, handle dangling parens and odd hyphenation, etc.
 
     Args:
-        terms (iterable[str]): sequence of n-grams such as "presidency", "epic failure",
-            "George W. Bush" that
+        terms (iterable[str]): sequence of terms such as "presidency", "epic failure",
+            or "George W. Bush" that may be _unclean_ for whatever reason
 
     Yields:
-        str: same as input `terms` but with the cruft stripped out, excluding terms
+        str: next term in `terms` but with the cruft cleaned up, excluding terms
             that were _entirely_ cruft
 
     .. warning:: Terms with (intentionally) unusual punctuation may get "cleaned"
