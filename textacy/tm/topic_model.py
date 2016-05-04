@@ -356,8 +356,6 @@ class TopicModel(object):
                 highlight_topics = (highlight_topics,)
             elif len(highlight_topics) > 6:
                 raise ValueError('no more than 6 topics may be highlighted at once')
-        else:
-            highlight_topics = tuple()
 
         # get topics indices
         if topics == -1:
@@ -380,8 +378,11 @@ class TopicModel(object):
             raise ValueError(msg)
 
         # get column index of any topics to highlight in termite plot
-        highlight_cols = tuple(i for i in range(len(topic_inds))
-                               if topic_inds[i] in highlight_topics)
+        if highlight_topics is not None:
+            highlight_cols = tuple(i for i in range(len(topic_inds))
+                                   if topic_inds[i] in highlight_topics)
+        else:
+            highlight_cols = None
 
         # get top term indices
         if rank_terms_by == 'corpus_weight':

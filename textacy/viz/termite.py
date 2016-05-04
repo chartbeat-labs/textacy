@@ -39,7 +39,8 @@ COLOR_PAIRS = (((0.65098041296005249, 0.80784314870834351, 0.89019608497619629),
 
 
 def draw_termite_plot(values_mat, col_labels, row_labels,
-                      highlight_cols=None, save=False):
+                      highlight_cols=None, highlight_colors=None,
+                      save=False):
     """
     Make a "termite" plot, typically used for assessing topic models with a tabular
     layout that promotes comparison of terms both within and across topics.
@@ -47,17 +48,21 @@ def draw_termite_plot(values_mat, col_labels, row_labels,
     Args:
         values_mat (``np.ndarray`` or matrix): matrix of values with shape
             (# row labels, # col labels) used to size the dots on the grid
-        col_labels (seq(str)): labels used to identify x-axis ticks on the grid
-        row_labels(seq(str)): labels used to identify y-axis ticks on the grid
-        highlight_cols (int or seq(int), optional): indices for up to 6 columns
+        col_labels (seq[str]): labels used to identify x-axis ticks on the grid
+        row_labels(seq[str]): labels used to identify y-axis ticks on the grid
+        highlight_cols (int or seq[int], optional): indices for columns
             to visually highlight in the plot with contrasting colors
+        highlight_colors (tuple of 2-tuples): each 2-tuple corresponds to a pair
+            of (light/dark) matplotlib-friendly colors used to highlight a single
+            column; if not specified (default), a good set of 6 pairs are used
         save (str, optional): give the full /path/to/fname on disk to save figure
 
     Returns:
         ``matplotlib.axes.Axes.axis``: axis on which termite plot is plotted
 
     Raises:
-        ValueError: if more than 6 columns are selected for highlighting
+        ValueError: if more columns are selected for highlighting than colors
+            or if any of the inputs' dimensions don't match
 
     References:
         .. Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
@@ -67,17 +72,29 @@ def draw_termite_plot(values_mat, col_labels, row_labels,
 
     .. seealso:: :func:`TopicModel.termite_plot <textacy.tm.TopicModel.termite_plot>`
     """
+    n_rows, n_cols = values_mat.shape
+    max_val = np.max(values_mat)
+
+    if n_rows != len(row_labels):
+        msg = "values_mat and row_labels dimensions don't match: {} vs. {}".format(
+            n_rows, len(row_labels))
+        raise ValueError(msg)
+    if n_cols != len(col_labels):
+        msg = "values_mat and col_labels dimensions don't match: {} vs. {}".format(
+            n_cols, len(col_labels))
+        raise ValueError(msg)
+
+    if highlight_colors is None:
+        highlight_colors = COLOR_PAIRS
     if highlight_cols is not None:
         if isinstance(highlight_cols, int):
             highlight_cols = (highlight_cols,)
-        elif len(highlight_cols) > 6:
-            raise ValueError('no more than 6 columns may be highlighted at once')
-
-    n_rows = len(row_labels)
-    n_cols = len(col_labels)
-    max_val = np.max(values_mat)
-    highlight_colors = {hc: COLOR_PAIRS[i]
-                        for i, hc in enumerate(highlight_cols)}
+        elif len(highlight_cols) > len(highlight_colors):
+            msg = 'no more than {} columns may be highlighted at once'.format(
+                len(highlight_colors))
+            raise ValueError(msg)
+        highlight_colors = {hc: COLOR_PAIRS[i]
+                            for i, hc in enumerate(highlight_cols)}
 
     with plt.rc_context(RC_PARAMS):
         fig, ax = plt.subplots(figsize=(pow(n_cols, 0.8), pow(n_rows, 0.66)))
