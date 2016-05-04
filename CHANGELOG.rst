@@ -1,11 +1,14 @@
 Changelog
 =========
 
-Latest (WIP)
-------------
+0.2.2 (2016-05-05)
+------------------
 
 Changes:
 
+- Added a `viz` subpackage, with two types of plots (so far):
+    - `viz.draw_termite_plot()`, typically used to evaluate and interpret topic models; conveniently accessible from the `tm.TopicModel` class
+    - `viz.draw_semantic_network()` for visualizing networks such as those output by `representations.network`
 - Added ``corpora/bernie_and_hillary.py`` module, which handles downloading to and loading from disk a corpus of congressional speeches by Bernie Sanders and Hillary Clinton
 - Modified ``data.load_depechemood`` function, now downloads data from GitHub source if not found on disk
 - Removed ``resources/`` directory from GitHub, hence all the downloading

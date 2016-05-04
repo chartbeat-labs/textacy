@@ -157,7 +157,7 @@ Project Links
 
 - `textacy @ PyPi <https://pypi.python.org/pypi/textacy>`_
 - `textacy @ GitHub <https://github.com/chartbeat-labs/textacy>`_
-- `textacy @ ReadTheDocs <http://textacy.readthedocs.org/en/latest/>`_
+- `textacy @ ReadTheDocs <http://textacy.readthedocs.io/en/latest/>`_
 
 
 Table of Contents

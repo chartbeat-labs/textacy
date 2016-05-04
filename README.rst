@@ -172,17 +172,9 @@ Unofficial Roadmap
 - [x] import/export for common formats
 - [x] serialization and streaming to/from disk
 - [x] topic modeling via ``gensim`` and/or ``sklearn``
-- [ ] data viz for text analysis
+- [x] data viz for text analysis
 - [ ] distributional representations (word2vec etc.) via either ``gensim`` or ``spacy``
 - [ ] document similarity/clustering (?)
 - [ ] basic dictionary-based methods e.g. sentiment analysis (?)
 - [ ] text classification
 - [ ] media frames analysis
-
-
-TODO
-----
-
-- texts: have textdocs inherit `_term_doc_freqs` from textcorpus?
-- drop scipy dependency and switch to honnibal's own sparse matrices?
-- preprocess: add basic tests for unidecode and ftfy functions?
