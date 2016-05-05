@@ -9,14 +9,23 @@ Changes:
 - Added a `viz` subpackage, with two types of plots (so far):
     - `viz.draw_termite_plot()`, typically used to evaluate and interpret topic models; conveniently accessible from the `tm.TopicModel` class
     - `viz.draw_semantic_network()` for visualizing networks such as those output by `representations.network`
-- Added ``corpora/bernie_and_hillary.py`` module, which handles downloading to and loading from disk a corpus of congressional speeches by Bernie Sanders and Hillary Clinton
+- Added a "Bernie & Hillary" corpus with 3000 congressional speeches made by Bernie Sanders and Hillary Clinton since 1996
+    - ``corpora.fetch_bernie_and_hillary()`` function automatically downloads to and loads from disk this corpus
 - Modified ``data.load_depechemood`` function, now downloads data from GitHub source if not found on disk
-- Removed ``resources/`` directory from GitHub, hence all the downloading
-- Added function for cleaning up a sequence of single- or multi-word strings by stripping leading/trailing junk chars, handling dangling parens and odd hyphenation, etc.
+- Removed ``resources/`` directory from GitHub, hence all the downloadin'
+- Updated to spaCy v0.100.7
+    - German is now supported! although some functionality is English-only
+    - added `textacy.load_spacy()` function for loading spaCy packages, taking advantage of the new `spacy.load()` API; added a DeprecationWarning for `textacy.data.load_spacy_pipeline()`
+    - proper nouns' and pronouns' ``.pos_`` attributes are now correctly assigned 'PROPN' and 'PRON'; hence, modified ``regexes_etc.POS_REGEX_PATTERNS['en']`` to include 'PROPN'
+    - modified ``spacy_utils.preserve_case()`` to check for language-agnostic 'PROPN' POS rather than English-specific 'NNP' and 'NNPS' tags
+- Added `text_utils.clean_terms()` function for cleaning up a sequence of single- or multi-word strings by stripping leading/trailing junk chars, handling dangling parens and odd hyphenation, etc.
 
 Bugfixes:
 
 - ``textstats.readability_stats()`` now correctly gets the number of words in a doc from its generator function (@gryBox #8)
+- removed NLTK dependency, which wasn't actually required
+- ``text_utils.detect_language()`` now warns via ``logging`` rather than a ``print()`` statement
+- ``fileio.write_conll()`` documentation now correctly indicates that the filename param is not optional
 
 
 0.2.0 (2016-04-11)

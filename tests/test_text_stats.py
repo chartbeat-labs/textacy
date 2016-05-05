@@ -9,7 +9,7 @@ from textacy import TextDoc
 class TextStatsTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.spacy_doc = TextDoc('Testing: 1, 2, 3.')
+        self.spacy_doc = TextDoc('This is an English-language document.')
         self.n_chars = 2855
         self.n_syllables = 857
         self.n_words = 441

@@ -3,6 +3,7 @@ Set of small utility functions that take text strings as input.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import logging
 import re
 
 from cld2 import detect as cld2_detect
@@ -12,6 +13,8 @@ from textacy.regexes_etc import (ACRONYM_REGEX, DANGLING_PARENS_TERM_RE,
                                  LEAD_HYPHEN_TERM_RE, LEAD_TAIL_CRUFT_TERM_RE,
                                  NEG_DIGIT_TERM_RE, NONBREAKING_SPACE_REGEX,
                                  WEIRD_HYPHEN_SPACE_TERM_RE, WEIRD_APOSTR_SPACE_TERM_RE)
+
+logger = logging.getLogger(__name__)
 
 
 def is_acronym(token, exclude=None):
@@ -73,8 +76,8 @@ def detect_language(text):
     else:
         is_reliable, _, best_guesses = cld2_detect(str(text), bestEffort=True)
     if is_reliable is False:
-        msg = '**WARNING: Text language detected with low confidence; best guesses: {}'
-        print(msg.format(best_guesses))
+        msg = 'Text language detected with low confidence; best guesses: %s'
+        logger.warning(msg, best_guesses)
     return best_guesses[0][1]
 
 

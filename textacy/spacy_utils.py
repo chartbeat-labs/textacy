@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from itertools import takewhile
 import logging
-from spacy.parts_of_speech import NOUN, VERB
+from spacy.parts_of_speech import NOUN, PROPN, VERB
 from spacy.tokens.token import Token as spacy_token
 from spacy.tokens.span import Span as spacy_span
 
@@ -64,13 +64,10 @@ def preserve_case(token):
 
     Returns:
         bool
-
-    TODO: use universal pos PROPN instead of english-specific tags as soon as
-    Honnibal decides to include them in his model...
     """
     if token.doc.is_tagged is False:
         raise ValueError('token is not POS-tagged')
-    return token.tag_ in {'NNP', 'NNPS'} or is_acronym(token.text)
+    return token.pos == PROPN or is_acronym(token.text)
 
 
 def normalized_str(token):

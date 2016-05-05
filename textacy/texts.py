@@ -53,7 +53,7 @@ class TextDoc(object):
         if isinstance(text_or_sdoc, str):
             self.lang = text_utils.detect_language(text_or_sdoc) if not lang else lang
             if spacy_pipeline is None:
-                spacy_pipeline = data.load_spacy_pipeline(lang=self.lang)
+                spacy_pipeline = data.load_spacy(self.lang)
             # check for match between text and passed spacy_pipeline language
             else:
                 if spacy_pipeline.lang != self.lang:
@@ -569,7 +569,7 @@ class TextCorpus(object):
     """
     def __init__(self, lang):
         self.lang = lang
-        self.spacy_pipeline = data.load_spacy_pipeline(lang=self.lang)
+        self.spacy_pipeline = data.load_spacy(self.lang)
         self.spacy_vocab = self.spacy_pipeline.vocab
         self.spacy_stringstore = self.spacy_vocab.strings
         self.docs = []

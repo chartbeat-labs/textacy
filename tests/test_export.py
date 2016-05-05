@@ -13,8 +13,7 @@ class ExportTestCase(unittest.TestCase):
         text = "The year was 2081, and everybody was finally equal. They weren't only equal before God and the law. They were equal every which way."
         # we're not loading all models for speed; instead, we're updating the doc
         # with pre-computed part-of-speech tagging and parsing values
-        spacy_pipeline = data.load_spacy_pipeline(
-            lang='en', tagger=False, parser=False, entity=False, matcher=False)
+        spacy_pipeline = data.load_spacy('en')
         self.spacy_doc = spacy_pipeline(text)
         cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
         values = np.array(

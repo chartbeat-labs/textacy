@@ -307,11 +307,6 @@ def aggregate_term_variants(terms,
         Proceedings of the 19th international conference on Computational linguistics-Volume 1.
         Association for Computational Linguistics, 2002.
     """
-    # TODO: decide if this would be useful
-    # if lemmatizer is None:
-    #     from nltk.stem import WordNetLemmatizer
-    #     lemmatizer = WordNetLemmatizer()
-
     agg_terms = []
     seen_terms = set()
     for term in sorted(terms, key=len, reverse=True):

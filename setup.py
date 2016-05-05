@@ -43,12 +43,11 @@ setup(
         'ftfy',
         'fuzzywuzzy',
         'networkx',
-        'nltk',
         'numpy>=1.8.0',
         'pyphen',
         'scipy',
         'scikit-learn',
-        'spacy>=0.100.0',
+        'spacy>=0.100.7',
         'unidecode',
         ],
 )

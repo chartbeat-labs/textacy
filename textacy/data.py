@@ -14,10 +14,12 @@ try:
 except ImportError:
     from urllib2 import urlopen
     from urllib2 import HTTPError
+import warnings
 import zipfile
 
 from cachetools import cached, Cache, hashkey
 from functools import partial
+import spacy
 
 import textacy
 
@@ -31,41 +33,45 @@ _CACHE = {}
 
 # TODO: maybe don't actually cache this -- it takes up a lot of RAM
 # but is indeed a pain to load
-# TODO: update this to spaCy's new `load` API
-@cached(Cache(1), key=partial(hashkey, 'spacy_pipeline'))
-def load_spacy_pipeline(lang='en', **kwargs):
+@cached(Cache(1), key=partial(hashkey, 'spacy'))
+def load_spacy(name, **kwargs):
     """
-    Load a language-specific pipeline (collection of data, models, and resources)
-    via Spacy for tokenizing, tagging, parsing, etc. raw text.
+    Load a language-specific spaCy pipeline (collection of data, models, and
+    resources) for tokenizing, tagging, parsing, etc. text; the most recent
+    package loaded is cached.
 
     Args:
-        lang (str {'en'}, optional): standard 2-letter language abbreviation
-        **kwargs: keyword arguments to pass to Spacy pipeline instantiation;
-            see `Spacy's documentation <https://spacy.io/docs#api>`_
+        name (str): standard 2-letter language abbreviation for a language;
+            currently, spaCy supports English ('en') and German ('de')
+        **kwargs: keyword arguments passed to :func:`spacy.load`; see the
+            `spaCy docs <https://spacy.io/docs#english>`_ for details
+
+            * via (str): non-default directory from which to load package data
+            * vocab
+            * tokenizer
+            * parser
+            * tagger
+            * entity
+            * matcher
+            * serializer
+            * vectors
 
     Returns:
         :class:`spacy.<lang>.<Language>`
 
     Raises:
-        ValueError: if `lang` not equal to 'en' (more languages coming?!?)
+        RuntimeError: if package can't be loaded
     """
-    logger.info('Loading "%s" language Spacy pipeline', lang)
-    if lang == 'en':
-        from spacy.en import English
-        return English(**kwargs)
-    # TODO: uncomment these whenever spacy makes them available...
-    # elif lang == 'de':
-    #     from spacy.de import German
-    #     return German(**kwargs)
-    # elif lang == 'it':
-    #     from spacy.it import Italian
-    #     return Italian(**kwargs)
-    # elif lang == 'fi':
-    #     from spacy.fi import Finnish
-    #     return Finnish(**kwargs)
-    else:
-        msg = 'spacy does not currently support lang "{}"'.format(lang)
-        raise ValueError(msg)
+    logger.info('Loading "%s" language spaCy pipeline', name)
+    return spacy.load(name, **kwargs)
+
+
+def load_spacy_pipeline(lang='en', **kwargs):
+    with warnings.catch_warnings():
+        warnings.simplefilter('always', DeprecationWarning)
+        warnings.warn('load_spacy_pipeline() is deprecated! use load_spacy() instead.',
+                      DeprecationWarning)
+    return load_spacy(lang, **kwargs)
 
 
 @cached(_CACHE, key=partial(hashkey, 'hyphenator'))

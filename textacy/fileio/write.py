@@ -152,8 +152,7 @@ def write_conll(spacy_doc, filename, encoding=None):
 
     Args:
         spacy_doc (``spacy.Doc``): must be parsed
-        filename (str, optional): to save the CoNLL string to disk, provide the full
-            path/to/fname.txt; otherwise, the string is returned but not saved
+        filename (str): /path/to/file on disk to which CONLL string will be written
         encoding (str, optional)
 
     Notes:

@@ -9,7 +9,7 @@ class SpacyUtilsTestCase(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        spacy_pipeline = data.load_spacy_pipeline(lang='en')
+        spacy_pipeline = data.load_spacy('en')
         text = """The unit tests aren't going well.
                   I love Python, but I don't love some of Guido's decisions.
                   No computer programmers were harmed in the making of this package.
