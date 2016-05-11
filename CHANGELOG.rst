@@ -1,6 +1,20 @@
 Changelog
 =========
 
+Dev
+---
+
+Changes:
+
+- Updated README and docs with a more comprehensive — and correct — usage example; also added tests to ensure it doesn't get stale
+- Updated requirements to latest version of spaCy, as well as added matplotlib for `viz`
+
+Bugfixes:
+
+- `textacy.preprocess.preprocess_text()` is now, once again, imported at the top level, so easily reachable via `textacy.preprocess_text()` (@bretdabaker #14)
+- `viz` subpackage now included in the docs' API reference
+
+
 0.2.2 (2016-05-05)
 ------------------
 
