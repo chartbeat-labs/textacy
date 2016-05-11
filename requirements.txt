@@ -5,10 +5,11 @@ ftfy
 fuzzywuzzy
 gensim
 ijson
+matplotlib
 networkx
 numpy>=1.8.0
 pyphen
 scipy
 scikit-learn>=0.17.0
-spacy>=0.100.7
+spacy>=0.101.0
 unidecode

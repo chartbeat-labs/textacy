@@ -47,7 +47,7 @@ setup(
         'pyphen',
         'scipy',
         'scikit-learn',
-        'spacy>=0.100.7',
+        'spacy>=0.101.0',
         'unidecode',
         ],
 )

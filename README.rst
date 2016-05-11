@@ -41,115 +41,177 @@ Example
 .. code-block:: pycon
 
     >>> import textacy
-    >>>
-    >>> text = """
-    ... Hell, it's about time someone told about my friend EPICAC. After all, he cost the taxpayers $776,434,927.54. They have a right to know about him, picking up a check like that. EPICAC got a big send off in the papers when Dr. Ormand von Kleigstadt designed him for the Government people. Since then, there hasn't been a peep about him -- not a peep. It isn't any military secret about what happened to EPICAC, although the Brass has been acting as though it were. The story is embarrassing, that's all. After all that money, EPICAC didn't work out the way he was supposed to.
-    ... And that's another thing: I want to vindicate EPICAC. Maybe he didn't do what the Brass wanted him to, but that doesn't mean he wasn't noble and great and brilliant. He was all of those things. The best friend I ever had, God rest his soul.
-    ... You can call him a machine if you want to. He looked like a machine, but he was a whole lot less like a machine than plenty of people I could name. That's why he fizzled as far as the Brass was concerned.
-    ... """
-    >>> textacy.preprocess_text(text, lowercase=True, no_numbers=True, no_punct=True)
-    'hell its about time someone told about my friend epicac after all he cost the taxpayers number they have a right to know about him picking up a check like that epicac got a big send off in the papers when dr ormand von kleigstadt designed him for the government people since then there hasnt been a peep about him not a peep it isnt any military secret about what happened to epicac although the brass has been acting as though it were the story is embarrassing thats all after all that money epicac didnt work out the way he was supposed to\nand thats another thing i want to vindicate epicac maybe he didnt do what the brass wanted him to but that doesnt mean he wasnt noble and great and brilliant he was all of those things the best friend i ever had god rest his soul\nyou can call him a machine if you want to he looked like a machine but he was a whole lot less like a machine than plenty of people i could name thats why he fizzled as far as the brass was concerned'
-    >>> textacy.text_utils.keyword_in_context(text, 'EPICAC', window_width=40)
-    about time someone told about my friend  EPICAC . After all, he cost the taxpayers $776,
-    bout him, picking up a check like that.  EPICAC  got a big send off in the papers when D
-     military secret about what happened to  EPICAC , although the Brass has been acting as
-    sing, that's all. After all that money,  EPICAC  didn't work out the way he was supposed
-    at's another thing: I want to vindicate  EPICAC . Maybe he didn't do what the Brass want
-    >>>
-    >>> doc = textacy.TextDoc(text.strip(), lang='auto',
-    ...                       metadata={'title': 'EPICAC', 'author': 'Kurt Vonnegut'})
+
+Efficiently stream documents from disk and into a processed corpus:
+
+.. code-block:: pycon
+
+    >>> docs = textacy.corpora.fetch_bernie_and_hillary()
+    >>> content_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
+    ...     docs, 'text', itemwise=False)
+    >>> corpus = textacy.TextCorpus.from_texts('en', texts, metadatas, n_threads=2)
+    >>> print(corpus)
+    TextCorpus(3066 docs; 1909705 tokens)
+
+Represent corpus as a document-term matrix, with flexible weighting and filtering:
+
+.. code-block:: pycon
+
+    >>> doc_term_matrix, id2term = corpus.as_doc_term_matrix(
+    ...     (doc.as_terms_list(words=True, ngrams=False, named_entities=True)
+    ...      for doc in corpus),
+    ...     weighting='tfidf', normalize=True, smooth_idf=True, min_df=2, max_df=0.95)
+    >>> print(repr(doc_term_matrix))
+    <3066x16145 sparse matrix of type '<class 'numpy.float64'>'
+    	with 432067 stored elements in Compressed Sparse Row format>
+
+Train and interpret a topic model:
+
+.. code-block:: pycon
+
+    >>> model = textacy.tm.TopicModel('nmf', n_topics=10)
+    >>> model.fit(doc_term_matrix)
+    >>> doc_topic_matrix = model.transform(doc_term_matrix)
+    >>> print(doc_topic_matrix.shape)
+    (3066, 10)
+    >>> for topic_idx, top_terms in model.top_topic_terms(id2term, top_n=10):
+    ...     print('topic', topic_idx, ':', '   '.join(top_terms))
+    topic 0 : people   tax   $   percent   american   million   republican   country   go   americans
+    topic 1 : rescind   quorum   order   consent   unanimous   ask   president   mr.   madam   absence
+    topic 2 : chairman   chairman.   amendment   mr.   clerk   gentleman   designate   offer   sanders   vermont
+    topic 3 : dispense   reading   amendment   consent   unanimous   ask   president   mr.   madam   pending
+    topic 4 : senate   consent   session   unanimous   authorize   ask   committee   meet   president   a.m.
+    topic 5 : health   care   state   child   veteran   va   vermont   new   's   need
+    topic 6 : china   american   speaker   worker   trade   job   wage   america   gentleman   people
+    topic 7 : social security   social   security   cut   senior   medicare   deficit   benefit   year   cola
+    topic 8 : senators   desiring   chamber   vote   minute   morning   permit   10 minute   proceed   speak
+    topic 9 : motion   table   reconsider   lay   agree   preamble   record   resolution   consent   print
+
+Basic indexing as well as flexible selection of documents in a corpus:
+
+.. code-block:: pycon
+
+    >>> bernie_docs = list(corpus.get_docs(
+    ...     lambda doc: doc.metadata['speaker'] == 'Bernard Sanders'))
+    >>> print(len(bernie_docs))
+    2236
+    >>> doc = corpus[-1]
     >>> print(doc)
-    TextDoc(230 tokens)
-    >>> doc.lang
-    'en'
-    >>>
-    >>> doc.ngrams(2, filter_stops=True, filter_punct=True)
-    [friend EPICAC.,
-     taxpayers $,
-     $776,434,927.54,
-     check like,
-     EPICAC got,
-     big send,
-     Dr. Ormand,
-     Ormand von,
-     von Kleigstadt,
-     Kleigstadt designed,
-     Government people,
-     military secret,
-     n't work,
-     vindicate EPICAC.,
-     EPICAC. Maybe,
-     Brass wanted,
-     n't mean,
-     n't noble,
-     best friend,
-     God rest,
-     looked like]
-    >>> doc.ngrams(3, filter_stops=True, filter_punct=True, min_freq=2)
-    [like a machine, like a machine]
-    >>> doc.named_entities(drop_determiners=True, bad_ne_types='numeric')
-    [Hell, EPICAC, Ormand von Kleigstadt, EPICAC, EPICAC, Brass, God]
-    >>> doc.pos_regex_matches(r'<DET> <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN> <PART>?)+')
-    [the taxpayers,
-     a right to,
-     a check,
-     the papers,
-     the Government people,
-     a peep,
-     a peep,
-     any military secret,
-     the Brass,
-     The story,
-     that money,
-     the way he,
-     another thing,
-     the Brass,
-     those things,
-     The best friend I,
-     a machine,
-     a machine,
-     a whole lot,
-     a machine,
-     the Brass]
-    >>> doc.semistructured_statements('he', cue='be')
-    [(he, was, n't noble and great and brilliant),
-     (He, was, all of those things),
-     (he, was, a whole lot less like a machine than plenty of people I could name)]
+    TextDoc(465 tokens; "Mr. President, I ask to have printed in the Rec...")
+
+Preprocess plain text, or highlight particular terms in it:
+
+.. code-block:: pycon
+
+    >>> textacy.preprocess_text(doc.text, lowercase=True, no_punct=True)[:70]
+    'mr president i ask to have printed in the record copies of some of the'
+    >>> textacy.text_utils.keyword_in_context(doc.text, 'nation', window_width=35)
+    ed States of America is an amazing  nation  that continues to lead the world t
+    come the role model for developing  nation s attempting to give their people t
+    ve before to better ourselves as a  nation , because what we change will set a
+    nd education. Fortunately, we as a  nation  have the opportunity to fix the in
+     sentences. Judges from across the  nation  have said for decades that they do
+    reopened many racial wounds in our  nation . The war on drugs also put addicts
+
+Extract various elements of interest from parsed documents:
+
+.. code-block:: pycon
+
+    >>> list(doc.ngrams(2, filter_stops=True, filter_punct=True, filter_nums=False))[:15]
+    [Mr. President,
+     Record copies,
+     finalist essays,
+     essays written,
+     Vermont High,
+     High School,
+     School students,
+     sixth annual,
+     annual ``,
+     essay contest,
+     contest conducted,
+     nearly 800,
+     800 entries,
+     material follows,
+     United States]
+    >>> list(doc.ngrams(3, filter_stops=True, filter_punct=True, min_freq=2))
+    [lead the world,
+     leading the world,
+     2.2 million people,
+     2.2 million people,
+     mandatory minimum sentences,
+     Mandatory minimum sentences,
+     war on drugs,
+     war on drugs]
+    >>> list(doc.named_entities(drop_determiners=True, bad_ne_types='numeric'))
+    [Record,
+     Vermont High School,
+     United States of America,
+     Americans,
+     U.S.,
+     U.S.,
+     African American]
+    >>> pattern = textacy.regexes_etc.POS_REGEX_PATTERNS['en']['NP']
+    >>> print(pattern)
+    <DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN>|<PROPN> <PART>?)+
+    >>> list(doc.pos_regex_matches(pattern))[-10:]
+    [experiment,
+     many racial wounds,
+     our nation,
+     The war,
+     drugs,
+     addicts,
+     bars,
+     addiction,
+     the problem,
+     a mental health issue]
+    >>> list(doc.semistructured_statements('it', cue='be'))
+    [(it, is, important to humanize these statistics),
+     (It, is, the third highest state expenditure, behind health care and education),
+     (it, is, ; a mental health issue)]
     >>> doc.key_terms(algorithm='textrank', n=5)
-    [('EPICAC', 0.06369346448602185),
-     ('Brass', 0.051763452142722675),
-     ('machine', 0.04761999319651037),
-     ('friend', 0.045713561400759786),
-     ('people', 0.043303827328545416)]
-    >>> doc.readability_stats()
-    {'automated_readability_index': 5.848928571428573,
-     'coleman_liau_index': 9.577214607142864,
-     'flesch_kincaid_grade_level': 3.7476190476190503,
-     'flesch_readability_ease': 78.8807142857143,
-     'gunning_fog_index': 4.780952380952381,
-     'n_chars': 433,
-     'n_polysyllable_words': 5,
-     'n_sents': 14,
-     'n_syllables': 121,
-     'n_unique_words': 62,
-     'n_words': 84,
-     'smog_index': 6.5431188927421005}
-    >>> doc.term_count('EPICAC')
-    3
-    >>> bot = doc.as_bag_of_terms(weighting='tf', normalized=False,
-    ...                           lemmatize='auto', ngram_range=(1, 2))
+    [('nation', 0.04315758994993049),
+     ('world', 0.030590559641614556),
+     ('incarceration', 0.029577233127175532),
+     ('problem', 0.02411902162606202),
+     ('people', 0.022631145896105508)]
+
+Compute common statistical attributes of a text:
+
+.. code-block:: pycon
+
+    >>> doc.readability_stats
+    {'automated_readability_index': 11.67580188679245,
+     'coleman_liau_index': 10.89927271226415,
+     'flesch_kincaid_grade_level': 10.711962264150948,
+     'flesch_readability_ease': 56.022660377358505,
+     'gunning_fog_index': 13.857358490566037,
+     'n_chars': 2026,
+     'n_polysyllable_words': 57,
+     'n_sents': 20,
+     'n_syllables': 648,
+     'n_unique_words': 228,
+     'n_words': 424,
+     'smog_index': 12.773325707644965}
+
+Count terms individually, and represent documents as a bag of terms with flexible weighting and inclusion criteria:
+
+.. code-block:: pycon
+
+    >>> doc.term_count('nation')
+    6
+    >>> bot = doc.as_bag_of_terms(weighting='tf', normalized=False, lemmatize='auto', ngram_range=(1, 1))
     >>> [(doc.spacy_stringstore[term_id], count)
     ...  for term_id, count in bot.most_common(n=10)]
-    [('not', 6),
-     ("'", 4),
-     ('EPICAC', 3),
-     ('want', 3),
-     ('Brass', 3),
-     ('like', 3),
-     ('machine', 3),
-     ('\n', 2),
-     ('people', 2),
-     ('friend', 2)]
+    [('nation', 6),
+     ('world', 4),
+     ('incarceration', 4),
+     ('people', 3),
+     ('mandatory minimum', 3),
+     ('lead', 3),
+     ('minimum', 3),
+     ('problem', 3),
+     ('mandatory', 3),
+     ('drug', 3)]
 
 
 Project Links

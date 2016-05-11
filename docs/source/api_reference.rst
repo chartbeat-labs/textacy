@@ -55,6 +55,15 @@ Corpora
 .. automodule:: textacy.corpora.wikipedia
     :members:
 
+Visualization
+-------------
+
+.. automodule:: textacy.viz.termite
+    :members:
+
+.. automodule:: textacy.viz.network
+    :members:
+
 Utilities
 ---------
 

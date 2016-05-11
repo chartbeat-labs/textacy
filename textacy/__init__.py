@@ -21,6 +21,7 @@ from textacy import export, keyterms
 from textacy import texts
 
 from textacy.data import load_spacy
+from textacy.preprocess import preprocess_text
 from textacy.texts import TextDoc, TextCorpus
 
 logger = logging.getLogger('textacy')
