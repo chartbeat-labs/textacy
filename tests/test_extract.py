@@ -40,7 +40,7 @@ class ExtractTestCase(unittest.TestCase):
              [419, -4, 407], [465, 1, 407], [459, 0, 53503], [426, -1, 393], [461, 2, 380],
              [445, 1, 393], [458, -3, 373], [446, 1, 402], [443, 2, 393], [452, 1, 370],
              [454, -4, 373], [419, -9, 407], [415, -10, 407]],
-             dtype='int32')
+            dtype='int32')
         self.spacy_doc.from_array(cols, values)
 
     def test_words(self):
