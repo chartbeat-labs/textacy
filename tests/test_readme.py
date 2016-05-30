@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+from operator import itemgetter
 import unittest
 
 import numpy as np
@@ -221,11 +222,13 @@ class ReadmeTestCase(unittest.TestCase):
         expected_1 = 6
         bot = self.doc.as_bag_of_terms(weighting='tf', normalized=False,
                                        lemmatize='auto', ngram_range=(1, 1))
+        # sort by term ascending, then count descending
         observed_2 = sorted([(self.doc.spacy_stringstore[term_id], count)
                              for term_id, count in bot.most_common(n=10)],
-                            key=lambda x: x[1], reverse=True)
-        expected_2 = [('nation', 6), ('incarceration', 4), ('world', 4), ('lead', 3),
-                      ('mandatory', 3), ('people', 3), ('minimum', 3), ('drug', 3),
-                      ('problem', 3), ('male', 2)]
+                            key=itemgetter(0), reverse=False)
+        observed_2 = sorted(observed_2, key=itemgetter(1), reverse=True)
+        expected_2 = [('nation', 6), ('incarceration', 4), ('world', 4),
+                      ('drug', 3), ('lead', 3), ('mandatory', 3), ('minimum', 3),
+                      ('people', 3), ('problem', 3), ('male', 2)]
         self.assertEqual(observed_1, expected_1)
         self.assertEqual(observed_2, expected_2)
