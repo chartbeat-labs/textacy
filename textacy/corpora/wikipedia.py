@@ -111,7 +111,7 @@ class WikiReader(object):
 
         return parsed_page
 
-    def texts(self, min_len=100, limit=None):
+    def texts(self, min_len=100, limit=-1):
         """
         Iterate over the pages in a Wikipedia articles database dump (*articles.xml.bz2),
         yielding the plain text of a page, one at a time.
@@ -119,8 +119,8 @@ class WikiReader(object):
         Args:
             min_len (int): minimum length in chars that a page must have
                 for it to be returned; too-short pages are skipped (optional)
-            limit (int): maximum number of pages (passing ``min_len``) to yield;
-                if None, all pages in the db dump are iterated over (optional)
+            limit (int): maximum number of pages (passing `min_len`) to yield;
+                if -1, all pages in the db dump are iterated over (optional)
 
         Yields:
             str: plain text for the next page in the wikipedia database dump
@@ -134,24 +134,25 @@ class WikiReader(object):
             text = self._clean_content(content)
             if len(text) < min_len:
                 continue
-            n_pages += 1
-            if limit is not None and n_pages > limit:
-                break
 
             yield title + '\n' + text
 
-    def pages(self, min_len=100, limit=None, metadata=True):
+            n_pages += 1
+            if n_pages == limit:
+                break
+
+    def pages(self, min_len=100, limit=-1, metadata=True):
         """
         Iterate over the pages in a Wikipedia articles database dump (*articles.xml.bz2),
         yielding one page whose structure and content have been parsed, as a dict.
 
         Args:
-            min_len (int, optional): minimum length in chars that a page must have
+            min_len (int): minimum length in chars that a page must have
                 for it to be returned; too-short pages are skipped
-            limit (int, optional): maximum number of pages (passing ``min_len``)
-                to yield; if None, all pages in the db dump are iterated over
-            metadata (bool, optional): if True, return page metadata in addition to content,
-                including 'ext_links', 'wiki_links', and 'categories'
+            limit (int): maximum number of pages (passing ``min_len``) to yield;
+                if -1, all pages in the db dump are iterated over (optional)
+            metadata (bool): if True, return page metadata in addition to content,
+                including 'ext_links', 'wiki_links', and 'categories' (optional)
 
         Yields:
             dict: the next page's parsed content, including 'title' and 'page_id'
@@ -176,10 +177,11 @@ class WikiReader(object):
             page = self._parse_content(content, parser, metadata=metadata)
             if len(' '.join(s['text'] for s in page['sections'])) < min_len:
                 continue
-            n_pages += 1
             page['title'] = title
             page['page_id'] = page_id
-            if limit is not None and n_pages > limit:
-                break
 
             yield page
+
+            n_pages += 1
+            if n_pages == limit:
+                break
