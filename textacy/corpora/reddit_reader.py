@@ -3,7 +3,9 @@ Reddit Corpus Reader
 --------------------
 
 Stream a corpus of up to ~1.6 billion Reddit comments posted from October 2007
-until May 2015, as either plaintext strings or content + metadata dicts.::
+until May 2015, as either plaintext strings or content + metadata dicts.
+
+.. code-block:: pycon
 
     >>> rr = RedditReader('/path/to/RC_2015-01.bz2')
     >>> for text in rr.texts(limit=5):  # plaintext comments

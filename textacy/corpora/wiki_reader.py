@@ -1,15 +1,27 @@
 """
-Wikipedia Corpus
-----------------
+Wikipedia Corpus Reader
+-----------------------
 
-Functions to read, iterate over, and extract text and/or structured information
-from Wikipedia article database dumps or the Wikimedia API.
+Stream a corpus of Wikipedia articles saved in standardized database dumps,
+as either plaintext strings or structured content + metadata dicts.
+
+.. code-block:: pycon
+
+    >>> wr = WikiReader('/path/to/enwiki-latest-pages-articles.xml.bz2')
+    >>> for text in wr.texts(limit=5):  # plaintext pages
+    ...     print(text)
+    >>> for page in wr.pages(min_len=100, limit=1):  # parsed pages
+    ...     print(page.keys())
+    ...     print(' '.join(section['text'] for section in page['sections']))
+
+DB dumps are downloadable from https://meta.wikimedia.org/wiki/Data_dumps.
 """
-import bz2
 import re
 
 from gensim.corpora.dictionary import Dictionary
 from gensim.corpora.wikicorpus import extract_pages, filter_wiki, WikiCorpus
+
+from textacy.compat import bzip_open
 
 WIKI_NEWLINE_RE = re.compile(r'\n{2,5}')
 WIKI_HEADER_RE = re.compile(r'={2,5}(.*?)={2,5}')
@@ -18,6 +30,14 @@ WIKI_CRUFT_RE = re.compile(r'\n\* ?')
 
 
 class WikiReader(object):
+    """
+    Stream Wikipedia pages from standardized, compressed files on disk, either as
+    plaintext strings or dict documents with both text content and metadata.
+    Download the data from https://meta.wikimedia.org/wiki/Data_dumps.
+
+    Args:
+        path (str): full name of database dump file on disk
+    """
 
     def __init__(self, path):
         self.wikicorpus = WikiCorpus(path, lemmatize=False, dictionary=Dictionary(),
@@ -28,7 +48,7 @@ class WikiReader(object):
         Iterate over the pages in a Wikipedia articles database dump (*articles.xml.bz2),
         yielding one (page id, title, page content) 3-tuple at a time.
         """
-        for title, content, page_id in extract_pages(bz2.BZ2File(self.wikicorpus.fname),
+        for title, content, page_id in extract_pages(bzip_open(self.wikicorpus.fname, mode='rt'),
                                                      self.wikicorpus.filter_namespaces):
             yield (page_id, title, content)
 
