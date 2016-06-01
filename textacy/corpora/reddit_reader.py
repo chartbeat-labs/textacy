@@ -1,10 +1,25 @@
 """
+Reddit Corpus Reader
+--------------------
+
+Stream a corpus of up to ~1.6 billion Reddit comments posted from October 2007
+until May 2015, as either plaintext strings or content + metadata dicts.::
+
+    >>> rr = RedditReader('/path/to/RC_2015-01.bz2')
+    >>> for text in rr.texts(limit=5):  # plaintext comments
+    ...     print(text)
+    >>> for comment in rr.comments(min_len=100, limit=1):  # parsed comments
+    ...     print(comment.keys())
+    ...     print(comment['body'])
+    >>> rr = RedditReader(['/path/to/RC_2015-01.bz2', '/path/to/RC_2015-02.bz2'])
+
+Raw data is downloadable from https://archive.org/details/2015_reddit_comments_corpus.
 """
-import bz2
+import datetime
+import json
 import re
 
-import ujson
-
+from textacy.compat import bzip_open, str
 from textacy.preprocess import normalize_whitespace
 
 
@@ -12,14 +27,28 @@ REDDIT_LINK_RE = re.compile(r'\[([^]]+)\]\(https?://[^\)]+\)')
 
 
 class RedditReader(object):
+    """
+    Stream Reddit comments from standardized, compressed files on disk, either as
+    plaintext strings or dict documents with both text content and metadata.
+    Download the data from https://archive.org/details/2015_reddit_comments_corpus;
+    the files are named as `RC_YYYY-MM.bz2`.
 
-    def __init__(self, path):
-        self.path = path
+    Args:
+        paths (sequence[str] or str): name or names of reddit comment file(s) from
+            which to stream comments
+    """
+
+    def __init__(self, paths):
+        if isinstance(paths, str):
+            self.paths = (paths,)
+        else:
+            self.paths = tuple(paths)
 
     def __iter__(self):
-        with bz2.BZ2File(self.path) as f:
-            for line in f:
-                yield ujson.loads(line)
+        for path in self.paths:
+            with bzip_open(path, mode='rt') as f:
+                for line in f:
+                    yield json.loads(line)
 
     def _clean_content(self, content):
         # strip out link markup, e.g. [foo](http://foo.com)
@@ -31,10 +60,21 @@ class RedditReader(object):
         # normalize whitespace
         return normalize_whitespace(content)
 
+    def _parse_comment(self, comment):
+        # convert str/int timestamp fields into datetime objects
+        for key in ('created_utc', 'retrieved_on'):
+            try:
+                comment[key] = datetime.datetime.utcfromtimestamp(int(comment[key]))
+            except KeyError:
+                pass
+        # clean up comment's text content
+        comment['body'] = self._clean_content(comment['body'])
+        return comment
+
     def texts(self, min_len=0, limit=-1):
         """
-        Iterate over the comments in a reddit comments file (RC_*.bz2),
-        yielding the plain text of a comment, one at a time.
+        Iterate over the comments in 1 or more reddit comments files (RC_YYYY-MM.bz2),
+        yielding the plain text of comments, one at a time.
 
         Args:
             min_len (int): minimum length in chars that a comment must have
@@ -59,8 +99,8 @@ class RedditReader(object):
 
     def comments(self, min_len=0, limit=-1):
         """
-        Iterate over the comments in a reddit comments file (RC_*.bz2),
-        yielding one comment at a time, as a dict.
+        Iterate over the comments in 1 or more reddit comments files (RC_YYYY-MM.bz2),
+        yielding one (lightly parsed) comment at a time, as a dict.
 
         Args:
             min_len (int): minimum length in chars that a page must have
@@ -74,7 +114,7 @@ class RedditReader(object):
         """
         n_comments = 0
         for comment in self:
-            comment['body'] = self._clean_content(comment['body'])
+            comment = self._parse_comment(comment)
             if len(comment['body']) < min_len:
                 continue
 
