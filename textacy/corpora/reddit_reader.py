@@ -48,9 +48,14 @@ class RedditReader(object):
 
     def __iter__(self):
         for path in self.paths:
-            with bzip_open(path, mode='rt') as f:
-                for line in f:
-                    yield json.loads(line)
+            try:
+                with bzip_open(path, mode='rt') as f:
+                    for line in f:
+                        yield json.loads(line)
+            except ValueError:  # Python 2 sucks and can't open bzip in text mode
+                with bzip_open(path, mode='r') as f:
+                    for line in f:
+                        yield json.loads(line)
 
     def _clean_content(self, content):
         # strip out link markup, e.g. [foo](http://foo.com)

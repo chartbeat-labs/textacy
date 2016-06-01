@@ -48,9 +48,14 @@ class WikiReader(object):
         Iterate over the pages in a Wikipedia articles database dump (*articles.xml.bz2),
         yielding one (page id, title, page content) 3-tuple at a time.
         """
-        for title, content, page_id in extract_pages(bzip_open(self.wikicorpus.fname, mode='rt'),
-                                                     self.wikicorpus.filter_namespaces):
-            yield (page_id, title, content)
+        try:
+            for title, content, page_id in extract_pages(bzip_open(self.wikicorpus.fname, mode='rt'),
+                                                         self.wikicorpus.filter_namespaces):
+                yield (page_id, title, content)
+        except ValueError:  # Python 2 sucks and can't open bzip in text mode
+            for title, content, page_id in extract_pages(bzip_open(self.wikicorpus.fname, mode='r'),
+                                                         self.wikicorpus.filter_namespaces):
+                yield (page_id, title, content)
 
     def _clean_content(self, content):
         return WIKI_CRUFT_RE.sub(
