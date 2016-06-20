@@ -1,11 +1,13 @@
 Changelog
 =========
 
-Dev
----
+0.2.3 (2016-06-20)
+------------------
 
 Changes:
 
+- Added `corpora.RedditReader()` class for streaming Reddit comments from disk, with `.texts()` method for a stream of plaintext comments and `.comments()` method for a stream of structured comments as dicts, with basic filtering by text length and limiting the number of comments returned
+- Refactored functions for streaming Wikipedia articles from disk into a `corpora.WikiReader()` class, with `.texts()` method for a stream of plaintext articles and `.pages()` method for a stream of structured pages as dicts, with basic filtering by text length and limiting the number of pages returned
 - Updated README and docs with a more comprehensive — and correct — usage example; also added tests to ensure it doesn't get stale
 - Updated requirements to latest version of spaCy, as well as added matplotlib for `viz`
 
@@ -13,6 +15,7 @@ Bugfixes:
 
 - `textacy.preprocess.preprocess_text()` is now, once again, imported at the top level, so easily reachable via `textacy.preprocess_text()` (@bretdabaker #14)
 - `viz` subpackage now included in the docs' API reference
+- missing dependencies added into `setup.py` so pip install handles everything for folks
 
 
 0.2.2 (2016-05-05)

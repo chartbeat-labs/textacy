@@ -52,7 +52,10 @@ Corpora
 .. automodule:: textacy.corpora.bernie_and_hillary
     :members:
 
-.. automodule:: textacy.corpora.wikipedia
+.. automodule:: textacy.corpora.wiki_reader
+    :members:
+
+.. automodule:: textacy.corpora.reddit_reader
     :members:
 
 Visualization
