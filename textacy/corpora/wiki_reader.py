@@ -194,7 +194,11 @@ class WikiReader(object):
         Notes:
             .. This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
         """
-        import mwparserfromhell  # hiding this here; don't want another required dep
+        try:
+            import mwparserfromhell  # hiding this here; don't want another required dep
+        except ImportError:
+            print('mwparserfromhell package must be installed; see http://pythonhosted.org/mwparserfromhell/')
+            raise
         parser = mwparserfromhell.parser.Parser()
 
         n_pages = 0

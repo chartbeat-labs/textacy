@@ -18,6 +18,7 @@ until May 2015, as either plaintext strings or content + metadata dicts.
 Raw data is downloadable from https://archive.org/details/2015_reddit_comments_corpus.
 """
 import datetime
+import logging
 import json
 import re
 
@@ -25,6 +26,7 @@ from textacy.compat import bzip_open, str
 from textacy.preprocess import normalize_whitespace
 
 
+LOGGER = logging.getLogger(__name__)
 REDDIT_LINK_RE = re.compile(r'\[([^]]+)\]\(https?://[^\)]+\)')
 
 
@@ -53,7 +55,7 @@ class RedditReader(object):
                     for line in f:
                         yield json.loads(line)
             except ValueError:  # Python 2 sucks and can't open bzip in text mode
-                with bzip_open(path, mode='r') as f:
+                with bzip_open(path, mode='rb') as f:
                     for line in f:
                         yield json.loads(line)
 
