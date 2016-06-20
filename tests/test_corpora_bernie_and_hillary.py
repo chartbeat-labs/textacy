@@ -7,7 +7,7 @@ import unittest
 from textacy.corpora import bernie_and_hillary
 
 
-class CorporaTestCase(unittest.TestCase):
+class BernieAndHillaryTestCase(unittest.TestCase):
 
     def setUp(self):
         self.tempdir = tempfile.mkdtemp(
