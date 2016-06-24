@@ -7,12 +7,15 @@ import collections
 
 from cytoolz import itertoolz
 from fuzzywuzzy import fuzz
-from Levenshtein import hamming as _hamming, distance as _levenshtein
+from Levenshtein import (distance as _levenshtein,
+                         hamming as _hamming,
+                         jaro_winkler as _jaro_winkler)
 import numpy as np
 from pyemd import emd
 from sklearn.metrics import pairwise_distances
 from spacy.strings import StringStore
 
+from textacy import extract
 from textacy.compat import str
 
 
@@ -21,8 +24,8 @@ def word_movers_distance(doc1, doc2, metric='cosine'):
     Measure the semantic distance between two documents using Word Movers Distance.
 
     Args:
-        doc1 (`TextDoc`)
-        doc2 (`TextDoc`)
+        doc1 (`TextDoc` or `spacy.Doc`)
+        doc2 (`TextDoc` or `.spacy.Doc`)
         metric ({'cosine', 'euclidean', 'l1', 'l2', 'manhattan'})
 
     Returns:
@@ -33,7 +36,7 @@ def word_movers_distance(doc1, doc2, metric='cosine'):
 
     n = 0
     word_vecs = []
-    for word in itertoolz.concatv(doc1.words(), doc2.words()):
+    for word in itertoolz.concatv(extract.words(doc1), extract.words(doc2)):
         if word.has_vector:
             if stringstore[word.text] - 1 == n:
                 word_vecs.append(word.vector)
@@ -43,19 +46,39 @@ def word_movers_distance(doc1, doc2, metric='cosine'):
 
     vec1 = collections.Counter(
         stringstore[word.text] - 1
-        for word in doc1.words()
+        for word in extract.words(doc1)
         if word.has_vector)
     vec1 = np.array([vec1[word_idx] for word_idx in range(len(stringstore))]).astype(np.double)
     vec1 /= vec1.sum()  # normalize word counts
 
     vec2 = collections.Counter(
         stringstore[word.text] - 1
-        for word in doc2.words()
+        for word in extract.words(doc2)
         if word.has_vector)
     vec2 = np.array([vec2[word_idx] for word_idx in range(len(stringstore))]).astype(np.double)
     vec2 /= vec2.sum()  # normalize word counts
 
     return emd(vec1, vec2, distance_mat)
+
+
+def word2vec_distance(obj1, obj2):
+    """
+    Measure the semantic similarity between one TextDoc or spacy Doc, Span, Token,
+    or Lexeme and another like object as the cosine distance between the objects'
+    (average) word2vec vectors.
+
+    Args:
+        obj1 (`TextDoc`, `spacy.Doc`, `spacy.Span`, `spacy.Token`, or `spacy.Lexeme`)
+        obj2 (`TextDoc`, `spacy.Doc`, `spacy.Span`, `spacy.Token`, or `spacy.Lexeme`)
+
+    Returns
+        float: distance between `obj1` and `obj2` in [0.0, 1.0], where
+            smaller values correspond to more similar objects
+    """
+    if isinstance(obj1, TextDoc) and isinstance(obj2, TextDoc):
+        obj1 = obj1.spacy_doc
+        obj2 = obj2.spacy_doc
+    return 1.0 - obj1.similarity(obj2)
 
 
 def jaccard_distance(str1, str2, fuzzy_match=False, match_threshold=80):
@@ -150,3 +173,21 @@ def levenshtein_distance(str1, str2, normalize=False):
     if normalize is True:
         distance /= max(len(str1), len(str2))
     return distance
+
+
+def jaro_winkler_distance(str1, str2, prefix_weight=0.1):
+    """
+    Measure the distance between two strings using Jaro-Winkler similarity metric,
+    a modification of Jaro metric giving more weight to a shared prefix.
+
+    Args:
+        str1 (str)
+        str2 (str)
+        prefix_weight (float): the inverse value of common prefix length needed
+            to consider the strings identical
+
+    Returns:
+        float: distance between `str1` and `str2` in [0.0, 1.0], where smaller
+            values correspond to more similar strings
+    """
+    return 1.0 - _jaro_winkler(str1, str2, prefix_weight)
