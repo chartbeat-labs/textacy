@@ -1,6 +1,14 @@
 Changelog
 =========
 
+dev
+---
+
+Changes:
+- Added `.save()` methods and `.load()` classmethods to both `TextDoc` and `TextCorpus` classes, which allows for fast serialization of parsed documents and associated metadata to/from disk.
+    - caveat: if `spacy.Vocab` object used to serialize and deserialize is not the same, there will be problems, making this format useful as short-term but not long-term storage
+
+
 0.2.3 (2016-06-20)
 ------------------
 
