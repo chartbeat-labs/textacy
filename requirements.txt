@@ -2,7 +2,7 @@ cachetools
 cld2-cffi
 cytoolz
 ftfy
-fuzzywuzzy
+fuzzywuzzy>=0.10.0
 gensim
 ijson
 matplotlib
