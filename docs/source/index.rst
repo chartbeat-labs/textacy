@@ -49,7 +49,7 @@ Efficiently stream documents from disk and into a processed corpus:
     >>> docs = textacy.corpora.fetch_bernie_and_hillary()
     >>> content_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
     ...     docs, 'text', itemwise=False)
-    >>> corpus = textacy.TextCorpus.from_texts('en', texts, metadatas, n_threads=2)
+    >>> corpus = textacy.TextCorpus.from_texts('en', content_stream, metadata=metadata_stream, n_threads=2)
     >>> print(corpus)
     TextCorpus(3066 docs; 1909705 tokens)
 
