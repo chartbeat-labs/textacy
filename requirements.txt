@@ -2,13 +2,14 @@ cachetools
 cld2-cffi
 cytoolz
 ftfy
-fuzzywuzzy
+fuzzywuzzy>=0.10.0
 gensim
 ijson
 matplotlib
 networkx
 numpy>=1.8.0
 pyphen
+python-levenshtein>=0.12.0
 scipy
 scikit-learn>=0.17.0
 spacy>=0.101.0
