@@ -81,7 +81,7 @@ class TextDoc(object):
             raise ValueError(msg)
 
     def __repr__(self):
-        snippet = self.text[:50].replace('\n',' ')
+        snippet = self.text[:50].replace('\n', ' ')
         if len(snippet) == 50:
             snippet = snippet[:47] + '...'
         return 'TextDoc({} tokens; "{}")'.format(len(self.spacy_doc), snippet)
@@ -104,6 +104,10 @@ class TextDoc(object):
             path (str): directory on disk where content + metadata will be saved
             fname_prefix (str, optional): prepend standard filenames 'spacy_doc.bin'
                 and 'metadata.json' with additional identifying information
+
+        .. warn:: If the `spacy.Vocab` object used to save this document is not the
+            same as the one used to load it, there will be problems! Consequently,
+            this functionality is only useful as short-term but not long-term storage.
         """
         if fname_prefix:
             meta_fname = os.path.join(path, '_'.join([fname_prefix, 'metadata.json']))
@@ -130,6 +134,10 @@ class TextDoc(object):
 
         Returns:
             :class:`textacy.TextDoc`
+
+        .. warn:: If the `spacy.Vocab` object used to save this document is not the
+            same as the one used to load it, there will be problems! Consequently,
+            this functionality is only useful as short-term but not long-term storage.
         """
         if fname_prefix:
             meta_fname = os.path.join(path, '_'.join([fname_prefix, 'metadata.json']))
@@ -616,8 +624,10 @@ class TextCorpus(object):
     corpus representations.
 
     Args:
-        lang (str): 2-letter code of corpus' language, used to initialize spaCy;
-            see https://cloud.google.com/translate/v2/using_rest#language-params
+        lang_or_pipeline ({'en', 'de'} or :class:`spacy.<lang>.<Language>`):
+            either 'en' or 'de', used to initialize the corresponding spaCy pipeline
+            with all models loaded by default, or an already-initialized spaCy
+            pipeline which may or may not have all models loaded
 
     Add texts to corpus one-by-one with :meth:`TextCorpus.add_text() <textacy.texts.TextCorpus.add_text>`,
     or all at once with :meth:`TextCorpus.from_texts() <textacy.texts.TextCorpus.from_texts>`.
@@ -627,9 +637,13 @@ class TextCorpus(object):
     by index (e.g. ``TextCorpus[0]`` or ``TextCorpus[0:10]``) or by boolean condition
     specified by a function (e.g. ``TextCorpus.get_docs(lambda x: len(x) > 100)``).
     """
-    def __init__(self, lang):
-        self.lang = lang
-        self.spacy_pipeline = data.load_spacy(self.lang)
+    def __init__(self, lang_or_pipeline):
+        if isinstance(lang_or_pipeline, str):
+            self.lang = lang_or_pipeline
+            self.spacy_pipeline = data.load_spacy(self.lang)
+        else:
+            self.spacy_pipeline = lang_or_pipeline
+            self.lang = self.spacy_pipeline.lang
         self.spacy_vocab = self.spacy_pipeline.vocab
         self.spacy_stringstore = self.spacy_vocab.strings
         self.docs = []
@@ -658,6 +672,10 @@ class TextCorpus(object):
             path (str): directory on disk where content + metadata will be saved
             fname_prefix (str, optional): prepend standard filenames 'spacy_docs.bin'
                 and 'metadatas.json' with additional identifying information
+
+        .. warn:: If the `spacy.Vocab` object used to save this corpus is not the
+            same as the one used to load it, there will be problems! Consequently,
+            this functionality is only useful as short-term but not long-term storage.
         """
         if fname_prefix:
             info_fname = os.path.join(path, '_'.join([fname_prefix, 'info.json']))
@@ -685,6 +703,10 @@ class TextCorpus(object):
 
         Returns:
             :class:`textacy.TextCorpus`
+
+        .. warn:: If the `spacy.Vocab` object used to save this corpus is not the
+            same as the one used to load it, there will be problems! Consequently,
+            this functionality is only useful as short-term but not long-term storage.
         """
         if fname_prefix:
             info_fname = os.path.join(path, '_'.join([fname_prefix, 'info.json']))
@@ -715,13 +737,13 @@ class TextCorpus(object):
         return textcorpus
 
     @classmethod
-    def from_texts(cls, lang, texts, metadata=None, n_threads=2, batch_size=1000):
+    def from_texts(cls, lang_or_pipeline, texts, metadata=None, n_threads=2, batch_size=1000):
         """
         Convenience function for creating a :class:`TextCorpus <textacy.texts.TextCorpus>`
         from an iterable of text strings.
 
         Args:
-            lang (str)
+            lang_or_pipeline ({'en', 'de'} or :class:`spacy.<lang>.<Language>`)
             texts (iterable(str))
             metadata (iterable(dict), optional)
             n_threads (int, optional)
@@ -730,17 +752,17 @@ class TextCorpus(object):
         Returns:
             :class:`TextCorpus <textacy.texts.TextCorpus>`
         """
-        textcorpus = cls(lang)
+        textcorpus = cls(lang_or_pipeline)
         spacy_docs = textcorpus.spacy_pipeline.pipe(
             texts, n_threads=n_threads, batch_size=batch_size)
         if metadata is not None:
             for spacy_doc, md in zip(spacy_docs, metadata):
-                textcorpus.add_doc(TextDoc(spacy_doc, lang=lang,
+                textcorpus.add_doc(TextDoc(spacy_doc, lang=textcorpus.lang,
                                            spacy_pipeline=textcorpus.spacy_pipeline,
                                            metadata=md))
         else:
             for spacy_doc in spacy_docs:
-                textcorpus.add_doc(TextDoc(spacy_doc, lang=lang,
+                textcorpus.add_doc(TextDoc(spacy_doc, lang=textcorpus.lang,
                                            spacy_pipeline=textcorpus.spacy_pipeline,
                                            metadata=None))
         return textcorpus
@@ -767,11 +789,12 @@ class TextCorpus(object):
         doc.corpus = self
         self.docs.append(doc)
         self.n_docs += 1
+        self.n_tokens += doc.n_tokens
+        # sentence segmentation requires parse; if not available, just skip this
         try:
             self.n_sents += doc.n_sents
-        except ValueError:  # no parser loaded, skip it
+        except ValueError:
             pass
-        self.n_tokens += doc.n_tokens
 
     def add_doc(self, doc, print_warning=True):
         """
@@ -797,11 +820,12 @@ class TextCorpus(object):
         doc.corpus = self
         self.docs.append(doc)
         self.n_docs += 1
+        self.n_tokens += doc.n_tokens
+        # sentence segmentation requires parse; if not available, just skip this
         try:
             self.n_sents += doc.n_sents
-        except ValueError:  # no parser loaded, skip it
+        except ValueError:
             pass
-        self.n_tokens += doc.n_tokens
 
     def get_doc(self, index):
         """
