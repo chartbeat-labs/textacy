@@ -5,8 +5,16 @@ dev
 ---
 
 Changes:
+
 - Added `.save()` methods and `.load()` classmethods to both `TextDoc` and `TextCorpus` classes, which allows for fast serialization of parsed documents and associated metadata to/from disk.
     - caveat: if `spacy.Vocab` object used to serialize and deserialize is not the same, there will be problems, making this format useful as short-term but not long-term storage
+- Added a `distance.py` module containing several document, set, and string distance metrics
+    - word movers: document distance as distance between individual words represented by word2vec vectors, normalized
+    - "word2vec": token, span, or document distance as cosine distance between (average) word2vec representations, normalized
+    - jaccard: string or set(string) distance as intersection / overlap, normalized, with optional fuzzy-matching across set members
+    - hamming: distance between two strings as number of substititions, optionally normalized
+    - levenshtein: distance between two strings as number of substitions, deletions, and insertions, optionally normalized (and removed a redundant function from the still-orphaned `math_utils.py` module)
+    - jaro-winkler: distance between two strings with variable prefix weighting, normalized
 
 
 0.2.3 (2016-06-20)
