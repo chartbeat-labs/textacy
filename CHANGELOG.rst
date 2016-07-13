@@ -16,6 +16,10 @@ Changes:
     - levenshtein: distance between two strings as number of substitions, deletions, and insertions, optionally normalized (and removed a redundant function from the still-orphaned `math_utils.py` module)
     - jaro-winkler: distance between two strings with variable prefix weighting, normalized
 
+Bugfixes:
+
+- fixed variable name error in docs usage example (thanks to @licyeus, PR #23)
+
 
 0.2.3 (2016-06-20)
 ------------------
