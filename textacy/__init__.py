@@ -17,7 +17,7 @@ from textacy import compat, data, math_utils, regexes_etc
 from textacy import lexicon_methods, preprocess, text_stats, text_utils
 from textacy import spacy_utils
 from textacy import extract
-from textacy import export, keyterms
+from textacy import distance, export, keyterms
 from textacy import texts
 
 from textacy.data import load_spacy
