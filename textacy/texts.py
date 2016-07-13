@@ -606,7 +606,7 @@ class TextCorpus(object):
         Returns:
             :class:`TextCorpus <textacy.texts.TextCorpus>`
         """
-        textcorpus = cls(lang=lang)
+        textcorpus = cls(lang)
         spacy_docs = textcorpus.spacy_pipeline.pipe(
             texts, n_threads=n_threads, batch_size=batch_size)
         if metadata is not None:
@@ -643,7 +643,10 @@ class TextCorpus(object):
         doc.corpus = self
         self.docs.append(doc)
         self.n_docs += 1
-        self.n_sents += doc.n_sents
+        try:
+            self.n_sents += doc.n_sents
+        except ValueError:  # no parser loaded, skip it
+            pass
         self.n_tokens += doc.n_tokens
 
     def add_doc(self, doc, print_warning=True):
@@ -670,7 +673,10 @@ class TextCorpus(object):
         doc.corpus = self
         self.docs.append(doc)
         self.n_docs += 1
-        self.n_sents += doc.n_sents
+        try:
+            self.n_sents += doc.n_sents
+        except ValueError:  # no parser loaded, skip it
+            pass
         self.n_tokens += doc.n_tokens
 
     def get_doc(self, index):

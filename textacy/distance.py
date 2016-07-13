@@ -15,6 +15,7 @@ from pyemd import emd
 from sklearn.metrics import pairwise_distances
 from spacy.strings import StringStore
 
+import textacy
 from textacy import extract
 from textacy.compat import str
 
@@ -25,12 +26,21 @@ def word_movers_distance(doc1, doc2, metric='cosine'):
 
     Args:
         doc1 (`TextDoc` or `spacy.Doc`)
-        doc2 (`TextDoc` or `.spacy.Doc`)
+        doc2 (`TextDoc` or `spacy.Doc`)
         metric ({'cosine', 'euclidean', 'l1', 'l2', 'manhattan'})
 
     Returns:
         float: distance between `doc1` and `doc2` in [0.0, 1.0], where smaller
             values correspond to more similar documents
+
+    References:
+        Ofir Pele and Michael Werman, "A linear time histogram metric for improved
+            SIFT matching," in Computer Vision - ECCV 2008, Marseille, France, 2008.
+        Ofir Pele and Michael Werman, "Fast and robust earth mover's distances,"
+            in Proc. 2009 IEEE 12th Int. Conf. on Computer Vision, Kyoto, Japan, 2009.
+        Kusner, Matt J., et al. "From word embeddings to document distances."
+            Proceedings of the 32nd International Conference on Machine Learning
+            (ICML 2015). 2015. http://jmlr.org/proceedings/papers/v37/kusnerb15.pdf
     """
     stringstore = StringStore()
 
@@ -38,7 +48,7 @@ def word_movers_distance(doc1, doc2, metric='cosine'):
     word_vecs = []
     for word in itertoolz.concatv(extract.words(doc1), extract.words(doc2)):
         if word.has_vector:
-            if stringstore[word.text] - 1 == n:
+            if stringstore[word.text] - 1 == n:  # stringstore[0] always empty space
                 word_vecs.append(word.vector)
                 n += 1
     distance_mat = pairwise_distances(np.array(word_vecs), metric=metric).astype(np.double)
@@ -75,21 +85,21 @@ def word2vec_distance(obj1, obj2):
         float: distance between `obj1` and `obj2` in [0.0, 1.0], where
             smaller values correspond to more similar objects
     """
-    if isinstance(obj1, TextDoc) and isinstance(obj2, TextDoc):
+    if isinstance(obj1, textacy.TextDoc) and isinstance(obj2, textacy.TextDoc):
         obj1 = obj1.spacy_doc
         obj2 = obj2.spacy_doc
     return 1.0 - obj1.similarity(obj2)
 
 
-def jaccard_distance(str1, str2, fuzzy_match=False, match_threshold=80):
+def jaccard_distance(obj1, obj2, fuzzy_match=False, match_threshold=80):
     """
     Measure the semantic distance between two strings or sequences of strings
     using Jaccard distance, with optional fuzzy matching of not-identical pairs
-    when `str1` and `str2` are sequences of strings.
+    when `obj1` and `obj2` are sequences of strings.
 
     Args:
-        str1 (str or sequence(str))
-        str2 (str or sequence(str)): if str, both inputs are treated as sequences
+        obj1 (str or sequence(str))
+        obj2 (str or sequence(str)): if str, both inputs are treated as sequences
             of *characters*, in which case fuzzy matching is not permitted
         fuzzy_match (bool): if True, allow for fuzzy matching in addition to the
             usual identical matching of pairs between input vectors
@@ -97,20 +107,25 @@ def jaccard_distance(str1, str2, fuzzy_match=False, match_threshold=80):
             with a score >= this value will be considered matches
 
     Returns:
-        float: distance between `str1` and `str2` in [0.0, 1.0], where smaller
+        float: distance between `obj1` and `obj2` in [0.0, 1.0], where smaller
             values correspond to more similar strings or sequences of strings
+
+    Raises:
+        ValueError: if `fuzzy_match` is True but `obj1` and `obj2` are strings
     """
-    set1 = set(str1)
-    set2 = set(str2)
+    set1 = set(obj1)
+    set2 = set(obj2)
     intersection = len(set1 & set2)
     union = len(set1 | set2)
-    if fuzzy_match is True and not isinstance(str1, str) and not isinstance(str2, str):
+    if fuzzy_match is True and not isinstance(obj1, str) and not isinstance(obj2, str):
         for item1 in set1.difference(set2):
             if max(fuzz.token_sort_ratio(item1, item2) for item2 in set2) >= match_threshold:
                 intersection += 1
         for item2 in set2.difference(set1):
             if max(fuzz.token_sort_ratio(item2, item1) for item1 in set1) >= match_threshold:
                 intersection += 1
+    elif fuzzy_match is True:
+        raise ValueError('fuzzy matching not possible with str inputs')
 
     return 1.0 - (intersection / union)
 
