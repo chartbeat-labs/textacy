@@ -8,6 +8,7 @@ Changes:
 
 - Added `.save()` methods and `.load()` classmethods to both `TextDoc` and `TextCorpus` classes, which allows for fast serialization of parsed documents and associated metadata to/from disk.
     - caveat: if `spacy.Vocab` object used to serialize and deserialize is not the same, there will be problems, making this format useful as short-term but not long-term storage
+- `TextCorpus` may now be instantiated with an already-loaded spaCy pipeline, which may or may not have all models loaded; it can still be instantiated using a language code string ('en', 'de') to load a spaCy pipeline that includes all models by default
 - Added a `distance.py` module containing several document, set, and string distance metrics
     - word movers: document distance as distance between individual words represented by word2vec vectors, normalized
     - "word2vec": token, span, or document distance as cosine distance between (average) word2vec representations, normalized
