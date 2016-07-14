@@ -13,9 +13,9 @@ from textacy import representations
 from textacy import tm
 from textacy import viz
 # top-level modules
-from textacy import compat, data, math_utils, regexes_etc
-from textacy import lexicon_methods, preprocess, text_stats, text_utils
-from textacy import spacy_utils
+from textacy import compat, math_utils, regexes_etc
+from textacy import data, preprocess, text_utils
+from textacy import lexicon_methods, spacy_utils, text_stats
 from textacy import extract
 from textacy import distance, export, keyterms
 from textacy import texts
