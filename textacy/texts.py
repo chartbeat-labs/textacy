@@ -372,9 +372,27 @@ class TextDoc(object):
         Extract an ordered sequence of words from a spacy-parsed doc, optionally
         filtering words by part-of-speech (etc.) and frequency.
 
-        .. seealso:: :func:`extract.words() <textacy.extract.words>` for all function kwargs.
+        Args:
+            **kwargs:
+                filter_stops (bool, optional): if True, remove stop words from word list
+                filter_punct (bool, optional): if True, remove punctuation from word list
+                filter_nums (bool, optional): if True, remove number-like words
+                    (e.g. 10, 'ten') from word list
+                good_pos_tags (set[str], optional): remove words whose part-of-speech tag
+                    is NOT in the specified tags, using the set of universal POS tagset
+                bad_pos_tags (set[str], optional): remove words whose part-of-speech tag
+                    IS in the specified tags, using the set of universal POS tagset
+                min_freq (int, optional): remove words that occur in `doc` fewer than
+                    `min_freq` times
+
+        Yields:
+            ``spacy.Token``: the next token passing all specified filters,
+                in order of appearance in the document
+
+        .. seealso:: :func:`extract.words() <textacy.extract.words>`
         """
-        return extract.words(self.spacy_doc, **kwargs)
+        for word in extract.words(self.spacy_doc, **kwargs):
+            yield word
 
     def ngrams(self, n, **kwargs):
         """
@@ -385,30 +403,75 @@ class TextDoc(object):
         Args:
             n (int): number of tokens to include in n-grams;
                 1 => unigrams, 2 => bigrams
+            **kwargs:
+                filter_stops (bool, optional): if True, remove ngrams that start or end
+                    with a stop word
+                filter_punct (bool, optional): if True, remove ngrams that contain
+                    any punctuation-only tokens
+                filter_nums (bool, optional): if True, remove ngrams that contain
+                    any numbers or number-like tokens (e.g. 10, 'ten')
+                good_pos_tags (set[str], optional): remove ngrams whose constituent
+                    tokens' part-of-speech tags are NOT all in the specified tags,
+                    using the universal POS tagset
+                bad_pos_tags (set[str], optional): remove ngrams if any of their constituent
+                    tokens' part-of-speech tags are in the specified tags,
+                    using the universal POS tagset
+                min_freq (int, optional): remove ngrams that occur in `doc` fewer than
+                    `min_freq` times
 
-        .. seealso:: :func:`extract.ngrams() <textacy.extract.ngrams>` for all function kwargs.
+        Yields:
+            ``spacy.Span``: the next ngram passing all specified filters,
+                in order of appearance in the document
+
+        .. seealso:: :func:`extract.ngrams() <textacy.extract.ngrams>`
         """
-        return extract.ngrams(self.spacy_doc, n, **kwargs)
+        for ngram in extract.ngrams(self.spacy_doc, n, **kwargs):
+            yield ngram
 
     def named_entities(self, **kwargs):
         """
         Extract an ordered sequence of named entities (PERSON, ORG, LOC, etc.) from
         doc, optionally filtering by the entity types and frequencies.
 
+        Args:
+            **kwargs:
+                good_ne_types (set[str] or 'numeric', optional): named entity types to
+                    include; if "numeric", all numeric entity types are included
+                bad_ne_types (set[str] or 'numeric', optional): named entity types to
+                    exclude; if "numeric", all numeric entity types are excluded
+                min_freq (int, optional): remove named entities that occur in `doc` fewer
+                    than `min_freq` times
+                drop_determiners (bool, optional): remove leading determiners (e.g. "the")
+                    from named entities (e.g. "the United States" => "United States")
+
+    Yields:
+        ``spacy.Span``: the next named entity passing all specified filters,
+            in order of appearance in the document
+
         .. seealso:: :func:`extract.named_entities() <textacy.extract.named_entities>`
-        for all function kwargs.
         """
-        return extract.named_entities(self.spacy_doc, **kwargs)
+        for ne in extract.named_entities(self.spacy_doc, **kwargs):
+            yield ne
 
     def noun_chunks(self, **kwargs):
         """
         Extract an ordered sequence of noun phrases from doc, optionally
         filtering by frequency and dropping leading determiners.
 
+        Args:
+            **kwargs:
+                drop_determiners (bool, optional): remove leading determiners (e.g. "the")
+                    from phrases (e.g. "the quick brown fox" => "quick brown fox")
+                min_freq (int, optional): remove chunks that occur in `doc` fewer than
+                    `min_freq` times
+
+        Yields:
+            ``spacy.Span``: the next noun chunk, in order of appearance in the document
+
         .. seealso:: :func:`extract.noun_chunks() <textacy.extract.noun_chunks>`
-        for all function kwargs.
         """
-        return extract.noun_chunks(self.spacy_doc, **kwargs)
+        for nc in extract.noun_chunks(self.spacy_doc, **kwargs):
+            yield nc
 
     def pos_regex_matches(self, pattern):
         """
@@ -429,26 +492,44 @@ class TextDoc(object):
                 * compound nouns: r'<NOUN>+'
                 * verb phrase: r'<VERB>?<ADV>*<VERB>+'
                 * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
+
+        Yields:
+            ``spacy.Span``: the next span of consecutive tokens whose parts-of-speech
+                match ``pattern``, in order of apperance in the document
         """
-        return extract.pos_regex_matches(self.spacy_doc, pattern)
+        for match in extract.pos_regex_matches(self.spacy_doc, pattern):
+            yield match
 
     def subject_verb_object_triples(self):
         """
         Extract an *un*ordered sequence of distinct subject-verb-object (SVO) triples
         from doc.
-        """
-        return extract.subject_verb_object_triples(self.spacy_doc)
 
-    def acronyms_and_definitions(self, **kwargs):
+        Yields:
+            (``spacy.Span``, ``spacy.Span``, ``spacy.Span``): the next 3-tuple
+                representing a (subject, verb, object) triple, in order of apperance
+        """
+        for svo in extract.subject_verb_object_triples(self.spacy_doc):
+            yield svo
+
+    def acronyms_and_definitions(self, known_acro_defs=None):
         """
         Extract a collection of acronyms and their most likely definitions,
         if available, from doc. If multiple definitions are found for a given acronym,
         only the most frequently occurring definition is returned.
 
+        Args:
+            known_acro_defs (dict, optional): if certain acronym/definition pairs
+                are known, pass them in as {acronym (str): definition (str)};
+                algorithm will not attempt to find new definitions
+
+        Returns:
+            dict: unique acronyms (keys) with matched definitions (values)
+
         .. seealso:: :func:`extract.acronyms_and_definitions() <textacy.extract.acronyms_and_definitions>`
         for all function kwargs.
         """
-        return extract.acronyms_and_definitions(self.spacy_doc, **kwargs)
+        return extract.acronyms_and_definitions(self.spacy_doc, known_acro_defs=known_acro_defs)
 
     def semistructured_statements(self, entity, **kwargs):
         """
@@ -458,18 +539,40 @@ class TextDoc(object):
         Args:
             entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
                 "global warming", "Python")
+            **kwargs:
+                cue (str, optional): verb lemma with which `entity` is associated
+                    (e.g. "talk about", "have", "write")
+                ignore_entity_case (bool, optional): if True, entity matching is
+                    case-independent
+                min_n_words (int, optional): min number of tokens allowed in a
+                    matching fragment
+                max_n_words (int, optional): max number of tokens allowed in a
+                    matching fragment
+
+        Yields:
+            (``spacy.Span`` or ``spacy.Token``, ``spacy.Span`` or ``spacy.Token``, ``spacy.Span``):
+                  where each element is a matching (entity, cue, fragment) triple
 
         .. seealso:: :func:`extract.semistructured_statements() <textacy.extract.semistructured_statements>`
-        for all function kwargs.
         """
-        return extract.semistructured_statements(self.spacy_doc, entity, **kwargs)
+        for sss in extract.semistructured_statements(self.spacy_doc, entity, **kwargs):
+            yield sss
 
     def direct_quotations(self):
         """
         Baseline, not-great attempt at direction quotation extraction (no indirect
         or mixed quotations) using rules and patterns. English only.
+
+        Yields:
+            (``spacy.Span``, ``spacy.Token``, ``spacy.Span``): next quotation
+                represented as a (speaker, reporting verb, quotation) 3-tuple
+
+        .. seealso:: :func:`extract.direct_quotations() <textacy.extract.direct_quotations>`
         """
-        return extract.direct_quotations(self.spacy_doc)
+        if self.lang != 'en':
+            raise NotImplementedError('sorry, English-language texts only :(')
+        for dq in extract.direct_quotations(self.spacy_doc):
+            yield dq
 
     def key_terms(self, algorithm='sgrank', n=10):
         """
@@ -482,8 +585,16 @@ class TextDoc(object):
                 as keyterms; if float, must be in the open interval (0.0, 1.0),
                 representing the fraction of top-ranked terms to return as keyterms
 
+        Returns:
+            list[(str, float)]: sorted list of top `n` key terms and their
+                corresponding scores
+
         Raises:
             ValueError: if ``algorithm`` not in {'sgrank', 'textrank', 'singlerank'}
+
+        .. seealso:: :func:`keyterms.sgrank() <textacy.keyterms.sgrank>`
+        .. seealso:: :func:`keyterms.textrank() <textacy.keyterms.textrank>`
+        .. seealso:: :func:`keyterms.singlerank() <textacy.keyterms.singlerank>`
         """
         if algorithm == 'sgrank':
             return keyterms.sgrank(self.spacy_doc, window_width=1500, n_keyterms=n)

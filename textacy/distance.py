@@ -20,7 +20,7 @@ from textacy import extract
 from textacy.compat import str
 
 
-def word_movers_distance(doc1, doc2, metric='cosine'):
+def word_movers(doc1, doc2, metric='cosine'):
     """
     Measure the semantic distance between two documents using Word Movers Distance.
 
@@ -71,7 +71,7 @@ def word_movers_distance(doc1, doc2, metric='cosine'):
     return emd(vec1, vec2, distance_mat)
 
 
-def word2vec_distance(obj1, obj2):
+def word2vec(obj1, obj2):
     """
     Measure the semantic similarity between one TextDoc or spacy Doc, Span, Token,
     or Lexeme and another like object as the cosine distance between the objects'
@@ -91,7 +91,7 @@ def word2vec_distance(obj1, obj2):
     return 1.0 - obj1.similarity(obj2)
 
 
-def jaccard_distance(obj1, obj2, fuzzy_match=False, match_threshold=80):
+def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=80):
     """
     Measure the semantic distance between two strings or sequences of strings
     using Jaccard distance, with optional fuzzy matching of not-identical pairs
@@ -130,7 +130,7 @@ def jaccard_distance(obj1, obj2, fuzzy_match=False, match_threshold=80):
     return 1.0 - (intersection / union)
 
 
-def hamming_distance(str1, str2, normalize=False):
+def hamming(str1, str2, normalize=False):
     """
     Measure the distance between two strings using Hamming distance, which simply
     gives the number of characters in the strings that are different, i.e. the
@@ -167,7 +167,7 @@ def hamming_distance(str1, str2, normalize=False):
     return distance
 
 
-def levenshtein_distance(str1, str2, normalize=False):
+def levenshtein(str1, str2, normalize=False):
     """
     Measure the distance between two strings using Levenshtein distance, which
     gives the minimum number of character insertions, deletions, and substitutions
@@ -190,7 +190,7 @@ def levenshtein_distance(str1, str2, normalize=False):
     return distance
 
 
-def jaro_winkler_distance(str1, str2, prefix_weight=0.1):
+def jaro_winkler(str1, str2, prefix_weight=0.1):
     """
     Measure the distance between two strings using Jaro-Winkler similarity metric,
     a modification of Jaro metric giving more weight to a shared prefix.

@@ -6,9 +6,10 @@ dev
 
 Changes:
 
-- Added `.save()` methods and `.load()` classmethods to both `TextDoc` and `TextCorpus` classes, which allows for fast serialization of parsed documents and associated metadata to/from disk.
-    - caveat: if `spacy.Vocab` object used to serialize and deserialize is not the same, there will be problems, making this format useful as short-term but not long-term storage
-- `TextCorpus` may now be instantiated with an already-loaded spaCy pipeline, which may or may not have all models loaded; it can still be instantiated using a language code string ('en', 'de') to load a spaCy pipeline that includes all models by default
+- New features for `TextDoc` and `TextCorpus` classes
+    - added `.save()` methods and `.load()` classmethods, which allows for fast serialization of parsed documents/corpora and associated metadata to/from disk — with an important caveat: if `spacy.Vocab` object used to serialize and deserialize is not the same, there will be problems, making this format useful as short-term but not long-term storage
+    - `TextCorpus` may now be instantiated with an already-loaded spaCy pipeline, which may or may not have all models loaded; it can still be instantiated using a language code string ('en', 'de') to load a spaCy pipeline that includes all models by default
+    - `TextDoc` methods wrapping `extract` and `keyterms` functions now have full documentation rather than forwarding users to the wrapped functions themselves; more irritating on the dev side, but much less irritating on the user side :)
 - Added a `distance.py` module containing several document, set, and string distance metrics
     - word movers: document distance as distance between individual words represented by word2vec vectors, normalized
     - "word2vec": token, span, or document distance as cosine distance between (average) word2vec representations, normalized
@@ -16,6 +17,7 @@ Changes:
     - hamming: distance between two strings as number of substititions, optionally normalized
     - levenshtein: distance between two strings as number of substitions, deletions, and insertions, optionally normalized (and removed a redundant function from the still-orphaned `math_utils.py` module)
     - jaro-winkler: distance between two strings with variable prefix weighting, normalized
+- Added `most_discriminating_terms()` function to `keyterms` module to take a collection of documents split into two exclusive groups and compute the most discriminating terms for group1-and-not-group2 as well as group2-and-not-group1
 
 Bugfixes:
 
