@@ -6,17 +6,19 @@ Also includes a function to aggregate common key term variants of the same idea.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from collections import Counter, defaultdict
+from decimal import Decimal
 import itertools
+import math
+from operator import itemgetter
+
+from cytoolz import itertoolz
+from fuzzywuzzy.fuzz import token_sort_ratio
 import networkx as nx
 import numpy as np
 
-from collections import Counter, defaultdict
-from cytoolz import itertoolz
-from fuzzywuzzy.fuzz import token_sort_ratio
-from math import log, sqrt
-from operator import itemgetter
-
 from textacy import extract, spacy_utils
+from textacy.representations import vsm
 from textacy.representations.network import terms_to_semantic_network
 
 
@@ -90,9 +92,9 @@ def sgrank(doc, window_width=1500, n_keyterms=10, idf=None):
     n_toks_plus_1 = n_toks + 1
     for term in terms:
         term_str = terms_as_strs[id(term)]
-        pos_first_occ_factor = log(n_toks_plus_1 / (term.start + 1))
+        pos_first_occ_factor = math.log(n_toks_plus_1 / (term.start + 1))
         # TODO: assess if len(t) puts too much emphasis on long terms
-        # alternative: term_len = 1 if ' ' not in term else sqrt(len(term))
+        # alternative: term_len = 1 if ' ' not in term else math.sqrt(len(term))
         term_len = 1 if ' ' not in term else len(term)
         term_count = term_counts[term_str]
         subsum_count = sum(term_counts[t2] for t2 in set_terms_as_str
@@ -121,10 +123,10 @@ def sgrank(doc, window_width=1500, n_keyterms=10, idf=None):
             n_coocs[terms_as_strs[id(t1)]][terms_as_strs[id(t2)]] += 1
             try:
                 sum_logdists[terms_as_strs[id(t1)]][terms_as_strs[id(t2)]] += \
-                    log(window_width / abs(t1.start - t2.start))
+                    math.log(window_width / abs(t1.start - t2.start))
             except ZeroDivisionError:  # HACK: pretend that they're 1 token apart
                 sum_logdists[terms_as_strs[id(t1)]][terms_as_strs[id(t2)]] += \
-                    log(window_width)
+                    math.log(window_width)
         if end_ind > n_toks:
             break
 
@@ -279,6 +281,101 @@ def key_terms_from_semantic_network(doc, window_width=2, edge_weighting='binary'
             joined_key_terms.append((term, sum(word_ranks[word] for word in words)))
 
     return sorted(joined_key_terms, key=itemgetter(1), reverse=True)[:n_keyterms]
+
+
+def most_discriminating_terms(terms_lists, bool_array_grp1,
+                              max_n_terms=1000, top_n_terms=25):
+    """
+    Given a collection of documents assigned to 1 of 2 exclusive groups, get the
+    `top_n_terms` most discriminating terms for group1-and-not-group2 and
+    group2-and-not-group1.
+
+    Args:
+        terms_lists (sequence[sequence[str]]): a sequence of documents, each as a
+            sequence of (str) terms; used as input to :func:`build_doc_term_matrix()`
+        bool_array_grp1 (sequence[bool]): an ordered sequence of True/False values,
+            where True corresponds to documents falling into "group 1" and False
+            corresponds to those in "group 2"
+        max_n_terms (int): only consider terms whose document frequency is within
+            the top `max_n_terms` out of all distinct terms; must be > 0
+        top_n_terms (int or float): if int (must be > 0), the total number of most
+            discriminating terms to return for each group; if float (must be in
+            the interval (0, 1)), the fraction of `max_n_terms` to return for each group
+
+    Returns:
+        list[str]: top `top_n_terms` most discriminating terms for grp1-not-grp2
+        list[str]: top `top_n_terms` most discriminating terms for grp2-not-grp1
+
+    References:
+        King, Gary, Patrick Lam, and Margaret Roberts. "Computer-Assisted Keyword
+            and Document Set Discovery from Unstructured Text." (2014).
+            http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.458.1445&rep=rep1&type=pdf
+    """
+    alpha_grp1 = 1
+    alpha_grp2 = 1
+    if isinstance(top_n_terms, float):
+        top_n_terms = top_n_terms * max_n_terms
+    bool_array_grp1 = np.array(bool_array_grp1)
+    bool_array_grp2 = np.invert(bool_array_grp1)
+
+    dtm, id2term = vsm.build_doc_term_matrix(
+        terms_lists, weighting='tf', normalize=False,
+        sublinear_tf=False, smooth_idf=True,
+        min_df=3, max_df=0.95, min_ic=0.0, max_n_terms=max_n_terms)
+
+    # get doc freqs for all terms in grp1 documents
+    dtm_grp1 = dtm[bool_array_grp1, :]
+    n_docs_grp1 = dtm_grp1.shape[0]
+    doc_freqs_grp1 = vsm.get_doc_freqs(dtm_grp1, normalized=False)
+
+    # get doc freqs for all terms in grp2 documents
+    dtm_grp2 = dtm[bool_array_grp2, :]
+    n_docs_grp2 = dtm_grp2.shape[0]
+    doc_freqs_grp2 = vsm.get_doc_freqs(dtm_grp2, normalized=False)
+
+    # get terms that occur in a larger fraction of grp1 docs than grp2 docs
+    term_ids_grp1 = np.where(doc_freqs_grp1 / n_docs_grp1 > doc_freqs_grp2 / n_docs_grp2)[0]
+
+    # get terms that occur in a larger fraction of grp2 docs than grp1 docs
+    term_ids_grp2 = np.where(doc_freqs_grp1 / n_docs_grp1 < doc_freqs_grp2 / n_docs_grp2)[0]
+
+    # get grp1 terms doc freqs in and not-in grp1 and grp2 docs, plus marginal totals
+    grp1_terms_grp1_df = doc_freqs_grp1[term_ids_grp1]
+    grp1_terms_grp2_df = doc_freqs_grp2[term_ids_grp1]
+    # grp1_terms_grp1_not_df = n_docs_grp1 - grp1_terms_grp1_df
+    # grp1_terms_grp2_not_df = n_docs_grp2 - grp1_terms_grp2_df
+    # grp1_terms_total_df = grp1_terms_grp1_df + grp1_terms_grp2_df
+    # grp1_terms_total_not_df = grp1_terms_grp1_not_df + grp1_terms_grp2_not_df
+
+    # get grp2 terms doc freqs in and not-in grp2 and grp1 docs, plus marginal totals
+    grp2_terms_grp2_df = doc_freqs_grp2[term_ids_grp2]
+    grp2_terms_grp1_df = doc_freqs_grp1[term_ids_grp2]
+    # grp2_terms_grp2_not_df = n_docs_grp2 - grp2_terms_grp2_df
+    # grp2_terms_grp1_not_df = n_docs_grp1 - grp2_terms_grp1_df
+    # grp2_terms_total_df = grp2_terms_grp2_df + grp2_terms_grp1_df
+    # grp2_terms_total_not_df = grp2_terms_grp2_not_df + grp2_terms_grp1_not_df
+
+    # get grp1 terms likelihoods, then sort for most discriminating grp1-not-grp2 terms
+    grp1_terms_likelihoods = {}
+    for idx, term_id in enumerate(term_ids_grp1):
+        term1 = Decimal(math.factorial(grp1_terms_grp1_df[idx] + alpha_grp1 - 1)) * Decimal(math.factorial(grp1_terms_grp2_df[idx] + alpha_grp2 - 1)) / Decimal(math.factorial(grp1_terms_grp1_df[idx] + grp1_terms_grp2_df[idx] + alpha_grp1 + alpha_grp2 - 1))
+        term2 = Decimal(math.factorial(n_docs_grp1 - grp1_terms_grp1_df[idx] + alpha_grp1 - 1)) * Decimal(math.factorial(n_docs_grp2 - grp1_terms_grp2_df[idx] + alpha_grp2 - 1)) / Decimal((math.factorial(n_docs_grp1 + n_docs_grp2 - grp1_terms_grp1_df[idx] - grp1_terms_grp2_df[idx] + alpha_grp1 + alpha_grp2 - 1)))
+        grp1_terms_likelihoods[id2term[term_id]] = term1 * term2
+    top_grp1_terms = [term for term, likelihood
+                      in sorted(grp1_terms_likelihoods.items(),
+                                key=itemgetter(1), reverse=True)[:top_n_terms]]
+
+    # get grp2 terms likelihoods, then sort for most discriminating grp2-not-grp1 terms
+    grp2_terms_likelihoods = {}
+    for idx, term_id in enumerate(term_ids_grp2):
+        term1 = Decimal(math.factorial(grp2_terms_grp2_df[idx] + alpha_grp2 - 1)) * Decimal(math.factorial(grp2_terms_grp1_df[idx] + alpha_grp1 - 1)) / Decimal(math.factorial(grp2_terms_grp2_df[idx] + grp2_terms_grp1_df[idx] + alpha_grp2 + alpha_grp1 - 1))
+        term2 = Decimal(math.factorial(n_docs_grp2 - grp2_terms_grp2_df[idx] + alpha_grp2 - 1)) * Decimal(math.factorial(n_docs_grp1 - grp2_terms_grp1_df[idx] + alpha_grp1 - 1)) / Decimal((math.factorial(n_docs_grp2 + n_docs_grp1 - grp2_terms_grp2_df[idx] - grp2_terms_grp1_df[idx] + alpha_grp2 + alpha_grp1 - 1)))
+        grp2_terms_likelihoods[id2term[term_id]] = term1 * term2
+    top_grp2_terms = [term for term, likelihood
+                      in sorted(grp2_terms_likelihoods.items(),
+                                key=itemgetter(1), reverse=True)[:top_n_terms]]
+
+    return (top_grp1_terms, top_grp2_terms)
 
 
 def aggregate_term_variants(terms,
