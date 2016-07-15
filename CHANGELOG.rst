@@ -1,6 +1,15 @@
 Changelog
 =========
 
+0.2.5 (2016-07-14)
+------------------
+
+Bugfixes:
+
+- Added (missing) `pyemd` and `python-levenshtein` dependencies to requirements and setup files
+- Fixed bug in `data.load_depechemood()` arising from the Py2 `csv` module's inability to take unicode as input (thanks to @robclewley, issue #25)
+
+
 0.2.4 (2016-07-14)
 ------------------
 

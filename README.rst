@@ -2,7 +2,7 @@
 textacy: higher-level NLP built on Spacy
 ========================================
 
-``textacy`` is a Python library for performing higher-level natural language processing (NLP) tasks, built on the high-performance `Spacy <https://spacy.io/>`_ library. With the basics --- tokenization, part-of-speech tagging, parsing --- offloaded to another library, ``textacy`` focuses on tasks facilitated by the availability of tokenized, POS-tagged, and parsed text: keyterm extraction, readability statistics, emotional valence analysis, quotation attribution, and more.
+``textacy`` is a Python library for performing higher-level natural language processing (NLP) tasks, built on the high-performance `spaCy <https://spacy.io/>`_ library. With the basics --- tokenization, part-of-speech tagging, parsing --- offloaded to another library, ``textacy`` focuses on tasks facilitated by the availability of tokenized, POS-tagged, and parsed text: keyterm extraction, readability statistics, emotional valence analysis, quotation attribution, and more.
 
 
 Features
