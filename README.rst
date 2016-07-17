@@ -237,7 +237,7 @@ Authors
 Roadmap
 -------
 
-1. document clustering
-1. media framing analysis (?)
-1. deep neural network model for text summarization
-1. deep neural network model for sentiment analysis
+#. document clustering
+#. media framing analysis (?)
+#. deep neural network model for text summarization
+#. deep neural network model for sentiment analysis
