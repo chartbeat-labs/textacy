@@ -1,22 +1,27 @@
 ========================================
-textacy: higher-level NLP built on Spacy
+textacy: higher-level NLP built on spaCy
 ========================================
 
-``textacy`` is a Python library for performing higher-level natural language processing (NLP) tasks, built on the high-performance `spaCy <https://spacy.io/>`_ library. With the basics --- tokenization, part-of-speech tagging, parsing --- offloaded to another library, ``textacy`` focuses on tasks facilitated by the availability of tokenized, POS-tagged, and parsed text: keyterm extraction, readability statistics, emotional valence analysis, quotation attribution, and more.
+``textacy`` is a Python library for performing higher-level natural language processing (NLP) tasks, built on the high-performance `spaCy <https://spacy.io/>`_ library. With the basics --- tokenization, part-of-speech tagging, dependency parsing, etc. --- offloaded to another library, ``textacy`` focuses on tasks facilitated by the ready availability of tokenized, POS-tagged, and parsed text.
 
 
 Features
 --------
 
-- Functions for preprocessing raw text prior to analysis (whitespace normalization, URL/email/number/date replacement, unicode fixing/stripping, etc.)
-- Convenient interface to basic linguistic elements provided by Spacy (words, ngrams, noun phrases, etc.), along with standardized filtering options
-- Variety of functions for extracting information from text (particular POS patterns, subject-verb-object triples, acronyms and their definitions, direct quotations, etc.)
-- Unsupervised key term extraction (specific algorithms such as SGRank or TextRank, as well as a general semantic network-based approach)
-- Conversion of individual documents into common representations (bag of words), as well as corpora (term-document matrix, with TF or TF-IDF weighting, and filtering by these metrics or IC)
-- Common utility functions for identifying a text's language, displaying key words in context (KWIC), truecasing words, and higher-level navigation of a parse tree
-- Sklearn-style topic modeling with LSA, LDA, or NMF, including functions to interpret the results of trained models
+- Stream text, json, and spaCy binary data to and from disk
+- Clean and normalize raw text, *before* analyzing it
+- Streaming readers for Wikipedia and Reddit, plus the bundled "Bernie & Hillary" corpus
+- Easy access to and filtering of basic linguistic elements, such as words, sentences, and ngrams
+- Extraction of structured information, including named entities, acronyms and their definitions, and direct quotations
+- String, set, and document similarity metrics
+- Unsupervised key term extraction by various algorithms
+- Vectorized and semantic network representations for documents and corpora
+- ``sklearn``-style topic modeling with LSA, LDA, or NMF, with functions for interpreting the results of trained models
+- Utilities for identifying a text's language, displaying key words in context (KWIC), true-casing words, and higher-level navigation of a parse tree
+- Visualizations for topic models and semantic networks
 
-And more!
+
+... and more!
 
 
 Installation
@@ -24,13 +29,13 @@ Installation
 
 The simple way to install ``textacy`` is
 
-.. code-block:: bash
+.. code-block:: console
 
     $ pip install -U textacy
 
 Or, download and unzip the source ``tar.gz`` from  `PyPi <https://pypi.python.org/pypi/textacy>`_, then
 
-.. code-block:: bash
+.. code-block:: console
 
     $ python setup.py install
 
@@ -49,7 +54,8 @@ Efficiently stream documents from disk and into a processed corpus:
     >>> docs = textacy.corpora.fetch_bernie_and_hillary()
     >>> content_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
     ...     docs, 'text', itemwise=False)
-    >>> corpus = textacy.TextCorpus.from_texts('en', content_stream, metadata=metadata_stream, n_threads=2)
+    >>> corpus = textacy.TextCorpus.from_texts(
+    ...     'en', content_stream, metadata_stream, n_threads=2)
     >>> print(corpus)
     TextCorpus(3066 docs; 1909705 tokens)
 
@@ -220,6 +226,12 @@ Project Links
 - `textacy @ PyPi <https://pypi.python.org/pypi/textacy>`_
 - `textacy @ GitHub <https://github.com/chartbeat-labs/textacy>`_
 - `textacy @ ReadTheDocs <http://textacy.readthedocs.io/en/latest/>`_
+
+
+Authors
+-------
+
+- Burton DeWilde (<burton@chartbeat.net>)
 
 
 Table of Contents
