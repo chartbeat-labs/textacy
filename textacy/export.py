@@ -97,3 +97,43 @@ def docs_to_gensim(spacy_docs, spacy_vocab, lemmatize=True,
     gdict.dfs = dict(doc_freqs)
 
     return (gdict, gcorpus)
+
+
+def doc_to_conll(doc):
+    """
+    Convert a single ``spacy.Doc`` into a CoNLL-U formatted str, as described at
+    http://universaldependencies.org/docs/format.html.
+
+    Args:
+        doc (``spacy.Doc``)
+
+    Returns:
+        str
+
+    Raises:
+        ValueError: if ``doc`` is not parsed
+    """
+    if doc.is_parsed is False:
+        raise ValueError('spaCy doc must be parsed')
+    rows = []
+    for j, sent in enumerate(doc.sents):
+        sent_i = sent.start
+        sent_id = j + 1
+        rows.append('# sent_id {}'.format(sent_id))
+        for i, tok in enumerate(sent):
+            # HACK...
+            if tok.is_space:
+                form = ' '
+                lemma = ' '
+            else:
+                form = tok.orth_
+                lemma = tok.lemma_
+            tok_id = i + 1
+            head = tok.head.i - sent_i + 1
+            if head == tok_id:
+                head = 0
+            misc = 'SpaceAfter=No' if not tok.whitespace_ else '_'
+            rows.append('\t'.join([str(tok_id), form, lemma, tok.pos_, tok.tag_,
+                                   '_', str(head), tok.dep_.lower(), '_', misc]))
+        rows.append('')  # sentences must be separated by a single newline
+    return '\n'.join(rows)

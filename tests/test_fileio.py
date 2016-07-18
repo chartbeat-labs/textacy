@@ -35,19 +35,6 @@ class FileIOTestCase(unittest.TestCase):
         self.tests_dir = os.path.split(__file__)[0]
         self.maxDiff = None
 
-    @unittest.skip("there's some bullshit happening here with lemmatization of n't; the function is fine")
-    def test_write_conll(self):
-        expected = "# sent_id 1\n1\tThe\tthe\tDET\tDT\t_\t2\tdet\t_\t_\n2\tyear\tyear\tNOUN\tNN\t_\t3\tnsubj\t_\t_\n3\twas\tbe\tVERB\tVBD\t_\t0\troot\t_\t_\n4\t2081\t2081\tNUM\tCD\t_\t3\tattr\t_\tSpaceAfter=No\n5\t,\t,\tPUNCT\t,\t_\t3\tpunct\t_\t_\n6\tand\tand\tCONJ\tCC\t_\t3\tcc\t_\t_\n7\teverybody\teverybody\tNOUN\tNN\t_\t8\tnsubj\t_\t_\n8\twas\tbe\tVERB\tVBD\t_\t3\tconj\t_\t_\n9\tfinally\tfinally\tADV\tRB\t_\t8\tadvmod\t_\t_\n10\tequal\tequal\tADJ\tJJ\t_\t8\tacomp\t_\tSpaceAfter=No\n11\t.\t.\tPUNCT\t.\t_\t8\tpunct\t_\t_\n\n# sent_id 2\n1\tThey\tthey\tPRON\tPRP\t_\t2\tnsubj\t_\t_\n2\twere\tbe\tVERB\tVBD\t_\t0\troot\t_\tSpaceAfter=No\n3\tn't\tnot\tADV\tRB\t_\t5\tneg\t_\t_\n4\tonly\tonly\tADV\tRB\t_\t5\tadvmod\t_\t_\n5\tequal\tequal\tADJ\tJJ\t_\t2\tacomp\t_\t_\n6\tbefore\tbefore\tADP\tIN\t_\t5\tprep\t_\t_\n7\tGod\tgod\tPROPN\tNNP\t_\t6\tpobj\t_\t_\n8\tand\tand\tCONJ\tCC\t_\t7\tcc\t_\t_\n9\tthe\tthe\tDET\tDT\t_\t10\tdet\t_\t_\n10\tlaw\tlaw\tNOUN\tNN\t_\t7\tconj\t_\tSpaceAfter=No\n11\t.\t.\tPUNCT\t.\t_\t2\tpunct\t_\t_\n\n# sent_id 3\n1\tThey\tthey\tPRON\tPRP\t_\t2\tnsubj\t_\t_\n2\twere\tbe\tVERB\tVBD\t_\t0\troot\t_\t_\n3\tequal\tequal\tADJ\tJJ\t_\t2\tacomp\t_\t_\n4\tevery\tevery\tDET\tDT\t_\t6\tdet\t_\t_\n5\twhich\twhich\tADJ\tWDT\t_\t6\tdet\t_\t_\n6\tway\tway\tNOUN\tNN\t_\t2\tnpadvmod\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t2\tpunct\t_\tSpaceAfter=No\n"
-        filename = os.path.join(self.tempdir, 'test_write_conll.txt')
-        fileio.write_conll(self.spacy_doc, filename)
-        observed = fileio.read_file(filename)
-        # nicer code below is only valid for Python 3.2 and later... sigh
-        # with tempfile.TemporaryDirectory() as tempdir:
-        #     filename = os.path.join(tempdir.title(), 'test_write_conll.txt')
-        #     fileio.write_conll(self.spacy_doc, filename)
-        #     observed = fileio.read_file(filename)
-        self.assertEqual(observed, expected)
-
     def test_read_write_spacy_doc(self):
         expected = [tok.lemma_ for tok in self.spacy_doc]
         filename = os.path.join(self.tempdir, 'test_read_write_spacy_doc.bin')
