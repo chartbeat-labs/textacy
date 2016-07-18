@@ -9,15 +9,15 @@ from scipy import sparse as sp
 from spacy import attrs
 
 from textacy import data, fileio
-from textacy.compat import PY2
+from textacy.compat import PY2, unicode_to_bytes
 
 
 class FileIOTestCase(unittest.TestCase):
 
     def setUp(self):
-        text = "The year was 2081, and everybody was finally equal. They weren't only equal before God and the law. They were equal every which way."
+        self.text = "The year was 2081, and everybody was finally equal. They weren't only equal before God and the law. They were equal every which way."
         self.spacy_pipeline = data.load_spacy('en')
-        self.spacy_doc = self.spacy_pipeline(text)
+        self.spacy_doc = self.spacy_pipeline(self.text)
         cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
         values = np.array(
             [[426, 1, 379], [440, 1, 393], [455, 0, 53503], [425, -1, 369],
@@ -35,35 +35,80 @@ class FileIOTestCase(unittest.TestCase):
         self.tests_dir = os.path.split(__file__)[0]
         self.maxDiff = None
 
+    def test_read_write_file_bytes(self):
+        expected = unicode_to_bytes(self.text)
+        for ext in ('.txt', '.gz', '.bz2', '.xz'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_file_bytes' + ext)
+            fileio.write_file(expected, filename, mode='wb')
+            observed = fileio.read_file(filename, mode='rb')
+            self.assertEqual(observed, expected)
+
+    def test_read_write_file_unicode(self):
+        expected = self.text
+        for ext in ('.txt', '.gz', '.bz2', '.xz'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_file_unicode' + ext)
+            if PY2 and ext != '.txt':
+                self.assertRaises(
+                    ValueError, fileio.open_sesame,
+                    filename, 'wt')
+            else:
+                fileio.write_file(expected, filename, mode='wt')
+                observed = fileio.read_file(filename, mode='rt')
+                self.assertEqual(observed, expected)
+
+    def test_read_write_file_lines_bytes(self):
+        expected = [unicode_to_bytes(sent.text) for sent in self.spacy_doc.sents]
+        for ext in ('.txt', '.gz', '.bz2', '.xz'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_file_lines_bytes' + ext)
+            fileio.write_file_lines(expected, filename, mode='wb')
+            observed = [line.strip() for line
+                        in fileio.read_file_lines(filename, mode='rb')]
+            self.assertEqual(observed, expected)
+
+    def test_read_write_file_lines_unicode(self):
+        expected = [sent.text for sent in self.spacy_doc.sents]
+        for ext in ('.txt', '.gz', '.bz2', '.xz'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_file_lines_unicode' + ext)
+            if PY2 and ext != '.txt':
+                self.assertRaises(
+                    ValueError, fileio.open_sesame,
+                    filename, 'wt')
+            else:
+                fileio.write_file_lines(expected, filename, mode='wt')
+                observed = [line.strip() for line
+                            in fileio.read_file_lines(filename, mode='rt')]
+                self.assertEqual(observed, expected)
+
+    def test_read_write_json_bytes(self):
+        expected = [{'idx': i, 'sent': sent.text}
+                    for i, sent in enumerate(self.spacy_doc.sents)]
+        for ext in ('.json', '.json.gz', '.json.bz2', '.json.xz'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_json' + ext)
+            fileio.write_json(expected, filename, mode='wb')
+            observed = list(fileio.read_json(filename, mode='rb', prefix=''))[0]
+            self.assertEqual(observed, expected)
+
+    def test_read_write_json_unicode(self):
+        expected = [{'idx': i, 'sent': sent.text}
+                    for i, sent in enumerate(self.spacy_doc.sents)]
+        for ext in ('.json', '.json.gz', '.json.bz2', '.json.xz'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_json' + ext)
+            fileio.write_json(expected, filename, mode='wt')
+            observed = list(fileio.read_json(filename, mode='rt', prefix=''))[0]
+            self.assertEqual(observed, expected)
+
     def test_read_write_spacy_doc(self):
         expected = [tok.lemma_ for tok in self.spacy_doc]
         filename = os.path.join(self.tempdir, 'test_read_write_spacy_doc.bin')
         fileio.write_spacy_docs(self.spacy_doc, filename)
         observed = [tok.lemma_ for doc in fileio.read_spacy_docs(self.spacy_pipeline.vocab, filename)
                     for tok in doc]
-        self.assertEqual(observed, expected)
-
-    def test_read_write_file_lines(self):
-        expected = [sent.text for sent in self.spacy_doc.sents]
-        filename = os.path.join(self.tempdir, 'test_read_write_file_lines.txt')
-        fileio.write_file_lines(expected, filename)
-        observed = [line.strip() for line in fileio.read_file_lines(filename)]
-        self.assertEqual(observed, expected)
-
-    def test_read_write_file_lines_gzip(self):
-        expected = [sent.text for sent in self.spacy_doc.sents]
-        filename = os.path.join(self.tempdir, 'test_read_write_file_lines.txt.gzip')
-        fileio.write_file_lines(expected, filename)
-        observed = [line.strip() for line in fileio.read_file_lines(filename)]
-        self.assertEqual(observed, expected)
-
-    def test_read_write_file_lines_bz2(self):
-        expected = [sent.text for sent in self.spacy_doc.sents]
-        filename = os.path.join(self.tempdir, 'test_read_write_file_lines.txt.bz2')
-        fileio.write_file_lines(expected, filename,
-                                mode='wb' if PY2 else 'wt')
-        observed = [line.strip() for line
-                    in fileio.read_file_lines(filename, mode='r' if PY2 else 'rt')]
         self.assertEqual(observed, expected)
 
     def test_read_write_json(self):

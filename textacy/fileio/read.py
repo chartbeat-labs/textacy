@@ -16,6 +16,25 @@ from textacy.fileio import open_sesame
 JSON_DECODER = json.JSONDecoder()
 
 
+def read_file(filepath, mode='rt', encoding=None):
+    """
+    Read the full contents of a file. Files compressed with gzip, bz2, or lzma
+    are handled automatically.
+    """
+    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+        return f.read()
+
+
+def read_file_lines(filepath, mode='rt', encoding=None):
+    """
+    Read the contents of a file, line by line. Files compressed with gzip, bz2,
+    or lzma are handled automatically.
+    """
+    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+        for line in f:
+            yield line
+
+
 def read_json(filepath, mode='rt', encoding=None, prefix=''):
     """
     Iterate over JSON objects matching the field given by ``prefix``.
@@ -106,25 +125,6 @@ def read_json_mash(filepath, mode='rt', encoding=None, buffersize=2048):
                 # not enough data to decode => read another chunk
                 except ValueError:
                     break
-
-
-def read_file(filepath, mode='rt', encoding=None):
-    """
-    Read the full contents of a file. Files compressed with gzip or bz2 are handled
-    automatically.
-    """
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
-        return f.read()
-
-
-def read_file_lines(filepath, mode='rt', encoding=None):
-    """
-    Read the contents of a file, line by line. Files compressed with gzip or bz2
-    are handled automatically.
-    """
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
-        for line in f:
-            yield line
 
 
 def read_spacy_docs(spacy_vocab, filepath):

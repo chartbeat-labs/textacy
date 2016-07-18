@@ -20,10 +20,10 @@ def open_sesame(filepath, mode='rt',
                 encoding=None, errors=None, newline=None):
     """
     Open file ``filepath``. Compression (if any) is inferred from the file
-    extension ('.gz', '.bz2', '.xz', or '.zip') and handled automatically;
-    '~', '.', and/or '..' in paths are automatically expanded; if writing to a
-    directory that doesn't exist, all intermediate directories are created
-    automatically, as needed.
+    extension ('.gz', '.bz2', or '.xz') and handled automatically; '~', '.',
+    and/or '..' in paths are automatically expanded; if writing to a directory
+    that doesn't exist, all intermediate directories are created automatically,
+    as needed.
 
     Args:
         filepath (str): path on disk (absolute or relative) of the file to open
@@ -41,7 +41,7 @@ def open_sesame(filepath, mode='rt',
     """
     # sanity check args
     if not isinstance(filepath, compat.string_types):
-        raise TypeError('filepath must be a string')
+        raise TypeError('filepath must be a string, not {}'.format(type(filepath)))
     if encoding and 't' not in mode:
         raise ValueError('encoding only applicable for text mode')
 
@@ -53,33 +53,23 @@ def open_sesame(filepath, mode='rt',
     # and get file handle accordingly
     _, ext = os.path.splitext(filepath)
     ext = ext.lower()
-    if ext in ('gz', 'bz2', 'xz', 'zip'):
+    if ext in ('.gz', '.bz2', '.xz'):
         # strip bytes/text from mode; 'b' is default, and we'll handle 't' below
         mode_ = mode.replace('b', '').replace('t', '')
-        if ext == 'gz':
+        if ext == '.gz':
             f = gzip.GzipFile(filepath, mode=mode_)
-        elif ext == 'bz2':
+        elif ext == '.bz2':
             f = bz2.BZ2File(filepath, mode=mode_)
-        elif ext == 'xz':
-            if compat.PY2 is True:
-                raise IOError("Python2's stdlib doesn't include lzma compression")
-            f = lzma.LZMAFile(filepath, mode=mode_)
-        elif ext == 'zip':
-            f = zipfile.ZipFile(filepath, mode=mode_,
-                                compression=zipfile.ZIP_DEFLATED)
-            if mode_ == 'r':
-                zip_names = f.namelist()
-                if len(zip_names) == 0:
-                    msg = 'no files found in zip archive "{}"'.format(filepath)
-                    raise ValueError(msg)
-                elif len(zip_names) == 1:
-                    f = f.open(zip_names[0], mode=mode_)
-                else:
-                    msg = 'multiple files found in zip archive "{}", but only single-file archives supported'.format(filepath)
-                    raise ValueError(msg)
+        elif ext == '.xz':
+            f = compat.lzma.LZMAFile(filepath, mode=mode_)
         # handle reading/writing compressed files in text mode
         if 't' in mode:
-            f = io.TextIOWrapper(f, encoding=encoding, errors=errors, newline=newline)
+            if compat.PY2 is True:
+                msg = 'Python 2 can\'t read/write compressed files in "{}" mode'.format(mode)
+                raise ValueError(msg)
+            else:
+                f = io.TextIOWrapper(
+                    f, encoding=encoding, errors=errors, newline=newline)
 
     # no compression, so file is opened as usual
     else:

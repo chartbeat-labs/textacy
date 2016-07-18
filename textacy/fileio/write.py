@@ -9,7 +9,39 @@ from numpy import savez, savez_compressed
 from scipy.sparse import csc_matrix, csr_matrix
 from spacy.tokens.doc import Doc as SpacyDoc
 
+from textacy.compat import (bytes_to_unicode, bytes_type,
+                            unicode_to_bytes, unicode_type)
 from textacy.fileio import open_sesame, make_dirs
+
+
+def _coerce_type(content, mode):
+    if 't' in mode and isinstance(content, bytes_type):
+        return bytes_to_unicode(content)
+    elif 'b' in mode and isinstance(content, unicode_type):
+        return unicode_to_bytes(content)
+    return content
+
+
+def write_file(content, filepath, mode='wt', encoding=None):
+    """
+    Write ``content`` to disk at ``filepath``. Files with appropriate extensions
+    are compressed with gzip or bz2 automatically. Any intermediate folders
+    not found on disk are automatically created.
+    """
+    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+        f.write(content)
+
+
+def write_file_lines(lines, filepath, mode='wt', encoding=None):
+    """
+    Write the content in ``lines`` to disk at ``filepath``, line by line. Files
+    with appropriate extensions are compressed with gzip or bz2 automatically.
+    Any intermediate folders not found on disk are automatically created.
+    """
+    newline = '\n' if 't' in mode else unicode_to_bytes('\n')
+    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+        for line in lines:
+            f.write(line + newline)
 
 
 def write_json(json_object, filepath, mode='wt', encoding=None):
@@ -29,8 +61,10 @@ def write_json(json_object, filepath, mode='wt', encoding=None):
         mode (str, optional)
         encoding (str, optional)
     """
+    # with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+    #     f.write(json.dumps(json_object, f, ensure_ascii=False))
     with open_sesame(filepath, mode=mode, encoding=encoding) as f:
-        f.write(json.dumps(json_object, f, ensure_ascii=False))
+        f.write(_coerce_type(json.dumps(json_object, f, ensure_ascii=False), mode))
 
 
 def write_json_lines(json_objects, filepath, mode='wt', encoding=None):
@@ -52,27 +86,6 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None):
     with open_sesame(filepath, mode=mode, encoding=encoding) as f:
         for json_object in json_objects:
             f.write(json.dumps(json_object, ensure_ascii=False) + '\n')
-
-
-def write_file(content, filepath, mode='wt', encoding=None):
-    """
-    Write ``content`` to disk at ``filepath``. Files with appropriate extensions
-    are compressed with gzip or bz2 automatically. Any intermediate folders
-    not found on disk are automatically created.
-    """
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
-        f.write(content)
-
-
-def write_file_lines(lines, filepath, mode='wt', encoding=None):
-    """
-    Write the content in ``lines`` to disk at ``filepath``, line by line. Files
-    with appropriate extensions are compressed with gzip or bz2 automatically.
-    Any intermediate folders not found on disk are automatically created.
-    """
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
-        for line in lines:
-            f.write(line + '\n')
 
 
 def write_spacy_docs(spacy_docs, filepath):

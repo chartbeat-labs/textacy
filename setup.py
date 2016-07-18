@@ -37,6 +37,7 @@ setup(
 
     packages=find_packages(),
     install_requires=[
+        'backports.lzma>=0.0.6',
         'cachetools',
         'cld2-cffi',
         'cytoolz',
