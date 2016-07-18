@@ -9,7 +9,7 @@ from scipy import sparse as sp
 from spacy import attrs
 
 from textacy import data, fileio
-from textacy.compat import PY2, str
+from textacy.compat import PY2
 
 
 class FileIOTestCase(unittest.TestCase):
@@ -107,7 +107,7 @@ class FileIOTestCase(unittest.TestCase):
     def test_read_write_sparse_csr_matrix(self):
         expected = sp.csr_matrix(
             (np.array([1, 2, 3, 4, 5, 6]),
-            (np.array([0, 0, 1, 2, 2, 2]), np.array([0, 2, 2, 0, 1, 2]))),
+             (np.array([0, 0, 1, 2, 2, 2]), np.array([0, 2, 2, 0, 1, 2]))),
             shape=(3, 3))
         filename = os.path.join(self.tempdir, 'test_read_write_sparse_csr_matrix.npz')
         fileio.write_sparse_matrix(expected, filename, compressed=False)
@@ -117,7 +117,7 @@ class FileIOTestCase(unittest.TestCase):
     def test_read_write_sparse_csr_matrix_compressed(self):
         expected = sp.csr_matrix(
             (np.array([1, 2, 3, 4, 5, 6]),
-            (np.array([0, 0, 1, 2, 2, 2]), np.array([0, 2, 2, 0, 1, 2]))),
+             (np.array([0, 0, 1, 2, 2, 2]), np.array([0, 2, 2, 0, 1, 2]))),
             shape=(3, 3))
         filename = os.path.join(self.tempdir, 'test_read_write_sparse_csr_matrix_compressed.npz')
         fileio.write_sparse_matrix(expected, filename, compressed=True)
@@ -127,7 +127,7 @@ class FileIOTestCase(unittest.TestCase):
     def test_read_write_sparse_csc_matrix(self):
         expected = sp.csc_matrix(
             (np.array([1, 2, 3, 4, 5, 6]),
-            (np.array([0, 0, 1, 2, 2, 2]), np.array([0, 2, 2, 0, 1, 2]))),
+             (np.array([0, 0, 1, 2, 2, 2]), np.array([0, 2, 2, 0, 1, 2]))),
             shape=(3, 3))
         filename = os.path.join(self.tempdir, 'test_read_write_sparse_csc_matrix.npz')
         fileio.write_sparse_matrix(expected, filename, compressed=False)
@@ -137,7 +137,7 @@ class FileIOTestCase(unittest.TestCase):
     def test_read_write_sparse_csc_matrix_compressed(self):
         expected = sp.csc_matrix(
             (np.array([1, 2, 3, 4, 5, 6]),
-            (np.array([0, 0, 1, 2, 2, 2]), np.array([0, 2, 2, 0, 1, 2]))),
+             (np.array([0, 0, 1, 2, 2, 2]), np.array([0, 2, 2, 0, 1, 2]))),
             shape=(3, 3))
         filename = os.path.join(self.tempdir, 'test_read_write_sparse_csc_matrix_compressed.npz')
         fileio.write_sparse_matrix(expected, filename, compressed=True)
@@ -155,8 +155,9 @@ class FileIOTestCase(unittest.TestCase):
 
     def test_get_filenames_ignore_invisible(self):
         self.assertTrue(
-            len(list(fileio.get_filenames(self.tests_dir, ignore_invisible=True))) \
-                < len(list(fileio.get_filenames(self.tests_dir, ignore_invisible=False))))
+            len(list(fileio.get_filenames(self.tests_dir, ignore_invisible=True)))
+            < len(list(fileio.get_filenames(self.tests_dir, ignore_invisible=False)))
+            )
 
     def test_get_filenames_ignore_substr(self):
         self.assertTrue(
