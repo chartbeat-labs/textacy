@@ -5,8 +5,9 @@ import os
 import tempfile
 import unittest
 
-from textacy.compat import bzip_open, str
+from textacy.compat import PY2, unicode_type
 from textacy.corpora import RedditReader
+from textacy.fileio import write_json_lines
 
 
 REDDIT_COMMENTS = [
@@ -22,20 +23,16 @@ class RedditReaderTestCase(unittest.TestCase):
         self.tempdir = tempfile.mkdtemp(
             prefix='test_corpora', dir=os.path.dirname(os.path.abspath(__file__)))
         reddit_fname = os.path.join(self.tempdir, 'RC_test.bz2')
-        try:
-            with bzip_open(reddit_fname, mode='wt') as f:
-                for comment in REDDIT_COMMENTS:
-                    f.write(json.dumps(comment, ensure_ascii=False) + '\n')
-        except ValueError:  # Python 2 fail
-            with bzip_open(reddit_fname, mode='wb') as f:
-                for comment in REDDIT_COMMENTS:
-                    f.write(json.dumps(comment, ensure_ascii=True) + '\n')
+        if PY2 is False:
+            write_json_lines(REDDIT_COMMENTS, reddit_fname, mode='wt')
+        else:
+            write_json_lines(REDDIT_COMMENTS, reddit_fname, mode='wb')
         self.redditreader = RedditReader(reddit_fname)
 
     def test_texts(self):
         texts = list(self.redditreader.texts())
         for text in texts:
-            self.assertIsInstance(text, str)
+            self.assertIsInstance(text, unicode_type)
 
     def test_texts_min_len(self):
         texts = list(self.redditreader.texts(min_len=100))
@@ -50,11 +47,11 @@ class RedditReaderTestCase(unittest.TestCase):
         for comment in comments:
             self.assertIsInstance(comment, dict)
 
-    def test_pages_min_len(self):
+    def test_comments_min_len(self):
         comments = list(self.redditreader.comments(min_len=100))
         self.assertEqual(len(comments), 1)
 
-    def test_pages_limit(self):
+    def test_comments_limit(self):
         comments = list(self.redditreader.comments(limit=1))
         self.assertEqual(len(comments), 1)
 

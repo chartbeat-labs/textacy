@@ -21,7 +21,8 @@ import re
 from gensim.corpora.dictionary import Dictionary
 from gensim.corpora.wikicorpus import extract_pages, filter_wiki, WikiCorpus
 
-from textacy.compat import bzip_open
+from textacy.compat import PY2
+from textacy.fileio import open_sesame
 
 WIKI_NEWLINE_RE = re.compile(r'\n{2,5}')
 WIKI_HEADER_RE = re.compile(r'={2,5}(.*?)={2,5}')
@@ -48,12 +49,12 @@ class WikiReader(object):
         Iterate over the pages in a Wikipedia articles database dump (*articles.xml.bz2),
         yielding one (page id, title, page content) 3-tuple at a time.
         """
-        try:
-            for title, content, page_id in extract_pages(bzip_open(self.wikicorpus.fname, mode='rt'),
+        if PY2 is False:
+            for title, content, page_id in extract_pages(open_sesame(self.wikicorpus.fname, mode='rt'),
                                                          self.wikicorpus.filter_namespaces):
                 yield (page_id, title, content)
-        except ValueError:  # Python 2 sucks and can't open bzip in text mode
-            for title, content, page_id in extract_pages(bzip_open(self.wikicorpus.fname, mode='r'),
+        else:  # Python 2 sucks and can't open bzip in text mode
+            for title, content, page_id in extract_pages(open_sesame(self.wikicorpus.fname, mode='rb'),
                                                          self.wikicorpus.filter_namespaces):
                 yield (page_id, title, content)
 

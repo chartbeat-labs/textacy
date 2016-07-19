@@ -17,7 +17,7 @@ from spacy.strings import StringStore
 
 import textacy
 from textacy import extract
-from textacy.compat import str
+from textacy.compat import string_types
 
 
 def word_movers(doc1, doc2, metric='cosine'):
@@ -117,7 +117,9 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=80):
     set2 = set(obj2)
     intersection = len(set1 & set2)
     union = len(set1 | set2)
-    if fuzzy_match is True and not isinstance(obj1, str) and not isinstance(obj2, str):
+    if (fuzzy_match is True and
+            not isinstance(obj1, string_types) and
+            not isinstance(obj2, string_types)):
         for item1 in set1.difference(set2):
             if max(fuzz.token_sort_ratio(item1, item2) for item2 in set2) >= match_threshold:
                 intersection += 1
