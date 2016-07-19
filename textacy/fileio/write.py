@@ -14,6 +14,7 @@ from textacy.compat import (bytes_to_unicode, bytes_type,
 from textacy.fileio import open_sesame, make_dirs
 
 
+# TODO: keep this, or no?
 def _coerce_type(content, mode):
     if 't' in mode and isinstance(content, bytes_type):
         return bytes_to_unicode(content)
@@ -61,10 +62,8 @@ def write_json(json_object, filepath, mode='wt', encoding=None):
         mode (str, optional)
         encoding (str, optional)
     """
-    # with open_sesame(filepath, mode=mode, encoding=encoding) as f:
-    #     f.write(json.dumps(json_object, f, ensure_ascii=False))
     with open_sesame(filepath, mode=mode, encoding=encoding) as f:
-        f.write(_coerce_type(json.dumps(json_object, f, ensure_ascii=False), mode))
+        f.write(json.dumps(json_object, f, ensure_ascii=False))
 
 
 def write_json_lines(json_objects, filepath, mode='wt', encoding=None):
@@ -83,9 +82,10 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None):
         mode (str, optional)
         encoding (str, optional)
     """
+    newline = '\n' if 't' in mode else unicode_to_bytes('\n')
     with open_sesame(filepath, mode=mode, encoding=encoding) as f:
         for json_object in json_objects:
-            f.write(json.dumps(json_object, ensure_ascii=False) + '\n')
+            f.write(json.dumps(json_object, ensure_ascii=False) + newline)
 
 
 def write_spacy_docs(spacy_docs, filepath):
@@ -105,7 +105,7 @@ def write_spacy_docs(spacy_docs, filepath):
             f.write(doc.to_bytes())
 
 
-def write_sparse_matrix(matrix, filepath, compressed=False):
+def write_sparse_matrix(matrix, filepath, compressed=True):
     """
     Write a ``scipy.sparse.csr_matrix`` or ``scipy.sparse.csc_matrix`` to disk
     at ``filepath``, optionally compressed.
@@ -115,8 +115,11 @@ def write_sparse_matrix(matrix, filepath, compressed=False):
         filepath (str): /path/to/file on disk to which matrix objects will be written;
             if ``filepath`` does not end in ``.npz``, that extension is
             automatically appended to the name
+        compressed (bool): if True, save arrays into a single file in compressed
+            .npz format
 
-    .. See also: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez.html
+    .. seealso: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez.html
+    .. seealso: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez_compressed.html
     """
     if not isinstance(matrix, (csc_matrix, csr_matrix)):
         raise TypeError('input matrix must be a scipy sparse csr or csc matrix')

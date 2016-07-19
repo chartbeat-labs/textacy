@@ -49,7 +49,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.txt', '.gz', '.bz2', '.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_file_unicode' + ext)
-            if PY2 and ext != '.txt':
+            if PY2 is True and ext != '.txt':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wt')
@@ -73,7 +73,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.txt', '.gz', '.bz2', '.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_file_lines_unicode' + ext)
-            if PY2 and ext != '.txt':
+            if PY2 is True and ext != '.txt':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wt')
@@ -88,53 +88,88 @@ class FileIOTestCase(unittest.TestCase):
                     for i, sent in enumerate(self.spacy_doc.sents)]
         for ext in ('.json', '.json.gz', '.json.bz2', '.json.xz'):
             filename = os.path.join(
-                self.tempdir, 'test_read_write_json' + ext)
-            fileio.write_json(expected, filename, mode='wb')
-            observed = list(fileio.read_json(filename, mode='rb', prefix=''))[0]
-            self.assertEqual(observed, expected)
+                self.tempdir, 'test_read_write_json_bytes' + ext)
+            if PY2 is True:
+                fileio.write_json(expected, filename, mode='wb')
+                observed = list(fileio.read_json(filename, mode='rb', prefix=''))[0]
+                self.assertEqual(observed, expected)
+            else:
+                self.assertRaises(
+                    TypeError,
+                    lambda: fileio.write_json(expected, filename, 'wb'))
 
     def test_read_write_json_unicode(self):
         expected = [{'idx': i, 'sent': sent.text}
                     for i, sent in enumerate(self.spacy_doc.sents)]
         for ext in ('.json', '.json.gz', '.json.bz2', '.json.xz'):
             filename = os.path.join(
-                self.tempdir, 'test_read_write_json' + ext)
-            fileio.write_json(expected, filename, mode='wt')
-            observed = list(fileio.read_json(filename, mode='rt', prefix=''))[0]
-            self.assertEqual(observed, expected)
-
-    def test_read_write_spacy_doc(self):
-        expected = [tok.lemma_ for tok in self.spacy_doc]
-        filename = os.path.join(self.tempdir, 'test_read_write_spacy_doc.bin')
-        fileio.write_spacy_docs(self.spacy_doc, filename)
-        observed = [tok.lemma_ for doc in fileio.read_spacy_docs(self.spacy_pipeline.vocab, filename)
-                    for tok in doc]
-        self.assertEqual(observed, expected)
-
-    def test_read_write_json(self):
-        expected = [{'idx': i, 'sent': sent.text}
-                    for i, sent in enumerate(self.spacy_doc.sents)]
-        filename = os.path.join(self.tempdir, 'test_read_write_json.json')
-        fileio.write_json(expected, filename)
-        observed = list(fileio.read_json(filename, prefix=''))[0]
-        self.assertEqual(observed, expected)
+                self.tempdir, 'test_read_write_json_unicode' + ext)
+            if PY2 is True and ext != '.json':
+                self.assertRaises(
+                    ValueError, fileio.open_sesame,
+                    filename, 'wt')
+            else:
+                fileio.write_json(expected, filename, mode='wt')
+                observed = list(fileio.read_json(filename, mode='rt', prefix=''))[0]
+                self.assertEqual(observed, expected)
 
     def test_read_write_json_prefix(self):
         to_write = [{'idx': i, 'sent': sent.text}
                     for i, sent in enumerate(self.spacy_doc.sents)]
-        expected = [item['sent'] for item in to_write]
-        filename = os.path.join(self.tempdir, 'test_read_write_json_prefix.json')
-        fileio.write_json(to_write, filename)
-        observed = list(fileio.read_json(filename, prefix='item.sent'))
-        self.assertEqual(observed, expected)
+        for prefix in ('idx', 'sent'):
+            expected = [item[prefix] for item in to_write]
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_json_prefix.json')
+            fileio.write_json(to_write, filename)
+            observed = list(fileio.read_json(filename, prefix='item.' + prefix))
+            self.assertEqual(observed, expected)
 
-    def test_read_write_json_lines(self):
+    def test_read_write_json_lines_bytes(self):
         expected = [{'idx': i, 'sent': sent.text}
                     for i, sent in enumerate(self.spacy_doc.sents)]
-        filename = os.path.join(self.tempdir, 'test_read_write_json_lines.json')
-        fileio.write_json_lines(expected, filename)
-        observed = list(fileio.read_json_lines(filename))
-        self.assertEqual(observed, expected)
+        for ext in ('.json', '.json.gz', '.json.bz2', '.json.xz'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_json_lines_bytes' + ext)
+            if PY2 is True:
+                fileio.write_json_lines(expected, filename, mode='wb')
+                observed = list(fileio.read_json_lines(filename, mode='rb'))
+                self.assertEqual(observed, expected)
+            else:
+                self.assertRaises(
+                    TypeError, fileio.write_json_lines,
+                    expected, filename, 'wb')
+
+    def test_read_write_json_lines_unicode(self):
+        expected = [{'idx': i, 'sent': sent.text}
+                    for i, sent in enumerate(self.spacy_doc.sents)]
+        for ext in ('.json', '.json.gz', '.json.bz2', '.json.xz'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_json_lines_unicode' + ext)
+            if PY2 is True and ext != '.json':
+                self.assertRaises(
+                    ValueError, fileio.open_sesame,
+                    filename, 'wt')
+            else:
+                fileio.write_json_lines(expected, filename, mode='wt')
+                observed = list(fileio.read_json_lines(filename, mode='rt'))
+                self.assertEqual(observed, expected)
+
+    def test_read_write_spacy_docs(self):
+        expected = [tok.lemma_ for tok in self.spacy_doc]
+        for ext in ('.bin', '.bin.gz', '.bin.bz2', '.bin.xz'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_spacy_docs' + ext)
+            if PY2 is True and ext == '.bin.gz':  # no idea why this is the case
+                self.assertRaises(
+                    TypeError, fileio.write_spacy_docs,
+                    self.spacy_doc, filename)
+            else:
+                fileio.write_spacy_docs(self.spacy_doc, filename)
+                observed = [
+                    tok.lemma_
+                    for doc in fileio.read_spacy_docs(self.spacy_pipeline.vocab, filename)
+                    for tok in doc]
+                self.assertEqual(observed, expected)
 
     def test_read_write_sparse_csr_matrix(self):
         expected = sp.csr_matrix(
