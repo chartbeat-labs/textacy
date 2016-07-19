@@ -73,9 +73,9 @@ class WikiReader(object):
             wikilinks = [str(wc.title) for wc in wikicode.ifilter_wikilinks()]
             parsed_page['categories'] = [wc for wc in wikilinks if wc.startswith('Category:')]
             parsed_page['wiki_links'] = [wc for wc in wikilinks
-                                         if not wc.startswith('Category:')
-                                         and not wc.startswith('File:')
-                                         and not wc.startswith('Image:')]
+                                         if not wc.startswith('Category:') and
+                                         not wc.startswith('File:') and
+                                         not wc.startswith('Image:')]
             parsed_page['ext_links'] = [str(wc.url) for wc in wikicode.ifilter_external_links()]
 
         def _filter_tags(obj):
@@ -110,7 +110,7 @@ class WikiReader(object):
                         pass
                 sec['text'] = str(section.strip_code(normalize=True, collapse=True)).strip()
                 if sec.get('title'):
-                    sec['text'] = re.sub(r'^'+re.escape(sec['title'])+r'\s*', '', sec['text'])
+                    sec['text'] = re.sub(r'^' + re.escape(sec['title']) + r'\s*', '', sec['text'])
                 parsed_page['sections'].append(sec)
                 section_idx += 1
 
@@ -119,7 +119,7 @@ class WikiReader(object):
                 titles = [str(h.title).strip() for h in headings]
                 levels = [int(h.level) for h in headings]
                 sub_sections = [str(ss) for ss in
-                                re.split(r'\s*'+'|'.join(re.escape(str(h)) for h in headings)+r'\s*', str(section))]
+                                re.split(r'\s*' + '|'.join(re.escape(str(h)) for h in headings) + r'\s*', str(section))]
                 # re.split leaves an empty string result up front :shrug:
                 if sub_sections[0] == '':
                     del sub_sections[0]

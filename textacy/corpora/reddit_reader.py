@@ -19,7 +19,6 @@ Raw data is downloadable from https://archive.org/details/2015_reddit_comments_c
 """
 import datetime
 import logging
-import json
 import re
 
 from textacy.compat import PY2, string_types

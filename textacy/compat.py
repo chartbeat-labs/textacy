@@ -1,4 +1,3 @@
-import bz2
 import sys
 
 PY2 = int(sys.version[0]) == 2
