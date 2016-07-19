@@ -45,7 +45,8 @@ def write_file_lines(lines, filepath, mode='wt', encoding=None):
             f.write(line + newline)
 
 
-def write_json(json_object, filepath, mode='wt', encoding=None):
+def write_json(json_object, filepath, mode='wt', encoding=None, indent=None,
+               ensure_ascii=False, separators=(',', ':'), sort_keys=False):
     """
     Write JSON object all at once to disk at ``filepath``.
 
@@ -61,31 +62,47 @@ def write_json(json_object, filepath, mode='wt', encoding=None):
 
         mode (str, optional)
         encoding (str, optional)
+        indent (int or str)
+        ensure_ascii (bool)
+        separators (tuple[str])
+        sort_keys (bool)
+
+    .. seealso:: https://docs.python.org/3/library/json.html#json.dump
     """
     with open_sesame(filepath, mode=mode, encoding=encoding) as f:
-        f.write(json.dumps(json_object, f, ensure_ascii=False))
+        f.write(json.dumps(json_object, indent=indent, ensure_ascii=ensure_ascii,
+                           separators=separators, sort_keys=sort_keys))
 
 
-def write_json_lines(json_objects, filepath, mode='wt', encoding=None):
+def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
+                     ensure_ascii=False, separators=(',', ':'), sort_keys=False):
     """
     Iterate over a stream of JSON objects, writing each to a separate line in
     file ``filepath`` but without a top-level JSON object (e.g. array).
 
     Args:
-        json_objects (iterable(json)): sequence of valid JSON objects to be written
+        json_objects (iterable[json]): iterable of valid JSON objects to be written
         filepath (str): /path/to/file on disk to which JSON objects will be written,
             where each line in the file is its own json object; for example::
 
                 {"title": "Harrison Bergeron", "text": "The year was 2081, and everybody was finally equal."}\n
                 {"title": "2BR02B", "text": "Everything was perfectly swell."}
 
-        mode (str, optional)
-        encoding (str, optional)
+        mode (str)
+        encoding (str)
+        ensure_ascii (bool)
+        separators (tuple[str])
+        sort_keys (bool)
+
+    .. seealso:: https://docs.python.org/3/library/json.html#json.dump
     """
     newline = '\n' if 't' in mode else unicode_to_bytes('\n')
     with open_sesame(filepath, mode=mode, encoding=encoding) as f:
         for json_object in json_objects:
-            f.write(json.dumps(json_object, ensure_ascii=False) + newline)
+            f.write(json.dumps(json_object,
+                               ensure_ascii=ensure_ascii,
+                               separators=separators,
+                               sort_keys=sort_keys) + newline)
 
 
 def write_spacy_docs(spacy_docs, filepath):

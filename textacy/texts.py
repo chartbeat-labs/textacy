@@ -17,7 +17,7 @@ from spacy.tokens.doc import Doc as sdoc
 from spacy.tokens.token import Token as stoken
 from spacy.tokens.span import Span as sspan
 
-from textacy.compat import zip, unicode_type
+from textacy.compat import PY2, unicode_type, zip
 from textacy import (data, extract, fileio, keyterms, spacy_utils,
                      text_stats, text_utils)
 from textacy.representations import network, vsm
@@ -775,7 +775,7 @@ class TextCorpus(object):
         for doc in self.docs:
             yield doc
 
-    def save(self, path, fname_prefix=None):
+    def save(self, path, fname_prefix=None, compression=None):
         """
         Save serialized TextCorpus content and metadata to disk.
 
@@ -783,6 +783,8 @@ class TextCorpus(object):
             path (str): directory on disk where content + metadata will be saved
             fname_prefix (str, optional): prepend standard filenames 'spacy_docs.bin'
                 and 'metadatas.json' with additional identifying information
+            compression ({'gzip', 'bz2', 'lzma'} or None): type of compression
+                used to reduce size of metadatas json file
 
         .. warn:: If the `spacy.Vocab` object used to save this corpus is not the
             same as the one used to load it, there will be problems! Consequently,
@@ -796,13 +798,20 @@ class TextCorpus(object):
             info_fname = os.path.join(path, 'info.json')
             meta_fname = os.path.join(path, 'metadatas.json')
             docs_fname = os.path.join(path, 'spacy_docs.bin')
+        meta_fname = meta_fname + ('.gz' if compression == 'gzip'
+                                   else '.bz2' if compression == 'bz2'
+                                   else '.xz' if compression == 'lzma'
+                                   else '')
+        meta_mode = 'wt' if PY2 is False or compression is None else 'wb'
         package_info = {'textacy_lang': self.lang, 'spacy_version': spacy.about.__version__}
         fileio.write_json(package_info, info_fname)
-        fileio.write_json_lines((doc.metadata for doc in self), meta_fname)
+        fileio.write_json_lines(
+            (doc.metadata for doc in self), meta_fname, mode=meta_mode,
+            ensure_ascii=False, separators=(',', ':'))
         fileio.write_spacy_docs((doc.spacy_doc for doc in self), docs_fname)
 
     @classmethod
-    def load(cls, path, fname_prefix=None):
+    def load(cls, path, fname_prefix=None, compression=None):
         """
         Load serialized content and metadata from disk, and initialize a TextCorpus.
 
@@ -811,6 +820,8 @@ class TextCorpus(object):
             fname_prefix (str, optional): additional identifying information
                 prepended to standard filenames 'spacy_docs.bin' and 'metadatas.json'
                 when saving to disk
+            compression ({'gzip', 'bz2', 'lzma'} or None): type of compression
+                used to reduce size of metadatas json file
 
         Returns:
             :class:`textacy.TextCorpus`
@@ -827,6 +838,11 @@ class TextCorpus(object):
             info_fname = os.path.join(path, 'info.json')
             meta_fname = os.path.join(path, 'metadatas.json')
             docs_fname = os.path.join(path, 'spacy_docs.bin')
+        meta_fname = meta_fname + ('.gz' if compression == 'gzip'
+                                   else '.bz2' if compression == 'bz2'
+                                   else '.xz' if compression == 'lzma'
+                                   else '')
+        meta_mode = 'rt' if PY2 is False or compression is None else 'rb'
         package_info = list(fileio.read_json(info_fname))[0]
         lang = package_info['textacy_lang']
         spacy_version = package_info['spacy_version']
@@ -839,7 +855,7 @@ class TextCorpus(object):
                 """.format(spacy_version, spacy.about.__version__)
             warnings.warn(msg, UserWarning)
         textcorpus = TextCorpus(lang)
-        metadata_stream = fileio.read_json_lines(meta_fname)
+        metadata_stream = fileio.read_json_lines(meta_fname, mode=meta_mode,)
         spacy_docs = fileio.read_spacy_docs(textcorpus.spacy_vocab, docs_fname)
         for spacy_doc, metadata in zip(spacy_docs, metadata_stream):
             textcorpus.add_doc(
