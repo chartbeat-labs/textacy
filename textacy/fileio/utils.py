@@ -4,12 +4,9 @@ import bz2
 import gzip
 import io
 from itertools import tee, starmap
-try:
-    import lzma
-except ImportError:
-    pass  # Py2 doesn't include lzma in its stdlib
 import os
-import zipfile
+import re
+import warnings
 
 from cytoolz.itertoolz import cons, pluck
 
@@ -17,13 +14,16 @@ from textacy import compat
 
 
 def open_sesame(filepath, mode='rt',
-                encoding=None, errors=None, newline=None):
+                encoding=None, auto_make_dirs=False,
+                errors=None, newline=None):
     """
     Open file ``filepath``. Compression (if any) is inferred from the file
     extension ('.gz', '.bz2', or '.xz') and handled automatically; '~', '.',
     and/or '..' in paths are automatically expanded; if writing to a directory
-    that doesn't exist, all intermediate directories are created automatically,
-    as needed.
+    that doesn't exist, all intermediate directories can be created
+    automatically, as needed.
+
+    `open_sesame` may be used as a drop-in replacement for the built-in `open`.
 
     Args:
         filepath (str): path on disk (absolute or relative) of the file to open
@@ -35,6 +35,8 @@ def open_sesame(filepath, mode='rt',
             are handled; only applicable in text mode
         newline (str): optional string specifying how universal newlines mode
             works; only applicable in text mode
+        auto_make_dirs (bool): if True, automatically create (sub)directories if
+            not already present in order to write `filepath`
 
     Returns:
         file object
@@ -47,7 +49,10 @@ def open_sesame(filepath, mode='rt',
 
     # process filepath and create dirs
     filepath = os.path.realpath(os.path.expanduser(filepath))
-    make_dirs(filepath, mode)
+    if auto_make_dirs is True:
+        make_dirs(filepath, mode)
+    elif not os.path.exists(filepath):
+        raise OSError('file "{}" does not exist'.format(filepath))
 
     # infer compression from filepath extension
     # and get file handle accordingly
@@ -89,7 +94,20 @@ def make_dirs(filepath, mode):
         os.makedirs(head)
 
 
-def split_content_and_metadata(items, content_field, itemwise=True):
+def coerce_content_type(content, file_mode):
+    """
+    If the `content` to be written to file and the `file_mode` used to open it
+    are incompatible (either bytes with text mode or unicode with bytes mode),
+    try to coerce the content type so it can be written.
+    """
+    if 't' in file_mode and isinstance(content, compat.bytes_type):
+        return compat.bytes_to_unicode(content)
+    elif 'b' in file_mode and isinstance(content, compat.unicode_type):
+        return compat.unicode_to_bytes(content)
+    return content
+
+
+def split_content_and_metadata(items, content_field, itemwise=False):
     """
     Split content (text) from associated metadata, but keep them paired together,
     for convenient loading into a ``TextDoc`` (with ``itemwise = True``) or
@@ -150,30 +168,48 @@ def unzip(seq):
 
 
 def get_filenames(dirname, match_substr=None, ignore_substr=None,
+                  match_regex=None, ignore_regex=None,
                   extension=None, ignore_invisible=True, recursive=False):
     """
-    Yield the full paths of files on disk under directory ``dirname``, optionally
-    filtering for or against particular substrings or file extensions. and crawling all subdirectories.
+    Yield full paths of files on disk under directory ``dirname``, optionally
+    filtering for or against particular substrings or file extensions and
+    crawling all subdirectories.
 
     Args:
         dirname (str): /path/to/dir on disk where files to read are saved
-        match_substr (str, optional): match only files with given substring
-        ignore_substr (str, optional): match only files *without* given substring
-        extension (str, optional): if files only of a certain type are wanted,
+        match_substr (str): match only files with given substring
+            (DEPRECATED; use match_regex)
+        ignore_substr (str): match only files *without* given substring
+            (DEPRECATED; use ignore_regex)
+        match_regex (str): include files whose names match this regex pattern
+        ignore_regex (str): include files whose names do *not* match this regex pattern
+        extension (str): if files only of a certain type are wanted,
             specify the file extension (e.g. ".txt")
-        ignore_invisible (bool, optional): if True, ignore invisible files, i.e.
+        ignore_invisible (bool): if True, ignore invisible files, i.e.
             those that begin with a period
-        recursive (bool, optional): if True, iterate recursively through all files
-            in subdirectories; otherwise, only return files directly under ``dirname``
+        recursive (bool): if True, iterate recursively through all files
+            in subdirectories; otherwise, only return files directly under
+            ``dirname``
 
     Yields:
         str: next file's name, including the full path on disk
 
     Raises:
-        IOError: if ``dirname`` is not found on disk
+        OSError: if ``dirname`` is not found on disk
     """
     if not os.path.exists(dirname):
-        raise IOError('directory {} does not exist'.format(dirname))
+        raise OSError('directory "{}" does not exist'.format(dirname))
+    # TODO: remove these params in, say, v0.4
+    if match_substr or ignore_substr:
+        with warnings.catch_warnings():
+            warnings.simplefilter('always', DeprecationWarning)
+            msg = """
+            the `match_substr` and `ignore_substr` params are deprecated!
+            use the more flexible `match_regex` and `ignore_regex` params instead
+            """.strip().replace('\n', ' ')
+            warnings.warn(msg, DeprecationWarning)
+    match_regex = re.compile(match_regex) if match_regex else None
+    ignore_regex = re.compile(ignore_regex) if ignore_regex else None
 
     def is_good_file(filename, filepath):
         if ignore_invisible and filename.startswith('.'):
@@ -181,6 +217,10 @@ def get_filenames(dirname, match_substr=None, ignore_substr=None,
         if match_substr and match_substr not in filename:
             return False
         if ignore_substr and ignore_substr in filename:
+            return False
+        if match_regex and not match_regex.search(filename):
+            return False
+        if ignore_regex and ignore_regex.search(filename):
             return False
         if extension and not os.path.splitext(filename)[-1] == extension:
             return False

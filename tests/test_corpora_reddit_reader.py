@@ -23,9 +23,11 @@ class RedditReaderTestCase(unittest.TestCase):
             prefix='test_corpora', dir=os.path.dirname(os.path.abspath(__file__)))
         reddit_fname = os.path.join(self.tempdir, 'RC_test.bz2')
         if PY2 is False:
-            write_json_lines(REDDIT_COMMENTS, reddit_fname, mode='wt')
+            write_json_lines(REDDIT_COMMENTS, reddit_fname, mode='wt',
+                             auto_make_dirs=True)
         else:
-            write_json_lines(REDDIT_COMMENTS, reddit_fname, mode='wb')
+            write_json_lines(REDDIT_COMMENTS, reddit_fname, mode='wb',
+                             auto_make_dirs=True)
         self.redditreader = RedditReader(reddit_fname)
 
     def test_texts(self):

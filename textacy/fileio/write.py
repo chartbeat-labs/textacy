@@ -9,44 +9,39 @@ from numpy import savez, savez_compressed
 from scipy.sparse import csc_matrix, csr_matrix
 from spacy.tokens.doc import Doc as SpacyDoc
 
-from textacy.compat import (bytes_to_unicode, bytes_type,
-                            unicode_to_bytes, unicode_type)
+from textacy.compat import unicode_to_bytes
 from textacy.fileio import open_sesame, make_dirs
 
 
-# TODO: keep this, or no?
-def _coerce_type(content, mode):
-    if 't' in mode and isinstance(content, bytes_type):
-        return bytes_to_unicode(content)
-    elif 'b' in mode and isinstance(content, unicode_type):
-        return unicode_to_bytes(content)
-    return content
-
-
-def write_file(content, filepath, mode='wt', encoding=None):
+def write_file(content, filepath, mode='wt', encoding=None,
+               auto_make_dirs=False):
     """
     Write ``content`` to disk at ``filepath``. Files with appropriate extensions
     are compressed with gzip or bz2 automatically. Any intermediate folders
-    not found on disk are automatically created.
+    not found on disk may automatically be created.
     """
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+    with open_sesame(filepath, mode=mode, encoding=encoding,
+                     auto_make_dirs=auto_make_dirs) as f:
         f.write(content)
 
 
-def write_file_lines(lines, filepath, mode='wt', encoding=None):
+def write_file_lines(lines, filepath, mode='wt', encoding=None,
+                     auto_make_dirs=False):
     """
     Write the content in ``lines`` to disk at ``filepath``, line by line. Files
     with appropriate extensions are compressed with gzip or bz2 automatically.
-    Any intermediate folders not found on disk are automatically created.
+    Any intermediate folders not found on disk may automatically be created.
     """
     newline = '\n' if 't' in mode else unicode_to_bytes('\n')
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+    with open_sesame(filepath, mode=mode, encoding=encoding,
+                     auto_make_dirs=auto_make_dirs) as f:
         for line in lines:
             f.write(line + newline)
 
 
-def write_json(json_object, filepath, mode='wt', encoding=None, indent=None,
-               ensure_ascii=False, separators=(',', ':'), sort_keys=False):
+def write_json(json_object, filepath, mode='wt', encoding=None,
+               auto_make_dirs=False, ensure_ascii=False,
+               indent=None, separators=(',', ':'), sort_keys=False):
     """
     Write JSON object all at once to disk at ``filepath``.
 
@@ -60,8 +55,9 @@ def write_json(json_object, filepath, mode='wt', encoding=None, indent=None,
                     {"title": "2BR02B", "text": "Everything was perfectly swell."}
                 ]
 
-        mode (str, optional)
-        encoding (str, optional)
+        mode (str)
+        encoding (str)
+        auto_make_dirs (bool)
         indent (int or str)
         ensure_ascii (bool)
         separators (tuple[str])
@@ -69,13 +65,15 @@ def write_json(json_object, filepath, mode='wt', encoding=None, indent=None,
 
     .. seealso:: https://docs.python.org/3/library/json.html#json.dump
     """
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+    with open_sesame(filepath, mode=mode, encoding=encoding,
+                     auto_make_dirs=auto_make_dirs) as f:
         f.write(json.dumps(json_object, indent=indent, ensure_ascii=ensure_ascii,
                            separators=separators, sort_keys=sort_keys))
 
 
 def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
-                     ensure_ascii=False, separators=(',', ':'), sort_keys=False):
+                     auto_make_dirs=False, ensure_ascii=False,
+                     separators=(',', ':'), sort_keys=False):
     """
     Iterate over a stream of JSON objects, writing each to a separate line in
     file ``filepath`` but without a top-level JSON object (e.g. array).
@@ -90,6 +88,7 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
 
         mode (str)
         encoding (str)
+        auto_make_dirs (bool)
         ensure_ascii (bool)
         separators (tuple[str])
         sort_keys (bool)
@@ -97,7 +96,8 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
     .. seealso:: https://docs.python.org/3/library/json.html#json.dump
     """
     newline = '\n' if 't' in mode else unicode_to_bytes('\n')
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+    with open_sesame(filepath, mode=mode, encoding=encoding,
+                     auto_make_dirs=auto_make_dirs) as f:
         for json_object in json_objects:
             f.write(json.dumps(json_object,
                                ensure_ascii=ensure_ascii,
@@ -105,7 +105,7 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
                                sort_keys=sort_keys) + newline)
 
 
-def write_spacy_docs(spacy_docs, filepath):
+def write_spacy_docs(spacy_docs, filepath, auto_make_dirs=False):
     """
     Serialize a sequence of ``spacy.Doc`` s to disk at ``filepath`` using Spacy's
     ``spacy.Doc.to_bytes()`` functionality.
@@ -114,10 +114,11 @@ def write_spacy_docs(spacy_docs, filepath):
         spacy_docs (``spacy.Doc`` or iterable(``spacy.Doc``)): a single spacy doc
             or a sequence of spacy docs to serialize to disk at ``filepath``
         filepath (str): /path/to/file on disk from which spacy docs will be streamed
+        auto_make_dirs (bool)
     """
     if isinstance(spacy_docs, SpacyDoc):
         spacy_docs = (spacy_docs,)
-    with open_sesame(filepath, mode='wb') as f:
+    with open_sesame(filepath, mode='wb', auto_make_dirs=auto_make_dirs) as f:
         for doc in spacy_docs:
             f.write(doc.to_bytes())
 

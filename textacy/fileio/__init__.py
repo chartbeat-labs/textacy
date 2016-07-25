@@ -1,4 +1,4 @@
-from .utils import (get_filenames, open_sesame, make_dirs,
+from .utils import (coerce_content_type, get_filenames, open_sesame, make_dirs,
                     split_content_and_metadata, unzip)
 from .read import (read_json, read_json_lines, read_json_mash,
                    read_file, read_file_lines, read_spacy_docs,

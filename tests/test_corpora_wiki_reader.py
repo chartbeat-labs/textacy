@@ -151,7 +151,7 @@ class WikiReaderTestCase(unittest.TestCase):
         self.tempdir = tempfile.mkdtemp(
             prefix='test_corpora', dir=os.path.dirname(os.path.abspath(__file__)))
         wiki_fname = os.path.join(self.tempdir, 'wikitext.xml.bz2')
-        write_file(WIKITEXT, wiki_fname, mode='wb')
+        write_file(WIKITEXT, wiki_fname, mode='wb', auto_make_dirs=True)
         self.wikireader = WikiReader(wiki_fname)
 
     def test_texts(self):

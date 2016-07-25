@@ -10,11 +10,11 @@ if PY2:
     unicode_type = unicode
     string_types = (str, unicode)
 
-    def unicode_to_bytes(s, encoding=None, errors=None):
-        return s
+    def unicode_to_bytes(s, encoding='utf8', errors='strict'):
+        return s.encode(encoding=encoding, errors=errors)
 
-    def bytes_to_unicode(b, encoding=None, errors=None):
-        return b
+    def bytes_to_unicode(b, encoding='utf8', errors='strict'):
+        return unicode_type(b, encoding=encoding, errors=errors)
 
 else:
     import lzma
