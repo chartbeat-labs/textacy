@@ -19,10 +19,10 @@ Raw data is downloadable from https://archive.org/details/2015_reddit_comments_c
 """
 import datetime
 import logging
-import json
 import re
 
-from textacy.compat import bzip_open, str
+from textacy.compat import PY2, string_types
+from textacy.fileio import read_json_lines
 from textacy.preprocess import normalize_whitespace
 
 
@@ -43,21 +43,19 @@ class RedditReader(object):
     """
 
     def __init__(self, paths):
-        if isinstance(paths, str):
+        if isinstance(paths, string_types):
             self.paths = (paths,)
         else:
             self.paths = tuple(paths)
 
     def __iter__(self):
         for path in self.paths:
-            try:
-                with bzip_open(path, mode='rt') as f:
-                    for line in f:
-                        yield json.loads(line)
-            except ValueError:  # Python 2 sucks and can't open bzip in text mode
-                with bzip_open(path, mode='rb') as f:
-                    for line in f:
-                        yield json.loads(line)
+            if PY2 is False:
+                for json_line in read_json_lines(path, mode='rt'):
+                    yield json_line
+            else:  # Python 2 can't open json in text mode
+                for json_line in read_json_lines(path, mode='rb'):
+                    yield json_line
 
     def _clean_content(self, content):
         # strip out link markup, e.g. [foo](http://foo.com)

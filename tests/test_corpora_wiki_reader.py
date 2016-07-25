@@ -5,8 +5,9 @@ import os
 import tempfile
 import unittest
 
-from textacy.compat import bzip_open, str
+from textacy.compat import unicode_type
 from textacy.corpora import WikiReader
+from textacy.fileio import write_file
 
 WIKITEXT = r"""
 <mediawiki xmlns="http://www.mediawiki.org/xml/export-0.10/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.mediawiki.org/xml/export-0.10/ http://www.mediawiki.org/xml/export-0.10.xsd" version="0.10" xml:lang="en">
@@ -149,15 +150,14 @@ class WikiReaderTestCase(unittest.TestCase):
     def setUp(self):
         self.tempdir = tempfile.mkdtemp(
             prefix='test_corpora', dir=os.path.dirname(os.path.abspath(__file__)))
-        wiki_fname =os.path.join(self.tempdir, 'wikitext.xml.bz2')
-        with bzip_open(wiki_fname, mode='w') as f:
-            f.write(WIKITEXT)
+        wiki_fname = os.path.join(self.tempdir, 'wikitext.xml.bz2')
+        write_file(WIKITEXT, wiki_fname, mode='wb', auto_make_dirs=True)
         self.wikireader = WikiReader(wiki_fname)
 
     def test_texts(self):
         texts = list(self.wikireader.texts())
         for text in texts:
-            self.assertIsInstance(text, str)
+            self.assertIsInstance(text, unicode_type)
 
     def test_texts_min_len(self):
         texts = list(self.wikireader.texts(min_len=300))

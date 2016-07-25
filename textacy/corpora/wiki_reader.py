@@ -21,7 +21,8 @@ import re
 from gensim.corpora.dictionary import Dictionary
 from gensim.corpora.wikicorpus import extract_pages, filter_wiki, WikiCorpus
 
-from textacy.compat import bzip_open
+from textacy.compat import PY2
+from textacy.fileio import open_sesame
 
 WIKI_NEWLINE_RE = re.compile(r'\n{2,5}')
 WIKI_HEADER_RE = re.compile(r'={2,5}(.*?)={2,5}')
@@ -48,12 +49,12 @@ class WikiReader(object):
         Iterate over the pages in a Wikipedia articles database dump (*articles.xml.bz2),
         yielding one (page id, title, page content) 3-tuple at a time.
         """
-        try:
-            for title, content, page_id in extract_pages(bzip_open(self.wikicorpus.fname, mode='rt'),
+        if PY2 is False:
+            for title, content, page_id in extract_pages(open_sesame(self.wikicorpus.fname, mode='rt'),
                                                          self.wikicorpus.filter_namespaces):
                 yield (page_id, title, content)
-        except ValueError:  # Python 2 sucks and can't open bzip in text mode
-            for title, content, page_id in extract_pages(bzip_open(self.wikicorpus.fname, mode='r'),
+        else:  # Python 2 sucks and can't open bzip in text mode
+            for title, content, page_id in extract_pages(open_sesame(self.wikicorpus.fname, mode='rb'),
                                                          self.wikicorpus.filter_namespaces):
                 yield (page_id, title, content)
 
@@ -72,9 +73,9 @@ class WikiReader(object):
             wikilinks = [str(wc.title) for wc in wikicode.ifilter_wikilinks()]
             parsed_page['categories'] = [wc for wc in wikilinks if wc.startswith('Category:')]
             parsed_page['wiki_links'] = [wc for wc in wikilinks
-                                         if not wc.startswith('Category:')
-                                         and not wc.startswith('File:')
-                                         and not wc.startswith('Image:')]
+                                         if not wc.startswith('Category:') and
+                                         not wc.startswith('File:') and
+                                         not wc.startswith('Image:')]
             parsed_page['ext_links'] = [str(wc.url) for wc in wikicode.ifilter_external_links()]
 
         def _filter_tags(obj):
@@ -109,7 +110,7 @@ class WikiReader(object):
                         pass
                 sec['text'] = str(section.strip_code(normalize=True, collapse=True)).strip()
                 if sec.get('title'):
-                    sec['text'] = re.sub(r'^'+re.escape(sec['title'])+r'\s*', '', sec['text'])
+                    sec['text'] = re.sub(r'^' + re.escape(sec['title']) + r'\s*', '', sec['text'])
                 parsed_page['sections'].append(sec)
                 section_idx += 1
 
@@ -118,7 +119,7 @@ class WikiReader(object):
                 titles = [str(h.title).strip() for h in headings]
                 levels = [int(h.level) for h in headings]
                 sub_sections = [str(ss) for ss in
-                                re.split(r'\s*'+'|'.join(re.escape(str(h)) for h in headings)+r'\s*', str(section))]
+                                re.split(r'\s*' + '|'.join(re.escape(str(h)) for h in headings) + r'\s*', str(section))]
                 # re.split leaves an empty string result up front :shrug:
                 if sub_sections[0] == '':
                     del sub_sections[0]
