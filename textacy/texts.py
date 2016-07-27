@@ -771,6 +771,9 @@ class TextCorpus(object):
     def __getitem__(self, index):
         return self.docs[index]
 
+    def __delitem__(self, index):
+        del self.docs[index]
+
     def __iter__(self):
         for doc in self.docs:
             yield doc
@@ -992,9 +995,19 @@ class TextCorpus(object):
     def remove_doc(self, index):
         """Remove the document at ``index`` from the corpus, and decrement the
         ``corpus_index`` attribute on all docs that come after it in the corpus."""
-        for doc in self[index + 1:]:
-            doc.corpus_index -= 1
+        n_tokens_removed = self[index].n_tokens
+        try:
+            n_sents_removed = self[index].n_sents
+        except ValueError:
+            n_sents_removed = 0
         del self[index]
+        # reset `corpus_index` attribute on docs higher up in the list
+        for doc in self[index:]:
+            doc.corpus_index -= 1
+        # also decrement the corpus doc/sent/token counts
+        self.n_docs -= 1
+        self.n_sents -= n_sents_removed
+        self.n_tokens -= n_tokens_removed
 
     def remove_docs(self, match_condition, limit=None):
         """
@@ -1008,13 +1021,27 @@ class TextCorpus(object):
             limit (int, optional): if not None, maximum number of matched docs
                 to remove
         """
-        remove_indexes = [doc.corpus_index
-                          for doc in self.get_docs(match_condition, limit=limit)]
+        remove_indexes = sorted(
+            (doc.corpus_index
+             for doc in self.get_docs(match_condition, limit=limit)),
+            reverse=True)
+        n_docs_removed = len(remove_indexes)
+        n_sents_removed = 0
+        n_tokens_removed = 0
         for index in remove_indexes:
+            n_tokens_removed += self[index].n_tokens
+            try:
+                n_sents_removed += self[index].n_sents
+            except ValueError:
+                pass
             del self[index]
         # now let's re-set the `corpus_index` attribute for all docs at once
         for i, doc in enumerate(self):
             doc.corpus_index = i
+        # also decrement the corpus doc/sent/token counts
+        self.n_docs -= n_docs_removed
+        self.n_sents -= n_sents_removed
+        self.n_tokens -= n_tokens_removed
 
     def as_doc_term_matrix(self, terms_lists, weighting='tf',
                            normalize=True, smooth_idf=True, sublinear_tf=False,
