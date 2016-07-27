@@ -1,7 +1,6 @@
 Changelog
 =========
 
-
 dev
 ---
 
@@ -19,6 +18,10 @@ Changes:
     - also added `compat.unicode_to_bytes()` and `compat.bytes_to_unicode()` functions, for converting between string types
 - added `compression` param to `TextCorpus.save()` and `.load()` to optionally write metadata json file in compressed form
 - moved `fileio.write_conll()` functionality to `export.doc_to_conll()`, which converts a spaCy doc into a ConLL-U formatted string; writing that string to disk would require a separate call to `fileio.write_file()`
+
+Bugfixes:
+
+- Fixed document(s) removal from `TextCorpus` objects, including correct decrementing of `.n_docs`, `.n_sents`, and `.n_tokens` attributes (@michelleful #29)
 
 
 0.2.5 (2016-07-14)
