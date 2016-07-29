@@ -51,7 +51,7 @@ def open_sesame(filepath, mode='rt',
     filepath = os.path.realpath(os.path.expanduser(filepath))
     if auto_make_dirs is True:
         make_dirs(filepath, mode)
-    elif not os.path.exists(filepath):
+    elif 'r' in mode and not os.path.exists(filepath):
         raise OSError('file "{}" does not exist'.format(filepath))
 
     # infer compression from filepath extension
