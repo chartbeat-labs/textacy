@@ -32,6 +32,7 @@ try:
 except ImportError:
     from urllib2 import urlopen
     from urllib2 import HTTPError
+import warnings
 
 import textacy
 from textacy.fileio import read_json_lines, write_file
@@ -88,7 +89,20 @@ def fetch_bernie_and_hillary(data_dir=None,
         IOError: if file is not found on disk and `download_if_missing` is False
         HTTPError: if file is not found on disk, `download_if_missing` is True,
             and something goes wrong with the download
+
+    .. warn:: The Bernie & Hillary corpus has been deprecated! Use the newer and
+        more comprehensive CapitolWords corpus instead. To recreate B&H, filter
+        CapitolWords speeches by `speaker_name={'Bernie Sanders', 'Hillary Clinton'}`.
     """
+    with warnings.catch_warnings():
+        warnings.simplefilter('always', DeprecationWarning)
+        msg = """
+            The Bernie & Hillary corpus has been deprecated! Use the newer and
+            more comprehensive CapitolWords corpus instead. To recreate B&H,
+            filter CapitolWords speeches by `speaker_name={'Bernie Sanders', 'Hillary Clinton'}`.
+            """
+        warnings.warn(msg.strip(),
+                      DeprecationWarning)
     if data_dir is None:
         data_dir = DEFAULT_DATA_DIR
     fname = os.path.join(data_dir, FNAME)

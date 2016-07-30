@@ -51,6 +51,7 @@ setup(
         'pyemd>=0.3.0',
         'pyphen',
         'python-levenshtein>=0.12.0',
+        'requests>=2.10.0',
         'scipy',
         'scikit-learn',
         'spacy>=0.101.0',
