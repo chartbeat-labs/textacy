@@ -1,3 +1,30 @@
+# -*- coding: utf-8 -*-
+"""
+The CapitolWords Corpus
+-----------------------
+
+Download to and stream from disk a corpus of (almost all) speeches given by the
+main protagonists of the 2016 U.S. Presidential election that had previously
+served in the U.S. Congress — including Hillary Clinton, Bernie Sanders, Barack
+Obama, Ted Cruz, and John Kasich — between January 1996 and June 2016.
+
+The corpus contains over 11k documents comprised of nearly 7M tokens. Each
+document contains 7 fields:
+
+    * text: full(?) text of the speech
+    * title: title of the speech, in all caps
+    * date: date on which the speech was given, as an ISO-standard string
+    * speaker_name: first and last name of the speaker
+    * speaker_party: political party of the speaker ('R' for Republican, 'D' for
+      Democrat, and 'I' for Independent)
+    * congress: number of the Congress in which the speech was given; ranges
+      continuously between 104 and 114
+    * chamber: chamber of Congress in which the speech was given; almost all are
+      either 'House' or 'Senate', with a small number of 'Extensions'
+
+The source for this corpus is the Sunlight Foundation's
+`Capitol Words API <http://sunlightlabs.github.io/Capitol-Words/>`_.
+"""
 import os
 
 from textacy import __data_dir__
@@ -7,7 +34,20 @@ from textacy.fileio import read_json_lines
 
 class CapitolWords(object):
     """
-    TODO
+    TODO.
+
+    Args:
+        data_dir (str)
+
+    Attributes:
+        speaker_names (set[str]): full names of all speakers included in corpus,
+            e.g. `'Bernie Sanders'`
+        speaker_parties (set[str]): all distinct political parties of speakers,
+            e.g. `'R'`
+        chambers (set[str]): all distinct chambers in which speeches were given,
+            e.g. `'House'`
+        congresses (set[int]): all distinct numbers of the congresses in which
+            speeches were given, e.g. `114`
     """
 
     speaker_names = {
