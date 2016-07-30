@@ -6,7 +6,7 @@ The CapitolWords Corpus
 Download to and stream from disk a corpus of (almost all) speeches given by the
 main protagonists of the 2016 U.S. Presidential election that had previously
 served in the U.S. Congress — including Hillary Clinton, Bernie Sanders, Barack
-Obama, Ted Cruz, and John Kasich — between January 1996 and June 2016.
+Obama, Ted Cruz, and John Kasich — from January 1996 through June 2016.
 
 The corpus contains over 11k documents comprised of nearly 7M tokens. Each
 document contains 7 fields:
@@ -22,19 +22,31 @@ document contains 7 fields:
     * chamber: chamber of Congress in which the speech was given; almost all are
       either 'House' or 'Senate', with a small number of 'Extensions'
 
-The source for this corpus is the Sunlight Foundation's
+This corpus was derived from the data provided by the Sunlight Foundation's
 `Capitol Words API <http://sunlightlabs.github.io/Capitol-Words/>`_.
 """
+import io
+import logging
 import os
 
-from textacy import __data_dir__
+import requests
+
+from textacy import __resources_dir__
 from textacy.compat import PY2, string_types
-from textacy.fileio import read_json_lines
+from textacy.fileio import make_dirs, read_json_lines
+
+if PY2:
+    URL = 'https://cdn.rawgit.com/chartbeat-labs/textacy/5156197facb98f767f5d92ffa299d266bd50cf6b/data/capitol-words-py2.json.gz'
+else:
+    URL = 'https://cdn.rawgit.com/chartbeat-labs/textacy/5156197facb98f767f5d92ffa299d266bd50cf6b/data/capitol-words-py3.json.gz'
+FILENAME = URL.rsplit('/', 1)[-1]
+
+LOGGER = logging.getLogger(__name__)
 
 
 class CapitolWords(object):
     """
-    TODO.
+    TODO: usage example.
 
     Args:
         data_dir (str)
@@ -58,16 +70,26 @@ class CapitolWords(object):
     chambers = {'Extensions', 'House', 'Senate'}
     congresses = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
 
-    def __init__(self, data_dir=None):
+    def __init__(self, data_dir=None, download_if_missing=True):
         if data_dir is None:
-            data_dir = __data_dir__
-        if PY2:
-            self.filepath = os.path.join(data_dir, 'capitol-words.json')
-        else:
-            self.filepath = os.path.join(data_dir, 'capitol-words.json.gz')
+            _data_dir = __resources_dir__
+        self.filepath = os.path.join(_data_dir, 'capitolwords', FILENAME)
+        if not os.path.exists(self.filepath):
+            if download_if_missing is True:
+                self._download_data()
+            else:
+                raise OSError('file "{}" not found'.format(self.filepath))
+
+    def _download_data(self):
+        LOGGER.info('downloading data from "%s"', URL)
+        response = requests.get(URL)
+        make_dirs(self.filepath, 'wb')
+        with io.open(self.filepath, mode='wb') as f:
+            f.write(response.content)
 
     def __iter__(self):
-        for line in read_json_lines(self.filepath, mode='rt'):
+        mode = 'rb' if PY2 else 'rt'
+        for line in read_json_lines(self.filepath, mode=mode):
             yield line
 
     def texts(self, speaker_name=None, speaker_party=None, chamber=None,

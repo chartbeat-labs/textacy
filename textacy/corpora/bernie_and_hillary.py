@@ -41,7 +41,7 @@ logger = logging.getLogger(__name__)
 
 URL = 'https://s3.amazonaws.com/chartbeat-labs/bernie_and_hillary.json'
 FNAME = 'bernie_and_hillary.json'
-DEFAULT_DATA_DIR = os.path.join(textacy.__data_dir__, 'bernie_and_hillary')
+DEFAULT_DATA_DIR = os.path.join(textacy.__resources_dir__, 'bernie_and_hillary')
 
 
 def _download_bernie_and_hillary(data_dir):
