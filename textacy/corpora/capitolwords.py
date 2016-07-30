@@ -110,8 +110,8 @@ class CapitolWords(object):
 
     def __init__(self, data_dir=None, download_if_missing=True):
         if data_dir is None:
-            _data_dir = __resources_dir__
-        self.filepath = os.path.join(_data_dir, 'capitolwords', FILENAME)
+            data_dir = __resources_dir__
+        self.filepath = os.path.join(data_dir, 'capitolwords', FILENAME)
         if not os.path.exists(self.filepath):
             if download_if_missing is True:
                 self._download_data()
@@ -213,10 +213,11 @@ class CapitolWords(object):
             limit (int): return no more than `limit` speeches, in order of date
 
         Yields:
-            str
+            str: full text of next (by chronological order) speech in corpus
+                passing all filter params
 
         Raises:
-            ValueError
+            ValueError: if any filtering options are invalid
         """
         texts = self._iterate(
             True, speaker_name=speaker_name, speaker_party=speaker_party,
@@ -250,10 +251,11 @@ class CapitolWords(object):
             limit (int): return no more than `limit` speeches, in order of date
 
         Yields:
-            dict
+            dict: full text and metadata of next (by chronological order) speech
+                in corpus passing all filter params
 
         Raises:
-            ValueError
+            ValueError: if any filtering options are invalid
         """
         docs = self._iterate(
             False, speaker_name=speaker_name, speaker_party=speaker_party,
