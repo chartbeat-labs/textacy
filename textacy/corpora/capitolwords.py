@@ -46,10 +46,45 @@ LOGGER = logging.getLogger(__name__)
 
 class CapitolWords(object):
     """
-    TODO: usage example.
+    Download data and stream from disk a collection of Congressional speeches
+    that includes the full text and key metadata for each::
+
+        >>> cw = textacy.corpora.CapitolWords()
+        >>> for text in cw.texts(limit=10):
+        ...     print(text)
+        >>> for doc in cw.docs(limit=10):
+        ...     print(doc['title'], doc['date'])
+        ...     print(doc['text'])
+
+    Filter speeches by metadata and text length::
+
+        >>> for doc in cw.docs(speaker_name='Bernie Sanders', limit=1):
+        ...     print(doc['date'], doc['text'])
+        >>> for doc in cw.docs(speaker_party='D', congress={110, 111, 112},
+        ...                    chamber='Senate', limit=10):
+        ...     print(doc['speaker_name'], doc['title'])
+        >>> for doc in cw.docs(speaker_name={'Barack Obama', 'Hillary Clinton'},
+        ...                    date_range=('2002-01-01', '2002-12-31')):
+        ...     print(doc['speaker_name'], doc['title'], doc['date'])
+        >>> for text in cw.texts(min_len=50000):
+        ...     print(len(text))
+
+    Stream speeches into a `TextCorpus`::
+
+        >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
+        ...     cw.docs(limit=100), 'text')
+        >>> tc = textacy.TextCorpus.from_texts('en', text_stream, metadata_stream)
+        >>> print(tc)
 
     Args:
-        data_dir (str)
+        data_dir (str): path on disk containing corpus data; if None, textacy's
+            default `__resources_dir__` is used
+        download_if_missing (bool): if True and corpus data file isn't found on
+            disk, download the file and save it to disk under `data_dir`
+
+    Raises:
+        OSError: if corpus data file isn't found under `data_dir` and
+            `download_if_missing` is False
 
     Attributes:
         speaker_names (set[str]): full names of all speakers included in corpus,
@@ -178,7 +213,7 @@ class CapitolWords(object):
             limit (int)
 
         Yields:
-            str
+            dict
 
         Raises:
             ValueError

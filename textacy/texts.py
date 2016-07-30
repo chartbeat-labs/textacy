@@ -17,7 +17,7 @@ from spacy.tokens.doc import Doc as sdoc
 from spacy.tokens.token import Token as stoken
 from spacy.tokens.span import Span as sspan
 
-from textacy.compat import PY2, unicode_type, zip
+from textacy.compat import PY2, string_types, unicode_type, zip
 from textacy import (data, extract, fileio, keyterms, spacy_utils,
                      text_stats, text_utils)
 from textacy.representations import network, vsm
@@ -54,7 +54,7 @@ class TextDoc(object):
         self.metadata = {} if metadata is None else metadata
         self._term_counts = Counter()
 
-        if isinstance(text_or_sdoc, unicode_type):
+        if isinstance(text_or_sdoc, string_types):
             self.lang = text_utils.detect_language(text_or_sdoc) if not lang else lang
             if spacy_pipeline is None:
                 spacy_pipeline = data.load_spacy(self.lang)
@@ -749,7 +749,7 @@ class TextCorpus(object):
     specified by a function (e.g. ``TextCorpus.get_docs(lambda x: len(x) > 100)``).
     """
     def __init__(self, lang_or_pipeline):
-        if isinstance(lang_or_pipeline, unicode_type):
+        if isinstance(lang_or_pipeline, string_types):
             self.lang = lang_or_pipeline
             self.spacy_pipeline = data.load_spacy(self.lang)
         else:
