@@ -230,9 +230,10 @@ class FileIOTestCase(unittest.TestCase):
         self.assertEqual(observed, expected)
 
     def test_get_filenames_ignore_invisible(self):
+        path = os.path.dirname(os.path.abspath(__file__))
         self.assertTrue(
-            len(list(fileio.get_filenames(self.tests_dir, ignore_invisible=True)))
-            < len(list(fileio.get_filenames(self.tests_dir, ignore_invisible=False)))
+            len(list(fileio.get_filenames(path, ignore_invisible=True))) <=
+            len(list(fileio.get_filenames(path, ignore_invisible=False)))
             )
 
     def test_get_filenames_ignore_regex(self):

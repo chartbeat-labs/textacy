@@ -7,7 +7,7 @@ dev
 Changes:
 
 - Added the CapitolWords corpus, a collection of 11k speeches (~7M tokens) given by the main protagonists of the 2016 U.S. Presidential election that had previously served in the U.S. Congress — including Hillary Clinton, Bernie Sanders, Barack Obama, Ted Cruz, and John Kasich — from January 1996 through June 2016
-    - DEPRECATED the Bernie and Hillary corpus, which is a small subset of CapitolWords
+    - DEPRECATED the Bernie and Hillary corpus, which is a small subset of CapitolWords that can be easily recreated by filtering CapitolWords by `speaker_name={'Bernie Sanders', 'Hillary Clinton'}`
 - Refactored and improved `fileio` subpackage
     - moved shared (read/write) functions into separate `fileio.utils` module
     - almost all read/write functions now use `fileio.utils.open_sesame()`, enabling seamless fileio for uncompressed or gzip, bz2, and lzma compressed files; relative/user-home-based paths; and missing intermediate directories. NOTE: certain file mode / compression pairs simply don't work (this is Python's fault), so users may run into exceptions; in Python 3, you'll almost always want to use text mode ('wt' or 'rt'), but in Python 2, users can't read or write compressed files in text mode, only binary mode ('wb' or 'rb')
@@ -23,6 +23,8 @@ Changes:
 Bugfixes:
 
 - Fixed document(s) removal from `TextCorpus` objects, including correct decrementing of `.n_docs`, `.n_sents`, and `.n_tokens` attributes (@michelleful #29)
+- Fixed OSError being incorrectly raised in `fileio.open_sesame()` on missing files
+- `lang` parameter in `TextDoc` and `TextCorpus` can now be unicode *or* bytes, which was bug-like
 
 
 0.2.5 (2016-07-14)
