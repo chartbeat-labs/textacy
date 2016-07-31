@@ -26,7 +26,7 @@ from textacy.compat import PY2, bytes_type
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DATA_DIR = textacy.__data_dir__
+DEFAULT_DATA_DIR = textacy.__resources_dir__
 
 _CACHE = {}
 """dict: key-value store used to cache datasets and such in memory"""

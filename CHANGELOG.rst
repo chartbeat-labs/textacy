@@ -6,18 +6,19 @@ dev
 
 Changes:
 
-- refactored and improved `fileio` subpackage
+- Added the CapitolWords corpus, a collection of 11k speeches (~7M tokens) given by the main protagonists of the 2016 U.S. Presidential election that had previously served in the U.S. Congress — including Hillary Clinton, Bernie Sanders, Barack Obama, Ted Cruz, and John Kasich — from January 1996 through June 2016
+    - DEPRECATED the Bernie and Hillary corpus, which is a small subset of CapitolWords
+- Refactored and improved `fileio` subpackage
     - moved shared (read/write) functions into separate `fileio.utils` module
-    - almost all read/write functions now use `fileio.utils.open_sesame()`, enabling seamless fileio for uncompressed or gzip, bz2, and lzma compressed files; relative/user-home-based paths; and missing intermediate directories
+    - almost all read/write functions now use `fileio.utils.open_sesame()`, enabling seamless fileio for uncompressed or gzip, bz2, and lzma compressed files; relative/user-home-based paths; and missing intermediate directories. NOTE: certain file mode / compression pairs simply don't work (this is Python's fault), so users may run into exceptions; in Python 3, you'll almost always want to use text mode ('wt' or 'rt'), but in Python 2, users can't read or write compressed files in text mode, only binary mode ('wb' or 'rb')
     - added options for writing json files (matching stdlib's `json.dump()`) that can help save space
     - `fileio.utils.get_filenames()` now matches for/against a regex pattern rather than just a contained substring; using the old params will now raise a deprecation warning
-    - BREAKING: `fileio.utils.split_content_and_metadata()` now has `itemwise=False` by default, rather than `itemwise=True`, which means that splitting multi-document streams of content and metadata into parallel iterators is now the default action
-    - NOTE: certain file mode / compression pairs simply don't work (this is Python's fault), so users may run into exceptions; in Python 3, you'll almost always want to use text mode ('wt' or 'rt'), but in Python 2, users can't read or write compressed files in text mode, only binary mode ('wb' or 'rb')
-- cleaned up deprecated/bad Py2/3 `compat` imports, and added better functionality for Py2/3 strings
+    - *BREAKING:* `fileio.utils.split_content_and_metadata()` now has `itemwise=False` by default, rather than `itemwise=True`, which means that splitting multi-document streams of content and metadata into parallel iterators is now the default action
+    - added `compression` param to `TextCorpus.save()` and `.load()` to optionally write metadata json file in compressed form
+    - moved `fileio.write_conll()` functionality to `export.doc_to_conll()`, which converts a spaCy doc into a ConLL-U formatted string; writing that string to disk would require a separate call to `fileio.write_file()`
+- Cleaned up deprecated/bad Py2/3 `compat` imports, and added better functionality for Py2/3 strings
     - now `compat.unicode_type` used for text data, `compat.bytes_type` for binary data, and `compat.string_types` for when either will do
     - also added `compat.unicode_to_bytes()` and `compat.bytes_to_unicode()` functions, for converting between string types
-- added `compression` param to `TextCorpus.save()` and `.load()` to optionally write metadata json file in compressed form
-- moved `fileio.write_conll()` functionality to `export.doc_to_conll()`, which converts a spaCy doc into a ConLL-U formatted string; writing that string to disk would require a separate call to `fileio.write_file()`
 
 Bugfixes:
 
