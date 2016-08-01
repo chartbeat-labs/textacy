@@ -36,9 +36,9 @@ from textacy.compat import PY2, string_types
 from textacy.fileio import make_dirs, read_json_lines
 
 if PY2:
-    URL = 'https://cdn.rawgit.com/chartbeat-labs/textacy/5156197facb98f767f5d92ffa299d266bd50cf6b/data/capitol-words-py2.json.gz'
+    URL = 'https://s3.amazonaws.com/chartbeat-labs/capitol-words-py2.json.gz'
 else:
-    URL = 'https://cdn.rawgit.com/chartbeat-labs/textacy/5156197facb98f767f5d92ffa299d266bd50cf6b/data/capitol-words-py3.json.gz'
+    URL = 'https://s3.amazonaws.com/chartbeat-labs/capitol-words-py3.json.gz'
 FILENAME = URL.rsplit('/', 1)[-1]
 
 MIN_DATE = '1996-01-01'
