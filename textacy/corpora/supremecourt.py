@@ -70,6 +70,58 @@ LOGGER = logging.getLogger(__name__)
 
 
 class SupremeCourt(object):
+    """
+    Download data and stream from disk a collection of Supreme Court decisions
+    that includes the full text and key metadata for each::
+
+        >>> sc = textacy.corpora.SupremeCourt()
+        >>> for text in sc.texts(limit=1):
+        ...     print(text)
+        >>> for doc in sc.docs(limit=1):
+        ...     print(doc['case_name'], doc['decision_date'])
+        ...     print(doc['text'])
+
+    Filter court cases by metadata and text length::
+
+        >>> for doc in sc.docs(opinion_author=109, limit=1):  # Notorious RBG!
+        ...     print(doc['case_name'], doc['us_cite_id'])
+        >>> for doc in sc.docs(decision_direction='liberal',
+        ...                    issue_area={1, 9, 10}, limit=10):
+        ...     print(doc['maj_opinion_author'], doc['n_maj_votes'])
+        >>> for doc in sc.docs(opinion_author=102,
+        ...                    date_range=('1990-01-01', '1999-12-31')):
+        ...     print(doc['case_name'], doc['decision_date'])
+        ...     print(sc.issue_codes[doc['issue']])
+        >>> for text in sc.texts(min_len=50000):
+        ...     print(len(text))
+
+    Stream court cases into a `TextCorpus`::
+
+        >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
+        ...     sc.docs(limit=100), 'text')
+        >>> tc = textacy.TextCorpus.from_texts('en', text_stream, metadata_stream)
+        >>> print(tc)
+
+    Args:
+        data_dir (str): path on disk containing corpus data; if None, textacy's
+            default `__resources_dir__` is used
+        download_if_missing (bool): if True and corpus data file isn't found on
+            disk, download the file and save it to disk under `data_dir`
+
+    Raises:
+        OSError: if corpus data file isn't found under `data_dir` and
+            `download_if_missing` is False
+
+    Attributes:
+        decision_directions (set[str]): all distinct decision directions,
+            e.g. 'liberal'
+        opinion_author_codes (dict): mapping of majority opinion authors from
+            integer code to (str) full name
+        issue_area_codes (dict): mapping of high-level issue area of the case's
+            core disagreement from integer code to (str) description
+        issue_codes (dict): mapping of specific issue of the case's core
+            disagreement from integer code to (str) description
+    """
 
     decision_directions = {'conservative', 'liberal', 'unspecifiable'}
 
