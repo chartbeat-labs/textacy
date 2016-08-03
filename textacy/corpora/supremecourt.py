@@ -3,20 +3,49 @@
 The Supreme Court Corpus
 ------------------------
 
-Download to and stream from disk a corpus of all decisions issued by the U.S.
-Supreme Court from 1792 through 2016. That amounts to 23k documents and 120.5M
-tokens. Each document contains 5 fields:
+Download to and stream from disk a corpus of (almost all) decisions issued by
+the U.S. Supreme Court from 1946 through 2016. That amounts to about 8.4k
+documents and 71M tokens, where each document contains 11 fields:
 
     * text: full text of the Court's decision
-    * title: title of the court case, in all caps
-    * docket: docket number of the court case, which some may find useful
-    * decided_date: date on which the decision was given, as an ISO-standard string
-    * argued_date: date on which the case was argued before the Supreme Court,
-        as an ISO-standard string (NOTE: about half are missing this value)
+    * case_name: name of the court case, in all caps
+    * argument_date: date on which the case was argued before the Court, as a
+        string with format 'YYYY-MM-DD'
+    * decision_date: date on which the Court's decision was announced, as a
+        string with format 'YYYY-MM-DD'
+    * decision_direction: ideological direction of the majority decision; either
+        'conservative', 'liberal', or 'unspecifiable'
+    * maj_opinion_author: name of the majority opinion's author, if available
+        and identifiable, as an integer code whose mapping is given in
+        `SupremeCourt.opinion_author_codes`
+    * n_maj_votes: number of justices voting in the majority
+    * n_min_votes: number of justices voting in the minority
+    * issue: subject matter of the case's core disagreement (e.g. affirmative
+        action) rather than its legal basis (e.g. the equal protection clause),
+        as a string code whose mapping is given in `SupremeCourt.issue_codes`
+    * issue_area: higher-level categorization of the issue (e.g. Civil Rights),
+        as an integer code whose mapping is given in `SupremeCourt.issue_area_codes`
+    * us_cite_id: citation identifier for each case according to the official
+        United States Reports; Note: There are ~300 cases with duplicate ids,
+        and it's not clear if that's "correct" or a data quality problem
 
-This dataset was derived from `FindLaw's searchable database <http://caselaw.findlaw.com/court/us-supreme-court>`_
-of court cases. Its creation was inspired by `this blog post <http://www.emilyinamillion.me/blog/2016/7/13/visualizing-supreme-court-topics-over-time>`_
-by Emily Barry.
+The text in this dataset was derived from FindLaw's searchable database of court
+cases: http://caselaw.findlaw.com/court/us-supreme-court
+
+The metadata was extracted without modification from the Supreme Court Database:
+Harold J. Spaeth, Lee Epstein, et al. 2016 Supreme Court Database, Version 2016
+Release 1. http://supremecourtdatabase.org. Its license is CC BY-NC 3.0 US:
+https://creativecommons.org/licenses/by-nc/3.0/us/
+
+This corpus' creation was inspired by a blog post by Emily Barry:
+http://www.emilyinamillion.me/blog/2016/7/13/visualizing-supreme-court-topics-over-time
+
+.. warn:: The two datasets were merged through much munging and a carefully
+    trained model using the `dedupe` package. The model's duplicate threshold
+    was set so as to maximize the F-score where precision had twice as much
+    weight as recall. Still, given occasionally baffling inconsistencies in case
+    naming, citation ids, and decision dates, a very small percentage of texts
+    may be incorrectly matched to metadata.
 """
 import io
 import logging
@@ -29,22 +58,23 @@ from textacy.compat import PY2, string_types
 from textacy.fileio import make_dirs, read_json_lines
 
 if PY2:
-    URL = 'https://s3.amazonaws.com/chartbeat-labs/supreme-court-cases-py2.json.gz'
+    URL = 'https://s3.amazonaws.com/chartbeat-labs/supreme-court-py2.json.gz'
 else:
-    URL = 'https://s3.amazonaws.com/chartbeat-labs/supreme-court-cases-py3.json.gz'
+    URL = 'https://s3.amazonaws.com/chartbeat-labs/supreme-court-py3.json.gz'
 FILENAME = URL.rsplit('/', 1)[-1]
 
-MIN_DATE = '1792-08-01'
-MAX_DATE = '2016-07-18'
+MIN_DATE = '1946-11-18'
+MAX_DATE = '2016-06-27'
 
 LOGGER = logging.getLogger(__name__)
-
-# TODO: Consider joining data with http://supremecourtdatabase.org/index.php
 
 
 class SupremeCourt(object):
 
-    decision_author_codes = {
+    decision_directions = {'conservative', 'liberal', 'unspecifiable'}
+
+    opinion_author_codes = {
+        -1: None,
         1: 'Jay, John',
         2: 'Rutledge, John',
         3: 'Cushing, William',
@@ -161,6 +191,7 @@ class SupremeCourt(object):
         114: 'Kagan, Elena'}
 
     issue_area_codes = {
+        -1: None,
         1: 'Criminal Procedure',
         2: 'Civil Rights',
         3: 'First Amendment',
@@ -473,14 +504,35 @@ class SupremeCourt(object):
         with io.open(self.filepath, mode='wb') as f:
             f.write(response.content)
 
-    def _iterate(self, text_only, date_range=None, min_len=None, limit=-1):
+    def _iterate(self, text_only, opinion_author=None, decision_direction=None,
+                 issue_area=None, date_range=None, min_len=None, limit=-1):
         """Note: Use `.texts()` or `.docs()` to iterate over corpus data."""
-        # prepare date range filter
+        # prepare filters
+        if opinion_author:
+            if isinstance(opinion_author, int):
+                opinion_author = {opinion_author}
+            if not all(oa in self.opinion_author_codes for oa in opinion_author):
+                msg = 'invalid `opinion_author` value; see `SupremeCourt.opinion_author_codes`'
+                raise ValueError(msg)
+        if issue_area:
+            if isinstance(issue_area, int):
+                issue_area = {issue_area}
+            if not all(ii in self.issue_area_codes for ii in issue_area):
+                msg = 'invalid `issue_area` value; see `SupremeCourt.issue_area_codes`'
+                raise ValueError(msg)
+        if decision_direction:
+            if isinstance(decision_direction, string_types):
+                decision_direction = {decision_direction}
+            if not all(dd in self.decision_directions for dd in decision_direction):
+                msg = 'invalid `decision_direction` value; see `SupremeCourt.decision_directions`'
+                raise ValueError(msg)
         if date_range:
             if not isinstance(date_range, (list, tuple)):
-                raise ValueError('`date_range` must be a list or tuple, not %s', type(date_range))
+                msg = '`date_range` must be a list or tuple, not {}'.format(type(date_range))
+                raise ValueError(msg)
             if not len(date_range) == 2:
-                raise ValueError('`date_range` must have both start and end values')
+                msg = '`date_range` must have both start and end values'
+                raise ValueError(msg)
             if not date_range[0]:
                 date_range = (MIN_DATE, date_range[1])
             if not date_range[1]:
@@ -489,7 +541,13 @@ class SupremeCourt(object):
         n = 0
         mode = 'rb' if PY2 else 'rt'
         for line in read_json_lines(self.filepath, mode=mode):
-            if date_range and not date_range[0] <= line['decided_date'] <= date_range[1]:
+            if opinion_author and line['maj_opinion_author'] not in opinion_author:
+                continue
+            if issue_area and line['issue_area'] not in issue_area:
+                continue
+            if decision_direction and line['decision_direction'] not in decision_direction:
+                continue
+            if date_range and not date_range[0] <= line['decision_date'] <= date_range[1]:
                 continue
             if min_len and len(line['text']) < min_len:
                 continue
@@ -503,55 +561,79 @@ class SupremeCourt(object):
             if n == limit:
                 break
 
-    def texts(self, date_range=None, min_len=None, limit=-1):
+    def texts(self, opinion_author=None, issue_area=None, decision_direction=None,
+              date_range=None, min_len=None, limit=-1):
         """
-        Iterate over texts in the CapitolWords corpus, optionally filtering by
-        a variety of metadata and/or text length, in order of date.
+        Iterate over texts in the SupremeCourt corpus, optionally filtering by
+        a variety of metadata and/or text length, in order of decision date.
 
         Args:
-            date_range (list[str] or tuple[str]): filter speeches by the date on
-                which they were given; both start and end date must be specified,
+            opinion_author (int or set[int]): filter cases by the name(s) of the
+                majority opinion's author, coded as an integer whose mapping is
+                given in :meth:`author_opinion_codes <SupremeCourt.author_opinion_codes>`
+            issue_area (int or set[int]): filter cases by the issue area of the
+                case's subject matter, coded as an integer whose mapping is
+                given in :meth:`issue_area_codes <SupremeCourt.issue_area_codes>`
+            decision_direction (str or set[str]): filter cases by the ideological
+                direction of the majority decision; see
+                :meth:`decision_directions <SupremeCourt.decision_directions>`
+            date_range (list[str] or tuple[str]): filter cases by the date on
+                which they were decided; both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
                 available in the corpus
-            min_len (int): filter speeches by the length (number of characters)
+            min_len (int): filter cases by the length (number of characters)
                 in their text content
-            limit (int): return no more than `limit` speeches, in order of date
+            limit (int): return no more than `limit` cases, in order of decision date
 
         Yields:
-            str: full text of next (by chronological order) speech in corpus
+            str: full text of next (by chronological order) court case in corpus
                 passing all filter params
 
         Raises:
             ValueError: if any filtering options are invalid
         """
         texts = self._iterate(
-            True, date_range=date_range, min_len=min_len, limit=limit)
+            True, opinion_author=opinion_author, issue_area=issue_area,
+            decision_direction=decision_direction, date_range=date_range,
+            min_len=min_len, limit=limit)
         for text in texts:
             yield text
 
-    def docs(self, date_range=None, min_len=None, limit=-1):
+    def docs(self, opinion_author=None, issue_area=None, decision_direction=None,
+             date_range=None, min_len=None, limit=-1):
         """
-        Iterate over documents (including text and metadata) in the CapitolWords
+        Iterate over documents (including text and metadata) in the SupremeCourt
         corpus, optionally filtering by a variety of metadata and/or text length,
-        in order of date.
+        in order of decision date.
 
         Args:
-            date_range (list[str] or tuple[str]): filter speeches by the date on
-                which they were given; both start and end date must be specified,
+            opinion_author (int or set[int]): filter cases by the name(s) of the
+                majority opinion's author, coded as an integer whose mapping is
+                given in :meth:`author_opinion_codes <SupremeCourt.author_opinion_codes>`
+            issue_area (int or set[int]): filter cases by the issue area of the
+                case's subject matter, coded as an integer whose mapping is
+                given in :meth:`issue_area_codes <SupremeCourt.issue_area_codes>`
+            decision_direction (str or set[str]): filter cases by the ideological
+                direction of the majority decision; see
+                :meth:`decision_directions <SupremeCourt.decision_directions>`
+            date_range (list[str] or tuple[str]): filter cases by the date on
+                which they were decided; both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
                 available in the corpus
-            min_len (int): filter speeches by the length (number of characters)
+            min_len (int): filter cases by the length (number of characters)
                 in their text content
-            limit (int): return no more than `limit` speeches, in order of date
+            limit (int): return no more than `limit` cases, in order of decision date
 
         Yields:
-            dict: full text and metadata of next (by chronological order) speech
-                in corpus passing all filter params
+            dict: full text and metadata of next (by chronological order) court
+                case in corpus passing all filter params
 
         Raises:
             ValueError: if any filtering options are invalid
         """
         docs = self._iterate(
-            False, date_range=date_range, min_len=min_len, limit=limit)
+            False, opinion_author=opinion_author, issue_area=issue_area,
+            decision_direction=decision_direction, date_range=date_range,
+            min_len=min_len, limit=limit)
         for doc in docs:
             yield doc
