@@ -10,24 +10,24 @@ documents and 71M tokens, where each document contains 11 fields:
     * text: full text of the Court's decision
     * case_name: name of the court case, in all caps
     * argument_date: date on which the case was argued before the Court, as a
-        string with format 'YYYY-MM-DD'
+      string with format 'YYYY-MM-DD'
     * decision_date: date on which the Court's decision was announced, as a
-        string with format 'YYYY-MM-DD'
+      string with format 'YYYY-MM-DD'
     * decision_direction: ideological direction of the majority decision; either
-        'conservative', 'liberal', or 'unspecifiable'
+      'conservative', 'liberal', or 'unspecifiable'
     * maj_opinion_author: name of the majority opinion's author, if available
-        and identifiable, as an integer code whose mapping is given in
-        `SupremeCourt.opinion_author_codes`
+      and identifiable, as an integer code whose mapping is given in
+      ``SupremeCourt.opinion_author_codes``
     * n_maj_votes: number of justices voting in the majority
     * n_min_votes: number of justices voting in the minority
     * issue: subject matter of the case's core disagreement (e.g. affirmative
-        action) rather than its legal basis (e.g. the equal protection clause),
-        as a string code whose mapping is given in `SupremeCourt.issue_codes`
+      action) rather than its legal basis (e.g. the equal protection clause),
+      as a string code whose mapping is given in ``SupremeCourt.issue_codes``
     * issue_area: higher-level categorization of the issue (e.g. Civil Rights),
-        as an integer code whose mapping is given in `SupremeCourt.issue_area_codes`
+      as an integer code whose mapping is given in ``SupremeCourt.issue_area_codes``
     * us_cite_id: citation identifier for each case according to the official
-        United States Reports; Note: There are ~300 cases with duplicate ids,
-        and it's not clear if that's "correct" or a data quality problem
+      United States Reports; Note: There are ~300 cases with duplicate ids,
+      and it's not clear if that's "correct" or a data quality problem
 
 The text in this dataset was derived from FindLaw's searchable database of court
 cases: http://caselaw.findlaw.com/court/us-supreme-court
@@ -40,12 +40,12 @@ https://creativecommons.org/licenses/by-nc/3.0/us/
 This corpus' creation was inspired by a blog post by Emily Barry:
 http://www.emilyinamillion.me/blog/2016/7/13/visualizing-supreme-court-topics-over-time
 
-.. warn:: The two datasets were merged through much munging and a carefully
-    trained model using the `dedupe` package. The model's duplicate threshold
-    was set so as to maximize the F-score where precision had twice as much
-    weight as recall. Still, given occasionally baffling inconsistencies in case
-    naming, citation ids, and decision dates, a very small percentage of texts
-    may be incorrectly matched to metadata.
+NOTE: The two datasets were merged through much munging and a carefully
+trained model using the ``dedupe`` package. The model's duplicate threshold
+was set so as to maximize the F-score where precision had twice as much
+weight as recall. Still, given occasionally baffling inconsistencies in case
+naming, citation ids, and decision dates, a very small percentage of texts
+may be incorrectly matched to metadata.
 """
 import io
 import logging
@@ -622,7 +622,7 @@ class SupremeCourt(object):
         Args:
             opinion_author (int or set[int]): filter cases by the name(s) of the
                 majority opinion's author, coded as an integer whose mapping is
-                given in :meth:`author_opinion_codes <SupremeCourt.author_opinion_codes>`
+                given in :meth:`opinion_author_codes <SupremeCourt.opinion_author_codes>`
             issue_area (int or set[int]): filter cases by the issue area of the
                 case's subject matter, coded as an integer whose mapping is
                 given in :meth:`issue_area_codes <SupremeCourt.issue_area_codes>`
@@ -661,7 +661,7 @@ class SupremeCourt(object):
         Args:
             opinion_author (int or set[int]): filter cases by the name(s) of the
                 majority opinion's author, coded as an integer whose mapping is
-                given in :meth:`author_opinion_codes <SupremeCourt.author_opinion_codes>`
+                given in :meth:`opinion_author_codes <SupremeCourt.opinion_author_codes>`
             issue_area (int or set[int]): filter cases by the issue area of the
                 case's subject matter, coded as an integer whose mapping is
                 given in :meth:`issue_area_codes <SupremeCourt.issue_area_codes>`
