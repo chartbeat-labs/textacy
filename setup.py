@@ -11,8 +11,8 @@ def read_file(fname, encoding='utf-8'):
 
 setup(
     name='textacy',
-    version='0.2.5',
-    description='Higher-level text processing, built on Spacy',
+    version='0.2.8',
+    description='Higher-level text processing, built on spaCy',
     long_description=read_file('README.rst'),
 
     url='https://github.com/chartbeat-labs/textacy',
@@ -22,7 +22,7 @@ setup(
     author_email='burtdewilde@gmail.com',
     license='Apache',
 
-    classifiers = [
+    classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: Apache Software License',
         'Intended Audience :: Developers',
@@ -33,7 +33,7 @@ setup(
         'Natural Language :: English',
         'Topic :: Text Processing :: Linguistic',
         ],
-    keywords = 'textacy, spacy, nlp, text processing, linguistics',
+    keywords='textacy, spacy, nlp, text processing, linguistics',
 
     packages=find_packages(),
     install_requires=[
@@ -57,4 +57,4 @@ setup(
         'spacy>=0.101.0',
         'unidecode',
         ],
-)
+    )
