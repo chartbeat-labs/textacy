@@ -49,6 +49,9 @@ File IO
 Corpora
 -------
 
+.. automodule:: textacy.corpora.supremecourt
+    :members:
+
 .. automodule:: textacy.corpora.capitolwords
     :members:
 
