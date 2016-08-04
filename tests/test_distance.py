@@ -10,8 +10,8 @@ class DistanceTestCase(unittest.TestCase):
     def setUp(self):
         self.text1 = 'She spoke to the assembled journalists.'
         self.text2 = 'He chatted with the gathered press.'
-        self.doc1 = textacy.TextDoc(self.text1, lang='en')
-        self.doc2 = textacy.TextDoc(self.text2, lang='en')
+        self.doc1 = textacy.Document(self.text1, lang='en')
+        self.doc2 = textacy.Document(self.text2, lang='en')
 
     def test_word_movers(self):
         metrics = ('cosine', 'l1', 'manhattan', 'l2', 'euclidean')

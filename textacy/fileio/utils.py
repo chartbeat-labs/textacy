@@ -110,8 +110,8 @@ def coerce_content_type(content, file_mode):
 def split_content_and_metadata(items, content_field, itemwise=False):
     """
     Split content (text) from associated metadata, but keep them paired together,
-    for convenient loading into a ``TextDoc`` (with ``itemwise = True``) or
-    ``TextCorpus.from_texts()`` (with ``itemwise = False``). Output format depends
+    for convenient loading into a ``Document`` (with ``itemwise = True``) or
+    ``Corpus.from_texts()`` (with ``itemwise = False``). Output format depends
     on the form of the input items (dicts vs. lists) and the value for ``itemwise``.
 
     Args:
