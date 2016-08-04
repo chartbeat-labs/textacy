@@ -10,7 +10,7 @@ import numpy as np
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
 from textacy.representations.vsm import build_doc_term_matrix
-from textacy.texts import TextCorpus
+from textacy import Corpus
 from textacy.tm import TopicModel
 
 class TopicModelTestCase(unittest.TestCase):
@@ -24,7 +24,7 @@ class TopicModelTestCase(unittest.TestCase):
                  "It waited patiently about until Mary did appear.",
                  "Why does the lamb love Mary so? The eager children cry.",
                  "Mary loves the lamb, you know, the teacher did reply."]
-        textcorpus = TextCorpus.from_texts('en', texts)
+        textcorpus = Corpus.from_texts('en', texts)
         term_lists = [doc.as_terms_list(words=True, ngrams=False, named_entities=False)
                       for doc in textcorpus]
         self.doc_term_matrix, self.id2term = build_doc_term_matrix(

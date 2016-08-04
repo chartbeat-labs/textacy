@@ -18,7 +18,7 @@ def readability_stats(doc):
     Also includes constituent values needed to compute the stats, e.g. word count.
 
     Args:
-        doc (:class:`texts.TextDoc() <textacy.texts.TextDoc>`)
+        doc (:class:`Document <textacy.document.Document>`)
 
     Returns:
         dict: mapping of readability statistic name (str) to value (int or float)

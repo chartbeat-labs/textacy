@@ -95,11 +95,11 @@ class SupremeCourt(object):
         >>> for text in sc.texts(min_len=50000):
         ...     print(len(text))
 
-    Stream court cases into a `TextCorpus`::
+    Stream court cases into a `Corpus`::
 
         >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
         ...     sc.docs(limit=100), 'text')
-        >>> tc = textacy.TextCorpus.from_texts('en', text_stream, metadata_stream)
+        >>> tc = textacy.Corpus.from_texts('en', text_stream, metadata_stream)
         >>> print(tc)
 
     Args:

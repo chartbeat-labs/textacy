@@ -6,7 +6,7 @@ Train and apply a topic model to vectorized texts. For example::
     ...          in textacy.corpora.wikipedia.get_plaintext_pages('enwiki-latest-pages-articles.xml.bz2', max_n_pages=100))
     >>> content_stream, metadata_stream = textacy.fileio.read.split_content_and_metadata(pages, 2, itemwise=False)
     >>> metadata_stream = ({'pageid': m[0], 'title': m[1]} for m in metadata_stream)
-    >>> corpus = textacy.TextCorpus.from_texts('en', content_stream, metadata=metadata_stream)
+    >>> corpus = textacy.Corpus.from_texts('en', content_stream, metadata=metadata_stream)
     >>> # next, tokenize and vectorize the corpus
     >>> terms_lists = (doc.as_terms_list(words=True, ngrams=False, named_entities=True)
     ...                for doc in corpus)
