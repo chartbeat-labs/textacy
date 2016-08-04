@@ -39,7 +39,7 @@ setup(
     install_requires=[
         'backports.lzma>=0.0.6',
         'cachetools',
-        'cld2-cffi',
+        'cld2-cffi>=0.1.3',
         'cytoolz',
         'ftfy',
         'fuzzywuzzy',

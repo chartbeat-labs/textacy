@@ -3,7 +3,7 @@ from __future__ import absolute_import
 import logging
 import os
 
-__version__ = '0.2.5'
+__version__ = '0.2.8'
 __resources_dir__ = os.path.join(os.path.dirname(__file__), 'resources')
 
 # subpackages
