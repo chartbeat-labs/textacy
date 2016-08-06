@@ -19,7 +19,7 @@ from textacy import lexicon_methods, spacy_utils, text_stats
 from textacy import doc
 from textacy import corpus
 from textacy import extract
-from textacy import distance, export, keyterms
+from textacy import export, keyterms, similarity
 
 from textacy.data import load_spacy
 from textacy.preprocess import preprocess_text

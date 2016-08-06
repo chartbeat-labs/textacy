@@ -1,5 +1,5 @@
 """
-collection of semantic distance metrics...
+Collection of semantic similarity metrics.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -22,7 +22,8 @@ from textacy.compat import string_types
 
 def word_movers(doc1, doc2, metric='cosine'):
     """
-    Measure the semantic distance between two documents using Word Movers Distance.
+    Measure the semantic similarity between two documents using Word Movers
+    Distance.
 
     Args:
         doc1 (``textacy.Doc`` or ``spacy.Doc``)
@@ -30,8 +31,8 @@ def word_movers(doc1, doc2, metric='cosine'):
         metric ({'cosine', 'euclidean', 'l1', 'l2', 'manhattan'})
 
     Returns:
-        float: distance between `doc1` and `doc2` in [0.0, 1.0], where smaller
-            values correspond to more similar documents
+        float: similarity between `doc1` and `doc2` in the interval [0.0, 1.0],
+            where larger values correspond to more similar documents
 
     References:
         Ofir Pele and Michael Werman, "A linear time histogram metric for improved
@@ -68,32 +69,32 @@ def word_movers(doc1, doc2, metric='cosine'):
     vec2 = np.array([vec2[word_idx] for word_idx in range(len(stringstore))]).astype(np.double)
     vec2 /= vec2.sum()  # normalize word counts
 
-    return emd(vec1, vec2, distance_mat)
+    return 1.0 - emd(vec1, vec2, distance_mat)
 
 
 def word2vec(obj1, obj2):
     """
     Measure the semantic similarity between one Doc or spacy Doc, Span, Token,
-    or Lexeme and another like object as the cosine distance between the objects'
-    (average) word2vec vectors.
+    or Lexeme and another like object using the cosine distance between the
+    objects' (average) word2vec vectors.
 
     Args:
         obj1 (`textacy.Doc`, `spacy.Doc`, `spacy.Span`, `spacy.Token`, or `spacy.Lexeme`)
         obj2 (`textacy.Doc`, `spacy.Doc`, `spacy.Span`, `spacy.Token`, or `spacy.Lexeme`)
 
     Returns
-        float: distance between `obj1` and `obj2` in [0.0, 1.0], where
-            smaller values correspond to more similar objects
+        float: similarity between `obj1` and `obj2` in the interval [0.0, 1.0],
+            where larger values correspond to more similar objects
     """
     if isinstance(obj1, textacy.Doc) and isinstance(obj2, textacy.Doc):
         obj1 = obj1.spacy_doc
         obj2 = obj2.spacy_doc
-    return 1.0 - obj1.similarity(obj2)
+    return obj1.similarity(obj2)
 
 
 def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=80):
     """
-    Measure the semantic distance between two strings or sequences of strings
+    Measure the semantic similarity between two strings or sequences of strings
     using Jaccard distance, with optional fuzzy matching of not-identical pairs
     when `obj1` and `obj2` are sequences of strings.
 
@@ -107,8 +108,9 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=80):
             with a score >= this value will be considered matches
 
     Returns:
-        float: distance between `obj1` and `obj2` in [0.0, 1.0], where smaller
-            values correspond to more similar strings or sequences of strings
+        float: similarity between `obj1` and `obj2` in the interval [0.0, 1.0],
+            where larger values correspond to more similar strings or sequences
+            of strings
 
     Raises:
         ValueError: if `fuzzy_match` is True but `obj1` and `obj2` are strings
@@ -129,28 +131,25 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=80):
     elif fuzzy_match is True:
         raise ValueError('fuzzy matching not possible with str inputs')
 
-    return 1.0 - (intersection / union)
+    return intersection / union
 
 
-def hamming(str1, str2, normalize=False):
+def hamming(str1, str2):
     """
-    Measure the distance between two strings using Hamming distance, which simply
-    gives the number of characters in the strings that are different, i.e. the
-    number of substitution edits needed to change one string into the other.
+    Measure the similarity between two strings using Hamming distance, which
+    simply gives the number of characters in the strings that are different i.e.
+    the number of substitution edits needed to change one string into the other.
 
     Args:
         str1 (str)
         str2 (str)
-        normalize (bool): if True, divide Hamming distance by the total number of
-            characters in the longest string; otherwise leave the distance as-is
 
     Returns:
-        int or float: if `normalize` is False, return an int, otherwise return
-            a float in the interval [0.0, 1.0], where smaller values correspond
-            to more similar strings
+        float: similarity between `str1` and `str2` in the interval [0.0, 1.0],
+            where larger values correspond to more similar strings
 
-    .. note:: This is a *modified* Hamming distance in that it permits strings of
-        different lengths to be compared,
+    .. note:: This uses a *modified* Hamming distance in that it permits strings
+        of different lengths to be compared.
     """
     len_str1 = len(str1)
     len_str2 = len(str2)
@@ -164,14 +163,13 @@ def hamming(str1, str2, normalize=False):
         # distance is # of different chars + difference in str lengths
         distance = len_str1 - len_str2
         distance += _hamming(str1[:len_str2], str2)
-    if normalize is True:
-        distance /= len_str1
-    return distance
+    distance /= len_str1
+    return 1.0 - distance
 
 
-def levenshtein(str1, str2, normalize=False):
+def levenshtein(str1, str2):
     """
-    Measure the distance between two strings using Levenshtein distance, which
+    Measure the similarity between two strings using Levenshtein distance, which
     gives the minimum number of character insertions, deletions, and substitutions
     needed to change one string into the other.
 
@@ -182,20 +180,18 @@ def levenshtein(str1, str2, normalize=False):
             of characters in the longest string; otherwise leave the distance as-is
 
     Returns:
-        int or float: if `normalize` is False, return an int, otherwise return
-            a float in the interval [0.0, 1.0], where smaller values correspond
-            to more similar strings
+        float: similarity between `str1` and `str2` in the interval [0.0, 1.0],
+            where larger values correspond to more similar strings
     """
     distance = _levenshtein(str1, str2)
-    if normalize is True:
-        distance /= max(len(str1), len(str2))
-    return distance
+    distance /= max(len(str1), len(str2))
+    return 1.0 - distance
 
 
 def jaro_winkler(str1, str2, prefix_weight=0.1):
     """
-    Measure the distance between two strings using Jaro-Winkler similarity metric,
-    a modification of Jaro metric giving more weight to a shared prefix.
+    Measure the similarity between two strings using Jaro-Winkler similarity
+    metric, a modification of Jaro metric giving more weight to a shared prefix.
 
     Args:
         str1 (str)
@@ -204,7 +200,7 @@ def jaro_winkler(str1, str2, prefix_weight=0.1):
             to consider the strings identical
 
     Returns:
-        float: distance between `str1` and `str2` in [0.0, 1.0], where smaller
-            values correspond to more similar strings
+        float: similarity between `str1` and `str2` in the interval [0.0, 1.0],
+            where larger values correspond to more similar strings
     """
-    return 1.0 - _jaro_winkler(str1, str2, prefix_weight)
+    return _jaro_winkler(str1, str2, prefix_weight)
