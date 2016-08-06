@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -36,6 +37,4 @@ class BernieAndHillaryTestCase(unittest.TestCase):
         self.assertNotEqual(bnh[0]['date'], '1996-01-04')
 
     def tearDown(self):
-        for fname in os.listdir(self.tempdir):
-            os.remove(os.path.join(self.tempdir, fname))
-        os.rmdir(self.tempdir)
+        shutil.rmtree(self.tempdir)

@@ -11,6 +11,7 @@ from numpy import load as np_load
 from scipy.sparse import csc_matrix, csr_matrix
 from spacy.tokens.doc import Doc as SpacyDoc
 
+from textacy.compat import csv
 from textacy.fileio import open_sesame
 
 JSON_DECODER = json.JSONDecoder()
@@ -125,6 +126,33 @@ def read_json_mash(filepath, mode='rt', encoding=None, buffersize=2048):
                 # not enough data to decode => read another chunk
                 except ValueError:
                     break
+
+
+def read_csv(filepath, encoding=None, dialect='excel', delimiter=','):
+    """
+    Iterate over a stream of rows, where each row is an iterable of strings
+    and/or numbers with individual values separated by ``delimiter``.
+
+    Args:
+        filepath (str): /path/to/file on disk from which rows will be streamed
+        encoding (str)
+        dialect (str): a grouping of formatting parameters that determine how
+            the tabular data is parsed when reading/writing; if 'infer', the
+            first 1024 bytes of the file is analyzed, producing a best guess for
+            the correct dialect
+        delimiter (str): 1-character string used to separate fields in a row
+
+    Yields:
+        List[obj]: next row, whose elements are strings and/or numbers
+
+    .. seealso:: https://docs.python.org/3/library/csv.html#csv.reader
+    """
+    with open_sesame(filepath, mode='rt', encoding=encoding, newline='') as f:
+        if dialect == 'infer':
+            dialect = csv.Sniffer().sniff(f.read(1024))
+            f.seek(0)
+        for row in csv.reader(f, dialect=dialect, delimiter=delimiter):
+            yield row
 
 
 def read_spacy_docs(spacy_vocab, filepath):

@@ -9,7 +9,7 @@ from numpy import savez, savez_compressed
 from scipy.sparse import csc_matrix, csr_matrix
 from spacy.tokens.doc import Doc as SpacyDoc
 
-from textacy.compat import unicode_to_bytes
+from textacy.compat import csv, unicode_to_bytes
 from textacy.fileio import open_sesame, make_dirs
 
 
@@ -105,6 +105,40 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
                                sort_keys=sort_keys) + newline)
 
 
+def write_csv(rows, filepath, encoding=None, auto_make_dirs=False,
+              dialect='excel', delimiter=',', ):
+    """
+    Iterate over a sequence of rows, where each row is an iterable of strings
+    and/or numbers, writing each to a separate line in file ``filepath`` with
+    individual values separated by ``delimiter``.
+
+    Args:
+        rows (Iterable[Iterable]): iterable of iterables of strings and/or
+            numbers to write to disk; for example::
+
+                [['That was a great movie!', 0.9],
+                 ['The movie was okay, I guess.', 0.2],
+                 ['Worst. Movie. Ever.', -1.0]]
+
+        filepath (str): /path/to/file on disk where rows will be written
+        encoding (str)
+        auto_make_dirs (bool)
+        dialect (str): a grouping of formatting parameters that determine how
+            the tabular data is parsed when reading/writing
+        delimiter (str): 1-character string used to separate fields in a row
+
+    .. seealso:: https://docs.python.org/3/library/csv.html#csv.writer
+
+    .. note:: Here, CSV is used as a catch-all term for *any* delimited file
+        format, and `delimiter=','` is merely the function's default value.
+        Other common delimited formats are TSV (tab-separated-value, with
+        `delimiter='\t''`) and PSV (pipe-separated-value, with `delimiter='|'`.
+    """
+    with open_sesame(filepath, mode='wt', encoding=encoding, newline='') as f:
+        csv_writer = csv.writer(f, dialect=dialect, delimiter=delimiter)
+        csv_writer.writerows(rows)
+
+
 def write_spacy_docs(spacy_docs, filepath, auto_make_dirs=False):
     """
     Serialize a sequence of ``spacy.Doc`` s to disk at ``filepath`` using Spacy's
@@ -113,7 +147,7 @@ def write_spacy_docs(spacy_docs, filepath, auto_make_dirs=False):
     Args:
         spacy_docs (``spacy.Doc`` or iterable(``spacy.Doc``)): a single spacy doc
             or a sequence of spacy docs to serialize to disk at ``filepath``
-        filepath (str): /path/to/file on disk from which spacy docs will be streamed
+        filepath (str): /path/to/file on disk to which spacy docs will be streamed
         auto_make_dirs (bool)
     """
     if isinstance(spacy_docs, SpacyDoc):
