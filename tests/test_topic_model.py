@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, unicode_literals
 
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -99,6 +100,4 @@ class TopicModelTestCase(unittest.TestCase):
                 self.assertTrue(term_weights[i][1] >= term_weights[i+1][1])
 
     def tearDown(self):
-        for fname in os.listdir(self.tempdir):
-            os.remove(os.path.join(self.tempdir, fname))
-        os.rmdir(self.tempdir)
+        shutil.rmtree(self.tempdir)

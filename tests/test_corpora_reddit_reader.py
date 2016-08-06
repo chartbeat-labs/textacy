@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -57,6 +58,4 @@ class RedditReaderTestCase(unittest.TestCase):
         self.assertEqual(len(comments), 1)
 
     def tearDown(self):
-        for fname in os.listdir(self.tempdir):
-            os.remove(os.path.join(self.tempdir, fname))
-        os.rmdir(self.tempdir)
+        shutil.rmtree(self.tempdir)

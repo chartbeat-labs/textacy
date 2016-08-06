@@ -3,6 +3,7 @@ import sys
 PY2 = int(sys.version[0]) == 2
 
 if PY2:
+    from backports import csv
     from backports import lzma
     from itertools import izip as zip
 
@@ -17,6 +18,7 @@ if PY2:
         return unicode_type(b, encoding=encoding, errors=errors)
 
 else:
+    import csv
     import lzma
 
     zip = zip

@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
 import os
+import shutil
 import tempfile
 import unittest
 
@@ -163,6 +165,42 @@ class FileIOTestCase(unittest.TestCase):
                 observed = list(fileio.read_json_lines(filename, mode='rt'))
                 self.assertEqual(observed, expected)
 
+    def test_read_write_csv_compressed(self):
+        expected = [['this is some text', 'scandal', '42'],
+                    ["here's some more text: boom!", 'escándalo', '1.0']]
+        for ext in ('.csv', '.csv.gz', '.csv.bz2', '.csv.xz'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_csv' + ext)
+            if PY2 is True and ext != '.csv':
+                self.assertRaises(
+                    ValueError, fileio.open_sesame,
+                    filename, 'wt', None, True)
+            else:
+                fileio.write_csv(expected, filename, auto_make_dirs=True)
+                observed = list(fileio.read_csv(filename))
+                self.assertEqual(observed, expected)
+
+    def test_read_write_csv_delimiters(self):
+        expected = [['this is some text', 'scandal', '42'],
+                    ["here's some more text: boom!", 'escándalo', '1.0']]
+        for delimiter in (',', '\t', '|', ':'):
+            filename = os.path.join(
+                self.tempdir, 'test_read_write_csv.csv')
+            fileio.write_csv(
+                expected, filename, delimiter=delimiter, auto_make_dirs=True)
+            observed = list(fileio.read_csv(filename, delimiter=delimiter))
+            self.assertEqual(observed, expected)
+
+    def test_read_write_csv_dialect(self):
+        expected = [['this is some text', 'scandal', '42'],
+                    ["here's some more text: boom!", 'escándalo', '1.0']]
+        filename = os.path.join(
+            self.tempdir, 'test_read_write_csv.csv')
+        fileio.write_csv(
+            expected, filename, dialect='excel', auto_make_dirs=True)
+        observed = list(fileio.read_csv(filename, dialect='infer'))
+        self.assertEqual(observed, expected)
+
     def test_read_write_spacy_docs(self):
         expected = [tok.lemma_ for tok in self.spacy_doc]
         for ext in ('.bin', '.bin.gz', '.bin.bz2', '.bin.xz'):
@@ -249,6 +287,4 @@ class FileIOTestCase(unittest.TestCase):
                                           extension='.py'))) == 1)
 
     def tearDown(self):
-        for fname in os.listdir(self.tempdir):
-            os.remove(os.path.join(self.tempdir, fname))
-        os.rmdir(self.tempdir)
+        shutil.rmtree(self.tempdir)
