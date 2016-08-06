@@ -9,10 +9,10 @@ import re
 from cld2 import detect as cld2_detect
 
 from textacy.compat import PY2, unicode_to_bytes
-from textacy.regexes_etc import (ACRONYM_REGEX, DANGLING_PARENS_TERM_RE,
-                                 LEAD_HYPHEN_TERM_RE, LEAD_TAIL_CRUFT_TERM_RE,
-                                 NEG_DIGIT_TERM_RE, NONBREAKING_SPACE_REGEX,
-                                 WEIRD_HYPHEN_SPACE_TERM_RE, WEIRD_APOSTR_SPACE_TERM_RE)
+from textacy.constants import (ACRONYM_REGEX, DANGLING_PARENS_TERM_RE,
+                               LEAD_HYPHEN_TERM_RE, LEAD_TAIL_CRUFT_TERM_RE,
+                               NEG_DIGIT_TERM_RE, NONBREAKING_SPACE_REGEX,
+                               WEIRD_HYPHEN_SPACE_TERM_RE, WEIRD_APOSTR_SPACE_TERM_RE)
 
 logger = logging.getLogger(__name__)
 

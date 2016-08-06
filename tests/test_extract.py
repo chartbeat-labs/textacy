@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 from spacy import attrs
 
-from textacy import data, extract, regexes_etc
+from textacy import constants, data, extract
 
 
 class ExtractTestCase(unittest.TestCase):
@@ -193,7 +193,7 @@ class ExtractTestCase(unittest.TestCase):
             'a personal question', 'Donald Trump', 'mosques',
             'the United States', 'great sorrow', 'that what', 'our kids']
         observed = [span.text for span in extract.pos_regex_matches(
-            self.spacy_doc, regexes_etc.POS_REGEX_PATTERNS['en']['NP'])]
+            self.spacy_doc, constants.POS_REGEX_PATTERNS['en']['NP'])]
         self.assertEqual(observed, expected)
 
     def test_subject_verb_object_triples(self):
