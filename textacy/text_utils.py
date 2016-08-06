@@ -46,8 +46,8 @@ def is_acronym(token, exclude=None):
     if token.isdigit():
         return False
     # acronyms must have at least one upper-case letter or start/end with a digit
-    if (not any(char.isupper() for char in token)
-            and not (token[0].isdigit() or token[-1].isdigit())):
+    if (not any(char.isupper() for char in token) and
+            not (token[0].isdigit() or token[-1].isdigit())):
         return False
     # acronyms must have between 2 and 10 alphanumeric characters
     if not 2 <= sum(1 for char in token if char.isalnum()) <= 10:
@@ -107,15 +107,20 @@ def keyword_in_context(text, keyword, ignore_case=True,
     flags = re.IGNORECASE if ignore_case is True else 0
     if print_only is True:
         for match in re.finditer(keyword, text, flags=flags):
-            print('{pre} {kw} {post}'.format(
-                    pre=text[max(0, match.start() - window_width): match.start()].rjust(window_width),
-                    kw=match.group(),
-                    post=text[match.end(): match.end() + window_width].ljust(window_width)))
+            line = '{pre} {kw} {post}'.format(
+                pre=text[max(0, match.start() - window_width): match.start()].rjust(window_width),
+                kw=match.group(),
+                post=text[match.end(): match.end() + window_width].ljust(window_width))
+            print(line)
     else:
         return ((text[max(0, match.start() - window_width): match.start()],
                  match.group(),
                  text[match.end(): match.end() + window_width])
                 for match in re.finditer(keyword, text, flags=flags))
+
+
+KWIC = keyword_in_context
+"""Alias of :func:`keyword_in_context <textacy.text_utils.keyword_in_context>`."""
 
 
 def clean_terms(terms):
@@ -149,7 +154,7 @@ def clean_terms(terms):
              else NEG_DIGIT_TERM_RE.sub(r'\1\2', WEIRD_HYPHEN_SPACE_TERM_RE.sub(r'\1', term))
              for term in terms)
     # handle oddly separated apostrophe'd words
-    terms = (WEIRD_APOSTR_SPACE_TERM_RE.sub(r'\1\2',  term)
+    terms = (WEIRD_APOSTR_SPACE_TERM_RE.sub(r'\1\2', term)
              if "'" in term else term
              for term in terms)
     # normalize whitespace

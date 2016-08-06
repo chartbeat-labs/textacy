@@ -72,7 +72,9 @@ def build_doc_term_matrix(terms_lists,
             values are corresponding strings
     """
     stringstore = StringStore()
-    data = []; rows = []; cols = []
+    data = []
+    rows = []
+    cols = []
     for row_idx, terms_list in enumerate(terms_lists):
 
         # an empty string always occupies index 0 in the stringstore, which causes

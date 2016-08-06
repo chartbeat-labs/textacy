@@ -9,8 +9,8 @@ import logging
 from cytoolz import itertoolz
 import networkx as nx
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
-from spacy.tokens.span import Span as spacy_span
-from spacy.tokens.token import Token as spacy_token
+from spacy.tokens.span import Span as SpacySpan
+from spacy.tokens.token import Token as SpacyToken
 
 from textacy.compat import unicode_type
 from textacy import extract
@@ -63,7 +63,7 @@ def terms_to_semantic_network(terms,
 
     if isinstance(terms[0], unicode_type):
         windows = itertoolz.sliding_window(window_width, terms)
-    elif isinstance(terms[0], spacy_token):
+    elif isinstance(terms[0], SpacyToken):
         windows = ((normalized_str(tok) for tok in window)
                    for window in itertoolz.sliding_window(window_width, terms))
     else:
@@ -117,7 +117,7 @@ def sents_to_semantic_network(sents,
     n_sents = len(sents)
     if isinstance(sents[0], unicode_type):
         pass
-    elif isinstance(sents[0], spacy_span):
+    elif isinstance(sents[0], SpacySpan):
         sents = [' '.join(normalized_str(tok) for tok in
                           extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
                  for sent in sents]

@@ -3,13 +3,13 @@ from __future__ import absolute_import, unicode_literals
 import unittest
 
 from textacy import text_stats
-from textacy import Document
+from textacy import Doc
 
 
 class TextStatsTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.spacy_doc = Document('This is an English-language document.')
+        self.spacy_doc = Doc('This is an English-language document.')
         self.n_chars = 2855
         self.n_syllables = 857
         self.n_words = 441

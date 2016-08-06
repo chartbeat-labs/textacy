@@ -25,8 +25,8 @@ def word_movers(doc1, doc2, metric='cosine'):
     Measure the semantic distance between two documents using Word Movers Distance.
 
     Args:
-        doc1 (`Document` or `spacy.Doc`)
-        doc2 (`Document` or `spacy.Doc`)
+        doc1 (``textacy.Doc`` or ``spacy.Doc``)
+        doc2 (``textacy.Doc`` or ``spacy.Doc``)
         metric ({'cosine', 'euclidean', 'l1', 'l2', 'manhattan'})
 
     Returns:
@@ -73,19 +73,19 @@ def word_movers(doc1, doc2, metric='cosine'):
 
 def word2vec(obj1, obj2):
     """
-    Measure the semantic similarity between one Document or spacy Doc, Span, Token,
+    Measure the semantic similarity between one Doc or spacy Doc, Span, Token,
     or Lexeme and another like object as the cosine distance between the objects'
     (average) word2vec vectors.
 
     Args:
-        obj1 (`Document`, `spacy.Doc`, `spacy.Span`, `spacy.Token`, or `spacy.Lexeme`)
-        obj2 (`Document`, `spacy.Doc`, `spacy.Span`, `spacy.Token`, or `spacy.Lexeme`)
+        obj1 (`textacy.Doc`, `spacy.Doc`, `spacy.Span`, `spacy.Token`, or `spacy.Lexeme`)
+        obj2 (`textacy.Doc`, `spacy.Doc`, `spacy.Span`, `spacy.Token`, or `spacy.Lexeme`)
 
     Returns
         float: distance between `obj1` and `obj2` in [0.0, 1.0], where
             smaller values correspond to more similar objects
     """
-    if isinstance(obj1, textacy.Document) and isinstance(obj2, textacy.Document):
+    if isinstance(obj1, textacy.Doc) and isinstance(obj2, textacy.Doc):
         obj1 = obj1.spacy_doc
         obj2 = obj2.spacy_doc
     return 1.0 - obj1.similarity(obj2)

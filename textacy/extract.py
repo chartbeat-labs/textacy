@@ -18,7 +18,7 @@ from spacy.tokens.span import Span as SpacySpan
 
 from textacy import spacy_utils, text_utils
 from textacy.compat import unicode_type
-from textacy.document import Document
+from textacy.doc import Doc
 from textacy.spacy_utils import (normalized_str, get_main_verbs_of_sent,
                                  get_subjects_of_verb, get_objects_of_verb,
                                  get_span_for_compound_noun,
@@ -34,7 +34,7 @@ def words(doc,
     optionally filtering words by part-of-speech tag and frequency.
 
     Args:
-        doc (``textacy.Document``, ``spacy.Doc``, or ``spacy.Span``)
+        doc (``textacy.Doc``, ``spacy.Doc``, or ``spacy.Span``)
         filter_stops (bool): if True, remove stop words from word list
         filter_punct (bool): if True, remove punctuation from word list
         filter_nums (bool): if True, remove number-like words (e.g. 10, 'ten')
@@ -103,7 +103,7 @@ def ngrams(doc, n,
     parts-of-speech of the constituent words.
 
     Args:
-        doc (``textacy.Document``, ``spacy.Doc``, or ``spacy.Span``)
+        doc (``textacy.Doc``, ``spacy.Doc``, or ``spacy.Span``)
         n (int): number of tokens per n-gram; 2 => bigrams, 3 => trigrams, etc.
         filter_stops (bool): if True, remove ngrams that start or end
             with a stop word
@@ -188,7 +188,7 @@ def named_entities(doc,
     a spacy-parsed doc, optionally filtering by entity types and frequencies.
 
     Args:
-        doc (``textacy.Document`` or ``spacy.Doc``)
+        doc (``textacy.Doc`` or ``spacy.Doc``)
         include_types (str or Set[str]): remove named entities whose type IS NOT
             in this param; if "NUMERIC", all numeric entity types ("DATE",
             "MONEY", "ORDINAL", etc.) are included
@@ -208,29 +208,31 @@ def named_entities(doc,
         TypeError: if `include_types` or `exclude_types` is not a str, a set of
             str, or a falsy value
     """
-    if isinstance(doc, Document):
+    if isinstance(doc, Doc):
         nes = doc.spacy_doc.ents
     else:
         nes = doc.ents
     if include_types:
-        if include_types.upper() == 'NUMERIC':
-            include_types = NUMERIC_NE_TYPES
         if isinstance(include_types, unicode_type):
             include_types = include_types.upper()
-            nes = (ne for ne in nes if ne.label_ == include_types)
-        elif isinstance(include_types, (set, frozenset)):
+            if include_types == 'NUMERIC':
+                include_types = NUMERIC_NE_TYPES  # we now go to next if block
+            else:
+                nes = (ne for ne in nes if ne.label_ == include_types)
+        if isinstance(include_types, (set, frozenset)):
             include_types = {type_.upper() for type_ in include_types}
             nes = (ne for ne in nes if ne.label_ in include_types)
         else:
             msg = 'invalid `include_types` type: "{}"'.format(type(include_types))
             raise TypeError(msg)
     if exclude_types:
-        if exclude_types.upper() == 'NUMERIC':
-            exclude_types = NUMERIC_NE_TYPES
         if isinstance(exclude_types, unicode_type):
             exclude_types = exclude_types.upper()
-            nes = (ne for ne in nes if ne.label_ != exclude_types)
-        elif isinstance(exclude_types, (set, frozenset)):
+            if exclude_types == 'NUMERIC':
+                exclude_types = NUMERIC_NE_TYPES  # we now go to next if block
+            else:
+                nes = (ne for ne in nes if ne.label_ != exclude_types)
+        if isinstance(exclude_types, (set, frozenset)):
             exclude_types = {type_.upper() for type_ in exclude_types}
             nes = (ne for ne in nes if ne.label_ not in exclude_types)
         else:
@@ -254,7 +256,7 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
     filtering by frequency and dropping leading determiners.
 
     Args:
-        doc (``textacy.Document`` or ``spacy.Doc``)
+        doc (``textacy.Doc`` or ``spacy.Doc``)
         drop_determiners (bool): remove leading determiners (e.g. "the")
             from phrases (e.g. "the quick brown fox" => "quick brown fox")
         min_freq (int): remove chunks that occur in `doc` fewer than
@@ -264,7 +266,7 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
         ``spacy.Span``: the next noun chunk from ``doc`` in order of appearance
              in the document
     """
-    if isinstance(doc, Document):
+    if isinstance(doc, Doc):
         ncs = doc.spacy_doc.noun_chunks
     else:
         ncs = doc.noun_chunks
@@ -287,7 +289,7 @@ def pos_regex_matches(doc, pattern):
     part-of-speech tags match the specified regex pattern.
 
     Args:
-        doc (``textacy.Document`` or ``spacy.Doc`` or ``spacy.Span``)
+        doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
         pattern (str): Pattern of consecutive POS tags whose corresponding words
             are to be extracted, inspired by the regex patterns used in NLTK's
             `nltk.chunk.regexp`. Tags are uppercase, from the universal tag set;
@@ -323,7 +325,7 @@ def subject_verb_object_triples(doc):
     spacy-parsed doc. Note that this only works for SVO languages.
 
     Args:
-        doc (``textacy.Document`` or ``spacy.Doc`` or ``spacy.Span``)
+        doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
 
     Yields:
         Tuple[``spacy.Span``, ``spacy.Span``, ``spacy.Span``]: the next 3-tuple
@@ -335,7 +337,7 @@ def subject_verb_object_triples(doc):
     # TODO: What about object (noun) negations?
     if isinstance(doc, SpacySpan):
         sents = [doc]
-    else:  # textacy.Document or spacy.Doc
+    else:  # textacy.Doc or spacy.Doc
         sents = doc.sents
 
     for sent in sents:
@@ -375,7 +377,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
     only the most frequently occurring definition is returned.
 
     Args:
-        doc (``textacy.Document`` or ``spacy.Doc`` or ``spacy.Span``)
+        doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
         known_acro_defs (dict, optional): if certain acronym/definition pairs
             are known, pass them in as {acronym (str): definition (str)};
             algorithm will not attempt to find new definitions
@@ -399,7 +401,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
 
     if isinstance(doc, SpacySpan):
         sents = [doc]
-    else:  # textacy.Document or spacy.Doc
+    else:  # textacy.Doc or spacy.Doc
         sents = doc.sents
 
     # iterate over sentences and their tokens
@@ -617,7 +619,7 @@ def semistructured_statements(doc, entity, cue='be', ignore_entity_case=True,
     (entity, cue, fragment) triple. This is similar to subject-verb-object triples.
 
     Args:
-        doc (``textacy.Document`` or ``spacy.Doc``)
+        doc (``textacy.Doc`` or ``spacy.Doc``)
         entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
             "global warming", "Python")
         cue (str, optional): verb lemma with which `entity` is associated
@@ -733,7 +735,7 @@ def direct_quotations(doc):
     or mixed quotations) using rules and patterns. English only.
 
     Args:
-        doc (``textacy.Document`` or ``spacy.Doc``)
+        doc (``textacy.Doc`` or ``spacy.Doc``)
 
     Yields:
         (``spacy.Span``, ``spacy.Token``, ``spacy.Span``): next quotation in ``doc``
@@ -745,7 +747,7 @@ def direct_quotations(doc):
 
     TODO: Better approach would use ML, but needs a training dataset.
     """
-    if isinstance(doc, Document):
+    if isinstance(doc, Doc):
         if doc.lang != 'en':
             raise NotImplementedError('sorry, English-language texts only :(')
         doc = doc.spacy_doc

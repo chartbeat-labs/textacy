@@ -16,14 +16,14 @@ from textacy import viz
 from textacy import compat, math_utils, regexes_etc
 from textacy import data, preprocess, text_utils
 from textacy import lexicon_methods, spacy_utils, text_stats
-from textacy import document
+from textacy import doc
 from textacy import corpus
 from textacy import extract
 from textacy import distance, export, keyterms
 
 from textacy.data import load_spacy
 from textacy.preprocess import preprocess_text
-from textacy.document import Document
+from textacy.doc import Doc
 from textacy.corpus import Corpus
 
 logger = logging.getLogger('textacy')

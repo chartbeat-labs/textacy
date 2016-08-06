@@ -12,13 +12,13 @@ import spacy.about
 
 from textacy import data, fileio
 from textacy.compat import PY2, string_types, zip
-from textacy.document import Document
+from textacy.doc import Doc
 from textacy.representations import vsm
 
 
 class Corpus(object):
     """
-    An ordered collection of :class:`Document <textacy.document.Document>` s, all of
+    An ordered collection of :class:`Doc <textacy.Doc>` s, all of
     the same language and sharing a single spaCy pipeline and vocabulary. Tracks
     overall corpus statistics and provides a convenient interface to alternate
     corpus representations.
@@ -31,7 +31,7 @@ class Corpus(object):
 
     Add texts to corpus one-by-one with :meth:`Corpus.add_text() <textacy.corpus.Corpus.add_text>`,
     or all at once with :meth:`Corpus.from_texts() <textacy.corpus.Corpus.from_texts>`.
-    Can also add already-instantiated Documents via :meth:`Corpus.add_doc() <textacy.corpus.Corpus.add_doc>`.
+    Can also add already-instantiated Docs via :meth:`Corpus.add_doc() <textacy.corpus.Corpus.add_doc>`.
 
     Iterate over corpus docs with ``for doc in Corpus``. Access individual docs
     by index (e.g. ``Corpus[0]`` or ``Corpus[0:10]``) or by boolean condition
@@ -151,8 +151,8 @@ class Corpus(object):
         spacy_docs = fileio.read_spacy_docs(textcorpus.spacy_vocab, docs_fname)
         for spacy_doc, metadata in zip(spacy_docs, metadata_stream):
             textcorpus.add_doc(
-                Document(spacy_doc, spacy_pipeline=textcorpus.spacy_pipeline,
-                         lang=lang, metadata=metadata))
+                Doc(spacy_doc, spacy_pipeline=textcorpus.spacy_pipeline,
+                    lang=lang, metadata=metadata))
         return textcorpus
 
     @classmethod
@@ -176,24 +176,24 @@ class Corpus(object):
             texts, n_threads=n_threads, batch_size=batch_size)
         if metadata is not None:
             for spacy_doc, md in zip(spacy_docs, metadata):
-                textcorpus.add_doc(Document(spacy_doc, lang=textcorpus.lang,
-                                            spacy_pipeline=textcorpus.spacy_pipeline,
-                                            metadata=md))
+                textcorpus.add_doc(Doc(spacy_doc, lang=textcorpus.lang,
+                                       spacy_pipeline=textcorpus.spacy_pipeline,
+                                       metadata=md))
         else:
             for spacy_doc in spacy_docs:
-                textcorpus.add_doc(Document(spacy_doc, lang=textcorpus.lang,
-                                            spacy_pipeline=textcorpus.spacy_pipeline,
-                                            metadata=None))
+                textcorpus.add_doc(Doc(spacy_doc, lang=textcorpus.lang,
+                                       spacy_pipeline=textcorpus.spacy_pipeline,
+                                       metadata=None))
         return textcorpus
 
     def add_text(self, text, lang=None, metadata=None):
         """
-        Create a :class:`Document <textacy.document.Document>` from ``text`` and ``metadata``,
+        Create a :class:`Doc <textacy.Doc>` from ``text`` and ``metadata``,
         then add it to the corpus.
 
         Args:
             text (str): raw text document to add to corpus as newly instantiated
-                :class:`Document <textacy.document.Document>`
+                :class:`Doc <textacy.Doc>`
             lang (str, optional):
             metadata (dict, optional): dictionary of document metadata, such as::
 
@@ -202,8 +202,8 @@ class Corpus(object):
                 NOTE: may be useful for retrieval via :func:`get_docs() <textacy.corpus.Corpus.get_docs>`,
                 e.g. ``Corpus.get_docs(lambda x: x.metadata["title"] == "My Great Doc")``
         """
-        doc = Document(text, spacy_pipeline=self.spacy_pipeline,
-                       lang=lang, metadata=metadata)
+        doc = Doc(text, spacy_pipeline=self.spacy_pipeline,
+                  lang=lang, metadata=metadata)
         doc.corpus_index = self.n_docs
         doc.corpus = self
         self.docs.append(doc)
@@ -217,24 +217,24 @@ class Corpus(object):
 
     def add_doc(self, doc, print_warning=True):
         """
-        Add an existing :class:`Document <textacy.document.Document>` to the corpus as-is.
-        NB: If ``Document`` is already added to this or another :class:`Corpus <textacy.corpus.Corpus>`,
+        Add an existing :class:`Doc <textacy.Doc>` to the corpus as-is.
+        NB: If ``Doc`` is already added to this or another :class:`Corpus <textacy.corpus.Corpus>`,
         a warning message will be printed and the ``corpus_index`` attribute will be
         overwritten, but you won't be prevented from adding the doc.
 
         Args:
-            doc (:class:`Document <textacy.document.Document>`)
+            doc (:class:`Doc <textacy.Doc>`)
             print_warning (bool, optional): if True, print a warning message if
                 ``doc`` already added to a corpus; otherwise, don't ever print
                 the warning and live dangerously
         """
         if doc.lang != self.lang:
-            msg = 'Document.lang {} != Corpus.lang {}'.format(doc.lang, self.lang)
+            msg = 'Doc.lang {} != Corpus.lang {}'.format(doc.lang, self.lang)
             raise ValueError(msg)
         if hasattr(doc, 'corpus_index'):
             doc = copy.deepcopy(doc)
             if print_warning is True:
-                print('**WARNING: Document already associated with a Corpus; adding anyway...')
+                print('**WARNING: Doc already associated with a Corpus; adding anyway...')
         doc.corpus_index = self.n_docs
         doc.corpus = self
         self.docs.append(doc)
@@ -258,14 +258,14 @@ class Corpus(object):
         ``match_condition(doc) is True``.
 
         Args:
-            match_condition (func): function that operates on a :class:`Document`
+            match_condition (func): function that operates on a :class:`Doc`
                 and returns a boolean value; e.g. `lambda x: len(x) > 100` matches
                 all docs with more than 100 tokens
             limit (int, optional): if not `None`, maximum number of matched docs
                 to return
 
         Yields:
-            :class:`Document <textacy.document.Document>`: one per doc passing ``match_condition``
+            :class:`Doc <textacy.Doc>`: one per doc passing ``match_condition``
                 up to ``limit`` docs
         """
         if limit is None:
@@ -304,7 +304,7 @@ class Corpus(object):
         Re-set all remaining docs' ``corpus_index`` attributes at the end.
 
         Args:
-            match_condition (func): function that operates on a :class:`Document <textacy.document.Document>`
+            match_condition (func): function that operates on a :class:`Doc <textacy.Doc>`
                 and returns a boolean value; e.g. ``lambda x: len(x) > 100`` matches
                 all docs with more than 100 tokens
             limit (int, optional): if not None, maximum number of matched docs
