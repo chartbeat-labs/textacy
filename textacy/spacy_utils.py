@@ -10,7 +10,7 @@ from spacy.tokens.token import Token as SpacyToken
 from spacy.tokens.span import Span as SpacySpan
 
 from textacy.text_utils import is_acronym
-from textacy.regexes_etc import AUX_DEPS, SUBJ_DEPS, OBJ_DEPS
+from textacy.constants import AUX_DEPS, SUBJ_DEPS, OBJ_DEPS
 
 
 logger = logging.getLogger(__name__)

@@ -183,7 +183,7 @@ class ReadmeTestCase(unittest.TestCase):
                       'United States of America', 'Americans', 'U.S.', 'U.S.',
                       'African American']
         observed_4 = [match.text for match in
-                      self.doc.pos_regex_matches(textacy.regexes_etc.POS_REGEX_PATTERNS['en']['NP'])][-10:]
+                      self.doc.pos_regex_matches(textacy.constants.POS_REGEX_PATTERNS['en']['NP'])][-10:]
         expected_4 = ['experiment', 'many racial wounds', 'our nation',
                       'The war', 'drugs', 'addicts', 'bars', 'addiction',
                       'the problem', 'a mental health issue']

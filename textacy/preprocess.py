@@ -13,9 +13,9 @@ import unicodedata
 from ftfy import fix_text
 from unidecode import unidecode
 
-from textacy.regexes_etc import (CURRENCIES, URL_REGEX, SHORT_URL_REGEX, EMAIL_REGEX,
-                                 PHONE_REGEX, NUMBERS_REGEX, PUNCT_REGEX, CURRENCY_REGEX,
-                                 LINEBREAK_REGEX, NONBREAKING_SPACE_REGEX)
+from textacy.constants import (CURRENCIES, URL_REGEX, SHORT_URL_REGEX, EMAIL_REGEX,
+                               PHONE_REGEX, NUMBERS_REGEX, PUNCT_REGEX, CURRENCY_REGEX,
+                               LINEBREAK_REGEX, NONBREAKING_SPACE_REGEX)
 
 
 def fix_bad_unicode(text, normalization='NFC'):

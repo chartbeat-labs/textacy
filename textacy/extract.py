@@ -23,7 +23,7 @@ from textacy.spacy_utils import (normalized_str, get_main_verbs_of_sent,
                                  get_subjects_of_verb, get_objects_of_verb,
                                  get_span_for_compound_noun,
                                  get_span_for_verb_auxiliaries)
-from textacy.regexes_etc import NUMERIC_NE_TYPES, REPORTING_VERBS
+from textacy.constants import NUMERIC_NE_TYPES, REPORTING_VERBS
 
 
 def words(doc,
@@ -297,7 +297,7 @@ def pos_regex_matches(doc, pattern):
             with spaces as needed to correctly extract matching word sequences;
             white space in the input doesn't matter.
 
-            Examples (see `regexes_etc.POS_REGEX_PATTERNS`):
+            Examples (see ``constants.POS_REGEX_PATTERNS``):
 
             * noun phrase: r'<DET>? (<NOUN>+ <ADP|CONJ>)* <NOUN>+'
             * compound nouns: r'<NOUN>+'
