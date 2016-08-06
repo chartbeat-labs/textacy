@@ -16,6 +16,8 @@ from textacy import viz
 from textacy import compat, math_utils, regexes_etc
 from textacy import data, preprocess, text_utils
 from textacy import lexicon_methods, spacy_utils, text_stats
+from textacy import document
+from textacy import corpus
 from textacy import extract
 from textacy import distance, export, keyterms
 
