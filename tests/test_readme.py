@@ -8,6 +8,7 @@ from spacy import attrs
 
 import textacy
 
+
 class ReadmeTestCase(unittest.TestCase):
 
     def setUp(self):
