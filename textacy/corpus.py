@@ -10,9 +10,9 @@ import warnings
 
 import spacy.about
 
-from textacy import Document
-from textacy.compat import PY2, string_types, zip
 from textacy import data, fileio
+from textacy.compat import PY2, string_types, zip
+from textacy.document import Document
 from textacy.representations import vsm
 
 

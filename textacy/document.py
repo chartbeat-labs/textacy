@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Load, process, iterate, transform, and save text content paired with metadata —
-a document.
+Load, process, iterate, transform, and save text content paired with metadata
+— a document.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -17,8 +17,7 @@ from spacy.tokens.token import Token as stoken
 from spacy.tokens.span import Span as sspan
 
 from textacy.compat import string_types, unicode_type
-from textacy import (data, extract, fileio, keyterms, spacy_utils,
-                     text_stats, text_utils)
+from textacy import data, fileio, spacy_utils, text_utils
 from textacy.representations import network
 
 
@@ -95,6 +94,9 @@ class Document(object):
         for tok in self.spacy_doc:
             yield tok
 
+    ##########
+    # FILEIO #
+
     def save(self, path, fname_prefix=None):
         """
         Save serialized Document content and metadata to disk.
@@ -159,17 +161,47 @@ class Document(object):
         return cls(list(fileio.read_spacy_docs(spacy_vocab, docs_fname))[0],
                    lang=lang, metadata=metadata)
 
+    ####################
+    # BASIC COMPONENTS #
+
     @property
     def tokens(self):
-        """Yield the document's tokens as tokenized by spacy; same as ``__iter__``."""
+        """
+        Yield the document's tokens, as tokenized by spaCy. Equivalent to
+        iterating directly: `for token in document: <do stuff>`
+        """
         for tok in self.spacy_doc:
             yield tok
 
     @property
     def sents(self):
-        """Yield the document's sentences as segmented by spacy."""
+        """Yield the document's sentences, as segmented by spaCy."""
         for sent in self.spacy_doc.sents:
             yield sent
+
+    @property
+    def n_tokens(self):
+        """The number of tokens in the document -- including punctuation."""
+        return len(self.spacy_doc)
+
+    @property
+    def n_sents(self):
+        """The number of sentences in the document."""
+        return sum(1 for _ in self.spacy_doc.sents)
+
+    # @property
+    # def n_words(self):
+    #     """
+    #     The number of words in the document -- i.e. the number of tokens,
+    #     excluding punctuation.
+    #     """
+    #     return sum(1 for _ in self.words(filter_stops=False,
+    #                                      filter_punct=True,
+    #                                      filter_nums=False))
+
+    # def n_paragraphs(self, pattern=r'\n\n+'):
+    #     """The number of paragraphs in the document, as delimited by ``pattern``."""
+    #     return sum(1 for _ in re.finditer(pattern, self.text)) + 1
 
     def merge(self, spans):
         """
@@ -363,247 +395,6 @@ class Document(object):
             for term in itertoolz.concat(all_terms):
                 yield term.text
 
-    ##########################
-    # INFORMATION EXTRACTION #
-
-    def words(self, **kwargs):
-        """
-        Extract an ordered sequence of words from a spacy-parsed doc, optionally
-        filtering words by part-of-speech (etc.) and frequency.
-
-        Args:
-            **kwargs:
-                filter_stops (bool, optional): if True, remove stop words from word list
-                filter_punct (bool, optional): if True, remove punctuation from word list
-                filter_nums (bool, optional): if True, remove number-like words
-                    (e.g. 10, 'ten') from word list
-                good_pos_tags (set[str], optional): remove words whose part-of-speech tag
-                    is NOT in the specified tags, using the set of universal POS tagset
-                bad_pos_tags (set[str], optional): remove words whose part-of-speech tag
-                    IS in the specified tags, using the set of universal POS tagset
-                min_freq (int, optional): remove words that occur in `doc` fewer than
-                    `min_freq` times
-
-        Yields:
-            ``spacy.Token``: the next token passing all specified filters,
-                in order of appearance in the document
-
-        .. seealso:: :func:`extract.words() <textacy.extract.words>`
-        """
-        for word in extract.words(self.spacy_doc, **kwargs):
-            yield word
-
-    def ngrams(self, n, **kwargs):
-        """
-        Extract an ordered sequence of n-grams (``n`` consecutive words) from doc,
-        optionally filtering n-grams by the types and parts-of-speech of the
-        constituent words.
-
-        Args:
-            n (int): number of tokens to include in n-grams;
-                1 => unigrams, 2 => bigrams
-            **kwargs:
-                filter_stops (bool, optional): if True, remove ngrams that start or end
-                    with a stop word
-                filter_punct (bool, optional): if True, remove ngrams that contain
-                    any punctuation-only tokens
-                filter_nums (bool, optional): if True, remove ngrams that contain
-                    any numbers or number-like tokens (e.g. 10, 'ten')
-                good_pos_tags (set[str], optional): remove ngrams whose constituent
-                    tokens' part-of-speech tags are NOT all in the specified tags,
-                    using the universal POS tagset
-                bad_pos_tags (set[str], optional): remove ngrams if any of their constituent
-                    tokens' part-of-speech tags are in the specified tags,
-                    using the universal POS tagset
-                min_freq (int, optional): remove ngrams that occur in `doc` fewer than
-                    `min_freq` times
-
-        Yields:
-            ``spacy.Span``: the next ngram passing all specified filters,
-                in order of appearance in the document
-
-        .. seealso:: :func:`extract.ngrams() <textacy.extract.ngrams>`
-        """
-        for ngram in extract.ngrams(self.spacy_doc, n, **kwargs):
-            yield ngram
-
-    def named_entities(self, **kwargs):
-        """
-        Extract an ordered sequence of named entities (PERSON, ORG, LOC, etc.) from
-        doc, optionally filtering by the entity types and frequencies.
-
-        Args:
-            **kwargs:
-                good_ne_types (set[str] or 'numeric', optional): named entity types to
-                    include; if "numeric", all numeric entity types are included
-                bad_ne_types (set[str] or 'numeric', optional): named entity types to
-                    exclude; if "numeric", all numeric entity types are excluded
-                min_freq (int, optional): remove named entities that occur in `doc` fewer
-                    than `min_freq` times
-                drop_determiners (bool, optional): remove leading determiners (e.g. "the")
-                    from named entities (e.g. "the United States" => "United States")
-
-    Yields:
-        ``spacy.Span``: the next named entity passing all specified filters,
-            in order of appearance in the document
-
-        .. seealso:: :func:`extract.named_entities() <textacy.extract.named_entities>`
-        """
-        for ne in extract.named_entities(self.spacy_doc, **kwargs):
-            yield ne
-
-    def noun_chunks(self, **kwargs):
-        """
-        Extract an ordered sequence of noun phrases from doc, optionally
-        filtering by frequency and dropping leading determiners.
-
-        Args:
-            **kwargs:
-                drop_determiners (bool, optional): remove leading determiners (e.g. "the")
-                    from phrases (e.g. "the quick brown fox" => "quick brown fox")
-                min_freq (int, optional): remove chunks that occur in `doc` fewer than
-                    `min_freq` times
-
-        Yields:
-            ``spacy.Span``: the next noun chunk, in order of appearance in the document
-
-        .. seealso:: :func:`extract.noun_chunks() <textacy.extract.noun_chunks>`
-        """
-        for nc in extract.noun_chunks(self.spacy_doc, **kwargs):
-            yield nc
-
-    def pos_regex_matches(self, pattern):
-        """
-        Extract sequences of consecutive tokens from a spacy-parsed doc whose
-        part-of-speech tags match the specified regex pattern.
-
-        Args:
-            pattern (str): Pattern of consecutive POS tags whose corresponding words
-                are to be extracted, inspired by the regex patterns used in NLTK's
-                ``nltk.chunk.regexp``. Tags are uppercase, from the universal tag set;
-                delimited by < and >, which are basically converted to parentheses
-                with spaces as needed to correctly extract matching word sequences;
-                white space in the input doesn't matter.
-
-                Examples (see :obj:`POS_REGEX_PATTERNS <textacy.regexes_etc.POS_REGEX_PATTERNS>`):
-
-                * noun phrase: r'<DET>? (<NOUN>+ <ADP|CONJ>)* <NOUN>+'
-                * compound nouns: r'<NOUN>+'
-                * verb phrase: r'<VERB>?<ADV>*<VERB>+'
-                * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
-
-        Yields:
-            ``spacy.Span``: the next span of consecutive tokens whose parts-of-speech
-                match ``pattern``, in order of apperance in the document
-        """
-        for match in extract.pos_regex_matches(self.spacy_doc, pattern):
-            yield match
-
-    def subject_verb_object_triples(self):
-        """
-        Extract an *un*ordered sequence of distinct subject-verb-object (SVO) triples
-        from doc.
-
-        Yields:
-            (``spacy.Span``, ``spacy.Span``, ``spacy.Span``): the next 3-tuple
-                representing a (subject, verb, object) triple, in order of apperance
-        """
-        for svo in extract.subject_verb_object_triples(self.spacy_doc):
-            yield svo
-
-    def acronyms_and_definitions(self, known_acro_defs=None):
-        """
-        Extract a collection of acronyms and their most likely definitions,
-        if available, from doc. If multiple definitions are found for a given acronym,
-        only the most frequently occurring definition is returned.
-
-        Args:
-            known_acro_defs (dict, optional): if certain acronym/definition pairs
-                are known, pass them in as {acronym (str): definition (str)};
-                algorithm will not attempt to find new definitions
-
-        Returns:
-            dict: unique acronyms (keys) with matched definitions (values)
-
-        .. seealso:: :func:`extract.acronyms_and_definitions() <textacy.extract.acronyms_and_definitions>`
-        for all function kwargs.
-        """
-        return extract.acronyms_and_definitions(self.spacy_doc, known_acro_defs=known_acro_defs)
-
-    def semistructured_statements(self, entity, **kwargs):
-        """
-        Extract "semi-structured statements" from doc, each as a (entity, cue, fragment)
-        triple. This is similar to subject-verb-object triples.
-
-        Args:
-            entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
-                "global warming", "Python")
-            **kwargs:
-                cue (str, optional): verb lemma with which `entity` is associated
-                    (e.g. "talk about", "have", "write")
-                ignore_entity_case (bool, optional): if True, entity matching is
-                    case-independent
-                min_n_words (int, optional): min number of tokens allowed in a
-                    matching fragment
-                max_n_words (int, optional): max number of tokens allowed in a
-                    matching fragment
-
-        Yields:
-            (``spacy.Span`` or ``spacy.Token``, ``spacy.Span`` or ``spacy.Token``, ``spacy.Span``):
-                  where each element is a matching (entity, cue, fragment) triple
-
-        .. seealso:: :func:`extract.semistructured_statements() <textacy.extract.semistructured_statements>`
-        """
-        for sss in extract.semistructured_statements(self.spacy_doc, entity, **kwargs):
-            yield sss
-
-    def direct_quotations(self):
-        """
-        Baseline, not-great attempt at direction quotation extraction (no indirect
-        or mixed quotations) using rules and patterns. English only.
-
-        Yields:
-            (``spacy.Span``, ``spacy.Token``, ``spacy.Span``): next quotation
-                represented as a (speaker, reporting verb, quotation) 3-tuple
-
-        .. seealso:: :func:`extract.direct_quotations() <textacy.extract.direct_quotations>`
-        """
-        if self.lang != 'en':
-            raise NotImplementedError('sorry, English-language texts only :(')
-        for dq in extract.direct_quotations(self.spacy_doc):
-            yield dq
-
-    def key_terms(self, algorithm='sgrank', n=10):
-        """
-        Extract key terms from a document using `algorithm`.
-
-        Args:
-            algorithm (str {'sgrank', 'textrank', 'singlerank'}, optional): name
-                of algorithm to use for key term extraction
-            n (int or float, optional): if int, number of top-ranked terms to return
-                as keyterms; if float, must be in the open interval (0.0, 1.0),
-                representing the fraction of top-ranked terms to return as keyterms
-
-        Returns:
-            list[(str, float)]: sorted list of top `n` key terms and their
-                corresponding scores
-
-        Raises:
-            ValueError: if ``algorithm`` not in {'sgrank', 'textrank', 'singlerank'}
-
-        .. seealso:: :func:`keyterms.sgrank() <textacy.keyterms.sgrank>`
-        .. seealso:: :func:`keyterms.textrank() <textacy.keyterms.textrank>`
-        .. seealso:: :func:`keyterms.singlerank() <textacy.keyterms.singlerank>`
-        """
-        if algorithm == 'sgrank':
-            return keyterms.sgrank(self.spacy_doc, window_width=1500, n_keyterms=n)
-        elif algorithm == 'textrank':
-            return keyterms.textrank(self.spacy_doc, n_keyterms=n)
-        elif algorithm == 'singlerank':
-            return keyterms.singlerank(self.spacy_doc, n_keyterms=n)
-        else:
-            raise ValueError('algorithm {} not a valid option'.format(algorithm))
-
     ##############
     # STATISTICS #
 
@@ -696,31 +487,3 @@ class Document(object):
                 return term_count_
         # last resort: try a regular expression
         return sum(1 for _ in re.finditer(re.escape(term_text), self.text))
-
-    @property
-    def n_tokens(self):
-        """The number of tokens in the document -- including punctuation."""
-        return len(self.spacy_doc)
-
-    @property
-    def n_words(self):
-        """
-        The number of words in the document -- i.e. the number of tokens, excluding
-        punctuation and whitespace.
-        """
-        return sum(1 for _ in self.words(filter_stops=False,
-                                         filter_punct=True,
-                                         filter_nums=False))
-
-    @property
-    def n_sents(self):
-        """The number of sentences in the document."""
-        return sum(1 for _ in self.spacy_doc.sents)
-
-    def n_paragraphs(self, pattern=r'\n\n+'):
-        """The number of paragraphs in the document, as delimited by ``pattern``."""
-        return sum(1 for _ in re.finditer(pattern, self.text)) + 1
-
-    @property
-    def readability_stats(self):
-        return text_stats.readability_stats(self)
