@@ -1,6 +1,15 @@
 Changelog
 =========
 
+dev
+---
+
+Changes:
+
+- Added functions to read and write delimited file formats: `read_csv()` and `write_csv()`, where the delimiter can be any valid one-char string; gzip/bzip/lzma compression is handled automatically, as usual
+- Added `backports.csv` dependency to get Python 2 up to parity with Python 3's stdlib
+
+
 0.2.8 (2016-08-03)
 ------------------
 
