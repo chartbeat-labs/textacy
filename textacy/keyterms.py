@@ -27,7 +27,7 @@ def sgrank(doc, window_width=1500, n_keyterms=10, idf=None):
     Extract key terms from a document using the [SGRank]_ algorithm.
 
     Args:
-        doc (``spacy.Doc``)
+        doc (``textacy.Doc`` or ``spacy.Doc``)
         window_width (int, optional): width of sliding window in which term
             co-occurrences are said to occur
         n_keyterms (int or float, optional): if int, number of top-ranked terms
@@ -159,7 +159,7 @@ def textrank(doc, n_keyterms=10):
     with the parameter values used in the [TextRank]_ algorithm.
 
     Args:
-        doc (``spacy.Doc``)
+        doc (``textacy.Doc`` or ``spacy.Doc``)
         n_keyterms (int or float, optional): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
             representing the fraction of top-ranked terms to return as keyterms
@@ -182,7 +182,7 @@ def singlerank(doc, n_keyterms=10):
     with the parameter values used in the [SingleRank]_ algorithm.
 
     Args:
-        doc (``spacy.Doc``)
+        doc (``textacy.Doc`` or ``spacy.Doc``)
         n_keyterms (int or float, optional): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
             representing the fraction of top-ranked terms to return as keyterms
@@ -209,7 +209,7 @@ def key_terms_from_semantic_network(doc, window_width=2, edge_weighting='binary'
     terms, connected by edges and weights specified by parameters.
 
     Args:
-        doc (``spacy.Doc``):
+        doc (``textacy.Doc`` or ``spacy.Doc``)
         window_width (int, optional): width of sliding window in which term
             co-occurrences are said to occur
         edge_weighting (str {'binary', 'cooc_freq'}, optional): method used to

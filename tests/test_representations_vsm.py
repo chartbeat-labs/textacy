@@ -3,7 +3,6 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
-import numpy as np
 from scipy.sparse import coo_matrix
 
 from textacy import Corpus
@@ -44,7 +43,7 @@ class RepresentationsVSMTestCase(unittest.TestCase):
 
     def test_get_term_freqs_exception(self):
         self.assertRaises(
-            ValueError, vsm.get_term_freqs, coo_matrix((1,1)).tocsr())
+            ValueError, vsm.get_term_freqs, coo_matrix((1, 1)).tocsr())
 
     def test_get_doc_freqs(self):
         doc_freqs = vsm.get_doc_freqs(self.doc_term_matrix, normalized=False)
@@ -64,7 +63,7 @@ class RepresentationsVSMTestCase(unittest.TestCase):
 
     def test_get_doc_freqs_exception(self):
         self.assertRaises(
-            ValueError, vsm.get_doc_freqs, coo_matrix((1,1)).tocsr())
+            ValueError, vsm.get_doc_freqs, coo_matrix((1, 1)).tocsr())
 
     def test_get_information_content(self):
         ics = vsm.get_information_content(self.doc_term_matrix)
@@ -88,7 +87,7 @@ class RepresentationsVSMTestCase(unittest.TestCase):
 
     def test_filter_terms_by_df_min_df(self):
         dtm, i2w = vsm.filter_terms_by_df(self.doc_term_matrix, self.id_to_word,
-                                                 max_df=1.0, min_df=2, max_n_terms=None)
+                                          max_df=1.0, min_df=2, max_n_terms=None)
         self.assertEqual(dtm.shape, (3, 1))
         self.assertEqual(sorted(i2w.values()), ['text'])
 
@@ -99,12 +98,12 @@ class RepresentationsVSMTestCase(unittest.TestCase):
 
     def test_filter_terms_by_ic_identity(self):
         dtm, i2w = vsm.filter_terms_by_ic(self.doc_term_matrix, self.id_to_word,
-                                                 min_ic=0.0, max_n_terms=None)
+                                          min_ic=0.0, max_n_terms=None)
         self.assertEqual(dtm.shape, self.doc_term_matrix.shape)
         self.assertEqual(i2w, self.id_to_word)
 
     def test_filter_terms_by_ic_max_n_terms(self):
         dtm, i2w = vsm.filter_terms_by_ic(self.doc_term_matrix, self.id_to_word,
-                                                 min_ic=0.0, max_n_terms=1)
+                                          min_ic=0.0, max_n_terms=1)
         self.assertEqual(dtm.shape, (3, 1))
         self.assertEqual(len(i2w), 1)

@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import re
 import unittest
 
 import numpy as np
 from spacy import attrs
 
-from textacy import data, extract, preprocess, regexes_etc
+from textacy import data, extract, regexes_etc
 
 
 class ExtractTestCase(unittest.TestCase):
@@ -69,7 +68,7 @@ class ExtractTestCase(unittest.TestCase):
             'mosques', 'sorrow', 'what', 'kids']
         observed = [tok.orth_ for tok in extract.words(
             self.spacy_doc, filter_stops=False, filter_punct=False, filter_nums=False,
-            good_pos_tags={'NOUN'})][:25]
+            include_pos={'NOUN'})][:25]
         self.assertEqual(observed, expected)
 
     def test_words_min_freq(self):
@@ -127,7 +126,7 @@ class ExtractTestCase(unittest.TestCase):
         expected = ['technology trends', 'education official']
         observed = [span.orth_ for span in extract.ngrams(
             self.spacy_doc, 2, filter_stops=False, filter_punct=False, filter_nums=False,
-            good_pos_tags={'NOUN'})]
+            include_pos={'NOUN'})]
         self.assertEqual(observed, expected)
 
     def test_named_entities(self):
@@ -141,7 +140,7 @@ class ExtractTestCase(unittest.TestCase):
     def test_named_entities_good(self):
         expected = ['Kuwait', 'Donald Trump', 'United States']
         observed = [ent.text for ent in extract.named_entities(
-            self.spacy_doc, good_ne_types={'PERSON', 'GPE'}, drop_determiners=True)]
+            self.spacy_doc, include_types={'PERSON', 'GPE'}, drop_determiners=True)]
         self.assertEqual(observed, expected)
 
     def test_named_entities_min_freq(self):

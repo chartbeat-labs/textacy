@@ -12,29 +12,30 @@ import warnings
 
 from cytoolz import itertoolz
 import spacy.about
-from spacy.tokens.doc import Doc as sdoc
-from spacy.tokens.token import Token as stoken
-from spacy.tokens.span import Span as sspan
+from spacy.tokens.doc import Doc as SpacyDoc
+from spacy.tokens.span import Span as SpacySpan
+from spacy.tokens.token import Token as SpacyToken
 
+import textacy
 from textacy.compat import string_types, unicode_type
 from textacy import data, fileio, spacy_utils, text_utils
 from textacy.representations import network
 
 
-class Document(object):
+class Doc(object):
     """
     Pairing of the content of a document with its associated metadata, where the
     content has been tokenized, tagged, parsed, etc. by spaCy. Also keep references
     to the id-to-token mapping used by spaCy to efficiently represent the content.
     If initialized from plain text, this processing is performed automatically.
 
-    ``Document`` also provides a convenient interface to information extraction,
+    ``Doc`` also provides a convenient interface to information extraction,
     different doc representations, statistical measures of the content, and more.
 
     Args:
         text_or_sdoc (str or ``spacy.Doc``): text or spacy doc containing the
-            content of this ``Document``; if str, it is automatically processed
-            by spacy before assignment to the ``Document.spacy_doc`` attribute
+            content of this ``Doc``; if str, it is automatically processed
+            by spacy before assignment to the ``Doc.spacy_doc`` attribute
         spacy_pipeline (``spacy.<lang>.<Lang>()``, optional): if a spacy pipeline
             has already been loaded or used to make the input ``spacy.Doc``, pass
             it in here to speed things up a touch; in general, only one of these
@@ -59,14 +60,14 @@ class Document(object):
             # check for match between text and passed spacy_pipeline language
             else:
                 if spacy_pipeline.lang != self.lang:
-                    msg = 'Document.lang {} != spacy_pipeline.lang {}'.format(
+                    msg = 'Doc.lang {} != spacy_pipeline.lang {}'.format(
                         self.lang, spacy_pipeline.lang)
                     raise ValueError(msg)
             self.spacy_vocab = spacy_pipeline.vocab
             self.spacy_stringstore = self.spacy_vocab.strings
             self.spacy_doc = spacy_pipeline(text_or_sdoc)
 
-        elif isinstance(text_or_sdoc, sdoc):
+        elif isinstance(text_or_sdoc, SpacyDoc):
             self.lang = spacy_pipeline.lang if spacy_pipeline is not None else \
                 text_utils.detect_language(text_or_sdoc.text_with_ws)
             self.spacy_vocab = text_or_sdoc.vocab
@@ -74,15 +75,15 @@ class Document(object):
             self.spacy_doc = text_or_sdoc
 
         else:
-            msg = 'Document must be initialized with {}, not {}'.format(
-                {str, sdoc}, type(text_or_sdoc))
+            msg = 'Doc must be initialized with {}, not {}'.format(
+                {str, SpacyDoc}, type(text_or_sdoc))
             raise ValueError(msg)
 
     def __repr__(self):
         snippet = self.text[:50].replace('\n', ' ')
         if len(snippet) == 50:
             snippet = snippet[:47] + '...'
-        return 'Document({} tokens; "{}")'.format(len(self.spacy_doc), snippet)
+        return 'Doc({} tokens; "{}")'.format(len(self.spacy_doc), snippet)
 
     def __len__(self):
         return self.n_tokens
@@ -99,7 +100,7 @@ class Document(object):
 
     def save(self, path, fname_prefix=None):
         """
-        Save serialized Document content and metadata to disk.
+        Save serialized Doc content and metadata to disk.
 
         Args:
             path (str): directory on disk where content + metadata will be saved
@@ -125,7 +126,7 @@ class Document(object):
     @classmethod
     def load(cls, path, fname_prefix=None):
         """
-        Load serialized content and metadata from disk, and initialize a Document.
+        Load serialized content and metadata from disk, and initialize a Doc.
 
         Args:
             path (str): directory on disk where content + metadata are saved
@@ -134,7 +135,7 @@ class Document(object):
                 when saving to disk
 
         Returns:
-            :class:`textacy.Document`
+            :class:`textacy.Doc`
 
         .. warn:: If the `spacy.Vocab` object used to save this document is not the
             same as the one used to load it, there will be problems! Consequently,
@@ -151,10 +152,10 @@ class Document(object):
         spacy_version = metadata.pop('spacy_version')
         if spacy_version != spacy.about.__version__:
             msg = """
-                the spaCy version used to save this Document to disk is not the
+                the spaCy version used to save this Doc to disk is not the
                 same as the version currently installed ('{}' vs. '{}'); if the
                 data underlying the associated `spacy.Vocab` has changed, this
-                loaded Document may not be valid!
+                loaded Doc may not be valid!
                 """.format(spacy_version, spacy.about.__version__)
             warnings.warn(msg, UserWarning)
         spacy_vocab = data.load_spacy(lang).vocab
@@ -188,20 +189,6 @@ class Document(object):
     def n_sents(self):
         """The number of sentences in the document."""
         return sum(1 for _ in self.spacy_doc.sents)
-
-    # @property
-    # def n_words(self):
-    #     """
-    #     The number of words in the document -- i.e. the number of tokens,
-    #     excluding punctuation.
-    #     """
-    #     return sum(1 for _ in self.words(filter_stops=False,
-    #                                      filter_punct=True,
-    #                                      filter_nums=False))
-
-    # def n_paragraphs(self, pattern=r'\n\n+'):
-    #     """The number of paragraphs in the document, as delimited by ``pattern``."""
-    #     return sum(1 for _ in re.finditer(pattern, self.text)) + 1
 
     def merge(self, spans):
         """
@@ -364,29 +351,29 @@ class Document(object):
         # special case: ensure that named entities aren't double-counted when
         # adding words or ngrams that were already added as named entities
         if dedupe is True and named_entities is True and (words is True or ngrams):
-            ents = list(self.named_entities(**kwargs))
+            ents = list(textacy.extract.named_entities(self, **kwargs))
             ent_idxs = {(ent.start, ent.end) for ent in ents}
             all_terms.append(ents)
             if words is True:
-                all_terms.append((word for word in self.words(**kwargs)
+                all_terms.append((word for word in textacy.extract.words(self, **kwargs)
                                   if (word.idx, word.idx + 1) not in ent_idxs))
             if ngrams:
                 for n in range(ngrams[0], ngrams[1] + 1):
                     if n == 1 and words is True:
                         continue
-                    all_terms.append((ngram for ngram in self.ngrams(n, **kwargs)
+                    all_terms.append((ngram for ngram in textacy.extract.ngrams(self, n, **kwargs)
                                       if (ngram.start, ngram.end) not in ent_idxs))
         # otherwise add everything in, duplicates and all
         else:
             if named_entities is True:
-                all_terms.append(self.named_entities(**kwargs))
+                all_terms.append(textacy.extract.named_entities(self, **kwargs))
             if words is True:
-                all_terms.append(self.words(**kwargs))
+                all_terms.append(textacy.extract.words(self, **kwargs))
             if ngrams:
                 for n in range(ngrams[0], ngrams[1] + 1):
                     if n == 1 and words is True:
                         continue
-                    all_terms.append(self.ngrams(n, **kwargs))
+                    all_terms.append(textacy.extract.ngrams(self, n, **kwargs))
 
         if lemmatize is True:
             for term in itertoolz.concat(all_terms):
@@ -462,11 +449,11 @@ class Document(object):
             term_text = term
             term_id = self.spacy_stringstore[term_text]
             term_len = term_text.count(' ') + 1
-        elif isinstance(term, stoken):
+        elif isinstance(term, SpacyToken):
             term_text = spacy_utils.normalized_str(term)
             term_id = self.spacy_stringstore[term_text]
             term_len = 1
-        elif isinstance(term, sspan):
+        elif isinstance(term, SpacySpan):
             term_text = spacy_utils.normalized_str(term)
             term_id = self.spacy_stringstore[term_text]
             term_len = len(term)
