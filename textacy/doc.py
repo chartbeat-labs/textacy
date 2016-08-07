@@ -6,12 +6,14 @@ Load, process, iterate, transform, and save text content paired with metadata
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from collections import Counter
+from operator import itemgetter
 import os
 import re
 import warnings
 
 from cytoolz import itertoolz
 import spacy.about
+from spacy import attrs
 from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
@@ -50,11 +52,11 @@ class Doc(object):
                  'author': 'Burton DeWilde', 'pub_date': '2012-08-01'}
     """
     def __init__(self, text_or_sdoc, spacy_pipeline=None, lang=None, metadata=None):
-        self.metadata = {} if metadata is None else metadata
+        self.metadata = metadata or {}
         self._term_counts = Counter()
 
-        if isinstance(text_or_sdoc, string_types):
-            self.lang = text_utils.detect_language(text_or_sdoc) if not lang else lang
+        if isinstance(text_or_sdoc, unicode_type):
+            self.lang = lang or text_utils.detect_language(text_or_sdoc)
             if spacy_pipeline is None:
                 spacy_pipeline = data.load_spacy(self.lang)
             # check for match between text and passed spacy_pipeline language
@@ -68,8 +70,10 @@ class Doc(object):
             self.spacy_doc = spacy_pipeline(text_or_sdoc)
 
         elif isinstance(text_or_sdoc, SpacyDoc):
-            self.lang = spacy_pipeline.lang if spacy_pipeline is not None else \
-                text_utils.detect_language(text_or_sdoc.text_with_ws)
+            if spacy_pipeline is not None:
+                self.lang = spacy_pipeline.lang
+            else:
+                self.lang = text_utils.detect_language(text_or_sdoc.text_with_ws)
             self.spacy_vocab = text_or_sdoc.vocab
             self.spacy_stringstore = self.spacy_vocab.strings
             self.spacy_doc = text_or_sdoc
@@ -224,6 +228,34 @@ class Doc(object):
 
     #######################
     # DOC REPRESENTATIONS #
+
+    def to_bag_of_words(self, lemmatize=True, normalize=False):
+        """
+        Transform ``Doc`` into bag-of-words format.
+
+        Args:
+            lemmatize (bool)
+            normalize (bool)
+
+        Returns:
+            List[Tuple[str, int]]
+        """
+        count_by = attrs.LEMMA if lemmatize is True else attrs.ORTH
+
+        id_to_weight = self.spacy_doc.count_by(count_by)
+        if normalize is True:
+            sum_weights = sum(id_to_weight.values())
+            id_to_weight = {id_: weight / sum_weights
+                            for id_, weight in id_to_weight.items()}
+
+        word_counts = []
+        for id_, count in id_to_weight.items():
+            lexeme = self.spacy_vocab[id_]
+            if lexeme.is_stop or lexeme.is_punct or lexeme.is_space:
+                continue
+            word_counts.append((id_, count))
+
+        return sorted(word_counts, key=itemgetter(0), reverse=False)
 
     def as_bag_of_terms(self, weighting='tf', normalized=True, binary=False,
                         idf=None, lemmatize='auto',
