@@ -229,79 +229,223 @@ class Doc(object):
     #######################
     # DOC REPRESENTATIONS #
 
-    def to_bag_of_words(self, lemmatize=True, normalize=False):
+    def to_terms_list(self, ngrams=(1, 2, 3), named_entities=True,
+                      lemmatize=True, lowercase=False, as_strings=False,
+                      **kwargs):
         """
-        Transform ``Doc`` into bag-of-words format.
+        Transform ``Doc`` into a sequence of ngrams and/or named entities, which
+        aren't necessarily in order of appearance.
 
         Args:
-            lemmatize (bool)
-            normalize (bool)
+            ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3)``
+                (default) includes unigrams (words), bigrams, and trigrams; `2`
+                if only bigrams are wanted; falsy (e.g. False) to not include any
+            named_entities (bool): if True (default), include named entities
+                in the terms list; note: if ngrams are also included, named
+                entities are added *first*, and any ngrams that exactly overlap
+                with an entity are skipped to prevent double-counting
+            lemmatize (bool): if True (default), lemmatize all terms
+            lowercase (bool): if True and `lemmatize` is False, words are lower-
+                cased
+            as_strings (bool): if True, terms are returned as strings; if False
+                (default), terms are returned as their unique integer ids
+            kwargs:
+                - filter_stops (bool)
+                - filter_punct (bool)
+                - filter_nums (bool)
+                - include_pos (str or Set[str])
+                - exclude_pos (str or Set[str])
+                - min_freq (int)
+                - include_types (str or Set[str])
+                - exclude_types (str or Set[str]
+                - drop_determiners (bool)
+                see :func:`extract.words <textacy.extract.words>`,
+                :func:`extract.ngrams <textacy.extract.ngrams>`,
+                and :func:`extract.named_entities <textacy.extract.named_entities>`
+                for more information on these parameters
+
+        Yields:
+            int or str: the next term in the terms list, either as a unique
+                integer id or as a string
+
+        .. note:: Despite the name, this is a generator function; to get a `list`
+            of terms, call ``list(doc.to_terms_list())``.
+        """
+        if not named_entities and not ngrams:
+            raise ValueError()
+        if isinstance(ngrams, int):
+            ngrams = (ngrams,)
+
+        terms = []
+        # special case: ensure that named entities aren't double-counted when
+        # adding words or ngrams that were already added as named entities
+        if named_entities is True and ngrams:
+            ents = tuple(textacy.extract.named_entities(self, **kwargs))
+            ent_idxs = {(ent.start, ent.end) for ent in ents}
+            terms.append(ents)
+            for n in ngrams:
+                if n == 1:
+                    terms.append((word for word in textacy.extract.words(self, **kwargs)
+                                  if (word.idx, word.idx + 1) not in ent_idxs))
+                else:
+                    terms.append((ngram for ngram in textacy.extract.ngrams(self, n, **kwargs)
+                                  if (ngram.start, ngram.end) not in ent_idxs))
+        # otherwise, no need to check for overlaps
+        else:
+            if named_entities is True:
+                terms.append(textacy.extract.named_entities(self, **kwargs))
+            else:
+                for n in ngrams:
+                    if n == 1:
+                        terms.append(textacy.extract.words(self, **kwargs))
+                    else:
+                        terms.append(textacy.extract.ngrams(self, n, **kwargs))
+
+        terms = itertoolz.concat(terms)
+
+        # convert token and span objects into integer ids
+        if as_strings is False:
+            if lemmatize is True:
+                for term in terms:
+                    try:
+                        yield term.lemma
+                    except AttributeError:
+                        yield self.spacy_stringstore[term.lemma_]
+            elif lowercase is True:
+                for term in terms:
+                    try:
+                        yield term.lower
+                    except AttributeError:
+                        yield self.spacy_stringstore[term.orth_.lower()]
+            else:
+                for term in terms:
+                    try:
+                        yield term.orth
+                    except AttributeError:
+                        yield self.spacy_stringstore[term.orth_]
+        # convert token and span objects into strings
+        else:
+            if lemmatize is True:
+                for term in terms:
+                    yield term.lemma_
+            elif lowercase is True:
+                for term in terms:
+                    try:
+                        yield term.lower_
+                    except AttributeError:
+                        yield term.orth_.lower()
+            else:
+                for term in terms:
+                    yield term.orth_
+
+    def to_bag_of_words(self, lemmatize=True, lowercase=False, normalize=False,
+                        as_strings=False):
+        """
+        Transform ``Doc`` into a bag-of-words: the set of unique words in ``Doc``
+        mapped to their frequency of occurrence.
+
+        Args:
+            lemmatize (bool): if True, words are lemmatized before counting;
+                for example, 'happy', 'happier', and 'happiest' would be grouped
+                together as 'happy', with a count of 3
+            lowercase (bool): if True and `lemmatize` is False, words are lower-
+                cased before counting; for example, 'happy' and 'Happy' would be
+                grouped together as 'happy', with a count of 2
+            normalize (bool): if True, normalize individual words' counts by the
+                total token count, giving instead their *relative* frequency of
+                occurrence in ``Doc``; note: the resulting set of values won't
+                (necessarily) sum to 1.0, since punctuation and stop words are
+                filtered out after counts are normalized
+            as_strings (bool): if True, words are returned as strings; if False
+                (default), words are returned as their unique integer ids
 
         Returns:
-            List[Tuple[str, int]]
+            dict: mapping of a unique word id or string (depending on the value
+                of `as_strings`) to its absolute or relative frequency of
+                occurrence (depending on the value of `normalize`)
         """
-        count_by = attrs.LEMMA if lemmatize is True else attrs.ORTH
-
-        id_to_weight = self.spacy_doc.count_by(count_by)
+        count_by = (attrs.LEMMA if lemmatize is True else
+                    attrs.LOWER if lowercase is True else attrs.ORTH)
+        word_to_weight = self.spacy_doc.count_by(count_by)
         if normalize is True:
-            sum_weights = sum(id_to_weight.values())
-            id_to_weight = {id_: weight / sum_weights
-                            for id_, weight in id_to_weight.items()}
+            n_tokens = self.n_tokens
+            word_to_weight = {id_: weight / n_tokens
+                              for id_, weight in word_to_weight.items()}
+        bow = {}
+        if as_strings is False:
+            for id_, count in word_to_weight.items():
+                lexeme = self.spacy_vocab[id_]
+                if lexeme.is_stop or lexeme.is_punct or lexeme.is_space:
+                    continue
+                bow[id_] = count
+        else:
+            for id_, count in word_to_weight.items():
+                lexeme = self.spacy_vocab[id_]
+                if lexeme.is_stop or lexeme.is_punct or lexeme.is_space:
+                    continue
+                bow[self.spacy_stringstore[id_]] = count
+        return bow
 
-        word_counts = []
-        for id_, count in id_to_weight.items():
-            lexeme = self.spacy_vocab[id_]
-            if lexeme.is_stop or lexeme.is_punct or lexeme.is_space:
-                continue
-            word_counts.append((id_, count))
-
-        return sorted(word_counts, key=itemgetter(0), reverse=False)
-
-    def as_bag_of_terms(self, weighting='tf', normalized=True, binary=False,
-                        idf=None, lemmatize='auto',
-                        ngram_range=(1, 1),
-                        include_nes=False, include_ncs=False, include_kts=False):
+    def to_bag_of_terms(self, ngrams=(1, 2, 3), named_entities=True,
+                        lemmatize=True, lowercase=False,
+                        normalize=False, as_strings=False, **kwargs):
         """
-        Represent doc as a "bag of terms", an unordered set of (term id, term weight)
-        pairs, where term weight may be by TF or TF*IDF.
+        Transform ``Doc`` into a bag-of-terms: the set of unique terms in ``Doc``
+        mapped to their frequency of occurrence, where "terms" includes ngrams
+        and/or named entities.
 
         Args:
-            weighting (str {'tf', 'tfidf'}, optional): weighting of term weights,
-                either term frequency ('tf') or tf * inverse doc frequency ('tfidf')
-            idf (dict, optional): if `weighting` = 'tfidf', idf's must be supplied
-                externally, such as from a `Corpus` object
-            lemmatize (bool or 'auto', optional): if True, lemmatize all terms
-                when getting their frequencies
-            ngram_range (tuple(int), optional): (min n, max n) values for n-grams
-                to include in terms list; default (1, 1) only includes unigrams
-            include_nes (bool, optional): if True, include named entities in terms list
-            include_ncs (bool, optional): if True, include noun chunks in terms list
-            include_kts (bool, optional): if True, include key terms in terms list
-            normalized (bool, optional): if True, normalize term freqs by the
-                total number of unique terms
-            binary (bool optional): if True, set all (non-zero) term freqs equal to 1
+            ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3)``
+                (default) includes unigrams (words), bigrams, and trigrams; `2`
+                if only bigrams are wanted; falsy (e.g. False) to not include any
+            named_entities (bool): if True (default), include named entities;
+                note: if ngrams are also included, any ngrams that exactly
+                overlap with an entity are skipped to prevent double-counting
+            lemmatize (bool): if True, words are lemmatized before counting;
+                for example, 'happy', 'happier', and 'happiest' would be grouped
+                together as 'happy', with a count of 3
+            lowercase (bool): if True and `lemmatize` is False, words are lower-
+                cased before counting; for example, 'happy' and 'Happy' would be
+                grouped together as 'happy', with a count of 2
+            normalize (bool): if True, normalize individual words' counts by the
+                total token count, giving instead their *relative* frequency of
+                occurrence in ``Doc``; note: the resulting set of values won't
+                (necessarily) sum to 1.0, since punctuation and stop words are
+                filtered out after counts are normalized
+            as_strings (bool): if True, words are returned as strings; if False
+                (default), words are returned as their unique integer ids
+            kwargs:
+                - filter_stops (bool)
+                - filter_punct (bool)
+                - filter_nums (bool)
+                - include_pos (str or Set[str])
+                - exclude_pos (str or Set[str])
+                - min_freq (int)
+                - include_types (str or Set[str])
+                - exclude_types (str or Set[str]
+                - drop_determiners (bool)
+                see :func:`extract.words <textacy.extract.words>`,
+                :func:`extract.ngrams <textacy.extract.ngrams>`,
+                and :func:`extract.named_entities <textacy.extract.named_entities>`
+                for more information on these parameters
 
         Returns:
-            :class:`collections.Counter <collections.Counter>`: mapping of term ids
-                to corresponding term weights
+            dict: mapping of a unique term id or string (depending on the value
+                of `as_strings`) to its absolute or relative frequency of
+                occurrence (depending on the value of `normalize`)
+
+        .. seealso:: :meth:`Doc.to_terms_list <textacy.document.Doc.to_terms_list>`
         """
-        term_weights = self.term_counts(
-            lemmatize=lemmatize, ngram_range=ngram_range, include_nes=include_nes,
-            include_ncs=include_ncs, include_kts=include_kts)
-
-        if binary is True:
-            term_weights = Counter({key: 1 for key in term_weights.keys()})
-        elif normalized is True:
-            # n_terms = sum(term_freqs.values())
+        terms_list = self.to_terms_list(
+            ngrams=ngrams, named_entities=named_entities,
+            lemmatize=lemmatize, lowercase=lowercase,
+            as_strings=as_strings, **kwargs)
+        bot = itertoolz.frequencies(terms_list)
+        if normalize is True:
             n_tokens = self.n_tokens
-            term_weights = Counter({key: val / n_tokens
-                                    for key, val in term_weights.items()})
-
-        if weighting == 'tfidf' and idf:
-            term_weights = Counter({key: val * idf[key]
-                                    for key, val in term_weights.items()})
-
-        return term_weights
+            bot = {term: weight / n_tokens
+                   for term, weight in bot.items()}
+        return bot
 
     def as_semantic_network(self, nodes='terms',
                             edge_weighting='default', window_width=10):
@@ -340,79 +484,6 @@ class Doc(object):
         else:
             msg = 'nodes "{}" not valid; must be in {}'.format(nodes, {'terms', 'sents'})
             raise ValueError(msg)
-
-    def as_terms_list(self, words=True, ngrams=(2, 3), named_entities=True,
-                      dedupe=True, lemmatize=True, **kwargs):
-        """
-        Represent doc as a sequence of terms -- which aren't necessarily in order --
-        including words (unigrams), ngrams (for a range of n), and named entities.
-        NOTE: Despite the name, this is a generator function; to get a *list* of terms,
-        just wrap the call like ``list(doc.as_terms_list())``.
-
-        Args:
-            words (bool, optional): if True (default), include words in the terms list
-            ngrams (tuple(int), optional): include a range of ngrams in the terms list;
-                default is ``(2, 3)``, i.e. bigrams and trigrams are included; if
-                ngrams aren't wanted, set to False-y
-
-                NOTE: if n=1 (words) is included here and ``words`` is True, n=1 is skipped
-            named_entities (bool, optional): if True (default), include named entities
-                in the terms list
-            dedupe (bool, optional): if True (default), named entities are added first
-                to the terms list, and any words or ngrams that exactly overlap with
-                previously added entities are skipped to prevent double-counting;
-                since words and ngrams (n > 1) are inherently exclusive, this only
-                applies to entities; you almost certainly want this to be True
-            lemmatize (bool, optional): if True (default), lemmatize all terms;
-                otherwise, return the text as it appeared
-            kwargs:
-                filter_stops (bool)
-                filter_punct (bool)
-                filter_nums (bool)
-                good_pos_tags (set(str))
-                bad_pos_tags (set(str))
-                min_freq (int)
-                good_ne_types (set(str))
-                bad_ne_types (set(str))
-                drop_determiners (bool)
-
-        Yields:
-            str: the next term in the terms list
-        """
-        all_terms = []
-        # special case: ensure that named entities aren't double-counted when
-        # adding words or ngrams that were already added as named entities
-        if dedupe is True and named_entities is True and (words is True or ngrams):
-            ents = list(textacy.extract.named_entities(self, **kwargs))
-            ent_idxs = {(ent.start, ent.end) for ent in ents}
-            all_terms.append(ents)
-            if words is True:
-                all_terms.append((word for word in textacy.extract.words(self, **kwargs)
-                                  if (word.idx, word.idx + 1) not in ent_idxs))
-            if ngrams:
-                for n in range(ngrams[0], ngrams[1] + 1):
-                    if n == 1 and words is True:
-                        continue
-                    all_terms.append((ngram for ngram in textacy.extract.ngrams(self, n, **kwargs)
-                                      if (ngram.start, ngram.end) not in ent_idxs))
-        # otherwise add everything in, duplicates and all
-        else:
-            if named_entities is True:
-                all_terms.append(textacy.extract.named_entities(self, **kwargs))
-            if words is True:
-                all_terms.append(textacy.extract.words(self, **kwargs))
-            if ngrams:
-                for n in range(ngrams[0], ngrams[1] + 1):
-                    if n == 1 and words is True:
-                        continue
-                    all_terms.append(textacy.extract.ngrams(self, n, **kwargs))
-
-        if lemmatize is True:
-            for term in itertoolz.concat(all_terms):
-                yield term.lemma_
-        else:
-            for term in itertoolz.concat(all_terms):
-                yield term.text
 
     ##############
     # STATISTICS #

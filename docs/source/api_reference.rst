@@ -10,7 +10,10 @@ Text Preprocessing
 OOP Interface
 -------------
 
-.. automodule:: textacy.texts
+.. automodule:: textacy.doc
+    :members:
+
+.. automodule:: textacy.corpus
     :members:
 
 Information Extraction

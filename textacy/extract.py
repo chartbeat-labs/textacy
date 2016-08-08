@@ -68,7 +68,7 @@ def words(doc,
         if isinstance(include_pos, unicode_type):
             include_pos = include_pos.upper()
             words_ = (w for w in words_ if w.pos_ == include_pos)
-        elif isinstance(include_pos, (set, frozenset)):
+        elif isinstance(include_pos, (set, frozenset, list, tuple)):
             include_pos = {pos.upper() for pos in include_pos}
             words_ = (w for w in words_ if w.pos_ in include_pos)
         else:
@@ -78,7 +78,7 @@ def words(doc,
         if isinstance(exclude_pos, unicode_type):
             exclude_pos = exclude_pos.upper()
             words_ = (w for w in words_ if w.pos_ != exclude_pos)
-        elif isinstance(exclude_pos, (set, frozenset)):
+        elif isinstance(exclude_pos, (set, frozenset, list, tuple)):
             exclude_pos = {pos.upper() for pos in exclude_pos}
             words_ = (w for w in words_ if w.pos_ not in exclude_pos)
         else:
@@ -151,7 +151,7 @@ def ngrams(doc, n,
             include_pos = include_pos.upper()
             ngrams_ = (ngram for ngram in ngrams_
                        if all(w.pos_ == include_pos for w in ngram))
-        elif isinstance(include_pos, (set, frozenset)):
+        elif isinstance(include_pos, (set, frozenset, list, tuple)):
             include_pos = {pos.upper() for pos in include_pos}
             ngrams_ = (ngram for ngram in ngrams_
                        if all(w.pos_ in include_pos for w in ngram))
@@ -163,7 +163,7 @@ def ngrams(doc, n,
             exclude_pos = exclude_pos.upper()
             ngrams_ = (ngram for ngram in ngrams_
                        if all(w.pos_ != exclude_pos for w in ngram))
-        elif isinstance(exclude_pos, (set, frozenset)):
+        elif isinstance(exclude_pos, (set, frozenset, list, tuple)):
             exclude_pos = {pos.upper() for pos in exclude_pos}
             ngrams_ = (ngram for ngram in ngrams_
                        if all(w.pos_ not in exclude_pos for w in ngram))
@@ -219,7 +219,7 @@ def named_entities(doc,
                 include_types = NUMERIC_NE_TYPES  # we now go to next if block
             else:
                 nes = (ne for ne in nes if ne.label_ == include_types)
-        if isinstance(include_types, (set, frozenset)):
+        if isinstance(include_types, (set, frozenset, list, tuple)):
             include_types = {type_.upper() for type_ in include_types}
             nes = (ne for ne in nes if ne.label_ in include_types)
         else:
@@ -232,7 +232,7 @@ def named_entities(doc,
                 exclude_types = NUMERIC_NE_TYPES  # we now go to next if block
             else:
                 nes = (ne for ne in nes if ne.label_ != exclude_types)
-        if isinstance(exclude_types, (set, frozenset)):
+        if isinstance(exclude_types, (set, frozenset, list, tuple)):
             exclude_types = {type_.upper() for type_ in exclude_types}
             nes = (ne for ne in nes if ne.label_ not in exclude_types)
         else:
