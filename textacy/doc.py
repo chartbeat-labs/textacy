@@ -207,6 +207,68 @@ class Doc(object):
         self._counts = Counter()
         self._counted_ngrams = set()
 
+    _counted_ngrams = set()
+    _counts = Counter()
+
+    def count(self, term):
+        """
+        Get the frequency of occurrence ("count") of ``term`` in ``Doc``.
+
+        Args:
+            term (str or int or ``spacy.Token`` or ``spacy.Span``): the term to
+                be counted can be given as a string, a unique integer id, a
+                spacy token, or a spacy span; counts for the same term given in
+                different forms are the same
+
+        Returns:
+            int: count of ``term`` in ``Doc``
+
+        .. note:: Counts are cached. The first time a single word's count is
+            looked up, *all* words' counts are saved, resulting in a slower
+            runtime the first time but orders of magnitude faster runtime for
+            subsequent calls for this or any other word. Similarly, if a
+            bigram's count is looked up, all bigrams' counts are stored — etc.
+
+        .. tip:: If spans are merged using :meth:`Doc.merge() <textacy.Doc.merge>`,
+            all cached counts are deleted, since merging spans will invalidate
+            many counts. Better to merge first, count second!
+        """
+        # figure out what object we're dealing with here; convert as necessary
+        if isinstance(term, unicode_type):
+            term_text = term
+            term_id = self.spacy_stringstore[term_text]
+            term_len = term_text.count(' ') + 1
+        elif isinstance(term, int):
+            term_id = term
+            term_text = self.spacy_stringstore[term_id]
+            term_len = term_text.count(' ') + 1
+        elif isinstance(term, SpacyToken):
+            term_text = term.orth_
+            term_id = self.spacy_stringstore[term_text]
+            term_len = 1
+        elif isinstance(term, SpacySpan):
+            term_text = term.orth_
+            term_id = self.spacy_stringstore[term_text]
+            term_len = len(term)
+        # we haven't counted terms of this length; let's do that now
+        if term_len not in self._counted_ngrams:
+            if term_len == 1:
+                self._counts += Counter(
+                    word.orth
+                    for word in textacy.extract.words(self,
+                                                      filter_stops=False,
+                                                      filter_punct=False,
+                                                      filter_nums=False))
+            else:
+                self._counts += Counter(
+                    self.spacy_stringstore[ngram.orth_]
+                    for ngram in textacy.extract.ngrams(self, term_len,
+                                                        filter_stops=False,
+                                                        filter_punct=False,
+                                                        filter_nums=False))
+            self._counted_ngrams.add(term_len)
+        return self._counts[term_id]
+
     ###############
     # DOC AS TEXT #
 
@@ -269,38 +331,57 @@ class Doc(object):
             int or str: the next term in the terms list, either as a unique
                 integer id or as a string
 
+        Raises:
+            ValueError: if neither ``named_entities`` nor ``ngrams`` are included
+
         .. note:: Despite the name, this is a generator function; to get a `list`
             of terms, call ``list(doc.to_terms_list())``.
         """
         if not named_entities and not ngrams:
-            raise ValueError()
+            raise ValueError('either `named_entities` or `ngrams` must be included')
         if isinstance(ngrams, int):
             ngrams = (ngrams,)
+        if named_entities is True:
+            ne_kwargs = {
+                'include_types': kwargs.get('include_types'),
+                'exclude_types': kwargs.get('exclude_types'),
+                'drop_determiners': kwargs.get('drop_determiners', True),
+                'min_freq': kwargs.get('min_freq', 1)}
+        if ngrams:
+            ngram_kwargs = {
+                'filter_stops': kwargs.get('filter_stops', True),
+                'filter_punct': kwargs.get('filter_punct', True),
+                'filter_nums': kwargs.get('filter_nums', False),
+                'include_pos': kwargs.get('include_pos'),
+                'exclude_pos': kwargs.get('exclude_pos'),
+                'min_freq': kwargs.get('min_freq', 1)}
 
         terms = []
         # special case: ensure that named entities aren't double-counted when
         # adding words or ngrams that were already added as named entities
         if named_entities is True and ngrams:
-            ents = tuple(textacy.extract.named_entities(self, **kwargs))
+            ents = tuple(textacy.extract.named_entities(self, **ne_kwargs))
             ent_idxs = {(ent.start, ent.end) for ent in ents}
             terms.append(ents)
             for n in ngrams:
                 if n == 1:
-                    terms.append((word for word in textacy.extract.words(self, **kwargs)
-                                  if (word.idx, word.idx + 1) not in ent_idxs))
+                    terms.append(
+                        (word for word in textacy.extract.words(self, **ngram_kwargs)
+                         if (word.idx, word.idx + 1) not in ent_idxs))
                 else:
-                    terms.append((ngram for ngram in textacy.extract.ngrams(self, n, **kwargs)
-                                  if (ngram.start, ngram.end) not in ent_idxs))
+                    terms.append(
+                        (ngram for ngram in textacy.extract.ngrams(self, n, **ngram_kwargs)
+                         if (ngram.start, ngram.end) not in ent_idxs))
         # otherwise, no need to check for overlaps
         else:
             if named_entities is True:
-                terms.append(textacy.extract.named_entities(self, **kwargs))
+                terms.append(textacy.extract.named_entities(self, **ne_kwargs))
             else:
                 for n in ngrams:
                     if n == 1:
-                        terms.append(textacy.extract.words(self, **kwargs))
+                        terms.append(textacy.extract.words(self, **ngram_kwargs))
                     else:
-                        terms.append(textacy.extract.ngrams(self, n, **kwargs))
+                        terms.append(textacy.extract.ngrams(self, n, **ngram_kwargs))
 
         terms = itertoolz.concat(terms)
 
@@ -448,34 +529,38 @@ class Doc(object):
                    for term, weight in bot.items()}
         return bot
 
-    def as_semantic_network(self, nodes='terms',
+    def to_semantic_network(self, nodes='words',
                             edge_weighting='default', window_width=10):
         """
-        Represent doc as a semantic network, where nodes are either 'terms' or
-        'sents', and edges between nodes may be weighted in different ways.
+        Transform ``Doc`` into a semantic network, where nodes are either 'words'
+        or 'sents' and edges between nodes may be weighted in different ways.
 
         Args:
-            nodes (str, {'terms', 'sents'}): type of doc component to use as nodes
+            nodes ({'words', 'sents'}): type of doc component to use as nodes
                 in the semantic network
-            edge_weighting (str, optional): type of weighting to apply to edges
-                between nodes; if ``nodes == 'terms'``, options are {'cooc_freq', 'binary'},
+            edge_weighting (str): type of weighting to apply to edges
+                between nodes; if ``nodes == 'words'``, options are {'cooc_freq', 'binary'},
                 if ``nodes == 'sents'``, options are {'cosine', 'jaccard'}; if
                 'default', 'cooc_freq' or 'cosine' will be automatically used
-            window_width (int, optional): size of sliding window over terms that
-                determines which are said to co-occur; only applicable if 'terms'
+            window_width (int): size of sliding window over terms that
+                determines which are said to co-occur; only applicable if 'words'
 
         Returns:
             :class:`networkx.Graph <networkx.Graph>`: where nodes represent either
                 terms or sentences in doc; edges, the relationships between them
 
+        Raises:
+            ValueError: if ``nodes`` is neither 'words' nor 'sents'
+
         .. seealso:: :func:`network.terms_to_semantic_network() <textacy.representations.network.terms_to_semantic_network>`
         .. seealso:: :func:`network.sents_to_semantic_network() <textacy.representations.network.sents_to_semantic_network>`
         """
-        if nodes == 'terms':
+        if nodes == 'words':
             if edge_weighting == 'default':
                 edge_weighting = 'cooc_freq'
             return network.terms_to_semantic_network(
-                list(self.words()), window_width=window_width,
+                list(textacy.extract.words(self)),
+                window_width=window_width,
                 edge_weighting=edge_weighting)
         elif nodes == 'sents':
             if edge_weighting == 'default':
@@ -483,69 +568,6 @@ class Doc(object):
             return network.sents_to_semantic_network(
                 list(self.sents), edge_weighting=edge_weighting)
         else:
-            msg = 'nodes "{}" not valid; must be in {}'.format(nodes, {'terms', 'sents'})
+            msg = 'nodes "{}" not valid; must be in {}'.format(
+                nodes, {'words', 'sents'})
             raise ValueError(msg)
-
-    _counted_ngrams = set()
-    _counts = Counter()
-
-    def count(self, term):
-        """
-        Get the frequency of occurrence ("count") of ``term`` in ``Doc``.
-
-        Args:
-            term (str or int or ``spacy.Token`` or ``spacy.Span``): the term to
-                be counted can be given as a string, a unique integer id, a
-                spacy token, or a spacy span; counts for the same term given in
-                different forms will be the same
-
-        Returns:
-            int: count of ``term`` in ``Doc``
-
-        .. note:: Counts are cached. The first time a single word's count is
-            looked up, *all* words' counts are saved, resulting in a slower
-            runtime the first time but orders of magnitude faster runtime for
-            subsequent calls for this or any other word. Similarly, if a
-            bigram's count is looked up, all bigrams' counts are stored — etc.
-        .. warning: If spans are merged using :meth:`Doc.merge() <textacy.Doc.merge>`,
-            all cached counts are deleted, since merging spans will invalidate
-            many counts. Better to merge first, count second!
-        """
-        # figure out what object we're dealing with here; convert as necessary
-        if isinstance(term, unicode_type):
-            term_text = term
-            term_id = self.spacy_stringstore[term_text]
-            term_len = term_text.count(' ') + 1
-        elif isinstance(term, int):
-            term_id = term
-            term_text = self.spacy_stringstore[term_id]
-            term_len = term_text.count(' ') + 1
-        elif isinstance(term, SpacyToken):
-            term_text = term.orth_
-            term_id = self.spacy_stringstore[term_text]
-            term_len = 1
-        elif isinstance(term, SpacySpan):
-            term_text = term.orth_
-            term_id = self.spacy_stringstore[term_text]
-            term_len = len(term)
-
-        # we haven't counted terms of this length; let's do that now
-        if term_len not in self._counted_ngrams:
-            if term_len == 1:
-                self._counts += Counter(
-                    word.orth
-                    for word in textacy.extract.words(self,
-                                                      filter_stops=False,
-                                                      filter_punct=False,
-                                                      filter_nums=False))
-            else:
-                self._counts += Counter(
-                    self.spacy_stringstore[ngram.orth_]
-                    for ngram in textacy.extract.ngrams(self, term_len,
-                                                        filter_stops=False,
-                                                        filter_punct=False,
-                                                        filter_nums=False))
-            self._counted_ngrams.add(term_len)
-
-        count_ = self._counts[term_id]
-        return count_
