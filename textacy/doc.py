@@ -6,9 +6,7 @@ Load, process, iterate, transform, and save text content paired with metadata
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from collections import Counter
-from operator import itemgetter
 import os
-import re
 import warnings
 
 from cytoolz import itertoolz
@@ -205,6 +203,9 @@ class Doc(object):
                 or :func:`extract.pos_regex_matches() <textacy.extract.pos_regex_matches>`
         """
         spacy_utils.merge_spans(spans)
+        # reset counts, since merging spans invalidates existing counts
+        self._counts = Counter()
+        self._counted_ngrams = set()
 
     ###############
     # DOC AS TEXT #
@@ -226,8 +227,8 @@ class Doc(object):
         return [[(token.text, token.pos_) for token in sent]
                 for sent in self.spacy_doc.sents]
 
-    #######################
-    # DOC REPRESENTATIONS #
+    #################
+    # TRANSFORM DOC #
 
     def to_terms_list(self, ngrams=(1, 2, 3), named_entities=True,
                       lemmatize=True, lowercase=False, as_strings=False,
@@ -485,95 +486,66 @@ class Doc(object):
             msg = 'nodes "{}" not valid; must be in {}'.format(nodes, {'terms', 'sents'})
             raise ValueError(msg)
 
-    ##############
-    # STATISTICS #
+    _counted_ngrams = set()
+    _counts = Counter()
 
-    def term_counts(self, lemmatize='auto', ngram_range=(1, 1),
-                    include_nes=False, include_ncs=False, include_kts=False):
+    def count(self, term):
         """
-        Get the number of occurrences ("counts") of each unique term in doc;
-        terms may be words, n-grams, named entities, noun phrases, and key terms.
+        Get the frequency of occurrence ("count") of ``term`` in ``Doc``.
 
         Args:
-            lemmatize (bool or 'auto', optional): if True, lemmatize all terms
-                when getting their frequencies; if 'auto', lemmatize all terms
-                that aren't proper nouns or acronyms
-            ngram_range (tuple(int), optional): (min n, max n) values for n-grams
-                to include in terms list; default (1, 1) only includes unigrams
-            include_nes (bool, optional): if True, include named entities in terms list
-            include_ncs (bool, optional): if True, include noun chunks in terms list
-            include_kts (bool, optional): if True, include key terms in terms list
+            term (str or int or ``spacy.Token`` or ``spacy.Span``): the term to
+                be counted can be given as a string, a unique integer id, a
+                spacy token, or a spacy span; counts for the same term given in
+                different forms will be the same
 
         Returns:
-            :class:`collections.Counter() <collections.Counter>`: mapping of unique
-                term ids to corresponding term counts
-        """
-        if lemmatize == 'auto':
-            get_id = lambda x: self.spacy_stringstore[spacy_utils.normalized_str(x)]
-        elif lemmatize is True:
-            get_id = lambda x: self.spacy_stringstore[x.lemma_]
-        else:
-            get_id = lambda x: self.spacy_stringstore[x.text]
+            int: count of ``term`` in ``Doc``
 
-        for n in range(ngram_range[0], ngram_range[1] + 1):
-            if n == 1:
-                self._term_counts = self._term_counts | Counter(
-                    get_id(word) for word in self.words())
-            else:
-                self._term_counts = self._term_counts | Counter(
-                    get_id(ngram) for ngram in self.ngrams(n))
-        if include_nes is True:
-            self._term_counts = self._term_counts | Counter(
-                get_id(ne) for ne in self.named_entities())
-        if include_ncs is True:
-            self._term_counts = self._term_counts | Counter(
-                get_id(nc) for nc in self.noun_chunks())
-        if include_kts is True:
-            # HACK: key terms are currently returned as strings
-            # TODO: cache key terms, and return them as spacy spans
-            get_id = lambda x: self.spacy_stringstore[x]
-            self._term_counts = self._term_counts | Counter(
-                get_id(kt) for kt, _ in self.key_terms())
-
-        return self._term_counts
-
-    def term_count(self, term):
-        """
-        Get the number of occurrences ("count") of term in doc.
-
-        Args:
-            term (str or ``spacy.Token`` or ``spacy.Span``)
-
-        Returns:
-            int
+        .. note:: Counts are cached. The first time a single word's count is
+            looked up, *all* words' counts are saved, resulting in a slower
+            runtime the first time but orders of magnitude faster runtime for
+            subsequent calls for this or any other word. Similarly, if a
+            bigram's count is looked up, all bigrams' counts are stored — etc.
+        .. warning: If spans are merged using :meth:`Doc.merge() <textacy.Doc.merge>`,
+            all cached counts are deleted, since merging spans will invalidate
+            many counts. Better to merge first, count second!
         """
         # figure out what object we're dealing with here; convert as necessary
         if isinstance(term, unicode_type):
             term_text = term
             term_id = self.spacy_stringstore[term_text]
             term_len = term_text.count(' ') + 1
+        elif isinstance(term, int):
+            term_id = term
+            term_text = self.spacy_stringstore[term_id]
+            term_len = term_text.count(' ') + 1
         elif isinstance(term, SpacyToken):
-            term_text = spacy_utils.normalized_str(term)
+            term_text = term.orth_
             term_id = self.spacy_stringstore[term_text]
             term_len = 1
         elif isinstance(term, SpacySpan):
-            term_text = spacy_utils.normalized_str(term)
+            term_text = term.orth_
             term_id = self.spacy_stringstore[term_text]
             term_len = len(term)
 
-        term_count_ = self._term_counts[term_id]
-        if term_count_ > 0:
-            return term_count_
-        # have we not already counted the appropriate `n` n-grams?
-        if not any(self.spacy_stringstore[t].count(' ') == term_len
-                   for t in self._term_counts):
-            get_id = lambda x: self.spacy_stringstore[spacy_utils.normalized_str(x)]
+        # we haven't counted terms of this length; let's do that now
+        if term_len not in self._counted_ngrams:
             if term_len == 1:
-                self._term_counts += Counter(get_id(w) for w in self.words())
+                self._counts += Counter(
+                    word.orth
+                    for word in textacy.extract.words(self,
+                                                      filter_stops=False,
+                                                      filter_punct=False,
+                                                      filter_nums=False))
             else:
-                self._term_counts += Counter(get_id(ng) for ng in self.ngrams(term_len))
-            term_count_ = self._term_counts[term_id]
-            if term_count_ > 0:
-                return term_count_
-        # last resort: try a regular expression
-        return sum(1 for _ in re.finditer(re.escape(term_text), self.text))
+                self._counts += Counter(
+                    self.spacy_stringstore[ngram.orth_]
+                    for ngram in textacy.extract.ngrams(self, term_len,
+                                                        filter_stops=False,
+                                                        filter_punct=False,
+                                                        filter_nums=False))
+            self._counted_ngrams.add(term_len)
+
+        count_ = self._counts[term_id]
+        return count_
