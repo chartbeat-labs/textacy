@@ -209,38 +209,78 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
         yield nc
 
 
-def pos_regex_matches(doc, pattern):
+def pos_regex_matches(doc, pattern, keyword_map={}):
     """
     Extract sequences of consecutive tokens from a spacy-parsed doc whose
-    part-of-speech tags match the specified regex pattern.
+    part-of-speech tags match the specified regex pattern. Optionally,
+    token lemmas are matched with provided keywords or keyword lists.
 
     Args:
         doc (``spacy.Doc`` or ``spacy.Span``)
-        pattern (str): Pattern of consecutive POS tags whose corresponding words
-            are to be extracted, inspired by the regex patterns used in NLTK's
-            `nltk.chunk.regexp`. Tags are uppercase, from the universal tag set;
-            delimited by < and >, which are basically converted to parentheses
-            with spaces as needed to correctly extract matching word sequences;
-            white space in the input doesn't matter.
+        pattern (str): Pattern of consecutive POS expressions whose corresponding
+            words are to be extracted, inspired by the regex patterns used in NLTK's
+            `nltk.chunk.regexp`.
 
-            Examples (see `regexes_etc.POS_REGEX_PATTERNS`):
+            POS expressions are delimited by `<` and `>`. They contain one or more
+            POS statements delimited by `|`. POS statement is an uppercase tag
+            from the universal tag set, optionally followed by a colon and
+            a comma-delimited list of plain text keywords and `@`-prefixed variables
+            that we want to match. Variables are replaced with keyword lists
+            from ``keyword_map``.
+
+            Examples (see also `regexes_etc.POS_REGEX_PATTERNS`):
 
             * noun phrase: r'<DET>? (<NOUN>+ <ADP|CONJ>)* <NOUN>+'
             * compound nouns: r'<NOUN>+'
-            * verb phrase: r'<VERB>?<ADV>*<VERB>+'
+            * verb phrase: r'<VERB>? <ADV>* <VERB>+'
             * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
+            * keyword-limited phrase: r'<ADJ:@nice,@nasty|ADV>? <NOUN:@animal,ant>'
+
+            White space in the input doesn't matter.
+        keyword_map (dict, optional): Keyword mappings for matching.
+
+            Example::
+                {
+                    '@animal' : [ 'cat', 'dog', 'mouse' ],
+                    '@nice'   : [ 'nice', 'friendly' ],
+                    '@nasty'  : [ 'nasty', 'arrogant' ]
+                }
+
+            Keywords lists for each variable are filtered to prevent regexps
+            from breaking.
 
     Yields:
         ``spacy.Span``: the next span of consecutive tokens from ``doc`` whose
-            parts-of-speech match ``pattern``, in order of apperance
+            parts-of-speech (and optionally lemmas) match ``pattern``, in order
+            of apperance.
     """
     # standardize and transform the regular expression pattern...
     pattern = re.sub(r'\s', '', pattern)
-    pattern = re.sub(r'<([A-Z]+)\|([A-Z]+)>', r'( (\1|\2))', pattern)
-    pattern = re.sub(r'<([A-Z]+)>', r'( \1)', pattern)
 
-    tags = ' ' + ' '.join(tok.pos_ for tok in doc)
+    def match_pos(pos):
+        words = []
+        if pos.group(2):
+            for w in pos.group(2).split(','):
+                if w.startswith('@'):
+                    if w in keyword_map:
+                        words.extend(map(lambda x: re.sub(r'\W', '', x), keyword_map[w]))
+                    else:
+                        raise ValueError("variable %s not in keyword_map" % w)
+                else:
+                    words.append(w)
+        return "%s:(%s)" % (pos.group(1), '|'.join(words) if words else r'\S+')
 
+    def match_tag(tag):
+        tag = re.sub(r'([A-Z]+)(?::([a-z@,]+))?', match_pos, tag.group(1))
+        return r'( (%s))' % tag
+
+    pattern = re.sub(r'<([A-Za-z:|@,]+)>', match_tag, pattern)
+
+    # if there are still unreplaced tags, something's wrong
+    if re.match(r'<.*>[+*?]?', pattern):
+        raise ValueError("syntax error in pattern")
+
+    tags = ' ' + ' '.join(':'.join([ tok.pos_, tok.lemma_]) for tok in doc)
     for m in re.finditer(pattern, tags):
         yield doc[tags[0:m.start()].count(' '):tags[0:m.end()].count(' ')]
 
