@@ -12,6 +12,7 @@ import warnings
 from cytoolz import itertoolz
 import spacy.about
 from spacy import attrs
+from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
@@ -24,61 +25,125 @@ from textacy.representations import network
 
 class Doc(object):
     """
-    Pairing of the content of a document with its associated metadata, where the
-    content has been tokenized, tagged, parsed, etc. by spaCy. Also keep references
-    to the id-to-token mapping used by spaCy to efficiently represent the content.
-    If initialized from plain text, this processing is performed automatically.
+    Parse text using spaCy and pair it with metadata, if available. Transform
+    ``Doc`` into an easily-customized list of terms, a bag-of-words or (more
+    general) bag-of-terms, or a semantic network; save and load parsed content
+    and metadata to and from disk; index, slice, and iterate through tokens and
+    sentences; and more.
 
-    ``Doc`` also provides a convenient interface to information extraction,
-    different doc representations, statistical measures of the content, and more.
+    Initialize from a text and (optional) metadata::
+
+        >>> content = '''
+        ...     The apparent symmetry between the quark and lepton families of
+        ...     the Standard Model (SM) are, at the very least, suggestive of
+        ...     a more fundamental relationship between them. In some Beyond the
+        ...     Standard Model theories, such interactions are mediated by
+        ...     leptoquarks (LQs): hypothetical color-triplet bosons with both
+        ...     lepton and baryon number and fractional electric charge.'''
+        >>> metadata = {
+        ...     'title': 'A Search for 2nd-generation Leptoquarks at √s = 7 TeV',
+        ...     'author': 'Burton DeWilde',
+        ...     'pub_date': '2012-08-01'}
+        >>> doc = textacy.Doc(content, metadata=metadata)
+        >>> print(doc)
+        Doc(71 tokens; "The apparent symmetry between the quark and lep...")
+
+    Transform into other, common formats::
+
+        >>> doc.to_bag_of_words(lemmatize=True, as_strings=True)
+        {1760: 2, 205123: 1, 21382: 1, 1479: 2, 175499: 2, 396: 1, 29774: 1,
+         27472: 1, 4498: 1, 1814: 1, 1176: 1, 1330010: 1, 49050: 1, 52064: 1,
+         1510246: 1, 65447: 1, 938: 1, 5607: 1, 6738: 1, 63216: 1, 1713: 1,
+         51317: 1, 4666: 1, 5243: 1, 1599: 1}
+        >>> doc.to_bag_of_terms(ngrams=2, named_entities=True,
+        ...                     lemmatize=False, as_strings=True)
+        {'Model theories': 1, 'Standard Model': 2, 'apparent symmetry': 1,
+         'baryon number': 1, 'electric charge': 1, 'fractional electric': 1,
+         'fundamental relationship': 1, 'hypothetical color': 1, 'lepton families': 1,
+         'triplet bosons': 1}
+
+    Doc as sequence of tokens, emulating spaCy's "sequence API"::
+
+        >>> doc[49]  # spacy.Token
+        leptoquarks
+        >>> doc[:3]  # spacy.Span
+        The apparent symmetry
+
+    Save to and load from disk::
+
+        >>> doc.save('~/Desktop', fname_prefix='leptoquarks')
+        >>> doc = textacy.Doc.load('~/Desktop', fname_prefix='leptoquarks')
+        >>> print(doc)
+        Doc(71 tokens; "The apparent symmetry between the quark and lep...")
 
     Args:
-        text_or_sdoc (str or ``spacy.Doc``): text or spacy doc containing the
-            content of this ``Doc``; if str, it is automatically processed
-            by spacy before assignment to the ``Doc.spacy_doc`` attribute
-        spacy_pipeline (``spacy.<lang>.<Lang>()``, optional): if a spacy pipeline
-            has already been loaded or used to make the input ``spacy.Doc``, pass
-            it in here to speed things up a touch; in general, only one of these
-            pipelines should be loaded per process
-        lang (str, optional): if doc's language is known, give its 2-letter code
-            (https://cloud.google.com/translate/v2/using_rest#language-params);
-            if None (default), lang will be automatically inferred from text
-        metadata (dict, optional): dictionary of relevant information about the
-            input ``text_or_sdoc``, e.g.::
+        content (str or ``spacy.Doc``): Document content as (unicode) text or an
+            already-parsed ``spacy.Doc``. If str, content is processed by models
+            loaded with a ``spacy.Language`` and assigned to :attr:`spacy_doc`.
+        metadata (dict): Dictionary of relevant information about content. This
+            can be helpful when identifying and filtering documents, as well as
+            when engineering features for model inputs.
+        lang (str or ``spacy.Language``): Language of document content. If this
+            is known, pass in its standard 2-letter language code or, if *not*
+            known, leave as None (default) and let textacy handle everything.
+            A language code is then used to load a ``spacy.Language`` object,
+            unless an already-instantiated such object is passed in here.
+            **Note:** Currently, spaCy only works with English ('en') and German
+            ('de') languages! The ``spacy.Language`` object parses ``content``
+            (if str) and sets the :attr:`spacy_vocab` and :attr:`spacy_stringstore`
+            attributes.
 
-                {'title': 'A Search for Second-generation Leptoquarks in pp Collisions at √s = 7 TeV with the ATLAS Detector',
-                 'author': 'Burton DeWilde', 'pub_date': '2012-08-01'}
+    Attributes:
+        lang (str)
+        metadata (dict)
+        spacy_doc (``spacy.Doc``): https://spacy.io/docs#doc
+        spacy_vocab (``spacy.Vocab``): https://spacy.io/docs#vocab
+        spacy_stringstore (``spacy.StringStore``): https://spacy.io/docs#stringstore
     """
-    def __init__(self, text_or_sdoc, spacy_pipeline=None, lang=None, metadata=None):
+    def __init__(self, content, metadata=None, lang=None):
         self.metadata = metadata or {}
-        self._term_counts = Counter()
 
-        if isinstance(text_or_sdoc, unicode_type):
-            self.lang = lang or text_utils.detect_language(text_or_sdoc)
-            if spacy_pipeline is None:
-                spacy_pipeline = data.load_spacy(self.lang)
-            # check for match between text and passed spacy_pipeline language
+        # Doc instantiated from text, so must be parsed with a spacy.Language
+        if isinstance(content, unicode_type):
+            if isinstance(lang, SpacyLang):
+                self.lang = lang.lang
+                spacy_lang = lang
+            elif isinstance(lang, unicode_type):
+                self.lang = lang
+                spacy_lang = data.load_spacy(self.lang)
+            elif lang is None:
+                self.lang = text_utils.detect_language(content)
+                spacy_lang = data.load_spacy(self.lang)
             else:
-                if spacy_pipeline.lang != self.lang:
-                    msg = 'Doc.lang {} != spacy_pipeline.lang {}'.format(
-                        self.lang, spacy_pipeline.lang)
+                msg = '`lang` must be {}, not "{}"'.format(
+                    {unicode_type, SpacyLang}, type(lang))
+                raise ValueError(msg)
+            self.spacy_vocab = spacy_lang.vocab
+            self.spacy_stringstore = self.spacy_vocab.strings
+            self.spacy_doc = spacy_lang(content)
+        # Doc instantiated from an already-parsed spacy.Doc
+        elif isinstance(content, SpacyDoc):
+            self.spacy_vocab = content.vocab
+            self.spacy_stringstore = self.spacy_vocab.strings
+            self.spacy_doc = content
+            self.lang = self.spacy_vocab.lang
+            # these checks are probably unnecessary, but in case a user
+            # has done something very strange, we should complain...
+            if isinstance(lang, SpacyLang):
+                if self.spacy_vocab is not lang.vocab:
+                    msg = '`spacy.Vocab` used to parse `content` must be the same as the one associated with `lang`'
                     raise ValueError(msg)
-            self.spacy_vocab = spacy_pipeline.vocab
-            self.spacy_stringstore = self.spacy_vocab.strings
-            self.spacy_doc = spacy_pipeline(text_or_sdoc)
-
-        elif isinstance(text_or_sdoc, SpacyDoc):
-            if spacy_pipeline is not None:
-                self.lang = spacy_pipeline.lang
-            else:
-                self.lang = text_utils.detect_language(text_or_sdoc.text_with_ws)
-            self.spacy_vocab = text_or_sdoc.vocab
-            self.spacy_stringstore = self.spacy_vocab.strings
-            self.spacy_doc = text_or_sdoc
-
+            elif isinstance(lang, unicode_type):
+                if lang != self.lang:
+                    raise ValueError('lang of spacy models used to parse `content` must be the same as `lang`')
+            elif lang is not None:
+                msg = '`lang` must be {}, not "{}"'.format(
+                    {unicode_type, SpacyLang}, type(lang))
+                raise ValueError(msg)
+        # oops, user has made some sort of mistake
         else:
-            msg = 'Doc must be initialized with {}, not {}'.format(
-                {str, SpacyDoc}, type(text_or_sdoc))
+            msg = '`Doc` must be initialized with {}, not "{}"'.format(
+                {unicode_type, SpacyDoc}, type(content))
             raise ValueError(msg)
 
     def __repr__(self):
@@ -102,16 +167,17 @@ class Doc(object):
 
     def save(self, path, fname_prefix=None):
         """
-        Save serialized Doc content and metadata to disk.
+        Save ``Doc`` content and metadata to disk.
 
         Args:
-            path (str): directory on disk where content + metadata will be saved
-            fname_prefix (str, optional): prepend standard filenames 'spacy_doc.bin'
-                and 'metadata.json' with additional identifying information
+            path (str): Directory on disk where content + metadata will be saved.
+            fname_prefix (str, optional): Prepend standard filenames 'spacy_doc.bin'
+                and 'metadata.json' with additional identifying information.
 
-        .. warn:: If the `spacy.Vocab` object used to save this document is not the
-            same as the one used to load it, there will be problems! Consequently,
-            this functionality is only useful as short-term but not long-term storage.
+        .. warning:: If the ``spacy.Vocab`` object used to save this document is
+            not the same as the one used to load it, there will be problems!
+            Consequently, this functionality is only useful as short-term but
+            not long-term storage.
         """
         if fname_prefix:
             meta_fname = os.path.join(path, '_'.join([fname_prefix, 'metadata.json']))
@@ -128,20 +194,21 @@ class Doc(object):
     @classmethod
     def load(cls, path, fname_prefix=None):
         """
-        Load serialized content and metadata from disk, and initialize a Doc.
+        Load content and metadata from disk, and initialize a ``Doc``.
 
         Args:
-            path (str): directory on disk where content + metadata are saved
-            fname_prefix (str, optional): additional identifying information
-                prepended to standard filenames 'spacy_doc.bin' and 'metadata.json'
-                when saving to disk
+            path (str): Directory on disk where content and metadata are saved.
+            fname_prefix (str): Additional identifying information prepended
+                to standard filenames 'spacy_doc.bin' and 'metadata.json' used
+                when when saving to disk via :meth:`Doc.save()`.
 
         Returns:
-            :class:`textacy.Doc`
+            :class:`textacy.Doc <Doc>`
 
-        .. warn:: If the `spacy.Vocab` object used to save this document is not the
-            same as the one used to load it, there will be problems! Consequently,
-            this functionality is only useful as short-term but not long-term storage.
+        .. warning:: If the ``spacy.Vocab`` object used to save this document is
+            not the same as the one used to load it, there will be problems!
+            Consequently, this functionality is only useful as short-term but
+            not long-term storage.
         """
         if fname_prefix:
             meta_fname = os.path.join(path, '_'.join([fname_prefix, 'metadata.json']))
@@ -171,7 +238,7 @@ class Doc(object):
     def tokens(self):
         """
         Yield the document's tokens, as tokenized by spaCy. Equivalent to
-        iterating directly: `for token in document: <do stuff>`
+        iterating directly: ``for token in Doc: <do stuff>``
         """
         for tok in self.spacy_doc:
             yield tok
@@ -184,7 +251,7 @@ class Doc(object):
 
     @property
     def n_tokens(self):
-        """The number of tokens in the document -- including punctuation."""
+        """The number of tokens in the document — including punctuation."""
         return len(self.spacy_doc)
 
     @property
@@ -194,11 +261,11 @@ class Doc(object):
 
     def merge(self, spans):
         """
-        Merge spans *in-place* within doc so that each takes up a single token.
-        Note: All cached methods on this doc will be cleared.
+        Merge spans *in-place* within ``Doc`` so that each takes up a single
+        token. Note: All cached counts on this doc are cleared after a merge.
 
         Args:
-            spans (iterable(``spacy.Span``)): for example, the results from
+            spans (Iterable[``spacy.Span``]): for example, the results from
                 :func:`extract.named_entities() <textacy.extract.named_entities>`
                 or :func:`extract.pos_regex_matches() <textacy.extract.pos_regex_matches>`
         """
@@ -215,21 +282,20 @@ class Doc(object):
         Get the frequency of occurrence ("count") of ``term`` in ``Doc``.
 
         Args:
-            term (str or int or ``spacy.Token`` or ``spacy.Span``): the term to
+            term (str or int or ``spacy.Token`` or ``spacy.Span``): The term to
                 be counted can be given as a string, a unique integer id, a
-                spacy token, or a spacy span; counts for the same term given in
-                different forms are the same
+                spacy token, or a spacy span. Counts for the same term given in
+                different forms are the same!
 
         Returns:
-            int: count of ``term`` in ``Doc``
+            int: Count of ``term`` in ``Doc``.
 
-        .. note:: Counts are cached. The first time a single word's count is
+        .. tip:: Counts are cached. The first time a single word's count is
             looked up, *all* words' counts are saved, resulting in a slower
             runtime the first time but orders of magnitude faster runtime for
             subsequent calls for this or any other word. Similarly, if a
             bigram's count is looked up, all bigrams' counts are stored — etc.
-
-        .. tip:: If spans are merged using :meth:`Doc.merge() <textacy.Doc.merge>`,
+            If spans are merged using :meth:`Doc.merge() <Doc.merge>`,
             all cached counts are deleted, since merging spans will invalidate
             many counts. Better to merge first, count second!
         """
@@ -334,8 +400,8 @@ class Doc(object):
         Raises:
             ValueError: if neither ``named_entities`` nor ``ngrams`` are included
 
-        .. note:: Despite the name, this is a generator function; to get a `list`
-            of terms, call ``list(doc.to_terms_list())``.
+        .. note:: Despite the name, this is a generator function; to get an
+            actual list of terms, call ``list(doc.to_terms_list())``.
         """
         if not named_entities and not ngrams:
             raise ValueError('either `named_entities` or `ngrams` must be included')
@@ -430,7 +496,7 @@ class Doc(object):
             lemmatize (bool): if True, words are lemmatized before counting;
                 for example, 'happy', 'happier', and 'happiest' would be grouped
                 together as 'happy', with a count of 3
-            lowercase (bool): if True and `lemmatize` is False, words are lower-
+            lowercase (bool): if True and ``lemmatize`` is False, words are lower-
                 cased before counting; for example, 'happy' and 'Happy' would be
                 grouped together as 'happy', with a count of 2
             normalize (bool): if True, normalize individual words' counts by the
@@ -443,8 +509,8 @@ class Doc(object):
 
         Returns:
             dict: mapping of a unique word id or string (depending on the value
-                of `as_strings`) to its absolute or relative frequency of
-                occurrence (depending on the value of `normalize`)
+                of ``as_strings``) to its absolute or relative frequency of
+                occurrence (depending on the value of ``normalize``)
         """
         count_by = (attrs.LEMMA if lemmatize is True else
                     attrs.LOWER if lowercase is True else attrs.ORTH)
@@ -486,7 +552,7 @@ class Doc(object):
             lemmatize (bool): if True, words are lemmatized before counting;
                 for example, 'happy', 'happier', and 'happiest' would be grouped
                 together as 'happy', with a count of 3
-            lowercase (bool): if True and `lemmatize` is False, words are lower-
+            lowercase (bool): if True and ``lemmatize`` is False, words are lower-
                 cased before counting; for example, 'happy' and 'Happy' would be
                 grouped together as 'happy', with a count of 2
             normalize (bool): if True, normalize individual words' counts by the
@@ -513,10 +579,10 @@ class Doc(object):
 
         Returns:
             dict: mapping of a unique term id or string (depending on the value
-                of `as_strings`) to its absolute or relative frequency of
-                occurrence (depending on the value of `normalize`)
+                of ``as_strings``) to its absolute or relative frequency of
+                occurrence (depending on the value of ``normalize``)
 
-        .. seealso:: :meth:`Doc.to_terms_list <textacy.document.Doc.to_terms_list>`
+        .. seealso:: :meth:`Doc.to_terms_list() <Doc.to_terms_list>`
         """
         terms_list = self.to_terms_list(
             ngrams=ngrams, named_entities=named_entities,
@@ -552,8 +618,8 @@ class Doc(object):
         Raises:
             ValueError: if ``nodes`` is neither 'words' nor 'sents'
 
-        .. seealso:: :func:`network.terms_to_semantic_network() <textacy.representations.network.terms_to_semantic_network>`
-        .. seealso:: :func:`network.sents_to_semantic_network() <textacy.representations.network.sents_to_semantic_network>`
+        .. seealso:: :func:`terms_to_semantic_network() <textacy.representations.network.terms_to_semantic_network>`
+        .. seealso:: :func:`sents_to_semantic_network() <textacy.representations.network.sents_to_semantic_network>`
         """
         if nodes == 'words':
             if edge_weighting == 'default':
