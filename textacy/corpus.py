@@ -274,36 +274,31 @@ class Corpus(object):
     #################
     # GET DOCUMENTS #
 
-    def get_doc(self, index):
+    def get(self, match_func, limit=-1):
         """
-        Get a single :class:`textacy.Doc <Doc>` by its position ``index`` in
-        the corpus.
-        """
-        return self.docs[index]
-
-    def get_docs(self, match_condition, limit=-1):
-        """
-        Iterate over all docs in ``Corpus`` and return all (or N <= ``limit``)
-        for which ``match_condition(doc)`` is True.
+        Iterate over docs in ``Corpus`` and return all (or N <= ``limit``) for
+        which ``match_func(doc)`` is True.
 
         Args:
-            match_condition (func): Function that takes a :class:`textacy.Doc <Doc>`
-                as input and returns a boolean value. For example, the function
-                `lambda x: len(x) > 100` matches all docs with 100+ tokens.
+            match_func (func): Function that takes a :class:`textacy.Doc <Doc>`
+                as input and returns a boolean value. For example::
+
+                    Corpus.get(lambda x: len(x) >= 100)
+
+                matches docs with 100+ tokens. And::
+
+                    Corpus.get(lambda x: x.metadata['author'] == 'Burton DeWilde')
+
+                matches docs whose author was given as Burton DeWilde.
             limit (int): Maximum number of matched docs to return.
 
         Yields:
             :class:`Doc <textacy.Doc>`: one per doc passing ``match_condition``
                 up to ``limit`` docs
-
-        .. tip:: Document metadata may be useful for retrieving only certain
-            docs via :func:`get_docs() <Corpus.get_docs>`. For example::
-
-                Corpus.get_docs(lambda x: x.metadata['author'] == 'Burton DeWilde')
         """
         n_matched_docs = 0
         for doc in self:
-            if match_condition(doc) is True:
+            if match_func(doc) is True:
                 yield doc
                 n_matched_docs += 1
                 if n_matched_docs == limit:
@@ -312,8 +307,47 @@ class Corpus(object):
     ###############
     # REMOVE DOCS #
 
-    def _remove_textacy_doc(self, doc):
-        pass  # TODO: this function?
+    def __delitem__(self, idx_or_slice):
+        if isinstance(idx_or_slice, int):
+            doc = self[idx_or_slice]
+            n_tokens_removed = doc.n_tokens
+            n_sents_removed = doc.n_sents if self.spacy_lang.parser else None
+            # actually remove the doc
+            del self.docs[idx_or_slice]
+            # shift `corpus_index` attribute on docs higher up in the list
+            for doc in self[idx_or_slice:]:
+                doc.corpus_index -= 1
+            # decrement the corpus doc/token/sent counts
+            self.n_docs -= 1
+            self.n_tokens -= n_tokens_removed
+            if n_sents_removed:
+                self.n_sents -= n_sents_removed
+        elif isinstance(idx_or_slice, slice):
+            sl = idx_or_slice.indices(self.n_docs)
+            remove_indexes = sorted(
+                range(sl.start, sl.end, sl.step),
+                reverse=True)
+            n_docs_removed = len(remove_indexes)
+            n_sents_removed = 0
+            n_tokens_removed = 0
+            for index in remove_indexes:
+                n_tokens_removed += self[index].n_tokens
+                if self.spacy_lang.parser:
+                    n_sents_removed += self[index].n_sents
+                # actually remove the doc
+                del self.docs[index]
+            # shift the `corpus_index` attribute for all docs at once
+            for i, doc in enumerate(self):
+                doc.corpus_index = i
+            # decrement the corpus doc/sent/token counts
+            self.n_docs -= n_docs_removed
+            self.n_tokens -= n_tokens_removed
+            if n_sents_removed:
+                self.n_sents -= n_sents_removed
+        else:
+            msg = 'value must be {}, not "{}"'.format(
+                {int, slice}, type(idx_or_slice))
+            raise ValueError(msg)
 
     def remove_doc(self, index):
         """
