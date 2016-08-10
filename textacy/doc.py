@@ -18,7 +18,7 @@ from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
 
 import textacy
-from textacy.compat import string_types, unicode_type
+from textacy.compat import unicode_type
 from textacy import data, fileio, spacy_utils, text_utils
 from textacy.representations import network
 
@@ -50,17 +50,17 @@ class Doc(object):
 
     Transform into other, common formats::
 
-        >>> doc.to_bag_of_words(lemmatize=True, as_strings=True)
-        {1760: 2, 205123: 1, 21382: 1, 1479: 2, 175499: 2, 396: 1, 29774: 1,
-         27472: 1, 4498: 1, 1814: 1, 1176: 1, 1330010: 1, 49050: 1, 52064: 1,
-         1510246: 1, 65447: 1, 938: 1, 5607: 1, 6738: 1, 63216: 1, 1713: 1,
-         51317: 1, 4666: 1, 5243: 1, 1599: 1}
+        >>> doc.to_bag_of_words(lemmatize=False, as_strings=False)
+        {205123: 1, 21382: 1, 17929: 1, 175499: 2, 396: 1, 29774: 1, 27472: 1,
+         4498: 1, 1814: 1, 1176: 1, 49050: 1, 287836: 1, 1510365: 1, 6239: 2,
+         3553: 1, 5607: 1, 4776: 1, 49580: 1, 6701: 1, 12078: 2, 63216: 1,
+         6738: 1, 83061: 1, 5243: 1, 1599: 1}
         >>> doc.to_bag_of_terms(ngrams=2, named_entities=True,
-        ...                     lemmatize=False, as_strings=True)
-        {'Model theories': 1, 'Standard Model': 2, 'apparent symmetry': 1,
-         'baryon number': 1, 'electric charge': 1, 'fractional electric': 1,
-         'fundamental relationship': 1, 'hypothetical color': 1, 'lepton families': 1,
-         'triplet bosons': 1}
+        ...                     lemmatize=True, as_strings=True)
+        {'apparent symmetry': 1, 'baryon number': 1, 'electric charge': 1,
+         'fractional electric': 1, 'fundamental relationship': 1,
+         'hypothetical color': 1, 'lepton family': 1, 'model theory': 1,
+         'standard model': 2, 'triplet boson': 1}
 
     Doc as sequence of tokens, emulating spaCy's "sequence API"::
 
@@ -165,23 +165,23 @@ class Doc(object):
     ##########
     # FILEIO #
 
-    def save(self, path, fname_prefix=None):
+    def save(self, path, name=None):
         """
         Save ``Doc`` content and metadata to disk.
 
         Args:
             path (str): Directory on disk where content + metadata will be saved.
-            fname_prefix (str, optional): Prepend standard filenames 'spacy_doc.bin'
-                and 'metadata.json' with additional identifying information.
+            name (str): Prepend default filenames 'spacy_doc.bin' and 'metadata.json'
+                with a name to identify/uniquify this particular document.
 
         .. warning:: If the ``spacy.Vocab`` object used to save this document is
             not the same as the one used to load it, there will be problems!
             Consequently, this functionality is only useful as short-term but
             not long-term storage.
         """
-        if fname_prefix:
-            meta_fname = os.path.join(path, '_'.join([fname_prefix, 'metadata.json']))
-            doc_fname = os.path.join(path, '_'.join([fname_prefix, 'spacy_doc.bin']))
+        if name:
+            meta_fname = os.path.join(path, '_'.join([name, 'metadata.json']))
+            doc_fname = os.path.join(path, '_'.join([name, 'spacy_doc.bin']))
         else:
             meta_fname = os.path.join(path, 'metadata.json')
             doc_fname = os.path.join(path, 'spacy_doc.bin')
@@ -192,15 +192,15 @@ class Doc(object):
         fileio.write_spacy_docs(self.spacy_doc, doc_fname)
 
     @classmethod
-    def load(cls, path, fname_prefix=None):
+    def load(cls, path, name=None):
         """
         Load content and metadata from disk, and initialize a ``Doc``.
 
         Args:
             path (str): Directory on disk where content and metadata are saved.
-            fname_prefix (str): Additional identifying information prepended
-                to standard filenames 'spacy_doc.bin' and 'metadata.json' used
-                when when saving to disk via :meth:`Doc.save()`.
+            name (str): Identifying/uniquifying name prepended to the default
+                filenames 'spacy_doc.bin' and 'metadata.json', used when doc was
+                saved to disk via :meth:`Doc.save()`.
 
         Returns:
             :class:`textacy.Doc <Doc>`
@@ -210,9 +210,9 @@ class Doc(object):
             Consequently, this functionality is only useful as short-term but
             not long-term storage.
         """
-        if fname_prefix:
-            meta_fname = os.path.join(path, '_'.join([fname_prefix, 'metadata.json']))
-            docs_fname = os.path.join(path, '_'.join([fname_prefix, 'spacy_doc.bin']))
+        if name:
+            meta_fname = os.path.join(path, '_'.join([name, 'metadata.json']))
+            docs_fname = os.path.join(path, '_'.join([name, 'spacy_doc.bin']))
         else:
             meta_fname = os.path.join(path, 'metadata.json')
             docs_fname = os.path.join(path, 'spacy_doc.bin')
