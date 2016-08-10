@@ -76,12 +76,24 @@ class Corpus(object):
     def __len__(self):
         return self.n_docs
 
-    def __getitem__(self, index):
-        return self.docs[index]
-
     def __iter__(self):
         for doc in self.docs:
             yield doc
+
+    def __getitem__(self, idx_or_slice):
+        return self.docs[idx_or_slice]
+
+    def __delitem__(self, idx_or_slice):
+        if isinstance(idx_or_slice, int):
+            self._remove_one_doc_by_index(idx_or_slice)
+        elif isinstance(idx_or_slice, slice):
+            sl = idx_or_slice.indices(self.n_docs)
+            indexes = range(sl.start, sl.end, sl.step)
+            self._remove_many_docs_by_index(indexes)
+        else:
+            msg = 'value must be {}, not "{}"'.format(
+                {int, slice}, type(idx_or_slice))
+            raise ValueError(msg)
 
     ##########
     # FILEIO #
@@ -285,16 +297,22 @@ class Corpus(object):
 
                     Corpus.get(lambda x: len(x) >= 100)
 
-                matches docs with 100+ tokens. And::
+                gets all docs with 100+ tokens. And::
 
                     Corpus.get(lambda x: x.metadata['author'] == 'Burton DeWilde')
 
-                matches docs whose author was given as Burton DeWilde.
+                gets all docs whose author was given as 'Burton DeWilde'.
             limit (int): Maximum number of matched docs to return.
 
         Yields:
-            :class:`Doc <textacy.Doc>`: one per doc passing ``match_condition``
+            :class:`textacy.Doc <Doc>`: next document passing ``match_func``
                 up to ``limit`` docs
+
+        .. seealso:: :meth:`Corpus.remove() <Corpus.remove>`
+
+        .. tip:: To get doc(s) by index, treat ``Corpus`` as a list and use
+            Python's usual indexing and slicing: ``Corpus[0]`` gets the first
+            document in the corpus; ``Corpus[:5]`` gets the first 5; etc.
         """
         n_matched_docs = 0
         for doc in self:
@@ -307,100 +325,76 @@ class Corpus(object):
     ###############
     # REMOVE DOCS #
 
-    def __delitem__(self, idx_or_slice):
-        if isinstance(idx_or_slice, int):
-            doc = self[idx_or_slice]
-            n_tokens_removed = doc.n_tokens
-            n_sents_removed = doc.n_sents if self.spacy_lang.parser else None
-            # actually remove the doc
-            del self.docs[idx_or_slice]
-            # shift `corpus_index` attribute on docs higher up in the list
-            for doc in self[idx_or_slice:]:
-                doc.corpus_index -= 1
-            # decrement the corpus doc/token/sent counts
-            self.n_docs -= 1
-            self.n_tokens -= n_tokens_removed
-            if n_sents_removed:
-                self.n_sents -= n_sents_removed
-        elif isinstance(idx_or_slice, slice):
-            sl = idx_or_slice.indices(self.n_docs)
-            remove_indexes = sorted(
-                range(sl.start, sl.end, sl.step),
-                reverse=True)
-            n_docs_removed = len(remove_indexes)
-            n_sents_removed = 0
-            n_tokens_removed = 0
-            for index in remove_indexes:
-                n_tokens_removed += self[index].n_tokens
-                if self.spacy_lang.parser:
-                    n_sents_removed += self[index].n_sents
-                # actually remove the doc
-                del self.docs[index]
-            # shift the `corpus_index` attribute for all docs at once
-            for i, doc in enumerate(self):
-                doc.corpus_index = i
-            # decrement the corpus doc/sent/token counts
-            self.n_docs -= n_docs_removed
-            self.n_tokens -= n_tokens_removed
-            if n_sents_removed:
-                self.n_sents -= n_sents_removed
-        else:
-            msg = 'value must be {}, not "{}"'.format(
-                {int, slice}, type(idx_or_slice))
-            raise ValueError(msg)
-
-    def remove_doc(self, index):
-        """
-        Remove the document at ``index`` from the corpus, and decrement the
-        ``corpus_index`` attribute on all docs that come after it in the corpus.
-        """
-        n_tokens_removed = self[index].n_tokens
-        try:
-            n_sents_removed = self[index].n_sents
-        except ValueError:
-            n_sents_removed = 0
+    def _remove_one_doc_by_index(self, index):
+        doc = self[index]
+        n_tokens_removed = doc.n_tokens
+        n_sents_removed = doc.n_sents if self.spacy_lang.parser else None
+        # actually remove the doc
         del self.docs[index]
-        # reset `corpus_index` attribute on docs higher up in the list
+        # shift `corpus_index` attribute on docs higher up in the list
         for doc in self[index:]:
             doc.corpus_index -= 1
-        # also decrement the corpus doc/sent/token counts
+        # decrement the corpus doc/token/sent counts
         self.n_docs -= 1
-        self.n_sents -= n_sents_removed
         self.n_tokens -= n_tokens_removed
+        if n_sents_removed:
+            self.n_sents -= n_sents_removed
 
-    def remove_docs(self, match_condition, limit=None):
-        """
-        Remove all (or N = ``limit``) docs in corpus for which ``match_condition(doc) is True``.
-        Re-set all remaining docs' ``corpus_index`` attributes at the end.
-
-        Args:
-            match_condition (func): function that operates on a :class:`Doc <textacy.Doc>`
-                and returns a boolean value; e.g. ``lambda x: len(x) > 100`` matches
-                all docs with more than 100 tokens
-            limit (int, optional): if not None, maximum number of matched docs
-                to remove
-        """
-        remove_indexes = sorted(
-            (doc.corpus_index
-             for doc in self.get_docs(match_condition, limit=limit)),
-            reverse=True)
-        n_docs_removed = len(remove_indexes)
+    def _remove_many_docs_by_index(self, indexes):
+        indexes = sorted(indexes, reverse=True)
+        n_docs_removed = len(indexes)
         n_sents_removed = 0
         n_tokens_removed = 0
-        for index in remove_indexes:
+        for index in indexes:
             n_tokens_removed += self[index].n_tokens
-            try:
+            if self.spacy_lang.parser:
                 n_sents_removed += self[index].n_sents
-            except ValueError:
-                pass
+            # actually remove the doc
             del self.docs[index]
-        # now let's re-set the `corpus_index` attribute for all docs at once
+        # shift the `corpus_index` attribute for all docs at once
         for i, doc in enumerate(self):
             doc.corpus_index = i
-        # also decrement the corpus doc/sent/token counts
+        # decrement the corpus doc/sent/token counts
         self.n_docs -= n_docs_removed
-        self.n_sents -= n_sents_removed
         self.n_tokens -= n_tokens_removed
+        self.n_sents -= n_sents_removed
+
+    def remove(self, match_func, limit=-1):
+        """
+        Remove all (or N <= ``limit``) docs in ``Corpus`` for which
+        ``match_func(doc)`` is True. Corpus doc/sent/token counts are adjusted
+        accordingly, as are the :attr:`Doc.corpus_index` attributes on affected
+        documents.
+
+        Args:
+            match_func (func): Function that takes a :class:`textacy.Doc <Doc>`
+                and returns a boolean value. For example::
+
+                    Corpus.remove(lambda x: len(x) >= 100)
+
+                removes docs with 100+ tokens. And::
+
+                    Corpus.remove(lambda x: x.metadata['author'] == 'Burton DeWilde')
+
+                removes docs whose author was given as 'Burton DeWilde'.
+            limit (int): Maximum number of matched docs to remove.
+
+        .. seealso:: :meth:`Corpus.get() <Corpus.get>`
+
+        .. tip:: To remove doc(s) by index, treat ``Corpus`` as a list and use
+            Python's usual indexing and slicing: ``del Corpus[0]`` removes the
+            first document in the corpus; ``del Corpus[:5]`` removes the first
+            5; etc.
+        """
+        n_matched_docs = 0
+        matched_indexes = []
+        for doc in self:
+            if match_func(doc) is True:
+                matched_indexes.append(doc)
+                n_matched_docs += 1
+                if n_matched_docs == limit:
+                    break
+        self._remove_many_docs_by_index(matched_indexes)
 
     ####################
     # TRANSFORM CORPUS #
