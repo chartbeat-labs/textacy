@@ -8,7 +8,8 @@ Train and apply a topic model to vectorized texts. For example::
     >>> metadata_stream = ({'pageid': m[0], 'title': m[1]} for m in metadata_stream)
     >>> corpus = textacy.Corpus.from_texts('en', content_stream, metadata=metadata_stream)
     >>> # next, tokenize and vectorize the corpus
-    >>> terms_lists = (doc.as_terms_list(words=True, ngrams=False, named_entities=True)
+    >>> terms_lists = (doc.as_terms_list(words=True, ngrams=False,
+    ...                                  named_entities=True, as_strings=True)
     ...                for doc in corpus)
     >>> doc_term_matrix, id2term = corpus.as_doc_term_matrix(
     ...     terms_lists, weighting='tfidf', normalize=True, smooth_idf=True,
