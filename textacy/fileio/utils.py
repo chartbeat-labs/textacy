@@ -117,7 +117,8 @@ def split_content_and_metadata(items, content_field, itemwise=False):
     Args:
         items (iterable(dict) or iterable(list)): an iterable of dicts, e.g. as
             read from disk by :func:`read_json_lines() <textacy.fileio.read.read_json_lines>`,
-            or an iterable of lists, e.g. as streamed from a Wikipedia database dump::
+            or an iterable of lists, e.g. as streamed from a Wikipedia database
+            dump::
 
                 >>> ([pageid, title, text] for pageid, title, text in
                 ...  textacy.corpora.wikipedia.get_plaintext_pages(<WIKIFILE>))
@@ -125,22 +126,22 @@ def split_content_and_metadata(items, content_field, itemwise=False):
         content_field (str or int): if str, key in each dict item whose value is
             the item's content (text); if int, index of the value in each list item
             corresponding to the item's content (text)
-        itemwise (bool, optional): if True, content + metadata are paired item-wise
+        itemwise (bool): if True, content + metadata are paired item-wise
             as an iterable of (content, metadata) 2-tuples; if False, content +
             metadata are paired by position in two parallel iterables in the form of
             a (iterable(content), iterable(metadata)) 2-tuple
 
     Returns:
-        generator(tuple(str, dict)): if ``itemwise`` is True and ``items`` is an
+        generator(Tuple[str, dict]): if ``itemwise`` is True and ``items`` is an
             iterable of dicts; the first element in each tuple is the item's content,
             the second element is its metadata as a dictionary
-        generator(tuple(str, list)): if ``itemwise`` is True and ``items`` is an
+        generator(Tuple[str, list]): if ``itemwise`` is True and ``items`` is an
             iterable of lists; the first element in each tuple is the item's content,
             the second element is its metadata as a list
-        tuple(iterable(str), iterable(dict)): if ``itemwise`` is False and ``items``
+        Tuple[Iterable[str], Iterable[dict]]: if ``itemwise`` is False and ``items``
             is an iterable of dicts; the first element of the tuple is an iterable
             of items' contents, the second is an iterable of their metadata dicts
-        tuple(iterable(str), iterable(list)): if ``itemwise`` is False and ``items``
+        Tuple[Iterable[str], Iterable[list]]: if ``itemwise`` is False and ``items``
             is an iterable of lists; the first element of the tuple is an iterable
             of items' contents, the second is an iterable of their metadata lists
     """

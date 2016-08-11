@@ -23,9 +23,9 @@ def is_acronym(token, exclude=None):
 
     Args:
         token (str): single word to check for acronym-ness
-        exclude (set[str]): if technically valid but not actually good acronyms
-        are known in advance, pass them in as a set of strings; matching tokens
-        will return False
+        exclude (Set[str]): if technically valid but not actually good acronyms
+            are known in advance, pass them in as a set of strings; matching
+            tokens will return False
 
     Returns:
         bool
@@ -94,15 +94,15 @@ def keyword_in_context(text, keyword, ignore_case=True,
             to account for variations, use regex: "[Ss]pam (and|&) [Ee]ggs?"
 
             N.B. If keyword contains special characters, be sure to escape them!!!
-        ignore_case (bool, optional): if True, ignore letter case in `keyword` matching
-        window_width (int, optional): number of characters on either side of
+        ignore_case (bool): if True, ignore letter case in `keyword` matching
+        window_width (int): number of characters on either side of
             `keyword` to include as "context"
-        print_only (bool, optional): if True, print out all results with nice
+        print_only (bool): if True, print out all results with nice
             formatting; if False, return all (pre, kw, post) matches as generator
             of raw strings
 
     Returns:
-        generator(tuple(str, str, str)), or None
+        generator(Tuple[str, str, str]), or None
     """
     flags = re.IGNORECASE if ignore_case is True else 0
     if print_only is True:
@@ -129,7 +129,7 @@ def clean_terms(terms):
     junk chars, handle dangling parens and odd hyphenation, etc.
 
     Args:
-        terms (iterable[str]): sequence of terms such as "presidency", "epic failure",
+        terms (Iterable[str]): sequence of terms such as "presidency", "epic failure",
             or "George W. Bush" that may be _unclean_ for whatever reason
 
     Yields:

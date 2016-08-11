@@ -20,7 +20,7 @@ from textacy.representations import vsm
 
 class Corpus(object):
     """
-    An ordered collection of :class:`textacy.Doc <textacy.Doc>`s, all of the
+    An ordered collection of :class:`textacy.Doc <textacy.Doc>` s, all of the
     same language and sharing the same ``spacy.Language`` models and vocabulary.
     Track corpus statistics; flexibly add, iterate through, filter for, and
     remove documents; save and load parsed content and metadata to and from disk;
@@ -377,7 +377,8 @@ class Corpus(object):
             :class:`textacy.Doc <Doc>`: next document passing ``match_func``
                 up to ``limit`` docs
 
-        .. seealso:: :meth:`Corpus.remove() <Corpus.remove>`
+        See Also:
+            :meth:`Corpus.remove() <Corpus.remove>`
 
         .. tip:: To get doc(s) by index, treat ``Corpus`` as a list and use
             Python's usual indexing and slicing: ``Corpus[0]`` gets the first
@@ -476,7 +477,9 @@ class Corpus(object):
         to a doc, each column j corresponds to a unique term, and matrix values
         (i, j) correspond to the tf or tf-idf weighting of term j in doc i.
 
-        .. seealso:: :func:`build_doc_term_matrix <textacy.representations.vsm.build_doc_term_matrix>`
+        See Also:
+            :meth:`Doc.to_terms_list() <textacy.doc.Doc.to_terms_list>`
+            :func:`build_doc_term_matrix() <textacy.representations.vsm.build_doc_term_matrix>`
         """
         self.doc_term_matrix, self.id_to_term = vsm.build_doc_term_matrix(
             terms_lists, weighting=weighting,

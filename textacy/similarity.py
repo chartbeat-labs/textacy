@@ -79,8 +79,8 @@ def word2vec(obj1, obj2):
     objects' (average) word2vec vectors.
 
     Args:
-        obj1 (`textacy.Doc`, `spacy.Doc`, `spacy.Span`, `spacy.Token`, or `spacy.Lexeme`)
-        obj2 (`textacy.Doc`, `spacy.Doc`, `spacy.Span`, `spacy.Token`, or `spacy.Lexeme`)
+        obj1 (``textacy.Doc``, ``spacy.Doc``, ``spacy.Span``, ``spacy.Token``, or ``spacy.Lexeme``)
+        obj2 (``textacy.Doc``, ``spacy.Doc``, ``spacy.Span``, ``spacy.Token``, or ``spacy.Lexeme``)
 
     Returns
         float: similarity between `obj1` and `obj2` in the interval [0.0, 1.0],
@@ -99,8 +99,8 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=80):
     when `obj1` and `obj2` are sequences of strings.
 
     Args:
-        obj1 (str or sequence(str))
-        obj2 (str or sequence(str)): if str, both inputs are treated as sequences
+        obj1 (str or Sequence[str])
+        obj2 (str or Sequence[str]): if str, both inputs are treated as sequences
             of *characters*, in which case fuzzy matching is not permitted
         fuzzy_match (bool): if True, allow for fuzzy matching in addition to the
             usual identical matching of pairs between input vectors

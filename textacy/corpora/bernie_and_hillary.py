@@ -90,9 +90,9 @@ def fetch_bernie_and_hillary(data_dir=None,
         HTTPError: if file is not found on disk, `download_if_missing` is True,
             and something goes wrong with the download
 
-    .. warn:: The Bernie & Hillary corpus has been deprecated! Use the newer and
-        more comprehensive CapitolWords corpus instead. To recreate B&H, filter
-        CapitolWords speeches by `speaker_name={'Bernie Sanders', 'Hillary Clinton'}`.
+    .. warning:: The Bernie & Hillary corpus has been deprecated! Use the newer
+        and more comprehensive CapitolWords corpus instead. To recreate B&H,
+        filter CapitolWords speeches by `speaker_name={'Bernie Sanders', 'Hillary Clinton'}`.
     """
     with warnings.catch_warnings():
         warnings.simplefilter('always', DeprecationWarning)

@@ -28,18 +28,18 @@ def sgrank(doc, window_width=1500, n_keyterms=10, idf=None):
 
     Args:
         doc (``textacy.Doc`` or ``spacy.Doc``)
-        window_width (int, optional): width of sliding window in which term
+        window_width (int): width of sliding window in which term
             co-occurrences are said to occur
-        n_keyterms (int or float, optional): if int, number of top-ranked terms
+        n_keyterms (int or float): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
             representing the fraction of top-ranked terms to return as keyterms
-        idf (dict, optional): mapping of
+        idf (dict): mapping of
             {`normalized_str(term) <textacy.spacy_utils.normalized_str>`: inverse document frequency}
             for re-weighting of unigrams (n-grams with n > 1 have df assumed = 1);
             NOTE: results are better with idf information
 
     Returns:
-        list[(str, float)]: sorted list of top ``n_keyterms`` key terms and their
+        List[Tuple[str, float]]: sorted list of top ``n_keyterms`` key terms and their
             corresponding SGRank scores
 
     Raises:
@@ -160,7 +160,7 @@ def textrank(doc, n_keyterms=10):
 
     Args:
         doc (``textacy.Doc`` or ``spacy.Doc``)
-        n_keyterms (int or float, optional): if int, number of top-ranked terms
+        n_keyterms (int or float): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
             representing the fraction of top-ranked terms to return as keyterms
 
@@ -183,7 +183,7 @@ def singlerank(doc, n_keyterms=10):
 
     Args:
         doc (``textacy.Doc`` or ``spacy.Doc``)
-        n_keyterms (int or float, optional): if int, number of top-ranked terms
+        n_keyterms (int or float): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
             representing the fraction of top-ranked terms to return as keyterms
 
@@ -210,22 +210,22 @@ def key_terms_from_semantic_network(doc, window_width=2, edge_weighting='binary'
 
     Args:
         doc (``textacy.Doc`` or ``spacy.Doc``)
-        window_width (int, optional): width of sliding window in which term
+        window_width (int): width of sliding window in which term
             co-occurrences are said to occur
-        edge_weighting (str {'binary', 'cooc_freq'}, optional): method used to
+        edge_weighting ('binary', 'cooc_freq'}): method used to
             determine weights of edges between nodes in the semantic network;
             if 'binary', edge weight is set to 1 for any two terms co-occurring
             within `window_width` terms; if 'cooc_freq', edge weight is set to
             the number of times that any two terms co-occur
-        ranking_algo (str {'pagerank', 'divrank', 'bestcoverage'}, optional):
+        ranking_algo ({'pagerank', 'divrank', 'bestcoverage'}):
             algorithm with which to rank nodes in the semantic network;
             `pagerank` is the canonical (and default) algorithm, but it prioritizes
             node centrality at the expense of node diversity; the other two
             attempt to balance centrality with diversity
-        join_key_words (bool, optional): if True, join consecutive key words
+        join_key_words (bool): if True, join consecutive key words
             together into longer key terms, taking the sum of the constituent words'
             scores as the joined key term's combined score
-        n_keyterms (int or float, optional): if int, number of top-ranked terms
+        n_keyterms (int or float): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
             representing the fraction of top-ranked terms to return as keyterms
 
@@ -291,9 +291,9 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
     group2-and-not-group1.
 
     Args:
-        terms_lists (sequence[sequence[str]]): a sequence of documents, each as a
+        terms_lists (Iterable[Iterable[str]]): a sequence of documents, each as a
             sequence of (str) terms; used as input to :func:`build_doc_term_matrix()`
-        bool_array_grp1 (sequence[bool]): an ordered sequence of True/False values,
+        bool_array_grp1 (Iterable[bool]): an ordered sequence of True/False values,
             where True corresponds to documents falling into "group 1" and False
             corresponds to those in "group 2"
         max_n_terms (int): only consider terms whose document frequency is within
@@ -303,8 +303,8 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
             the interval (0, 1)), the fraction of `max_n_terms` to return for each group
 
     Returns:
-        list[str]: top `top_n_terms` most discriminating terms for grp1-not-grp2
-        list[str]: top `top_n_terms` most discriminating terms for grp2-not-grp1
+        List[str]: top `top_n_terms` most discriminating terms for grp1-not-grp2
+        List[str]: top `top_n_terms` most discriminating terms for grp2-not-grp1
 
     References:
         King, Gary, Patrick Lam, and Margaret Roberts. "Computer-Assisted Keyword
@@ -386,16 +386,16 @@ def aggregate_term_variants(terms,
     and ordering variants of each other, as well as acronyms and fuzzy string matches.
 
     Args:
-        terms (set(str)): set of unique terms with potential duplicates
-        acro_defs (dict, optional): if not None, terms that are acronyms will be
+        terms (Set[str]): set of unique terms with potential duplicates
+        acro_defs (dict): if not None, terms that are acronyms will be
             aggregated with their definitions and terms that are definitions will
             be aggregated with their acronyms
-        fuzzy_dedupe (bool, optional): if True, fuzzy string matching will be used
+        fuzzy_dedupe (bool): if True, fuzzy string matching will be used
             to aggregate similar terms of a sufficient length using
             `FuzzyWuzzy <https://pypi.python.org/pypi/fuzzywuzzy>`_
 
     Returns:
-        list(set): each item is a set of aggregated terms
+        List[Set[str]]: each item is a set of aggregated terms
 
     Notes:
         Partly inspired by aggregation of variants discussed in
@@ -497,8 +497,8 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
     Args:
         graph (:class:`networkx.Graph <networkx.Graph>`)
         k (int): number of results to return for top-k search
-        c (int, optional): *l* parameter for *l*-step expansion; best if 1 or 2
-        alpha (float, optional): float in [0.0, 1.0] specifying how much of
+        c (int): *l* parameter for *l*-step expansion; best if 1 or 2
+        alpha (float): float in [0.0, 1.0] specifying how much of
             central vertex's score to remove from its *l*-step neighbors;
             smaller value puts more emphasis on centrality, larger value puts
             more emphasis on diversity
@@ -600,14 +600,14 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
 
     Args:
         graph (:class:`networkx.Graph <networkx.Graph>`):
-        r (:class:`numpy.array`, optional): the "personalization vector";
+        r (:class:`numpy.array`,): the "personalization vector";
             by default, ``r = ones(1, n)/n``
-        lambda_ (float, optional): must be in [0.0, 1.0]
-        alpha (float, optional): controls the strength of self-links;
+        lambda_ (float): must be in [0.0, 1.0]
+        alpha (float): controls the strength of self-links;
             must be in [0.0, 1.0]
 
     Returns:
-        list[tuple]: list of (node, score) tuples ordered by desc. divrank score
+        List[Tuple[str, float]]: list of (node, score) tuples ordered by desc. divrank score
 
     References:
         .. [DivRank] Mei, Q., Guo, J., & Radev, D. (2010, July). Divrank: the interplay

@@ -572,10 +572,11 @@ class Doc(object):
                 - include_types (str or Set[str])
                 - exclude_types (str or Set[str]
                 - drop_determiners (bool)
-                see :func:`extract.words <textacy.extract.words>`,
-                :func:`extract.ngrams <textacy.extract.ngrams>`,
-                and :func:`extract.named_entities <textacy.extract.named_entities>`
-                for more information on these parameters
+
+                See :func:`extract.words() <textacy.extract.words>`,
+                :func:`extract.ngrams() <textacy.extract.ngrams>`,
+                and :func:`extract.named_entities() <textacy.extract.named_entities>`
+                for more information on these parameters.
 
         Returns:
             dict: mapping of a unique term id or string (depending on the value

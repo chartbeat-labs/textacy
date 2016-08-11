@@ -152,8 +152,8 @@ class WikiReader(object):
             str: plain text for the next page in the wikipedia database dump
 
         Notes:
-            .. Page and section titles appear immediately before the text content
-               that they label, separated by a single newline character.
+            Page and section titles appear immediately before the text content
+                that they label, separated by a single newline character.
         """
         n_pages = 0
         for _, title, content in self:

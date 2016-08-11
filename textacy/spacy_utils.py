@@ -96,7 +96,7 @@ def merge_spans(spans):
     Merge spans *in-place* within parent doc so that each takes up a single token.
 
     Args:
-        spans (iterable(``spacy.Span``))
+        spans (Iterable[``spacy.Span``])
     """
     for span in spans:
         try:
