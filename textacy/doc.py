@@ -25,11 +25,11 @@ from textacy.representations import network
 
 class Doc(object):
     """
-    Parse text using spaCy and pair it with metadata, if available. Transform
-    ``Doc`` into an easily-customized list of terms, a bag-of-words or (more
-    general) bag-of-terms, or a semantic network; save and load parsed content
-    and metadata to and from disk; index, slice, and iterate through tokens and
-    sentences; and more.
+    A text document parsed by spaCy and, optionally, paired with key metadata.
+    Transform ``Doc`` into an easily-customized list of terms, a bag-of-words or
+    (more general) bag-of-terms, or a semantic network; save and load parsed
+    content and metadata to and from disk; index, slice, and iterate through
+    tokens and sentences; and more.
 
     Initialize from a text and (optional) metadata::
 
@@ -71,8 +71,8 @@ class Doc(object):
 
     Save to and load from disk::
 
-        >>> doc.save('~/Desktop', fname_prefix='leptoquarks')
-        >>> doc = textacy.Doc.load('~/Desktop', fname_prefix='leptoquarks')
+        >>> doc.save('~/Desktop', name='leptoquarks')
+        >>> doc = textacy.Doc.load('~/Desktop', name='leptoquarks')
         >>> print(doc)
         Doc(71 tokens; "The apparent symmetry between the quark and lep...")
 
@@ -94,8 +94,8 @@ class Doc(object):
             attributes.
 
     Attributes:
-        lang (str)
-        metadata (dict)
+        lang (str): 2-letter code for language of ``Doc``.
+        metadata (dict): Dictionary of relevant information about content.
         spacy_doc (``spacy.Doc``): https://spacy.io/docs#doc
         spacy_vocab (``spacy.Vocab``): https://spacy.io/docs#vocab
         spacy_stringstore (``spacy.StringStore``): https://spacy.io/docs#stringstore

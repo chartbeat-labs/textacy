@@ -20,24 +20,94 @@ from textacy.representations import vsm
 
 class Corpus(object):
     """
-    An ordered collection of :class:`Doc <textacy.Doc>` s, all of
-    the same language and sharing a single spaCy pipeline and vocabulary. Tracks
-    overall corpus statistics and provides a convenient interface to alternate
-    corpus representations.
+    An ordered collection of :class:`textacy.Doc <textacy.Doc>`s, all of the
+    same language and sharing the same ``spacy.Language`` models and vocabulary.
+    Track corpus statistics; flexibly add, iterate through, filter for, and
+    remove documents; save and load parsed content and metadata to and from disk;
+    transform corpus into a document-term matrix; and more.
+
+    Initialize from a stream of texts and corresponding metadatas::
+
+        >>> cw = textacy.corpora.CapitolWords()
+        >>> records = cw.docs(limit=50)
+        >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
+        ...     records, 'text')
+        >>> corpus = textacy.Corpus(
+        ...     'en', texts=text_stream, metadatas=metadata_stream)
+        >>> print(corpus)
+        Corpus(50 docs; 32163 tokens)
+
+    Index, slice, and flexibly get particular documents::
+
+        >>> corpus[0]
+        Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work...")
+        >>> corpus[:3]
+        [Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work..."),
+         Doc(219 tokens; "Mr. Speaker, a relationship, to work and surviv..."),
+         Doc(336 tokens; "Mr. Speaker, I thank the gentleman for yielding...")]
+        >>> match_func = lambda doc: doc.metadata['speaker_name'] == 'Bernie Sanders'
+        >>> for doc in corpus.get(match_func, limit=3):
+        ...     print(doc)
+        Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work...")
+        Doc(336 tokens; "Mr. Speaker, I thank the gentleman for yielding...")
+        Doc(177 tokens; "Mr. Speaker, if we want to understand why in th...")
+
+    Add and remove documents, with automatic updating of corpus statistics::
+
+        >>> records = cw.docs(congress=114, limit=25)
+        >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
+        ...     records, 'text')
+        >>> corpus.add_texts(text_stream, metadatas=metadata_stream, n_threads=4)
+        >>> print(corpus)
+        Corpus(75 docs; 55869 tokens)
+        >>> corpus.remove(lambda doc: doc.metadata['speaker_name'] == 'Rick Santorum')
+        >>> print(corpus)
+        Corpus(60 docs; 48532 tokens)
+        >>> del corpus[:5]
+        >>> print(corpus)
+        Corpus(55 docs; 47444 tokens)
+
+    Save to and load from disk::
+
+        >>> corpus.save('~/Desktop', name='congress', compression='gzip')
+        >>> corpus = textacy.Corpus.load(
+        ...     '~/Desktop', name='congress', compression='gzip')
+        >>> print(corpus)
+        Corpus(55 docs; 47444 tokens)
 
     Args:
-        lang (str or ``spacy.Language``):
-            either 'en' or 'de', used to initialize the corresponding spaCy pipeline
-            with all models loaded by default, or an already-initialized spaCy
-            pipeline which may or may not have all models loaded
+        lang (str or ``spacy.Language``): Language of content for all docs in
+            corpus as a 2-letter code, used to instantiate the corresponding
+            ``spacy.Language`` with all models loaded by default, or an already-
+            instantiated ``spacy.Language`` which may or may not have all models
+            loaded, depending on the user's needs. Currently, spaCy only handles
+            English ('en') and German ('de') text.
+        texts (Iterable[str]): Stream of documents as (unicode) text, to be
+            processed by spaCy and added to the corpus as :class:`textacy.Doc <textacy.Doc>`s.
+        docs (Iterable[``textacy.Doc``] or Iterable[``spacy.Doc``]): Stream of
+            documents already-processed by spaCy alone or via textacy.
+        metadatas (Iterable[dict]): Stream of dictionaries of relevant doc
+            metadata. **Note:** This stream must align exactly with ``texts`` or
+            ``docs``, or else metadata will be mis-assigned. More concretely,
+            the first item in ``metadatas`` will be assigned to the first item
+            in ``texts`` or ``docs``, and so on from there.
 
-    Add texts to corpus one-by-one with :meth:`Corpus.add_text() <textacy.corpus.Corpus.add_text>`,
-    or all at once with :meth:`Corpus.from_texts() <textacy.corpus.Corpus.from_texts>`.
-    Can also add already-instantiated Docs via :meth:`Corpus.add_doc() <textacy.corpus.Corpus.add_doc>`.
-
-    Iterate over corpus docs with ``for doc in Corpus``. Access individual docs
-    by index (e.g. ``Corpus[0]`` or ``Corpus[0:10]``) or by boolean condition
-    specified by a function (e.g. ``Corpus.get_docs(lambda x: len(x) > 100)``).
+    Attributes:
+        lang (str): 2-letter code for language of documents in ``Corpus``.
+        n_docs (int): Number of documents in ``Corpus``.
+        n_tokens (int): Total number of tokens of all documents in ``Corpus``.
+        n_sents (int): Total number of sentences of all documents in ``Corpus``.
+            If the ``spacy.Language`` used to process documents did not include
+            a syntactic parser, upon which sentence segmentation relies, this
+            value will be null.
+        docs (List[``textacy.Doc``]): List of documents in ``Corpus``. In 99\%
+            of cases, you should never have to interact directly with this list;
+            instead, index and slice directly on ``Corpus`` or use the flexible
+            :meth:`Corpus.get() <Corpus.get>` and :meth:`Corpus.remove() <Corpus.remove`
+            methods.
+        spacy_lang (``spacy.Language``): http://spacy.io/docs/#english
+        spacy_vocab (``spacy.Vocab``): https://spacy.io/docs#vocab
+        spacy_stringstore (``spacy.StringStore``): https://spacy.io/docs#stringstore
     """
     def __init__(self, lang, texts=None, docs=None, metadatas=None):
         if isinstance(lang, unicode_type):
@@ -87,8 +157,8 @@ class Corpus(object):
         if isinstance(idx_or_slice, int):
             self._remove_one_doc_by_index(idx_or_slice)
         elif isinstance(idx_or_slice, slice):
-            sl = idx_or_slice.indices(self.n_docs)
-            indexes = range(sl.start, sl.end, sl.step)
+            start, end, step = idx_or_slice.indices(self.n_docs)
+            indexes = range(start, end, step)
             self._remove_many_docs_by_index(indexes)
         else:
             msg = 'value must be {}, not "{}"'.format(
@@ -180,14 +250,13 @@ class Corpus(object):
                 loaded Corpus may not be valid!
                 """.format(spacy_version, spacy.about.__version__)
             warnings.warn(msg, UserWarning)
-        textcorpus = Corpus(lang)
-        metadata_stream = fileio.read_json_lines(meta_fname, mode=meta_mode,)
-        spacy_docs = fileio.read_spacy_docs(textcorpus.spacy_vocab, docs_fname)
+        corpus = Corpus(lang)
+        metadata_stream = fileio.read_json_lines(meta_fname, mode=meta_mode)
+        spacy_docs = fileio.read_spacy_docs(corpus.spacy_vocab, docs_fname)
         for spacy_doc, metadata in zip(spacy_docs, metadata_stream):
-            textcorpus.add_doc(
-                Doc(spacy_doc, spacy_pipeline=textcorpus.spacy_pipeline,
-                    lang=lang, metadata=metadata))
-        return textcorpus
+            corpus.add_doc(
+                Doc(spacy_doc, lang=corpus.spacy_lang, metadata=metadata))
+        return corpus
 
     #################
     # ADD DOCUMENTS #
@@ -388,9 +457,9 @@ class Corpus(object):
         """
         n_matched_docs = 0
         matched_indexes = []
-        for doc in self:
+        for i, doc in enumerate(self):
             if match_func(doc) is True:
-                matched_indexes.append(doc)
+                matched_indexes.append(i)
                 n_matched_docs += 1
                 if n_matched_docs == limit:
                     break
