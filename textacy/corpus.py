@@ -274,7 +274,7 @@ class Corpus(object):
     def add_texts(self, texts, metadatas=None, n_threads=4, batch_size=1000):
         """
         Process a stream of texts (and a corresponding stream of metadata dicts,
-        optionally) in parallel with spaCy; add as :class:`textacy.Doc <Doc>` s
+        optionally) in parallel with spaCy; add as :class:`textacy.Doc <textacy.doc.Doc>` s
         to the corpus.
 
         Args:
@@ -288,8 +288,9 @@ class Corpus(object):
                 in parallel, if available.
             batch_size (int): Number of texts to process at a time.
 
-        .. seealso: :func:`fileio.split_content_and_metadata()`
-        .. seealso: http://spacy.io/docs/#multi-threaded
+        See Also:
+            :func:`fileio.split_content_and_metadata()`
+            http://spacy.io/docs/#multi-threaded
         """
         spacy_docs = self.spacy_lang.pipe(
             texts, n_threads=n_threads, batch_size=batch_size)
@@ -304,8 +305,8 @@ class Corpus(object):
 
     def add_text(self, text, metadata=None):
         """
-        Create a :class:`textacy.Doc <Doc>` from ``text`` and ``metadata``,
-        then add it to the corpus.
+        Create a :class:`textacy.Doc <textacy.doc.Doc>` from ``text`` and
+        ``metadata``, then add it to the corpus.
 
         Args:
             text (str): Document (text) content to add to corpus as a ``Doc``.
@@ -315,8 +316,8 @@ class Corpus(object):
 
     def add_doc(self, doc, metadata=None):
         """
-        Add an existing ``textacy.Doc`` or initialize a new one from a
-        ``spacy.Doc`` to the corpus.
+        Add an existing :class:`textacy.Doc <textacy.doc.Doc>` or initialize a
+        new one from a ``spacy.Doc`` to the corpus.
 
         Args:
             doc (``textacy.Doc`` or ``spacy.Doc``)
@@ -374,11 +375,11 @@ class Corpus(object):
             limit (int): Maximum number of matched docs to return.
 
         Yields:
-            :class:`textacy.Doc <Doc>`: next document passing ``match_func``
-                up to ``limit`` docs
+            :class:`textacy.Doc <textacy.doc.Doc>`: next document passing
+                ``match_func`` up to ``limit`` docs
 
         See Also:
-            :meth:`Corpus.remove() <Corpus.remove>`
+            :meth:`Corpus.remove()`
 
         .. tip:: To get doc(s) by index, treat ``Corpus`` as a list and use
             Python's usual indexing and slicing: ``Corpus[0]`` gets the first
@@ -433,11 +434,11 @@ class Corpus(object):
         """
         Remove all (or N <= ``limit``) docs in ``Corpus`` for which
         ``match_func(doc)`` is True. Corpus doc/sent/token counts are adjusted
-        accordingly, as are the :attr:`Doc.corpus_index` attributes on affected
-        documents.
+        accordingly, as are the :attr:`Doc.corpus_index <textacy.doc.Doc.corpus_index>`
+        attributes on affected documents.
 
         Args:
-            match_func (func): Function that takes a :class:`textacy.Doc <Doc>`
+            match_func (func): Function that takes a :class:`textacy.Doc <textacy.doc.Doc>`
                 and returns a boolean value. For example::
 
                     Corpus.remove(lambda x: len(x) >= 100)
@@ -449,7 +450,8 @@ class Corpus(object):
                 removes docs whose author was given as 'Burton DeWilde'.
             limit (int): Maximum number of matched docs to remove.
 
-        .. seealso:: :meth:`Corpus.get() <Corpus.get>`
+        See Also:
+            :meth:`Corpus.get() <Corpus.get>`
 
         .. tip:: To remove doc(s) by index, treat ``Corpus`` as a list and use
             Python's usual indexing and slicing: ``del Corpus[0]`` removes the

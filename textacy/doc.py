@@ -295,9 +295,9 @@ class Doc(object):
             runtime the first time but orders of magnitude faster runtime for
             subsequent calls for this or any other word. Similarly, if a
             bigram's count is looked up, all bigrams' counts are stored — etc.
-            If spans are merged using :meth:`Doc.merge() <Doc.merge>`,
-            all cached counts are deleted, since merging spans will invalidate
-            many counts. Better to merge first, count second!
+            If spans are merged using :meth:`Doc.merge()`, all cached counts are
+            deleted, since merging spans will invalidate many counts. Better to
+            merge first, count second!
         """
         # figure out what object we're dealing with here; convert as necessary
         if isinstance(term, unicode_type):
@@ -583,7 +583,8 @@ class Doc(object):
                 of ``as_strings``) to its absolute or relative frequency of
                 occurrence (depending on the value of ``normalize``)
 
-        .. seealso:: :meth:`Doc.to_terms_list() <Doc.to_terms_list>`
+        See Also:
+            :meth:`Doc.to_terms_list() <Doc.to_terms_list>`
         """
         terms_list = self.to_terms_list(
             ngrams=ngrams, named_entities=named_entities,
@@ -619,8 +620,9 @@ class Doc(object):
         Raises:
             ValueError: if ``nodes`` is neither 'words' nor 'sents'
 
-        .. seealso:: :func:`terms_to_semantic_network() <textacy.representations.network.terms_to_semantic_network>`
-        .. seealso:: :func:`sents_to_semantic_network() <textacy.representations.network.sents_to_semantic_network>`
+        See Also:
+            :func:`terms_to_semantic_network() <textacy.representations.network.terms_to_semantic_network>`
+            :func:`sents_to_semantic_network() <textacy.representations.network.sents_to_semantic_network>`
         """
         if nodes == 'words':
             if edge_weighting == 'default':
