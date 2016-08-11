@@ -44,18 +44,18 @@ class RedditReaderTestCase(unittest.TestCase):
         texts = list(self.redditreader.texts(limit=1))
         self.assertEqual(len(texts), 1)
 
-    def test_comments(self):
-        comments = list(self.redditreader.comments())
-        for comment in comments:
-            self.assertIsInstance(comment, dict)
+    def test_records(self):
+        records = list(self.redditreader.records())
+        for record in records:
+            self.assertIsInstance(record, dict)
 
-    def test_comments_min_len(self):
-        comments = list(self.redditreader.comments(min_len=100))
-        self.assertEqual(len(comments), 1)
+    def test_records_min_len(self):
+        records = list(self.redditreader.records(min_len=100))
+        self.assertEqual(len(records), 1)
 
-    def test_comments_limit(self):
-        comments = list(self.redditreader.comments(limit=1))
-        self.assertEqual(len(comments), 1)
+    def test_records_limit(self):
+        records = list(self.redditreader.records(limit=1))
+        self.assertEqual(len(records), 1)
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)

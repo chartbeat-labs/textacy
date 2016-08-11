@@ -10,9 +10,9 @@ as either plaintext strings or structured content + metadata dicts.
     >>> wr = WikiReader('/path/to/enwiki-latest-pages-articles.xml.bz2')
     >>> for text in wr.texts(limit=5):  # plaintext pages
     ...     print(text)
-    >>> for page in wr.pages(min_len=100, limit=1):  # parsed pages
-    ...     print(page.keys())
-    ...     print(' '.join(section['text'] for section in page['sections']))
+    >>> for record in wr.records(min_len=100, limit=1):  # parsed pages
+    ...     print(record.keys())
+    ...     print(' '.join(section['text'] for section in record['sections']))
 
 DB dumps are downloadable from https://meta.wikimedia.org/wiki/Data_dumps.
 """
@@ -167,10 +167,11 @@ class WikiReader(object):
             if n_pages == limit:
                 break
 
-    def pages(self, min_len=100, limit=-1, metadata=True):
+    def records(self, min_len=100, limit=-1, metadata=True):
         """
-        Iterate over the pages in a Wikipedia articles database dump (*articles.xml.bz2),
-        yielding one page whose structure and content have been parsed, as a dict.
+        Iterate over the pages in a Wikipedia articles database dump
+        (``*articles.xml.bz2``), yielding one page whose structure and content
+        have been parsed, as a dict.
 
         Args:
             min_len (int): minimum length in chars that a page must have

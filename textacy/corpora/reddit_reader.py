@@ -10,9 +10,9 @@ until May 2015, as either plaintext strings or content + metadata dicts.
     >>> rr = RedditReader('/path/to/RC_2015-01.bz2')
     >>> for text in rr.texts(limit=5):  # plaintext comments
     ...     print(text)
-    >>> for comment in rr.comments(min_len=100, limit=1):  # parsed comments
-    ...     print(comment.keys())
-    ...     print(comment['body'])
+    >>> for record in rr.records(min_len=100, limit=1):  # parsed comments
+    ...     print(record.keys())
+    ...     print(record['body'])
     >>> rr = RedditReader(['/path/to/RC_2015-01.bz2', '/path/to/RC_2015-02.bz2'])
 
 Raw data is downloadable from https://archive.org/details/2015_reddit_comments_corpus.
@@ -104,10 +104,11 @@ class RedditReader(object):
             if n_comments == limit:
                 break
 
-    def comments(self, min_len=0, limit=-1):
+    def records(self, min_len=0, limit=-1):
         """
-        Iterate over the comments in 1 or more reddit comments files (RC_YYYY-MM.bz2),
-        yielding one (lightly parsed) comment at a time, as a dict.
+        Iterate over the comments in 1 or more reddit comments files
+        (``RC_YYYY-MM.bz2``), yielding one (lightly parsed) comment at a time,
+        as a dict.
 
         Args:
             min_len (int): minimum length in chars that a page must have

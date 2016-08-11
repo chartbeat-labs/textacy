@@ -15,8 +15,8 @@ class RepresentationsVSMTestCase(unittest.TestCase):
         texts = ["Burton loves to work with data — especially text data.",
                  "Extracting information from unstructured text is an interesting challenge.",
                  "Sometimes the hardest part is acquiring the right text; as with much analysis, it's garbage in, garbage out."]
-        textcorpus = Corpus.from_texts('en', texts)
-        term_lists = [doc.as_terms_list(words=True, ngrams=False, named_entities=False)
+        textcorpus = Corpus('en', texts=texts)
+        term_lists = [doc.to_terms_list(ngrams=1, named_entities=False)
                       for doc in textcorpus]
         self.doc_term_matrix, self.id_to_word = vsm.build_doc_term_matrix(
             term_lists,

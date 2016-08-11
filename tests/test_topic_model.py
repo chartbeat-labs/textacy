@@ -13,6 +13,7 @@ from textacy.representations.vsm import build_doc_term_matrix
 from textacy import Corpus
 from textacy.tm import TopicModel
 
+
 class TopicModelTestCase(unittest.TestCase):
 
     def setUp(self):
@@ -24,8 +25,8 @@ class TopicModelTestCase(unittest.TestCase):
                  "It waited patiently about until Mary did appear.",
                  "Why does the lamb love Mary so? The eager children cry.",
                  "Mary loves the lamb, you know, the teacher did reply."]
-        textcorpus = Corpus.from_texts('en', texts)
-        term_lists = [doc.as_terms_list(words=True, ngrams=False, named_entities=False)
+        textcorpus = Corpus('en', texts=texts)
+        term_lists = [doc.to_terms_list(ngrams=1, named_entities=False)
                       for doc in textcorpus]
         self.doc_term_matrix, self.id2term = build_doc_term_matrix(
             term_lists,
@@ -61,7 +62,7 @@ class TopicModelTestCase(unittest.TestCase):
         self.assertEqual(observed, expected)
 
     def test_get_doc_topic_matrix(self):
-        expected = np.array([1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0])
+        expected = np.array([1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0])
         observed = self.model.get_doc_topic_matrix(self.doc_term_matrix,
                                                    normalize=True).sum(axis=1)
         self.assertTrue(np.equal(observed, expected).all())
@@ -97,7 +98,7 @@ class TopicModelTestCase(unittest.TestCase):
         self.assertTrue(isinstance(observed[0][1][0], tuple))
         for topic_idx, term_weights in observed:
             for i in range(len(term_weights) - 1):
-                self.assertTrue(term_weights[i][1] >= term_weights[i+1][1])
+                self.assertTrue(term_weights[i][1] >= term_weights[i + 1][1])
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)
