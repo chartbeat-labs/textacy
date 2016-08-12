@@ -20,6 +20,7 @@ When parsed, article pages have the following fields:
 
 DB dumps are downloadable from https://meta.wikimedia.org/wiki/Data_dumps.
 """
+import os
 import re
 
 from gensim.corpora.dictionary import Dictionary
@@ -54,8 +55,13 @@ class WikiReader(object):
     """
 
     def __init__(self, path):
+        self.path = path
         self.wikicorpus = WikiCorpus(path, lemmatize=False, dictionary=Dictionary(),
                                      filter_namespaces={'0'})
+
+    def __repr__(self):
+        filepath = os.path.split(self.path)[-1]
+        return 'WikiReader("{}")'.format(filepath)
 
     def __iter__(self):
         """
