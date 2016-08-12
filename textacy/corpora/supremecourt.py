@@ -77,28 +77,28 @@ class SupremeCourt(object):
         >>> sc = textacy.corpora.SupremeCourt()
         >>> for text in sc.texts(limit=1):
         ...     print(text)
-        >>> for doc in sc.docs(limit=1):
-        ...     print(doc['case_name'], doc['decision_date'])
-        ...     print(doc['text'])
+        >>> for record in sc.records(limit=1):
+        ...     print(record['case_name'], record['decision_date'])
+        ...     print(record['text'])
 
     Filter court cases by metadata and text length::
 
-        >>> for doc in sc.docs(opinion_author=109, limit=1):  # Notorious RBG!
-        ...     print(doc['case_name'], doc['us_cite_id'])
-        >>> for doc in sc.docs(decision_direction='liberal',
-        ...                    issue_area={1, 9, 10}, limit=10):
-        ...     print(doc['maj_opinion_author'], doc['n_maj_votes'])
-        >>> for doc in sc.docs(opinion_author=102,
-        ...                    date_range=('1990-01-01', '1999-12-31')):
-        ...     print(doc['case_name'], doc['decision_date'])
-        ...     print(sc.issue_codes[doc['issue']])
+        >>> for record in sc.records(opinion_author=109, limit=1):  # Notorious RBG!
+        ...     print(record['case_name'], record['us_cite_id'])
+        >>> for record in sc.records(decision_direction='liberal',
+        ...                          issue_area={1, 9, 10}, limit=10):
+        ...     print(record['maj_opinion_author'], record['n_maj_votes'])
+        >>> for record in sc.records(opinion_author=102,
+        ...                          date_range=('1990-01-01', '1999-12-31')):
+        ...     print(record['case_name'], record['decision_date'])
+        ...     print(sc.issue_codes[record['issue']])
         >>> for text in sc.texts(min_len=50000):
         ...     print(len(text))
 
     Stream court cases into a ``Corpus``::
 
         >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
-        ...     sc.docs(limit=100), 'text')
+        ...     sc.records(limit=100), 'text')
         >>> tc = textacy.Corpus.from_texts('en', text_stream, metadata_stream)
         >>> print(tc)
 
@@ -558,7 +558,7 @@ class SupremeCourt(object):
 
     def _iterate(self, text_only, opinion_author=None, decision_direction=None,
                  issue_area=None, date_range=None, min_len=None, limit=-1):
-        """Note: Use `.texts()` or `.docs()` to iterate over corpus data."""
+        """Note: Use `.texts()` or `.records()` to iterate over corpus data."""
         # prepare filters
         if opinion_author:
             if isinstance(opinion_author, int):
@@ -651,8 +651,8 @@ class SupremeCourt(object):
         for text in texts:
             yield text
 
-    def docs(self, opinion_author=None, issue_area=None, decision_direction=None,
-             date_range=None, min_len=None, limit=-1):
+    def records(self, opinion_author=None, issue_area=None, decision_direction=None,
+                date_range=None, min_len=None, limit=-1):
         """
         Iterate over documents (including text and metadata) in the SupremeCourt
         corpus, optionally filtering by a variety of metadata and/or text length,
@@ -683,9 +683,9 @@ class SupremeCourt(object):
         Raises:
             ValueError: if any filtering options are invalid
         """
-        docs = self._iterate(
+        records = self._iterate(
             False, opinion_author=opinion_author, issue_area=issue_area,
             decision_direction=decision_direction, date_range=date_range,
             min_len=min_len, limit=limit)
-        for doc in docs:
-            yield doc
+        for record in records:
+            yield record
