@@ -44,13 +44,18 @@ class RedditReader(object):
 
     .. code-block:: pycon
 
-        >>> rr = RedditReader('/path/to/RC_2015-01.bz2')
+        >>> rr = RedditReader('RC_2015-01.bz2')
         >>> for text in rr.texts(limit=5):  # plaintext comments
         ...     print(text)
         >>> for record in rr.records(min_len=100, limit=1):  # parsed comments
-        ...     print(record.keys())
+        ...     print(record['subreddit'], record['created_utc'])
         ...     print(record['body'])
-        >>> rr = RedditReader(['/path/to/RC_2015-01.bz2', '/path/to/RC_2015-02.bz2'])
+        >>> for record in rr.records(subreddit='leagueoflegends'):
+        ...     print(record['score'], record['body'])
+        >>> for text in rr.texts(date_range=('2015-02-11T00:00:00', '2015-02-11T23:59:59'),
+        ...                      limit=100):
+        ...     print(record['created_utc'])
+        >>> rr = RedditReader(['RC_2015-01.bz2', 'RC_2015-02.bz2'])
 
     Args:
         paths (str or Sequence[str]): name(s) of reddit comment file(s) from
@@ -111,7 +116,7 @@ class RedditReader(object):
                 msg = '`score_range` must be a list or tuple, not {}'.format(
                     type(score_range))
                 raise ValueError(msg)
-            if not len(score_range) == 2:
+            if len(score_range) != 2:
                 msg = '`score_range` must have both min and max values'
                 raise ValueError(msg)
             if not score_range[0]:

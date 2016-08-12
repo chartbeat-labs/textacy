@@ -94,7 +94,7 @@ Utilities
 Other Stuff!
 ------------
 
-.. automodule:: textacy.constants
+.. automodule:: textacy.similarity
     :members:
 
 .. automodule:: textacy.text_stats
