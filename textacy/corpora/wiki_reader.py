@@ -5,14 +5,18 @@ Wikipedia Corpus Reader
 Stream a corpus of Wikipedia articles saved in standardized database dumps,
 as either plaintext strings or structured content + metadata dicts.
 
-.. code-block:: pycon
+When parsed, article pages have the following fields:
 
-    >>> wr = WikiReader('/path/to/enwiki-latest-pages-articles.xml.bz2')
-    >>> for text in wr.texts(limit=5):  # plaintext pages
-    ...     print(text)
-    >>> for record in wr.records(min_len=100, limit=1):  # parsed pages
-    ...     print(record.keys())
-    ...     print(' '.join(section['text'] for section in record['sections']))
+    - ``title``: title of the Wikipedia article
+    - ``page_id``: unique identifier of the page, usable in Wikimedia APIs
+    - ``wiki_links``: a list of other article pages linked to from this page
+    - ``ext_links``: a list of external URLs linked to from this page
+    - ``categories``: a list of Wikipedia categories to which this page belongs
+    - ``sections``: a list of article content and associated metadata split up
+      according to the section hierarchy of the page; each section contains:
+        - ``text``: text content of the section
+        - ``idx``: ordered position on the page, from top (0) to bottom
+        - ``level``: level (or depth) in the sections hierarchy
 
 DB dumps are downloadable from https://meta.wikimedia.org/wiki/Data_dumps.
 """
@@ -35,6 +39,15 @@ class WikiReader(object):
     Stream Wikipedia pages from standardized, compressed files on disk, either as
     plaintext strings or dict documents with both text content and metadata.
     Download the data from https://meta.wikimedia.org/wiki/Data_dumps.
+
+    .. code-block:: pycon
+
+        >>> wr = WikiReader('/path/to/enwiki-latest-pages-articles.xml.bz2')
+        >>> for text in wr.texts(limit=5):  # plaintext pages
+        ...     print(text)
+        >>> for record in wr.records(min_len=100, limit=1):  # parsed pages
+        ...     print(record.keys())
+        ...     print(' '.join(section['text'] for section in record['sections']))
 
     Args:
         path (str): full name of database dump file on disk
@@ -65,18 +78,17 @@ class WikiReader(object):
                     r'\1', WIKI_QUOTE_RE.sub(
                         r'', filter_wiki(content))))).strip()
 
-    def _parse_content(self, content, parser, metadata=True):
+    def _parse_content(self, content, parser):
         wikicode = parser.parse(content)
         parsed_page = {'sections': []}
 
-        if metadata is True:
-            wikilinks = [str(wc.title) for wc in wikicode.ifilter_wikilinks()]
-            parsed_page['categories'] = [wc for wc in wikilinks if wc.startswith('Category:')]
-            parsed_page['wiki_links'] = [wc for wc in wikilinks
-                                         if not wc.startswith('Category:') and
-                                         not wc.startswith('File:') and
-                                         not wc.startswith('Image:')]
-            parsed_page['ext_links'] = [str(wc.url) for wc in wikicode.ifilter_external_links()]
+        wikilinks = [str(wc.title) for wc in wikicode.ifilter_wikilinks()]
+        parsed_page['categories'] = [wc for wc in wikilinks if wc.startswith('Category:')]
+        parsed_page['wiki_links'] = [wc for wc in wikilinks
+                                     if not wc.startswith('Category:') and
+                                     not wc.startswith('File:') and
+                                     not wc.startswith('Image:')]
+        parsed_page['ext_links'] = [str(wc.url) for wc in wikicode.ifilter_external_links()]
 
         def _filter_tags(obj):
             return obj.tag == 'ref' or obj.tag == 'table'
@@ -139,8 +151,8 @@ class WikiReader(object):
 
     def texts(self, min_len=100, limit=-1):
         """
-        Iterate over the pages in a Wikipedia articles database dump (*articles.xml.bz2),
-        yielding the plain text of a page, one at a time.
+        Iterate over the pages in a Wikipedia articles database dump
+        (``*articles.xml.bz2``), yielding the text of a page, one at a time.
 
         Args:
             min_len (int): minimum length in chars that a page must have
@@ -167,7 +179,7 @@ class WikiReader(object):
             if n_pages == limit:
                 break
 
-    def records(self, min_len=100, limit=-1, metadata=True):
+    def records(self, min_len=100, limit=-1):
         """
         Iterate over the pages in a Wikipedia articles database dump
         (``*articles.xml.bz2``), yielding one page whose structure and content
@@ -178,8 +190,6 @@ class WikiReader(object):
                 for it to be returned; too-short pages are skipped
             limit (int): maximum number of pages (passing ``min_len``) to yield;
                 if -1, all pages in the db dump are iterated over (optional)
-            metadata (bool): if True, return page metadata in addition to content,
-                including 'ext_links', 'wiki_links', and 'categories' (optional)
 
         Yields:
             dict: the next page's parsed content, including 'title' and 'page_id'
@@ -188,13 +198,7 @@ class WikiReader(object):
                 for the section title, 'text' for plain text content,'idx' for position
                 on page, and 'level' for the depth of the section within the page's hierarchy
 
-                If ``metadata`` is True, there are additional keys: 'wiki_links' is
-                a list of _other_ page titles linked to from this page; 'ext_links' is
-                a list of external URLs linked to from this page; and 'categories' is
-                a list of Wikipedia categories to which this page belongs.
-
-        Notes:
-            .. This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
+        .. note:: This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
         """
         try:
             import mwparserfromhell  # hiding this here; don't want another required dep
@@ -205,7 +209,7 @@ class WikiReader(object):
 
         n_pages = 0
         for page_id, title, content in self:
-            page = self._parse_content(content, parser, metadata=metadata)
+            page = self._parse_content(content, parser)
             if len(' '.join(s['text'] for s in page['sections'])) < min_len:
                 continue
             page['title'] = title

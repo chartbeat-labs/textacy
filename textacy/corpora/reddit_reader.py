@@ -12,7 +12,7 @@ Key fields in each record are as follows:
     * ``created_utc``: date on which the comment was posted
     * ``subreddit``: sub-reddit in which the comment was posted, excluding the
       familiar '/r/' prefix
-    * ``score``: net score (upvotes - downvotes?) on the comment
+    * ``score``: net score (upvotes - downvotes) on the comment
     * ``gilded``: number of times this comment received reddit gold
 
 Raw data is downloadable from https://archive.org/details/2015_reddit_comments_corpus.
@@ -50,10 +50,10 @@ class RedditReader(object):
         >>> for record in rr.records(min_len=100, limit=1):  # parsed comments
         ...     print(record['subreddit'], record['created_utc'])
         ...     print(record['body'])
-        >>> for record in rr.records(subreddit='leagueoflegends'):
+        >>> for record in rr.records(subreddit='leagueoflegends', limit=10):
         ...     print(record['score'], record['body'])
-        >>> for text in rr.texts(date_range=('2015-02-11T00:00:00', '2015-02-11T23:59:59'),
-        ...                      limit=100):
+        >>> for record in rr.records(date_range=('2015-01-01T00:00:00', '2015-01-01T23:59:59'),
+        ...                          limit=100):
         ...     print(record['created_utc'])
         >>> rr = RedditReader(['RC_2015-01.bz2', 'RC_2015-02.bz2'])
 

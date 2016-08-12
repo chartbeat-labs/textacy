@@ -7,25 +7,25 @@ Download to and stream from disk a corpus of (almost all) decisions issued by
 the U.S. Supreme Court from 1946 through 2016. That amounts to about 8.4k
 documents and 71M tokens, where each document contains 11 fields:
 
-    * text: full text of the Court's decision
-    * case_name: name of the court case, in all caps
-    * argument_date: date on which the case was argued before the Court, as a
+    * ``text``: full text of the Court's decision
+    * ``case_name``: name of the court case, in all caps
+    * ``argument_date``: date on which the case was argued before the Court, as a
       string with format 'YYYY-MM-DD'
-    * decision_date: date on which the Court's decision was announced, as a
+    * ``decision_date``: date on which the Court's decision was announced, as a
       string with format 'YYYY-MM-DD'
-    * decision_direction: ideological direction of the majority decision; either
+    * ``decision_direction``: ideological direction of the majority decision; either
       'conservative', 'liberal', or 'unspecifiable'
-    * maj_opinion_author: name of the majority opinion's author, if available
+    * ``maj_opinion_author``: name of the majority opinion's author, if available
       and identifiable, as an integer code whose mapping is given in
       ``SupremeCourt.opinion_author_codes``
-    * n_maj_votes: number of justices voting in the majority
-    * n_min_votes: number of justices voting in the minority
-    * issue: subject matter of the case's core disagreement (e.g. affirmative
+    * ``n_maj_votes``: number of justices voting in the majority
+    * ``n_min_votes``: number of justices voting in the minority
+    * ``issue``: subject matter of the case's core disagreement (e.g. affirmative
       action) rather than its legal basis (e.g. the equal protection clause),
       as a string code whose mapping is given in ``SupremeCourt.issue_codes``
-    * issue_area: higher-level categorization of the issue (e.g. Civil Rights),
+    * ``issue_area``: higher-level categorization of the issue (e.g. Civil Rights),
       as an integer code whose mapping is given in ``SupremeCourt.issue_area_codes``
-    * us_cite_id: citation identifier for each case according to the official
+    * ``us_cite_id``: citation identifier for each case according to the official
       United States Reports; Note: There are ~300 cases with duplicate ids,
       and it's not clear if that's "correct" or a data quality problem
 
