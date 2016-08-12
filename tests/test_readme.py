@@ -164,30 +164,30 @@ class ReadmeTestCase(unittest.TestCase):
 
     def test_extract_functionality(self):
         observed_1 = [ng.text for ng in
-                      self.doc.ngrams(2, filter_stops=True, filter_punct=True, filter_nums=False)][:15]
+                      textacy.extract.ngrams(self.doc, 2, filter_stops=True, filter_punct=True, filter_nums=False)][:15]
         expected_1 = ['Mr. President', 'Record copies', 'finalist essays',
                       'essays written', 'Vermont High', 'High School',
                       'School students', 'sixth annual', 'annual ``',
                       'essay contest', 'contest conducted', 'nearly 800',
                       '800 entries', 'material follows', 'United States']
         observed_2 = [ng.text for ng in
-                      self.doc.ngrams(3, filter_stops=True, filter_punct=True, min_freq=2)]
+                      textacy.extract.ngrams(self.doc, 3, filter_stops=True, filter_punct=True, min_freq=2)]
         expected_2 = ['lead the world', 'leading the world',
                       '2.2 million people', '2.2 million people',
                       'mandatory minimum sentences',
                       'Mandatory minimum sentences', 'war on drugs',
                       'war on drugs']
         observed_3 = [ne.text for ne in
-                      self.doc.named_entities(drop_determiners=True, bad_ne_types='numeric')]
+                      textacy.extract.named_entities(self.doc, drop_determiners=True, exclude_types='numeric')]
         expected_3 = ['Record', 'Vermont High School',
                       'United States of America', 'Americans', 'U.S.', 'U.S.',
                       'African American']
         observed_4 = [match.text for match in
-                      self.doc.pos_regex_matches(textacy.constants.POS_REGEX_PATTERNS['en']['NP'])][-10:]
+                      textacy.extract.pos_regex_matches(self.doc, textacy.constants.POS_REGEX_PATTERNS['en']['NP'])][-10:]
         expected_4 = ['experiment', 'many racial wounds', 'our nation',
                       'The war', 'drugs', 'addicts', 'bars', 'addiction',
                       'the problem', 'a mental health issue']
-        observed_5 = self.doc.key_terms(algorithm='textrank', n=5)
+        observed_5 = textacy.keyterms.textrank(self.doc, n_keyterms=5)
         expected_5 = [('nation', 0.04315758994993049),
                       ('world', 0.030590559641614556),
                       ('incarceration', 0.029577233127175532),
@@ -202,7 +202,7 @@ class ReadmeTestCase(unittest.TestCase):
             self.assertAlmostEqual(o[1], e[1], places=4)
 
     def test_readability(self):
-        observed = self.doc.readability_stats
+        observed = textacy.text_stats.readability_stats(self.doc)
         expected = {'automated_readability_index': 11.67580188679245,
                     'coleman_liau_index': 10.89927271226415,
                     'flesch_kincaid_grade_level': 10.711962264150948,
@@ -219,17 +219,15 @@ class ReadmeTestCase(unittest.TestCase):
             self.assertAlmostEqual(observed[key], expected[key], places=4)
 
     def test_term_counting(self):
-        observed_1 = self.doc.term_count('nation')
-        expected_1 = 6
-        bot = self.doc.as_bag_of_terms(weighting='tf', normalized=False,
-                                       lemmatize='auto', ngram_range=(1, 1))
+        observed_1 = self.doc.count('nation')
+        expected_1 = 5
+        bot = self.doc.to_bag_of_terms(
+            ngrams=1, normalize=False, lemmatize=True, as_strings=True)
         # sort by term ascending, then count descending
-        observed_2 = sorted([(self.doc.spacy_stringstore[term_id], count)
-                             for term_id, count in bot.most_common(n=10)],
-                            key=itemgetter(0), reverse=False)
-        observed_2 = sorted(observed_2, key=itemgetter(1), reverse=True)
-        expected_2 = [('nation', 6), ('incarceration', 4), ('world', 4),
-                      ('drug', 3), ('lead', 3), ('mandatory', 3), ('minimum', 3),
-                      ('people', 3), ('problem', 3), ('male', 2)]
+        observed_2 = sorted(bot.items(), key=itemgetter(1, 0), reverse=True)[:10]
+        expected_2 = [
+            ('nation', 6), ('world', 4), ('u.s.', 4), ('incarceration', 4),
+            ('decade', 4), ('state', 3), ('record', 3), ('problem', 3),
+            ('people', 3), ('minimum', 3)]
         self.assertEqual(observed_1, expected_1)
         self.assertEqual(observed_2, expected_2)

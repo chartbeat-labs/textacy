@@ -16,9 +16,9 @@ from numpy import nanmin, nanmax, zeros, NaN
 from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
 from spacy.tokens.span import Span as SpacySpan
 
+import textacy
 from textacy import spacy_utils, text_utils
 from textacy.compat import unicode_type
-from textacy.doc import Doc
 from textacy.spacy_utils import (normalized_str, get_main_verbs_of_sent,
                                  get_subjects_of_verb, get_objects_of_verb,
                                  get_span_for_compound_noun,
@@ -208,7 +208,7 @@ def named_entities(doc,
         TypeError: if `include_types` or `exclude_types` is not a str, a set of
             str, or a falsy value
     """
-    if isinstance(doc, Doc):
+    if isinstance(doc, textacy.Doc):
         nes = doc.spacy_doc.ents
     else:
         nes = doc.ents
@@ -266,7 +266,7 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
         ``spacy.Span``: the next noun chunk from ``doc`` in order of appearance
              in the document
     """
-    if isinstance(doc, Doc):
+    if isinstance(doc, textacy.Doc):
         ncs = doc.spacy_doc.noun_chunks
     else:
         ncs = doc.noun_chunks
@@ -747,7 +747,7 @@ def direct_quotations(doc):
 
     TODO: Better approach would use ML, but needs a training dataset.
     """
-    if isinstance(doc, Doc):
+    if isinstance(doc, textacy.Doc):
         if doc.lang != 'en':
             raise NotImplementedError('sorry, English-language texts only :(')
         doc = doc.spacy_doc
