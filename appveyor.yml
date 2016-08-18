@@ -1,3 +1,9 @@
+# branches to build
+branches:
+  # whitelist
+  only:
+    - master
+
 environment:
 
   matrix:
