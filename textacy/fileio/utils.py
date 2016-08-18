@@ -107,25 +107,21 @@ def coerce_content_type(content, file_mode):
     return content
 
 
-def split_content_and_metadata(items, content_field, itemwise=False):
+def split_record_fields(items, content_field, itemwise=False):
     """
-    Split content (text) from associated metadata, but keep them paired together,
-    for convenient loading into a ``Document`` (with ``itemwise = True``) or
-    ``Corpus.from_texts()`` (with ``itemwise = False``). Output format depends
-    on the form of the input items (dicts vs. lists) and the value for ``itemwise``.
+    Split records' content (text) field from associated metadata fields, but
+    keep them paired together for convenient loading into a ``textacy.Doc <textacy.doc.Doc>``
+    (with ``itemwise = True``) or ``textacy.Corpus <textacy.corpus.Corpus>``
+    (with ``itemwise = False``). Output format depends on the form of the input
+    items (dicts vs. lists) and the value for ``itemwise``.
 
     Args:
-        items (iterable(dict) or iterable(list)): an iterable of dicts, e.g. as
+        items (Iterable[dict] or Iterable[list]): an iterable of dicts, e.g. as
             read from disk by :func:`read_json_lines() <textacy.fileio.read.read_json_lines>`,
-            or an iterable of lists, e.g. as streamed from a Wikipedia database
-            dump::
-
-                >>> ([pageid, title, text] for pageid, title, text in
-                ...  textacy.corpora.wikipedia.get_plaintext_pages(<WIKIFILE>))
-
+            or an iterable of lists, e.g. as read from disk by :func:`read_csv() <textacy.fileio.read.read_csv>`
         content_field (str or int): if str, key in each dict item whose value is
-            the item's content (text); if int, index of the value in each list item
-            corresponding to the item's content (text)
+            the item's content (text); if int, index of the value in each list
+            item corresponding to the item's content (text)
         itemwise (bool): if True, content + metadata are paired item-wise
             as an iterable of (content, metadata) 2-tuples; if False, content +
             metadata are paired by position in two parallel iterables in the form of

@@ -30,7 +30,7 @@ class Corpus(object):
 
         >>> cw = textacy.corpora.CapitolWords()
         >>> records = cw.docs(limit=50)
-        >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
+        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
         ...     records, 'text')
         >>> corpus = textacy.Corpus(
         ...     'en', texts=text_stream, metadatas=metadata_stream)
@@ -55,7 +55,7 @@ class Corpus(object):
     Add and remove documents, with automatic updating of corpus statistics::
 
         >>> records = cw.docs(congress=114, limit=25)
-        >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
+        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
         ...     records, 'text')
         >>> corpus.add_texts(text_stream, metadatas=metadata_stream, n_threads=4)
         >>> print(corpus)
@@ -289,7 +289,7 @@ class Corpus(object):
             batch_size (int): Number of texts to process at a time.
 
         See Also:
-            :func:`fileio.split_content_and_metadata()`
+            :func:`fileio.split_record_fields()`
             http://spacy.io/docs/#multi-threaded
         """
         spacy_docs = self.spacy_lang.pipe(

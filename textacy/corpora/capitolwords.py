@@ -74,7 +74,7 @@ class CapitolWords(object):
 
     Stream speeches into a `Corpus`::
 
-        >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
+        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
         ...     cw.records(limit=100), 'text')
         >>> tc = textacy.Corpus.from_texts('en', text_stream, metadata_stream)
         >>> print(tc)

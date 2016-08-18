@@ -50,7 +50,7 @@ Efficiently stream documents from disk and into a processed corpus:
 
     >>> cw = textacy.corpora.CapitolWords()
     >>> docs = cw.records(speaker_name={'Hillary Clinton', 'Barack Obama'})
-    >>> content_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
+    >>> content_stream, metadata_stream = textacy.fileio.split_record_fields(
     ...     docs, 'text')
     >>> corpus = textacy.Corpus('en', texts=content_stream, metadatas=metadata_stream)
     >>> corpus
