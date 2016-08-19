@@ -1,42 +1,4 @@
-"""
-Train and apply a topic model to vectorized texts. For example::
-
-    >>> # first, stream a corpus with metadata from disk
-    >>> pages = ([pid, title, text] for pid, title, text
-    ...          in textacy.corpora.wikipedia.get_plaintext_pages('enwiki-latest-pages-articles.xml.bz2', max_n_pages=100))
-    >>> content_stream, metadata_stream = textacy.fileio.read.split_record_fields(pages, 2, itemwise=False)
-    >>> metadata_stream = ({'pageid': m[0], 'title': m[1]} for m in metadata_stream)
-    >>> corpus = textacy.Corpus.from_texts('en', content_stream, metadata=metadata_stream)
-    >>> # next, tokenize and vectorize the corpus
-    >>> terms_lists = (doc.as_terms_list(words=True, ngrams=False,
-    ...                                  named_entities=True, as_strings=True)
-    ...                for doc in corpus)
-    >>> doc_term_matrix, id2term = corpus.as_doc_term_matrix(
-    ...     terms_lists, weighting='tfidf', normalize=True, smooth_idf=True,
-    ...     min_df=3, max_df=0.95, max_n_terms=100000)
-    >>> # now initialize and train a topic model
-    >>> model = textacy.tm.TopicModel('nmf', n_topics=20)
-    >>> model.fit(doc_term_matrix)
-    >>> # transform the corpus and interpret our model
-    >>> doc_topic_matrix = model.transform(doc_term_matrix)
-    >>> for topic_idx, top_terms in model.top_topic_terms(id2term, top_n=10):
-    ...     print('topic', topic_idx, ':', '   '.join(top_terms))
-    >>> for topic_idx, top_docs in model.top_topic_docs(doc_topic_matrix, top_n=5):
-    ...     print(topic_idx)
-    ...     for j in top_docs:
-    ...         print(corpus[j].metadata['title'])
-    >>> for doc_idx, topics in model.top_doc_topics(doc_topic_matrix, docs=range(5), top_n=2):
-    ...     print(corpus[doc_idx].metadata['title'], ':', topics)
-    >>> for i, val in enumerate(model.topic_weights(doc_topic_matrix)):
-    ...     print(i, val)
-    >>> # visualize the model
-    >>> model.termite_plot(doc_term_matrix, id2term,
-    ...                    topics=-1,  n_terms=25, sort_terms_by='seriation')
-    >>> # assess topic quality through a coherence metric
-    >>> # TODO...
-    >>> # persist our topic model to disk
-    >>> model.save('nmf-20topics.pkl')
-"""
+"""Convenient and consolidated topic-modeling, built on ``scikit-learn``."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
@@ -53,10 +15,87 @@ logger = logging.getLogger(__name__)
 
 class TopicModel(object):
     """
+    Train and apply a topic model to vectorized texts using scikit-learn's
+    implementations of LSA, LDA, and NMF models. Inspect and visualize results.
+    Save and load trained models to and from disk.
+
+    Stream a corpus with metadata from disk::
+
+        >>> cw = textacy.corpora.CapitolWords()
+        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+        ...     cw.records(limit=1000), 'text', itemwise=False)
+        >>> corpus = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
+        >>> corpus
+        Corpus(1000 docs; 537742 tokens)
+
+    Tokenize and vectorize the corpus::
+
+        >>> terms_lists = (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+        ...                for doc in corpus)
+        >>> doc_term_matrix, id2term = corpus.to_doc_term_matrix(
+        ...     terms_lists, weighting='tfidf', normalize=True, smooth_idf=True,
+        ...     min_df=3, max_df=0.95, max_n_terms=100000)
+        >>> doc_term_matrix
+        <1000x5579 sparse matrix of type '<class 'numpy.float64'>'
+                with 105632 stored elements in Compressed Sparse Row format>
+
+    Initialize and train a topic model::
+
+        >>> model = textacy.tm.TopicModel('nmf', n_topics=20)
+        >>> model.fit(doc_term_matrix)
+        >>> model
+        TopicModel(n_topics=10, model=NMF)
+
+    Transform the corpus and interpret our model::
+
+        >>> doc_topic_matrix = model.transform(doc_term_matrix)
+        >>> for topic_idx, top_terms in model.top_topic_terms(id2term, topics=[0,1]):
+        ...     print('topic', topic_idx, ':', '   '.join(top_terms))
+        topic 0 : people   american   go   year   work   think   $   today   money   america
+        topic 1 : rescind   quorum   order   unanimous   consent   ask   president   mr.   madam   absence
+        >>> for topic_idx, top_docs in model.top_topic_docs(doc_topic_matrix, topics=[0,1], top_n=2):
+        ...     print(topic_idx)
+        ...     for j in top_docs:
+        ...         print(corpus[j].metadata['title'])
+        0
+        THE MOST IMPORTANT ISSUES FACING THE AMERICAN PEOPLE
+        55TH ANNIVERSARY OF THE BATTLE OF CRETE
+        1
+        CHEMICAL WEAPONS CONVENTION
+        MFN STATUS FOR CHINA
+        >>> for doc_idx, topics in model.top_doc_topics(doc_topic_matrix, docs=range(5), top_n=2):
+        ...     print(corpus[doc_idx].metadata['title'], ':', topics)
+        JOIN THE SENATE AND PASS A CONTINUING RESOLUTION : (9, 0)
+        MEETING THE CHALLENGE : (2, 0)
+        DISPOSING OF SENATE AMENDMENT TO H.R. 1643, EXTENSION OF MOST-FAVORED- NATION TREATMENT FOR BULGARIA : (0, 9)
+        EXAMINING THE SPEAKER'S UPCOMING TRAVEL SCHEDULE : (0, 9)
+        FLOODING IN PENNSYLVANIA : (0, 9)
+        >>> for i, val in enumerate(model.topic_weights(doc_topic_matrix)):
+        ...     print(i, val)
+        0 0.302796022302
+        1 0.0635617650602
+        2 0.0744927472417
+        3 0.0905778808867
+        4 0.0521162262192
+        5 0.0656303769725
+        6 0.0973516532757
+        7 0.112907245542
+        8 0.0680659204364
+        9 0.0725001620636
+
+    Visualize the model::
+
+        >>> model.termite_plot(doc_term_matrix, id2term,
+        ...                    topics=-1,  n_terms=25, sort_terms_by='seriation')
+
+    Persist our topic model to disk::
+
+        >>> model.save('nmf-10topics.pkl')
+
     Args:
         model ({'nmf', 'lda', 'lsa'} or ``sklearn.decomposition.<model>``)
-        n_topics (int, optional): number of topics in the model to be initialized
-        kwargs:
+        n_topics (int): number of topics in the model to be initialized
+        **kwargs:
             variety of parameters used to initialize the model; see individual
             sklearn pages for full details
 
@@ -64,7 +103,7 @@ class TopicModel(object):
         ValueError: if ``model`` not in ``{'nmf', 'lda', 'lsa'}`` or is not an
             NMF, LatentDirichletAllocation, or TruncatedSVD instance
 
-    Notes:
+    See Also:
         - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.NMF.html
         - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.LatentDirichletAllocation.html
         - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
@@ -104,6 +143,10 @@ class TopicModel(object):
                 model, {'nmf', 'lda', 'lsa'})
             raise ValueError(msg)
 
+    def __repr__(self):
+        return 'TopicModel(n_topics={}, model={})'.format(
+            self.n_topics, str(self.model).split('(', 1)[0])
+
     def save(self, filename):
         _ = joblib.dump(self.model, filename, compress=3)
         logger.info('{} model saved to {}'.format(self.model, filename))
@@ -142,7 +185,7 @@ class TopicModel(object):
             doc_term_matrix (array-like or sparse matrix): corpus represented as a
                 document-term matrix with shape (n_docs, n_terms); NOTE: LDA expects
                 tf-weighting, while NMF and LSA may do better with tfidf-weighting!
-            normalize (bool, optional): if True, the values in each row are normalized,
+            normalize (bool): if True, the values in each row are normalized,
                 i.e. topic weights on each document sum to 1
 
         Returns:
@@ -164,14 +207,14 @@ class TopicModel(object):
                 where the index represents the term id, such as that returned by
                 ``sklearn.feature_extraction.text.CountVectorizer.get_feature_names()``,
                 or a mapping of term id: term string
-            topics (int or seq(int), optional): topic(s) for which to return top terms;
+            topics (int or Sequence[int]): topic(s) for which to return top terms;
                 if -1 (default), all topics' terms are returned
-            top_n (int, optional): number of top terms to return per topic
-            weights (bool, optional): if True, terms are returned with their corresponding
+            top_n (int): number of top terms to return per topic
+            weights (bool): if True, terms are returned with their corresponding
                 topic weights; otherwise, terms are returned without weights
 
         Yields:
-            tuple(int, tuple(str)) or tuple(int, tuple((str, float))):
+            Tuple[int, Tuple[str]] or Tuple[int, Tuple[Tuple[str, float]]]:
                 next tuple corresponding to a topic; the first element is the topic's
                 index; if ``weights`` is False, the second element is a tuple of str
                 representing the top ``top_n`` related terms; otherwise, the second
@@ -203,17 +246,17 @@ class TopicModel(object):
         Get the top ``top_n`` docs by weight per topic in ``doc_topic_matrix``.
 
         Args:
-            doc_topic_matrix (numpy.ndarray): document-topic matrix with shape
+            doc_topic_matrix (``numpy.ndarray``): document-topic matrix with shape
                 (n_docs, n_topics), the result of calling
                 :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
-            topics (seq(int) or int, optional): topic(s) for which to return top docs;
+            topics (int or Sequence[int]): topic(s) for which to return top docs;
                 if -1, all topics' docs are returned
-            top_n (int, optional): number of top docs to return per topic
-            weights (bool, optional): if True, docs are returned with their corresponding
+            top_n (int): number of top docs to return per topic
+            weights (bool): if True, docs are returned with their corresponding
                 (normalized) topic weights; otherwise, docs are returned without weights
 
         Yields:
-            tuple(int, tuple(int)) or tuple(int, tuple(int, float)):
+            Tuple[int, Tuple[int]] or Tuple[int, Tuple[Tuple[int, float]]]:
                 next tuple corresponding to a topic; the first element is the topic's
                 index; if ``weights`` is False, the second element is a tuple of ints
                 representing the top ``top_n`` related docs; otherwise, the second
@@ -244,17 +287,17 @@ class TopicModel(object):
         Get the top ``top_n`` topics by weight per doc for ``docs`` in ``doc_topic_matrix``.
 
         Args:
-            doc_topic_matrix (numpy.ndarray): document-topic matrix with shape
+            doc_topic_matrix (``numpy.ndarray``): document-topic matrix with shape
                 (n_docs, n_topics), the result of calling
                 :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
-            docs (seq(int) or int, optional): docs for which to return top topics;
+            docs (int or Sequence[int]): docs for which to return top topics;
                 if -1, all docs' top topics are returned
-            top_n (int, optional): number of top topics to return per doc
-            weights (bool, optional): if True, docs are returned with their corresponding
+            top_n (int): number of top topics to return per doc
+            weights (bool): if True, docs are returned with their corresponding
                 (normalized) topic weights; otherwise, docs are returned without weights
 
         Yields:
-            tuple(int, tuple(int)) or tuple(int, tuple(int, float)):
+            Tuple[int, Tuple[int]] or Tuple[int, Tuple[Tuple[int, float]]]:
                 next tuple corresponding to a doc; the first element is the doc's
                 index; if ``weights`` is False, the second element is a tuple of ints
                 representing the top ``top_n`` related topics; otherwise, the second
@@ -287,7 +330,7 @@ class TopicModel(object):
         or not. I suppose either way makes sense... o_O
 
         Args:
-            doc_topic_matrix (numpy.ndarray): document-topic matrix with shape
+            doc_topic_matrix (``numpy.ndarray``): document-topic matrix with shape
                 (n_docs, n_topics), the result of calling
                 :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
 
@@ -314,24 +357,24 @@ class TopicModel(object):
             doc_term_matrix (``np.ndarray``-like or sparse matrix): corpus
                 represented as a document-term matrix with shape (n_docs, n_terms);
                 may have tf- or tfidf-weighting
-            id2term (list(str) or dict): object that returns the term string corresponding
+            id2term (List[str] or dict): object that returns the term string corresponding
                 to term id ``i`` through ``id2term[i]``; could be a list of strings
                 where the index represents the term id, such as that returned by
                 ``sklearn.feature_extraction.text.CountVectorizer.get_feature_names()``,
                 or a mapping of term id: term string
-            topics (seq(int) or int, optional): topic(s) to include in termite plot;
+            topics (int or Sequence[int]): topic(s) to include in termite plot;
                 if -1, all topics are included
-            sort_topics_by ({'index', 'weight'}, optional):
-            highlight_topics (seq(int) or int, optional): indices for up to 6 topics
+            sort_topics_by ({'index', 'weight'}):
+            highlight_topics (int or Sequence[int]): indices for up to 6 topics
                 to visually highlight in the plot with contrasting colors
-            n_terms (int, optional): number of top terms to include in termite plot
-            rank_terms_by ({'topic_weight', 'corpus_weight'}, optional): value used
+            n_terms (int): number of top terms to include in termite plot
+            rank_terms_by ({'topic_weight', 'corpus_weight'}): value used
                 to rank terms; the top-ranked ``n_terms`` are included in the plot
-            sort_terms_by ({'seriation', 'weight', 'index', 'alphabetical'}, optional):
+            sort_terms_by ({'seriation', 'weight', 'index', 'alphabetical'}):
                 method used to vertically sort the selected top ``n_terms`` terms;
                 the default ("seriation") groups similar terms together, which
                 facilitates cross-topic assessment
-            save (str, optional): give the full /path/to/fname on disk to save figure
+            save (str): give the full /path/to/fname on disk to save figure
 
         Returns:
             ``matplotlib.axes.Axes.axis``: axis on which termite plot is plotted
