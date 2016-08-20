@@ -4,7 +4,9 @@ Load, process, iterate, transform, and save a collection of documents — a corp
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from collections import Counter
 import copy
+from math import log
 import os
 import warnings
 
@@ -467,6 +469,110 @@ class Corpus(object):
                 if n_matched_docs == limit:
                     break
         self._remove_many_docs_by_index(matched_indexes)
+
+    def word_counts(self, lemmatize=True, lowercase=False,
+                    weighting='count', as_strings=False):
+        """
+        Map the set of unique words in ``Corpus`` to their counts as absolute,
+        relative, or binary frequencies of occurence. This is akin to
+        :func:``Doc.to_bag_of_words() <textacy.doc.Doc.to_bag_of_words>.
+
+        Args:
+            lemmatize (bool): if True, words are lemmatized before counting;
+                for example, 'happy', 'happier', and 'happiest' would be grouped
+                together as 'happy', with a count of 3
+            lowercase (bool): if True and ``lemmatize`` is False, words are lower-
+                cased before counting; for example, 'happy' and 'Happy' would be
+                grouped together as 'happy', with a count of 2
+            weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
+                words. If 'count' (default), weights are the absolute number of
+                occurrences (count) of word in corpus. If 'binary', all counts
+                are set equal to 1. If 'freq', word counts are normalized by the
+                total token count, giving their relative frequency of occurrence.
+                Note: The resulting set of frequencies won't (necessarily) sum
+                to 1.0, since punctuation and stop words are filtered out after
+                counts are normalized.
+            as_strings (bool): if True, words are returned as strings; if False
+                (default), words are returned as their unique integer ids
+
+        Returns:
+            dict: mapping of a unique word id or string (depending on the value
+                of ``as_strings``) to its absolute, relative, or binary frequency
+                of occurrence (depending on the value of ``weighting``).
+        """
+        word_counts = Counter()
+        for doc in self:
+            word_counts.update(doc.to_bag_of_words(
+                lemmatize=lemmatize, lowercase=lowercase,
+                weighting='count', as_strings=as_strings))
+        if weighting == 'count':
+            word_counts = dict(word_counts)
+        if weighting == 'freq':
+            n_tokens = self.n_tokens
+            word_counts = {word: weight / n_tokens
+                           for word, weight in word_counts.items()}
+        elif weighting == 'binary':
+            word_counts = {word: 1 for word in word_counts.keys()}
+        return word_counts
+
+    def word_doc_counts(self, lemmatize=True, lowercase=False,
+                        weighting='count', smooth_idf=True, as_strings=False):
+        """
+        Map the set of unique words in ``Corpus`` to their *document* counts as
+        absolute, relative, inverse, or binary frequencies of occurence.
+
+        Args:
+            lemmatize (bool): if True, words are lemmatized before counting;
+                for example, 'happy', 'happier', and 'happiest' would be grouped
+                together as 'happy', with a count of 3
+            lowercase (bool): if True and ``lemmatize`` is False, words are lower-
+                cased before counting; for example, 'happy' and 'Happy' would be
+                grouped together as 'happy', with a count of 2
+            weighting ({'count', 'freq', 'idf', 'binary'}): Type of weight to
+                assign to words. If 'count' (default), weights are the absolute
+                number (count) of documents in which word appears. If 'binary',
+                all counts are set equal to 1. If 'freq', word doc counts are
+                normalized by the total document count, giving their relative
+                frequency of occurrence. If 'idf', weights are the log of the
+                inverse relative frequencies: ``log(n_docs / word_doc_count)``
+                or ``log(1 + n_docs / word_doc_count)`` if ``smooth_idf`` is True.
+            smooth_idf (bool): if True, add 1 to all document frequencies when
+                calculating 'idf' weighting, equivalent to adding a single
+                document to the corpus containing every unique word
+            as_strings (bool): if True, words are returned as strings; if False
+                (default), words are returned as their unique integer ids
+
+        Returns:
+            dict: mapping of a unique word id or string (depending on the value
+                of ``as_strings``) to the number of documents in which it appears
+                weighted as absolute, relative, or binary frequencies (depending
+                on the value of ``weighting``).
+
+        See Also:
+            :func:`vsm.get_term_freqs() <textacy.representations.vsm.get_term_freqs>``
+        """
+        word_doc_counts = Counter()
+        for doc in self:
+            word_doc_counts.update(doc.to_bag_of_words(
+                lemmatize=lemmatize, lowercase=lowercase,
+                weighting='binary', as_strings=as_strings))
+        if weighting == 'count':
+            word_doc_counts = dict(word_doc_counts)
+        elif weighting == 'freq':
+            n_docs = self.n_docs
+            word_doc_counts = {word: count / n_docs
+                               for word, doc in word_doc_counts.items()}
+        elif weighting == 'idf':
+            n_docs = self.n_docs
+            if smooth_idf is True:
+                word_doc_counts = {word: log(1 + n_docs / count)
+                                   for word, count in word_doc_counts.items()}
+            else:
+                word_doc_counts = {word: log(n_docs / count)
+                                   for word, count in word_doc_counts.items()}
+        elif weighting == 'binary':
+            word_doc_counts = {word: 1 for word in word_doc_counts.keys()}
+        return word_doc_counts
 
     ####################
     # TRANSFORM CORPUS #

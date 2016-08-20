@@ -271,7 +271,7 @@ class Doc(object):
         """
         spacy_utils.merge_spans(spans)
         # reset counts, since merging spans invalidates existing counts
-        self._counts = Counter()
+        self._counts.clear()
         self._counted_ngrams = set()
 
     _counted_ngrams = set()
@@ -279,7 +279,7 @@ class Doc(object):
 
     def count(self, term):
         """
-        Get the frequency of occurrence ("count") of ``term`` in ``Doc``.
+        Get the number of occurrences (i.e. count) of ``term`` in ``Doc``.
 
         Args:
             term (str or int or ``spacy.Token`` or ``spacy.Span``): The term to
@@ -486,11 +486,11 @@ class Doc(object):
                 for term in terms:
                     yield term.orth_
 
-    def to_bag_of_words(self, lemmatize=True, lowercase=False, normalize=False,
+    def to_bag_of_words(self, lemmatize=True, lowercase=False, weighting='count',
                         as_strings=False):
         """
         Transform ``Doc`` into a bag-of-words: the set of unique words in ``Doc``
-        mapped to their frequency of occurrence.
+        mapped to their absolute, relative, or binary frequency of occurrence.
 
         Args:
             lemmatize (bool): if True, words are lemmatized before counting;
@@ -499,26 +499,35 @@ class Doc(object):
             lowercase (bool): if True and ``lemmatize`` is False, words are lower-
                 cased before counting; for example, 'happy' and 'Happy' would be
                 grouped together as 'happy', with a count of 2
-            normalize (bool): if True, normalize individual words' counts by the
-                total token count, giving instead their *relative* frequency of
-                occurrence in ``Doc``; note: the resulting set of values won't
-                (necessarily) sum to 1.0, since punctuation and stop words are
-                filtered out after counts are normalized
+            weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
+                words. If 'count' (default), weights are the absolute number of
+                occurrences (count) of word in doc. If 'binary', all counts are
+                set equal to 1. If 'freq', word counts are normalized by the
+                total token count, giving their relative frequency of occurrence.
+                Note: The resulting set of frequencies won't (necessarily) sum
+                to 1.0, since punctuation and stop words are filtered out after
+                counts are normalized.
             as_strings (bool): if True, words are returned as strings; if False
                 (default), words are returned as their unique integer ids
 
         Returns:
             dict: mapping of a unique word id or string (depending on the value
-                of ``as_strings``) to its absolute or relative frequency of
-                occurrence (depending on the value of ``normalize``)
+                of ``as_strings``) to its absolute, relative, or binary frequency
+                of occurrence (depending on the value of ``weighting``).
         """
+        if weighting not in {'count', 'freq', 'binary'}:
+            raise ValueError('weighting "{}" is invalid'.format(weighting))
         count_by = (attrs.LEMMA if lemmatize is True else
-                    attrs.LOWER if lowercase is True else attrs.ORTH)
+                    attrs.LOWER if lowercase is True else
+                    attrs.ORTH)
         word_to_weight = self.spacy_doc.count_by(count_by)
-        if normalize is True:
+        if weighting == 'freq':
             n_tokens = self.n_tokens
             word_to_weight = {id_: weight / n_tokens
                               for id_, weight in word_to_weight.items()}
+        elif weighting == 'binary':
+            word_to_weight = {word: 1 for word in word_to_weight.keys()}
+
         bow = {}
         if as_strings is False:
             for id_, count in word_to_weight.items():
@@ -536,7 +545,7 @@ class Doc(object):
 
     def to_bag_of_terms(self, ngrams=(1, 2, 3), named_entities=True,
                         lemmatize=True, lowercase=False,
-                        normalize=False, as_strings=False, **kwargs):
+                        weighting='count', as_strings=False, **kwargs):
         """
         Transform ``Doc`` into a bag-of-terms: the set of unique terms in ``Doc``
         mapped to their frequency of occurrence, where "terms" includes ngrams
@@ -555,11 +564,11 @@ class Doc(object):
             lowercase (bool): if True and ``lemmatize`` is False, words are lower-
                 cased before counting; for example, 'happy' and 'Happy' would be
                 grouped together as 'happy', with a count of 2
-            normalize (bool): if True, normalize individual words' counts by the
-                total token count, giving instead their *relative* frequency of
-                occurrence in ``Doc``; note: the resulting set of values won't
-                (necessarily) sum to 1.0, since punctuation and stop words are
-                filtered out after counts are normalized
+            weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
+                terms. If 'count' (default), weights are the absolute number of
+                occurrences (count) of term in doc. If 'binary', all counts are
+                set equal to 1. If 'freq', term counts are normalized by the
+                total token count, giving their relative frequency of occurrence.
             as_strings (bool): if True, words are returned as strings; if False
                 (default), words are returned as their unique integer ids
             kwargs:
@@ -580,21 +589,24 @@ class Doc(object):
 
         Returns:
             dict: mapping of a unique term id or string (depending on the value
-                of ``as_strings``) to its absolute or relative frequency of
-                occurrence (depending on the value of ``normalize``)
+                of ``as_strings``) to its absolute, relative, or binary frequency
+                of occurrence (depending on the value of ``weighting``).
 
         See Also:
             :meth:`Doc.to_terms_list() <Doc.to_terms_list>`
         """
+        if weighting not in {'count', 'freq', 'binary'}:
+            raise ValueError('weighting "{}" is invalid'.format(weighting))
         terms_list = self.to_terms_list(
             ngrams=ngrams, named_entities=named_entities,
             lemmatize=lemmatize, lowercase=lowercase,
             as_strings=as_strings, **kwargs)
         bot = itertoolz.frequencies(terms_list)
-        if normalize is True:
+        if weighting == 'freq':
             n_tokens = self.n_tokens
-            bot = {term: weight / n_tokens
-                   for term, weight in bot.items()}
+            bot = {term: weight / n_tokens for term, weight in bot.items()}
+        elif weighting == 'binary':
+            bot = {term: 1 for term in bot.keys()}
         return bot
 
     def to_semantic_network(self, nodes='words',
