@@ -32,7 +32,7 @@ class TopicModel(object):
 
         >>> terms_lists = (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
         ...                for doc in corpus)
-        >>> doc_term_matrix, id2term = corpus.to_doc_term_matrix(
+        >>> doc_term_matrix, id2term = textacy.vsm.doc_term_matrix(
         ...     terms_lists, weighting='tfidf', normalize=True, smooth_idf=True,
         ...     min_df=3, max_df=0.95, max_n_terms=100000)
         >>> doc_term_matrix

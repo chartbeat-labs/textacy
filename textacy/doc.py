@@ -20,7 +20,7 @@ from spacy.tokens.token import Token as SpacyToken
 import textacy
 from textacy.compat import unicode_type
 from textacy import data, fileio, spacy_utils, text_utils
-from textacy.representations import network
+from textacy import network
 
 
 class Doc(object):
@@ -633,8 +633,8 @@ class Doc(object):
             ValueError: if ``nodes`` is neither 'words' nor 'sents'
 
         See Also:
-            :func:`terms_to_semantic_network() <textacy.representations.network.terms_to_semantic_network>`
-            :func:`sents_to_semantic_network() <textacy.representations.network.sents_to_semantic_network>`
+            :func:`terms_to_semantic_network() <textacy.network.terms_to_semantic_network>`
+            :func:`sents_to_semantic_network() <textacy.network.sents_to_semantic_network>`
         """
         if nodes == 'words':
             if edge_weighting == 'default':

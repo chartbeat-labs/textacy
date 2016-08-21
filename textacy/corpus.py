@@ -17,7 +17,6 @@ from spacy.tokens.doc import Doc as SpacyDoc
 from textacy import data, fileio
 from textacy.compat import PY2, unicode_type, zip
 from textacy.doc import Doc
-from textacy.representations import vsm
 
 
 class Corpus(object):
@@ -25,8 +24,8 @@ class Corpus(object):
     An ordered collection of :class:`textacy.Doc <textacy.Doc>` s, all of the
     same language and sharing the same ``spacy.Language`` models and vocabulary.
     Track corpus statistics; flexibly add, iterate through, filter for, and
-    remove documents; save and load parsed content and metadata to and from disk;
-    transform corpus into a document-term matrix; and more.
+    remove documents; save and load parsed content and metadata to and from
+    disk; and more.
 
     Initialize from a stream of texts and corresponding metadatas::
 
@@ -68,6 +67,11 @@ class Corpus(object):
         >>> del corpus[:5]
         >>> print(corpus)
         Corpus(55 docs; 47444 tokens)
+
+    Get word and doc frequencies in absolute, relative, or binary form:
+
+        >>> counts = corpus.word_freqs(lemmatize=True, weighting='count')
+        >>> idf = corpus.word_doc_freqs(lemmatize=True, weighting='idf')
 
     Save to and load from disk::
 
@@ -470,8 +474,8 @@ class Corpus(object):
                     break
         self._remove_many_docs_by_index(matched_indexes)
 
-    def word_counts(self, lemmatize=True, lowercase=False,
-                    weighting='count', as_strings=False):
+    def word_freqs(self, lemmatize=True, lowercase=False,
+                   weighting='count', as_strings=False):
         """
         Map the set of unique words in ``Corpus`` to their counts as absolute,
         relative, or binary frequencies of occurence. This is akin to
@@ -499,6 +503,9 @@ class Corpus(object):
             dict: mapping of a unique word id or string (depending on the value
                 of ``as_strings``) to its absolute, relative, or binary frequency
                 of occurrence (depending on the value of ``weighting``).
+
+        See Also:
+            :func:`vsm.get_term_freqs() <textacy.vsm.get_term_freqs>``
         """
         word_counts = Counter()
         for doc in self:
@@ -515,8 +522,8 @@ class Corpus(object):
             word_counts = {word: 1 for word in word_counts.keys()}
         return word_counts
 
-    def word_doc_counts(self, lemmatize=True, lowercase=False,
-                        weighting='count', smooth_idf=True, as_strings=False):
+    def word_doc_freqs(self, lemmatize=True, lowercase=False,
+                       weighting='count', smooth_idf=True, as_strings=False):
         """
         Map the set of unique words in ``Corpus`` to their *document* counts as
         absolute, relative, inverse, or binary frequencies of occurence.
@@ -549,7 +556,7 @@ class Corpus(object):
                 on the value of ``weighting``).
 
         See Also:
-            :func:`vsm.get_term_freqs() <textacy.representations.vsm.get_term_freqs>``
+            :func:`vsm.get_doc_freqs() <textacy.vsm.get_doc_freqs>``
         """
         word_doc_counts = Counter()
         for doc in self:
@@ -561,7 +568,7 @@ class Corpus(object):
         elif weighting == 'freq':
             n_docs = self.n_docs
             word_doc_counts = {word: count / n_docs
-                               for word, doc in word_doc_counts.items()}
+                               for word, count in word_doc_counts.items()}
         elif weighting == 'idf':
             n_docs = self.n_docs
             if smooth_idf is True:
@@ -573,25 +580,3 @@ class Corpus(object):
         elif weighting == 'binary':
             word_doc_counts = {word: 1 for word in word_doc_counts.keys()}
         return word_doc_counts
-
-    ####################
-    # TRANSFORM CORPUS #
-
-    def to_doc_term_matrix(self, terms_lists, weighting='tf',
-                           normalize=True, smooth_idf=True, sublinear_tf=False,
-                           min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None):
-        """
-        Transform corpus into a sparse CSR matrix, where each row i corresponds
-        to a doc, each column j corresponds to a unique term, and matrix values
-        (i, j) correspond to the tf or tf-idf weighting of term j in doc i.
-
-        See Also:
-            :meth:`Doc.to_terms_list() <textacy.doc.Doc.to_terms_list>`
-            :func:`build_doc_term_matrix() <textacy.representations.vsm.build_doc_term_matrix>`
-        """
-        self.doc_term_matrix, self.id_to_term = vsm.build_doc_term_matrix(
-            terms_lists, weighting=weighting,
-            normalize=normalize, smooth_idf=smooth_idf, sublinear_tf=sublinear_tf,
-            min_df=min_df, max_df=max_df, min_ic=min_ic,
-            max_n_terms=max_n_terms)
-        return (self.doc_term_matrix, self.id_to_term)

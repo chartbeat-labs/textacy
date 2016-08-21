@@ -18,8 +18,8 @@ import networkx as nx
 import numpy as np
 
 from textacy import extract, spacy_utils
-from textacy.representations import vsm
-from textacy.representations.network import terms_to_semantic_network
+from textacy import vsm
+from textacy.network import terms_to_semantic_network
 
 
 def sgrank(doc, window_width=1500, n_keyterms=10, idf=None):
@@ -292,7 +292,7 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
 
     Args:
         terms_lists (Iterable[Iterable[str]]): a sequence of documents, each as a
-            sequence of (str) terms; used as input to :func:`build_doc_term_matrix()`
+            sequence of (str) terms; used as input to :func:`doc_term_matrix()`
         bool_array_grp1 (Iterable[bool]): an ordered sequence of True/False values,
             where True corresponds to documents falling into "group 1" and False
             corresponds to those in "group 2"
@@ -318,7 +318,7 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
     bool_array_grp1 = np.array(bool_array_grp1)
     bool_array_grp2 = np.invert(bool_array_grp1)
 
-    dtm, id2term = vsm.build_doc_term_matrix(
+    dtm, id2term = vsm.doc_term_matrix(
         terms_lists, weighting='tf', normalize=False,
         sublinear_tf=False, smooth_idf=True,
         min_df=3, max_df=0.95, min_ic=0.0, max_n_terms=max_n_terms)

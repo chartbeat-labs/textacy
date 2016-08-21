@@ -6,10 +6,10 @@ import unittest
 from scipy.sparse import coo_matrix
 
 from textacy import Corpus
-from textacy.representations import vsm
+from textacy import vsm
 
 
-class RepresentationsVSMTestCase(unittest.TestCase):
+class VSMTestCase(unittest.TestCase):
 
     def setUp(self):
         texts = ["Mary had a little lamb. Its fleece was white as snow.",
@@ -23,7 +23,7 @@ class RepresentationsVSMTestCase(unittest.TestCase):
         corpus = Corpus('en', texts=texts)
         term_lists = [doc.to_terms_list(ngrams=1, named_entities=False, as_strings=True)
                       for doc in corpus]
-        self.doc_term_matrix, self.id_to_term = vsm.build_doc_term_matrix(
+        self.doc_term_matrix, self.id_to_term = vsm.doc_term_matrix(
             term_lists,
             weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
             min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)

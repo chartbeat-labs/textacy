@@ -25,13 +25,13 @@ Information Extraction
 .. automodule:: textacy.keyterms
     :members:
 
-Document Representations
-------------------------
+Representations
+---------------
 
-.. automodule:: textacy.representations.network
+.. automodule:: textacy.network
     :members:
 
-.. automodule:: textacy.representations.vsm
+.. automodule:: textacy.vsm
     :members:
 
 Topic Modeling

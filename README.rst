@@ -60,7 +60,7 @@ Represent corpus as a document-term matrix, with flexible weighting and filterin
 
 .. code-block:: pycon
 
-    >>> doc_term_matrix, id2term = corpus.to_doc_term_matrix(
+    >>> doc_term_matrix, id2term = textacy.vsm.doc_term_matrix(
     ...     (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
     ...      for doc in corpus),
     ...     weighting='tfidf', normalize=True, smooth_idf=True, min_df=2, max_df=0.95)
