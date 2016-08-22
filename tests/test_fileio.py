@@ -42,10 +42,15 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.txt', '.gz', '.bz2', '.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_file_bytes' + ext)
-            fileio.write_file(expected, filename, mode='wb',
-                              auto_make_dirs=True)
-            observed = fileio.read_file(filename, mode='rb')
-            self.assertEqual(observed, expected)
+            if PY2 is True and ext == '.xz':
+                self.assertRaises(
+                    ValueError, fileio.open_sesame,
+                    filename, 'wb', 'utf-8', True)
+            else:
+                fileio.write_file(expected, filename, mode='wb',
+                                  auto_make_dirs=True)
+                observed = fileio.read_file(filename, mode='rb')
+                self.assertEqual(observed, expected)
 
     def test_read_write_file_unicode(self):
         expected = self.text
@@ -67,11 +72,16 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.txt', '.gz', '.bz2', '.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_file_lines_bytes' + ext)
-            fileio.write_file_lines(expected, filename, mode='wb',
-                                    auto_make_dirs=True)
-            observed = [line.strip() for line
-                        in fileio.read_file_lines(filename, mode='rb')]
-            self.assertEqual(observed, expected)
+            if PY2 is True and ext == '.xz':
+                self.assertRaises(
+                    ValueError, fileio.open_sesame,
+                    filename, 'wb', 'utf-8', True)
+            else:
+                fileio.write_file_lines(expected, filename, mode='wb',
+                                        auto_make_dirs=True)
+                observed = [line.strip() for line
+                            in fileio.read_file_lines(filename, mode='rb')]
+                self.assertEqual(observed, expected)
 
     def test_read_write_file_lines_unicode(self):
         expected = [sent.text for sent in self.spacy_doc.sents]
@@ -96,10 +106,15 @@ class FileIOTestCase(unittest.TestCase):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_json_bytes' + ext)
             if PY2 is True:
-                fileio.write_json(expected, filename, mode='wb',
-                                  auto_make_dirs=True)
-                observed = list(fileio.read_json(filename, mode='rb', prefix=''))[0]
-                self.assertEqual(observed, expected)
+                if ext == '.json.xz':
+                    self.assertRaises(
+                        ValueError, fileio.open_sesame,
+                        filename, 'wb', 'utf-8', True)
+                else:
+                    fileio.write_json(expected, filename, mode='wb',
+                                      auto_make_dirs=True)
+                    observed = list(fileio.read_json(filename, mode='rb', prefix=''))[0]
+                    self.assertEqual(observed, expected)
             else:
                 self.assertRaises(
                     TypeError,
@@ -140,10 +155,15 @@ class FileIOTestCase(unittest.TestCase):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_json_lines_bytes' + ext)
             if PY2 is True:
-                fileio.write_json_lines(expected, filename, mode='wb',
-                                        auto_make_dirs=True)
-                observed = list(fileio.read_json_lines(filename, mode='rb'))
-                self.assertEqual(observed, expected)
+                if ext == '.json.xz':
+                    self.assertRaises(
+                        ValueError, fileio.open_sesame,
+                        filename, 'wb', 'utf-8', True)
+                else:
+                    fileio.write_json_lines(expected, filename, mode='wb',
+                                            auto_make_dirs=True)
+                    observed = list(fileio.read_json_lines(filename, mode='rb'))
+                    self.assertEqual(observed, expected)
             else:
                 self.assertRaises(
                     TypeError, fileio.write_json_lines,
@@ -206,7 +226,11 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.bin', '.bin.gz', '.bin.bz2', '.bin.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_spacy_docs' + ext)
-            if PY2 is True and ext == '.bin.gz':  # no idea why this is the case
+            if PY2 is True and ext == '.bin.xz':
+                self.assertRaises(
+                    ValueError, fileio.open_sesame,
+                    filename, 'wb', None, True)
+            elif PY2 is True and ext == '.bin.gz':  # no idea why this is the case
                 self.assertRaises(
                     TypeError, fileio.write_spacy_docs,
                     self.spacy_doc, filename, True)

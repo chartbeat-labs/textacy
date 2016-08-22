@@ -7,6 +7,10 @@ from itertools import tee, starmap
 import os
 import re
 import warnings
+try:  # Py3
+    import lzma
+except ImportError:  # Py2
+    pass
 
 from cytoolz.itertoolz import cons, pluck
 
@@ -66,7 +70,10 @@ def open_sesame(filepath, mode='rt',
         elif ext == '.bz2':
             f = bz2.BZ2File(filepath, mode=mode_)
         elif ext == '.xz':
-            f = compat.lzma.LZMAFile(filepath, mode=mode_)
+            if compat.PY2 is True:
+                msg = "lzma compression isn't enabled for Python 2; try gzip or bz2"
+                raise ValueError(msg)
+            f = lzma.LZMAFile(filepath, mode=mode_)
         # handle reading/writing compressed files in text mode
         if 't' in mode:
             if compat.PY2 is True:

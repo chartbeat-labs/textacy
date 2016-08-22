@@ -1,5 +1,4 @@
 backports.csv>=1.0.1
-backports.lzma>=0.0.6
 cachetools
 cld2-cffi>=0.1.4
 cytoolz

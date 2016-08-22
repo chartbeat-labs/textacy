@@ -38,7 +38,6 @@ setup(
     packages=find_packages(),
     install_requires=[
         'backports.csv>=1.0.1',
-        'backports.lzma>=0.0.6',
         'cachetools',
         'cld2-cffi>=0.1.3',
         'cytoolz',
