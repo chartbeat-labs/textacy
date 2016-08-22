@@ -1,16 +1,19 @@
 API Reference
 =============
 
+Doc and Corpus
+--------------
+
+.. automodule:: textacy.doc
+    :members:
+
+.. automodule:: textacy.corpus
+    :members:
+
 Text Preprocessing
 ----------------------
 
 .. automodule:: textacy.preprocess
-    :members:
-
-OOP Interface
--------------
-
-.. automodule:: textacy.texts
     :members:
 
 Information Extraction
@@ -22,13 +25,13 @@ Information Extraction
 .. automodule:: textacy.keyterms
     :members:
 
-Document Representations
-------------------------
+Representations
+---------------
 
-.. automodule:: textacy.representations.network
+.. automodule:: textacy.network
     :members:
 
-.. automodule:: textacy.representations.vsm
+.. automodule:: textacy.vsm
     :members:
 
 Topic Modeling
@@ -44,6 +47,9 @@ File IO
     :members:
 
 .. automodule:: textacy.fileio.write
+    :members:
+
+.. automodule:: textacy.fileio.utils
     :members:
 
 Corpora
@@ -88,7 +94,7 @@ Utilities
 Other Stuff!
 ------------
 
-.. automodule:: textacy.regexes_etc
+.. automodule:: textacy.similarity
     :members:
 
 .. automodule:: textacy.text_stats

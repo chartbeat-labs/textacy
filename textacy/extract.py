@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 Functions to extract various elements of interest from documents already parsed
-by `Spacy <http://spacy.io/>`_, such as n-grams, named entities, subject-verb-object
+by `spaCy <http://spacy.io/>`_, such as n-grams, named entities, subject-verb-object
 triples, and acronyms.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -14,38 +14,48 @@ import re
 from cytoolz import itertoolz
 from numpy import nanmin, nanmax, zeros, NaN
 from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
+from spacy.tokens.span import Span as SpacySpan
 
+import textacy
 from textacy import spacy_utils, text_utils
+from textacy.compat import unicode_type
 from textacy.spacy_utils import (normalized_str, get_main_verbs_of_sent,
                                  get_subjects_of_verb, get_objects_of_verb,
                                  get_span_for_compound_noun,
                                  get_span_for_verb_auxiliaries)
-from textacy.regexes_etc import NUMERIC_NE_TYPES, REPORTING_VERBS
+from textacy.constants import NUMERIC_NE_TYPES, REPORTING_VERBS
 
 
 def words(doc,
           filter_stops=True, filter_punct=True, filter_nums=False,
-          good_pos_tags=None, bad_pos_tags=None, min_freq=1):
+          include_pos=None, exclude_pos=None, min_freq=1):
     """
-    Extract an ordered sequence of words from a spacy-parsed doc, optionally
-    filtering words by part-of-speech (etc.) and frequency.
+    Extract an ordered sequence of words from a document processed by spaCy,
+    optionally filtering words by part-of-speech tag and frequency.
 
     Args:
-        doc (``spacy.Doc`` or ``spacy.Span``)
-        filter_stops (bool, optional): if True, remove stop words from word list
-        filter_punct (bool, optional): if True, remove punctuation from word list
-        filter_nums (bool, optional): if True, remove number-like words
-            (e.g. 10, 'ten') from word list
-        good_pos_tags (set[str], optional): remove words whose part-of-speech tag
-            is NOT in the specified tags, using the set of universal POS tagset
-        bad_pos_tags (set[str], optional): remove words whose part-of-speech tag
-            IS in the specified tags, using the set of universal POS tagset
-        min_freq (int, optional): remove words that occur in `doc` fewer than
+        doc (``textacy.Doc``, ``spacy.Doc``, or ``spacy.Span``)
+        filter_stops (bool): if True, remove stop words from word list
+        filter_punct (bool): if True, remove punctuation from word list
+        filter_nums (bool): if True, remove number-like words (e.g. 10, 'ten')
+            from word list
+        include_pos (str or Set[str]): remove words whose part-of-speech tag
+            IS NOT included in this param
+        exclude_pos (str or Set[str]): remove words whose part-of-speech tag
+            IS in the specified tags
+        min_freq (int): remove words that occur in `doc` fewer than
             `min_freq` times
 
     Yields:
         ``spacy.Token``: the next token from ``doc`` passing specified filters
             in order of appearance in the document
+
+    Raises:
+        TypeError: if `include_pos` or `exclude_pos` is not a str, a set of str,
+            or a falsy value
+
+    .. note:: Filtering by part-of-speech tag uses the universal POS tag set,
+        http://universaldependencies.org/u/pos/
     """
     words_ = (w for w in doc if not w.is_space)
     if filter_stops is True:
@@ -54,10 +64,26 @@ def words(doc,
         words_ = (w for w in words_ if not w.is_punct)
     if filter_nums is True:
         words_ = (w for w in words_ if not w.like_num)
-    if good_pos_tags:
-        words_ = (w for w in words_ if w.pos_ in good_pos_tags)
-    if bad_pos_tags:
-        words_ = (w for w in words_ if w.pos_ not in bad_pos_tags)
+    if include_pos:
+        if isinstance(include_pos, unicode_type):
+            include_pos = include_pos.upper()
+            words_ = (w for w in words_ if w.pos_ == include_pos)
+        elif isinstance(include_pos, (set, frozenset, list, tuple)):
+            include_pos = {pos.upper() for pos in include_pos}
+            words_ = (w for w in words_ if w.pos_ in include_pos)
+        else:
+            msg = 'invalid `include_pos` type: "{}"'.format(type(include_pos))
+            raise TypeError(msg)
+    if exclude_pos:
+        if isinstance(exclude_pos, unicode_type):
+            exclude_pos = exclude_pos.upper()
+            words_ = (w for w in words_ if w.pos_ != exclude_pos)
+        elif isinstance(exclude_pos, (set, frozenset, list, tuple)):
+            exclude_pos = {pos.upper() for pos in exclude_pos}
+            words_ = (w for w in words_ if w.pos_ not in exclude_pos)
+        else:
+            msg = 'invalid `exclude_pos` type: "{}"'.format(type(exclude_pos))
+            raise TypeError(msg)
     if min_freq > 1:
         words_ = list(words_)
         freqs = itertoolz.frequencies(normalized_str(w) for w in words_)
@@ -70,36 +96,39 @@ def words(doc,
 
 def ngrams(doc, n,
            filter_stops=True, filter_punct=True, filter_nums=False,
-           good_pos_tags=None, bad_pos_tags=None, min_freq=1):
+           include_pos=None, exclude_pos=None, min_freq=1):
     """
-    Extract an ordered sequence of n-grams (``n`` consecutive words) from a spacy-parsed
-    doc, optionally filtering n-grams by the types and parts-of-speech of the
-    constituent words.
+    Extract an ordered sequence of n-grams (``n`` consecutive words) from a
+    spacy-parsed doc, optionally filtering n-grams by the types and
+    parts-of-speech of the constituent words.
 
     Args:
-        doc (``spacy.Doc`` or ``spacy.Span``)
-        n (int): number of tokens per n-gram; 2 gives bigrams, 3 gives trigrams, etc.
-        filter_stops (bool, optional): if True, remove ngrams that start or end
+        doc (``textacy.Doc``, ``spacy.Doc``, or ``spacy.Span``)
+        n (int): number of tokens per n-gram; 2 => bigrams, 3 => trigrams, etc.
+        filter_stops (bool): if True, remove ngrams that start or end
             with a stop word
-        filter_punct (bool, optional): if True, remove ngrams that contain
+        filter_punct (bool): if True, remove ngrams that contain
             any punctuation-only tokens
-        filter_nums (bool, optional): if True, remove ngrams that contain
+        filter_nums (bool): if True, remove ngrams that contain
             any numbers or number-like tokens (e.g. 10, 'ten')
-        good_pos_tags (set[str], optional): remove ngrams whose constituent
-            tokens' part-of-speech tags are NOT all in the specified tags,
-            using the universal POS tagset
-        bad_pos_tags (set[str], optional): remove ngrams if any of their constituent
-            tokens' part-of-speech tags are in the specified tags,
-            using the universal POS tagset
+        include_pos (str or Set[str]): remove ngrams if any of their constituent
+            tokens' part-of-speech tags ARE NOT included in this param
+        exclude_pos (str or Set[str]): remove ngrams if any of their constituent
+            tokens' part-of-speech tags ARE included in this param
         min_freq (int, optional): remove ngrams that occur in `doc` fewer than
             `min_freq` times
 
     Yields:
-        ``spacy.Span``: the next ngram from ``doc`` passing all specified filters,
-            in order of appearance in the document
+        ``spacy.Span``: the next ngram from ``doc`` passing all specified
+            filters, in order of appearance in the document
 
     Raises:
         ValueError: if ``n`` < 1
+        TypeError: if `include_pos` or `exclude_pos` is not a str, a set of str,
+            or a falsy value
+
+    .. note:: Filtering by part-of-speech tag uses the universal POS tag set,
+        http://universaldependencies.org/u/pos/
     """
     if n < 1:
         raise ValueError('n must be greater than or equal to 1')
@@ -117,12 +146,30 @@ def ngrams(doc, n,
     if filter_nums is True:
         ngrams_ = (ngram for ngram in ngrams_
                    if not any(w.like_num for w in ngram))
-    if good_pos_tags:
-        ngrams_ = (ngram for ngram in ngrams_
-                   if all(w.pos_ in good_pos_tags for w in ngram))
-    if bad_pos_tags:
-        ngrams_ = (ngram for ngram in ngrams_
-                   if not any(w.pos_ in bad_pos_tags for w in ngram))
+    if include_pos:
+        if isinstance(include_pos, unicode_type):
+            include_pos = include_pos.upper()
+            ngrams_ = (ngram for ngram in ngrams_
+                       if all(w.pos_ == include_pos for w in ngram))
+        elif isinstance(include_pos, (set, frozenset, list, tuple)):
+            include_pos = {pos.upper() for pos in include_pos}
+            ngrams_ = (ngram for ngram in ngrams_
+                       if all(w.pos_ in include_pos for w in ngram))
+        else:
+            msg = 'invalid `include_pos` type: "{}"'.format(type(include_pos))
+            raise TypeError(msg)
+    if exclude_pos:
+        if isinstance(exclude_pos, unicode_type):
+            exclude_pos = exclude_pos.upper()
+            ngrams_ = (ngram for ngram in ngrams_
+                       if all(w.pos_ != exclude_pos for w in ngram))
+        elif isinstance(exclude_pos, (set, frozenset, list, tuple)):
+            exclude_pos = {pos.upper() for pos in exclude_pos}
+            ngrams_ = (ngram for ngram in ngrams_
+                       if all(w.pos_ not in exclude_pos for w in ngram))
+        else:
+            msg = 'invalid `exclude_pos` type: "{}"'.format(type(exclude_pos))
+            raise TypeError(msg)
     if min_freq > 1:
         ngrams_ = list(ngrams_)
         freqs = itertoolz.frequencies(normalized_str(ngram) for ngram in ngrams_)
@@ -134,41 +181,65 @@ def ngrams(doc, n,
 
 
 def named_entities(doc,
-                   good_ne_types=None, bad_ne_types=None, min_freq=1,
-                   drop_determiners=True):
+                   include_types=None, exclude_types=None,
+                   drop_determiners=True, min_freq=1):
     """
-    Extract an ordered sequence of named entities (PERSON, ORG, LOC, etc.) from a
-    spacy-parsed doc, optionally filtering by the entity types and frequencies.
+    Extract an ordered sequence of named entities (PERSON, ORG, LOC, etc.) from
+    a spacy-parsed doc, optionally filtering by entity types and frequencies.
 
     Args:
-        doc (``spacy.Doc``)
-        good_ne_types (set[str] or 'numeric', optional): named entity types to
-            include; if "numeric", all numeric entity types are included
-        bad_ne_types (set[str] or 'numeric', optional): named entity types to
-            exclude; if "numeric", all numeric entity types are excluded
-        min_freq (int, optional): remove named entities that occur in `doc` fewer
-            than `min_freq` times
-        drop_determiners (bool, optional): remove leading determiners (e.g. "the")
+        doc (``textacy.Doc`` or ``spacy.Doc``)
+        include_types (str or Set[str]): remove named entities whose type IS NOT
+            in this param; if "NUMERIC", all numeric entity types ("DATE",
+            "MONEY", "ORDINAL", etc.) are included
+        exclude_types (str or Set[str]): remove named entities whose type IS
+            in this param; if "NUMERIC", all numeric entity types ("DATE",
+            "MONEY", "ORDINAL", etc.) are excluded
+        drop_determiners (bool): remove leading determiners (e.g. "the")
             from named entities (e.g. "the United States" => "United States")
+        min_freq (int): remove named entities that occur in `doc` fewer
+            than `min_freq` times
 
     Yields:
         ``spacy.Span``: the next named entity from ``doc`` passing all specified
             filters in order of appearance in the document
+
+    Raise:
+        TypeError: if `include_types` or `exclude_types` is not a str, a set of
+            str, or a falsy value
     """
-    nes = doc.ents
-    if good_ne_types:
-        if good_ne_types == 'numeric':
-            good_ne_types = NUMERIC_NE_TYPES
-        nes = (ne for ne in nes
-               if ne.label_ in good_ne_types)
-    if bad_ne_types:
-        if bad_ne_types == 'numeric':
-            bad_ne_types = NUMERIC_NE_TYPES
-        nes = (ne for ne in nes
-               if ne.label_ not in bad_ne_types)
+    if isinstance(doc, textacy.Doc):
+        nes = doc.spacy_doc.ents
+    else:
+        nes = doc.ents
+    if include_types:
+        if isinstance(include_types, unicode_type):
+            include_types = include_types.upper()
+            if include_types == 'NUMERIC':
+                include_types = NUMERIC_NE_TYPES  # we now go to next if block
+            else:
+                nes = (ne for ne in nes if ne.label_ == include_types)
+        if isinstance(include_types, (set, frozenset, list, tuple)):
+            include_types = {type_.upper() for type_ in include_types}
+            nes = (ne for ne in nes if ne.label_ in include_types)
+        else:
+            msg = 'invalid `include_types` type: "{}"'.format(type(include_types))
+            raise TypeError(msg)
+    if exclude_types:
+        if isinstance(exclude_types, unicode_type):
+            exclude_types = exclude_types.upper()
+            if exclude_types == 'NUMERIC':
+                exclude_types = NUMERIC_NE_TYPES  # we now go to next if block
+            else:
+                nes = (ne for ne in nes if ne.label_ != exclude_types)
+        if isinstance(exclude_types, (set, frozenset, list, tuple)):
+            exclude_types = {type_.upper() for type_ in exclude_types}
+            nes = (ne for ne in nes if ne.label_ not in exclude_types)
+        else:
+            msg = 'invalid `exclude_types` type: "{}"'.format(type(exclude_types))
+            raise TypeError(msg)
     if drop_determiners is True:
-        nes = (ne if ne[0].pos != DET else ne[1:]
-               for ne in nes)
+        nes = (ne if ne[0].pos != DET else ne[1:] for ne in nes)
     if min_freq > 1:
         nes = list(nes)
         freqs = itertoolz.frequencies(ne.text for ne in nes)
@@ -185,17 +256,20 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
     filtering by frequency and dropping leading determiners.
 
     Args:
-        doc (``spacy.Doc``)
-        drop_determiners (bool, optional): remove leading determiners (e.g. "the")
+        doc (``textacy.Doc`` or ``spacy.Doc``)
+        drop_determiners (bool): remove leading determiners (e.g. "the")
             from phrases (e.g. "the quick brown fox" => "quick brown fox")
-        min_freq (int, optional): remove chunks that occur in `doc` fewer than
+        min_freq (int): remove chunks that occur in `doc` fewer than
             `min_freq` times
 
     Yields:
         ``spacy.Span``: the next noun chunk from ``doc`` in order of appearance
              in the document
     """
-    ncs = doc.noun_chunks
+    if isinstance(doc, textacy.Doc):
+        ncs = doc.spacy_doc.noun_chunks
+    else:
+        ncs = doc.noun_chunks
     if drop_determiners is True:
         ncs = (nc if nc[0].pos != DET else nc[1:]
                for nc in ncs)
@@ -215,7 +289,7 @@ def pos_regex_matches(doc, pattern):
     part-of-speech tags match the specified regex pattern.
 
     Args:
-        doc (``spacy.Doc`` or ``spacy.Span``)
+        doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
         pattern (str): Pattern of consecutive POS tags whose corresponding words
             are to be extracted, inspired by the regex patterns used in NLTK's
             `nltk.chunk.regexp`. Tags are uppercase, from the universal tag set;
@@ -223,7 +297,7 @@ def pos_regex_matches(doc, pattern):
             with spaces as needed to correctly extract matching word sequences;
             white space in the input doesn't matter.
 
-            Examples (see `regexes_etc.POS_REGEX_PATTERNS`):
+            Examples (see ``constants.POS_REGEX_PATTERNS``):
 
             * noun phrase: r'<DET>? (<NOUN>+ <ADP|CONJ>)* <NOUN>+'
             * compound nouns: r'<NOUN>+'
@@ -251,21 +325,20 @@ def subject_verb_object_triples(doc):
     spacy-parsed doc. Note that this only works for SVO languages.
 
     Args:
-        doc (``spacy.Doc`` or ``spacy.Span``): either a spacy document
-            or a sentence thereof
+        doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
 
     Yields:
-        (``spacy.Span``, ``spacy.Span``, ``spacy.Span``): the next 3-tuple from ``doc``
-            representing a (subject, verb, object) triple, in order of apperance
-
+        Tuple[``spacy.Span``, ``spacy.Span``, ``spacy.Span``]: the next 3-tuple
+            of spans from ``doc`` representing a (subject, verb, object) triple,
+            in order of appearance
+    """
     # TODO: What to do about questions, where it may be VSO instead of SVO?
     # TODO: What about non-adjacent verb negations?
     # TODO: What about object (noun) negations?
-    """
-    try:
-        sents = doc.sents
-    except AttributeError:
+    if isinstance(doc, SpacySpan):
         sents = [doc]
+    else:  # textacy.Doc or spacy.Doc
+        sents = doc.sents
 
     for sent in sents:
         start_i = sent[0].i
@@ -304,7 +377,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
     only the most frequently occurring definition is returned.
 
     Args:
-        doc (``spacy.Doc`` or ``spacy.Span``)
+        doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
         known_acro_defs (dict, optional): if certain acronym/definition pairs
             are known, pass them in as {acronym (str): definition (str)};
             algorithm will not attempt to find new definitions
@@ -326,10 +399,11 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
                 acro_defs[acro] = [defs]
         known_acronyms = set(acro_defs.keys())
 
-    try:
-        sents = doc.sents
-    except AttributeError:
+    if isinstance(doc, SpacySpan):
         sents = [doc]
+    else:  # textacy.Doc or spacy.Doc
+        sents = doc.sents
+
     # iterate over sentences and their tokens
     for sent in sents:
         max_ind = len(sent) - 1
@@ -348,7 +422,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
             if 0 < i < max_ind:
                 adjacent_tokens = sent[i - 1].text + sent[i + 1].text
                 if adjacent_tokens in {'()', '--', '––'}:
-                    _ = windows.pop()
+                    windows.pop()
 
             # iterate over possible windows
             # filtering for valid definition strings
@@ -396,7 +470,7 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
             for acceptance; valid values in [0.0, 1.0]; higher value => stricter threshold
 
     Returns:
-        (str, float): most likely definition for given acronym ('' if none found),
+        Tuple[str, float]: most likely definition for given acronym ('' if none found),
             along with the confidence assigned to it
 
     References:
@@ -545,7 +619,7 @@ def semistructured_statements(doc, entity, cue='be', ignore_entity_case=True,
     (entity, cue, fragment) triple. This is similar to subject-verb-object triples.
 
     Args:
-        doc (``spacy.Doc``)
+        doc (``textacy.Doc`` or ``spacy.Doc``)
         entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
             "global warming", "Python")
         cue (str, optional): verb lemma with which `entity` is associated
@@ -661,7 +735,7 @@ def direct_quotations(doc):
     or mixed quotations) using rules and patterns. English only.
 
     Args:
-        doc (``spacy.Doc``)
+        doc (``textacy.Doc`` or ``spacy.Doc``)
 
     Yields:
         (``spacy.Span``, ``spacy.Token``, ``spacy.Span``): next quotation in ``doc``
@@ -673,6 +747,10 @@ def direct_quotations(doc):
 
     TODO: Better approach would use ML, but needs a training dataset.
     """
+    if isinstance(doc, textacy.Doc):
+        if doc.lang != 'en':
+            raise NotImplementedError('sorry, English-language texts only :(')
+        doc = doc.spacy_doc
     quote_end_punct = {',', '.', '?', '!'}
     quote_indexes = set(itertoolz.concat(
         (m.start(), m.end() - 1) for m in re.finditer(r"(\".*?\")|(''.*?'')|(``.*?'')", doc.string)))
@@ -702,10 +780,10 @@ def direct_quotations(doc):
 
             # get any reporting verbs
             rvs = [tok for tok in sent
-                   if spacy_utils.preserve_case(tok) is False
-                   and tok.lemma_ in REPORTING_VERBS
-                   and tok.pos_ == 'VERB'
-                   and not any(oq0 <= tok.i <= oq1 for oq0, oq1 in quote_positions)]
+                   if spacy_utils.preserve_case(tok) is False and
+                   tok.lemma_ in REPORTING_VERBS and
+                   tok.pos_ == 'VERB' and
+                   not any(oq0 <= tok.i <= oq1 for oq0, oq1 in quote_positions)]
 
             # get target offset against which to measure distances of NEs
             if rvs:

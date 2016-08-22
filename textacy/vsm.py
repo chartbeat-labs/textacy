@@ -15,54 +15,53 @@ from sklearn.preprocessing import normalize as normalize_mat
 from spacy.strings import StringStore
 
 
-def build_doc_term_matrix(terms_lists,
-                          weighting='tf',
-                          normalize=False, sublinear_tf=False, smooth_idf=True,
-                          min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None):
+def doc_term_matrix(terms_lists, weighting='tf',
+                    normalize=False, sublinear_tf=False, smooth_idf=True,
+                    min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None):
     """
-    Build a document-term matrix of shape (# docs, # unique terms) from a sequence
-    of documents, each represented as a sequence of (str) terms, with a variety of
-    weighting and normalization schemes for the matrix values.
+    Get a document-term matrix of shape (# docs, # unique terms) from a sequence
+    of documents, each represented as a sequence of (str) terms, with a variety
+    of weighting and normalization schemes for the matrix values.
 
     Args:
-        terms_lists (iterable(iterable(str))): a sequence of documents, each as a
-            sequence of (str) terms; note that the terms in each doc are to be
-            counted, so these probably shouldn't be sets containing *unique* terms;
-            example inputs::
+        terms_lists (Iterable[Iterable[str]]): A sequence of documents, each as
+            a sequence of (str) terms. Note that the terms in each doc are to be
+            counted, so these probably shouldn't be sets containing *unique*
+            terms. Example inputs::
 
                 >>> ([tok.lemma_ for tok in spacy_doc]
                 ...  for spacy_doc in spacy_docs)
-                >>> ((ne.text for ne in doc.named_entities())
-                ...  for doc in textcorpus)
-                >>> (tuple(ng.text for ng in itertools.chain.from_iterable(doc.ngrams(i) for i in range(1, 3)))
+                >>> ((ne.text for ne in extract.named_entities(doc))
+                ...  for doc in corpus)
+                >>> (tuple(ng.text for ng in
+                           itertools.chain.from_iterable(extract.ngrams(doc, i)
+                                                         for i in range(1, 3)))
                 ...  for doc in docs)
 
-        weighting (str {'tf', 'tfidf', 'binary'}, optional): if 'tf', matrix values
-            (i, j) correspond to the number of occurrences of term j in doc i; if
-            'tfidf', term frequencies (tf) are multiplied by their corresponding
-            inverse document frequencies (idf); if 'binary', all non-zero values
-            are set equal to 1
-        normalize (bool, optional): if True, normalize term frequencies by the
-            L2 norms of the vectors
-        binarize (bool, optional): if True, set all term frequencies greater than
-            0 equal to 1
-        sublinear_tf (bool, optional): if True, apply sub-linear term-frequency
-            scaling, i.e. tf => 1 + log(tf)
-        smooth_idf (bool, optional): if True, add 1 to all document frequencies,
-            equivalent to adding a single document to the corpus containing every
-            unique term
-        min_df (float or int, optional): if float, value is the fractional proportion
-            of the total number of documents, which must be in [0.0, 1.0]; if int,
-            value is the absolute number; filter terms whose document frequency
-            is less than ``min_df``
-        max_df (float or int, optional): if float, value is the fractional proportion
-            of the total number of documents, which must be in [0.0, 1.0]; if int,
-            value is the absolute number; filter terms whose document frequency
-            is greater than ``max_df``
-        min_ic (float, optional): filter terms whose information content is less
-            than `min_ic`; value must be in [0.0, 1.0]
-        max_n_terms (int, optional): only include terms whose document frequency
-            is within the top ``max_n_terms``
+        weighting ({'tf', 'tfidf', 'binary'}): Weighting to assign to terms in
+            the doc-term matrix. If 'tf', matrix values (i, j) correspond to the
+            number of occurrences of term j in doc i; if 'tfidf', term frequencies
+            (tf) are multiplied by their corresponding inverse document frequencies
+            (idf); if 'binary', all non-zero values are set equal to 1.
+        normalize (bool): If True, normalize term frequencies by the
+            L2 norms of the vectors.
+        binarize (bool): If True, set all term frequencies > 0 equal to 1.
+        sublinear_tf (bool): If True, apply sub-linear term-frequency scaling,
+            i.e. tf => 1 + log(tf).
+        smooth_idf (bool): If True, add 1 to all document frequencies, equivalent
+            to adding a single document to the corpus containing every unique term.
+        min_df (float or int): If float, value is the fractional proportion of
+            the total number of documents, which must be in [0.0, 1.0]. If int,
+            value is the absolute number. Filter terms whose document frequency
+            is less than ``min_df``.
+        max_df (float or int): If float, value is the fractional proportion of
+            the total number of documents, which must be in [0.0, 1.0]. If int,
+            value is the absolute number. Filter terms whose document frequency
+            is greater than ``max_df``.
+        min_ic (float): Filter terms whose information content is less than
+            ``min_ic``; value must be in [0.0, 1.0].
+        max_n_terms (int): Only include terms whose document frequency is within
+            the top ``max_n_terms``.
 
     Returns:
         :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
@@ -72,7 +71,9 @@ def build_doc_term_matrix(terms_lists,
             values are corresponding strings
     """
     stringstore = StringStore()
-    data = []; rows = []; cols = []
+    data = []
+    rows = []
+    cols = []
     for row_idx, terms_list in enumerate(terms_lists):
 
         # an empty string always occupies index 0 in the stringstore, which causes
@@ -127,9 +128,8 @@ def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
     Args:
         doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
             M X N matrix, where M is the # of docs and N is the # of unique terms
-        smooth_idf (bool, optional): if True, add 1 to all document frequencies,
-            equivalent to adding a single document to the corpus containing every
-            unique term
+        smooth_idf (bool): if True, add 1 to all document frequencies, equivalent
+            to adding a single document to the corpus containing every unique term
 
     Returns:
         :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
@@ -157,9 +157,9 @@ def get_term_freqs(doc_term_matrix, normalized=True):
 
             Note: Weighting on the terms DOES matter! Only absolute term counts
             (rather than normalized term frequencies) should be used here
-        normalized (bool, optional): if True, return normalized term frequencies,
-            i.e. term counts divided by the total number of terms; if False,
-            return absolute term counts
+        normalized (bool): if True, return normalized term frequencies, i.e.
+            term counts divided by the total number of terms; if False, return
+            absolute term counts
 
     Returns:
         :class:`numpy.ndarray <numpy.ndarray>`: array of absolute or relative term
@@ -190,9 +190,9 @@ def get_doc_freqs(doc_term_matrix, normalized=True):
 
             Note: Weighting on the terms doesn't matter! Could be 'tf' or 'tfidf'
             or 'binary' weighting, a term's doc freq will be the same
-        normalized (bool, optional): if True, return normalized doc frequencies,
-            i.e. doc counts divided by the total number of docs; if False,
-            return absolute doc counts
+        normalized (bool): if True, return normalized doc frequencies, i.e.
+            doc counts divided by the total number of docs; if False, return
+            absolute doc counts
 
     Returns:
         :class:`numpy.ndarray`: array of absolute or relative document
@@ -249,18 +249,18 @@ def filter_terms_by_df(doc_term_matrix, id_to_term,
     Args:
         doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
             M X N matrix, where M is the # of docs and N is the # of unique terms
-        id_to_term (dict): mapping of unique integer term identifiers to
-            their corresponding normalized strings
-        min_df (float in [0.0, 1.0] or int, optional): if float, value is the
-            fractional proportion of the total number of documents and must be
-            in [0.0, 1.0]; if int, value is the absolute number; filter terms
-            whose document frequency is less than ``min_df``
-        max_df (float in [0.0, 1.0] or int, optional): if float, value is the
-            fractional proportion of the total number of documents and must be
-            in [0.0, 1.0]; if int, value is the absolute number; filter terms
-            whose document frequency is greater than ``max_df``
-        max_n_terms (int, optional): only include terms whose *term* frequency
-            is within the top `max_n_terms`
+        id_to_term (dict): mapping of unique integer term identifiers to their
+            corresponding normalized strings
+        min_df (float or int): if float, value is the fractional proportion of
+            the total number of documents and must be in [0.0, 1.0]; if int,
+            value is the absolute number; filter terms whose document frequency
+            is less than ``min_df``
+        max_df (float or int): if float, value is the fractional proportion of
+            the total number of documents and must be in [0.0, 1.0]; if int,
+            value is the absolute number; filter terms whose document frequency
+            is greater than ``max_df``
+        max_n_terms (int): only include terms whose *term* frequency is within
+            the top `max_n_terms`
 
     Returns:
         :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
@@ -323,10 +323,10 @@ def filter_terms_by_ic(doc_term_matrix, id_to_term,
             M X N matrix, where M is the # of docs and N is the # of unique terms
         id_to_term (dict): mapping of unique integer term identifiers to
             corresponding normalized strings as values
-        min_ic (float, optional): filter terms whose information content is less
-            than this value; must be in [0.0, 1.0]
-        max_n_terms (int, optional): only include terms whose information content
-            is within the top ``max_n_terms``
+        min_ic (float): filter terms whose information content is less than this
+            value; must be in [0.0, 1.0]
+        max_n_terms (int): only include terms whose information content is within
+            the top ``max_n_terms``
 
     Returns:
         :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix

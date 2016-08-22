@@ -44,42 +44,42 @@ class CapitolWordsTestCase(unittest.TestCase):
                 all(len(text) >= min_len
                     for text in cw.texts(min_len=min_len, limit=1000)))
 
-    def test_capitolwords_docs(self):
+    def test_capitolwords_records(self):
         cw = capitolwords.CapitolWords(download_if_missing=True)
-        for doc in cw.docs(limit=3):
-            self.assertIsInstance(doc, dict)
+        for record in cw.records(limit=3):
+            self.assertIsInstance(record, dict)
 
-    def test_capitolwords_docs_speaker_name(self):
+    def test_capitolwords_records_speaker_name(self):
         cw = capitolwords.CapitolWords(download_if_missing=True)
         speaker_names = ({'Bernie Sanders'}, {'Ted Cruz', 'Barack Obama'})
         for speaker_name in speaker_names:
             self.assertTrue(
-                all(d['speaker_name'] in speaker_name
-                    for d in cw.docs(speaker_name=speaker_name, limit=1000)))
+                all(r['speaker_name'] in speaker_name
+                    for r in cw.records(speaker_name=speaker_name, limit=1000)))
 
-    def test_capitolwords_docs_speaker_party(self):
+    def test_capitolwords_records_speaker_party(self):
         cw = capitolwords.CapitolWords(download_if_missing=True)
         speaker_parties = ({'R'}, {'D', 'I'})
         for speaker_party in speaker_parties:
             self.assertTrue(
-                all(d['speaker_party'] in speaker_party
-                    for d in cw.docs(speaker_party=speaker_party, limit=1000)))
+                all(r['speaker_party'] in speaker_party
+                    for r in cw.records(speaker_party=speaker_party, limit=1000)))
 
-    def test_capitolwords_docs_chamber(self):
+    def test_capitolwords_records_chamber(self):
         cw = capitolwords.CapitolWords(download_if_missing=True)
         chambers = ({'House'}, {'House', 'Senate'})
         for chamber in chambers:
             self.assertTrue(
-                all(d['chamber'] in chamber
-                    for d in cw.docs(chamber=chamber, limit=1000)))
+                all(r['chamber'] in chamber
+                    for r in cw.records(chamber=chamber, limit=1000)))
 
-    def test_capitolwords_docs_congress(self):
+    def test_capitolwords_records_congress(self):
         cw = capitolwords.CapitolWords(download_if_missing=True)
         congresses = ({104}, {104, 114})
         for congress in congresses:
             self.assertTrue(
-                all(d['congress'] in congress
-                    for d in cw.docs(congress=congress, limit=1000)))
+                all(r['congress'] in congress
+                    for r in cw.records(congress=congress, limit=1000)))
 
     def test_capitolwords_bad_filters(self):
         cw = capitolwords.CapitolWords(download_if_missing=True)

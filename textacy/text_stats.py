@@ -1,12 +1,12 @@
 """
-Statistical functions dealing with text. Kind of a grab-bag at the moment.
-Includes calculations for common "readability" statistics.
+Calculations for common "readability" statistics. English only, for now.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from math import sqrt
 
 from textacy import data
+from textacy import extract
 
 
 def readability_stats(doc):
@@ -18,7 +18,7 @@ def readability_stats(doc):
     Also includes constituent values needed to compute the stats, e.g. word count.
 
     Args:
-        doc (:class:`texts.TextDoc() <textacy.texts.TextDoc>`)
+        doc (:class:`textacy.Doc <textacy.document.Doc>`)
 
     Returns:
         dict: mapping of readability statistic name (str) to value (int or float)
@@ -31,7 +31,7 @@ def readability_stats(doc):
 
     n_sents = doc.n_sents
 
-    words = list(doc.words(filter_punct=True, filter_stops=False, filter_nums=False))
+    words = list(extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False))
     n_words = len(words)
     n_unique_words = len({word.lower for word in words})
     n_chars = sum(len(word) for word in words)

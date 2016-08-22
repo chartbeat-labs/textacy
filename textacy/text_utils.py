@@ -9,10 +9,10 @@ import re
 from cld2 import detect as cld2_detect
 
 from textacy.compat import PY2, unicode_to_bytes
-from textacy.regexes_etc import (ACRONYM_REGEX, DANGLING_PARENS_TERM_RE,
-                                 LEAD_HYPHEN_TERM_RE, LEAD_TAIL_CRUFT_TERM_RE,
-                                 NEG_DIGIT_TERM_RE, NONBREAKING_SPACE_REGEX,
-                                 WEIRD_HYPHEN_SPACE_TERM_RE, WEIRD_APOSTR_SPACE_TERM_RE)
+from textacy.constants import (ACRONYM_REGEX, DANGLING_PARENS_TERM_RE,
+                               LEAD_HYPHEN_TERM_RE, LEAD_TAIL_CRUFT_TERM_RE,
+                               NEG_DIGIT_TERM_RE, NONBREAKING_SPACE_REGEX,
+                               WEIRD_HYPHEN_SPACE_TERM_RE, WEIRD_APOSTR_SPACE_TERM_RE)
 
 logger = logging.getLogger(__name__)
 
@@ -23,9 +23,9 @@ def is_acronym(token, exclude=None):
 
     Args:
         token (str): single word to check for acronym-ness
-        exclude (set[str]): if technically valid but not actually good acronyms
-        are known in advance, pass them in as a set of strings; matching tokens
-        will return False
+        exclude (Set[str]): if technically valid but not actually good acronyms
+            are known in advance, pass them in as a set of strings; matching
+            tokens will return False
 
     Returns:
         bool
@@ -46,8 +46,8 @@ def is_acronym(token, exclude=None):
     if token.isdigit():
         return False
     # acronyms must have at least one upper-case letter or start/end with a digit
-    if (not any(char.isupper() for char in token)
-            and not (token[0].isdigit() or token[-1].isdigit())):
+    if (not any(char.isupper() for char in token) and
+            not (token[0].isdigit() or token[-1].isdigit())):
         return False
     # acronyms must have between 2 and 10 alphanumeric characters
     if not 2 <= sum(1 for char in token if char.isalnum()) <= 10:
@@ -94,28 +94,33 @@ def keyword_in_context(text, keyword, ignore_case=True,
             to account for variations, use regex: "[Ss]pam (and|&) [Ee]ggs?"
 
             N.B. If keyword contains special characters, be sure to escape them!!!
-        ignore_case (bool, optional): if True, ignore letter case in `keyword` matching
-        window_width (int, optional): number of characters on either side of
+        ignore_case (bool): if True, ignore letter case in `keyword` matching
+        window_width (int): number of characters on either side of
             `keyword` to include as "context"
-        print_only (bool, optional): if True, print out all results with nice
+        print_only (bool): if True, print out all results with nice
             formatting; if False, return all (pre, kw, post) matches as generator
             of raw strings
 
     Returns:
-        generator(tuple(str, str, str)), or None
+        generator(Tuple[str, str, str]), or None
     """
     flags = re.IGNORECASE if ignore_case is True else 0
     if print_only is True:
         for match in re.finditer(keyword, text, flags=flags):
-            print('{pre} {kw} {post}'.format(
-                    pre=text[max(0, match.start() - window_width): match.start()].rjust(window_width),
-                    kw=match.group(),
-                    post=text[match.end(): match.end() + window_width].ljust(window_width)))
+            line = '{pre} {kw} {post}'.format(
+                pre=text[max(0, match.start() - window_width): match.start()].rjust(window_width),
+                kw=match.group(),
+                post=text[match.end(): match.end() + window_width].ljust(window_width))
+            print(line)
     else:
         return ((text[max(0, match.start() - window_width): match.start()],
                  match.group(),
                  text[match.end(): match.end() + window_width])
                 for match in re.finditer(keyword, text, flags=flags))
+
+
+KWIC = keyword_in_context
+"""Alias of :func:`keyword_in_context <textacy.text_utils.keyword_in_context>`."""
 
 
 def clean_terms(terms):
@@ -124,7 +129,7 @@ def clean_terms(terms):
     junk chars, handle dangling parens and odd hyphenation, etc.
 
     Args:
-        terms (iterable[str]): sequence of terms such as "presidency", "epic failure",
+        terms (Iterable[str]): sequence of terms such as "presidency", "epic failure",
             or "George W. Bush" that may be _unclean_ for whatever reason
 
     Yields:
@@ -149,7 +154,7 @@ def clean_terms(terms):
              else NEG_DIGIT_TERM_RE.sub(r'\1\2', WEIRD_HYPHEN_SPACE_TERM_RE.sub(r'\1', term))
              for term in terms)
     # handle oddly separated apostrophe'd words
-    terms = (WEIRD_APOSTR_SPACE_TERM_RE.sub(r'\1\2',  term)
+    terms = (WEIRD_APOSTR_SPACE_TERM_RE.sub(r'\1\2', term)
              if "'" in term else term
              for term in terms)
     # normalize whitespace

@@ -73,8 +73,8 @@ URL_REGEX = re.compile(
     r"(?::\d{2,5})?"
     # resource path
     r"(?:/\S*)?"
-    r"(?:$|(?![\w?!+&/]))"
-    , flags=re.UNICODE | re.IGNORECASE)  # source: https://gist.github.com/dperini/729294
+    r"(?:$|(?![\w?!+&/]))",
+    flags=re.UNICODE | re.IGNORECASE)  # source: https://gist.github.com/dperini/729294
 SHORT_URL_REGEX = re.compile(
     r"(?:^|(?<![\w/.]))"
     # optional scheme
@@ -84,14 +84,19 @@ SHORT_URL_REGEX = re.compile(
     r"/"
     # hash
     r"[^\s.,?!'\"|+]{2,12}"
-    r"(?:$|(?![\w?!+&/]))"
-    , flags=re.IGNORECASE)
+    r"(?:$|(?![\w?!+&/]))",
+    flags=re.IGNORECASE)
 
 # regexes for cleaning up crufty terms
-DANGLING_PARENS_TERM_RE = re.compile(r'(?:\s|^)(\()\s{1,2}(.*?)\s{1,2}(\))(?:\s|$)',
-                                     flags=re.UNICODE)
-LEAD_TAIL_CRUFT_TERM_RE = re.compile(r'^([^\w(-] ?)+|([^\w).!?] ?)+$', flags=re.UNICODE)
-LEAD_HYPHEN_TERM_RE = re.compile(r'^-([^\W\d_])', flags=re.UNICODE)
-NEG_DIGIT_TERM_RE = re.compile(r'(-) (\d)', flags=re.UNICODE)
-WEIRD_HYPHEN_SPACE_TERM_RE = re.compile(r'(?<=[^\W\d]) (-[^\W\d])', flags=re.UNICODE)
-WEIRD_APOSTR_SPACE_TERM_RE = re.compile(r"([^\W\d]+) ('[a-z]{1,2}\b)", flags=re.UNICODE)
+DANGLING_PARENS_TERM_RE = re.compile(
+    r'(?:\s|^)(\()\s{1,2}(.*?)\s{1,2}(\))(?:\s|$)', flags=re.UNICODE)
+LEAD_TAIL_CRUFT_TERM_RE = re.compile(
+    r'^([^\w(-] ?)+|([^\w).!?] ?)+$', flags=re.UNICODE)
+LEAD_HYPHEN_TERM_RE = re.compile(
+    r'^-([^\W\d_])', flags=re.UNICODE)
+NEG_DIGIT_TERM_RE = re.compile(
+    r'(-) (\d)', flags=re.UNICODE)
+WEIRD_HYPHEN_SPACE_TERM_RE = re.compile(
+    r'(?<=[^\W\d]) (-[^\W\d])', flags=re.UNICODE)
+WEIRD_APOSTR_SPACE_TERM_RE = re.compile(
+    r"([^\W\d]+) ('[a-z]{1,2}\b)", flags=re.UNICODE)

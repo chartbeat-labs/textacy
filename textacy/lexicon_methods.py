@@ -16,14 +16,14 @@ def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting='norm
     AFRAID, AMUSED, ANGRY, ANNOYED, DONT_CARE, HAPPY, INSPIRED, SAD.
 
     Args:
-        words (list(``spacy.Token``)): list of words for which to get
+        words (List[``spacy.Token``]): list of words for which to get
             average emotional valence; note that only nouns, adjectives, adverbs,
             and verbs will be counted
-        threshold (float, optional): minimum emotional valence score for which to
+        threshold (float): minimum emotional valence score for which to
             count a given word for a given emotion; value must be in [0.0, 1.0)
-        dm_data_dir (str, optional): full path to directory where DepecheMood data
+        dm_data_dir (str): full path to directory where DepecheMood data
             is saved on disk
-        dm_weighting (str, {'freq', 'normfreq', 'tfidf'}, optional): type of word
+        dm_weighting ({'freq', 'normfreq', 'tfidf'}): type of word
             weighting used in building DepecheMood matrix
 
     Returns:

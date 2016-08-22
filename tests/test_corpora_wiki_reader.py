@@ -168,18 +168,18 @@ class WikiReaderTestCase(unittest.TestCase):
         texts = list(self.wikireader.texts(limit=1))
         self.assertEqual(len(texts), 1)
 
-    def test_pages(self):
-        pages = list(self.wikireader.pages())
-        for page in pages:
-            self.assertIsInstance(page, dict)
+    def test_records(self):
+        records = list(self.wikireader.records())
+        for record in records:
+            self.assertIsInstance(record, dict)
 
-    def test_pages_min_len(self):
-        pages = list(self.wikireader.pages(min_len=300))
-        self.assertEqual(len(pages), 1)
+    def test_records_min_len(self):
+        records = list(self.wikireader.records(min_len=300))
+        self.assertEqual(len(records), 1)
 
-    def test_pages_limit(self):
-        pages = list(self.wikireader.pages(limit=1))
-        self.assertEqual(len(pages), 1)
+    def test_records_limit(self):
+        records = list(self.wikireader.records(limit=1))
+        self.assertEqual(len(records), 1)
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)

@@ -6,11 +6,11 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from itertools import takewhile
 import logging
 from spacy.parts_of_speech import NOUN, PROPN, VERB
-from spacy.tokens.token import Token as spacy_token
-from spacy.tokens.span import Span as spacy_span
+from spacy.tokens.token import Token as SpacyToken
+from spacy.tokens.span import Span as SpacySpan
 
 from textacy.text_utils import is_acronym
-from textacy.regexes_etc import AUX_DEPS, SUBJ_DEPS, OBJ_DEPS
+from textacy.constants import AUX_DEPS, SUBJ_DEPS, OBJ_DEPS
 
 
 logger = logging.getLogger(__name__)
@@ -81,9 +81,9 @@ def normalized_str(token):
     Returns:
         str
     """
-    if isinstance(token, spacy_token):
+    if isinstance(token, SpacyToken):
         return token.text if preserve_case(token) else token.lemma_
-    elif isinstance(token, spacy_span):
+    elif isinstance(token, SpacySpan):
         return ' '.join(subtok.text if preserve_case(subtok) else subtok.lemma_
                         for subtok in token)
     else:
@@ -96,7 +96,7 @@ def merge_spans(spans):
     Merge spans *in-place* within parent doc so that each takes up a single token.
 
     Args:
-        spans (iterable(``spacy.Span``))
+        spans (Iterable[``spacy.Span``])
     """
     for span in spans:
         try:

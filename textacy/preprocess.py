@@ -13,9 +13,9 @@ import unicodedata
 from ftfy import fix_text
 from unidecode import unidecode
 
-from textacy.regexes_etc import (CURRENCIES, URL_REGEX, SHORT_URL_REGEX, EMAIL_REGEX,
-                                 PHONE_REGEX, NUMBERS_REGEX, PUNCT_REGEX, CURRENCY_REGEX,
-                                 LINEBREAK_REGEX, NONBREAKING_SPACE_REGEX)
+from textacy.constants import (CURRENCIES, URL_REGEX, SHORT_URL_REGEX, EMAIL_REGEX,
+                               PHONE_REGEX, NUMBERS_REGEX, PUNCT_REGEX, CURRENCY_REGEX,
+                               LINEBREAK_REGEX, NONBREAKING_SPACE_REGEX)
 
 
 def fix_bad_unicode(text, normalization='NFC'):
@@ -26,7 +26,7 @@ def fix_bad_unicode(text, normalization='NFC'):
 
     Args:
         text (str): raw text
-        normalization (str {'NFC', 'NFKC', 'NFD', 'NFKD'}, optional): if 'NFC',
+        normalization ({'NFC', 'NFKC', 'NFD', 'NFKD'}): if 'NFC',
             combines characters and diacritics written using separate code points,
             e.g. converting "e" plus an acute accent modifier into "é"; unicode
             can be converted to NFC form without any change in its meaning!
@@ -112,7 +112,7 @@ def replace_currency_symbols(text, replace_with=None):
 
     Args:
         text (str): raw text
-        replace_with (str, optional): if None (default), replace symbols with
+        replace_with (str): if None (default), replace symbols with
             their standard 3-letter abbreviations (e.g. '$' with 'USD', '£' with 'GBP');
             otherwise, pass in a string with which to replace all symbols
             (e.g. "*CURRENCY*")
@@ -135,7 +135,7 @@ def remove_accents(text, method='unicode'):
 
     Args:
         text (str): raw text
-        method (str {'unicode', 'ascii'}, optional): if 'unicode', remove accented
+        method ({'unicode', 'ascii'}): if 'unicode', remove accented
             char for any unicode symbol with a direct ASCII equivalent; if 'ascii',
             remove accented char for any unicode symbol
 
@@ -165,34 +165,35 @@ def preprocess_text(text, fix_unicode=False, lowercase=False, transliterate=Fals
     Normalize various aspects of a raw text doc before parsing it with Spacy.
     A convenience function for applying all other preprocessing functions in one go.
 
-    WARNING: These changes may negatively affect subsequent NLP analysis performed
-    on the text, so choose carefully, and preprocess at your own risk!
-
     Args:
         text (str): raw text to preprocess
-        fix_unicode (bool, optional): if True, fix "broken" unicode such as
+        fix_unicode (bool): if True, fix "broken" unicode such as
             mojibake and garbled HTML entities
-        lowercase (bool, optional): if True, all text is lower-cased
-        transliterate (bool, optional): if True, convert non-ascii characters
+        lowercase (bool): if True, all text is lower-cased
+        transliterate (bool): if True, convert non-ascii characters
             into their closest ascii equivalents
-        no_urls (bool, optional): if True, replace all URL strings with '*URL*'
-        no_emails (bool, optional): if True, replace all email strings with '*EMAIL*'
-        no_phone_numbers (bool, optional): if True, replace all phone number strings
+        no_urls (bool): if True, replace all URL strings with '*URL*'
+        no_emails (bool): if True, replace all email strings with '*EMAIL*'
+        no_phone_numbers (bool): if True, replace all phone number strings
             with '*PHONE*'
-        no_numbers (bool, optional): if True, replace all number-like strings
+        no_numbers (bool): if True, replace all number-like strings
             with '*NUMBER*'
-        no_currency_symbols (bool, optional): if True, replace all currency symbols
+        no_currency_symbols (bool): if True, replace all currency symbols
             with their standard 3-letter abbreviations
-        no_punct (bool, optional): if True, remove all punctuation (replace with
+        no_punct (bool): if True, remove all punctuation (replace with
             empty string)
-        no_contractions (bool, optional): if True, replace *English* contractions
+        no_contractions (bool): if True, replace *English* contractions
             with their unshortened forms
-        no_accents (bool, optional): if True, replace all accented characters
+        no_accents (bool): if True, replace all accented characters
             with unaccented versions; NB: if `transliterate` is True, this option
             is redundant
 
     Returns:
         str: input ``text`` processed according to function args
+
+    .. warning:: These changes may negatively affect subsequent NLP analysis
+        performed on the text, so choose carefully, and preprocess at your own
+        risk!
     """
     if fix_unicode is True:
         text = fix_bad_unicode(text, normalization='NFC')

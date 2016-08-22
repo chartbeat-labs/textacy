@@ -7,25 +7,25 @@ Download to and stream from disk a corpus of (almost all) decisions issued by
 the U.S. Supreme Court from 1946 through 2016. That amounts to about 8.4k
 documents and 71M tokens, where each document contains 11 fields:
 
-    * text: full text of the Court's decision
-    * case_name: name of the court case, in all caps
-    * argument_date: date on which the case was argued before the Court, as a
+    * ``text``: full text of the Court's decision
+    * ``case_name``: name of the court case, in all caps
+    * ``argument_date``: date on which the case was argued before the Court, as a
       string with format 'YYYY-MM-DD'
-    * decision_date: date on which the Court's decision was announced, as a
+    * ``decision_date``: date on which the Court's decision was announced, as a
       string with format 'YYYY-MM-DD'
-    * decision_direction: ideological direction of the majority decision; either
+    * ``decision_direction``: ideological direction of the majority decision; either
       'conservative', 'liberal', or 'unspecifiable'
-    * maj_opinion_author: name of the majority opinion's author, if available
+    * ``maj_opinion_author``: name of the majority opinion's author, if available
       and identifiable, as an integer code whose mapping is given in
       ``SupremeCourt.opinion_author_codes``
-    * n_maj_votes: number of justices voting in the majority
-    * n_min_votes: number of justices voting in the minority
-    * issue: subject matter of the case's core disagreement (e.g. affirmative
+    * ``n_maj_votes``: number of justices voting in the majority
+    * ``n_min_votes``: number of justices voting in the minority
+    * ``issue``: subject matter of the case's core disagreement (e.g. affirmative
       action) rather than its legal basis (e.g. the equal protection clause),
       as a string code whose mapping is given in ``SupremeCourt.issue_codes``
-    * issue_area: higher-level categorization of the issue (e.g. Civil Rights),
+    * ``issue_area``: higher-level categorization of the issue (e.g. Civil Rights),
       as an integer code whose mapping is given in ``SupremeCourt.issue_area_codes``
-    * us_cite_id: citation identifier for each case according to the official
+    * ``us_cite_id``: citation identifier for each case according to the official
       United States Reports; Note: There are ~300 cases with duplicate ids,
       and it's not clear if that's "correct" or a data quality problem
 
@@ -77,29 +77,29 @@ class SupremeCourt(object):
         >>> sc = textacy.corpora.SupremeCourt()
         >>> for text in sc.texts(limit=1):
         ...     print(text)
-        >>> for doc in sc.docs(limit=1):
-        ...     print(doc['case_name'], doc['decision_date'])
-        ...     print(doc['text'])
+        >>> for record in sc.records(limit=1):
+        ...     print(record['case_name'], record['decision_date'])
+        ...     print(record['text'])
 
     Filter court cases by metadata and text length::
 
-        >>> for doc in sc.docs(opinion_author=109, limit=1):  # Notorious RBG!
-        ...     print(doc['case_name'], doc['us_cite_id'])
-        >>> for doc in sc.docs(decision_direction='liberal',
-        ...                    issue_area={1, 9, 10}, limit=10):
-        ...     print(doc['maj_opinion_author'], doc['n_maj_votes'])
-        >>> for doc in sc.docs(opinion_author=102,
-        ...                    date_range=('1990-01-01', '1999-12-31')):
-        ...     print(doc['case_name'], doc['decision_date'])
-        ...     print(sc.issue_codes[doc['issue']])
+        >>> for record in sc.records(opinion_author=109, limit=1):  # Notorious RBG!
+        ...     print(record['case_name'], record['us_cite_id'])
+        >>> for record in sc.records(decision_direction='liberal',
+        ...                          issue_area={1, 9, 10}, limit=10):
+        ...     print(record['maj_opinion_author'], record['n_maj_votes'])
+        >>> for record in sc.records(opinion_author=102,
+        ...                          date_range=('1990-01-01', '1999-12-31')):
+        ...     print(record['case_name'], record['decision_date'])
+        ...     print(sc.issue_codes[record['issue']])
         >>> for text in sc.texts(min_len=50000):
         ...     print(len(text))
 
-    Stream court cases into a `TextCorpus`::
+    Stream court cases into a ``Corpus``::
 
-        >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
-        ...     sc.docs(limit=100), 'text')
-        >>> tc = textacy.TextCorpus.from_texts('en', text_stream, metadata_stream)
+        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+        ...     sc.records(limit=100), 'text')
+        >>> tc = textacy.Corpus.from_texts('en', text_stream, metadata_stream)
         >>> print(tc)
 
     Args:
@@ -558,7 +558,7 @@ class SupremeCourt(object):
 
     def _iterate(self, text_only, opinion_author=None, decision_direction=None,
                  issue_area=None, date_range=None, min_len=None, limit=-1):
-        """Note: Use `.texts()` or `.docs()` to iterate over corpus data."""
+        """Note: Use `.texts()` or `.records()` to iterate over corpus data."""
         # prepare filters
         if opinion_author:
             if isinstance(opinion_author, int):
@@ -651,8 +651,8 @@ class SupremeCourt(object):
         for text in texts:
             yield text
 
-    def docs(self, opinion_author=None, issue_area=None, decision_direction=None,
-             date_range=None, min_len=None, limit=-1):
+    def records(self, opinion_author=None, issue_area=None, decision_direction=None,
+                date_range=None, min_len=None, limit=-1):
         """
         Iterate over documents (including text and metadata) in the SupremeCourt
         corpus, optionally filtering by a variety of metadata and/or text length,
@@ -683,9 +683,9 @@ class SupremeCourt(object):
         Raises:
             ValueError: if any filtering options are invalid
         """
-        docs = self._iterate(
+        records = self._iterate(
             False, opinion_author=opinion_author, issue_area=issue_area,
             decision_direction=decision_direction, date_range=date_range,
             min_len=min_len, limit=limit)
-        for doc in docs:
-            yield doc
+        for record in records:
+            yield record

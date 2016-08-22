@@ -44,34 +44,34 @@ class SupremeCourtTestCase(unittest.TestCase):
                 all(len(text) >= min_len
                     for text in cw.texts(min_len=min_len, limit=1000)))
 
-    def test_supremecourt_docs(self):
+    def test_supremecourt_records(self):
         cw = supremecourt.SupremeCourt(download_if_missing=True)
-        for doc in cw.docs(limit=3):
-            self.assertIsInstance(doc, dict)
+        for record in cw.records(limit=3):
+            self.assertIsInstance(record, dict)
 
-    def test_supremecourt_docs_opinion_author(self):
+    def test_supremecourt_records_opinion_author(self):
         cw = supremecourt.SupremeCourt(download_if_missing=True)
         opinion_authors = ({109}, {113, 114})
         for opinion_author in opinion_authors:
             self.assertTrue(
-                all(d['maj_opinion_author'] in opinion_author
-                    for d in cw.docs(opinion_author=opinion_author, limit=100)))
+                all(r['maj_opinion_author'] in opinion_author
+                    for r in cw.records(opinion_author=opinion_author, limit=100)))
 
-    def test_supremecourt_docs_decision_direction(self):
+    def test_supremecourt_records_decision_direction(self):
         cw = supremecourt.SupremeCourt(download_if_missing=True)
         decision_directions = ('liberal', {'conservative', 'unspecifiable'})
         for decision_direction in decision_directions:
             self.assertTrue(
-                all(d['decision_direction'] in decision_direction
-                    for d in cw.docs(decision_direction=decision_direction, limit=100)))
+                all(r['decision_direction'] in decision_direction
+                    for r in cw.records(decision_direction=decision_direction, limit=100)))
 
-    def test_supremecourt_docs_issue_area(self):
+    def test_supremecourt_records_issue_area(self):
         cw = supremecourt.SupremeCourt(download_if_missing=True)
         issue_areas = ({2}, {4, 5, 6})
         for issue_area in issue_areas:
             self.assertTrue(
-                all(d['issue_area'] in issue_area
-                    for d in cw.docs(issue_area=issue_area, limit=100)))
+                all(r['issue_area'] in issue_area
+                    for r in cw.records(issue_area=issue_area, limit=100)))
 
     def test_supremecourt_bad_filters(self):
         cw = supremecourt.SupremeCourt(download_if_missing=True)

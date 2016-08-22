@@ -55,28 +55,28 @@ class CapitolWords(object):
         >>> cw = textacy.corpora.CapitolWords()
         >>> for text in cw.texts(limit=10):
         ...     print(text)
-        >>> for doc in cw.docs(limit=10):
-        ...     print(doc['title'], doc['date'])
-        ...     print(doc['text'])
+        >>> for record in cw.records(limit=10):
+        ...     print(record['title'], record['date'])
+        ...     print(record['text'])
 
     Filter speeches by metadata and text length::
 
-        >>> for doc in cw.docs(speaker_name='Bernie Sanders', limit=1):
-        ...     print(doc['date'], doc['text'])
-        >>> for doc in cw.docs(speaker_party='D', congress={110, 111, 112},
-        ...                    chamber='Senate', limit=10):
-        ...     print(doc['speaker_name'], doc['title'])
-        >>> for doc in cw.docs(speaker_name={'Barack Obama', 'Hillary Clinton'},
-        ...                    date_range=('2002-01-01', '2002-12-31')):
-        ...     print(doc['speaker_name'], doc['title'], doc['date'])
+        >>> for record in cw.records(speaker_name='Bernie Sanders', limit=1):
+        ...     print(record['date'], record['text'])
+        >>> for record in cw.records(speaker_party='D', congress={110, 111, 112},
+        ...                          chamber='Senate', limit=10):
+        ...     print(record['speaker_name'], record['title'])
+        >>> for record in cw.records(speaker_name={'Barack Obama', 'Hillary Clinton'},
+        ...                          date_range=('2002-01-01', '2002-12-31')):
+        ...     print(record['speaker_name'], record['title'], record['date'])
         >>> for text in cw.texts(min_len=50000):
         ...     print(len(text))
 
-    Stream speeches into a `TextCorpus`::
+    Stream speeches into a `Corpus`::
 
-        >>> text_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
-        ...     cw.docs(limit=100), 'text')
-        >>> tc = textacy.TextCorpus.from_texts('en', text_stream, metadata_stream)
+        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+        ...     cw.records(limit=100), 'text')
+        >>> tc = textacy.Corpus.from_texts('en', text_stream, metadata_stream)
         >>> print(tc)
 
     Args:
@@ -90,13 +90,13 @@ class CapitolWords(object):
             `download_if_missing` is False
 
     Attributes:
-        speaker_names (set[str]): full names of all speakers included in corpus,
+        speaker_names (Set[str]): full names of all speakers included in corpus,
             e.g. `'Bernie Sanders'`
-        speaker_parties (set[str]): all distinct political parties of speakers,
+        speaker_parties (Set[str]): all distinct political parties of speakers,
             e.g. `'R'`
-        chambers (set[str]): all distinct chambers in which speeches were given,
+        chambers (Set[str]): all distinct chambers in which speeches were given,
             e.g. `'House'`
-        congresses (set[int]): all distinct numbers of the congresses in which
+        congresses (Set[int]): all distinct numbers of the congresses in which
             speeches were given, e.g. `114`
     """
 
@@ -128,7 +128,7 @@ class CapitolWords(object):
     def _iterate(self, text_only, speaker_name=None, speaker_party=None,
                  chamber=None, congress=None, date_range=None, min_len=None,
                  limit=-1):
-        """Note: Use `.texts()` or `.docs()` to iterate over corpus data."""
+        """Note: Use `.texts()` or `.records()` to iterate over corpus data."""
         # prepare filters
         if speaker_name:
             if isinstance(speaker_name, string_types):
@@ -196,15 +196,15 @@ class CapitolWords(object):
         a variety of metadata and/or text length, in order of date.
 
         Args:
-            speaker_name (str or set[str]): filter speeches by the speakers'
+            speaker_name (str or Set[str]): filter speeches by the speakers'
                 name; see :meth:`speaker_names <CapitolWords.speaker_names>`
-            speaker_party (str or set[str]): filter speeches by the speakers'
+            speaker_party (str or Set[str]): filter speeches by the speakers'
                 party; see :meth:`speaker_parties <CapitolWords.speaker_parties>`
-            chamber (str or set[str]): filter speeches by the chamber in which
+            chamber (str or Set[str]): filter speeches by the chamber in which
                 they were given; see :meth:`chambers <CapitolWords.chambers>`
-            congress (int or set[int]): filter speeches by the congress in which
+            congress (int or Set[int]): filter speeches by the congress in which
                 they were given; see :meth:`congresses <CapitolWords.congresses>`
-            date_range (list[str] or tuple[str]): filter speeches by the date on
+            date_range (List[str] or Tuple[str]): filter speeches by the date on
                 which they were given; both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
                 available in the corpus
@@ -226,23 +226,23 @@ class CapitolWords(object):
         for text in texts:
             yield text
 
-    def docs(self, speaker_name=None, speaker_party=None, chamber=None,
-             congress=None, date_range=None, min_len=None, limit=-1):
+    def records(self, speaker_name=None, speaker_party=None, chamber=None,
+                congress=None, date_range=None, min_len=None, limit=-1):
         """
         Iterate over documents (including text and metadata) in the CapitolWords
         corpus, optionally filtering by a variety of metadata and/or text length,
         in order of date.
 
         Args:
-            speaker_name (str or set[str]): filter speeches by the speakers'
+            speaker_name (str or Set[str]): filter speeches by the speakers'
                 name; see :meth:`speaker_names <CapitolWords.speaker_names>`
-            speaker_party (str or set[str]): filter speeches by the speakers'
+            speaker_party (str or Set[str]): filter speeches by the speakers'
                 party; see :meth:`speaker_parties <CapitolWords.speaker_parties>`
-            chamber (str or set[str]): filter speeches by the chamber in which
+            chamber (str or Set[str]): filter speeches by the chamber in which
                 they were given; see :meth:`chambers <CapitolWords.chambers>`
-            congress (int or set[int]): filter speeches by the congress in which
+            congress (int or Set[int]): filter speeches by the congress in which
                 they were given; see :meth:`congresses <CapitolWords.congresses>`
-            date_range (list[str] or tuple[str]): filter speeches by the date on
+            date_range (List[str] or Tuple[str]): filter speeches by the date on
                 which they were given; both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
                 available in the corpus
@@ -257,9 +257,9 @@ class CapitolWords(object):
         Raises:
             ValueError: if any filtering options are invalid
         """
-        docs = self._iterate(
+        records = self._iterate(
             False, speaker_name=speaker_name, speaker_party=speaker_party,
             chamber=chamber, congress=congress, date_range=date_range,
             min_len=min_len, limit=limit)
-        for doc in docs:
-            yield doc
+        for record in records:
+            yield record

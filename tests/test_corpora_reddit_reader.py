@@ -32,30 +32,44 @@ class RedditReaderTestCase(unittest.TestCase):
         self.redditreader = RedditReader(reddit_fname)
 
     def test_texts(self):
-        texts = list(self.redditreader.texts())
-        for text in texts:
+        for text in self.redditreader.texts():
             self.assertIsInstance(text, unicode_type)
-
-    def test_texts_min_len(self):
-        texts = list(self.redditreader.texts(min_len=100))
-        self.assertEqual(len(texts), 1)
 
     def test_texts_limit(self):
         texts = list(self.redditreader.texts(limit=1))
         self.assertEqual(len(texts), 1)
 
-    def test_comments(self):
-        comments = list(self.redditreader.comments())
-        for comment in comments:
-            self.assertIsInstance(comment, dict)
+    def test_texts_min_len(self):
+        for text in self.redditreader.texts(min_len=100):
+            self.assertTrue(len(text) >= 100)
 
-    def test_comments_min_len(self):
-        comments = list(self.redditreader.comments(min_len=100))
-        self.assertEqual(len(comments), 1)
+    def test_records(self):
+        for record in self.redditreader.records():
+            self.assertIsInstance(record, dict)
 
-    def test_comments_limit(self):
-        comments = list(self.redditreader.comments(limit=1))
-        self.assertEqual(len(comments), 1)
+    def test_records_limit(self):
+        records = list(self.redditreader.records(limit=1))
+        self.assertEqual(len(records), 1)
+
+    def test_records_score_range(self):
+        score_ranges = [(-2, 2), (5, None), (None, 2)]
+        for score_range in score_ranges:
+            records = list(self.redditreader.records(score_range=score_range))
+            self.assertEqual(len(records), 1)
+            for record in records:
+                if score_range[0]:
+                    self.assertTrue(record['score'] >= score_range[0])
+                if score_range[1]:
+                    self.assertTrue(record['score'] <= score_range[1])
+
+    def test_records_subreddit(self):
+        subreddits = [('exmormon',), {'CanadaPolitics', 'AdviceAnimals'}]
+        expected_lens = (1, 2)
+        for subreddit, expected_len in zip(subreddits, expected_lens):
+            records = list(self.redditreader.records(subreddit=subreddit))
+            self.assertEqual(len(records), expected_len)
+            for record in records:
+                self.assertTrue(record['subreddit'] in subreddit)
 
     def tearDown(self):
         shutil.rmtree(self.tempdir)

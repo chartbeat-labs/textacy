@@ -2,24 +2,21 @@
 textacy: higher-level NLP built on spaCy
 ========================================
 
-``textacy`` is a Python library for performing higher-level natural language processing (NLP) tasks, built on the high-performance `spaCy <https://spacy.io/>`_ library. With the basics --- tokenization, part-of-speech tagging, dependency parsing, etc. --- offloaded to another library, ``textacy`` focuses on tasks facilitated by the ready availability of tokenized, POS-tagged, and parsed text.
+``textacy`` is a Python library for performing higher-level natural language processing (NLP) tasks, built on the high-performance spaCy_ library. With the basics --- tokenization, part-of-speech tagging, dependency parsing, etc. --- offloaded to another library, ``textacy`` focuses on tasks facilitated by the ready availability of tokenized, POS-tagged, and parsed text.
 
 
 Features
 --------
 
-- Stream text, json, and spaCy binary data to and from disk
+- Stream text, json, csv, and spaCy binary data to and from disk
 - Clean and normalize raw text, *before* analyzing it
-- Streaming readers for Wikipedia and Reddit, plus the bundled "Bernie & Hillary" corpus
-- Easy access to and filtering of basic linguistic elements, such as words, sentences, and ngrams
-- Extraction of structured information, including named entities, acronyms and their definitions, and direct quotations
-- String, set, and document similarity metrics
-- Unsupervised key term extraction by various algorithms
-- Vectorized and semantic network representations for documents and corpora
-- ``sklearn``-style topic modeling with LSA, LDA, or NMF, with functions for interpreting the results of trained models
-- Utilities for identifying a text's language, displaying key words in context (KWIC), true-casing words, and higher-level navigation of a parse tree
-- Visualizations for topic models and semantic networks
-
+- Explore included corpora of Congressional speeches and Supreme Court decisions, or stream documents from standard Wikipedia pages and Reddit comments datasets
+- Access and filter basic linguistic elements, such as words and ngrams, noun chunks and sentences
+- Extract named entities, acronyms and their definitions, direct quotations, key terms, and more from documents
+- Compare strings, sets, and documents by a variety of similarity metrics
+- Transform documents and corpora into vectorized and semantic network representations
+- Train, interpret, visualize, and save ``sklearn``-style topic models using LSA, LDA, or NMF methods
+- Identify a text's language, display key words in context (KWIC), true-case words, and navigate a parse tree
 
 ... and more!
 
@@ -31,9 +28,9 @@ The simple way to install ``textacy`` is
 
 .. code-block:: console
 
-    $ pip install -U textacy
+    $ pip install textacy
 
-Or, download and unzip the source ``tar.gz`` from  `PyPi <https://pypi.python.org/pypi/textacy>`_, then
+Or, download and unzip the source ``tar.gz`` from  PyPi_, then
 
 .. code-block:: console
 
@@ -51,25 +48,25 @@ Efficiently stream documents from disk and into a processed corpus:
 
 .. code-block:: pycon
 
-    >>> docs = textacy.corpora.fetch_bernie_and_hillary()
-    >>> content_stream, metadata_stream = textacy.fileio.split_content_and_metadata(
-    ...     docs, 'text', itemwise=False)
-    >>> corpus = textacy.TextCorpus.from_texts(
-    ...     'en', content_stream, metadata_stream, n_threads=2)
-    >>> print(corpus)
-    TextCorpus(3066 docs; 1909705 tokens)
+    >>> cw = textacy.corpora.CapitolWords()
+    >>> docs = cw.records(speaker_name={'Hillary Clinton', 'Barack Obama'})
+    >>> content_stream, metadata_stream = textacy.fileio.split_record_fields(
+    ...     docs, 'text')
+    >>> corpus = textacy.Corpus('en', texts=content_stream, metadatas=metadata_stream)
+    >>> corpus
+    Corpus(1241 docs; 857058 tokens)
 
 Represent corpus as a document-term matrix, with flexible weighting and filtering:
 
 .. code-block:: pycon
 
-    >>> doc_term_matrix, id2term = corpus.as_doc_term_matrix(
-    ...     (doc.as_terms_list(words=True, ngrams=False, named_entities=True)
+    >>> doc_term_matrix, id2term = textacy.vsm.doc_term_matrix(
+    ...     (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
     ...      for doc in corpus),
     ...     weighting='tfidf', normalize=True, smooth_idf=True, min_df=2, max_df=0.95)
     >>> print(repr(doc_term_matrix))
-    <3066x16145 sparse matrix of type '<class 'numpy.float64'>'
-    	with 432067 stored elements in Compressed Sparse Row format>
+    <1241x11364 sparse matrix of type '<class 'numpy.float64'>'
+	   with 211602 stored elements in Compressed Sparse Row format>
 
 Train and interpret a topic model:
 
@@ -78,146 +75,158 @@ Train and interpret a topic model:
     >>> model = textacy.tm.TopicModel('nmf', n_topics=10)
     >>> model.fit(doc_term_matrix)
     >>> doc_topic_matrix = model.transform(doc_term_matrix)
-    >>> print(doc_topic_matrix.shape)
-    (3066, 10)
+    >>> doc_topic_matrix.shape
+    (1241, 10)
     >>> for topic_idx, top_terms in model.top_topic_terms(id2term, top_n=10):
     ...     print('topic', topic_idx, ':', '   '.join(top_terms))
-    topic 0 : people   tax   $   percent   american   million   republican   country   go   americans
-    topic 1 : rescind   quorum   order   consent   unanimous   ask   president   mr.   madam   absence
-    topic 2 : chairman   chairman.   amendment   mr.   clerk   gentleman   designate   offer   sanders   vermont
-    topic 3 : dispense   reading   amendment   consent   unanimous   ask   president   mr.   madam   pending
-    topic 4 : senate   consent   session   unanimous   authorize   ask   committee   meet   president   a.m.
-    topic 5 : health   care   state   child   veteran   va   vermont   new   's   need
-    topic 6 : china   american   speaker   worker   trade   job   wage   america   gentleman   people
-    topic 7 : social security   social   security   cut   senior   medicare   deficit   benefit   year   cola
-    topic 8 : senators   desiring   chamber   vote   minute   morning   permit   10 minute   proceed   speak
-    topic 9 : motion   table   reconsider   lay   agree   preamble   record   resolution   consent   print
+    topic 0 : new   people   's   american   senate   need   iraq   york   americans   work
+    topic 1 : rescind   quorum   order   consent   unanimous   ask   president   mr.   madam   aside
+    topic 2 : dispense   reading   amendment   unanimous   consent   ask   president   mr.   pending   aside
+    topic 3 : health   care   child   mental   quality   patient   medical   program   information   family
+    topic 4 : student   school   education   college   child   teacher   high   program   loan   year
+    topic 5 : senators   desiring   chamber   vote   4,600   amtrak   rail   airline   litigation   expedited
+    topic 6 : senate   thursday   wednesday   session   unanimous   consent   authorize   p.m.   committee   ask
+    topic 7 : medicare   drug   senior   medicaid   prescription   benefit   plan   cut   cost   fda
+    topic 8 : flu   vaccine   avian   pandemic   roberts   influenza   seasonal   outbreak   health   cdc
+    topic 9 : virginia   west virginia   west   senator   yield   question   thank   objection   inquiry   massachusetts
 
 Basic indexing as well as flexible selection of documents in a corpus:
 
 .. code-block:: pycon
 
-    >>> bernie_docs = list(corpus.get_docs(
-    ...     lambda doc: doc.metadata['speaker'] == 'Bernard Sanders'))
-    >>> print(len(bernie_docs))
-    2236
+    >>> obama_docs = list(corpus.get(
+    ...     lambda doc: doc.metadata['speaker_name'] == 'Barack Obama'))
+    >>> len(obama_docs)
+    411
     >>> doc = corpus[-1]
-    >>> print(doc)
-    TextDoc(465 tokens; "Mr. President, I ask to have printed in the Rec...")
+    >>> doc
+    Doc(2999 tokens; "In the Federalist Papers, we often hear the ref...")
 
 Preprocess plain text, or highlight particular terms in it:
 
 .. code-block:: pycon
 
     >>> textacy.preprocess_text(doc.text, lowercase=True, no_punct=True)[:70]
-    'mr president i ask to have printed in the record copies of some of the'
-    >>> textacy.text_utils.keyword_in_context(doc.text, 'nation', window_width=35)
-    ed States of America is an amazing  nation  that continues to lead the world t
-    come the role model for developing  nation s attempting to give their people t
-    ve before to better ourselves as a  nation , because what we change will set a
-    nd education. Fortunately, we as a  nation  have the opportunity to fix the in
-     sentences. Judges from across the  nation  have said for decades that they do
-    reopened many racial wounds in our  nation . The war on drugs also put addicts
+    'in the federalist papers we often hear the reference to the senates ro'
+    >>> textacy.text_utils.keyword_in_context(doc.text, 'America', window_width=35)
+    g on this tiny piece of Senate and  America n history. Some 10 years ago, I ask
+    o do the hard work in New York and  America , who get up every day and do the v
+    say: You know, you never can count  America  out. Whenever the chips are down,
+     what we know will give our fellow  America ns a better shot at the kind of fut
+    aith in this body and in my fellow  America ns. I remain an optimist, that Amer
+    ricans. I remain an optimist, that  America 's best days are still ahead of us.
 
 Extract various elements of interest from parsed documents:
 
 .. code-block:: pycon
 
-    >>> list(doc.ngrams(2, filter_stops=True, filter_punct=True, filter_nums=False))[:15]
-    [Mr. President,
-     Record copies,
-     finalist essays,
-     essays written,
-     Vermont High,
-     High School,
-     School students,
-     sixth annual,
-     annual ``,
-     essay contest,
-     contest conducted,
-     nearly 800,
-     800 entries,
-     material follows,
-     United States]
-    >>> list(doc.ngrams(3, filter_stops=True, filter_punct=True, min_freq=2))
-    [lead the world,
-     leading the world,
-     2.2 million people,
-     2.2 million people,
-     mandatory minimum sentences,
-     Mandatory minimum sentences,
-     war on drugs,
-     war on drugs]
-    >>> list(doc.named_entities(drop_determiners=True, bad_ne_types='numeric'))
-    [Record,
-     Vermont High School,
-     United States of America,
-     Americans,
-     U.S.,
-     U.S.,
-     African American]
-    >>> pattern = textacy.regexes_etc.POS_REGEX_PATTERNS['en']['NP']
-    >>> print(pattern)
+    >>> list(textacy.extract.ngrams(
+    ...     doc, 2, filter_stops=True, filter_punct=True, filter_nums=False))[:15]
+    [Federalist Papers,
+     Senate's,
+     's role,
+     violent passions,
+     pernicious resolutions,
+     everlasting credit,
+     common ground,
+     8 years,
+     tiny piece,
+     American history,
+     10 years,
+     years ago,
+     New York,
+     fellow New,
+     New Yorkers]
+    >>> list(textacy.extract.ngrams(
+    ...     doc, 3, filter_stops=True, filter_punct=True, min_freq=2))
+    [fellow New Yorkers,
+     World Trade Center,
+     Senator from New,
+     World Trade Center,
+     Senator from New,
+     lot of fun,
+     fellow New Yorkers,
+     lot of fun]
+    >>> list(textacy.extract.named_entities(
+    ...     doc, drop_determiners=True, exclude_types='numeric'))[:10]
+    [Senate,
+     Senate,
+     American,
+     New York,
+     New Yorkers,
+     Senate,
+     Barbara Mikulski,
+     Senate,
+     Pennsylvania Avenue,
+     Senate]
+    >>> pattern = textacy.constants.POS_REGEX_PATTERNS['en']['NP']
+    >>> pattern
     <DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN>|<PROPN> <PART>?)+
-    >>> list(doc.pos_regex_matches(pattern))[-10:]
-    [experiment,
-     many racial wounds,
-     our nation,
-     The war,
-     drugs,
-     addicts,
-     bars,
-     addiction,
-     the problem,
-     a mental health issue]
-    >>> list(doc.semistructured_statements('it', cue='be'))
-    [(it, is, important to humanize these statistics),
-     (It, is, the third highest state expenditure, behind health care and education),
-     (it, is, ; a mental health issue)]
-    >>> doc.key_terms(algorithm='textrank', n=5)
-    [('nation', 0.04315758994993049),
-     ('world', 0.030590559641614556),
-     ('incarceration', 0.029577233127175532),
-     ('problem', 0.02411902162606202),
-     ('people', 0.022631145896105508)]
+    >>> list(textacy.extract.pos_regex_matches(doc, pattern))[:10]
+    [the Federalist Papers,
+     the reference,
+     the Senate's role,
+     the consequences,
+     sudden and violent passions,
+     intemperate and pernicious resolutions,
+     the everlasting credit,
+     wisdom,
+     our Founders,
+     an effort]
+    >>> list(textacy.extract.semistructured_statements(doc, 'I', cue='be'))
+    [(I, was, on the other end of Pennsylvania Avenue),
+     (I, was, , a very new Senator, and my city and my State had been devastated),
+     (I, am, grateful to have had Senator Schumer as my partner and my ally),
+     (I, am, very excited about what can happen in the next 4 years),
+     (I, been, a New Yorker, but I know I always will be one)]
+    >>> textacy.keyterms.textrank(doc, n_keyterms=10)
+    [('day', 0.01608508275877894),
+     ('people', 0.015079868730811194),
+     ('year', 0.012330783590843065),
+     ('way', 0.011732786337383587),
+     ('colleague', 0.010794482493897155),
+     ('new', 0.0104941198408241),
+     ('time', 0.010016582029543003),
+     ('work', 0.0096498231660789),
+     ('lot', 0.008960478625039818),
+     ('great', 0.008552318032915361)]
 
 Compute common statistical attributes of a text:
 
 .. code-block:: pycon
 
-    >>> doc.readability_stats
-    {'automated_readability_index': 11.67580188679245,
-     'coleman_liau_index': 10.89927271226415,
-     'flesch_kincaid_grade_level': 10.711962264150948,
-     'flesch_readability_ease': 56.022660377358505,
-     'gunning_fog_index': 13.857358490566037,
-     'n_chars': 2026,
-     'n_polysyllable_words': 57,
-     'n_sents': 20,
-     'n_syllables': 648,
-     'n_unique_words': 228,
-     'n_words': 424,
-     'smog_index': 12.773325707644965}
+    >>> textacy.text_stats.readability_stats(doc)
+    {'automated_readability_index': 12.549920902265107,
+     'coleman_liau_index': 9.882109957869638,
+     'flesch_kincaid_grade_level': 10.65744148341702,
+     'flesch_readability_ease': 63.02302106124765,
+     'gunning_fog_index': 13.493768200349448,
+     'n_chars': 11498,
+     'n_polysyllable_words': 222,
+     'n_sents': 101,
+     'n_syllables': 3525,
+     'n_unique_words': 1107,
+     'n_words': 2516,
+     'smog_index': 11.598657798783282}
 
-Count terms individually, and represent documents as a bag of terms with flexible weighting and inclusion criteria:
+Count terms individually, and represent documents as a bag-of-terms with flexible weighting and inclusion criteria:
 
 .. code-block:: pycon
 
-    >>> doc.term_count('nation')
-    6
-    >>> bot = doc.as_bag_of_terms(weighting='tf', normalized=False, lemmatize='auto', ngram_range=(1, 1))
-    >>> [(doc.spacy_stringstore[term_id], count)
-    ...  for term_id, count in bot.most_common(n=10)]
-    [('nation', 6),
-     ('world', 4),
-     ('incarceration', 4),
-     ('people', 3),
-     ('mandatory minimum', 3),
-     ('lead', 3),
-     ('minimum', 3),
-     ('problem', 3),
-     ('mandatory', 3),
-     ('drug', 3)]
+    >>> doc.count('America')
+    3
+    >>> bot = doc.to_bag_of_terms(ngrams={2, 3}, as_strings=True)
+    >>> sorted(bot.items(), key=lambda x: x[1], reverse=True)[:10]
+    [('new york', 18),
+     ('senate', 8),
+     ('first', 6),
+     ('state', 4),
+     ('9/11', 3),
+     ('look forward', 3),
+     ('america', 3),
+     ('new yorkers', 3),
+     ('chuck', 3),
+     ('lot of fun', 2)]
 
 
 Project Links
@@ -242,3 +251,7 @@ Table of Contents
 
    license
    api_reference
+
+
+.. _spaCy: https://spacy.io/
+.. _PyPi: https://pypi.python.org/pypi/textacy

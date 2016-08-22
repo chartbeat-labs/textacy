@@ -130,9 +130,9 @@ def write_csv(rows, filepath, encoding=None, auto_make_dirs=False,
     .. seealso:: https://docs.python.org/3/library/csv.html#csv.writer
 
     .. note:: Here, CSV is used as a catch-all term for *any* delimited file
-        format, and `delimiter=','` is merely the function's default value.
+        format, and ``delimiter=','`` is merely the function's default value.
         Other common delimited formats are TSV (tab-separated-value, with
-        `delimiter='\t''`) and PSV (pipe-separated-value, with `delimiter='|'`.
+        ``delimiter='\\t'``) and PSV (pipe-separated-value, with ``delimiter='|'``.
     """
     with open_sesame(filepath, mode='wt', encoding=encoding, newline='') as f:
         csv_writer = csv.writer(f, dialect=dialect, delimiter=delimiter)

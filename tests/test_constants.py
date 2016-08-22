@@ -3,10 +3,9 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
-from textacy.regexes_etc import (ACRONYM_REGEX, URL_REGEX, EMAIL_REGEX,
-                                 PHONE_REGEX, NUMBERS_REGEX, PUNCT_REGEX,
-                                 LINEBREAK_REGEX, NONBREAKING_SPACE_REGEX,
-                                 SHORT_URL_REGEX)
+from textacy.constants import (ACRONYM_REGEX, URL_REGEX, EMAIL_REGEX,
+                               PHONE_REGEX, NUMBERS_REGEX,
+                               SHORT_URL_REGEX)
 
 
 GOOD_ACRONYMS = [
@@ -62,7 +61,7 @@ GOOD_SHORT_URLS = [
 BAD_SHORT_URLS = [
     'ftp://foo.bar/baz', 'http://foo.com/blah_blah?adsf',
     'https://www.example.com/foo/?bar=baz&inga=42&quux'
-]
+    ]
 
 GOOD_EMAILS = [
     'prettyandsimple@example.com', 'very.common@example.com',
@@ -141,14 +140,14 @@ class RegexesEtcTestCase(unittest.TestCase):
         for item in BAD_EMAILS:
             self.assertIsNone(EMAIL_REGEX.search(item))
 
-    def test_good_phone_regex(self):
-        for item in GOOD_PHONES:
-            self.assertEqual(item, PHONE_REGEX.search(item).group())
+    def test_good_number_regex(self):
+        for item in GOOD_NUMBERS:
+            self.assertEqual(item, NUMBERS_REGEX.search(item).group())
 
-    def test_bad_phone_regex(self):
-        for item in BAD_PHONES:
-            self.assertIsNone(PHONE_REGEX.search(item))
+    def test_bad_number_regex(self):
+        for item in BAD_NUMBERS:
+            self.assertIsNone(NUMBERS_REGEX.search(item))
 
-    def test_partial_phone_regex(self):
-        for item in PARTIAL_PHONES:
-            self.assertNotEqual(item, PHONE_REGEX.search(item))
+    def test_partial_number_regex(self):
+        for item in PARTIAL_NUMBERS:
+            self.assertNotEqual(item, NUMBERS_REGEX.search(item))
