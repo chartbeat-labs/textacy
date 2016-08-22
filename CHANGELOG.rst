@@ -1,13 +1,40 @@
 Changelog
 =========
 
-dev
----
+0.3.0 (2016-08-23)
+------------------
 
 Changes:
 
-- Added functions to read and write delimited file formats: `read_csv()` and `write_csv()`, where the delimiter can be any valid one-char string; gzip/bzip/lzma compression is handled automatically, as usual
-- Added `backports.csv` dependency to get Python 2 up to parity with Python 3's stdlib
+- Refactored and streamlined `TextDoc`; changed name to `Doc`
+    - simplified init params: `lang` can now be a language code string or an equivalent `spacy.Language` object, and `content` is either a string or `spacy.Doc`; param values and their interactions are better checked for errors and inconsistencies
+    - renamed and improved methods transforming the Doc; for example, `.as_bag_of_terms()` is now `.to_bag_of_terms()`, and terms can be returned as integer ids (default) or as strings with absolute, relative, or binary frequencies as weights
+    - added performant `.to_bag_of_words()` method, at the cost of less customizability of what gets included in the bag (no stopwords or punctuation); words can be returned as integer ids (default) or as strings with absolute, relative, or binary frequencies as weights
+    - removed methods wrapping `extract` functions, in favor of simply calling that function on the Doc (see below for updates to `extract` functions to make this more convenient); for example, `TextDoc.words()` is now `extract.words(Doc)`
+    - removed `.term_counts()` method, which was redundant with `Doc.to_bag_of_terms()`
+    - renamed `.term_count()` => `.count()`, and checking + caching results is now smarter and faster
+- Refactored and streamlined `TextCorpus`; changed name to `Corpus`
+    - added init params: can now initialize a `Corpus` with a stream of texts, spacy or textacy Docs, and optional metadatas, analogous to `Doc`; accordingly, removed `.from_texts()` class method
+    - refactored, streamlined, *bug-fixed*, and made consistent the process of adding, getting, and removing documents from `Corpus`
+        - getting/removing by index is now equivalent to the built-in `list` API: `Corpus[:5]` gets the first 5 `Doc`s, and `del Corpus[:5]` removes the first 5, automatically keeping track of corpus statistics for total # docs, sents, and tokens
+        - getting/removing by boolean function is now done via the `.get()` and `.remove()` methods, the latter of which now also correctly tracks corpus stats
+        - adding documents is split across the `.add_text()`, `.add_texts()`, and `.add_doc()` methods for performance and clarity reasons
+    - added `.word_freqs()` and `.word_doc_freqs()` methods for getting a mapping of word (int id or string) to global weight (absolute, relative, binary, or inverse frequency); akin to a vectorized representation (see: `textacy.vsm`) but in non-vectorized form, which can be useful
+    - removed `.as_doc_term_matrix()` method, which was just wrapping another function; so, instead of `corpus.as_doc_term_matrix((doc.as_terms_list() for doc in corpus))`, do `textacy.vsm.doc_term_matrix((doc.to_terms_list(as_strings=True) for doc in corpus))`
+- Updated several `extract` functions
+    - almost all now accept either a `textacy.Doc` or `spacy.Doc` as input
+    - renamed and improved parameters for filtering for or against certain POS or NE types; for example, `good_pos_tags` is now `include_pos`, and will accept either a single POS tag as a string or a set of POS tags to filter for; same goes for `exclude_pos`, and analogously `include_types`, and `exclude_types`
+- Updated corpora classes for consistency and added flexibility
+    - enforced a consistent API: `.texts()` for a stream of plain text documents and `.records()` for a stream of dicts containing both text and metadata
+    - added filtering options for `RedditReader`, e.g. by date or subreddit, consistent with other corpora (similar tweaks to `WikiReader` may come later, but it's slightly more complicated...)
+    - added a nicer `repr` for `RedditReader` and `WikiReader` corpora, consistent with other corpora
+- Moved `vsm.py` and `network.py` into the top-level of `textacy` and thus removed the `representations` subpackage
+    - renamed `vsm.build_doc_term_matrix()` => `vsm.doc_term_matrix()`, because the "build" part of it is obvious
+- Renamed `distance.py` => `similarity.py`; all returned values are now similarity metrics in the interval [0, 1], where higher values indicate higher similarity
+- Renamed `regexes_etc.py` => `constants.py`, without additional changes
+- Renamed `fileio.utils.split_content_and_metadata()` => `fileio.utils.split_record_fields()`, without further changes (except for tweaks to the docstring)
+- Added functions to read and write delimited file formats: `fileio.read_csv()` and `fileio.write_csv()`, where the delimiter can be any valid one-char string; gzip/bzip/lzma compression is handled automatically when available
+- Added better and more consistent docstrings and usage examples throughout the code base
 
 
 0.2.8 (2016-08-03)

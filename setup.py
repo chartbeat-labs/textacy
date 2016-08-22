@@ -11,7 +11,7 @@ def read_file(fname, encoding='utf-8'):
 
 setup(
     name='textacy',
-    version='0.2.8',
+    version='0.3.0',
     description='Higher-level text processing, built on spaCy',
     long_description=read_file('README.rst'),
 

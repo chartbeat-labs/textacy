@@ -363,7 +363,8 @@ class Doc(object):
                       **kwargs):
         """
         Transform ``Doc`` into a sequence of ngrams and/or named entities, which
-        aren't necessarily in order of appearance.
+        aren't necessarily in order of appearance, where each term appears in
+        the list with the same frequency that it appears in ``Doc``.
 
         Args:
             ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3)``
