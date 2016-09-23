@@ -1,6 +1,14 @@
 Changelog
 =========
 
+dev
+---
+
+Bugfixes:
+
+- Fixed incorrect kwarg in `sgrank` 's call to `extract.ngrams()` (@patcollis34, issue #44)
+
+
 0.3.0 (2016-08-23)
 ------------------
 
