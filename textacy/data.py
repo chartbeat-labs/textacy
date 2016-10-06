@@ -17,7 +17,8 @@ except ImportError:
 import warnings
 import zipfile
 
-from cachetools import cached, Cache, hashkey
+from cachetools import cached, Cache
+from cachetools.keys import hashkey
 from functools import partial
 import spacy
 

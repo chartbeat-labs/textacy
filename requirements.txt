@@ -1,5 +1,5 @@
 backports.csv>=1.0.1
-cachetools
+cachetools>=2.0.0
 cld2-cffi>=0.1.4
 cytoolz
 ftfy
@@ -15,5 +15,5 @@ python-levenshtein>=0.12.0
 requests>=2.10.0
 scipy
 scikit-learn>=0.17.0
-spacy>=0.101.0
+spacy>=0.101.0,<1.0.0
 unidecode

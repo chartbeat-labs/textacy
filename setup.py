@@ -38,7 +38,7 @@ setup(
     packages=find_packages(),
     install_requires=[
         'backports.csv>=1.0.1',
-        'cachetools',
+        'cachetools>=2.0.0',
         'cld2-cffi>=0.1.3',
         'cytoolz',
         'ftfy',
@@ -54,7 +54,7 @@ setup(
         'requests>=2.10.0',
         'scipy',
         'scikit-learn',
-        'spacy>=0.101.0',
+        'spacy>=0.101.0,<1.0.0',
         'unidecode',
         ],
     )
