@@ -1,12 +1,18 @@
 Changelog
 =========
 
-dev
----
+0.3.1 (2016-10-19)
+------------------
+
+Changes:
+
+- Updated spaCy dependency to the latest v1.0.1; set a floor on other dependencies' versions to make sure everyone's running reasonably up-to-date code
+
 
 Bugfixes:
 
 - Fixed incorrect kwarg in `sgrank` 's call to `extract.ngrams()` (@patcollis34, issue #44)
+- Fixed import for `cachetool` 's `hashkey`, which changed in the v2.0 (@gramonov, issue #45)
 
 
 0.3.0 (2016-08-23)
