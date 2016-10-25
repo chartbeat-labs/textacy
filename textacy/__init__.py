@@ -12,7 +12,7 @@ from textacy import fileio
 from textacy import tm
 from textacy import viz
 # top-level modules
-from textacy import compat, constants, math_utils, vsm
+from textacy import compat, constants, math_utils, spacy_pipelines, vsm
 from textacy import data, preprocess, text_utils
 from textacy import lexicon_methods, spacy_utils, text_stats
 from textacy import doc

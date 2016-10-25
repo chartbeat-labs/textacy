@@ -10,6 +10,7 @@ from math import log
 import os
 import warnings
 
+import numpy as np
 import spacy.about
 from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
@@ -170,6 +171,10 @@ class Corpus(object):
             msg = 'value must be {}, not "{}"'.format(
                 {int, slice}, type(idx_or_slice))
             raise ValueError(msg)
+
+    @property
+    def vector(self):
+        return np.vstack((doc.spacy_doc.vector for doc in self))
 
     ##########
     # FILEIO #

@@ -14,7 +14,6 @@ try:
 except ImportError:
     from urllib2 import urlopen
     from urllib2 import HTTPError
-import warnings
 import zipfile
 
 from cachetools import cached, Cache
@@ -33,47 +32,48 @@ _CACHE = {}
 """dict: key-value store used to cache datasets and such in memory"""
 
 
-# TODO: maybe don't actually cache this -- it takes up a lot of RAM
-# but is indeed a pain to load
 @cached(Cache(1), key=partial(hashkey, 'spacy'))
-def load_spacy(name, **kwargs):
+def load_spacy(name, path=None, create_pipeline=None, **kwargs):
     """
     Load a language-specific spaCy pipeline (collection of data, models, and
-    resources) for tokenizing, tagging, parsing, etc. text; the most recent
-    package loaded is cached.
+    resources) for tokenizing, tagging, parsing, etc. text. The most recent
+    result is cached.
 
     Args:
-        name (str): standard 2-letter language abbreviation for a language;
-            currently, spaCy supports English ('en') and German ('de')
-        **kwargs: keyword arguments passed to :func:`spacy.load`; see the
-            `spaCy docs <https://spacy.io/docs#english>`_ for details
+        name (str): Standard 2-letter language abbreviation for a language.
+            Currently, spaCy supports English ('en') and German ('de').
+        path (str): path/to/directory on disk where spaCy models are saved. If
+            None, spaCy's default data path is used.
+        create_pipeline (func): Callable that takes a spaCy Language instance
+            as its argument and returns a sequence of callables. Each callable
+            takes a ``SpacyDoc`` as its sole positional argument and modifies
+            the document in place.
+        **kwargs: Keyword arguments passed to :func:`spacy.load()`.
 
-            * via (str): non-default directory from which to load package data
             * vocab
             * tokenizer
-            * parser
             * tagger
-            * entity
+            * parser
             * matcher
-            * serializer
-            * vectors
+            * entity
+            * add_vectors
+            * create_make_doc
 
     Returns:
         :class:`spacy.<lang>.<Language>`
 
     Raises:
         RuntimeError: if package can't be loaded
+
+    See Also:
+        https://spacy.io/docs/#language
     """
-    logger.info('Loading "%s" language spaCy pipeline', name)
+    logger.info('Loading "%s" spaCy language models', name)
+    if path is not None:
+        kwargs['path'] = path
+    if create_pipeline is not None:
+        kwargs['create_pipeline'] = create_pipeline
     return spacy.load(name, **kwargs)
-
-
-def load_spacy_pipeline(lang='en', **kwargs):
-    with warnings.catch_warnings():
-        warnings.simplefilter('always', DeprecationWarning)
-        warnings.warn('load_spacy_pipeline() is deprecated! use load_spacy() instead.',
-                      DeprecationWarning)
-    return load_spacy(lang, **kwargs)
 
 
 @cached(_CACHE, key=partial(hashkey, 'hyphenator'))
