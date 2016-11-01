@@ -15,10 +15,9 @@
 ## Steps to Reproduce (for bugs)
 <!--- Provide a link to a live example, or an unambiguous set of steps to -->
 <!--- reproduce this bug. Include code to reproduce, if relevant -->
-1.
-2.
-3.
-4.
+1. 
+1. 
+1. 
 
 ## Context
 <!--- How has this issue affected you? What are you trying to accomplish? -->
@@ -26,8 +25,6 @@
 
 ## Your Environment
 <!--- Include as many relevant details about the environment you experienced the bug in -->
-* Version used:
-* Environment name and version (e.g. PHP 5.4 on nginx 1.9.1):
-* Server type and version:
-* Operating System and version:
-* Link to your project:
+* `textacy` and `spacy` versions:
+* Python version:
+* Operating system and version:
