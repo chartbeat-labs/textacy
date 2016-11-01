@@ -1,6 +1,5 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import matplotlib.pyplot as plt
 import numpy as np
 
 
@@ -96,6 +95,7 @@ def draw_termite_plot(values_mat, col_labels, row_labels,
         highlight_colors = {hc: COLOR_PAIRS[i]
                             for i, hc in enumerate(highlight_cols)}
 
+    import matplotlib.pyplot as plt
     with plt.rc_context(RC_PARAMS):
         fig, ax = plt.subplots(figsize=(pow(n_cols, 0.8), pow(n_rows, 0.66)))
 
