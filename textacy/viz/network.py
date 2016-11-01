@@ -4,9 +4,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import math
 
-import matplotlib.pyplot as plt
-import networkx as nx
-
 
 RC_PARAMS = {'axes.axisbelow': True,
              'axes.edgecolor': '.8',
@@ -61,6 +58,9 @@ def draw_semantic_network(graph, node_weights=None, spread=3.0,
     Returns:
         ``matplotlib.axes.Axes.axis``: axis on which network plot is drawn
     """
+    import matplotlib.pyplot as plt
+    import networkx as nx
+
     with plt.rc_context(RC_PARAMS):
         fig, ax = plt.subplots(figsize=(12, 12))
 
