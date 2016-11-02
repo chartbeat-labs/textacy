@@ -30,7 +30,13 @@ The simple way to install ``textacy`` is
 
     $ pip install textacy
 
-Or, download and unzip the source ``tar.gz`` from  PyPi_, then
+There are a couple optional dependencies, most notably ``matplotlib``, which is used for visualizations. If you need that functionality, be sure you have ``matplotlib`` installed already, or install it along with all of ``textacy`` 's other dependencies via
+
+.. code-block:: console
+
+    $ pip install textacy[viz]
+
+If ``pip`` isn't an option, you can download and unzip the source ``tar.gz`` from  PyPi_, then
 
 .. code-block:: console
 
