@@ -1,7 +1,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import matplotlib.pyplot as plt
 import numpy as np
+try:
+    import matplotlib.pyplot as plt
+except ImportError:
+    pass
 
 
 RC_PARAMS = {'axes.axisbelow': True,
@@ -72,6 +75,12 @@ def draw_termite_plot(values_mat, col_labels, row_labels,
 
     .. seealso:: :func:`TopicModel.termite_plot <textacy.tm.TopicModel.termite_plot>`
     """
+    try:
+        plt
+    except NameError:
+        raise ImportError(
+            'matplotlib is not installed, so textacy.viz won\'t work; install it \
+            individually, or along with textacy via `pip install textacy[viz]`')
     n_rows, n_cols = values_mat.shape
     max_val = np.max(values_mat)
 
@@ -126,14 +135,14 @@ def draw_termite_plot(values_mat, col_labels, row_labels,
             if highlight_cols is not None and col_ind in highlight_cols:
                 ax.scatter([col_ind for _ in range(n_rows)],
                            [i for i in range(n_rows)],
-                           s=600*(values_mat[:, col_ind] / max_val),
+                           s=600 * (values_mat[:, col_ind] / max_val),
                            alpha=0.5, linewidth=1,
                            color=highlight_colors[col_ind][0],
                            edgecolor=highlight_colors[col_ind][1])
             else:
                 ax.scatter([col_ind for _ in range(n_rows)],
                            [i for i in range(n_rows)],
-                           s=600*(values_mat[:, col_ind] / max_val),
+                           s=600 * (values_mat[:, col_ind] / max_val),
                            alpha=0.5, linewidth=1,
                            color='lightgray', edgecolor='gray')
 
