@@ -15,7 +15,7 @@ class SimilarityTestCase(unittest.TestCase):
 
     def test_word_movers(self):
         metrics = ('cosine', 'l1', 'manhattan', 'l2', 'euclidean')
-        expected_values = (0.532305, 0.344288, 0.344288, 0.331001, 0.331001)
+        expected_values = (0.459725, 0.271157, 0.271157, 0.265651, 0.265651)
         for metric, expected_value in zip(metrics, expected_values):
             self.assertAlmostEqual(
                 textacy.similarity.word_movers(self.doc1, self.doc2, metric=metric),
@@ -26,7 +26,7 @@ class SimilarityTestCase(unittest.TestCase):
         pairs = ((self.doc1, self.doc2),
                  (self.doc1[-2:], self.doc2[-2:]),
                  (self.doc1[-1], self.doc2[-1]))
-        expected_values = (0.910964, 0.761701, 0.500000)
+        expected_values = (0.906904, 0.712395, 1.000000)
         for pair, expected_value in zip(pairs, expected_values):
             self.assertAlmostEqual(
                 textacy.similarity.word2vec(pair[0], pair[1]),
@@ -36,7 +36,7 @@ class SimilarityTestCase(unittest.TestCase):
     def test_jaccard(self):
         pairs = ((self.text1, self.text2),
                  (self.text1.split(), self.text2.split()))
-        expected_values = (0.458334, 0.09091)
+        expected_values = (0.4583333, 0.09091)
         for pair, expected_value in zip(pairs, expected_values):
             self.assertAlmostEqual(
                 textacy.similarity.jaccard(pair[0], pair[1]),

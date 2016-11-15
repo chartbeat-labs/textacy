@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Wikipedia Corpus Reader
 -----------------------
@@ -20,13 +21,15 @@ When parsed, article pages have the following fields:
 
 DB dumps are downloadable from https://meta.wikimedia.org/wiki/Data_dumps.
 """
+from __future__ import unicode_literals
+
 import os
 import re
 from xml.etree.cElementTree import iterparse
 
 import ftfy
 
-from textacy.compat import PY2
+from textacy.compat import PY2, bytes_to_unicode, unicode_type
 from textacy.fileio import open_sesame
 
 
@@ -120,12 +123,14 @@ class WikiReader(object):
             Tuple[str, str, str]: page id, title, content with wikimedia markup
         """
         if PY2 is False:
+            events = ('end',)
             f = open_sesame(self.path, mode='rt')
         else:  # Python 2 can't open bzip in text mode :(
+            events = (b'end',)
             f = open_sesame(self.path, mode='rb')
         with f:
 
-            elems = (elem for _, elem in iterparse(f, events=['end']))
+            elems = (elem for _, elem in iterparse(f, events=events))
 
             elem = next(elems)
             match = re.match('^{(.*?)}', elem.tag)
@@ -149,6 +154,8 @@ class WikiReader(object):
                         content = ''
                     else:
                         content = elem.find(text_path).text
+                    if not isinstance(content, unicode_type):
+                        content = bytes_to_unicode(content, errors='ignore')
                     yield page_id, title, content
                     elem.clear()
 
