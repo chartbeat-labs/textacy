@@ -173,7 +173,8 @@ class Corpus(object):
             raise ValueError(msg)
 
     @property
-    def vector(self):
+    def vectors(self):
+        """Constituent docs' word vectors stacked together in a matrix."""
         return np.vstack((doc.spacy_doc.vector for doc in self))
 
     ##########

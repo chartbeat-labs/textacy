@@ -1,6 +1,25 @@
 Changelog
 =========
 
+0.3.2 (2016-11-15)
+------------------
+
+Changes:
+
+- Preliminary inclusion of custom spaCy pipelines
+    - updated ``load_spacy()`` to include explicit path and create_pipeline kwargs, and removed the already-deprecated ``load_spacy_pipeline()`` function to avoid confusion around spaCy languages and pipelines
+    - added ``spacy_pipelines`` module to hold implementations of custom spaCy pipelines, including a basic one that merges entities into single tokens
+    - note: necessarily bumped minimum spaCy version to 1.1.0+
+    - see the announcement here: https://explosion.ai/blog/spacy-deep-learning-keras
+- To reduce code bloat, made the ``matplotlib`` dependency optional and dropped the ``gensim`` dependency
+    - to install ``matplotlib`` at the same time as textacy, do ``$ pip install textacy[viz]``
+    - bonus: ``backports.csv`` is now only installed for Py2 users
+    - thanks to @mbatchkarov for the request
+- Improved performance of ``textacy.corpora.WikiReader().texts()``; results should stream faster and have cleaner plaintext content than when they were produced by ``gensim``
+    - this *should* also fix a bug reported in Issue #51 by @baisk
+- Added a ``Corpus.vectors`` property that returns a matrix of shape (# documents, vector dim) containing the average word2vec-style vector representation of constituent tokens for all ``Doc`` s
+
+
 0.3.1 (2016-10-19)
 ------------------
 

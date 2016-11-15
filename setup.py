@@ -12,7 +12,6 @@ INSTALL_REQUIRES = [
     'cytoolz>=0.8.0',
     'ftfy>=4.2.0',
     'fuzzywuzzy>=0.12.0',
-    'gensim>=0.13.2',
     'ijson>=2.3',
     'networkx>=1.11',
     'numpy>=1.8.0',
@@ -22,7 +21,7 @@ INSTALL_REQUIRES = [
     'requests>=2.10.0',
     'scipy>=0.17.0',
     'scikit-learn>=0.17.0',
-    'spacy>=1.0.1',
+    'spacy>=1.1.0',
     'unidecode>=0.04.19',
     ]
 EXTRAS_REQUIRE = {
