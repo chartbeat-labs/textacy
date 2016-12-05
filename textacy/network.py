@@ -14,13 +14,13 @@ from spacy.tokens.token import Token as SpacyToken
 
 from textacy.compat import unicode_type
 from textacy import extract
-from textacy.spacy_utils import normalized_str
 
 
 logger = logging.getLogger(__name__)
 
 
 def terms_to_semantic_network(terms,
+                              normalize='lemma',
                               window_width=10,
                               edge_weighting='cooc_freq'):
     """
@@ -29,7 +29,12 @@ def terms_to_semantic_network(terms,
     that co-occur within ``window_width`` terms of itself.
 
     Args:
-        terms (list(str) or list(``spacy.Token``))
+        terms (List[str] or List[``spacy.Token``])
+        normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
+            lowercase terms; if false-y, use the form of terms as they appear
+            in doc; if a callable, must accept a ``spacy.Token`` and return a
+            str, e.g. :func:`textacy.spacy_utils.normalized_str()`;
+            only applicable if ``terms`` is a List[``spacy.Token``]
         window_width (int, optional): size of sliding window over `terms` that
             determines which are said to co-occur; if = 2, only adjacent terms
             will have edges in network
@@ -47,8 +52,9 @@ def terms_to_semantic_network(terms,
           from the terms list before passing it to this function
         - Multi-word terms, such as named entities and compound nouns, must be merged
           into single strings or spacy.Tokens beforehand
-        - If terms are already strings, be sure to normalize so that like terms
-          are counted together (see :func:`normalized_str() <textacy.spacy_utils.normalized_str>`)
+        - If terms are already strings, be sure to have normalized them so that
+          like terms are counted together; for example, by applying
+          :func:`normalized_str() <textacy.spacy_utils.normalized_str>`
     """
     if window_width < 2:
         raise ValueError('Window width must be >= 2')
@@ -64,8 +70,18 @@ def terms_to_semantic_network(terms,
     if isinstance(terms[0], unicode_type):
         windows = itertoolz.sliding_window(window_width, terms)
     elif isinstance(terms[0], SpacyToken):
-        windows = ((normalized_str(tok) for tok in window)
-                   for window in itertoolz.sliding_window(window_width, terms))
+        if normalize == 'lemma':
+            windows = ((tok.lemma_ for tok in window)
+                       for window in itertoolz.sliding_window(window_width, terms))
+        elif normalize == 'lower':
+            windows = ((tok.lower_ for tok in window)
+                       for window in itertoolz.sliding_window(window_width, terms))
+        elif not normalize:
+            windows = ((tok.text for tok in window)
+                       for window in itertoolz.sliding_window(window_width, terms))
+        else:
+            windows = ((normalize(tok) for tok in window)
+                       for window in itertoolz.sliding_window(window_width, terms))
     else:
         msg = 'Input terms must be strings or spacy Tokens, not {}.'.format(type(terms[0]))
         raise TypeError(msg)
@@ -90,6 +106,7 @@ def terms_to_semantic_network(terms,
 
 
 def sents_to_semantic_network(sents,
+                              normalize='lemma',
                               edge_weighting='cosine'):
     """
     Convert a list of sentences into a semantic network, where each sentence is
@@ -97,7 +114,12 @@ def sents_to_semantic_network(sents,
     the (cosine or jaccard) similarity of their constituent words.
 
     Args:
-        sents (list(str) or list(:class:`spacy.Span`))
+        sents (List[str] or List[``spacy.Span``])
+        normalize (str or callable): if 'lemma', lemmatize words in sents;
+            if 'lower', lowercase word in sents; if false-y, use the form of words
+            as they appear in sents; if a callable, must accept a ``spacy.Token``
+            and return a str, e.g. :func:`textacy.spacy_utils.normalized_str()`;
+            only applicable if ``sents`` is a List[``spacy.Span``]
         edge_weighting (str {'cosine', 'jaccard'}, optional): similarity metric
             to use for weighting edges between sentences; if 'cosine', use the
             cosine similarity between sentences represented as tf-idf word vectors;
@@ -118,9 +140,22 @@ def sents_to_semantic_network(sents,
     if isinstance(sents[0], unicode_type):
         pass
     elif isinstance(sents[0], SpacySpan):
-        sents = [' '.join(normalized_str(tok) for tok in
-                          extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
-                 for sent in sents]
+        if normalize == 'lemma':
+            sents = [
+                ' '.join(tok.lemma_ for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
+                for sent in sents]
+        elif normalize == 'lower':
+            sents = [
+                ' '.join(tok.lower_ for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
+                for sent in sents]
+        elif not normalize:
+            sents = [
+                ' '.join(tok.text for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
+                for sent in sents]
+        else:
+            sents = [
+                ' '.join(normalize(tok) for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
+                for sent in sents]
     else:
         msg = 'Input sents must be strings or spacy Spans, not {}.'.format(type(sents[0]))
         raise TypeError(msg)

@@ -359,8 +359,8 @@ class Doc(object):
     # TRANSFORM DOC #
 
     def to_terms_list(self, ngrams=(1, 2, 3), named_entities=True,
-                      lemmatize=True, lowercase=False, as_strings=False,
-                      **kwargs):
+                      normalize='lemma', lemmatize=None, lowercase=None,
+                      as_strings=False, **kwargs):
         """
         Transform ``Doc`` into a sequence of ngrams and/or named entities, which
         aren't necessarily in order of appearance, where each term appears in
@@ -374,9 +374,13 @@ class Doc(object):
                 in the terms list; note: if ngrams are also included, named
                 entities are added *first*, and any ngrams that exactly overlap
                 with an entity are skipped to prevent double-counting
-            lemmatize (bool): if True (default), lemmatize all terms
-            lowercase (bool): if True and `lemmatize` is False, words are lower-
-                cased
+            lemmatize (bool): *deprecated* if True (default), lemmatize all terms
+            lowercase (bool): *deprecated* if True and `lemmatize` is False, words
+                are lower-cased
+            normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
+                lowercase terms; if false-y, use the form of terms as they appear
+                in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
+                and return a str, e.g. :func:`textacy.spacy_utils.normalized_str()`
             as_strings (bool): if True, terms are returned as strings; if False
                 (default), terms are returned as their unique integer ids
             kwargs:
@@ -404,6 +408,14 @@ class Doc(object):
         .. note:: Despite the name, this is a generator function; to get an
             actual list of terms, call ``list(doc.to_terms_list())``.
         """
+        if lemmatize is not None or lowercase is not None:
+            normalize = ('lemma' if lemmatize is True else
+                         'lower' if lowercase is True else
+                         False)
+            msg = '`lemmatize` and `lowercase` params are deprecated; use `normalize` instead'
+            with warnings.catch_warnings():
+                warnings.simplefilter('once', DeprecationWarning)
+                warnings.warn(msg, DeprecationWarning)
         if not named_entities and not ngrams:
             raise ValueError('either `named_entities` or `ngrams` must be included')
         if isinstance(ngrams, int):
@@ -454,52 +466,62 @@ class Doc(object):
 
         # convert token and span objects into integer ids
         if as_strings is False:
-            if lemmatize is True:
+            if normalize == 'lemma':
                 for term in terms:
                     try:
                         yield term.lemma
                     except AttributeError:
                         yield self.spacy_stringstore[term.lemma_]
-            elif lowercase is True:
+            elif normalize == 'lower':
                 for term in terms:
                     try:
                         yield term.lower
                     except AttributeError:
                         yield self.spacy_stringstore[term.orth_.lower()]
-            else:
+            elif not normalize:
                 for term in terms:
                     try:
                         yield term.orth
                     except AttributeError:
                         yield self.spacy_stringstore[term.orth_]
+            else:
+                for term in terms:
+                    yield self.spacy_stringstore[normalize(term)]
+
         # convert token and span objects into strings
         else:
-            if lemmatize is True:
+            if normalize == 'lemma':
                 for term in terms:
                     yield term.lemma_
-            elif lowercase is True:
+            elif normalize == 'lower':
                 for term in terms:
                     try:
                         yield term.lower_
                     except AttributeError:
                         yield term.orth_.lower()
-            else:
+            elif not normalize:
                 for term in terms:
                     yield term.orth_
+            else:
+                for term in terms:
+                    yield normalize(term)
 
-    def to_bag_of_words(self, lemmatize=True, lowercase=False, weighting='count',
-                        as_strings=False):
+    def to_bag_of_words(self, normalize='lemma', lemmatize=None, lowercase=None,
+                        weighting='count', as_strings=False):
         """
         Transform ``Doc`` into a bag-of-words: the set of unique words in ``Doc``
         mapped to their absolute, relative, or binary frequency of occurrence.
 
         Args:
-            lemmatize (bool): if True, words are lemmatized before counting;
-                for example, 'happy', 'happier', and 'happiest' would be grouped
-                together as 'happy', with a count of 3
-            lowercase (bool): if True and ``lemmatize`` is False, words are lower-
-                cased before counting; for example, 'happy' and 'Happy' would be
-                grouped together as 'happy', with a count of 2
+            lemmatize (bool): *deprecated* if True, words are lemmatized before
+                counting; for example, 'happy', 'happier', and 'happiest' would
+                be grouped together as 'happy', with a count of 3
+            lowercase (bool): *deprecated* if True and ``lemmatize`` is False,
+                words are lower-cased before counting; for example, 'happy' and
+                'Happy' would be grouped together as 'happy', with a count of 2
+            normalize (str): if 'lemma', lemmatize words before counting; if
+                'lower', lowercase words before counting; otherwise, words are
+                counted using the form with which they they appear in doc
             weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
                 words. If 'count' (default), weights are the absolute number of
                 occurrences (count) of word in doc. If 'binary', all counts are
@@ -516,10 +538,18 @@ class Doc(object):
                 of ``as_strings``) to its absolute, relative, or binary frequency
                 of occurrence (depending on the value of ``weighting``).
         """
+        if lemmatize is not None or lowercase is not None:
+            normalize = ('lemma' if lemmatize is True else
+                         'lower' if lowercase is True else
+                         False)
+            msg = '`lemmatize` and `lowercase` params are deprecated; use `normalize` instead'
+            with warnings.catch_warnings():
+                warnings.simplefilter('once', DeprecationWarning)
+                warnings.warn(msg, DeprecationWarning)
         if weighting not in {'count', 'freq', 'binary'}:
             raise ValueError('weighting "{}" is invalid'.format(weighting))
-        count_by = (attrs.LEMMA if lemmatize is True else
-                    attrs.LOWER if lowercase is True else
+        count_by = (attrs.LEMMA if normalize == 'lemma' else
+                    attrs.LOWER if normalize == 'lower' else
                     attrs.ORTH)
         word_to_weight = self.spacy_doc.count_by(count_by)
         if weighting == 'freq':
@@ -545,7 +575,7 @@ class Doc(object):
         return bow
 
     def to_bag_of_terms(self, ngrams=(1, 2, 3), named_entities=True,
-                        lemmatize=True, lowercase=False,
+                        normalize='lemma', lemmatize=None, lowercase=None,
                         weighting='count', as_strings=False, **kwargs):
         """
         Transform ``Doc`` into a bag-of-terms: the set of unique terms in ``Doc``
@@ -559,12 +589,16 @@ class Doc(object):
             named_entities (bool): if True (default), include named entities;
                 note: if ngrams are also included, any ngrams that exactly
                 overlap with an entity are skipped to prevent double-counting
-            lemmatize (bool): if True, words are lemmatized before counting;
+            lemmatize (bool): *deprecated* if True, words are lemmatized before counting;
                 for example, 'happy', 'happier', and 'happiest' would be grouped
                 together as 'happy', with a count of 3
-            lowercase (bool): if True and ``lemmatize`` is False, words are lower-
+            lowercase (bool): *deprecated* if True and ``lemmatize`` is False, words are lower-
                 cased before counting; for example, 'happy' and 'Happy' would be
                 grouped together as 'happy', with a count of 2
+            normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
+                lowercase terms; if false-y, use the form of terms as they appear
+                in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
+                and return a str, e.g. :func:`textacy.spacy_utils.normalized_str()`
             weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
                 terms. If 'count' (default), weights are the absolute number of
                 occurrences (count) of term in doc. If 'binary', all counts are
@@ -596,12 +630,19 @@ class Doc(object):
         See Also:
             :meth:`Doc.to_terms_list() <Doc.to_terms_list>`
         """
+        if lemmatize is not None or lowercase is not None:
+            normalize = ('lemma' if lemmatize is True else
+                         'lower' if lowercase is True else
+                         False)
+            msg = '`lemmatize` and `lowercase` params are deprecated; use `normalize` instead'
+            with warnings.catch_warnings():
+                warnings.simplefilter('once', DeprecationWarning)
+                warnings.warn(msg, DeprecationWarning)
         if weighting not in {'count', 'freq', 'binary'}:
             raise ValueError('weighting "{}" is invalid'.format(weighting))
         terms_list = self.to_terms_list(
             ngrams=ngrams, named_entities=named_entities,
-            lemmatize=lemmatize, lowercase=lowercase,
-            as_strings=as_strings, **kwargs)
+            normalize=normalize, as_strings=as_strings, **kwargs)
         bot = itertoolz.frequencies(terms_list)
         if weighting == 'freq':
             n_tokens = self.n_tokens
@@ -610,7 +651,7 @@ class Doc(object):
             bot = {term: 1 for term in bot.keys()}
         return bot
 
-    def to_semantic_network(self, nodes='words',
+    def to_semantic_network(self, nodes='words', normalize='lemma',
                             edge_weighting='default', window_width=10):
         """
         Transform ``Doc`` into a semantic network, where nodes are either 'words'
@@ -619,6 +660,11 @@ class Doc(object):
         Args:
             nodes ({'words', 'sents'}): type of doc component to use as nodes
                 in the semantic network
+            normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
+                lowercase terms; if false-y, use the form of terms as they appear
+                in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
+                (if ``nodes`` = 'words' or 'sents', respectively) and return a
+                str, e.g. :func:`textacy.spacy_utils.normalized_str()`
             edge_weighting (str): type of weighting to apply to edges
                 between nodes; if ``nodes == 'words'``, options are {'cooc_freq', 'binary'},
                 if ``nodes == 'sents'``, options are {'cosine', 'jaccard'}; if
@@ -642,13 +688,16 @@ class Doc(object):
                 edge_weighting = 'cooc_freq'
             return network.terms_to_semantic_network(
                 list(textacy.extract.words(self)),
+                normalize=normalize,
                 window_width=window_width,
                 edge_weighting=edge_weighting)
         elif nodes == 'sents':
             if edge_weighting == 'default':
                 edge_weighting = 'cosine'
             return network.sents_to_semantic_network(
-                list(self.sents), edge_weighting=edge_weighting)
+                list(self.sents),
+                normalize=normalize,
+                edge_weighting=edge_weighting)
         else:
             msg = 'nodes "{}" not valid; must be in {}'.format(
                 nodes, {'words', 'sents'})
