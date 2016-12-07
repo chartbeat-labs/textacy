@@ -83,11 +83,11 @@ def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
         terms = [(normalize(term), term.start, len(term)) for term in terms]
 
     # pre-filter terms to the top N ranked by TF or modified TF*IDF
-    n_prefilter_kts = max(5 * n_keyterms, 100)
+    n_prefilter_kts = max(3 * n_keyterms, 100)
     term_text_counts = Counter(term[0] for term in terms)
     if idf:
         mod_tfidfs = {
-            term: count * idf[term] if ' ' not in term else count
+            term: count * idf.get(term, 1) if ' ' not in term else count
             for term, count in term_text_counts.items()}
         terms_set = {
             term for term, _
@@ -115,7 +115,7 @@ def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
                            if t2 != term_text and term_text in t2)
         term_freq_factor = term_count - subsum_count
         if idf and term[2] == 1:
-            term_freq_factor *= idf[term_text]
+            term_freq_factor *= idf.get(term_text, 1)
         term_weights[term_text] = term_freq_factor * pos_first_occ_factor * term_len
 
     # filter terms to only those with positive weights
@@ -132,14 +132,8 @@ def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
                         if start_ind <= term[1] <= end_ind)
         # get all token combinations within window
         for t1, t2 in itertools.combinations(window_terms, 2):
-            if t1 == t2:
-                continue
             n_coocs[t1[0]][t2[0]] += 1
-            try:
-                sum_logdists[t1[0]][t2[0]] += \
-                    log_(window_width / abs(t1[1] - t2[1]))
-            except ZeroDivisionError:  # HACK: pretend that they're 1 token apart
-                sum_logdists[t1[0]][t2[0]] += log_(window_width)
+            sum_logdists[t1[0]][t2[0]] += log_(window_width / max(abs(t1[1] - t2[1]), 1))
         if end_ind > n_toks:
             break
 

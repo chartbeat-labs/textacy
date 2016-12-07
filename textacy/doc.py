@@ -513,15 +513,15 @@ class Doc(object):
         mapped to their absolute, relative, or binary frequency of occurrence.
 
         Args:
-            lemmatize (bool): *deprecated* if True, words are lemmatized before
-                counting; for example, 'happy', 'happier', and 'happiest' would
-                be grouped together as 'happy', with a count of 3
-            lowercase (bool): *deprecated* if True and ``lemmatize`` is False,
-                words are lower-cased before counting; for example, 'happy' and
-                'Happy' would be grouped together as 'happy', with a count of 2
             normalize (str): if 'lemma', lemmatize words before counting; if
                 'lower', lowercase words before counting; otherwise, words are
                 counted using the form with which they they appear in doc
+            lemmatize (bool): if True, words are lemmatized before counting; for
+                example, 'happy', 'happier', and 'happiest' would be grouped
+                together as 'happy', with a count of 3 (*DEPRECATED*)
+            lowercase (bool): *deprecated* if True and ``lemmatize`` is False,
+                words are lower-cased before counting; for example, 'happy' and
+                'Happy' would be grouped together as 'happy', with a count of 2
             weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
                 words. If 'count' (default), weights are the absolute number of
                 occurrences (count) of word in doc. If 'binary', all counts are
