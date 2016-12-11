@@ -17,8 +17,7 @@ from fuzzywuzzy.fuzz import token_sort_ratio
 import networkx as nx
 import numpy as np
 
-from textacy import extract, spacy_utils
-from textacy import vsm
+from textacy import extract, vsm
 from textacy.network import terms_to_semantic_network
 
 
@@ -65,7 +64,7 @@ def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
     # if inverse doc freqs available, include nouns, adjectives, and verbs;
     # otherwise, just include nouns and adjectives
     # (without IDF downweighting, verbs dominate the results in a bad way)
-    include_pos = {'NOUN', 'ADJ', 'VERB'} if idf else {'NOUN', 'ADJ'}
+    include_pos = {'NOUN', 'PROPN', 'ADJ', 'VERB'} if idf else {'NOUN', 'PROPN', 'ADJ'}
     terms = itertoolz.concat(
         extract.ngrams(doc, n, filter_stops=True, filter_punct=True, filter_nums=False,
                        include_pos=include_pos, min_freq=min_term_freq)
@@ -154,7 +153,7 @@ def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
     graph.add_edges_from(norm_edge_weights)
     term_ranks = nx.pagerank_scipy(graph)
 
-    return sorted(term_ranks.items(), key=itemgetter(1), reverse=True)[:n_keyterms]
+    return sorted(term_ranks.items(), key=itemgetter(1, 0), reverse=True)[:n_keyterms]
 
 
 def textrank(doc, normalize='lemma', n_keyterms=10):
@@ -258,7 +257,7 @@ def key_terms_from_semantic_network(doc, normalize='lemma',
             raise ValueError('`n_keyterms` must be an int, or a float between 0.0 and 1.0')
         n_keyterms = int(round(len(doc) * n_keyterms))
 
-    include_pos = {'NOUN', 'ADJ'}
+    include_pos = {'NOUN', 'PROPN', 'ADJ'}
     if normalize == 'lemma':
         word_list = [word.lemma_ for word in doc]
         good_word_list = [word.lemma_ for word in doc
@@ -310,7 +309,7 @@ def key_terms_from_semantic_network(doc, normalize='lemma',
             seen_joined_key_terms.add(term)
             joined_key_terms.append((term, sum(word_ranks[word] for word in words)))
 
-    return sorted(joined_key_terms, key=itemgetter(1), reverse=True)[:n_keyterms]
+    return sorted(joined_key_terms, key=itemgetter(1, 0), reverse=True)[:n_keyterms]
 
 
 def most_discriminating_terms(terms_lists, bool_array_grp1,
