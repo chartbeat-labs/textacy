@@ -222,7 +222,7 @@ class ReadmeTestCase(unittest.TestCase):
         observed_1 = self.doc.count('nation')
         expected_1 = 5
         bot = self.doc.to_bag_of_terms(
-            ngrams=1, normalize=False, lemmatize=True, as_strings=True)
+            ngrams=1, normalize='lemma', as_strings=True)
         # sort by term ascending, then count descending
         observed_2 = sorted(bot.items(), key=itemgetter(1, 0), reverse=True)[:10]
         expected_2 = [
