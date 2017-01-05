@@ -275,6 +275,10 @@ def key_terms_from_semantic_network(doc, normalize='lemma',
         good_word_list = [normalize(word) for word in doc
                           if not word.is_stop and not word.is_punct and word.pos_ in include_pos]
 
+    # HACK: omit empty strings, which happen as a bug in spacy as of v1.5
+    # and may well happen with ``normalize`` as a callable
+    # an empty string should never be considered a keyterm
+    good_word_list = [word for word in good_word_list if word]
     graph = terms_to_semantic_network(
         good_word_list, window_width=window_width, edge_weighting=edge_weighting)
 
