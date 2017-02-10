@@ -22,7 +22,7 @@ from functools import partial
 import spacy
 
 import textacy
-from textacy.compat import PY2, bytes_type
+from textacy.compat import PY2, bytes_
 
 logger = logging.getLogger(__name__)
 
@@ -136,7 +136,7 @@ def load_depechemood(data_dir=None, download_if_missing=True,
         if (tail and tail != 'DepecheMood_V1.0') or head != 'DepecheMood_V1.0':
             data_dir = os.path.join(data_dir, 'DepecheMood_V1.0')
     fname = os.path.join(data_dir, 'DepecheMood_' + weighting + '.txt')
-    delimiter = bytes_type('\t') if PY2 else '\t'  # HACK: Py2's csv module fail
+    delimiter = bytes_('\t') if PY2 else '\t'  # HACK: Py2's csv module fail
     try:
         with io.open(fname, mode='rt') as csvfile:
             csvreader = csv.reader(csvfile, delimiter=delimiter)

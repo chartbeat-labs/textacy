@@ -29,7 +29,7 @@ from xml.etree.cElementTree import iterparse
 
 import ftfy
 
-from textacy.compat import PY2, bytes_to_unicode, unicode_type
+from textacy.compat import PY2, bytes_to_unicode, unicode_
 from textacy.fileio import open_sesame
 
 
@@ -154,7 +154,7 @@ class WikiReader(object):
                         content = ''
                     else:
                         content = elem.find(text_path).text
-                    if not isinstance(content, unicode_type):
+                    if not isinstance(content, unicode_):
                         content = bytes_to_unicode(content, errors='ignore')
                     yield page_id, title, content
                     elem.clear()
@@ -163,14 +163,14 @@ class WikiReader(object):
         wikicode = parser.parse(content)
         parsed_page = {'sections': []}
 
-        wikilinks = [unicode_type(wc.title) for wc in wikicode.ifilter_wikilinks()]
+        wikilinks = [unicode_(wc.title) for wc in wikicode.ifilter_wikilinks()]
         parsed_page['categories'] = [wc for wc in wikilinks if wc.startswith('Category:')]
         parsed_page['wiki_links'] = [wc for wc in wikilinks
                                      if not wc.startswith('Category:') and
                                      not wc.startswith('File:') and
                                      not wc.startswith('Image:')]
         parsed_page['ext_links'] = [
-            unicode_type(wc.url) for wc in wikicode.ifilter_external_links()]
+            unicode_(wc.url) for wc in wikicode.ifilter_external_links()]
 
         def _filter_tags(obj):
             return obj.tag == 'ref' or obj.tag == 'table'
@@ -184,7 +184,7 @@ class WikiReader(object):
 
             if section_idx == 0 or len(headings) == 1:
                 try:
-                    sec_title = unicode_type(headings[0].title)
+                    sec_title = unicode_(headings[0].title)
                     if sec_title.lower() in bad_section_titles:
                         continue
                     sec['title'] = sec_title
@@ -200,12 +200,12 @@ class WikiReader(object):
                         continue
                 for obj in section.ifilter_wikilinks(recursive=True):
                     try:
-                        obj_title = unicode_type(obj.title)
+                        obj_title = unicode_(obj.title)
                         if obj_title.startswith('File:') or obj_title.startswith('Image:'):
                             section.remove(obj)
                     except Exception:
                         pass
-                sec['text'] = unicode_type(section.strip_code(normalize=True, collapse=True)).strip()
+                sec['text'] = unicode_(section.strip_code(normalize=True, collapse=True)).strip()
                 if sec.get('title'):
                     sec['text'] = re.sub(r'^' + re.escape(sec['title']) + r'\s*', '', sec['text'])
                 parsed_page['sections'].append(sec)
@@ -213,11 +213,11 @@ class WikiReader(object):
 
             # dammit! the parser has failed us; let's handle it as best we can
             elif len(headings) > 1:
-                titles = [unicode_type(h.title).strip() for h in headings]
+                titles = [unicode_(h.title).strip() for h in headings]
                 levels = [int(h.level) for h in headings]
                 sub_sections = [
-                    unicode_type(ss) for ss in
-                    re.split(r'\s*' + '|'.join(re.escape(unicode_type(h)) for h in headings) + r'\s*', unicode_type(section))]
+                    unicode_(ss) for ss in
+                    re.split(r'\s*' + '|'.join(re.escape(unicode_(h)) for h in headings) + r'\s*', unicode_(section))]
                 # re.split leaves an empty string result up front :shrug:
                 if sub_sections[0] == '':
                     del sub_sections[0]

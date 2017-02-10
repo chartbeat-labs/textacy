@@ -16,7 +16,7 @@ from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
 
 from textacy import data, fileio
-from textacy.compat import PY2, unicode_type, zip
+from textacy.compat import PY2, unicode_, zip
 from textacy.doc import Doc
 
 
@@ -117,7 +117,7 @@ class Corpus(object):
         spacy_stringstore (``spacy.StringStore``): https://spacy.io/docs#stringstore
     """
     def __init__(self, lang, texts=None, docs=None, metadatas=None):
-        if isinstance(lang, unicode_type):
+        if isinstance(lang, unicode_):
             self.lang = lang
             self.spacy_lang = data.load_spacy(self.lang)
         elif isinstance(lang, SpacyLang):
@@ -125,7 +125,7 @@ class Corpus(object):
             self.spacy_lang = lang
         else:
             msg = '`lang` must be {}, not "{}"'.format(
-                {unicode_type, SpacyLang}, type(lang))
+                {unicode_, SpacyLang}, type(lang))
             raise ValueError(msg)
         self.spacy_vocab = self.spacy_lang.vocab
         self.spacy_stringstore = self.spacy_vocab.strings

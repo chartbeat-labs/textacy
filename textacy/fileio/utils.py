@@ -107,9 +107,9 @@ def coerce_content_type(content, file_mode):
     are incompatible (either bytes with text mode or unicode with bytes mode),
     try to coerce the content type so it can be written.
     """
-    if 't' in file_mode and isinstance(content, compat.bytes_type):
+    if 't' in file_mode and isinstance(content, compat.bytes_):
         return compat.bytes_to_unicode(content)
-    elif 'b' in file_mode and isinstance(content, compat.unicode_type):
+    elif 'b' in file_mode and isinstance(content, compat.unicode_):
         return compat.unicode_to_bytes(content)
     return content
 

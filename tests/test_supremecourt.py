@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import unittest
 
-from textacy.compat import unicode_type
+from textacy.compat import unicode_
 from textacy.corpora import supremecourt
 
 
@@ -30,7 +30,7 @@ class SupremeCourtTestCase(unittest.TestCase):
     def test_supremecourt_texts(self):
         cw = supremecourt.SupremeCourt(download_if_missing=True)
         for text in cw.texts(limit=3):
-            self.assertIsInstance(text, unicode_type)
+            self.assertIsInstance(text, unicode_)
 
     def test_supremecourt_texts_limit(self):
         cw = supremecourt.SupremeCourt(download_if_missing=True)

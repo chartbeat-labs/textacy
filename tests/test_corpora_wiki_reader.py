@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import unittest
 
-from textacy.compat import unicode_type
+from textacy.compat import unicode_
 from textacy.corpora import WikiReader
 from textacy.fileio import write_file
 
@@ -158,7 +158,7 @@ class WikiReaderTestCase(unittest.TestCase):
     def test_texts(self):
         texts = list(self.wikireader.texts())
         for text in texts:
-            self.assertIsInstance(text, unicode_type)
+            self.assertIsInstance(text, unicode_)
 
     def test_texts_min_len(self):
         texts = list(self.wikireader.texts(min_len=300))

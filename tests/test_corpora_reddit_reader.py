@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import unittest
 
-from textacy.compat import PY2, unicode_type
+from textacy.compat import PY2, unicode_
 from textacy.corpora import RedditReader
 from textacy.fileio import write_json_lines
 
@@ -33,7 +33,7 @@ class RedditReaderTestCase(unittest.TestCase):
 
     def test_texts(self):
         for text in self.redditreader.texts():
-            self.assertIsInstance(text, unicode_type)
+            self.assertIsInstance(text, unicode_)
 
     def test_texts_limit(self):
         texts = list(self.redditreader.texts(limit=1))

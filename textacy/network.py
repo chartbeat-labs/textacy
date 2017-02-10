@@ -12,7 +12,7 @@ from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
 
-from textacy.compat import unicode_type
+from textacy.compat import unicode_
 from textacy import extract
 
 
@@ -67,7 +67,7 @@ def terms_to_semantic_network(terms,
                 len(terms), window_width))
         window_width = len(terms)
 
-    if isinstance(terms[0], unicode_type):
+    if isinstance(terms[0], unicode_):
         windows = itertoolz.sliding_window(window_width, terms)
     elif isinstance(terms[0], SpacyToken):
         if normalize == 'lemma':
@@ -137,7 +137,7 @@ def sents_to_semantic_network(sents,
           (see :func:`normalized_str() <textacy.spacy_utils.normalized_str>`)
     """
     n_sents = len(sents)
-    if isinstance(sents[0], unicode_type):
+    if isinstance(sents[0], unicode_):
         pass
     elif isinstance(sents[0], SpacySpan):
         if normalize == 'lemma':

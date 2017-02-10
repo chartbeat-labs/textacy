@@ -18,7 +18,7 @@ from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
 
 import textacy
-from textacy.compat import unicode_type
+from textacy.compat import unicode_
 from textacy.constants import NUMERIC_NE_TYPES
 from textacy import data, fileio, spacy_utils, text_utils
 from textacy import network
@@ -105,11 +105,11 @@ class Doc(object):
         self.metadata = metadata or {}
 
         # Doc instantiated from text, so must be parsed with a spacy.Language
-        if isinstance(content, unicode_type):
+        if isinstance(content, unicode_):
             if isinstance(lang, SpacyLang):
                 self.lang = lang.lang
                 spacy_lang = lang
-            elif isinstance(lang, unicode_type):
+            elif isinstance(lang, unicode_):
                 self.lang = lang
                 spacy_lang = data.load_spacy(self.lang)
             elif lang is None:
@@ -117,7 +117,7 @@ class Doc(object):
                 spacy_lang = data.load_spacy(self.lang)
             else:
                 msg = '`lang` must be {}, not "{}"'.format(
-                    {unicode_type, SpacyLang}, type(lang))
+                    {unicode_, SpacyLang}, type(lang))
                 raise ValueError(msg)
             self.spacy_vocab = spacy_lang.vocab
             self.spacy_stringstore = self.spacy_vocab.strings
@@ -134,17 +134,17 @@ class Doc(object):
                 if self.spacy_vocab is not lang.vocab:
                     msg = '`spacy.Vocab` used to parse `content` must be the same as the one associated with `lang`'
                     raise ValueError(msg)
-            elif isinstance(lang, unicode_type):
+            elif isinstance(lang, unicode_):
                 if lang != self.lang:
                     raise ValueError('lang of spacy models used to parse `content` must be the same as `lang`')
             elif lang is not None:
                 msg = '`lang` must be {}, not "{}"'.format(
-                    {unicode_type, SpacyLang}, type(lang))
+                    {unicode_, SpacyLang}, type(lang))
                 raise ValueError(msg)
         # oops, user has made some sort of mistake
         else:
             msg = '`Doc` must be initialized with {}, not "{}"'.format(
-                {unicode_type, SpacyDoc}, type(content))
+                {unicode_, SpacyDoc}, type(content))
             raise ValueError(msg)
 
     def __repr__(self):
@@ -301,7 +301,7 @@ class Doc(object):
             merge first, count second!
         """
         # figure out what object we're dealing with here; convert as necessary
-        if isinstance(term, unicode_type):
+        if isinstance(term, unicode_):
             term_text = term
             term_id = self.spacy_stringstore[term_text]
             term_len = term_text.count(' ') + 1

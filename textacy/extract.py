@@ -18,7 +18,7 @@ from spacy.tokens.span import Span as SpacySpan
 
 import textacy
 from textacy import spacy_utils, text_utils
-from textacy.compat import unicode_type
+from textacy.compat import unicode_
 from textacy.spacy_utils import (normalized_str, get_main_verbs_of_sent,
                                  get_subjects_of_verb, get_objects_of_verb,
                                  get_span_for_compound_noun,
@@ -65,7 +65,7 @@ def words(doc,
     if filter_nums is True:
         words_ = (w for w in words_ if not w.like_num)
     if include_pos:
-        if isinstance(include_pos, unicode_type):
+        if isinstance(include_pos, unicode_):
             include_pos = include_pos.upper()
             words_ = (w for w in words_ if w.pos_ == include_pos)
         elif isinstance(include_pos, (set, frozenset, list, tuple)):
@@ -75,7 +75,7 @@ def words(doc,
             msg = 'invalid `include_pos` type: "{}"'.format(type(include_pos))
             raise TypeError(msg)
     if exclude_pos:
-        if isinstance(exclude_pos, unicode_type):
+        if isinstance(exclude_pos, unicode_):
             exclude_pos = exclude_pos.upper()
             words_ = (w for w in words_ if w.pos_ != exclude_pos)
         elif isinstance(exclude_pos, (set, frozenset, list, tuple)):
@@ -147,7 +147,7 @@ def ngrams(doc, n,
         ngrams_ = (ngram for ngram in ngrams_
                    if not any(w.like_num for w in ngram))
     if include_pos:
-        if isinstance(include_pos, unicode_type):
+        if isinstance(include_pos, unicode_):
             include_pos = include_pos.upper()
             ngrams_ = (ngram for ngram in ngrams_
                        if all(w.pos_ == include_pos for w in ngram))
@@ -159,7 +159,7 @@ def ngrams(doc, n,
             msg = 'invalid `include_pos` type: "{}"'.format(type(include_pos))
             raise TypeError(msg)
     if exclude_pos:
-        if isinstance(exclude_pos, unicode_type):
+        if isinstance(exclude_pos, unicode_):
             exclude_pos = exclude_pos.upper()
             ngrams_ = (ngram for ngram in ngrams_
                        if all(w.pos_ != exclude_pos for w in ngram))
@@ -213,7 +213,7 @@ def named_entities(doc,
     else:
         nes = doc.ents
     if include_types:
-        if isinstance(include_types, unicode_type):
+        if isinstance(include_types, unicode_):
             include_types = include_types.upper()
             if include_types == 'NUMERIC':
                 include_types = NUMERIC_NE_TYPES  # we now go to next if block
@@ -226,7 +226,7 @@ def named_entities(doc,
             msg = 'invalid `include_types` type: "{}"'.format(type(include_types))
             raise TypeError(msg)
     if exclude_types:
-        if isinstance(exclude_types, unicode_type):
+        if isinstance(exclude_types, unicode_):
             exclude_types = exclude_types.upper()
             if exclude_types == 'NUMERIC':
                 exclude_types = NUMERIC_NE_TYPES  # we now go to next if block
