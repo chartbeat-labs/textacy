@@ -19,6 +19,7 @@ from spacy.tokens.token import Token as SpacyToken
 
 import textacy
 from textacy.compat import unicode_type
+from textacy.constants import NUMERIC_NE_TYPES
 from textacy import data, fileio, spacy_utils, text_utils
 from textacy import network
 
@@ -426,6 +427,14 @@ class Doc(object):
                 'exclude_types': kwargs.get('exclude_types'),
                 'drop_determiners': kwargs.get('drop_determiners', True),
                 'min_freq': kwargs.get('min_freq', 1)}
+            # if numeric ngrams are to be filtered, we should filter numeric entities
+            if ngrams and kwargs.get('filter_nums') is True:
+                if ne_kwargs['exclude_types']:
+                    if isinstance(ne_kwargs['exclude_types'], (set, frozenset, list, tuple)):
+                        ne_kwargs['exclude_types'] = set(ne_kwargs['exclude_types'])
+                        ne_kwargs['exclude_types'].add(NUMERIC_NE_TYPES)
+                else:
+                    ne_kwargs['exclude_types'] = NUMERIC_NE_TYPES
         if ngrams:
             ngram_kwargs = {
                 'filter_stops': kwargs.get('filter_stops', True),
