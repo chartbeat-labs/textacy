@@ -443,6 +443,9 @@ class Doc(object):
                 'include_pos': kwargs.get('include_pos'),
                 'exclude_pos': kwargs.get('exclude_pos'),
                 'min_freq': kwargs.get('min_freq', 1)}
+            # if numeric entities are to be filtered, we should filter numeric ngrams
+            if named_entities and kwargs.get('exclude_types') and NUMERIC_NE_TYPES in kwargs['exclude_types']:
+                ngram_kwargs['filter_nums'] = True
 
         terms = []
         # special case: ensure that named entities aren't double-counted when

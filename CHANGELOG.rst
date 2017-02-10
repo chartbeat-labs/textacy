@@ -1,6 +1,23 @@
 Changelog
 =========
 
+0.3.3 (2017-02-10)
+------------------
+
+Changes:
+
+- Added a consistent ``normalize`` param to functions and methods that require token/span text normalization. Typically, it takes one of the following values: 'lemma' to lemmatize tokens, 'lower' to lowercase tokens, False-y to *not* normalize tokens, or a function that converts a spacy token or span into a string, in whatever way the user prefers (e.g. ``spacy_utils.normalized_str()``).
+    - Functions modified to use this param: ``Doc.to_bag_of_terms()``, ``Doc.to_bag_of_words()``, ``Doc.to_terms_list()``, ``Doc.to_semantic_network()``, ``Corpus.word_freqs()``, ``Corpus.word_doc_freqs()``, ``keyterms.sgrank()``, ``keyterms.textrank()``, ``keyterms.singlerank()``, ``keyterms.key_terms_from_semantic_network()``, ``network.terms_to_semantic_network()``, ``network.sents_to_semantic_network()``,
+- Tweaked ``keyterms.sgrank()`` for higher quality results and improved internal performance.
+- When getting both n-grams and named entities with ``Doc.to_terms_list()``, filtering out numeric spans for only one is automatically extended to the other. This prevents unexpected behavior, such as passing `filter_nums=True` but getting numeric named entities back in the terms list.
+
+Bufixes:
+
+- ``keyterms.sgrank()`` no longer crashes if a term is missing from ``idfs`` mapping. (@jeremybmerrill, issue #53)
+- Proper nouns are no longer excluded from consideration as keyterms in ``keyterms.sgrank()`` and ``keyterms.textrank()``. (@jeremybmerrill, issue #53)
+- Empty strings are now excluded from consideration as keyterms — a bug inherited from spaCy. (@mlehl88, issue #58)
+
+
 0.3.2 (2016-11-15)
 ------------------
 
