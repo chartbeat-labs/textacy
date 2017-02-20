@@ -394,9 +394,8 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
     if not known_acro_defs:
         known_acronyms = set()
     else:
-        for acro, defs in known_acro_defs.items():
-            if not isinstance(defs, list):
-                acro_defs[acro] = [defs]
+        for acro, def_ in known_acro_defs.items():
+            acro_defs[acro] = [(def_, 1.0)]
         known_acronyms = set(acro_defs.keys())
 
     if isinstance(doc, SpacySpan):

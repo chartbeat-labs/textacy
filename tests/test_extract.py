@@ -209,6 +209,12 @@ class ExtractTestCase(unittest.TestCase):
         observed = extract.acronyms_and_definitions(self.spacy_doc)
         self.assertEqual(observed, expected)
 
+    def test_acronyms_and_definitions_known(self):
+        expected = {'I.M.F.': 'International Monetary Fund'}
+        observed = extract.acronyms_and_definitions(
+            self.spacy_doc, known_acro_defs={'I.M.F.': 'International Monetary Fund'})
+        self.assertEqual(observed, expected)
+
     @unittest.skip("direct quotation extraction needs to be improved; it fails here")
     def test_direct_quotations(self):
         expected = [
