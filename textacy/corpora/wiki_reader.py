@@ -32,7 +32,6 @@ import ftfy
 from textacy.compat import PY2, bytes_to_unicode, unicode_
 from textacy.fileio import open_sesame
 
-
 re_nowiki = re.compile(r'<nowiki>(.*?)</nowiki>', flags=re.UNICODE)  # nowiki tags: take contents verbatim
 
 self_closing_tags = ('br', 'hr', 'nobr', 'ref', 'references')
@@ -154,7 +153,9 @@ class WikiReader(object):
                         content = ''
                     else:
                         content = elem.find(text_path).text
-                    if not isinstance(content, unicode_):
+                    if content is None:
+                        content = ''
+                    elif not isinstance(content, unicode_):
                         content = bytes_to_unicode(content, errors='ignore')
                     yield page_id, title, content
                     elem.clear()
@@ -344,7 +345,7 @@ def strip_markup(wikitext):
     # text = replace_internal_links(text)  # TODO: is this needed?
 
     # remove table markup
-    text = text.replace('||', '\n|').replace('!!', '\n!')  #  put each cell on a separate line
+    text = text.replace('||', '\n|').replace('!!', '\n!')  # put each cell on a separate line
     text = re_table_formatting.sub('\n', text)  # remove formatting lines
     text = re_table_cell_formatting.sub('\n\\3', text)  # leave only cell content
 
