@@ -1,0 +1,9 @@
+graft docs
+graft tests
+prune docs/build/
+
+include CHANGELOG.rst
+include README.rst
+include LICENSE.txt
+
+global-exclude __pycache__ *.py[cod]
