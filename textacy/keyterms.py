@@ -13,12 +13,12 @@ import math
 from operator import itemgetter
 
 from cytoolz import itertoolz
-from fuzzywuzzy.fuzz import token_sort_ratio
 import networkx as nx
 import numpy as np
 
 from textacy import extract, vsm
 from textacy.network import terms_to_semantic_network
+from textacy.similarity import token_sort_ratio
 
 
 def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
@@ -424,8 +424,7 @@ def aggregate_term_variants(terms,
             aggregated with their definitions and terms that are definitions will
             be aggregated with their acronyms
         fuzzy_dedupe (bool): if True, fuzzy string matching will be used
-            to aggregate similar terms of a sufficient length using
-            `FuzzyWuzzy <https://pypi.python.org/pypi/fuzzywuzzy>`_
+            to aggregate similar terms of a sufficient length
 
     Returns:
         List[Set[str]]: each item is a set of aggregated terms
@@ -506,13 +505,13 @@ def aggregate_term_variants(terms,
                     variants.add(variant)
                     seen_terms.add(variant)
 
-        # intense de-duping via fuzzywuzzy for sufficiently long terms
+        # intense de-duping for sufficiently long terms
         if fuzzy_dedupe is True and len(term) >= 13:
             for other_term in sorted(terms.difference(seen_terms), key=len, reverse=True):
                 if len(other_term) < 13:
                     break
                 tsr = token_sort_ratio(term, other_term)
-                if tsr > 93:
+                if tsr > 0.93:
                     variants.add(other_term)
                     seen_terms.add(other_term)
                     break

@@ -4,12 +4,14 @@ Collection of semantic similarity metrics.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import collections
+import re
+import warnings
 
 from cytoolz import itertoolz
-from fuzzywuzzy import fuzz
 from Levenshtein import (distance as _levenshtein,
                          hamming as _hamming,
-                         jaro_winkler as _jaro_winkler)
+                         jaro_winkler as _jaro_winkler,
+                         ratio as _ratio)
 import numpy as np
 from pyemd import emd
 from sklearn.metrics import pairwise_distances
@@ -17,7 +19,10 @@ from spacy.strings import StringStore
 
 import textacy
 from textacy import extract
-from textacy.compat import string_types
+from textacy.compat import string_types, unicode_, bytes_, bytes_to_unicode
+
+
+NONWORDCHARS_REGEX = re.compile(r'\W+', flags=re.IGNORECASE | re.UNICODE)
 
 
 def word_movers(doc1, doc2, metric='cosine'):
@@ -92,7 +97,7 @@ def word2vec(obj1, obj2):
     return obj1.similarity(obj2)
 
 
-def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=80):
+def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
     """
     Measure the semantic similarity between two strings or sequences of strings
     using Jaccard distance, with optional fuzzy matching of not-identical pairs
@@ -104,7 +109,7 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=80):
             of *characters*, in which case fuzzy matching is not permitted
         fuzzy_match (bool): if True, allow for fuzzy matching in addition to the
             usual identical matching of pairs between input vectors
-        match_threshold (int): value in the interval [0, 100]; fuzzy comparisons
+        match_threshold (float): value in the interval [0.0, 1.0]; fuzzy comparisons
             with a score >= this value will be considered matches
 
     Returns:
@@ -115,6 +120,10 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=80):
     Raises:
         ValueError: if `fuzzy_match` is True but `obj1` and `obj2` are strings
     """
+    if isinstance(match_threshold, int) and 1 <= match_threshold <= 100:
+        msg = '`match_threshold` should be a float in [0.0, 1.0]; it was automatically converted from the provided int in [0, 100]'
+        warnings.warn(msg)
+        match_threshold /= 100
     set1 = set(obj1)
     set2 = set(obj2)
     intersection = len(set1 & set2)
@@ -123,10 +132,10 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=80):
             not isinstance(obj1, string_types) and
             not isinstance(obj2, string_types)):
         for item1 in set1.difference(set2):
-            if max(fuzz.token_sort_ratio(item1, item2) for item2 in set2) >= match_threshold:
+            if max(token_sort_ratio(item1, item2) for item2 in set2) >= match_threshold:
                 intersection += 1
         for item2 in set2.difference(set1):
-            if max(fuzz.token_sort_ratio(item2, item1) for item1 in set1) >= match_threshold:
+            if max(token_sort_ratio(item2, item1) for item1 in set1) >= match_threshold:
                 intersection += 1
     elif fuzzy_match is True:
         raise ValueError('fuzzy matching not possible with str inputs')
@@ -204,3 +213,50 @@ def jaro_winkler(str1, str2, prefix_weight=0.1):
             where larger values correspond to more similar strings
     """
     return _jaro_winkler(str1, str2, prefix_weight)
+
+
+def token_sort_ratio(str1, str2):
+    """
+    Measure of similarity between two strings based on minimal edit distance,
+    where ordering of words in each string is normalized before comparing.
+
+    Args:
+        str1 (str)
+        str2 (str)
+
+    Returns:
+        float: similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
+            where larger values correspond to more similar strings.
+    """
+    if not str1 or not str2:
+        return 0
+    str1 = _force_unicode(str1)
+    str2 = _force_unicode(str2)
+    str1_proc = _process_and_sort(str1)
+    str2_proc = _process_and_sort(str2)
+    return _ratio(str1_proc, str2_proc)
+
+
+def _force_unicode(s):
+    """Force ``s`` into unicode, or die trying."""
+    if isinstance(s, unicode_):
+        return s
+    elif isinstance(s, bytes_):
+        return bytes_to_unicode(s)
+    else:
+        return unicode_(s)
+
+
+def _process_and_sort(s):
+    """Return a processed string with tokens sorted then re-joined."""
+    return ' '.join(sorted(_process(s).split()))
+
+
+def _process(s):
+    """
+    Remove all characters but letters and numbers, strip whitespace,
+    and force everything to lower-case.
+    """
+    if not s:
+        return ''
+    return NONWORDCHARS_REGEX.sub(' ', s).lower().strip()

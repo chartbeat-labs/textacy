@@ -49,7 +49,7 @@ class SimilarityTestCase(unittest.TestCase):
             self.text1, self.text2, True)
 
     def test_jaccard_fuzzy_match(self):
-        thresholds = (50, 70, 90)
+        thresholds = (0.50, 0.70, 0.90)
         expected_values = (0.454546, 0.272728, 0.09091)
         for thresh, expected_value in zip(thresholds, expected_values):
             self.assertAlmostEqual(
@@ -57,6 +57,13 @@ class SimilarityTestCase(unittest.TestCase):
                                            fuzzy_match=True, match_threshold=thresh),
                 expected_value,
                 places=4)
+
+    def test_jaccard_fuzzy_match_warning(self):
+        thresh = 50
+        with self.assertWarns(UserWarning):
+            textacy.similarity.jaccard(
+                self.text1.split(), self.text2.split(),
+                fuzzy_match=True, match_threshold=thresh)
 
     def test_hamming(self):
         self.assertEqual(

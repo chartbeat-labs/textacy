@@ -11,7 +11,6 @@ INSTALL_REQUIRES = [
     'cld2-cffi>=0.1.4',
     'cytoolz>=0.8.0',
     'ftfy>=4.2.0',
-    'fuzzywuzzy>=0.12.0',
     'ijson>=2.3',
     'networkx>=1.11',
     'numpy>=1.9.0,<2.0.0',
