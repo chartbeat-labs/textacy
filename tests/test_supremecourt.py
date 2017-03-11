@@ -5,10 +5,15 @@ import shutil
 import tempfile
 import unittest
 
+from textacy import __resources_dir__
 from textacy.compat import unicode_
 from textacy.corpora import supremecourt
 
+CORPUS_FILEPATH = os.path.join(__resources_dir__, 'supremecourt', supremecourt.FILENAME)
 
+
+@unittest.skipUnless(
+    os.path.isfile(CORPUS_FILEPATH), 'SupremeCourt corpus must first be downloaded to run tests')
 class SupremeCourtTestCase(unittest.TestCase):
 
     def setUp(self):
