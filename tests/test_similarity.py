@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 import unittest
 
 import textacy
+from textacy.compat import PY2
 
 
 class SimilarityTestCase(unittest.TestCase):
@@ -58,6 +59,7 @@ class SimilarityTestCase(unittest.TestCase):
                 expected_value,
                 places=4)
 
+    @unittest.skipIf(PY2, "Python 2's unittest doesn't have ``assertWarns``")
     def test_jaccard_fuzzy_match_warning(self):
         thresh = 50
         with self.assertWarns(UserWarning):
