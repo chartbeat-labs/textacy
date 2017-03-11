@@ -42,6 +42,8 @@ If ``pip`` isn't an option, you can download and unzip the source ``tar.gz`` fro
 
     $ python setup.py install
 
+**Note:** For most uses of ``textacy``, language-specific model data for ``spacy`` must first be downloaded. Follow the directions `here <https://spacy.io/docs/usage/>`_.
+
 
 Example
 -------
