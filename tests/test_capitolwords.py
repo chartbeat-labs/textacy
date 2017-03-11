@@ -28,7 +28,7 @@ class CapitolWordsTestCase(unittest.TestCase):
     @unittest.skip("no need to download a fresh corpus every time")
     def test_capitolwords_download(self):
         capitolwords.CapitolWords(
-            data_dir=self.tempdir, download_if_missing=False)
+            data_dir=self.tempdir, download_if_missing=True)
         self.assertTrue(
             os.path.exists(os.path.join(self.tempdir, 'capitolwords', capitolwords.FILENAME)))
 
