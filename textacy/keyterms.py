@@ -27,25 +27,29 @@ def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
 
     Args:
         doc (``textacy.Doc`` or ``spacy.Doc``)
-        normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
+        normalize (str or callable): If 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``spacy.Span`` and return a str,
             e.g. :func:`textacy.spacy_utils.normalized_str()`
-        window_width (int): width of sliding window in which term
-            co-occurrences are said to occur
-        n_keyterms (int or float): if int, number of top-ranked terms
-            to return as keyterms; if float, must be in the open interval (0, 1),
-            is converted to an integer by ``round(len(doc) * n_keyterms)``
-        idf (dict): mapping of ``normalize(term)`` to inverse document frequency
-            for re-weighting of unigrams (n-grams with n > 1 have df assumed = 1);
-            NOTE: results are better with idf information
+        window_width (int): Width of sliding window in which term
+            co-occurrences are determined to occur. Note: Larger values may
+            dramatically increase runtime, owing to the larger number of
+            co-occurrence combinations that must be counted.
+        n_keyterms (int or float): Number of top-ranked terms to return as
+            keyterms. If int, represents the absolute number; if float, must be
+            in the open interval (0.0, 1.0), and is converted to an integer by
+            ``int(round(len(doc) * n_keyterms))``
+        idf (dict): Mapping of ``normalize(term)`` to inverse document frequency
+            for re-weighting of unigrams (n-grams with n > 1 have df assumed = 1).
+            NOTE: Results are typically better with idf information.
 
     Returns:
         List[Tuple[str, float]]: sorted list of top ``n_keyterms`` key terms and
             their corresponding SGRank scores
 
     Raises:
-        ValueError: if ``n_keyterms`` is a float but not in (0.0, 1.0]
+        ValueError: If ``n_keyterms`` is a float but not in (0.0, 1.0] or
+            ``window_width`` < 2.
 
     References:
         .. [SGRank] Danesh, Sumner, and Martin. "SGRank: Combining Statistical and
@@ -57,6 +61,8 @@ def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
         if not 0.0 < n_keyterms <= 1.0:
             raise ValueError('`n_keyterms` must be an int, or a float between 0.0 and 1.0')
         n_keyterms = int(round(n_toks * n_keyterms))
+    if window_width < 2:
+        raise ValueError('`window_width` must be >= 2')
     window_width = min(n_toks, window_width)
     min_term_freq = min(n_toks // 1000, 4)
 
@@ -140,7 +146,7 @@ def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
     edge_weights = defaultdict(lambda: defaultdict(float))
     for t1, t2s in sum_logdists.items():
         for t2 in t2s:
-            edge_weights[t1][t2] = (sum_logdists[t1][t2] / n_coocs[t1][t2]) * term_weights[t1] * term_weights[t2]
+            edge_weights[t1][t2] = ((1.0 + sum_logdists[t1][t2]) / n_coocs[t1][t2]) * term_weights[t1] * term_weights[t2]
     # normalize edge weights by sum of outgoing edge weights per term (node)
     norm_edge_weights = []
     for t1, t2s in edge_weights.items():
