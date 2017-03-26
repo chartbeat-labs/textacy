@@ -42,6 +42,25 @@ class ExtractTestCase(unittest.TestCase):
         # for e, o in zip(expected, observed):
         #     self.assertEqual(e, o)
 
+    def test_sgrank_ngrams_1(self):
+        expected = [
+            'friedman', 'international', 'beirut', 'bureau', 'york']
+        observed = [term for term, _ in keyterms.sgrank(self.spacy_doc, ngrams=1, n_keyterms=5)]
+        self.assertEqual(len(expected), len(observed))
+        # can't do this owing to randomness of results
+        # for e, o in zip(expected, observed):
+        #     self.assertEqual(e, o)
+
+    def test_sgrank_ngrams_1_2_3(self):
+        expected = [
+            'new york times', 'friedman', 'pulitzer prize', 'beirut', 
+            'international reporting']
+        observed = [term for term, _ in keyterms.sgrank(self.spacy_doc, ngrams=(1, 2, 3), n_keyterms=5)]
+        self.assertEqual(len(expected), len(observed))
+        # can't do this owing to randomness of results
+        # for e, o in zip(expected, observed):
+        #     self.assertEqual(e, o)
+
     def test_sgrank_n_keyterms(self):
         expected = [
             'new york times', 'new york times jerusalem bureau chief', 'friedman',
