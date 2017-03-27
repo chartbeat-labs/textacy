@@ -21,12 +21,15 @@ from textacy.network import terms_to_semantic_network
 from textacy.similarity import token_sort_ratio
 
 
-def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
+def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
     """
     Extract key terms from a document using the [SGRank]_ algorithm.
 
     Args:
         doc (``textacy.Doc`` or ``spacy.Doc``)
+        ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3, 4, 5, 6)``
+                (default) includes all ngrams from 1 to 6; `2`
+                if only bigrams are wanted
         normalize (str or callable): If 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``spacy.Span`` and return a str,
@@ -65,6 +68,8 @@ def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
         raise ValueError('`window_width` must be >= 2')
     window_width = min(n_toks, window_width)
     min_term_freq = min(n_toks // 1000, 4)
+    if isinstance(ngrams, int):
+            ngrams = (ngrams,)
 
     # build full list of candidate terms
     # if inverse doc freqs available, include nouns, adjectives, and verbs;
@@ -74,7 +79,7 @@ def sgrank(doc, normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
     terms = itertoolz.concat(
         extract.ngrams(doc, n, filter_stops=True, filter_punct=True, filter_nums=False,
                        include_pos=include_pos, min_freq=min_term_freq)
-        for n in range(1, 7))
+        for n in ngrams)
 
     # get normalized term strings, as desired
     # paired with positional index in document and length in a 3-tuple
