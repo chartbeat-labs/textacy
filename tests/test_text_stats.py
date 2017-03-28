@@ -7,13 +7,14 @@ from textacy import Doc
 
 
 class TextStatsTestCase(unittest.TestCase):
-
     def setUp(self):
         self.spacy_doc = Doc('This is an English-language document.')
         self.n_chars = 2855
         self.n_syllables = 857
         self.n_words = 441
         self.n_polysyllable_words = 104
+        self.n_monosyllable_words = 187
+        self.n_long_words = 205
         self.n_sents = 21
 
     def test_readability_stats(self):
@@ -53,3 +54,27 @@ class TextStatsTestCase(unittest.TestCase):
         self.assertAlmostEqual(
             text_stats.automated_readability_index(self.n_chars, self.n_words, self.n_sents),
             19.56, places=2)
+
+    def test_wiener_sachtextformel_1(self):
+        self.assertAlmostEqual(
+            text_stats.wiener_sachtextformel(self.n_words, self.n_sents, self.n_polysyllable_words,
+                                             self.n_monosyllable_words, self.n_long_words, variant=1),
+            11.84, places=2)
+
+    def test_wiener_sachtextformel_2(self):
+        self.assertAlmostEqual(
+            text_stats.wiener_sachtextformel(self.n_words, self.n_sents, self.n_polysyllable_words,
+                                             self.n_monosyllable_words, self.n_long_words, variant=2),
+            11.87, places=2)
+
+    def test_wiener_sachtextformel_3(self):
+        self.assertAlmostEqual(
+            text_stats.wiener_sachtextformel(self.n_words, self.n_sents, self.n_polysyllable_words,
+                                             self.n_monosyllable_words, self.n_long_words, variant=3),
+            9.87, places=2)
+
+    def test_wiener_sachtextformel_4(self):
+        self.assertAlmostEqual(
+            text_stats.wiener_sachtextformel(self.n_words, self.n_sents, self.n_polysyllable_words,
+                                             self.n_monosyllable_words, self.n_long_words, variant=4),
+            10.36, places=2)

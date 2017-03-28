@@ -85,3 +85,20 @@ def coleman_liau_index(n_chars, n_words, n_sents):
 def automated_readability_index(n_chars, n_words, n_sents):
     """https://en.wikipedia.org/wiki/Automated_readability_index"""
     return 4.71 * (n_chars / n_words) + 0.5 * (n_words / n_sents) - 21.43
+
+
+def wiener_sachtextformel(n_words, n_sents, n_polysyllable_words, n_monosyllable_words, n_long_words, variant=1):
+    """https://de.wikipedia.org/wiki/Lesbarkeitsindex#Wiener_Sachtextformel"""
+    ms = (n_polysyllable_words / n_words) * 100
+    sl = n_words / n_sents
+    iw = (n_long_words / n_words) * 100
+    es = (n_monosyllable_words / n_words) * 100
+    if variant == 1:
+        return 0.1935 * ms + 0.1672 * sl + 0.1297 * iw - 0.0327 * es - 0.875
+    elif variant == 2:
+        return 0.2007 * ms + 0.1682 * sl + 0.1373 * iw - 2.779
+    elif variant == 3:
+        return 0.2963 * ms + 0.1905 * sl - 1.1144
+    elif variant == 4:
+        return 0.2656 * sl + 0.2744 * ms - 1.693
+    raise ValueError('such variant of formula does not exist')
