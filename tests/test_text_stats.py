@@ -78,3 +78,8 @@ class TextStatsTestCase(unittest.TestCase):
             text_stats.wiener_sachtextformel(self.n_words, self.n_sents, self.n_polysyllable_words,
                                              self.n_monosyllable_words, self.n_long_words, variant=4),
             10.36, places=2)
+
+    def test_gulpease_index(self):
+        self.assertAlmostEqual(
+            text_stats.gulpease_index(self.n_chars, self.n_words, self.n_sents),
+            38.55, places=2)

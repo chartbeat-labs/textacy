@@ -102,3 +102,8 @@ def wiener_sachtextformel(n_words, n_sents, n_polysyllable_words, n_monosyllable
     elif variant == 4:
         return 0.2656 * sl + 0.2744 * ms - 1.693
     raise ValueError('such variant of formula does not exist')
+
+
+def gulpease_index(n_chars, n_words, n_sents):
+    """https://it.wikipedia.org/wiki/Indice_Gulpease"""
+    return 89 + (300 * n_sents / n_words) - (10 * n_chars / n_words)
