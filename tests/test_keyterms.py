@@ -3,7 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
-from textacy import data, keyterms, preprocess_text, spacy_utils
+from textacy import constants, data, keyterms, preprocess_text, spacy_utils
 
 
 class ExtractTestCase(unittest.TestCase):
@@ -56,6 +56,16 @@ class ExtractTestCase(unittest.TestCase):
             'new york times', 'friedman', 'pulitzer prize', 'beirut', 
             'international reporting']
         observed = [term for term, _ in keyterms.sgrank(self.spacy_doc, ngrams=(1, 2, 3), n_keyterms=5)]
+        self.assertEqual(len(expected), len(observed))
+        # can't do this owing to randomness of results
+        # for e, o in zip(expected, observed):
+        #     self.assertEqual(e, o)
+
+    def test_sgrank_pattern(self):
+        expected = [
+            'friedman', 'the new york times', 'beirut', 'the pulitzer prize', 'june']
+        observed = [term for term, _ in keyterms.sgrank(
+            self.spacy_doc, pattern=constants.POS_REGEX_PATTERNS['en']['NP'], n_keyterms=5)]
         self.assertEqual(len(expected), len(observed))
         # can't do this owing to randomness of results
         # for e, o in zip(expected, observed):
