@@ -86,9 +86,9 @@ def words(doc,
             raise TypeError(msg)
     if min_freq > 1:
         words_ = list(words_)
-        freqs = itertoolz.frequencies(normalized_str(w) for w in words_)
+        freqs = itertoolz.frequencies(w.lower_ for w in words_)
         words_ = (w for w in words_
-                  if freqs[normalized_str(w)] >= min_freq)
+                  if freqs[w.lower_] >= min_freq)
 
     for word in words_:
         yield word
@@ -172,9 +172,9 @@ def ngrams(doc, n,
             raise TypeError(msg)
     if min_freq > 1:
         ngrams_ = list(ngrams_)
-        freqs = itertoolz.frequencies(normalized_str(ngram) for ngram in ngrams_)
+        freqs = itertoolz.frequencies(ngram.lower_ for ngram in ngrams_)
         ngrams_ = (ngram for ngram in ngrams_
-                   if freqs[normalized_str(ngram)] >= min_freq)
+                   if freqs[ngram.lower_] >= min_freq)
 
     for ngram in ngrams_:
         yield ngram
@@ -242,9 +242,9 @@ def named_entities(doc,
         nes = (ne if ne[0].pos != DET else ne[1:] for ne in nes)
     if min_freq > 1:
         nes = list(nes)
-        freqs = itertoolz.frequencies(ne.text for ne in nes)
+        freqs = itertoolz.frequencies(ne.lower_ for ne in nes)
         nes = (ne for ne in nes
-               if freqs[ne.text] >= min_freq)
+               if freqs[ne.lower_] >= min_freq)
 
     for ne in nes:
         yield ne
@@ -275,9 +275,9 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
                for nc in ncs)
     if min_freq > 1:
         ncs = list(ncs)
-        freqs = itertoolz.frequencies(normalized_str(nc) for nc in ncs)
+        freqs = itertoolz.frequencies(nc.lower_ for nc in ncs)
         ncs = (nc for nc in ncs
-               if freqs[normalized_str(nc)] >= min_freq)
+               if freqs[nc.lower_] >= min_freq)
 
     for nc in ncs:
         yield nc
