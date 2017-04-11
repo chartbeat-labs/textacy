@@ -23,6 +23,7 @@ DB dumps are downloadable from https://meta.wikimedia.org/wiki/Data_dumps.
 """
 from __future__ import unicode_literals
 
+import logging
 import os
 import re
 from xml.etree.cElementTree import iterparse
@@ -223,7 +224,9 @@ class WikiReader(object):
                 if sub_sections[0] == '':
                     del sub_sections[0]
                 if len(headings) != len(sub_sections):
-                    print('# headings =', len(headings), '# sections =', len(sub_sections))
+                    logging.warning(
+                        '# headings = %s, but # sections = %s',
+                        len(headings), len(sub_sections))
                 for i, sub_section in enumerate(sub_sections):
                     try:
                         if titles[i].lower() in bad_section_titles:
@@ -290,7 +293,8 @@ class WikiReader(object):
         try:
             import mwparserfromhell  # hiding this here; don't want another required dep
         except ImportError:
-            print('mwparserfromhell package must be installed; see http://pythonhosted.org/mwparserfromhell/')
+            logging.exception(
+                'mwparserfromhell package must be installed; see http://pythonhosted.org/mwparserfromhell/')
             raise
         parser = mwparserfromhell.parser.Parser()
 

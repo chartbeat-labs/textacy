@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from collections import Counter
 import copy
+import logging
 from math import log
 import os
 import warnings
@@ -349,7 +350,7 @@ class Corpus(object):
             if hasattr(doc, 'corpus_index'):
                 doc = copy.deepcopy(doc)
                 # TODO: make this into a logging warning
-                print('**WARNING: Doc already associated with a Corpus; adding anyway...')
+                logging.warning('Doc already associated with a Corpus; adding anyway...')
             if metadata is not None:
                 doc.metadata = metadata
             self._add_textacy_doc(doc)

@@ -9,6 +9,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from collections import Counter, defaultdict
 from decimal import Decimal
 import itertools
+import logging
 import math
 from operator import itemgetter
 
@@ -629,7 +630,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
                 try:
                     contrib[w] -= alpha * ranks[vertex]
                 except KeyError:
-                    print('***ERROR: word', w, 'not in contrib dict! We\'re approximating...')
+                    logging.error('Word %s not in contrib dict! We\'re approximating...', w)
             taken[vertex] = True
         contrib[max_word_score[0]] = 0
 
@@ -660,7 +661,7 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
     """
     # check function arguments
     if len(graph) == 0:
-        print('**WARNING: Graph graph is empty!')
+        logging.warning('``graph`` is empty!')
         return {}
 
     # create adjacency matrix, i.e.
