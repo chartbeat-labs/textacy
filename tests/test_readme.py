@@ -202,22 +202,33 @@ class ReadmeTestCase(unittest.TestCase):
             self.assertEqual(o[0], e[0])
             self.assertAlmostEqual(o[1], e[1], places=4)
 
-    def test_readability(self):
-        observed = textacy.text_stats.readability_stats(self.doc)
-        expected = {'automated_readability_index': 11.67580188679245,
-                    'coleman_liau_index': 10.89927271226415,
-                    'flesch_kincaid_grade_level': 10.711962264150948,
-                    'flesch_readability_ease': 56.022660377358505,
-                    'gunning_fog_index': 13.857358490566037,
-                    'n_chars': 2026,
-                    'n_polysyllable_words': 57,
-                    'n_sents': 20,
-                    'n_syllables': 648,
-                    'n_unique_words': 228,
-                    'n_words': 424,
-                    'smog_index': 12.773325707644965}
-        for key in expected:
-            self.assertAlmostEqual(observed[key], expected[key], places=4)
+    def test_readability_stats(self):
+        ts = textacy.text_stats.TextStats(self.doc)
+        observed_1 = ts.basic_counts
+        observed_2 = ts.readability_stats
+        expected_1 = {
+            'n_chars': 2027,
+            'n_long_words': 97,
+            'n_monosyllable_words': 287,
+            'n_polysyllable_words': 57,
+            'n_sents': 19,
+            'n_syllables': 648,
+            'n_unique_words': 228,
+            'n_words': 424}
+        expected_2 = {
+            'automated_readability_index': 12.244805114200595,
+            'coleman_liau_index': 10.982921606132077,
+            'flesch_kincaid_grade_level': 11.147120158887784,
+            'flesch_readability_ease': 54.89013406156903,
+            'gulpease_index': 54.63679245283019,
+            'gunning_fog_index': 14.303674280039722,
+            'lix': 45.193147964250244,
+            'smog_index': 13.023866798666859,
+            'wiener_sachtextformel': 6.211270754716981}
+        for key in expected_1:
+            self.assertEqual(observed_1[key], expected_1[key])
+        for key in expected_2:
+            self.assertAlmostEqual(observed_2[key], expected_2[key], places=2)
 
     def test_term_counting(self):
         observed_1 = self.doc.count('nation')

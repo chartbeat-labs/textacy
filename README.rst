@@ -42,11 +42,17 @@ If ``pip`` isn't an option, you can download and unzip the source ``tar.gz`` fro
 
     $ python setup.py install
 
-**Note:** For most uses of ``textacy``, language-specific model data for ``spacy`` must first be downloaded. Follow the directions `here <https://spacy.io/docs/usage/>`_.
+
+spaCy Language Data
+~~~~~~~~~~~~~~~~~~~
+
+For most uses of ``textacy``, language-specific model data for ``spacy`` must first be downloaded. Follow the directions `here <https://spacy.io/docs/usage/models>`_.
+
+Currently available language models are listed `here <https://spacy.io/docs/api/language-models>`_.
 
 
-Example
--------
+Usage Example
+-------------
 
 .. code-block:: pycon
 
@@ -199,23 +205,34 @@ Extract various elements of interest from parsed documents:
      ('lot', 0.008960478625039818),
      ('great', 0.008552318032915361)]
 
-Compute common statistical attributes of a text:
+Compute basic counts and readability statistics for a given text:
 
 .. code-block:: pycon
 
-    >>> textacy.text_stats.readability_stats(doc)
-    {'automated_readability_index': 12.549920902265107,
-     'coleman_liau_index': 9.882109957869638,
-     'flesch_kincaid_grade_level': 10.65744148341702,
-     'flesch_readability_ease': 63.02302106124765,
-     'gunning_fog_index': 13.493768200349448,
-     'n_chars': 11498,
+    >>> ts = textacy.text_stats.TextStats(doc)
+    >>> ts.n_unique_words
+    1107
+    >>> ts.basic_counts
+    {'n_chars': 11498,
+     'n_long_words': 512,
+     'n_monosyllable_words': 1785,
      'n_polysyllable_words': 222,
-     'n_sents': 101,
+     'n_sents': 99,
      'n_syllables': 3525,
      'n_unique_words': 1107,
-     'n_words': 2516,
-     'smog_index': 11.598657798783282}
+     'n_words': 2516}
+    >>> ts.flesch_kincaid_grade_level
+    10.853709110179697
+    >>> ts.readability_stats
+    {'automated_readability_index': 12.801546064781363,
+     'coleman_liau_index': 9.905629258346586,
+     'flesch_kincaid_grade_level': 10.853709110179697,
+     'flesch_readability_ease': 62.51222198133965,
+     'gulpease_index': 55.10492845786963,
+     'gunning_fog_index': 13.69506833036245,
+     'lix': 45.76390294037353,
+     'smog_index': 11.683781121521076,
+     'wiener_sachtextformel': 5.401029023140788}
 
 Count terms individually, and represent documents as a bag-of-terms with flexible weighting and inclusion criteria:
 
