@@ -18,18 +18,18 @@ class FileIOTestCase(unittest.TestCase):
 
     def setUp(self):
         self.text = "The year was 2081, and everybody was finally equal. They weren't only equal before God and the law. They were equal every which way."
-        self.spacy_pipeline = data.load_spacy('en')
-        self.spacy_doc = self.spacy_pipeline(self.text)
+        self.spacy_lang = data.load_spacy('en_core_web_sm')
+        self.spacy_doc = self.spacy_lang(self.text)
         cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
         values = np.array(
-            [[426, 1, 379], [440, 1, 393], [455, 0, 53503], [425, -1, 369],
-             [416, -2, 407], [424, -3, 372], [440, 1, 393], [455, -5, 375],
-             [447, -1, 365], [433, -2, 363], [419, -3, 407], [445, 1, 393],
-             [455, 0, 53503], [447, 2, 389], [447, 1, 365], [433, -3, 363],
-             [432, -1, 405], [441, -1, 401], [424, -1, 372], [426, 1, 379],
-             [440, -3, 375], [419, -9, 407], [445, 1, 393], [455, 0, 53503],
-             [433, -1, 363], [426, 2, 379], [460, 1, 379], [440, -4, 392],
-             [419, -5, 407]],
+            [[460, 1, 411], [474, 1, 425], [489, 0, 512817], [459, -1, 399],
+             [450, -1, 441], [458, -2, 403], [474, 1, 425], [489, -4, 406],
+             [481, 1, 396], [467, -2, 394], [453, -8, 441], [479, 1, 425],
+             [489, 0, 512817], [481, 2, 438], [481, 1, 396], [467, -3, 394],
+             [466, -1, 439], [475, -1, 435], [458, -1, 403], [460, 1, 411],
+             [474, -5, 412], [453, -9, 441], [479, 1, 425], [489, 0, 512817],
+             [467, -1, 394], [460, 2, 411], [494, 1, 411], [474, -3, 758141],
+             [453, -5, 441]],
             dtype='int32')
         self.spacy_doc.from_array(cols, values)
         self.tempdir = tempfile.mkdtemp(
@@ -238,7 +238,7 @@ class FileIOTestCase(unittest.TestCase):
                 fileio.write_spacy_docs(self.spacy_doc, filename, True)
                 observed = [
                     tok.lemma_
-                    for doc in fileio.read_spacy_docs(self.spacy_pipeline.vocab, filename)
+                    for doc in fileio.read_spacy_docs(self.spacy_lang.vocab, filename)
                     for tok in doc]
                 self.assertEqual(observed, expected)
 

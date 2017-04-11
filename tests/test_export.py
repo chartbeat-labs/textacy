@@ -12,16 +12,15 @@ class ExportTestCase(unittest.TestCase):
 
     def setUp(self):
         text = "I would have lived in peace. But my enemies brought me war."
-        # we're not loading all models for speed; instead, we're updating the doc
-        # with pre-computed part-of-speech tagging and parsing values
-        spacy_pipeline = data.load_spacy('en')
-        self.spacy_doc = spacy_pipeline(text)
+        spacy_lang = data.load_spacy('en_core_web_sm')
+        self.spacy_doc = spacy_lang(text)
         cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
         values = np.array(
-            [[445, 3, 393], [437, 2, 370], [454, 1, 370], [457, 0, 53503],
-             [432, -1, 405], [440, -1, 401], [419, -3, 407], [424, 3, 372],
-             [446, 1, 402], [443, 1, 393], [455, 0, 53503], [445, -1, 93815],
-             [440, -2, 380], [419, -3, 407]], dtype='int32')
+            [[479, 3, 425], [471, 2, 401], [488, 1, 401],
+             [491, 0, 512817], [466, -1, 439], [474, -1, 435],
+             [453, -3, 441], [458, 3, 403], [480, 1, 436],
+             [477, 1, 425], [489, 0, 512817], [479, -1, 412],
+             [474, -2, 412], [453, -3, 441]], dtype='int32')
         self.spacy_doc.from_array(cols, values)
 
     # def test_doc_to_gensim(self):
@@ -41,6 +40,6 @@ class ExportTestCase(unittest.TestCase):
     #         self.assertEqual(observed_gdoc[obs_tok_id][1], expected_gdoc[exp_tok_id][1])
 
     def test_write_conll(self):
-        expected = '# sent_id 1\n1\tI\ti\tPRON\tPRP\t_\t4\tnsubj\t_\t_\n2\twould\twould\tVERB\tMD\t_\t4\taux\t_\t_\n3\thave\thave\tVERB\tVB\t_\t4\taux\t_\t_\n4\tlived\tlive\tVERB\tVBN\t_\t0\troot\t_\t_\n5\tin\tin\tADP\tIN\t_\t4\tprep\t_\t_\n6\tpeace\tpeace\tNOUN\tNN\t_\t5\tpobj\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t4\tpunct\t_\t_\n\n# sent_id 2\n1\tBut\tbut\tCONJ\tCC\t_\t4\tcc\t_\t_\n2\tmy\tmy\tADJ\tPRP$\t_\t3\tposs\t_\t_\n3\tenemies\tenemy\tNOUN\tNNS\t_\t4\tnsubj\t_\t_\n4\tbrought\tbring\tVERB\tVBD\t_\t0\troot\t_\t_\n5\tme\tme\tPRON\tPRP\t_\t4\tdative\t_\t_\n6\twar\twar\tNOUN\tNN\t_\t4\tdobj\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t4\tpunct\t_\tSpaceAfter=No\n'
+        expected = '# sent_id 1\n1\tI\t-PRON-\tPRON\tPRP\t_\t4\tnsubj\t_\t_\n2\twould\twould\tVERB\tMD\t_\t4\taux\t_\t_\n3\thave\thave\tVERB\tVB\t_\t4\taux\t_\t_\n4\tlived\tlive\tVERB\tVBN\t_\t0\troot\t_\t_\n5\tin\tin\tADP\tIN\t_\t4\tprep\t_\t_\n6\tpeace\tpeace\tNOUN\tNN\t_\t5\tpobj\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t4\tpunct\t_\t_\n\n# sent_id 2\n1\tBut\tbut\tCCONJ\tCC\t_\t4\tcc\t_\t_\n2\tmy\t-PRON-\tADJ\tPRP$\t_\t3\tposs\t_\t_\n3\tenemies\tenemy\tNOUN\tNNS\t_\t4\tnsubj\t_\t_\n4\tbrought\tbring\tVERB\tVBD\t_\t0\troot\t_\t_\n5\tme\t-PRON-\tPRON\tPRP\t_\t4\tdobj\t_\t_\n6\twar\twar\tNOUN\tNN\t_\t4\tdobj\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t4\tpunct\t_\tSpaceAfter=No\n'
         observed = export.doc_to_conll(self.spacy_doc)
         self.assertEqual(observed, expected)

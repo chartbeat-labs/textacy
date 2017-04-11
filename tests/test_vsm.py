@@ -20,7 +20,7 @@ class VSMTestCase(unittest.TestCase):
                  "It waited patiently about until Mary did appear.",
                  "Why does the lamb love Mary so? The eager children cry.",
                  "Mary loves the lamb, you know, the teacher did reply."]
-        corpus = Corpus('en', texts=texts)
+        corpus = Corpus('en_core_web_sm', texts=texts)
         term_lists = [doc.to_terms_list(ngrams=1, named_entities=False, as_strings=True)
                       for doc in corpus]
         self.doc_term_matrix, self.id_to_term = vsm.doc_term_matrix(
@@ -41,10 +41,10 @@ class VSMTestCase(unittest.TestCase):
     def test_get_term_freqs_normalized(self):
         term_freqs = vsm.get_term_freqs(self.doc_term_matrix, normalized=True)
         self.assertEqual(len(term_freqs), self.doc_term_matrix.shape[1])
-        self.assertAlmostEqual(term_freqs.max(), 0.19230, places=4)
-        self.assertAlmostEqual(term_freqs.min(), 0.03846, places=4)
-        self.assertAlmostEqual(term_freqs[self.idx_lamb], 0.1923, places=4)
-        self.assertAlmostEqual(term_freqs[self.idx_child], 0.07692, places=4)
+        self.assertAlmostEqual(term_freqs.max(), 0.18518518518518517, places=4)
+        self.assertAlmostEqual(term_freqs.min(), 0.037037037037037035, places=4)
+        self.assertAlmostEqual(term_freqs[self.idx_lamb], 0.18518518518518517, places=4)
+        self.assertAlmostEqual(term_freqs[self.idx_child], 0.07407407407407407, places=4)
 
     def test_get_term_freqs_exception(self):
         self.assertRaises(

@@ -9,7 +9,7 @@ class SpacyUtilsTestCase(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        spacy_pipeline = data.load_spacy('en')
+        spacy_pipeline = data.load_spacy('en_core_web_sm')
         text = """The unit tests aren't going well.
                   I love Python, but I don't love some of Guido's decisions.
                   No computer programmers were harmed in the making of this package.
@@ -39,8 +39,8 @@ class SpacyUtilsTestCase(unittest.TestCase):
 
     def test_normalize_str(self):
         normalized_strs = [
-            'the', 'unit', 'test', 'be', 'not', 'go', 'well', '.', 'i', 'love',
-            'Python', ',', 'but', 'i', 'do', 'not', 'love', 'some', 'of', 'Guido',
+            'the', 'unit', 'test', 'be', 'not', 'go', 'well', '.', '-PRON-', 'love',
+            'Python', ',', 'but', '-PRON-', 'do', 'not', 'love', 'some', 'of', 'Guido',
             "'s", 'decision', '.', 'no', 'computer', 'programmer', 'be', 'harm',
             'in', 'the', 'making', 'of', 'this', 'package', '.', 'thank', 'God',
             'for', 'Stack', 'Overflow', '.']
