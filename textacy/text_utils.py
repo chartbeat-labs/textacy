@@ -6,15 +6,20 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import re
 
-from cld2 import detect as cld2_detect
+logger = logging.getLogger(__name__)
+
+try:
+    from cld2 import detect as cld2_detect
+except ImportError:
+    logger.warning("cld2-cffi is not installed, language detection won\'t work;"
+                   "install it \
+                   individually, or with textacy via `pip install textacy[language_detect]`")
 
 from textacy.compat import is_python2, unicode_to_bytes
 from textacy.constants import (ACRONYM_REGEX, DANGLING_PARENS_TERM_RE,
                                LEAD_HYPHEN_TERM_RE, LEAD_TAIL_CRUFT_TERM_RE,
                                NEG_DIGIT_TERM_RE, NONBREAKING_SPACE_REGEX,
                                WEIRD_HYPHEN_SPACE_TERM_RE, WEIRD_APOSTR_SPACE_TERM_RE)
-
-logger = logging.getLogger(__name__)
 
 
 def is_acronym(token, exclude=None):
@@ -71,6 +76,11 @@ def detect_language(text):
     Returns:
         str
     """
+    try:
+        cld2_detect
+    except NameError:
+        return None
+
     if is_python2:
         is_reliable, _, best_guesses = cld2_detect(unicode_to_bytes(text), bestEffort=True)
     else:

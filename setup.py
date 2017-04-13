@@ -8,7 +8,6 @@ from setuptools import setup, find_packages
 
 INSTALL_REQUIRES = [
     'cachetools>=2.0.0',
-    'cld2-cffi>=0.1.4',
     'cytoolz>=0.8.0',
     'ftfy>=4.2.0,<5.0.0',
     'ijson>=2.3',
@@ -25,6 +24,7 @@ INSTALL_REQUIRES = [
     ]
 EXTRAS_REQUIRE = {
     'viz': ['matplotlib>=1.5.0'],
+    'language_detect': ['cld2-cffi>=0.1.4'],
     }
 
 # as advised by https://hynek.me/articles/conditional-python-dependencies/
