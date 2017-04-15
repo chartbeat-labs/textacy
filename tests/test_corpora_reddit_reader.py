@@ -5,7 +5,7 @@ import shutil
 import tempfile
 import unittest
 
-from textacy.compat import PY2, unicode_
+from textacy.compat import is_python2, unicode_
 from textacy.corpora import RedditReader
 from textacy.fileio import write_json_lines
 
@@ -23,7 +23,7 @@ class RedditReaderTestCase(unittest.TestCase):
         self.tempdir = tempfile.mkdtemp(
             prefix='test_corpora', dir=os.path.dirname(os.path.abspath(__file__)))
         reddit_fname = os.path.join(self.tempdir, 'RC_test.bz2')
-        if PY2 is False:
+        if is_python2 is False:
             write_json_lines(REDDIT_COMMENTS, reddit_fname, mode='wt',
                              auto_make_dirs=True)
         else:

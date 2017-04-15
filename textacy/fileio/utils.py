@@ -70,13 +70,13 @@ def open_sesame(filepath, mode='rt',
         elif ext == '.bz2':
             f = bz2.BZ2File(filepath, mode=mode_)
         elif ext == '.xz':
-            if compat.PY2 is True:
+            if compat.is_python2 is True:
                 msg = "lzma compression isn't enabled for Python 2; try gzip or bz2"
                 raise ValueError(msg)
             f = lzma.LZMAFile(filepath, mode=mode_)
         # handle reading/writing compressed files in text mode
         if 't' in mode:
-            if compat.PY2 is True:
+            if compat.is_python2 is True:
                 msg = 'Python 2 can\'t read/write compressed files in "{}" mode'.format(mode)
                 raise ValueError(msg)
             else:

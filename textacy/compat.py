@@ -1,8 +1,11 @@
 import sys
 
-PY2 = int(sys.version[0]) == 2
+is_python2 = int(sys.version[0]) == 2
+is_windows = sys.platform.startswith('win')
+is_linux = sys.platform.startswith('linux')
+is_osx = sys.platform == 'darwin'
 
-if PY2:
+if is_python2:
     from backports import csv
     from itertools import izip as zip_
 

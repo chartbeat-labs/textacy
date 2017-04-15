@@ -22,7 +22,7 @@ import logging
 import os
 import re
 
-from textacy.compat import PY2, string_types
+from textacy.compat import is_python2, string_types
 from textacy.fileio import read_json_lines
 from textacy.preprocess import normalize_whitespace
 
@@ -125,7 +125,7 @@ class RedditReader(object):
                 score_range = (score_range[0], MAX_INT)
 
         n = 0
-        mode = 'rb' if PY2 else 'rt'  # Python 2 can't open json in text mode
+        mode = 'rb' if is_python2 else 'rt'  # Python 2 can't open json in text mode
         for path in self.paths:
             for line in read_json_lines(path, mode=mode):
 

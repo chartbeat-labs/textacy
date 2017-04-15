@@ -17,7 +17,7 @@ from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
 
 from textacy import data, fileio
-from textacy.compat import PY2, unicode_, zip_
+from textacy.compat import is_python2, unicode_, zip_
 from textacy.doc import Doc
 
 
@@ -210,7 +210,7 @@ class Corpus(object):
                                    else '.bz2' if compression == 'bz2'
                                    else '.xz' if compression == 'lzma'
                                    else '')
-        meta_mode = 'wt' if PY2 is False or compression is None else 'wb'
+        meta_mode = 'wt' if is_python2 is False or compression is None else 'wb'
         package_info = {'textacy_lang': self.lang, 'spacy_version': spacy.about.__version__}
         fileio.write_json(package_info, info_fname)
         fileio.write_json_lines(
@@ -251,7 +251,7 @@ class Corpus(object):
                                    else '.bz2' if compression == 'bz2'
                                    else '.xz' if compression == 'lzma'
                                    else '')
-        meta_mode = 'rt' if PY2 is False or compression is None else 'rb'
+        meta_mode = 'rt' if is_python2 is False or compression is None else 'rb'
         package_info = list(fileio.read_json(info_fname))[0]
         lang = package_info['textacy_lang']
         spacy_version = package_info['spacy_version']

@@ -8,7 +8,7 @@ import re
 
 from cld2 import detect as cld2_detect
 
-from textacy.compat import PY2, unicode_to_bytes
+from textacy.compat import is_python2, unicode_to_bytes
 from textacy.constants import (ACRONYM_REGEX, DANGLING_PARENS_TERM_RE,
                                LEAD_HYPHEN_TERM_RE, LEAD_TAIL_CRUFT_TERM_RE,
                                NEG_DIGIT_TERM_RE, NONBREAKING_SPACE_REGEX,
@@ -71,7 +71,7 @@ def detect_language(text):
     Returns:
         str
     """
-    if PY2:
+    if is_python2:
         is_reliable, _, best_guesses = cld2_detect(unicode_to_bytes(text), bestEffort=True)
     else:
         is_reliable, _, best_guesses = cld2_detect(text, bestEffort=True)

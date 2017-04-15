@@ -11,7 +11,7 @@ from scipy import sparse as sp
 from spacy import attrs
 
 from textacy import data, fileio
-from textacy.compat import PY2, unicode_to_bytes
+from textacy.compat import is_python2, unicode_to_bytes
 
 
 class FileIOTestCase(unittest.TestCase):
@@ -42,7 +42,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.txt', '.gz', '.bz2', '.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_file_bytes' + ext)
-            if PY2 is True and ext == '.xz':
+            if is_python2 is True and ext == '.xz':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wb', 'utf-8', True)
@@ -57,7 +57,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.txt', '.gz', '.bz2', '.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_file_unicode' + ext)
-            if PY2 is True and ext != '.txt':
+            if is_python2 is True and ext != '.txt':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wt', 'utf-8', True)
@@ -72,7 +72,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.txt', '.gz', '.bz2', '.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_file_lines_bytes' + ext)
-            if PY2 is True and ext == '.xz':
+            if is_python2 is True and ext == '.xz':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wb', 'utf-8', True)
@@ -88,7 +88,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.txt', '.gz', '.bz2', '.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_file_lines_unicode' + ext)
-            if PY2 is True and ext != '.txt':
+            if is_python2 is True and ext != '.txt':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wt', None, True)
@@ -105,7 +105,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.json', '.json.gz', '.json.bz2', '.json.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_json_bytes' + ext)
-            if PY2 is True:
+            if is_python2 is True:
                 if ext == '.json.xz':
                     self.assertRaises(
                         ValueError, fileio.open_sesame,
@@ -127,7 +127,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.json', '.json.gz', '.json.bz2', '.json.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_json_unicode' + ext)
-            if PY2 is True and ext != '.json':
+            if is_python2 is True and ext != '.json':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wt', None, True)
@@ -154,7 +154,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.json', '.json.gz', '.json.bz2', '.json.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_json_lines_bytes' + ext)
-            if PY2 is True:
+            if is_python2 is True:
                 if ext == '.json.xz':
                     self.assertRaises(
                         ValueError, fileio.open_sesame,
@@ -175,7 +175,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.json', '.json.gz', '.json.bz2', '.json.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_json_lines_unicode' + ext)
-            if PY2 is True and ext != '.json':
+            if is_python2 is True and ext != '.json':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wt', None, True)
@@ -191,7 +191,7 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.csv', '.csv.gz', '.csv.bz2', '.csv.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_csv' + ext)
-            if PY2 is True and ext != '.csv':
+            if is_python2 is True and ext != '.csv':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wt', None, True)
@@ -226,11 +226,11 @@ class FileIOTestCase(unittest.TestCase):
         for ext in ('.bin', '.bin.gz', '.bin.bz2', '.bin.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_spacy_docs' + ext)
-            if PY2 is True and ext == '.bin.xz':
+            if is_python2 is True and ext == '.bin.xz':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wb', None, True)
-            elif PY2 is True and ext == '.bin.gz':  # no idea why this is the case
+            elif is_python2 is True and ext == '.bin.gz':  # no idea why this is the case
                 self.assertRaises(
                     TypeError, fileio.write_spacy_docs,
                     self.spacy_doc, filename, True)

@@ -32,10 +32,10 @@ import os
 import requests
 
 from textacy import __resources_dir__
-from textacy.compat import PY2, string_types
+from textacy.compat import is_python2, string_types
 from textacy.fileio import make_dirs, read_json_lines
 
-if PY2:
+if is_python2:
     URL = 'https://s3.amazonaws.com/chartbeat-labs/capitol-words-py2.json.gz'
 else:
     URL = 'https://s3.amazonaws.com/chartbeat-labs/capitol-words-py3.json.gz'
@@ -165,7 +165,7 @@ class CapitolWords(object):
                 date_range = (date_range[0], MAX_DATE)
 
         n = 0
-        mode = 'rb' if PY2 else 'rt'
+        mode = 'rb' if is_python2 else 'rt'
         for line in read_json_lines(self.filepath, mode=mode):
             if speaker_name and line['speaker_name'] not in speaker_name:
                 continue

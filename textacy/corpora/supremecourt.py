@@ -54,10 +54,10 @@ import os
 import requests
 
 from textacy import __resources_dir__
-from textacy.compat import PY2, string_types
+from textacy.compat import is_python2, string_types
 from textacy.fileio import make_dirs, read_json_lines
 
-if PY2:
+if is_python2:
     URL = 'https://s3.amazonaws.com/chartbeat-labs/supreme-court-py2.json.gz'
 else:
     URL = 'https://s3.amazonaws.com/chartbeat-labs/supreme-court-py3.json.gz'
@@ -591,7 +591,7 @@ class SupremeCourt(object):
                 date_range = (date_range[0], MAX_DATE)
 
         n = 0
-        mode = 'rb' if PY2 else 'rt'
+        mode = 'rb' if is_python2 else 'rt'
         for line in read_json_lines(self.filepath, mode=mode):
             if opinion_author and line['maj_opinion_author'] not in opinion_author:
                 continue

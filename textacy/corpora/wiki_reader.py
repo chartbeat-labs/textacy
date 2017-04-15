@@ -30,7 +30,7 @@ from xml.etree.cElementTree import iterparse
 
 import ftfy
 
-from textacy.compat import PY2, bytes_to_unicode, unicode_
+from textacy.compat import is_python2, bytes_to_unicode, unicode_
 from textacy.fileio import open_sesame
 
 re_nowiki = re.compile(r'<nowiki>(.*?)</nowiki>', flags=re.UNICODE)  # nowiki tags: take contents verbatim
@@ -122,7 +122,7 @@ class WikiReader(object):
         Yields:
             Tuple[str, str, str]: page id, title, content with wikimedia markup
         """
-        if PY2 is False:
+        if is_python2 is False:
             events = ('end',)
             f = open_sesame(self.path, mode='rt')
         else:  # Python 2 can't open bzip in text mode :(
