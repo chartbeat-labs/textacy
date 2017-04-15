@@ -4,7 +4,7 @@ PY2 = int(sys.version[0]) == 2
 
 if PY2:
     from backports import csv
-    from itertools import izip as zip
+    from itertools import izip as zip_
 
     bytes_ = str
     unicode_ = unicode
@@ -19,7 +19,7 @@ if PY2:
 else:
     import csv
 
-    zip = zip
+    zip_ = zip
     bytes_ = bytes
     unicode_ = str
     string_types = (bytes, str)

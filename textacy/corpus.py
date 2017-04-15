@@ -17,7 +17,7 @@ from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
 
 from textacy import data, fileio
-from textacy.compat import PY2, unicode_, zip
+from textacy.compat import PY2, unicode_, zip_
 from textacy.doc import Doc
 
 
@@ -142,7 +142,7 @@ class Corpus(object):
             self.add_texts(texts, metadatas=metadatas)
         elif docs:
             if metadatas:
-                for doc, metadata in zip(docs, metadatas):
+                for doc, metadata in zip_(docs, metadatas):
                     self.add_doc(doc, metadata=metadata)
             else:
                 for doc in docs:
@@ -266,7 +266,7 @@ class Corpus(object):
         corpus = Corpus(lang)
         metadata_stream = fileio.read_json_lines(meta_fname, mode=meta_mode)
         spacy_docs = fileio.read_spacy_docs(corpus.spacy_vocab, docs_fname)
-        for spacy_doc, metadata in zip(spacy_docs, metadata_stream):
+        for spacy_doc, metadata in zip_(spacy_docs, metadata_stream):
             corpus.add_doc(
                 Doc(spacy_doc, lang=corpus.spacy_lang, metadata=metadata))
         return corpus
@@ -308,7 +308,7 @@ class Corpus(object):
         spacy_docs = self.spacy_lang.pipe(
             texts, n_threads=n_threads, batch_size=batch_size)
         if metadatas:
-            for spacy_doc, metadata in zip(spacy_docs, metadatas):
+            for spacy_doc, metadata in zip_(spacy_docs, metadatas):
                 self._add_textacy_doc(
                     Doc(spacy_doc, lang=self.spacy_lang, metadata=metadata))
         else:
