@@ -119,9 +119,9 @@ class TextStatsTestCase(unittest.TestCase):
         self.assertIsInstance(text_stats.readability_stats(self.doc), dict)
 
     def test_readability_stats_lang_function(self):
-        self.doc.lang = 'es'
+        tmp_doc = Doc('Buenos días, amigo mío!', lang='es')
         self.assertRaises(
-            NotImplementedError, text_stats.readability_stats, self.doc)
+            NotImplementedError, text_stats.readability_stats, tmp_doc)
 
     def test_wiener_sachtextformel_variant1(self):
         self.assertEqual(

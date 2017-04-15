@@ -110,7 +110,7 @@ class Doc(object):
                 self.lang = lang.lang
                 spacy_lang = lang
             elif isinstance(lang, unicode_):
-                self.lang = lang
+                self.lang = lang[:2]
                 spacy_lang = data.load_spacy(self.lang)
             elif lang is None:
                 self.lang = text_utils.detect_language(content)
