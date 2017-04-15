@@ -32,3 +32,21 @@ else:
 
     def bytes_to_unicode(b, encoding='utf8', errors='strict'):
         return b.decode(encoding=encoding, errors=errors)
+
+
+def get_config():
+    """Helper function to get relevant config info, especially when debugging."""
+    from spacy.about import __version__ as spacy_version
+    from spacy.util import get_data_path
+    from textacy import __version__ as textacy_version
+
+    return {
+        'python': sys.version,
+        'platform': sys.platform,
+        'textacy': textacy_version,
+        'spacy': spacy_version,
+        'spacy_models': [
+            d.parts[-1] for d in get_data_path().iterdir()
+            if (d.is_dir() or d.is_symlink()) and
+            d.parts[-1] not in {'__cache__', '__pycache__'}]
+        }

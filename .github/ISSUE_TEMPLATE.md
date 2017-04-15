@@ -15,16 +15,17 @@
 ## Steps to Reproduce (for bugs)
 <!--- Provide a link to a live example, or an unambiguous set of steps to -->
 <!--- reproduce this bug. Include code to reproduce, if relevant -->
-1. 
-1. 
-1. 
+1.
+1.
+1.
 
 ## Context
 <!--- How has this issue affected you? What are you trying to accomplish? -->
 <!--- Providing context helps us come up with a solution that is most useful in the real world -->
 
 ## Your Environment
-<!--- Include as many relevant details about the environment you experienced the bug in -->
+<!--- Include relevant details about the environment in which you experienced the bug -->
+<!-- NOTE: For textacy v0.3.4+, just copy-paste the output of `textacy.compat.get_config()`-->
 * `textacy` and `spacy` versions:
 * Python version:
 * Operating system and version:
