@@ -15,6 +15,7 @@ import numpy as np
 import spacy.about
 from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
+from spacy.util import get_lang_class
 
 from textacy import data, fileio
 from textacy.compat import is_python2, unicode_, zip_
@@ -85,11 +86,17 @@ class Corpus(object):
 
     Args:
         lang (str or ``spacy.Language``): Language of content for all docs in
-            corpus as a 2-letter code, used to instantiate the corresponding
-            ``spacy.Language`` with all models loaded by default, or an already-
-            instantiated ``spacy.Language`` which may or may not have all models
-            loaded, depending on the user's needs. Currently, spaCy only handles
-            English ('en') and German ('de') text.
+            corpus. Pass a standard 2-letter language code (e.g. "en") or the name
+            of a spacy model for the desired language (e.g. "en_core_web_md")
+            or an already-instantiated ``spacy.Language`` object. If a str, the
+            value is used to instantiate the corresponding ``spacy.Language``
+            with all models loaded by default, and the appropriate 2-letter lang
+            code is assigned to :attr:`Corpus.lang`.
+
+            **Note:** The ``spacy.Language`` object parses all documents contents
+            and sets the :attr:`spacy_vocab` and :attr:`spacy_stringstore`
+            attributes. See https://spacy.io/docs/usage/models#available for
+            available spacy models.
         texts (Iterable[str]): Stream of documents as (unicode) text, to be
             processed by spaCy and added to the corpus as :class:`textacy.Doc <textacy.Doc>`s.
         docs (Iterable[``textacy.Doc``] or Iterable[``spacy.Doc``]): Stream of
@@ -119,8 +126,8 @@ class Corpus(object):
     """
     def __init__(self, lang, texts=None, docs=None, metadatas=None):
         if isinstance(lang, unicode_):
-            self.lang = lang
-            self.spacy_lang = data.load_spacy(self.lang)
+            self.lang = get_lang_class(lang).lang
+            self.spacy_lang = data.load_spacy(lang)
         elif isinstance(lang, SpacyLang):
             self.lang = lang.lang
             self.spacy_lang = lang

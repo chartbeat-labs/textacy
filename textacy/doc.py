@@ -16,6 +16,7 @@ from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
+from spacy.util import get_lang_class
 
 import textacy
 from textacy.compat import unicode_
@@ -84,15 +85,18 @@ class Doc(object):
         metadata (dict): Dictionary of relevant information about content. This
             can be helpful when identifying and filtering documents, as well as
             when engineering features for model inputs.
-        lang (str or ``spacy.Language``): Language of document content. If this
-            is known, pass in its standard 2-letter language code or, if *not*
-            known, leave as None (default) and let textacy handle everything.
-            A language code is then used to load a ``spacy.Language`` object,
-            unless an already-instantiated such object is passed in here.
-            **Note:** Currently, spaCy only works with English ('en') and German
-            ('de') languages! The ``spacy.Language`` object parses ``content``
+        lang (str or ``spacy.Language``): Language of document content. If
+            known, pass a standard 2-letter language code (e.g. "en") or the
+            name of a spacy model for the desired language (e.g. "en_core_web_md")
+            or an already-instantiated ``spacy.Language`` object. If a str,
+            the value is used to instantiate the corresponding ``spacy.Language``
+            with all models loaded by default, and the appropriate 2-letter
+            lang code is assigned to :attr:`Doc.lang`.
+
+            **Note:** The ``spacy.Language`` object parses ``content``
             (if str) and sets the :attr:`spacy_vocab` and :attr:`spacy_stringstore`
-            attributes.
+            attributes. See https://spacy.io/docs/usage/models#available for
+            available spacy models.
 
     Attributes:
         lang (str): 2-letter code for language of ``Doc``.
@@ -110,8 +114,8 @@ class Doc(object):
                 self.lang = lang.lang
                 spacy_lang = lang
             elif isinstance(lang, unicode_):
-                self.lang = lang[:2]
-                spacy_lang = data.load_spacy(self.lang)
+                self.lang = get_lang_class(lang).lang
+                spacy_lang = data.load_spacy(lang)
             elif lang is None:
                 self.lang = text_utils.detect_language(content)
                 spacy_lang = data.load_spacy(self.lang)
