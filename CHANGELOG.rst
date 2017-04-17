@@ -1,6 +1,37 @@
 Changelog
 =========
 
+0.3.4 (2017-04-17)
+------------------
+
+Changes:
+
+- Improved and expanded calculation of basic counts and readability statistics in ``text_stats`` module.
+    - Added a ``TextStats()`` class for more convenient, granular access to individual values. See usage docs for more info. When calculating, say, just one readability statistic, performance with this class should be slightly better; if calculating _all_ statistics, performance is worse owing to unavoidable, added overhead in Python for variable lookups. The legacy function ``text_stats.readability_stats()`` still exists and behaves as before, but a deprecation warning is displayed.
+    - Added functions for calculating Wiener Sachtextformel (PR #77), LIX, and GULPease readability statistics.
+    - Added number of long words and number of monosyllabic words to basic counts.
+- Clarified the need for having spacy models installed for most use cases of textacy, in addition to just the spacy package.
+    - README updated with comments on this, including links to more extensive spacy documentation. (Issues #66 and #68)
+    - Added a function, ``compat.get_config()`` that includes information about which (if any) spacy models are installed.
+    - Recent changes to spacy, including a warning message, will also make model problems more apaprent.
+- Added an ``ngrams`` parameter to ``keyterms.sgrank()``, allowing for more flexibility in specifying valid keyterm candidates for the algorithm. (PR #75)
+- Dropped dependency on ``fuzzywuzzy`` package, replacing usage of ``fuzz.token_sort_ratio()`` with a textacy equivalent in order to avoid license incompatibilities. As a bonus, the new code seems to perform faster! (Issue #62)
+    - Note: Outputs are now floats in [0.0, 1.0], consistent with other similarity functions, whereas before outputs were ints in [0, 100]. This has implications for ``match_threshold`` values passed to ``similarity.jaccard()``; a warning is displayed and the conversion is performed automatically, for now.
+- A MANIFEST.in file was added to include docs, tests, and distribution files in the source distribution. This is just good practice. (PR #65)
+
+Bugfixes:
+
+- Known acronym-definition pairs are now properly handled in ``extract.acronyms_and_definitions()`` (Issue #61)
+- WikiReader no longer crashes on null page element content while parsing (PR #64)
+- Fixed a rare but perfectly legal edge case exception in ``keyterms.sgrank()``, and added a window width sanity check. (Issue #72)
+- Fixed assignment of 2-letter language codes to ``Doc`` and ``Corpus`` objects when the lang parameter is specified as a full spacy model name.
+- Replaced several leftover print statements with proper logging functions.
+
+Contributors:
+
+Big thanks to @oroszgy, @rolando, @covuworie, and @RolandColored for the pull requests!
+
+
 0.3.3 (2017-02-10)
 ------------------
 
