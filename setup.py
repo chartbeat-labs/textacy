@@ -24,8 +24,9 @@ INSTALL_REQUIRES = [
     ]
 EXTRAS_REQUIRE = {
     'viz': ['matplotlib>=1.5.0'],
-    'language_detect': ['cld2-cffi>=0.1.4'],
+    'lang': ['cld2-cffi>=0.1.4'],
     }
+EXTRAS_REQUIRE['all'] = list({pkg for pkgs in EXTRAS_REQUIRE.values() for pkg in pkgs})
 
 # as advised by https://hynek.me/articles/conditional-python-dependencies/
 if int(setuptools.__version__.split('.')[0]) < 18:

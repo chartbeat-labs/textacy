@@ -30,11 +30,11 @@ The simple way to install ``textacy`` is
 
     $ pip install textacy
 
-There are a couple optional dependencies, most notably ``matplotlib``, which is used for visualizations. If you need that functionality, be sure you have ``matplotlib`` installed already, or install it along with all of ``textacy`` 's other dependencies via
+**Note:** Some dependencies have been made optional, because they can be difficult to install and/or are only needed in certain uses cases. To use viz functions, you'll need ``matplotlib`` installed; you can do so via ``pip install textacy[viz]``. For automatic language detection, you'll need ``cld2-cffi`` installed; do ``pip install textacy[lang]``. To install all optional dependencies:
 
 .. code-block:: console
 
-    $ pip install textacy[viz]
+    $ pip install textacy[all]
 
 If ``pip`` isn't an option, you can download and unzip the source ``tar.gz`` from  PyPi_, then
 
