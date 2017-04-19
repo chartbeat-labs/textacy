@@ -2,11 +2,14 @@ from __future__ import absolute_import
 
 import logging
 import os
-import pkgutil
+# import pkgutil
 
 __version__ = '0.3.4'
+# __resources_dir__ = os.path.join(
+#     os.path.dirname(pkgutil.get_loader('textacy').get_filename()),
+#     'resources')
 __resources_dir__ = os.path.join(
-    os.path.dirname(pkgutil.get_loader('textacy').get_filename()),
+    os.path.dirname(os.path.abspath(__file__)),
     'resources')
 
 # subpackages
