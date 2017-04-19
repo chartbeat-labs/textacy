@@ -61,9 +61,6 @@ Corpora
 .. automodule:: textacy.corpora.capitolwords
     :members:
 
-.. automodule:: textacy.corpora.bernie_and_hillary
-    :members:
-
 .. automodule:: textacy.corpora.wiki_reader
     :members:
 

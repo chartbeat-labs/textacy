@@ -398,6 +398,7 @@ class Doc(object):
                 - include_types (str or Set[str])
                 - exclude_types (str or Set[str]
                 - drop_determiners (bool)
+                
                 see :func:`extract.words <textacy.extract.words>`,
                 :func:`extract.ngrams <textacy.extract.ngrams>`,
                 and :func:`extract.named_entities <textacy.extract.named_entities>`

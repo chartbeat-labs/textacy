@@ -98,7 +98,7 @@ class Corpus(object):
             attributes. See https://spacy.io/docs/usage/models#available for
             available spacy models.
         texts (Iterable[str]): Stream of documents as (unicode) text, to be
-            processed by spaCy and added to the corpus as :class:`textacy.Doc <textacy.Doc>`s.
+            processed by spaCy and added to the corpus as :class:`textacy.Doc <textacy.Doc>` s.
         docs (Iterable[``textacy.Doc``] or Iterable[``spacy.Doc``]): Stream of
             documents already-processed by spaCy alone or via textacy.
         metadatas (Iterable[dict]): Stream of dictionaries of relevant doc
@@ -493,7 +493,7 @@ class Corpus(object):
         """
         Map the set of unique words in ``Corpus`` to their counts as absolute,
         relative, or binary frequencies of occurence. This is akin to
-        :func:``Doc.to_bag_of_words() <textacy.doc.Doc.to_bag_of_words>.
+        :func:`Doc.to_bag_of_words() <textacy.doc.Doc.to_bag_of_words>`.
 
         Args:
             normalize (str): if 'lemma', lemmatize words before counting; if

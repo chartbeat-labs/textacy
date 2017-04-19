@@ -15,9 +15,9 @@ When parsed, article pages have the following fields:
     - ``categories``: a list of Wikipedia categories to which this page belongs
     - ``sections``: a list of article content and associated metadata split up
       according to the section hierarchy of the page; each section contains:
-        - ``text``: text content of the section
-        - ``idx``: ordered position on the page, from top (0) to bottom
-        - ``level``: level (or depth) in the sections hierarchy
+      - ``text``: text content of the section
+      - ``idx``: ordered position on the page, from top (0) to bottom
+      - ``level``: level (or depth) in the sections hierarchy
 
 DB dumps are downloadable from https://meta.wikimedia.org/wiki/Data_dumps.
 """
