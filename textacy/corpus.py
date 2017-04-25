@@ -8,6 +8,7 @@ from collections import Counter
 import copy
 import logging
 from math import log
+import multiprocessing
 import os
 import warnings
 
@@ -20,6 +21,8 @@ from spacy.util import get_lang_class
 from textacy import data, fileio
 from textacy.compat import is_python2, unicode_, zip_
 from textacy.doc import Doc
+
+_DEFAULT_N_THREADS = max(multiprocessing.cpu_count() - 1, 1)
 
 
 class Corpus(object):
@@ -291,7 +294,8 @@ class Corpus(object):
         if self.spacy_lang.parser:
             self.n_sents += doc.n_sents
 
-    def add_texts(self, texts, metadatas=None, n_threads=4, batch_size=1000):
+    def add_texts(self, texts, metadatas=None,
+                  n_threads=_DEFAULT_N_THREADS, batch_size=1000):
         """
         Process a stream of texts (and a corresponding stream of metadata dicts,
         optionally) in parallel with spaCy; add as :class:`textacy.Doc <textacy.doc.Doc>` s
