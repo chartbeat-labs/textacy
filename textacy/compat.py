@@ -12,6 +12,7 @@ if is_python2:
     bytes_ = str
     unicode_ = unicode
     string_types = (str, unicode)
+    chr_ = unichr
 
     def unicode_to_bytes(s, encoding='utf8', errors='strict'):
         return s.encode(encoding=encoding, errors=errors)
@@ -26,6 +27,7 @@ else:
     bytes_ = bytes
     unicode_ = str
     string_types = (bytes, str)
+    chr_ = chr
 
     def unicode_to_bytes(s, encoding='utf8', errors='strict'):
         return s.encode(encoding=encoding, errors=errors)

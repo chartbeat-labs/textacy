@@ -43,6 +43,11 @@ class PreprocessTestCase(unittest.TestCase):
         proc_text = "I cant No I wont Its a matter of principle of  whats the word  conscience"
         self.assertEqual(preprocess.remove_punct(text), proc_text)
 
+    def test_remove_punct_marks(self):
+        text = "I can't. No, I won't! It's a matter of \"principle\"; of -- what's the word? -- conscience."
+        proc_text = "I cant. No, I wont! Its a matter of principle; of  whats the word?  conscience."
+        self.assertEqual(preprocess.remove_punct(text, marks="-'\""), proc_text)
+
     def test_replace_currency_symbols(self):
         text = '$1.00 equals £0.67 equals €0.91.'
         proc_text1 = 'USD1.00 equals GBP0.67 equals EUR0.91.'

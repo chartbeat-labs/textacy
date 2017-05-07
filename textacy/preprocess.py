@@ -13,9 +13,12 @@ import unicodedata
 from ftfy import fix_text
 from unidecode import unidecode
 
+from textacy.compat import unicode_
 from textacy.constants import (CURRENCIES, URL_REGEX, SHORT_URL_REGEX, EMAIL_REGEX,
-                               PHONE_REGEX, NUMBERS_REGEX, PUNCT_REGEX, CURRENCY_REGEX,
-                               LINEBREAK_REGEX, NONBREAKING_SPACE_REGEX)
+                               PHONE_REGEX, NUMBERS_REGEX, CURRENCY_REGEX,
+                               LINEBREAK_REGEX, NONBREAKING_SPACE_REGEX,
+                               PUNCT_TRANSLATE_UNICODE,
+                               PUNCT_TRANSLATE_BYTES)
 
 
 def fix_bad_unicode(text, normalization='NFC'):
@@ -101,11 +104,6 @@ def replace_numbers(text, replace_with='*NUMBER*'):
     return NUMBERS_REGEX.sub(replace_with, text)
 
 
-def remove_punct(text):
-    """Remove all punctuation from ``text`` str (replace punct marks with empty string)."""
-    return PUNCT_REGEX.sub('', text)
-
-
 def replace_currency_symbols(text, replace_with=None):
     """
     Replace all currency symbols in ``text`` str with string specified by ``replace_with`` str.
@@ -126,6 +124,33 @@ def replace_currency_symbols(text, replace_with=None):
         return text
     else:
         return CURRENCY_REGEX.sub(replace_with, text)
+
+
+def remove_punct(text, marks=None):
+    """
+    Remove punctuation from ``text`` by replacing all instances of ``marks``
+    with an empty string.
+
+    Args:
+        text (str): raw text
+        marks (str): If specified, remove only the characters in this string,
+            e.g. ``marks=',;:'`` removes commas, semi-colons, and colons.
+            Otherwise, all punctuation marks are removed.
+
+    Returns:
+        str
+
+    .. note:: When ``marks=None``, Python's built-in :meth:`str.translate()` is
+        used to remove punctuation; otherwise,, a regular expression is used
+        instead. The former's performance is about 5-10x faster.
+    """
+    if marks:
+        return re.sub('[{}]+'.format(re.escape(marks)), '', text, flags=re.UNICODE)
+    else:
+        if isinstance(text, unicode_):
+            return text.translate(PUNCT_TRANSLATE_UNICODE)
+        else:
+            return text.translate(None, PUNCT_TRANSLATE_BYTES)
 
 
 def remove_accents(text, method='unicode'):
