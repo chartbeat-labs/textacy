@@ -157,6 +157,9 @@ class TextStats(object):
 
     @property
     def readability_stats(self):
+        if self.n_words == 0:
+            logging.warning("readability stats can't be computed because doc has 0 words")
+            return None
         return {'flesch_kincaid_grade_level': self.flesch_kincaid_grade_level,
                 'flesch_readability_ease': self.flesch_readability_ease,
                 'smog_index': self.smog_index,
@@ -199,6 +202,9 @@ def readability_stats(doc):
 
     words = list(extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False))
     n_words = len(words)
+    if n_words == 0:
+        logging.warning("readability stats can't be computed because doc has 0 words")
+        return None
     n_unique_words = len({word.lower for word in words})
     n_chars = sum(len(word) for word in words)
 
