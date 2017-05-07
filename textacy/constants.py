@@ -39,8 +39,9 @@ POS_REGEX_PATTERNS = {
 PUNCT_TRANSLATE_UNICODE = dict.fromkeys(
     i for i in range(sys.maxunicode)
     if unicodedata.category(chr_(i)).startswith('P'))
-PUNCT_TRANSLATE_BYTES = b''.join(
-    chr_(i).encode('utf8') for i in PUNCT_TRANSLATE_UNICODE.keys())
+PUNCT_TRANSLATE_BYTES = ''.join(
+    chr_(i) for i in PUNCT_TRANSLATE_UNICODE.keys()
+    ).encode('utf-8')
 
 ACRONYM_REGEX = re.compile(r"(?:^|(?<=\W))(?:(?:(?:(?:[A-Z]\.?)+[a-z0-9&/-]?)+(?:[A-Z][s.]?|[0-9]s?))|(?:[0-9](?:\-?[A-Z])+))(?:$|(?=\W))", flags=re.UNICODE)
 EMAIL_REGEX = re.compile(r"(?:^|(?<=[^\w@.)]))([\w+-](\.(?!\.))?)*?[\w+-]@(?:\w-?)*?\w+(\.([a-z]{2,})){1,3}(?:$|(?=\b))", flags=re.IGNORECASE | re.UNICODE)
