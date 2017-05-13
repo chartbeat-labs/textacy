@@ -20,6 +20,37 @@ from textacy.constants import (ACRONYM_REGEX, DANGLING_PARENS_TERM_RE,
 logger = logging.getLogger(__name__)
 
 
+def detect_language(text):
+    """
+    Detect the most likely language of a text and return its 2-letter code
+    (see https://cloud.google.com/translate/v2/using_rest#language-params).
+    Uses the `cld2-cffi <https://pypi.python.org/pypi/cld2-cffi>`_ package;
+    to take advantage of optional params, call :func:`cld2.detect()` directly.
+
+    Args:
+        text (str)
+
+    Returns:
+        str
+    """
+    try:
+        cld2_detect
+    except NameError:
+        raise ImportError(
+            '`cld2-cffi` must be installed to use textacy\'s automatic language detection; '
+            'you may do so via `pip install cld2-cffi` or `pip install textacy[lang]`.'
+            )
+
+    if is_python2:
+        is_reliable, _, best_guesses = cld2_detect(unicode_to_bytes(text), bestEffort=True)
+    else:
+        is_reliable, _, best_guesses = cld2_detect(text, bestEffort=True)
+    if is_reliable is False:
+        msg = 'Text language detected with low confidence; best guesses: %s'
+        logger.warning(msg, best_guesses)
+    return best_guesses[0][1]
+
+
 def is_acronym(token, exclude=None):
     """
     Pass single token as a string, return True/False if is/is not valid acronym.
@@ -59,36 +90,6 @@ def is_acronym(token, exclude=None):
     if not ACRONYM_REGEX.match(token):
         return False
     return True
-
-
-def detect_language(text):
-    """
-    Detect the most likely language of a text and return its 2-letter code
-    (see https://cloud.google.com/translate/v2/using_rest#language-params).
-    Uses the `cld2-cffi <https://pypi.python.org/pypi/cld2-cffi>`_ package;
-    to take advantage of optional params, call :func:`cld2.detect()` directly.
-
-    Args:
-        text (str)
-
-    Returns:
-        str
-    """
-    try:
-        cld2_detect
-    except NameError:
-        raise ImportError(
-            'cld2-cffi is not installed, so language detection won\'t work; '
-            'install it individually, or with textacy via `pip install textacy[lang]`')
-
-    if is_python2:
-        is_reliable, _, best_guesses = cld2_detect(unicode_to_bytes(text), bestEffort=True)
-    else:
-        is_reliable, _, best_guesses = cld2_detect(text, bestEffort=True)
-    if is_reliable is False:
-        msg = 'Text language detected with low confidence; best guesses: %s'
-        logger.warning(msg, best_guesses)
-    return best_guesses[0][1]
 
 
 def keyword_in_context(text, keyword, ignore_case=True,

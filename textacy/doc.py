@@ -7,6 +7,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from collections import Counter
 import os
+import types
 import warnings
 
 from cytoolz import itertoolz
@@ -21,7 +22,8 @@ from spacy.util import get_lang_class
 import textacy
 from textacy.compat import unicode_
 from textacy.constants import NUMERIC_NE_TYPES
-from textacy import data, fileio, spacy_utils, text_utils
+from textacy.text_utils import detect_language
+from textacy import data, fileio, spacy_utils
 from textacy import network
 
 
@@ -85,13 +87,16 @@ class Doc(object):
         metadata (dict): Dictionary of relevant information about content. This
             can be helpful when identifying and filtering documents, as well as
             when engineering features for model inputs.
-        lang (str or ``spacy.Language``): Language of document content. If
-            known, pass a standard 2-letter language code (e.g. "en") or the
-            name of a spacy model for the desired language (e.g. "en_core_web_md")
-            or an already-instantiated ``spacy.Language`` object. If a str,
-            the value is used to instantiate the corresponding ``spacy.Language``
-            with all models loaded by default, and the appropriate 2-letter
-            lang code is assigned to :attr:`Doc.lang`.
+        lang (str or ``spacy.Language`` or callable): Language of document content.
+            If known, pass a standard 2-letter language code (e.g. "en"), or the
+            name of a spacy model for the desired language (e.g. "en_core_web_md"),
+            or an already-instantiated ``spacy.Language`` object. If not known,
+            pass a function/callable that takes unicode text as input and outputs
+            a standard 2-letter language code.
+
+            The given or detected language str is used to instantiate a corresponding
+            ``spacy.Language`` with all models loaded by default, and the appropriate
+            2-letter lang code is assigned to :attr:`Doc.lang`.
 
             **Note:** The ``spacy.Language`` object parses ``content``
             (if str) and sets the :attr:`spacy_vocab` and :attr:`spacy_stringstore`
@@ -105,7 +110,7 @@ class Doc(object):
         spacy_vocab (``spacy.Vocab``): https://spacy.io/docs#vocab
         spacy_stringstore (``spacy.StringStore``): https://spacy.io/docs#stringstore
     """
-    def __init__(self, content, metadata=None, lang=None):
+    def __init__(self, content, metadata=None, lang=detect_language):
         self.metadata = metadata or {}
 
         # Doc instantiated from text, so must be parsed with a spacy.Language
@@ -116,13 +121,13 @@ class Doc(object):
             elif isinstance(lang, unicode_):
                 self.lang = get_lang_class(lang).lang
                 spacy_lang = data.load_spacy(lang)
-            elif lang is None:
-                self.lang = text_utils.detect_language(content)
+            elif callable(lang):
+                self.lang = lang(content)
                 spacy_lang = data.load_spacy(self.lang)
             else:
-                msg = '`lang` must be {}, not "{}"'.format(
-                    {unicode_, SpacyLang}, type(lang))
-                raise ValueError(msg)
+                raise ValueError(
+                    '`lang` must be {}, not "{}"'.format(
+                        {unicode_, SpacyLang, types.FunctionType}, type(lang)))
             self.spacy_vocab = spacy_lang.vocab
             self.spacy_stringstore = self.spacy_vocab.strings
             self.spacy_doc = spacy_lang(content)
@@ -133,23 +138,26 @@ class Doc(object):
             self.spacy_doc = content
             self.lang = self.spacy_vocab.lang
             # these checks are probably unnecessary, but in case a user
-            # has done something very strange, we should complain...
+            # has done something strange, we should complain...
             if isinstance(lang, SpacyLang):
                 if self.spacy_vocab is not lang.vocab:
-                    msg = '`spacy.Vocab` used to parse `content` must be the same as the one associated with `lang`'
-                    raise ValueError(msg)
+                    raise ValueError(
+                        '`spacy.Vocab` used to parse `content` must be the same '
+                        'as the one associated with the `lang` param')
             elif isinstance(lang, unicode_):
                 if lang != self.lang:
-                    raise ValueError('lang of spacy models used to parse `content` must be the same as `lang`')
-            elif lang is not None:
-                msg = '`lang` must be {}, not "{}"'.format(
-                    {unicode_, SpacyLang}, type(lang))
-                raise ValueError(msg)
+                    raise ValueError(
+                        'lang of spacy models used to parse `content` must be '
+                        'the same as the `lang` param')
+            elif callable(lang) is False:
+                raise ValueError(
+                    '`lang` must be {}, not "{}"'.format(
+                        {unicode_, SpacyLang, types.FunctionType}, type(lang)))
         # oops, user has made some sort of mistake
         else:
-            msg = '`Doc` must be initialized with {}, not "{}"'.format(
-                {unicode_, SpacyDoc}, type(content))
-            raise ValueError(msg)
+            raise ValueError(
+                '`Doc` must be initialized with {} content, not "{}"'.format(
+                    {unicode_, SpacyDoc}, type(content)))
 
     def __repr__(self):
         snippet = self.text[:50].replace('\n', ' ')
@@ -398,7 +406,7 @@ class Doc(object):
                 - include_types (str or Set[str])
                 - exclude_types (str or Set[str]
                 - drop_determiners (bool)
-                
+
                 see :func:`extract.words <textacy.extract.words>`,
                 :func:`extract.ngrams <textacy.extract.ngrams>`,
                 and :func:`extract.named_entities <textacy.extract.named_entities>`
@@ -449,7 +457,8 @@ class Doc(object):
                 'exclude_pos': kwargs.get('exclude_pos'),
                 'min_freq': kwargs.get('min_freq', 1)}
             # if numeric entities are to be filtered, we should filter numeric ngrams
-            if named_entities and kwargs.get('exclude_types') and NUMERIC_NE_TYPES in kwargs['exclude_types']:
+            if (named_entities and kwargs.get('exclude_types')
+                    and NUMERIC_NE_TYPES in kwargs['exclude_types']):
                 ngram_kwargs['filter_nums'] = True
 
         terms = []
