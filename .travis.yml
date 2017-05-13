@@ -13,4 +13,4 @@ install:
     - "python -m spacy download en_core_web_sm"
 
 # command to run tests
-script: nosetests
+script: nosetests -v
