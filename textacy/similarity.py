@@ -121,8 +121,9 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
         ValueError: if `fuzzy_match` is True but `obj1` and `obj2` are strings
     """
     if isinstance(match_threshold, int) and 1 <= match_threshold <= 100:
-        msg = '`match_threshold` should be a float in [0.0, 1.0]; it was automatically converted from the provided int in [0, 100]'
-        warnings.warn(msg)
+        warnings.warn(
+            '`match_threshold` should be a float in [0.0, 1.0]; '
+            'it was automatically converted from the provided int in [0, 100]')
         match_threshold /= 100
     set1 = set(obj1)
     set2 = set(obj2)
