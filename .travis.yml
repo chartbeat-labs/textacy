@@ -1,0 +1,16 @@
+language: python
+python:
+   - "2.7"
+   - "3.6"
+
+dist: trusty
+os:
+  - linux
+
+# command to install dependencies
+install:
+    - "pip install -r requirements.txt"
+    - "python -m spacy download en_core_web_sm"
+
+# command to run tests
+script: nosetests

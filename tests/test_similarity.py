@@ -16,11 +16,7 @@ class SimilarityTestCase(unittest.TestCase):
 
     def test_word_movers(self):
         metrics = ('cosine', 'l1', 'manhattan', 'l2', 'euclidean')
-        # TODO: Figure out why python2 and 3 give different values!
-        if is_python2:
-            expected_values = (0.459725, 0.271157, 0.271157, 0.265651, 0.265651)
-        else:
-            expected_values = (0.27088, 0.112838, 0.112838, 0.102415, 0.102415)
+        expected_values = (0.27088, 0.112838, 0.112838, 0.102415, 0.102415)
         for metric, expected_value in zip(metrics, expected_values):
             self.assertAlmostEqual(
                 textacy.similarity.word_movers(self.doc1, self.doc2, metric=metric),
@@ -31,11 +27,7 @@ class SimilarityTestCase(unittest.TestCase):
         pairs = ((self.doc1, self.doc2),
                  (self.doc1[-2:], self.doc2[-2:]),
                  (self.doc1[-1], self.doc2[-1]))
-        # TODO: Figure out why python2 and 3 give different values!
-        if is_python2:
-            expected_values = (0.906904, 0.712395, 1.000000)
-        else:
-            expected_values = (0.893582, 0.712395, 1.000000)
+        expected_values = (0.893582, 0.712395, 1.000000)
         for pair, expected_value in zip(pairs, expected_values):
             self.assertAlmostEqual(
                 textacy.similarity.word2vec(pair[0], pair[1]),
