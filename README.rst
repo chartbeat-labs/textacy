@@ -30,7 +30,13 @@ The simple way to install ``textacy`` is
 
     $ pip install textacy
 
-**Note:** Some dependencies have been made optional, because they can be difficult to install and/or are only needed in certain uses cases. To use viz functions, you'll need ``matplotlib`` installed; you can do so via ``pip install textacy[viz]``. For automatic language detection, you'll need ``cld2-cffi`` installed; do ``pip install textacy[lang]``. To install all optional dependencies:
+or using ``conda``
+
+.. code-block:: console
+
+    $ conda install -c conda-forge textacy
+
+**Note:** If you use ``pip``, some dependencies have been made optional, because they can be difficult to install and/or are only needed in certain uses cases. To use viz functions, you'll need ``matplotlib`` installed; you can do so via ``pip install textacy[viz]``. For automatic language detection, you'll need ``cld2-cffi`` installed; do ``pip install textacy[lang]``. To install all optional dependencies:
 
 .. code-block:: console
 
