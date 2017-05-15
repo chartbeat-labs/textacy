@@ -12,6 +12,7 @@ import itertools
 import logging
 import math
 from operator import itemgetter
+import re
 
 from cytoolz import itertoolz
 import networkx as nx
@@ -20,9 +21,11 @@ import numpy as np
 from textacy import extract, vsm
 from textacy.network import terms_to_semantic_network
 from textacy.similarity import token_sort_ratio
+from textacy.spacy_utils import normalized_str
 
 
-def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
+def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), pattern=None, normalize='lemma', 
+           window_width=1500, n_keyterms=10, idf=None):
     """
     Extract key terms from a document using the [SGRank]_ algorithm.
 
@@ -31,6 +34,19 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
         ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3, 4, 5, 6)``
                 (default) includes all ngrams from 1 to 6; `2`
                 if only bigrams are wanted
+        pattern (str): Pattern of consecutive POS tags whose corresponding words
+            are to be extracted, inspired by the regex patterns used in NLTK's
+            `nltk.chunk.regexp`. Tags are uppercase, from the universal tag set;
+            delimited by < and >, which are basically converted to parentheses
+            with spaces as needed to correctly extract matching word sequences;
+            white space in the input doesn't matter.
+
+            Examples (see ``constants.POS_REGEX_PATTERNS``):
+
+            * noun phrase: r'<DET>? (<NOUN>+ <ADP|CONJ>)* <NOUN>+'
+            * compound nouns: r'<NOUN>+'
+            * verb phrase: r'<VERB>?<ADV>*<VERB>+'
+            * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
         normalize (str or callable): If 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``spacy.Span`` and return a str,
@@ -68,20 +84,24 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
     if window_width < 2:
         raise ValueError('`window_width` must be >= 2')
     window_width = min(n_toks, window_width)
-    min_term_freq = min(n_toks // 1000, 4)
-    if isinstance(ngrams, int):
-            ngrams = (ngrams,)
 
     # build full list of candidate terms
-    # if inverse doc freqs available, include nouns, adjectives, and verbs;
-    # otherwise, just include nouns and adjectives
-    # (without IDF downweighting, verbs dominate the results in a bad way)
-    include_pos = {'NOUN', 'PROPN', 'ADJ', 'VERB'} if idf else {'NOUN', 'PROPN', 'ADJ'}
-    terms = itertoolz.concat(
-        extract.ngrams(doc, n, filter_stops=True, filter_punct=True, filter_nums=False,
-                       include_pos=include_pos, min_freq=min_term_freq)
-        for n in ngrams)
-
+    if pattern is not None:
+        terms = extract.pos_regex_matches(doc, pattern)
+        terms = (term for term in terms if len(term) in ngrams)
+    else:
+        min_term_freq = min(n_toks // 1000, 4)
+        if isinstance(ngrams, int):
+            ngrams = (ngrams,)
+        # if inverse doc freqs available, include nouns, adjectives, and verbs;
+        # otherwise, just include nouns and adjectives
+        # (without IDF downweighting, verbs dominate the results in a bad way)
+        include_pos = {'NOUN', 'PROPN', 'ADJ', 'VERB'} if idf else {'NOUN', 'PROPN', 'ADJ'}
+        terms = itertoolz.concat(
+            extract.ngrams(doc, n, filter_stops=True, filter_punct=True, filter_nums=False,
+                           include_pos=include_pos, min_freq=min_term_freq)
+            for n in ngrams)
+    
     # get normalized term strings, as desired
     # paired with positional index in document and length in a 3-tuple
     if normalize == 'lemma':
