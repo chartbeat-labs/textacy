@@ -33,6 +33,8 @@ import ftfy
 from textacy.compat import is_python2, bytes_to_unicode, unicode_
 from textacy.fileio import open_sesame
 
+LOGGER = logging.getLogger(__name__)
+
 re_nowiki = re.compile(r'<nowiki>(.*?)</nowiki>', flags=re.UNICODE)  # nowiki tags: take contents verbatim
 
 self_closing_tags = ('br', 'hr', 'nobr', 'ref', 'references')
@@ -224,7 +226,7 @@ class WikiReader(object):
                 if sub_sections[0] == '':
                     del sub_sections[0]
                 if len(headings) != len(sub_sections):
-                    logging.warning(
+                    LOGGER.warning(
                         '# headings = %s, but # sections = %s',
                         len(headings), len(sub_sections))
                 for i, sub_section in enumerate(sub_sections):
@@ -293,7 +295,7 @@ class WikiReader(object):
         try:
             import mwparserfromhell  # hiding this here; don't want another required dep
         except ImportError:
-            logging.exception(
+            LOGGER.exception(
                 'mwparserfromhell package must be installed; see http://pythonhosted.org/mwparserfromhell/')
             raise
         parser = mwparserfromhell.parser.Parser()

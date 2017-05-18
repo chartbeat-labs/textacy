@@ -24,7 +24,7 @@ import spacy
 import textacy
 from textacy.compat import is_python2, bytes_
 
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 DEFAULT_DATA_DIR = textacy.__resources_dir__
 
@@ -68,7 +68,7 @@ def load_spacy(name, path=None, create_pipeline=None, **kwargs):
     See Also:
         https://spacy.io/docs/#language
     """
-    logger.info('Loading "%s" spaCy language models', name)
+    LOGGER.info('Loading "%s" spaCy language models', name)
     if path is not None:
         kwargs['path'] = path
     if create_pipeline is not None:
@@ -93,7 +93,7 @@ def load_hyphenator(lang='en'):
     Returns:
         :class:`pyphen.Pyphen()`
     """
-    logger.info('Loading "%s" language hyphenator', lang)
+    LOGGER.info('Loading "%s" language hyphenator', lang)
     return pyphen.Pyphen(lang=lang)
 
 
@@ -148,10 +148,10 @@ def load_depechemood(data_dir=None, download_if_missing=True,
                 csvreader = csv.reader(csvfile, delimiter=delimiter)
                 rows = list(csvreader)
         else:
-            logger.exception('unable to load DepecheMood from %s', data_dir)
+            LOGGER.exception('unable to load DepecheMood from %s', data_dir)
             raise
 
-    logger.info('loading DepecheMood lexicon from %s', fname)
+    LOGGER.info('loading DepecheMood lexicon from %s', fname)
     cols = rows[0]
     return {row[0]: {cols[i]: float(row[i]) for i in range(1, 9)}
             for row in rows[1:]}
@@ -171,10 +171,10 @@ def _download_depechemood(data_dir):
     try:
         data = urlopen(url).read()
     except HTTPError as e:
-        logger.exception(
+        LOGGER.exception(
             'unable to download DepecheMood from %s; status code %s', url, e.code)
         raise
-    logger.info('DepecheMood downloaded from %s (4 MB)', url)
+    LOGGER.info('DepecheMood downloaded from %s (4 MB)', url)
     with zipfile.ZipFile(io.BytesIO(data)) as f:
         members = ['DepecheMood_V1.0/DepecheMood_freq.txt',
                    'DepecheMood_V1.0/DepecheMood_normfreq.txt',

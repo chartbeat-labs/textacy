@@ -12,6 +12,8 @@ from spacy.tokens import Doc as SpacyDoc
 import textacy
 from textacy import data, extract
 
+LOGGER = logging.getLogger(__name__)
+
 
 class TextStats(object):
     """
@@ -158,7 +160,7 @@ class TextStats(object):
     @property
     def readability_stats(self):
         if self.n_words == 0:
-            logging.warning("readability stats can't be computed because doc has 0 words")
+            LOGGER.warning("readability stats can't be computed because doc has 0 words")
             return None
         return {'flesch_kincaid_grade_level': self.flesch_kincaid_grade_level,
                 'flesch_readability_ease': self.flesch_readability_ease,
@@ -203,7 +205,7 @@ def readability_stats(doc):
     words = list(extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False))
     n_words = len(words)
     if n_words == 0:
-        logging.warning("readability stats can't be computed because doc has 0 words")
+        LOGGER.warning("readability stats can't be computed because doc has 0 words")
         return None
     n_unique_words = len({word.lower for word in words})
     n_chars = sum(len(word) for word in words)
@@ -240,7 +242,7 @@ def flesch_readability_ease(n_syllables, n_words, n_sents):
 def smog_index(n_polysyllable_words, n_sents):
     """https://en.wikipedia.org/wiki/SMOG"""
     if n_sents < 30:
-        logging.warning('SMOG score may be unreliable for n_sents < 30')
+        LOGGER.warning('SMOG score may be unreliable for n_sents < 30')
     return (1.0430 * sqrt(30 * n_polysyllable_words / n_sents)) + 3.1291
 
 

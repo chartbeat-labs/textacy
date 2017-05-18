@@ -3,8 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 
-
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def _merge_entities(doc):
@@ -19,7 +18,7 @@ def _merge_entities(doc):
         try:
             ent.merge(ent.root.tag_, ent.text, ent.root.ent_type_)
         except IndexError as e:
-            logger.exception(e)
+            LOGGER.exception('Unable to merge entity "%s"; skipping...', ent.text)
 
 
 def merged_entities_pipeline(lang):

@@ -12,8 +12,7 @@ from spacy.tokens.span import Span as SpacySpan
 from textacy.text_utils import is_acronym
 from textacy.constants import AUX_DEPS, SUBJ_DEPS, OBJ_DEPS
 
-
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def is_plural_noun(token):
@@ -102,7 +101,7 @@ def merge_spans(spans):
         try:
             span.merge(span.root.tag_, span.text, span.root.ent_type_)
         except IndexError as e:
-            logger.error(e)
+            LOGGER.exception('Unable to merge span "%s"; skipping...', span.text)
 
 
 def get_main_verbs_of_sent(sent):

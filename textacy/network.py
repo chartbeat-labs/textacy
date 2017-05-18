@@ -15,8 +15,7 @@ from spacy.tokens.token import Token as SpacyToken
 from textacy.compat import unicode_
 from textacy import extract
 
-
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 def terms_to_semantic_network(terms,
@@ -62,9 +61,9 @@ def terms_to_semantic_network(terms,
     # if len(terms) < window_width, cytoolz throws a StopIteration error
     # which we don't want
     if len(terms) < window_width:
-        logger.warning(
-            'input terms list is smaller than window width ({} < {})'.format(
-                len(terms), window_width))
+        LOGGER.warning(
+            'input terms list is smaller than window width (%s < %s)',
+            len(terms), window_width)
         window_width = len(terms)
 
     if isinstance(terms[0], unicode_):

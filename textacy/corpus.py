@@ -22,6 +22,8 @@ from textacy import data, fileio
 from textacy.compat import is_python2, unicode_, zip_
 from textacy.doc import Doc
 
+LOGGER = logging.getLogger(__name__)
+
 _DEFAULT_N_THREADS = max(multiprocessing.cpu_count() - 1, 1)
 
 
@@ -360,8 +362,7 @@ class Corpus(object):
                 raise ValueError(msg)
             if hasattr(doc, 'corpus_index'):
                 doc = copy.deepcopy(doc)
-                # TODO: make this into a logging warning
-                logging.warning('Doc already associated with a Corpus; adding anyway...')
+                LOGGER.warning('Doc already associated with a Corpus; adding anyway...')
             if metadata is not None:
                 doc.metadata = metadata
             self._add_textacy_doc(doc)

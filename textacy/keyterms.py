@@ -21,8 +21,11 @@ from textacy import extract, vsm
 from textacy.network import terms_to_semantic_network
 from textacy.similarity import token_sort_ratio
 
+LOGGER = logging.getLogger(__name__)
 
-def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500, n_keyterms=10, idf=None):
+
+def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
+           n_keyterms=10, idf=None):
     """
     Extract key terms from a document using the [SGRank]_ algorithm.
 
@@ -630,7 +633,8 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
                 try:
                     contrib[w] -= alpha * ranks[vertex]
                 except KeyError:
-                    logging.error('Word %s not in contrib dict! We\'re approximating...', w)
+                    LOGGER.error(
+                        'Word %s not in contrib dict! We\'re approximating...', w)
             taken[vertex] = True
         contrib[max_word_score[0]] = 0
 
@@ -661,7 +665,7 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
     """
     # check function arguments
     if len(graph) == 0:
-        logging.warning('``graph`` is empty!')
+        LOGGER.warning('``graph`` is empty!')
         return {}
 
     # create adjacency matrix, i.e.

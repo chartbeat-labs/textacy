@@ -9,8 +9,7 @@ from sklearn.externals import joblib
 
 from textacy import viz
 
-
-logger = logging.getLogger(__name__)
+LOGGER = logging.getLogger(__name__)
 
 
 class TopicModel(object):
@@ -149,7 +148,7 @@ class TopicModel(object):
 
     def save(self, filename):
         _ = joblib.dump(self.model, filename, compress=3)
-        logger.info('{} model saved to {}'.format(self.model, filename))
+        LOGGER.info('%s model saved to %s', self.model, filename)
 
     @classmethod
     def load(cls, filename):

@@ -26,8 +26,8 @@ from textacy.compat import is_python2, string_types
 from textacy.fileio import read_json_lines
 from textacy.preprocess import normalize_whitespace
 
-
 LOGGER = logging.getLogger(__name__)
+
 REDDIT_LINK_RE = re.compile(r'\[([^]]+)\]\(https?://[^\)]+\)')
 MIN_DATE = '0001-01-01'
 MAX_DATE = '9999-12-31'
