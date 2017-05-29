@@ -39,25 +39,25 @@ Features
 Installation
 ------------
 
-The simple way to install ``textacy`` is
+The simple way to install ``textacy`` is via ``pip``:
 
 .. code-block:: console
 
     $ pip install textacy
 
-or using ``conda``
+or ``conda``:
 
 .. code-block:: console
 
     $ conda install -c conda-forge textacy
 
-**Note:** If you use ``pip``, some dependencies have been made optional, because they can be difficult to install and/or are only needed in certain uses cases. To use viz functions, you'll need ``matplotlib`` installed; you can do so via ``pip install textacy[viz]``. For automatic language detection, you'll need ``cld2-cffi`` installed; do ``pip install textacy[lang]``. To install all optional dependencies:
+**Note:** If you use ``pip``, some dependencies have been made optional, because they can be difficult to install and/or are only needed in certain uses cases. To use visualization functions, you'll need ``matplotlib`` installed; you can do so via ``pip install textacy[viz]``. For automatic language detection, you'll need ``cld2-cffi`` installed; do ``pip install textacy[lang]``. To install all optional dependencies:
 
 .. code-block:: console
 
     $ pip install textacy[all]
 
-If ``pip`` isn't an option, you can download and unzip the source ``tar.gz`` from  PyPi_, then
+Otherwise, you can download and unzip the source ``tar.gz`` from  PyPi_, then install manually:
 
 .. code-block:: console
 
@@ -273,6 +273,8 @@ Count terms individually, and represent documents as a bag-of-terms with flexibl
      ('new yorkers', 3),
      ('chuck', 3),
      ('lot of fun', 2)]
+
+**Note:** In almost all cases, ``textacy`` expects to be working with unicode text. Docstrings indicate this as ``str``, which is clear and correct for Python 3 but not Python 2. In the latter case, users should cast ``str`` bytes to ``unicode``, as needed.
 
 
 Project Links
