@@ -5,7 +5,7 @@ import unittest
 
 from spacy import attrs
 
-from textacy import compat, data, export
+from textacy import data, export
 
 
 class ExportTestCase(unittest.TestCase):
@@ -23,8 +23,6 @@ class ExportTestCase(unittest.TestCase):
              [474, -2, 412], [453, -3, 441]], dtype='int32')
         self.spacy_doc.from_array(cols, values)
 
-    @unittest.skipUnless(
-        compat.is_python2, 'HACK: Skipping test to see if Travis continues to barf on it')
     def test_write_conll(self):
         expected = '# sent_id 1\n1\tI\t-PRON-\tPRON\tPRP\t_\t4\tnsubj\t_\t_\n2\twould\twould\tVERB\tMD\t_\t4\taux\t_\t_\n3\thave\thave\tVERB\tVB\t_\t4\taux\t_\t_\n4\tlived\tlive\tVERB\tVBN\t_\t0\troot\t_\t_\n5\tin\tin\tADP\tIN\t_\t4\tprep\t_\t_\n6\tpeace\tpeace\tNOUN\tNN\t_\t5\tpobj\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t4\tpunct\t_\t_\n\n# sent_id 2\n1\tBut\tbut\tCCONJ\tCC\t_\t4\tcc\t_\t_\n2\tmy\t-PRON-\tADJ\tPRP$\t_\t3\tposs\t_\t_\n3\tenemies\tenemy\tNOUN\tNNS\t_\t4\tnsubj\t_\t_\n4\tbrought\tbring\tVERB\tVBD\t_\t0\troot\t_\t_\n5\tme\t-PRON-\tPRON\tPRP\t_\t4\tdobj\t_\t_\n6\twar\twar\tNOUN\tNN\t_\t4\tdobj\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t4\tpunct\t_\tSpaceAfter=No\n'
         observed = export.doc_to_conll(self.spacy_doc)
