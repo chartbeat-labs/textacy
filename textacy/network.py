@@ -57,6 +57,8 @@ def terms_to_semantic_network(terms,
     """
     if window_width < 2:
         raise ValueError('Window width must be >= 2')
+    if not terms:
+        raise ValueError('`terms` list is empty; it must contain 1 or more terms')
 
     # if len(terms) < window_width, cytoolz throws a StopIteration error
     # which we don't want
