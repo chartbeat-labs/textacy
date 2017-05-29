@@ -36,6 +36,14 @@ Features
 ... and more!
 
 
+Project Links
+-------------
+
+- `textacy @ PyPi <https://pypi.python.org/pypi/textacy>`_
+- `textacy @ GitHub <https://github.com/chartbeat-labs/textacy>`_
+- `textacy @ ReadTheDocs <http://textacy.readthedocs.io/en/latest/>`_
+
+
 Installation
 ------------
 
@@ -277,27 +285,10 @@ Count terms individually, and represent documents as a bag-of-terms with flexibl
 **Note:** In almost all cases, ``textacy`` expects to be working with unicode text. Docstrings indicate this as ``str``, which is clear and correct for Python 3 but not Python 2. In the latter case, users should cast ``str`` bytes to ``unicode``, as needed.
 
 
-Project Links
--------------
-
-- `textacy @ PyPi <https://pypi.python.org/pypi/textacy>`_
-- `textacy @ GitHub <https://github.com/chartbeat-labs/textacy>`_
-- `textacy @ ReadTheDocs <http://textacy.readthedocs.io/en/latest/>`_
-
-
 Authors
 -------
 
 - Burton DeWilde (<burton@chartbeat.net>)
-
-
-Roadmap
--------
-
-#. document clustering
-#. media framing analysis (?)
-#. deep neural network model for text summarization
-#. deep neural network model for sentiment analysis
 
 
 .. _spaCy: https://spacy.io/
