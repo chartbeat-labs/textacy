@@ -2,6 +2,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from contextlib import closing
+import io
 import json
 
 from numpy import savez, savez_compressed
@@ -199,14 +200,15 @@ def write_streaming_download_file(url, filepath, mode='wt', encoding=None,
     .. seealso:: :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
     """
     decode_unicode = True if 't' in mode else False
+    if auto_make_dirs is True:
+        make_dirs(filepath, mode)
     # always close the connection
     with closing(requests.get(url, stream=True)) as r:
         # set fallback encoding if unable to infer from headers
         if r.encoding is None:
             # TODO: log a warning?
             r.encoding = 'utf-8'
-        with open_sesame(filepath, mode=mode, encoding=None,
-                         auto_make_dirs=auto_make_dirs) as f:
+        with io.open(filepath, mode=mode, encoding=encoding) as f:
             for chunk in r.iter_content(chunk_size=chunk_size,
                                         decode_unicode=decode_unicode):
                 # needed (?) to filter out "keep-alive" new chunks

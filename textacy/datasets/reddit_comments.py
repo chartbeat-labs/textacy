@@ -3,7 +3,7 @@ Reddit Comments
 ---------------
 
 Stream a dataset of up to ~1.5 billion Reddit comments posted from October 2007
-until May 2015, as either texts (str) or records (dict) with both content and
+through May 2015, as either texts (str) or records (dict) with both content and
 metadata.
 
 Key fields in each record are as follows:
@@ -47,6 +47,45 @@ REDDIT_LINK_RE = re.compile(r'\[([^]]+)\]\(https?://[^\)]+\)')
 
 
 class RedditComments(Dataset):
+    """
+    Stream Reddit comments from 1 or more compressed files on disk, either
+    as texts (str) or records (dict) with both text content and metadata.
+
+    Download 1 or more files, optionally within a given date range::
+
+        >>> rc = RedditComments()
+        >>> rc.download(date_range=('2007-10', '2008-01'))
+        >>> rc.info
+        {'data_dir': 'path/to/textacy/data/reddit_comments',
+         'description': 'An archive of ~1.5 billion publicly available Reddit comments from October 2007 through May 2015.',
+         'name': 'reddit_comments',
+         'site_url': 'https://archive.org/details/2015_reddit_comments_corpus'}
+
+    Iterate over comments as plain texts or records with both text and metadata::
+
+        >>> for text in rc.texts(limit=5):
+        ...     print(text)
+        >>> for record in rc.records(limit=5):
+        ...     print(record['body'], record['author'], record['created_utc'])
+
+    Filter for specific comments on a variety of fields::
+
+        >>> for record in rc.records(subreddit='politics', limit=5):
+        ...     print(record['body'], record['score'])
+        >>> for record in rc.records(date_range=('2015-01-01', '2015-01-02'), limit=5):
+        ...     print(record['created_utc'])
+        >>> for record in rc.records(min_len=1000, limit=1):
+        ...     print(record['body'], len(record['body']))
+
+    Args:
+        data_dir (str): Path to directory on disk under which Reddit comments
+            files are stored. Each file is expected at ``YYYY/RC_YYYY-MM.bz2``
+            immediately under this directory.
+
+    Attributes:
+        filenames (Tuple[str]): Full paths on disk for all Reddit comments files
+            found under the ``data_dir`` directory, sorted chronologically.
+    """
 
     def __init__(self, data_dir=DATA_DIR):
         super(RedditComments, self).__init__(
@@ -54,20 +93,31 @@ class RedditComments(Dataset):
 
     @property
     def filenames(self):
+        """
+        Tuple[str]: Full paths on disk for all Reddit comments files found under
+        the ``data_dir`` directory, sorted chronologically.
+        """
         if os.path.exists(self.data_dir):
             return tuple(sorted(get_filenames(self.data_dir, extension='.bz2', recursive=True)))
         else:
             LOGGER.warning(
-                '%s directory does not exist', self.data_dir)
+                '%s data directory does not exist', self.data_dir)
             return tuple()
 
     def download(self, date_range=(MIN_DATE, MAX_DATE), force=False):
         """
-        Download 1 or more monthly Reddit comments files and save them to disk.
+        Download 1 or more monthly Reddit comments files from archive.org
+        and save them to disk under the ``data_dir`` used to instantiate.
 
         Args:
-            date_range (Tuple[str])
-            force (bool)
+            date_range (Tuple[str]): Interval specifying the [start, end) dates
+                for which comments files will be downloaded. Each item must be
+                a str formatted as YYYY-MM or YYYY-MM-DD (the latter is converted
+                to the corresponding YYYY-MM value). Both start and end values
+                must be specified, but a null value for either is automatically
+                replaced by the minimum or maximum valid values, respectively.
+            force (bool): Force download of all specified files, even if they
+                already exist on disk.
         """
         date_range = self._parse_date_range(date_range)
         fnames = self._generate_filenames(date_range)
@@ -118,12 +168,6 @@ class RedditComments(Dataset):
         """
         Generate a list of monthly filenames in the interval [start, end),
         each with format "YYYY/RC_YYYY-MM.bz2".
-
-        Args:
-            date_range (Tuple[str])
-
-        Returns:
-            Tuple[str]
         """
         fnames = []
         yrmo, end = date_range
@@ -150,23 +194,26 @@ class RedditComments(Dataset):
         yielding the plain text of comments, one at a time.
 
         Args:
-            subreddit (str or Set[str]): filter comments by the subreddit in
-                which they were posted
-            date_range (List[str] or Tuple[str]): filter comments by the date on
-                which they were posted; both start and end date must be specified,
-                but a null value for either will effectively unbound the range
-                on the corresponding side
-            score_range (List[int] or Tuple[int]): filter comments by score
-                (# upvotes minus # downvotes); both min and max score must be
-                specified, but a null value for either will effectively unbound
-                the range on the corresponding side
-            min_len (int): minimum length in chars that a comment must have
-                for it to be returned; too-short comments are skipped (optional)
-            limit (int): maximum number of comments (passing `min_len`) to yield;
-                if -1, all comments in the db file are iterated over (optional)
+            subreddit (str or Set[str]): Filter comments for those which were
+                posted in the specified subreddit(s).
+            date_range (Tuple[str]): Filter comments for those which were posted
+                within the interval [start, end). Each item must be a str in
+                ISO-standard format, i.e. some amount of YYYY-MM-DDTHH:mm:ss.
+                Both start and end values must be specified, but a null value
+                for either is automatically replaced by the minimum or maximum
+                valid values, respectively.
+            score_range (Tuple[int]): Filter comments for those whose score
+                (# upvotes minus # downvotes) is within the interval [low, high).
+                Both start and end values must be specified, but a null value
+                for either is automatically replaced by the minimum or maximum
+                valid values, respectively.
+            min_len (int): Filter comments for those whose body length in chars
+                is at least this long.
+            limit (int): Maximum number of comments passing all filters to yield.
+                If -1, all comments are iterated over.
 
         Yields:
-            str: plain text for the next comment in the reddit comments file
+            str: Plain text of the next comment passing all filters.
         """
         texts = self._iterate(
             True, subreddit=subreddit, date_range=date_range,
@@ -181,23 +228,26 @@ class RedditComments(Dataset):
         yielding one (lightly parsed) comment at a time, as a dict.
 
         Args:
-            subreddit (str or Set[str]): filter comments by the subreddit in
-                which they were posted
-            date_range (List[str] or Tuple[str]): filter comments by the date on
-                which they were posted; both start and end date must be specified,
-                but a null value for either will effectively unbound the range
-                on the corresponding side
-            score_range (List[int] or Tuple[int]): filter comments by score
-                (# upvotes minus # downvotes); both min and max score must be
-                specified, but a null value for either will effectively unbound
-                the range on the corresponding side
-            min_len (int): minimum length in chars that a comment must have
-                for it to be returned; too-short comments are skipped (optional)
-            limit (int): maximum number of comments (passing `min_len`) to yield;
-                if -1, all comments in the db file are iterated over (optional)
+            subreddit (str or Set[str]): Filter comments for those which were
+                posted in the specified subreddit(s).
+            date_range (Tuple[str]): Filter comments for those which were posted
+                within the interval [start, end). Each item must be a str in
+                ISO-standard format, i.e. some amount of YYYY-MM-DDTHH:mm:ss.
+                Both start and end values must be specified, but a null value
+                for either is automatically replaced by the minimum or maximum
+                valid values, respectively.
+            score_range (Tuple[int]): Filter comments for those whose score
+                (# upvotes minus # downvotes) is within the interval [low, high).
+                Both start and end values must be specified, but a null value
+                for either is automatically replaced by the minimum or maximum
+                valid values, respectively.
+            min_len (int): Filter comments for those whose body length in chars
+                is at least this long.
+            limit (int): Maximum number of comments passing all filters to yield.
+                If -1, all comments are iterated over.
 
         Yields:
-            str: plain text for the next comment in the reddit comments file
+            dict: Text and metadata of the next comment passing all filters.
         """
         records = self._iterate(
             False, subreddit=subreddit, date_range=date_range,
@@ -208,7 +258,8 @@ class RedditComments(Dataset):
     def _iterate(self, text_only, subreddit, date_range, score_range,
                  min_len, limit):
         """
-        Note: Use `.texts()` or `.records()` to iterate over corpus data.
+        Iterate over the comments in 1 or more Reddit comments files. Used by
+        both :meth:`RedditComments.texts()` and :meth:`RedditComments.records()`.
         """
         if subreddit:
             if isinstance(subreddit, compat.string_types):
@@ -219,23 +270,30 @@ class RedditComments(Dataset):
             score_range = self._parse_score_range(score_range)
         if date_range:
             date_range = self._parse_date_range(date_range)
-            needed_filepaths = [os.path.join(self.data_dir, fname)
-                                for fname in self._generate_filenames(date_range)]
-            filepaths = tuple(sorted(set(self.filenames).intersection(set(needed_filepaths))))
+            needed_filepaths = {
+                os.path.join(self.data_dir, fname)
+                for fname in self._generate_filenames(date_range)}
+            filepaths = tuple(
+                fname for fname in self.filenames
+                if fname in needed_filepaths)
         else:
             filepaths = self.filenames
 
+        if not filepaths:
+            raise IOError(
+                'No files found at {} corresponding to date range {}'.format(
+                    self.data_dir, date_range))
+
         n = 0
-        mode = 'rb'  # 'rb' if compat.is_python2 else 'rt'  # Python 2 can't open json in text mode
         for filepath in filepaths:
-            for line in read_json_lines(filepath, mode=mode):
+            for line in read_json_lines(filepath, mode='rb'):
 
                 if subreddit and line['subreddit'] not in subreddit:
                     continue
-                if score_range and not score_range[0] <= line['score'] <= score_range[1]:
+                if score_range and not score_range[0] <= line['score'] < score_range[1]:
                     continue
                 line['created_utc'] = self._convert_timestamp(line.get('created_utc', ''))
-                if date_range and not date_range[0] <= line['created_utc'] <= date_range[1]:
+                if date_range and not date_range[0] <= line['created_utc'] < date_range[1]:
                     continue
                 line['body'] = self._clean_content(line['body'])
                 if min_len and len(line['body']) < min_len:
