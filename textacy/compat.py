@@ -8,6 +8,7 @@ is_osx = sys.platform == 'darwin'
 if is_python2:
     from backports import csv
     from itertools import izip as zip_
+    from urlparse import urljoin
 
     bytes_ = str
     unicode_ = unicode
@@ -22,6 +23,7 @@ if is_python2:
 
 else:
     import csv
+    from urllib.parse import urljoin
 
     zip_ = zip
     bytes_ = bytes
