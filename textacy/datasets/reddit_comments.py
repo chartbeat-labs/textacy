@@ -1,9 +1,10 @@
+# -*- coding: utf-8 -*-
 """
 Reddit Comments
 ---------------
 
 Stream a dataset of up to ~1.5 billion Reddit comments posted from October 2007
-through May 2015, as either texts (str) or records (dict) with both content and
+through May 2015, as either texts (str) or records (dict) with both text and
 metadata.
 
 Key fields in each record are as follows:
@@ -120,20 +121,20 @@ class RedditComments(Dataset):
                 already exist on disk.
         """
         date_range = self._parse_date_range(date_range)
-        fnames = self._generate_filenames(date_range)
-        for fname in fnames:
+        fstubs = self._generate_filestubs(date_range)
+        for fstub in fstubs:
             url = compat.urljoin(DOWNLOAD_ROOT, fname)
-            filepath = os.path.join(self.data_dir, fname)
-            if os.path.isfile(filepath) and force is False:
+            filename = os.path.join(self.data_dir, fstub)
+            if os.path.isfile(filename) and force is False:
                 LOGGER.warning(
                     'File %s already exists; skipping download...',
-                    filepath)
+                    filename)
                 continue
             LOGGER.info(
                 'Downloading data from %s and writing it to %s',
-                url, filepath)
+                url, filename)
             write_streaming_download_file(
-                url, filepath, mode='wb', encoding=None,
+                url, filename, mode='wb', encoding=None,
                 auto_make_dirs=True, chunk_size=1024)
 
     def _parse_date_range(self, date_range):
@@ -164,12 +165,12 @@ class RedditComments(Dataset):
             score_range = (score_range[0], MAX_SCORE)
         return tuple(score_range)
 
-    def _generate_filenames(self, date_range):
+    def _generate_filestubs(self, date_range):
         """
         Generate a list of monthly filenames in the interval [start, end),
         each with format "YYYY/RC_YYYY-MM.bz2".
         """
-        fnames = []
+        fstubs = []
         yrmo, end = date_range
         while yrmo < end:
             # parse current yrmo
@@ -177,7 +178,7 @@ class RedditComments(Dataset):
                 dt = datetime.strptime(yrmo, '%Y-%m')
             except ValueError:
                 dt = datetime.strptime(yrmo, '%Y-%m-%d')
-            fnames.append(dt.strftime('%Y/RC_%Y-%m.bz2'))
+            fstubs.append(dt.strftime('%Y/RC_%Y-%m.bz2'))
             # dead simple iteration to next yrmo
             next_yr = dt.year
             next_mo = dt.month + 1
@@ -185,7 +186,7 @@ class RedditComments(Dataset):
                 next_yr += 1
                 next_mo = 1
             yrmo = datetime(next_yr, next_mo, 1).strftime('%Y-%m')
-        return tuple(fnames)
+        return tuple(fstubs)
 
     def texts(self, subreddit=None, date_range=None, score_range=None,
               min_len=0, limit=-1):
@@ -270,23 +271,23 @@ class RedditComments(Dataset):
             score_range = self._parse_score_range(score_range)
         if date_range:
             date_range = self._parse_date_range(date_range)
-            needed_filepaths = {
-                os.path.join(self.data_dir, fname)
-                for fname in self._generate_filenames(date_range)}
-            filepaths = tuple(
+            needed_filenames = {
+                os.path.join(self.data_dir, fstub)
+                for fstub in self._generate_filestubs(date_range)}
+            filenames = tuple(
                 fname for fname in self.filenames
-                if fname in needed_filepaths)
+                if fname in needed_filenames)
         else:
-            filepaths = self.filenames
+            filenames = self.filenames
 
-        if not filepaths:
+        if not filenames:
             raise IOError(
                 'No files found at {} corresponding to date range {}'.format(
                     self.data_dir, date_range))
 
         n = 0
-        for filepath in filepaths:
-            for line in read_json_lines(filepath, mode='rb'):
+        for filename in filenames:
+            for line in read_json_lines(filename, mode='rb'):
 
                 if subreddit and line['subreddit'] not in subreddit:
                     continue
