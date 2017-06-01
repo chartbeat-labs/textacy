@@ -205,126 +205,68 @@ class Wikipedia(Dataset):
                     yield page_id, title, content
                     elem.clear()
 
-    def _parse_content(self, content, parser):
-        unicode_ = compat.unicode_  # let's make this local, for performance
+    def _parse_content(self, content, parser, fast):
+        unicode_ = compat.unicode_  # for performance
         wikicode = parser.parse(content)
 
-        parsed_page = {'sections': []}
+        parsed_content = {}
 
         wikilinks = [unicode_(wc.title) for wc in wikicode.ifilter_wikilinks()]
-        parsed_page['categories'] = [wc for wc in wikilinks
-                                     if wc.startswith('Category:')]
-        parsed_page['wiki_links'] = [wc for wc in wikilinks
-                                     if not wc.startswith('Category:') and
-                                     not wc.startswith('File:') and
-                                     not wc.startswith('Image:')]
-        parsed_page['ext_links'] = [
+        parsed_content['categories'] = [
+            wc for wc in wikilinks
+            if wc.startswith('Category:')]
+        parsed_content['wiki_links'] = [
+            wc for wc in wikilinks
+            if not wc.startswith('Category:') and
+            not wc.startswith('File:') and
+            not wc.startswith('Image:')]
+        parsed_content['ext_links'] = [
             unicode_(wc.url) for wc in wikicode.ifilter_external_links()]
 
-        def _filter_tags(obj):
-            return obj.tag == 'ref' or obj.tag == 'table'
+        # worse quality, but significantly faster
+        # just strip the markup from unicode, as is done for `.texts()`
+        if fast is True:
+            parsed_content['text'] = strip_markup(unicode_(wikicode))
+        else:
+            re_image_wl = re.compile(
+                '^(?:File|Image|Media):', flags=re.IGNORECASE | re.UNICODE)
+            bad_template_names = {
+                'reflist', 'notelist', 'notelist-ua', 'notelist-lr', 'notelist-ur', 'notelist-lg'}
+            bad_tags = {'ref', 'table'}
 
-        bad_section_titles = {'external links', 'notes', 'references'}
-        section_idx = 0
+            def is_bad_wikilink(obj):
+                return bool(re_image_wl.match(unicode_(obj.title)))
 
-        for section in wikicode.get_sections(flat=True, include_lead=True, include_headings=True):
-            headings = section.filter_headings()
-            sec = {'idx': section_idx}
+            def is_bad_tag(obj):
+                return unicode_(obj.tag) in bad_tags
 
-            if section_idx == 0 or len(headings) == 1:
-                try:
-                    sec_title = unicode_(headings[0].title)
-                    if sec_title.lower() in bad_section_titles:
-                        continue
-                    sec['title'] = sec_title
-                    sec['level'] = int(headings[0].level)
-                except IndexError:
-                    if section_idx == 0:
-                        sec['level'] = 1
-                # strip out references, tables, and file/image links
-                for obj in section.ifilter_tags(matches=_filter_tags, recursive=True):
+            def is_bad_template(obj):
+                return obj.name.lower() in bad_template_names
+
+            texts = []
+            # strip out references, tables, and file/image links
+            # then concatenate the stripped text of each section
+            for i, section in enumerate(wikicode.get_sections(flat=True, include_lead=True, include_headings=True)):
+                for obj in section.ifilter_wikilinks(matches=is_bad_wikilink, recursive=True):
                     try:
                         section.remove(obj)
                     except Exception:
                         continue
-                for obj in section.ifilter_wikilinks(recursive=True):
+                for obj in section.ifilter_templates(matches=is_bad_template, recursive=True):
                     try:
-                        obj_title = unicode_(obj.title)
-                        if obj_title.startswith('File:') or obj_title.startswith('Image:'):
-                            section.remove(obj)
+                        section.remove(obj)
                     except Exception:
-                        pass
-                sec['text'] = unicode_(section.strip_code(normalize=True, collapse=True)).strip()
-                if sec.get('title'):
-                    sec['text'] = re.sub(r'^' + re.escape(sec['title']) + r'\s*', '', sec['text'])
-                parsed_page['sections'].append(sec)
-                section_idx += 1
-
-            # dammit! the parser has failed us; let's handle it as best we can
-            elif len(headings) > 1:
-                titles = [unicode_(h.title).strip() for h in headings]
-                levels = [int(h.level) for h in headings]
-                sub_sections = [
-                    unicode_(ss) for ss in
-                    re.split(r'\s*' + '|'.join(re.escape(unicode_(h)) for h in headings) + r'\s*', compat.unicode_(section))]
-                # re.split leaves an empty string result up front :shrug:
-                if sub_sections[0] == '':
-                    del sub_sections[0]
-                if len(headings) != len(sub_sections):
-                    LOGGER.warning(
-                        '# headings = %s, but # sections = %s',
-                        len(headings), len(sub_sections))
-                for i, sub_section in enumerate(sub_sections):
-                    try:
-                        if titles[i].lower() in bad_section_titles:
-                            continue
-                        parsed_page['sections'].append({'title': titles[i], 'level': levels[i], 'idx': section_idx,
-                                                        'text': strip_markup(sub_section)})
-                        section_idx += 1
-                    except IndexError:
                         continue
+                for obj in section.ifilter_tags(matches=is_bad_tag, recursive=True):
+                    try:
+                        section.remove(obj)
+                    except Exception:
+                        continue
+                texts.append(section.strip_code().strip())
 
-        return parsed_page
+            parsed_content['text'] = '\n\n'.join(texts)
 
-    # def _parse_content(self, content, parser):
-    #     unicode_ = compat.unicode_  # let's make this local, for performance
-    #     wikicode = parser.parse(content)
-    #
-    #     parsed_page = {}
-    #
-    #     wikilinks = [unicode_(wc.title) for wc in wikicode.ifilter_wikilinks()]
-    #     parsed_page['categories'] = [wc for wc in wikilinks
-    #                                  if wc.startswith('Category:')]
-    #     parsed_page['wiki_links'] = [wc for wc in wikilinks
-    #                                  if not wc.startswith('Category:') and
-    #                                  not wc.startswith('File:') and
-    #                                  not wc.startswith('Image:')]
-    #     parsed_page['ext_links'] = [
-    #         unicode_(wc.url) for wc in wikicode.ifilter_external_links()]
-    #
-    #     filtered_templates = {
-    #         'reflist',
-    #         'notelist', 'notelist-ua', 'notelist-lr', 'notelist-ur', 'notelist-lg',
-    #         'navbox', 'sidebar', 'infobox'}
-    #     filtered_tags = {
-    #         'ref', 'references', 'table'}
-    #
-    #     for obj in wikicode.ifilter_templates(matches=lambda obj: obj.name.lower() in filtered_templates):
-    #         try:
-    #             wikicode.remove(obj)
-    #         except Exception:
-    #             continue
-    #
-    #     # strip out references, tables, and file/image links
-    #     for obj in wikicode.ifilter_tags(matches=lambda obj: obj.tag.lower() in filtered_tags):
-    #         try:
-    #             wikicode.remove(obj)
-    #         except Exception:
-    #             continue
-    #
-    #     parsed_page['text'] = wikicode.strip_code().strip()
-    #
-    #     return parsed_page
+        return parsed_content
 
     def texts(self, min_len=100, limit=-1):
         """
@@ -356,7 +298,7 @@ class Wikipedia(Dataset):
             if n_pages == limit:
                 break
 
-    def records(self, min_len=100, limit=-1):
+    def records(self, min_len=100, limit=-1, fast=False):
         """
         Iterate over the pages in a Wikipedia articles database dump
         (``*articles.xml.bz2``), yielding one page whose structure and content
@@ -367,13 +309,13 @@ class Wikipedia(Dataset):
                 for it to be returned; too-short pages are skipped
             limit (int): maximum number of pages (passing ``min_len``) to yield;
                 if -1, all pages in the db dump are iterated over (optional)
+            fast (bool): If True, text is extracted using a faster method but
+                which gives lower quality results. Otherwise, a slower but better
+                method is used to extract article text.
 
         Yields:
-            dict: the next page's parsed content, including 'title' and 'page_id'
-
-                Key 'sections' includes a list of all page sections, each with 'title'
-                for the section title, 'text' for plain text content,'idx' for position
-                on page, and 'level' for the depth of the section within the page's hierarchy
+            dict: the next page's parsed content, including key:value pairs for
+                'title', 'page_id', 'text', 'categories', 'wiki_links', 'ext_links'
 
         .. note:: This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
         """
@@ -389,13 +331,12 @@ class Wikipedia(Dataset):
         n_pages = 0
         for page_id, title, content in self:
 
-            page = self._parse_content(content, parser)
-            if len(' '.join(s['text'] for s in page['sections'])) < min_len:
+            page = self._parse_content(content, parser, fast)
+            if len(page['text']) < min_len:
                 continue
-            # if len(page['text']) < min_len:
-            #     continue
             page['title'] = title
             page['page_id'] = page_id
+            page['text'] = title + '\n\n' + page['text']
 
             yield page
 
