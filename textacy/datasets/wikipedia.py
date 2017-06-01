@@ -13,11 +13,7 @@ Records have the following fields:
     * ``wiki_links``: a list of other article pages linked to from this page
     * ``ext_links``: a list of external URLs linked to from this page
     * ``categories``: a list of Wikipedia categories to which this page belongs
-    * ``sections``: a list of article content and associated metadata split up
-      according to the section hierarchy of the page; each section contains:
-      * ``text``: text content of the section
-      * ``idx``: ordered position on the page, from top (0) to bottom
-      * ``level``: level (or depth) in the sections hierarchy
+    * ``text``: text content of the article, with markup stripped out
 """
 from __future__ import unicode_literals
 
@@ -31,7 +27,7 @@ import ftfy
 from textacy import data_dir
 from textacy import compat
 from textacy.datasets.base import Dataset
-from textacy.fileio import open_sesame
+from textacy import fileio
 
 LOGGER = logging.getLogger(__name__)
 
@@ -116,7 +112,7 @@ class Wikipedia(Dataset):
     def __init__(self, data_dir=DATA_DIR, lang='en', version='latest'):
         self.lang = lang
         self.version = version
-        self.filestub = '{version}/{lang}wiki-{version}-pages-articles.xml.bz2'.format(
+        self.filestub = '{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2'.format(
             version=self.version, lang=self.lang)
         super(Wikipedia, self).__init__(
             name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
@@ -154,7 +150,7 @@ class Wikipedia(Dataset):
         LOGGER.info(
             'Downloading data from %s and writing it to %s',
             url, filename)
-        write_streaming_download_file(
+        fileio.write_streaming_download_file(
             url, filename, mode='wb', encoding=None,
             auto_make_dirs=True, chunk_size=1024)
 
@@ -168,10 +164,10 @@ class Wikipedia(Dataset):
         """
         if compat.is_python2 is False:
             events = ('end',)
-            f = open_sesame(self.filename, mode='rt')
+            f = fileio.open_sesame(self.filename, mode='rt')
         else:  # Python 2 can't open bzip in text mode :(
             events = (b'end',)
-            f = open_sesame(self.filename, mode='rb')
+            f = fileio.open_sesame(self.filename, mode='rb')
         with f:
 
             elems = (elem for _, elem in iterparse(f, events=events))
