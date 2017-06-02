@@ -3,11 +3,10 @@
 Reddit Comments
 ---------------
 
-Stream a dataset of up to ~1.5 billion Reddit comments posted from October 2007
-through May 2015, as either texts (str) or records (dict) with both text and
-metadata.
+Stream up to ~1.5 billion Reddit comments posted from October 2007 through
+May 2015, as either texts (str) or records (dict) with both text and metadata.
 
-Key fields in each record are as follows:
+Record include the following key fields (plus a few others):
 
     * ``body``: full text of the comment
     * ``created_utc``: date on which the comment was posted
@@ -69,7 +68,7 @@ class RedditComments(Dataset):
         >>> for record in rc.records(limit=5):
         ...     print(record['body'], record['author'], record['created_utc'])
 
-    Filter for specific comments on a variety of fields::
+    Filter comments by a variety of metadata fields and text length::
 
         >>> for record in rc.records(subreddit='politics', limit=5):
         ...     print(record['body'], record['score'])
@@ -259,8 +258,8 @@ class RedditComments(Dataset):
     def _iterate(self, text_only, subreddit, date_range, score_range,
                  min_len, limit):
         """
-        Iterate over the comments in 1 or more Reddit comments files. Used by
-        both :meth:`RedditComments.texts()` and :meth:`RedditComments.records()`.
+        Low-level method to iterate over the comments in 1+ Reddit comments files.
+        Used by :meth:`RedditComments.texts()` and :meth:`RedditComments.records()`.
         """
         if subreddit:
             if isinstance(subreddit, compat.string_types):

@@ -6,14 +6,14 @@ Wikipedia
 Stream all articles for a given Wikipedia site snapshot, as either texts (str)
 or records (dict) with both text and metadata.
 
-Records have the following fields:
+Records include the following fields:
 
+    * ``text``: text content of the article, with markup stripped out
     * ``title``: title of the Wikipedia article
     * ``page_id``: unique identifier of the page, usable in Wikimedia APIs
     * ``wiki_links``: a list of other article pages linked to from this page
     * ``ext_links``: a list of external URLs linked to from this page
     * ``categories``: a list of Wikipedia categories to which this page belongs
-    * ``text``: text content of the article, with markup stripped out
 """
 from __future__ import unicode_literals
 
@@ -97,10 +97,42 @@ re_magic_words = re.compile('|'.join(magic_words))
 
 class Wikipedia(Dataset):
     """
+    Stream Wikipedia articles from versioned, language-specific database dumps,
+    either as texts (str) or records (dict) with both text content and metadata.
+
+    Download a database dump for a given language and version::
+
+        >>> wp = Wikipedia(lang='en', version='latest')
+        >>> wp.download()
+        >>> wp.info
+        {'data_dir': 'path/to/textacy/data/wikipedia',
+         'description': 'All articles for a given Wikimedia wiki, including wikitext source and metadata, as a single database dump in XML format.',
+         'name': 'wikipedia',
+         'site_url': 'https://meta.wikimedia.org/wiki/Data_dumps'}
+
+    Iterate over articles as plain texts or records with both text and metadata::
+
+        >>> for text in wp.texts(limit=5):
+        ...     print(text)
+        >>> for record in wp.records(limit=5):
+        ...     print(record['title'], record['text'][:500])
+
+    Filter articles by text length::
+
+        >>> for text in wp.texts(min_len=1000, limit=1):
+        ...     print(text)
+
     Args:
-        data_dir (str)
-        lang (str)
-        version (str)
+        data_dir (str): Path to directory on disk under which database dump
+            files are stored. Each file is expected at
+            ``{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2``
+            immediately under this directory.
+        lang (str): Standard two-letter language code, e.g. "en" => "English",
+            "de" => "German", "fr" => "French".
+        version (str): Database dump version to use. Either "latest" for the
+            most recently available version or a date formatted as "YYYYMMDD".
+            Dumps are produced intermittently; check for available versions at
+            https://meta.wikimedia.org/wiki/Data_dumps.
 
     Attributes:
         lang (str)
@@ -110,25 +142,25 @@ class Wikipedia(Dataset):
     """
 
     def __init__(self, data_dir=DATA_DIR, lang='en', version='latest'):
+        super(Wikipedia, self).__init__(
+            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
         self.lang = lang
         self.version = version
         self.filestub = '{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2'.format(
             version=self.version, lang=self.lang)
-        super(Wikipedia, self).__init__(
-            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
+        self._filename = os.path.join(data_dir, self.filestub)
 
     @property
     def filename(self):
         """
         str: Full path on disk for Wikipedia database dump corresponding to
             the ``lang`` and ``version`` used in instantiation.
+            ``None`` if file not found.
         """
-        if os.path.exists(self.data_dir):
-            return os.path.join(self.data_dir, self.filestub)
+        if os.path.isfile(self._filename):
+            return self._filename
         else:
-            LOGGER.warning(
-                '%s data directory does not exist', self.data_dir)
-            return ''
+            return None
 
     def download(self, force=False):
         """
@@ -141,17 +173,15 @@ class Wikipedia(Dataset):
                 even if it already exists on disk.
         """
         url = compat.urljoin(DOWNLOAD_ROOT, self.filestub)
-        filename = self.filename
-        if os.path.isfile(filename) and force is False:
+        fname = self._filename
+        if os.path.isfile(fname) and force is False:
             LOGGER.warning(
-                'File %s already exists; skipping download...',
-                filename)
+                'File %s already exists; skipping download...', fname)
             return
         LOGGER.info(
-            'Downloading data from %s and writing it to %s',
-            url, filename)
+            'Downloading data from %s and writing it to %s', url, fname)
         fileio.write_streaming_download_file(
-            url, filename, mode='wb', encoding=None,
+            url, fname, mode='wb', encoding=None,
             auto_make_dirs=True, chunk_size=1024)
 
     def __iter__(self):
@@ -162,6 +192,9 @@ class Wikipedia(Dataset):
         Yields:
             Tuple[str, str, str]: page id, title, content with wikimedia markup
         """
+        if not self.filename:
+            raise IOError('{} file not found'.format(self._filename))
+
         if compat.is_python2 is False:
             events = ('end',)
             f = fileio.open_sesame(self.filename, mode='rt')
