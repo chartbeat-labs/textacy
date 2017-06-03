@@ -38,15 +38,12 @@ from textacy import fileio
 
 LOGGER = logging.getLogger(__name__)
 
-NAME = 'capitolwords'
+NAME = 'capitol_words'
 DESCRIPTION = ('Collection of ~11k speeches in the Congressional Record given by '
                'notable U.S. politicians between Jan 1996 and Jun 2016.')
 SITE_URL = 'http://sunlightlabs.github.io/Capitol-Words/'  # TODO: change to propublica?
 DOWNLOAD_ROOT = 'https://s3.amazonaws.com/chartbeat-labs/'
 DATA_DIR = os.path.join(data_dir, NAME)
-
-MIN_DATE = '1996-01-01'
-MAX_DATE = '2016-06-30'
 
 
 class CapitolWords(Dataset):
@@ -89,7 +86,7 @@ class CapitolWords(Dataset):
 
         >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
         ...     cw.records(limit=100), 'text')
-        >>> c = textacy.Corpus.from_texts('en', text_stream, metadata_stream)
+        >>> c = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
         >>> c
         Corpus(100 docs; 70500 tokens)
 
@@ -102,6 +99,10 @@ class CapitolWords(Dataset):
             `download_if_missing` is False
 
     Attributes:
+        min_date (str): Earliest date for which speeches are available, as an
+            ISO-formatted string (YYYY-MM-DD).
+        max_date (str): Latest date for which speeches are available, as an
+            ISO-formatted string (YYYY-MM-DD).
         speaker_names (Set[str]): full names of all speakers included in corpus,
             e.g. `'Bernie Sanders'`
         speaker_parties (Set[str]): all distinct political parties of speakers,
@@ -112,6 +113,8 @@ class CapitolWords(Dataset):
             speeches were given, e.g. `114`
     """
 
+    min_date = '1996-01-01'
+    max_date = '2016-06-30'
     speaker_names = {
         'Barack Obama', 'Bernie Sanders', 'Hillary Clinton', 'Jim Webb',
         'Joe Biden', 'John Kasich', 'Joseph Biden', 'Lincoln Chafee',
@@ -132,7 +135,7 @@ class CapitolWords(Dataset):
     def filename(self):
         """
         str: Full path on disk for CapitolWords data as compressed json file.
-            ``None`` if file not found.
+            ``None`` if file is not found, e.g. has not yet been downloaded.
         """
         if os.path.isfile(self._filename):
             return self._filename
@@ -300,17 +303,3 @@ class CapitolWords(Dataset):
             n += 1
             if n == limit:
                 break
-
-    def _parse_date_range(self, date_range):
-        """Flexibly parse date range args."""
-        if not isinstance(date_range, (list, tuple)):
-            raise ValueError(
-                '`date_range` must be a list or tuple, not {}'.format(type(date_range)))
-        if len(date_range) != 2:
-            raise ValueError(
-                '`date_range` must have exactly two items: start and end')
-        if not date_range[0]:
-            date_range = (MIN_DATE, date_range[1])
-        if not date_range[1]:
-            date_range = (date_range[0], MAX_DATE)
-        return tuple(date_range)

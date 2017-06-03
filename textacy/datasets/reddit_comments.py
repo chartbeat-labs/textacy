@@ -15,6 +15,8 @@ Record include the following key fields (plus a few others):
     * ``score``: net score (upvotes - downvotes) on the comment
     * ``gilded``: number of times this comment received reddit gold
 """
+from __future__ import unicode_literals
+
 from datetime import datetime
 import io
 import logging
@@ -26,8 +28,8 @@ import requests
 from textacy import data_dir
 from textacy import compat
 from textacy.datasets.base import Dataset
-from textacy.fileio import get_filenames, read_json_lines, write_streaming_download_file
-from textacy.preprocess import normalize_whitespace
+from textacy import fileio
+from textacy import preprocess
 
 LOGGER = logging.getLogger(__name__)
 
@@ -38,8 +40,6 @@ SITE_URL = 'https://archive.org/details/2015_reddit_comments_corpus'
 DATA_DIR = os.path.join(data_dir, NAME)
 
 DOWNLOAD_ROOT = 'https://archive.org/download/2015_reddit_comments_corpus/reddit_data/'
-MIN_DATE = '2007-10-01'
-MAX_DATE = '2015-06-01'
 MIN_SCORE = -2147483647
 MAX_SCORE = 2147483647
 
@@ -83,9 +83,16 @@ class RedditComments(Dataset):
             immediately under this directory.
 
     Attributes:
+        min_date (str): Earliest date for which comments are available, as an
+            ISO-formatted string (YYYY-MM-DD).
+        max_date (str): Latest date for which comments are available, as an
+            ISO-formatted string (YYYY-MM-DD).
         filenames (Tuple[str]): Full paths on disk for all Reddit comments files
             found under the ``data_dir`` directory, sorted chronologically.
     """
+
+    min_date = '2007-10-01'
+    max_date = '2015-06-01'
 
     def __init__(self, data_dir=DATA_DIR):
         super(RedditComments, self).__init__(
@@ -98,7 +105,7 @@ class RedditComments(Dataset):
         the ``data_dir`` directory, sorted chronologically.
         """
         if os.path.exists(self.data_dir):
-            return tuple(sorted(get_filenames(self.data_dir, extension='.bz2', recursive=True)))
+            return tuple(sorted(fileio.get_filenames(self.data_dir, extension='.bz2', recursive=True)))
         else:
             LOGGER.warning(
                 '%s data directory does not exist', self.data_dir)
@@ -132,23 +139,9 @@ class RedditComments(Dataset):
             LOGGER.info(
                 'Downloading data from %s and writing it to %s',
                 url, filename)
-            write_streaming_download_file(
+            fileio.write_streaming_download_file(
                 url, filename, mode='wb', encoding=None,
                 auto_make_dirs=True, chunk_size=1024)
-
-    def _parse_date_range(self, date_range):
-        """Flexibly parse date range args."""
-        if not isinstance(date_range, (list, tuple)):
-            raise ValueError(
-                '`date_range` must be a list or tuple, not {}'.format(type(date_range)))
-        if len(date_range) != 2:
-            raise ValueError(
-                '`date_range` must have exactly two items: start and end')
-        if not date_range[0]:
-            date_range = (MIN_DATE, date_range[1])
-        if not date_range[1]:
-            date_range = (date_range[0], MAX_DATE)
-        return tuple(date_range)
 
     def _parse_score_range(self, score_range):
         """Flexibly parse score range args."""
@@ -286,7 +279,7 @@ class RedditComments(Dataset):
 
         n = 0
         for filename in filenames:
-            for line in read_json_lines(filename, mode='rb'):
+            for line in fileio.read_json_lines(filename, mode='rb'):
 
                 if subreddit and line['subreddit'] not in subreddit:
                     continue
@@ -326,4 +319,4 @@ class RedditComments(Dataset):
         # strip out text markup, e.g. * for bold text
         content = content.replace('`', '').replace('*', '').replace('~', '')
         # normalize whitespace
-        return normalize_whitespace(content)
+        return preprocess.normalize_whitespace(content)

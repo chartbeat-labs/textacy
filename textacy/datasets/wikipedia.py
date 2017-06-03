@@ -128,17 +128,19 @@ class Wikipedia(Dataset):
             ``{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2``
             immediately under this directory.
         lang (str): Standard two-letter language code, e.g. "en" => "English",
-            "de" => "German", "fr" => "French".
+            "de" => "German". https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
         version (str): Database dump version to use. Either "latest" for the
             most recently available version or a date formatted as "YYYYMMDD".
             Dumps are produced intermittently; check for available versions at
             https://meta.wikimedia.org/wiki/Data_dumps.
 
     Attributes:
-        lang (str)
-        version (str)
-        filestub (str)
-        filename (str)
+        lang (str): Standard two-letter language code used in instantiation.
+        version (str): Database dump version used in instantiation.
+        filestub (str): The component of ``filename`` that is unique to this
+            lang- and version-specific database dump.
+        filename (str): Full path on disk for the lang- and version-specific
+            Wikipedia database dump, found under the ``data_dir`` directory.
     """
 
     def __init__(self, data_dir=DATA_DIR, lang='en', version='latest'):

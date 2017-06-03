@@ -34,3 +34,27 @@ class Dataset(object):
 
     def load(self, indir=None):
         raise NotImplementedError()
+
+    def _parse_date_range(self, date_range):
+        """
+        Flexibly parse date range args, where ``date_range`` is length-2 list or
+        tuple for which null values will be automatically set equal to the min
+        or max valid dates, if available as class attributes.
+        """
+        if not isinstance(date_range, (list, tuple)):
+            raise ValueError(
+                '`date_range` must be a list or tuple, not {}'.format(type(date_range)))
+        if len(date_range) != 2:
+            raise ValueError(
+                '`date_range` must have exactly two items: start and end')
+        if not date_range[0]:
+            try:
+                date_range = (self.min_date, date_range[1])
+            except AttributeError:
+                raise ValueError('`date_range` minimum must be specified')
+        if not date_range[1]:
+            try:
+                date_range = (date_range[0], self.max_date)
+            except AttributeError:
+                raise ValueError('`date_range` maximum must be specified')
+        return tuple(date_range)
