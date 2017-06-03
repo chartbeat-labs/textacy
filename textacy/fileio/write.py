@@ -9,6 +9,7 @@ from numpy import savez, savez_compressed
 import requests
 from scipy.sparse import csc_matrix, csr_matrix
 from spacy.tokens.doc import Doc as SpacyDoc
+from tqdm import tqdm
 
 from textacy.compat import csv, unicode_to_bytes
 from textacy.fileio import open_sesame, make_dirs
@@ -206,11 +207,15 @@ def write_streaming_download_file(url, filepath, mode='wt', encoding=None,
     with closing(requests.get(url, stream=True)) as r:
         # set fallback encoding if unable to infer from headers
         if r.encoding is None:
-            # TODO: log a warning?
             r.encoding = 'utf-8'
         with io.open(filepath, mode=mode, encoding=encoding) as f:
-            for chunk in r.iter_content(chunk_size=chunk_size,
-                                        decode_unicode=decode_unicode):
+            pbar = tqdm(
+                unit='B', unit_scale=True,
+                total=int(r.headers.get('content-length', 0)))
+            chunks = r.iter_content(
+                chunk_size=chunk_size, decode_unicode=decode_unicode)
+            for chunk in chunks:
                 # needed (?) to filter out "keep-alive" new chunks
                 if chunk:
+                    pbar.update(len(chunk))
                     f.write(chunk)
