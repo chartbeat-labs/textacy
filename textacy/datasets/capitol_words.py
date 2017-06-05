@@ -148,8 +148,7 @@ class CapitolWords(Dataset):
         and save it to disk under the ``data_dir`` directory.
 
         Args:
-            force (bool): Force download the json file, even if it already
-                exists on disk.
+            force (bool): Download the file, even if it already exists on disk.
         """
         url = compat.urljoin(DOWNLOAD_ROOT, self.filestub)
         fname = self._filename

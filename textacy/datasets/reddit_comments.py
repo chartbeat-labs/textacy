@@ -123,8 +123,7 @@ class RedditComments(Dataset):
                 to the corresponding YYYY-MM value). Both start and end values
                 must be specified, but a null value for either is automatically
                 replaced by the minimum or maximum valid values, respectively.
-            force (bool): Force download of all specified files, even if they
-                already exist on disk.
+            force (bool): Download the file, even if it already exists on disk.
         """
         date_range = self._parse_date_range(date_range)
         fstubs = self._generate_filestubs(date_range)
