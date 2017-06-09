@@ -250,8 +250,8 @@ class RedditComments(Dataset):
     def _iterate(self, text_only, subreddit, date_range, score_range,
                  min_len, limit):
         """
-        Low-level method to iterate over the comments in 1+ Reddit comments files.
-        Used by :meth:`RedditComments.texts()` and :meth:`RedditComments.records()`.
+        Low-level method to iterate over the records this dataset. Used by
+        :meth:`RedditComments.texts()` and :meth:`RedditComments.records()`.
         """
         if subreddit:
             if isinstance(subreddit, compat.string_types):

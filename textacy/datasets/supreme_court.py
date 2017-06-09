@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-The Supreme Court Corpus
-------------------------
+Supreme Court Decisions
+-----------------------
 
 Stream a corpus of ~8.4k (almost all) decisions issued by the U.S. Supreme Court
 from November 1946 through June 2016 — the "modern" era.
@@ -621,7 +621,7 @@ class SupremeCourt(Dataset):
                 passing all filter params
 
         Raises:
-            ValueError: if any filtering options are invalid
+            ValueError: If any filtering options are invalid.
         """
         texts = self._iterate(
             True, opinion_author=opinion_author, issue_area=issue_area,
@@ -660,7 +660,7 @@ class SupremeCourt(Dataset):
                 case in corpus passing all filter params
 
         Raises:
-            ValueError: if any filtering options are invalid
+            ValueError: If any filtering options are invalid.
         """
         records = self._iterate(
             False, opinion_author=opinion_author, issue_area=issue_area,
@@ -672,8 +672,8 @@ class SupremeCourt(Dataset):
     def _iterate(self, text_only, opinion_author=None, decision_direction=None,
                  issue_area=None, date_range=None, min_len=None, limit=-1):
         """
-        Low-level method to iterate over the records in a compressed json file.
-        Used by :meth:`SupremeCourt.texts()` and :meth:`SupremeCourt.records()`.
+        Low-level method to iterate over the records in this dataset. Used by
+        :meth:`SupremeCourt.texts()` and :meth:`SupremeCourt.records()`.
         """
         if not self.filename:
             raise IOError('{} file not found'.format(self._filename))

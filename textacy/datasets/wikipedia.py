@@ -314,7 +314,7 @@ class Wikipedia(Dataset):
 
         Notes:
             Page and section titles appear immediately before the text content
-                that they label, separated by a single newline character.
+                that they label, separated by an empty line.
         """
         n_pages = 0
         for _, title, content in self:
@@ -347,10 +347,12 @@ class Wikipedia(Dataset):
             dict: the next page's parsed content, including key:value pairs for
                 'title', 'page_id', 'text', 'categories', 'wiki_links', 'ext_links'
 
-        .. note:: This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
+        Notes:
+            This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
         """
+        # hiding this here; don't want another required dep
         try:
-            import mwparserfromhell  # hiding this here; don't want another required dep
+            import mwparserfromhell
         except ImportError:
             LOGGER.exception(
                 'mwparserfromhell package must be installed; '

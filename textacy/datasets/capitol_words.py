@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-CapitolWords
-------------
+Capitol Words
+-------------
 
 Stream ~11k (almost all) speeches given by the main protagonists of the 2016 U.S.
 Presidential election that had previously served in the U.S. Congress — including
@@ -21,7 +21,7 @@ Records include the following fields:
     * ``chamber``: chamber of Congress in which the speech was given; almost all
       are either 'House' or 'Senate', with a small number of 'Extensions'
 
-This corpus was derived from data provided by the (now defunct) Sunlight
+This dataset was derived from data provided by the (now defunct) Sunlight
 Foundation's `Capitol Words API <http://sunlightlabs.github.io/Capitol-Words/>`_.
 """
 from __future__ import unicode_literals
@@ -94,10 +94,6 @@ class CapitolWords(Dataset):
         data_dir (str): Path to directory on disk under which compressed json
             files are stored.
 
-    Raises:
-        OSError: if corpus data file isn't found under `data_dir` and
-            `download_if_missing` is False
-
     Attributes:
         min_date (str): Earliest date for which speeches are available, as an
             ISO-formatted string (YYYY-MM-DD).
@@ -165,32 +161,33 @@ class CapitolWords(Dataset):
     def texts(self, speaker_name=None, speaker_party=None, chamber=None,
               congress=None, date_range=None, min_len=None, limit=-1):
         """
-        Iterate over texts in the CapitolWords corpus, optionally filtering by
-        a variety of metadata and/or text length, in order of date.
+        Iterate over texts in this dataset, optionally filtering by a variety of
+        metadata and/or text length, in chronological order.
 
         Args:
-            speaker_name (str or Set[str]): filter speeches by the speakers'
-                name; see :meth:`speaker_names <CapitolWords.speaker_names>`
-            speaker_party (str or Set[str]): filter speeches by the speakers'
-                party; see :meth:`speaker_parties <CapitolWords.speaker_parties>`
-            chamber (str or Set[str]): filter speeches by the chamber in which
-                they were given; see :meth:`chambers <CapitolWords.chambers>`
-            congress (int or Set[int]): filter speeches by the congress in which
-                they were given; see :meth:`congresses <CapitolWords.congresses>`
-            date_range (List[str] or Tuple[str]): filter speeches by the date on
-                which they were given; both start and end date must be specified,
+            speaker_name (str or Set[str]): Filter texts by the speakers' name;
+                see :meth:`speaker_names <CapitolWords.speaker_names>`.
+            speaker_party (str or Set[str]): Filter texts by the speakers' party;
+                see :meth:`speaker_parties <CapitolWords.speaker_parties>`.
+            chamber (str or Set[str]): Filter texts by the chamber in which they
+                were given; see :meth:`chambers <CapitolWords.chambers>`.
+            congress (int or Set[int]): Filter texts by the congress in which
+                they were given; see :meth:`congresses <CapitolWords.congresses>`.
+            date_range (List[str] or Tuple[str]): Filter texts by the date on
+                which they were given. Both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
-                available in the corpus
-            min_len (int): filter speeches by the length (number of characters)
-                in their text content
-            limit (int): return no more than `limit` speeches, in order of date
+                available in the dataset.
+            min_len (int): Filter texts by the length (number of characters)
+                of their text content.
+            limit (int): Return no more than ``limit`` texts,
+                chronological order.
 
         Yields:
-            str: full text of next (by chronological order) speech in corpus
-                passing all filter params
+            str: Full text of next (by chronological order) text in dataset
+                passing all filter params.
 
         Raises:
-            ValueError: if any filtering options are invalid
+            ValueError: If any filtering options are invalid.
         """
         texts = self._iterate(
             True, speaker_name=speaker_name, speaker_party=speaker_party,
@@ -202,46 +199,46 @@ class CapitolWords(Dataset):
     def records(self, speaker_name=None, speaker_party=None, chamber=None,
                 congress=None, date_range=None, min_len=None, limit=-1):
         """
-        Iterate over documents (including text and metadata) in the CapitolWords
-        corpus, optionally filtering by a variety of metadata and/or text length,
-        in order of date.
+        Iterate over records (including text and metadata) in this dataset,
+        optionally filtering by a variety of metadata and/or text length,
+        in chronological order.
 
         Args:
-            speaker_name (str or Set[str]): filter speeches by the speakers'
-                name; see :meth:`speaker_names <CapitolWords.speaker_names>`
-            speaker_party (str or Set[str]): filter speeches by the speakers'
-                party; see :meth:`speaker_parties <CapitolWords.speaker_parties>`
-            chamber (str or Set[str]): filter speeches by the chamber in which
-                they were given; see :meth:`chambers <CapitolWords.chambers>`
-            congress (int or Set[int]): filter speeches by the congress in which
-                they were given; see :meth:`congresses <CapitolWords.congresses>`
-            date_range (List[str] or Tuple[str]): filter speeches by the date on
-                which they were given; both start and end date must be specified,
+            speaker_name (str or Set[str]): Filter records by the speakers' name;
+                see :meth:`speaker_names <CapitolWords.speaker_names>`.
+            speaker_party (str or Set[str]): Filter records by the speakers'
+                party; see :meth:`speaker_parties <CapitolWords.speaker_parties>`.
+            chamber (str or Set[str]): Filter records by the chamber in which
+                they were given; see :meth:`chambers <CapitolWords.chambers>`.
+            congress (int or Set[int]): Filter records by the congress in which
+                they were given; see :meth:`congresses <CapitolWords.congresses>`.
+            date_range (List[str] or Tuple[str]): Filter records by the date on
+                which they were given. Both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
-                available in the corpus
-            min_len (int): filter speeches by the length (number of characters)
-                in their text content
-            limit (int): return no more than `limit` speeches, in order of date
+                available in the dataset.
+            min_len (int): Filter records by the length (number of characters)
+                of their text content.
+            limit (int): Return no more than ``limit`` records,
+                in chronological order.
 
         Yields:
-            dict: full text and metadata of next (by chronological order) speech
-                in corpus passing all filter params
+            dict: Full text and metadata of next (by chronological order) record
+                in dataset passing all filter params.
 
         Raises:
-            ValueError: if any filtering options are invalid
+            ValueError: If any filtering options are invalid.
         """
         records = self._iterate(
-            False, speaker_name=speaker_name, speaker_party=speaker_party,
-            chamber=chamber, congress=congress, date_range=date_range,
-            min_len=min_len, limit=limit)
+            False, speaker_name, speaker_party, chamber, congress, date_range,
+            min_len, limit)
         for record in records:
             yield record
 
     def _iterate(self, text_only, speaker_name, speaker_party, chamber, congress,
                  date_range, min_len, limit):
         """
-        Low-level method to iterate over the records in a compressed json file.
-        Used by :meth:`CapitolWords.texts()` and :meth:`CapitolWords.records()`.
+        Low-level method to iterate over the records this dataset. Used by
+        :meth:`CapitolWords.texts()` and :meth:`CapitolWords.records()`.
         """
         if not self.filename:
             raise IOError('{} file not found'.format(self._filename))
