@@ -11,7 +11,7 @@ Doc and Corpus
     :members:
 
 Text Preprocessing
-----------------------
+------------------
 
 .. automodule:: textacy.preprocess
     :members:
@@ -25,6 +25,12 @@ Information Extraction
 .. automodule:: textacy.keyterms
     :members:
 
+Topic Modeling
+--------------
+
+.. automodule:: textacy.tm.topic_model
+    :members:
+
 Representations
 ---------------
 
@@ -34,10 +40,22 @@ Representations
 .. automodule:: textacy.vsm
     :members:
 
-Topic Modeling
---------------
+Datasets
+--------
 
-.. automodule:: textacy.tm.topic_model
+.. automodule:: textacy.datasets.capitol_words
+    :members:
+
+.. automodule:: textacy.datasets.supreme_court
+    :members:
+
+.. automodule:: textacy.datasets.wikipedia
+    :members:
+
+.. automodule:: textacy.datasets.supreme_court
+    :members:
+
+.. automodule:: textacy.datasets.oxford_text_archive
     :members:
 
 File IO
@@ -50,21 +68,6 @@ File IO
     :members:
 
 .. automodule:: textacy.fileio.utils
-    :members:
-
-Corpora
--------
-
-.. automodule:: textacy.corpora.supremecourt
-    :members:
-
-.. automodule:: textacy.corpora.capitolwords
-    :members:
-
-.. automodule:: textacy.corpora.wiki_reader
-    :members:
-
-.. automodule:: textacy.corpora.reddit_reader
     :members:
 
 Visualization
