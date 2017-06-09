@@ -129,7 +129,7 @@ class WikiReader(object):
             f = open_sesame(self.path, mode='rt', encoding="UTF-8")
         else:  # Python 2 can't open bzip in text mode :(
             events = (b'end',)
-            f = open_sesame(self.path, mode='rb', encoding="UTF-8")
+            f = open_sesame(self.path, mode='rb')
         with f:
 
             elems = (elem for _, elem in iterparse(f, events=events))
