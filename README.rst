@@ -25,7 +25,7 @@ Features
 
 - Stream text, json, csv, and spaCy binary data to and from disk
 - Clean and normalize raw text, *before* analyzing it
-- Explore included corpora of Congressional speeches and Supreme Court decisions, or stream documents from standard Wikipedia pages and Reddit comments datasets
+- Explore a variety of included datasets, with both text data and metadata from Congressional speeches to historical literature to Reddit comments
 - Access and filter basic linguistic elements, such as words and ngrams, noun chunks and sentences
 - Extract named entities, acronyms and their definitions, direct quotations, key terms, and more from documents
 - Compare strings, sets, and documents by a variety of similarity metrics
@@ -83,11 +83,11 @@ Efficiently stream documents from disk and into a processed corpus:
 
 .. code-block:: pycon
 
-    >>> cw = textacy.corpora.CapitolWords()
-    >>> docs = cw.records(speaker_name={'Hillary Clinton', 'Barack Obama'})
-    >>> content_stream, metadata_stream = textacy.fileio.split_record_fields(
-    ...     docs, 'text')
-    >>> corpus = textacy.Corpus('en', texts=content_stream, metadatas=metadata_stream)
+    >>> cw = textacy.datasets.CapitolWords()
+    >>> records = cw.records(speaker_name={'Hillary Clinton', 'Barack Obama'})
+    >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+    ...     records, 'text')
+    >>> corpus = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
     >>> corpus
     Corpus(1241 docs; 857058 tokens)
 

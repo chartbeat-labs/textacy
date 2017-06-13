@@ -37,7 +37,7 @@ class Corpus(object):
 
     Initialize from a stream of texts and corresponding metadatas::
 
-        >>> cw = textacy.corpora.CapitolWords()
+        >>> cw = textacy.datasets.CapitolWords()
         >>> records = cw.docs(limit=50)
         >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
         ...     records, 'text')

@@ -29,10 +29,13 @@ class Dataset(object):
                 'site_url': self.site_url,
                 'data_dir': self.data_dir}
 
-    def download(self, outdir=None):
+    def download(self):
         raise NotImplementedError()
 
-    def load(self, indir=None):
+    def texts(self):
+        raise NotImplementedError()
+
+    def records(self):
         raise NotImplementedError()
 
     def _parse_date_range(self, date_range):
