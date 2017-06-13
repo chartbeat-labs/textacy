@@ -16,7 +16,6 @@ data_dir = os.path.join(
     'data')
 
 # subpackages
-from textacy import corpora
 from textacy import fileio
 from textacy import tm
 from textacy import viz

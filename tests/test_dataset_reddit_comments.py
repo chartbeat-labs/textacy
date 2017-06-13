@@ -51,7 +51,7 @@ class RedditCommentsTestCase(unittest.TestCase):
             self.assertIsInstance(record, dict)
 
     def test_records_subreddit(self):
-        subreddits = ({'politics'}, {'science', 'sports'})
+        subreddits = ({'exmormon'}, {'CanadaPolitics', 'AdviceAnimals'})
         for subreddit in subreddits:
             self.assertTrue(
                 all(r['subreddit'] in subreddit
