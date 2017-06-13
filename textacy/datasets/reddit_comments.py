@@ -3,7 +3,7 @@
 Reddit Comments
 ---------------
 
-Stream up to ~1.5 billion Reddit comments posted from October 2007 through
+A collection of up to ~1.5 billion Reddit comments posted from October 2007 through
 May 2015, as either texts (str) or records (dict) with both text and metadata.
 
 Record include the following key fields (plus a few others):
@@ -34,7 +34,7 @@ from textacy import preprocess
 LOGGER = logging.getLogger(__name__)
 
 NAME = 'reddit_comments'
-DESCRIPTION = ('An archive of ~1.5 billion publicly available Reddit comments '
+DESCRIPTION = ('Collection of ~1.5 billion publicly available Reddit comments '
                'from October 2007 through May 2015.')
 SITE_URL = 'https://archive.org/details/2015_reddit_comments_corpus'
 DATA_DIR = os.path.join(data_dir, NAME)
@@ -111,7 +111,7 @@ class RedditComments(Dataset):
                 '%s data directory does not exist', self.data_dir)
             return tuple()
 
-    def download(self, date_range=(MIN_DATE, MAX_DATE), force=False):
+    def download(self, date_range=(None, None), force=False):
         """
         Download 1 or more monthly Reddit comments files from archive.org
         and save them to disk under the ``data_dir`` used to instantiate.

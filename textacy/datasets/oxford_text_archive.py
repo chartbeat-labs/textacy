@@ -3,8 +3,8 @@
 Oxford Text Archive
 -------------------
 
-Collection of ~2.7k Creative Commons texts from the Oxford Text Archive,
-containing 16th-20th century literature and history.
+A collection of ~2.7k Creative Commons texts from the Oxford Text Archive,
+containing primarily English-language 16th-20th century literature and history.
 
 Record include the following fields:
 
@@ -39,7 +39,8 @@ LOGGER = logging.getLogger(__name__)
 
 NAME = 'oxford_text_archive'
 DESCRIPTION = ('Collection of ~2.7k Creative Commons texts from the Oxford Text '
-               'Archive, containing 16th-20th century literature and history.')
+               'Archive, containing primarily English-language 16th-20th century '
+               'literature and history.')
 SITE_URL = 'https://ota.ox.ac.uk/'
 DOWNLOAD_ROOT = 'https://github.com/mimno/ota/archive/master.zip'
 DATA_DIR = os.path.join(data_dir, NAME)
@@ -56,7 +57,7 @@ class OxfordTextArchive(Dataset):
         >>> ota.download()
         >>> ota.info
         {'data_dir': 'path/to/textacy/data/oxford_text_archive',
-         'description': 'Collection of ~2.7k Creative Commons texts from the Oxford Text Archive, containing 16th-20th century literature and history.',
+         'description': 'Collection of ~2.7k Creative Commons texts from the Oxford Text Archive, containing primarily English-language 16th-20th century literature and history.',
          'name': 'oxford_text_archive',
          'site_url': 'https://ota.ox.ac.uk/'}
 
@@ -153,12 +154,15 @@ class OxfordTextArchive(Dataset):
         if not self.filename:
             raise IOError('{} file not found'.format(self._filename))
 
-        # TODO: fix a couple of issues in the author cleanup, e.g. "fl" and "d"
         re_extract_year = re.compile(r'(\d{4})')
-        re_extract_authors = re.compile(r'([^\d]+)(?:\d{4}(?:\?| or \d{1,2})?-(?:ca\. )?\d{4}|[bdfl]\.(?: ca\.)? \d{4}\??|-\d{4}|\d{4} or \d{1,2}|\d{2}th cent\.)\.?')
-        re_clean_authors = re.compile(r'^[,; ]+|[,.]+\s*?$')
+        re_extract_authors = re.compile(
+            r'(\D+)'
+            r'(?:, '
+            r'(?:[bdf]l?\. )?(?:ca. )?\d{4}(?:\?| or \d{1,2})?(?:-(?:[bdf]l?\. )?(?:ca. )?\d{4}(?:\?| or \d{1,2})?)?|'
+            r'(?:\d{2}th(?:/\d{2}th)? cent\.)'
+            r'\.?)')
+        re_clean_authors = re.compile(r'^[,;. ]+|[,.]+\s*?$')
 
-        # metadata = []
         metadata = {}
         with zipfile.ZipFile(self._filename, mode='r') as f:
             subf = io.StringIO(f.read('ota-master/metadata.tsv').decode('utf-8'))
@@ -178,18 +182,15 @@ class OxfordTextArchive(Dataset):
                 # get rid of uniform "Language" and "License" fields
                 del row['Language']
                 del row['License']
-                # metadata.append({key.lower(): val for key, val in row.items()})
                 id_ = row.pop('ID')
                 metadata[id_] = {key.lower(): val for key, val in row.items()}
 
         # set authors attribute
-        # self.authors = {a for m in metadata for a in m['author']}
         self.authors = {
             author for value in metadata.values()
             for author in value['author']
             if value.get('author')}
 
-        # return tuple(metadata)
         return metadata
 
     def texts(self, author=None, date_range=None, min_len=None, limit=-1):

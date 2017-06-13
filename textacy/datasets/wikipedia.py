@@ -3,8 +3,8 @@
 Wikipedia
 ---------
 
-Stream all articles for a given Wikipedia site snapshot, as either texts (str)
-or records (dict) with both text and metadata.
+All articles for a given language- and version-specific Wikipedia site snapshot,
+as either texts (str) or records (dict) with both text and metadata.
 
 Records include the following fields:
 
@@ -32,8 +32,8 @@ from textacy import fileio
 LOGGER = logging.getLogger(__name__)
 
 NAME = 'wikipedia'
-DESCRIPTION = ('All articles for a given Wikimedia wiki, including wikitext source '
-               'and metadata, as a single database dump in XML format.')
+DESCRIPTION = ('All articles for a given language- and version-specific '
+               'Wikipedia site snapshot.')
 SITE_URL = 'https://meta.wikimedia.org/wiki/Data_dumps'
 DATA_DIR = os.path.join(data_dir, NAME)
 

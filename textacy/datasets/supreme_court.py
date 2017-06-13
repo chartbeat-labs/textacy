@@ -3,7 +3,7 @@
 Supreme Court Decisions
 -----------------------
 
-Stream a corpus of ~8.4k (almost all) decisions issued by the U.S. Supreme Court
+A collection of ~8.4k (almost all) decisions issued by the U.S. Supreme Court
 from November 1946 through June 2016 — the "modern" era.
 
 Records include the following fields:
