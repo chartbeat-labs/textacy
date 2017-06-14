@@ -30,7 +30,8 @@ class RedditCommentsTestCase(unittest.TestCase):
 
     def test_ioerror(self):
         dataset = RedditComments(data_dir=self.tempdir)
-        self.assertRaises(IOError, list(dataset.texts()))
+        with self.assertRaises(IOError):
+            _ = list(dataset.texts())
 
     def test_texts(self):
         for text in DATASET.texts(limit=3):
@@ -44,7 +45,7 @@ class RedditCommentsTestCase(unittest.TestCase):
         for min_len in (100, 200, 1000):
             self.assertTrue(
                 all(len(text) >= min_len
-                    for text in DATASET.texts(min_len=min_len, limit=100)))
+                    for text in DATASET.texts(min_len=min_len, limit=10)))
 
     def test_records(self):
         for record in DATASET.records(limit=3):
@@ -55,7 +56,7 @@ class RedditCommentsTestCase(unittest.TestCase):
         for subreddit in subreddits:
             self.assertTrue(
                 all(r['subreddit'] in subreddit
-                    for r in DATASET.records(subreddit=subreddit, limit=100)))
+                    for r in DATASET.records(subreddit=subreddit, limit=10)))
 
     def test_records_date_range(self):
         date_ranges = (
@@ -65,7 +66,7 @@ class RedditCommentsTestCase(unittest.TestCase):
         for date_range in date_ranges:
             self.assertTrue(
                 all(date_range[0] <= r['created_utc'] < date_range[1]
-                    for r in DATASET.records(date_range=date_range, limit=100)))
+                    for r in DATASET.records(date_range=date_range, limit=10)))
 
     def test_records_score_range(self):
         score_ranges = (
@@ -75,7 +76,7 @@ class RedditCommentsTestCase(unittest.TestCase):
         for score_range in score_ranges:
             self.assertTrue(
                 all(score_range[0] <= r['score'] < score_range[1]
-                    for r in DATASET.records(score_range=score_range, limit=100)))
+                    for r in DATASET.records(score_range=score_range, limit=10)))
 
     def test_bad_filters(self):
         bad_filters = ({'date_range': '2016-01-01'},

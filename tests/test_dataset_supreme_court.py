@@ -28,21 +28,22 @@ class SupremeCourtTestCase(unittest.TestCase):
 
     def test_ioerror(self):
         dataset = SupremeCourt(data_dir=self.tempdir)
-        self.assertRaises(IOError, list(dataset.texts()))
+        with self.assertRaises(IOError):
+            _ = list(dataset.texts())
 
     def test_texts(self):
         for text in DATASET.texts(limit=3):
             self.assertIsInstance(text, unicode_)
 
     def test_texts_limit(self):
-        for limit in (1, 5, 100):
+        for limit in (1, 5, 10):
             self.assertEqual(sum(1 for _ in DATASET.texts(limit=limit)), limit)
 
     def test_texts_min_len(self):
         for min_len in (100, 200, 1000):
             self.assertTrue(
                 all(len(text) >= min_len
-                    for text in DATASET.texts(min_len=min_len, limit=1000)))
+                    for text in DATASET.texts(min_len=min_len, limit=10)))
 
     def test_records(self):
         for record in DATASET.records(limit=3):
@@ -53,21 +54,21 @@ class SupremeCourtTestCase(unittest.TestCase):
         for opinion_author in opinion_authors:
             self.assertTrue(
                 all(r['maj_opinion_author'] in opinion_author
-                    for r in DATASET.records(opinion_author=opinion_author, limit=100)))
+                    for r in DATASET.records(opinion_author=opinion_author, limit=10)))
 
     def test_records_decision_direction(self):
         decision_directions = ('liberal', {'conservative', 'unspecifiable'})
         for decision_direction in decision_directions:
             self.assertTrue(
                 all(r['decision_direction'] in decision_direction
-                    for r in DATASET.records(decision_direction=decision_direction, limit=1000)))
+                    for r in DATASET.records(decision_direction=decision_direction, limit=10)))
 
     def test_records_issue_area(self):
         issue_areas = ({2}, {4, 5, 6})
         for issue_area in issue_areas:
             self.assertTrue(
                 all(r['issue_area'] in issue_area
-                    for r in DATASET.records(issue_area=issue_area, limit=100)))
+                    for r in DATASET.records(issue_area=issue_area, limit=10)))
 
     def test_records_date_range(self):
         date_ranges = (
@@ -77,7 +78,7 @@ class SupremeCourtTestCase(unittest.TestCase):
         for date_range in date_ranges:
             self.assertTrue(
                 all(date_range[0] <= r['decision_date'] < date_range[1]
-                    for r in DATASET.records(date_range=date_range, limit=1000)))
+                    for r in DATASET.records(date_range=date_range, limit=10)))
 
     def test_bad_filters(self):
         bad_filters = ({'opinion_author': 'Burton DeWilde'},

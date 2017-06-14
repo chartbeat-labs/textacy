@@ -28,7 +28,8 @@ class CapitolWordsTestCase(unittest.TestCase):
 
     def test_ioerror(self):
         dataset = CapitolWords(data_dir=self.tempdir)
-        self.assertRaises(IOError, list(dataset.texts()))
+        with self.assertRaises(IOError):
+            _ = list(dataset.texts())
 
     def test_texts(self):
         for text in DATASET.texts(limit=3):
@@ -42,7 +43,7 @@ class CapitolWordsTestCase(unittest.TestCase):
         for min_len in (100, 200, 1000):
             self.assertTrue(
                 all(len(text) >= min_len
-                    for text in DATASET.texts(min_len=min_len, limit=1000)))
+                    for text in DATASET.texts(min_len=min_len, limit=10)))
 
     def test_records(self):
         for record in DATASET.records(limit=3):
@@ -53,28 +54,28 @@ class CapitolWordsTestCase(unittest.TestCase):
         for speaker_name in speaker_names:
             self.assertTrue(
                 all(r['speaker_name'] in speaker_name
-                    for r in DATASET.records(speaker_name=speaker_name, limit=1000)))
+                    for r in DATASET.records(speaker_name=speaker_name, limit=10)))
 
     def test_records_speaker_party(self):
         speaker_parties = ({'R'}, {'D', 'I'})
         for speaker_party in speaker_parties:
             self.assertTrue(
                 all(r['speaker_party'] in speaker_party
-                    for r in DATASET.records(speaker_party=speaker_party, limit=1000)))
+                    for r in DATASET.records(speaker_party=speaker_party, limit=10)))
 
     def test_records_chamber(self):
         chambers = ({'House'}, {'House', 'Senate'})
         for chamber in chambers:
             self.assertTrue(
                 all(r['chamber'] in chamber
-                    for r in DATASET.records(chamber=chamber, limit=1000)))
+                    for r in DATASET.records(chamber=chamber, limit=10)))
 
     def test_records_congress(self):
         congresses = ({104}, {104, 114})
         for congress in congresses:
             self.assertTrue(
                 all(r['congress'] in congress
-                    for r in DATASET.records(congress=congress, limit=1000)))
+                    for r in DATASET.records(congress=congress, limit=10)))
 
     def test_records_date_range(self):
         date_ranges = (
@@ -84,7 +85,7 @@ class CapitolWordsTestCase(unittest.TestCase):
         for date_range in date_ranges:
             self.assertTrue(
                 all(date_range[0] <= r['date'] < date_range[1]
-                    for r in DATASET.records(date_range=date_range, limit=1000)))
+                    for r in DATASET.records(date_range=date_range, limit=10)))
 
     def test_bad_filters(self):
         bad_filters = ({'speaker_name': 'Burton DeWilde'},

@@ -28,21 +28,22 @@ class WikipediaTestCase(unittest.TestCase):
 
     def test_ioerror(self):
         dataset = Wikipedia(data_dir=self.tempdir)
-        self.assertRaises(IOError, list(dataset.texts()))
+        with self.assertRaises(IOError):
+            _ = list(dataset.texts())
 
     def test_texts(self):
         for text in DATASET.texts(limit=3):
             self.assertIsInstance(text, unicode_)
 
     def test_texts_limit(self):
-        for limit in (1, 5, 100):
+        for limit in (1, 5, 10):
             self.assertEqual(sum(1 for _ in DATASET.texts(limit=limit)), limit)
 
     def test_texts_min_len(self):
         for min_len in (100, 200, 1000):
             self.assertTrue(
                 all(len(text) >= min_len
-                    for text in DATASET.texts(min_len=min_len, limit=1000)))
+                    for text in DATASET.texts(min_len=min_len, limit=10)))
 
     def test_records(self):
         for record in DATASET.records(limit=3):

@@ -28,7 +28,8 @@ class OxfordTextArchiveTestCase(unittest.TestCase):
 
     def test_ioerror(self):
         dataset = OxfordTextArchive(data_dir=self.tempdir)
-        self.assertRaises(IOError, list(dataset.texts()))
+        with self.assertRaises(IOError):
+            _ = list(dataset.texts())
 
     def test_texts(self):
         for text in DATASET.texts(limit=3):
@@ -42,7 +43,7 @@ class OxfordTextArchiveTestCase(unittest.TestCase):
         for min_len in (100, 200, 1000):
             self.assertTrue(
                 all(len(text) >= min_len
-                    for text in DATASET.texts(min_len=min_len, limit=1000)))
+                    for text in DATASET.texts(min_len=min_len, limit=10)))
 
     def test_records(self):
         for record in DATASET.records(limit=3):
@@ -53,7 +54,7 @@ class OxfordTextArchiveTestCase(unittest.TestCase):
         for author in authors:
             self.assertTrue(
                 all(a in author
-                    for r in DATASET.records(author=author, limit=1000)
+                    for r in DATASET.records(author=author, limit=10)
                     for a in r['author']))
 
     def test_records_date_range(self):
@@ -64,7 +65,7 @@ class OxfordTextArchiveTestCase(unittest.TestCase):
         for date_range in date_ranges:
             self.assertTrue(
                 all(date_range[0] <= r['year'] < date_range[1]
-                    for r in DATASET.records(date_range=date_range, limit=1000)))
+                    for r in DATASET.records(date_range=date_range, limit=10)))
 
     def test_bad_filters(self):
         bad_filters = ({'author': 'Burton DeWilde'},
