@@ -11,9 +11,11 @@ __version__ = '0.3.4'
 __resources_dir__ = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     'resources')
+data_dir = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)),
+    'data')
 
 # subpackages
-from textacy import corpora
 from textacy import fileio
 from textacy import tm
 from textacy import viz

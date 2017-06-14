@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-The Supreme Court Corpus
-------------------------
+Supreme Court Decisions
+-----------------------
 
-Download to and stream from disk a corpus of (almost all) decisions issued by
-the U.S. Supreme Court from 1946 through 2016. That amounts to about 8.4k
-documents and 71M tokens, where each document contains 11 fields:
+A collection of ~8.4k (almost all) decisions issued by the U.S. Supreme Court
+from November 1946 through June 2016 — the "modern" era.
+
+Records include the following fields:
 
     * ``text``: full text of the Court's decision
     * ``case_name``: name of the court case, in all caps
@@ -45,46 +46,58 @@ trained model using the ``dedupe`` package. The model's duplicate threshold
 was set so as to maximize the F-score where precision had twice as much
 weight as recall. Still, given occasionally baffling inconsistencies in case
 naming, citation ids, and decision dates, a very small percentage of texts
-may be incorrectly matched to metadata.
+may be incorrectly matched to metadata. Sorry.
 """
+from __future__ import unicode_literals
+
 import io
 import logging
 import os
 
 import requests
 
-from textacy import __resources_dir__
-from textacy.compat import is_python2, string_types
-from textacy.fileio import make_dirs, read_json_lines
+from textacy import data_dir
+from textacy import compat
+from textacy.datasets.base import Dataset
+from textacy import fileio
 
 LOGGER = logging.getLogger(__name__)
 
-if is_python2:
-    URL = 'https://s3.amazonaws.com/chartbeat-labs/supreme-court-py2.json.gz'
-else:
-    URL = 'https://s3.amazonaws.com/chartbeat-labs/supreme-court-py3.json.gz'
-FILENAME = URL.rsplit('/', 1)[-1]
-
-MIN_DATE = '1946-11-18'
-MAX_DATE = '2016-06-27'
+NAME = 'supreme_court'
+DESCRIPTION = ('Collection of ~8.4k decisions issued by the U.S. Supreme Court '
+               'between November 1946 and June 2016.')
+SITE_URL = 'http://caselaw.findlaw.com/court/us-supreme-court'
+DOWNLOAD_ROOT = 'https://s3.amazonaws.com/chartbeat-labs/'
+DATA_DIR = os.path.join(data_dir, NAME)
 
 
-class SupremeCourt(object):
+class SupremeCourt(Dataset):
     """
-    Download data and stream from disk a collection of Supreme Court decisions
-    that includes the full text and key metadata for each::
+    Stream U.S. Supreme Court decisions from a compressed json file on disk,
+    either as texts (str) or records (dict) with both text content and metadata.
 
-        >>> sc = textacy.corpora.SupremeCourt()
+    Download a Python version-specific file from s3::
+
+        >>> sc = SupremeCourt()
+        >>> sc.download()
+        >>> sc.info
+        {'data_dir': 'path/to/textacy/data/supreme_court',
+         'description': 'Collection of ~8.4k decisions issued by the U.S. Supreme Court between November 1946 and June 2016.',
+         'name': 'supreme_court',
+         'site_url': 'http://caselaw.findlaw.com/court/us-supreme-court'}
+
+    Iterate over decisions as plain texts or records with both text and metadata::
+
         >>> for text in sc.texts(limit=1):
         ...     print(text)
         >>> for record in sc.records(limit=1):
         ...     print(record['case_name'], record['decision_date'])
         ...     print(record['text'])
 
-    Filter court cases by metadata and text length::
+    Filter decisions by a variety of metadata fields and text length::
 
         >>> for record in sc.records(opinion_author=109, limit=1):  # Notorious RBG!
-        ...     print(record['case_name'], record['us_cite_id'])
+        ...     print(record['case_name'], record['decision_direction'], record['n_maj_votes'])
         >>> for record in sc.records(decision_direction='liberal',
         ...                          issue_area={1, 9, 10}, limit=10):
         ...     print(record['maj_opinion_author'], record['n_maj_votes'])
@@ -95,24 +108,23 @@ class SupremeCourt(object):
         >>> for text in sc.texts(min_len=50000):
         ...     print(len(text))
 
-    Stream court cases into a ``Corpus``::
+    Stream decisions into a :class:`textacy.Corpus`::
 
         >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
         ...     sc.records(limit=100), 'text')
-        >>> tc = textacy.Corpus.from_texts('en', text_stream, metadata_stream)
-        >>> print(tc)
+        >>> c = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
+        >>> c
+        Corpus(100 docs; 615135 tokens)
 
     Args:
         data_dir (str): path on disk containing corpus data; if None, textacy's
-            default `__resources_dir__` is used
-        download_if_missing (bool): if True and corpus data file isn't found on
-            disk, download the file and save it to disk under `data_dir`
-
-    Raises:
-        OSError: if corpus data file isn't found under `data_dir` and
-            `download_if_missing` is False
+            default ``data_dir`` is used
 
     Attributes:
+        min_date (str): Earliest date for which decisions are available, as an
+            ISO-formatted string (YYYY-MM-DD).
+        max_date (str): Latest date for which decisions are available, as an
+            ISO-formatted string (YYYY-MM-DD).
         decision_directions (set[str]): all distinct decision directions,
             e.g. 'liberal'
         opinion_author_codes (dict): mapping of majority opinion authors from
@@ -122,6 +134,9 @@ class SupremeCourt(object):
         issue_codes (dict): mapping of specific issue of the case's core
             disagreement from integer code to (str) description
     """
+
+    min_date = '1946-11-18'
+    max_date = '2016-06-27'
 
     decision_directions = {'conservative', 'liberal', 'unspecifiable'}
 
@@ -539,79 +554,43 @@ class SupremeCourt(object):
         '90510': "Supreme Court's certiorari, writ of error, or appeals jurisdiction",
         '90520': 'miscellaneous judicial power, especially diversity jurisdiction'}
 
-    def __init__(self, data_dir=None, download_if_missing=True):
-        if data_dir is None:
-            data_dir = __resources_dir__
-        self.filepath = os.path.join(data_dir, 'supremecourt', FILENAME)
-        if not os.path.exists(self.filepath):
-            if download_if_missing is True:
-                self._download_data()
-            else:
-                raise OSError('file "{}" not found'.format(self.filepath))
+    def __init__(self, data_dir=DATA_DIR):
+        super(SupremeCourt, self).__init__(
+            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
+        self.filestub = 'supreme-court-py2.json.gz' if compat.is_python2 \
+            else 'supreme-court-py3.json.gz'
+        self._filename = os.path.join(data_dir, self.filestub)
 
-    def _download_data(self):
-        LOGGER.info('downloading data from "%s"', URL)
-        response = requests.get(URL)
-        make_dirs(self.filepath, 'wb')
-        with io.open(self.filepath, mode='wb') as f:
-            f.write(response.content)
+    @property
+    def filename(self):
+        """
+        str: Full path on disk for SupremeCourt data as compressed json file.
+            ``None`` if file is not found, e.g. has not yet been downloaded.
+        """
+        if os.path.isfile(self._filename):
+            return self._filename
+        else:
+            return None
 
-    def _iterate(self, text_only, opinion_author=None, decision_direction=None,
-                 issue_area=None, date_range=None, min_len=None, limit=-1):
-        """Note: Use `.texts()` or `.records()` to iterate over corpus data."""
-        # prepare filters
-        if opinion_author:
-            if isinstance(opinion_author, int):
-                opinion_author = {opinion_author}
-            if not all(oa in self.opinion_author_codes for oa in opinion_author):
-                msg = 'invalid `opinion_author` value; see `SupremeCourt.opinion_author_codes`'
-                raise ValueError(msg)
-        if issue_area:
-            if isinstance(issue_area, int):
-                issue_area = {issue_area}
-            if not all(ii in self.issue_area_codes for ii in issue_area):
-                msg = 'invalid `issue_area` value; see `SupremeCourt.issue_area_codes`'
-                raise ValueError(msg)
-        if decision_direction:
-            if isinstance(decision_direction, string_types):
-                decision_direction = {decision_direction}
-            if not all(dd in self.decision_directions for dd in decision_direction):
-                msg = 'invalid `decision_direction` value; see `SupremeCourt.decision_directions`'
-                raise ValueError(msg)
-        if date_range:
-            if not isinstance(date_range, (list, tuple)):
-                msg = '`date_range` must be a list or tuple, not {}'.format(type(date_range))
-                raise ValueError(msg)
-            if not len(date_range) == 2:
-                msg = '`date_range` must have both start and end values'
-                raise ValueError(msg)
-            if not date_range[0]:
-                date_range = (MIN_DATE, date_range[1])
-            if not date_range[1]:
-                date_range = (date_range[0], MAX_DATE)
+    def download(self, force=False):
+        """
+        Download a Python version-specific compressed json file from s3,
+        and save it to disk under the ``data_dir`` directory.
 
-        n = 0
-        mode = 'rb' if is_python2 else 'rt'
-        for line in read_json_lines(self.filepath, mode=mode):
-            if opinion_author and line['maj_opinion_author'] not in opinion_author:
-                continue
-            if issue_area and line['issue_area'] not in issue_area:
-                continue
-            if decision_direction and line['decision_direction'] not in decision_direction:
-                continue
-            if date_range and not date_range[0] <= line['decision_date'] <= date_range[1]:
-                continue
-            if min_len and len(line['text']) < min_len:
-                continue
-
-            if text_only is True:
-                yield line['text']
-            else:
-                yield line
-
-            n += 1
-            if n == limit:
-                break
+        Args:
+            force (bool): Download the file, even if it already exists on disk.
+        """
+        url = compat.urljoin(DOWNLOAD_ROOT, self.filestub)
+        fname = self._filename
+        if os.path.isfile(fname) and force is False:
+            LOGGER.warning(
+                'File %s already exists; skipping download...', fname)
+            return
+        LOGGER.info(
+            'Downloading data from %s and writing it to %s', url, fname)
+        fileio.write_streaming_download_file(
+            url, fname, mode='wb', encoding=None,
+            auto_make_dirs=True, chunk_size=1024)
 
     def texts(self, opinion_author=None, issue_area=None, decision_direction=None,
               date_range=None, min_len=None, limit=-1):
@@ -642,7 +621,7 @@ class SupremeCourt(object):
                 passing all filter params
 
         Raises:
-            ValueError: if any filtering options are invalid
+            ValueError: If any filtering options are invalid.
         """
         texts = self._iterate(
             True, opinion_author=opinion_author, issue_area=issue_area,
@@ -681,7 +660,7 @@ class SupremeCourt(object):
                 case in corpus passing all filter params
 
         Raises:
-            ValueError: if any filtering options are invalid
+            ValueError: If any filtering options are invalid.
         """
         records = self._iterate(
             False, opinion_author=opinion_author, issue_area=issue_area,
@@ -689,3 +668,56 @@ class SupremeCourt(object):
             min_len=min_len, limit=limit)
         for record in records:
             yield record
+
+    def _iterate(self, text_only, opinion_author=None, decision_direction=None,
+                 issue_area=None, date_range=None, min_len=None, limit=-1):
+        """
+        Low-level method to iterate over the records in this dataset. Used by
+        :meth:`SupremeCourt.texts()` and :meth:`SupremeCourt.records()`.
+        """
+        if not self.filename:
+            raise IOError('{} file not found'.format(self._filename))
+
+        if opinion_author:
+            if isinstance(opinion_author, int):
+                opinion_author = {opinion_author}
+            if not all(oa in self.opinion_author_codes for oa in opinion_author):
+                msg = 'invalid `opinion_author` value; see `SupremeCourt.opinion_author_codes`'
+                raise ValueError(msg)
+        if issue_area:
+            if isinstance(issue_area, int):
+                issue_area = {issue_area}
+            if not all(ii in self.issue_area_codes for ii in issue_area):
+                msg = 'invalid `issue_area` value; see `SupremeCourt.issue_area_codes`'
+                raise ValueError(msg)
+        if decision_direction:
+            if isinstance(decision_direction, compat.string_types):
+                decision_direction = {decision_direction}
+            if not all(dd in self.decision_directions for dd in decision_direction):
+                msg = 'invalid `decision_direction` value; see `SupremeCourt.decision_directions`'
+                raise ValueError(msg)
+        if date_range:
+            date_range = self._parse_date_range(date_range)
+
+        n = 0
+        mode = 'rb' if compat.is_python2 else 'rt'
+        for line in fileio.read_json_lines(self.filename, mode=mode):
+            if opinion_author and line['maj_opinion_author'] not in opinion_author:
+                continue
+            if issue_area and line['issue_area'] not in issue_area:
+                continue
+            if decision_direction and line['decision_direction'] not in decision_direction:
+                continue
+            if date_range and not date_range[0] <= line['decision_date'] <= date_range[1]:
+                continue
+            if min_len and len(line['text']) < min_len:
+                continue
+
+            if text_only is True:
+                yield line['text']
+            else:
+                yield line
+
+            n += 1
+            if n == limit:
+                break

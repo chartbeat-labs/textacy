@@ -1,13 +1,15 @@
-"""
-Module with functions for writing content to disk in common formats.
-"""
+"""Functions for writing content to disk in common formats."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from contextlib import closing
+import io
 import json
 
 from numpy import savez, savez_compressed
+import requests
 from scipy.sparse import csc_matrix, csr_matrix
 from spacy.tokens.doc import Doc as SpacyDoc
+from tqdm import tqdm
 
 from textacy.compat import csv, unicode_to_bytes
 from textacy.fileio import open_sesame, make_dirs
@@ -19,6 +21,8 @@ def write_file(content, filepath, mode='wt', encoding=None,
     Write ``content`` to disk at ``filepath``. Files with appropriate extensions
     are compressed with gzip or bz2 automatically. Any intermediate folders
     not found on disk may automatically be created.
+
+    .. seealso:: :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
     """
     with open_sesame(filepath, mode=mode, encoding=encoding,
                      auto_make_dirs=auto_make_dirs) as f:
@@ -170,8 +174,8 @@ def write_sparse_matrix(matrix, filepath, compressed=True):
         compressed (bool): if True, save arrays into a single file in compressed
             .npz format
 
-    .. seealso: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez.html
-    .. seealso: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez_compressed.html
+    .. seealso:: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez.html
+    .. seealso:: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez_compressed.html
     """
     if not isinstance(matrix, (csc_matrix, csr_matrix)):
         raise TypeError('input matrix must be a scipy sparse csr or csc matrix')
@@ -184,3 +188,34 @@ def write_sparse_matrix(matrix, filepath, compressed=True):
         savez_compressed(filepath,
                          data=matrix.data, indices=matrix.indices,
                          indptr=matrix.indptr, shape=matrix.shape)
+
+
+def write_streaming_download_file(url, filepath, mode='wt', encoding=None,
+                                  auto_make_dirs=False, chunk_size=1024):
+    """
+    Download content from ``url`` in a stream; write successive chunks of size
+    ``chunk_size`` bytes to disk at ``filepath``. Files with appropriate extensions
+    are compressed with gzip or bz2 automatically. Any intermediate folders
+    not found on disk may automatically be created.
+
+    .. seealso:: :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
+    """
+    decode_unicode = True if 't' in mode else False
+    if auto_make_dirs is True:
+        make_dirs(filepath, mode)
+    # always close the connection
+    with closing(requests.get(url, stream=True)) as r:
+        # set fallback encoding if unable to infer from headers
+        if r.encoding is None:
+            r.encoding = 'utf-8'
+        with io.open(filepath, mode=mode, encoding=encoding) as f:
+            pbar = tqdm(
+                unit='B', unit_scale=True,
+                total=int(r.headers.get('content-length', 0)))
+            chunks = r.iter_content(
+                chunk_size=chunk_size, decode_unicode=decode_unicode)
+            for chunk in chunks:
+                # needed (?) to filter out "keep-alive" new chunks
+                if chunk:
+                    pbar.update(len(chunk))
+                    f.write(chunk)

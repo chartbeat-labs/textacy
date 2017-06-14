@@ -20,7 +20,7 @@ class TextStats(object):
     Compute a variety of basic counts and readability statistics for a given
     text document. For example::
 
-        >>> text = list(textacy.corpora.CapitolWords().texts(limit=1))[0]
+        >>> text = list(textacy.datasets.CapitolWords().texts(limit=1))[0]
         >>> doc = textacy.Doc(text)
         >>> ts = TextStats(doc)
         >>> ts.n_words

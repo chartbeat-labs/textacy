@@ -1,25 +1,19 @@
 # -*- coding: utf-8 -*-
 """
-Wikipedia Corpus Reader
------------------------
+Wikipedia
+---------
 
-Stream a corpus of Wikipedia articles saved in standardized database dumps,
-as either plaintext strings or structured content + metadata dicts.
+All articles for a given language- and version-specific Wikipedia site snapshot,
+as either texts (str) or records (dict) with both text and metadata.
 
-When parsed, article pages have the following fields:
+Records include the following fields:
 
-    - ``title``: title of the Wikipedia article
-    - ``page_id``: unique identifier of the page, usable in Wikimedia APIs
-    - ``wiki_links``: a list of other article pages linked to from this page
-    - ``ext_links``: a list of external URLs linked to from this page
-    - ``categories``: a list of Wikipedia categories to which this page belongs
-    - ``sections``: a list of article content and associated metadata split up
-      according to the section hierarchy of the page; each section contains:
-      - ``text``: text content of the section
-      - ``idx``: ordered position on the page, from top (0) to bottom
-      - ``level``: level (or depth) in the sections hierarchy
-
-DB dumps are downloadable from https://meta.wikimedia.org/wiki/Data_dumps.
+    * ``text``: text content of the article, with markup stripped out
+    * ``title``: title of the Wikipedia article
+    * ``page_id``: unique identifier of the page, usable in Wikimedia APIs
+    * ``wiki_links``: a list of other article pages linked to from this page
+    * ``ext_links``: a list of external URLs linked to from this page
+    * ``categories``: a list of Wikipedia categories to which this page belongs
 """
 from __future__ import unicode_literals
 
@@ -30,12 +24,23 @@ from xml.etree.cElementTree import iterparse
 
 import ftfy
 
-from textacy.compat import is_python2, bytes_to_unicode, unicode_
-from textacy.fileio import open_sesame
+from textacy import data_dir
+from textacy import compat
+from textacy.datasets.base import Dataset
+from textacy import fileio
 
 LOGGER = logging.getLogger(__name__)
 
-re_nowiki = re.compile(r'<nowiki>(.*?)</nowiki>', flags=re.UNICODE)  # nowiki tags: take contents verbatim
+NAME = 'wikipedia'
+DESCRIPTION = ('All articles for a given language- and version-specific '
+               'Wikipedia site snapshot.')
+SITE_URL = 'https://meta.wikimedia.org/wiki/Data_dumps'
+DATA_DIR = os.path.join(data_dir, NAME)
+
+DOWNLOAD_ROOT = 'https://dumps.wikimedia.org/'
+
+# nowiki tags: take contents verbatim
+re_nowiki = re.compile(r'<nowiki>(.*?)</nowiki>', flags=re.UNICODE)
 
 self_closing_tags = ('br', 'hr', 'nobr', 'ref', 'references')
 re_self_closing_html_tags = re.compile(
@@ -43,9 +48,9 @@ re_self_closing_html_tags = re.compile(
     flags=re.IGNORECASE | re.DOTALL)
 
 ignored_html_tags = (
-    'abbr', 'b', 'big', 'blockquote', 'center', 'cite', 'em', 'font', 'h1', 'h2', 'h3', 'h4',
-    'hiero', 'i', 'kbd', 'p', 'plaintext', 's', 'span', 'strike', 'strong', 'tt', 'u', 'var',
-    'math', 'code')  # are math and code okay here?
+    'abbr', 'b', 'big', 'blockquote', 'center', 'cite', 'em', 'font', 'h1', 'h2',
+    'h3', 'h4', 'hiero', 'i', 'kbd', 'p', 'plaintext', 's', 'span', 'strike',
+    'strong', 'tt', 'u', 'var', 'math', 'code')  # are math and code okay here?
 re_ignored_html_tags = re.compile(
     r'<(%s)\b.*?>(.*?)</\s*\1>' % '|'.join(ignored_html_tags),
     flags=re.IGNORECASE | re.DOTALL)
@@ -53,8 +58,8 @@ re_ignored_html_tags = re.compile(
 dropped_elements = (
     'caption', 'dd', 'dir', 'div', 'dl', 'dt', 'form', 'gallery', 'imagemap', 'img',
     'indicator', 'input', 'li', 'menu', 'noinclude', 'ol', 'option', 'pre', 'ref',
-    'references', 'select', 'small', 'source', 'sub', 'sup', 'table', 'td', 'textarea',
-    'th', 'timeline', 'tr', 'ul')
+    'references', 'select', 'small', 'source', 'sub', 'sup', 'table', 'td',
+    'textarea', 'th', 'timeline', 'tr', 'ul')
 re_dropped_elements = re.compile(
     r'<\s*(%s)\b[^>/]*>.*?<\s*/\s*\1>' % '|'.join(dropped_elements),
     flags=re.IGNORECASE | re.DOTALL)
@@ -90,31 +95,95 @@ magic_words = (
 re_magic_words = re.compile('|'.join(magic_words))
 
 
-class WikiReader(object):
+class Wikipedia(Dataset):
     """
-    Stream Wikipedia pages from standardized, compressed files on disk, either as
-    plaintext strings or dict documents with both text content and metadata.
-    Download the data from https://meta.wikimedia.org/wiki/Data_dumps.
+    Stream Wikipedia articles from versioned, language-specific database dumps,
+    either as texts (str) or records (dict) with both text content and metadata.
 
-    .. code-block:: pycon
+    Download a database dump for a given language and version::
 
-        >>> wr = WikiReader('/path/to/enwiki-latest-pages-articles.xml.bz2')
-        >>> for text in wr.texts(limit=5):  # plaintext pages
+        >>> wp = Wikipedia(lang='en', version='latest')
+        >>> wp.download()
+        >>> wp.info
+        {'data_dir': 'path/to/textacy/data/wikipedia',
+         'description': 'All articles for a given Wikimedia wiki, including wikitext source and metadata, as a single database dump in XML format.',
+         'name': 'wikipedia',
+         'site_url': 'https://meta.wikimedia.org/wiki/Data_dumps'}
+
+    Iterate over articles as plain texts or records with both text and metadata::
+
+        >>> for text in wp.texts(limit=5):
         ...     print(text)
-        >>> for record in wr.records(min_len=100, limit=1):  # parsed pages
-        ...     print(record.keys())
-        ...     print(' '.join(section['text'] for section in record['sections']))
+        >>> for record in wp.records(limit=5):
+        ...     print(record['title'], record['text'][:500])
+
+    Filter articles by text length::
+
+        >>> for text in wp.texts(min_len=1000, limit=1):
+        ...     print(text)
 
     Args:
-        path (str): full name of database dump file on disk
+        data_dir (str): Path to directory on disk under which database dump
+            files are stored. Each file is expected at
+            ``{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2``
+            immediately under this directory.
+        lang (str): Standard two-letter language code, e.g. "en" => "English",
+            "de" => "German". https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
+        version (str): Database dump version to use. Either "latest" for the
+            most recently available version or a date formatted as "YYYYMMDD".
+            Dumps are produced intermittently; check for available versions at
+            https://meta.wikimedia.org/wiki/Data_dumps.
+
+    Attributes:
+        lang (str): Standard two-letter language code used in instantiation.
+        version (str): Database dump version used in instantiation.
+        filestub (str): The component of ``filename`` that is unique to this
+            lang- and version-specific database dump.
+        filename (str): Full path on disk for the lang- and version-specific
+            Wikipedia database dump, found under the ``data_dir`` directory.
     """
 
-    def __init__(self, path):
-        self.path = path
+    def __init__(self, data_dir=DATA_DIR, lang='en', version='latest'):
+        super(Wikipedia, self).__init__(
+            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
+        self.lang = lang
+        self.version = version
+        self.filestub = '{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2'.format(
+            version=self.version, lang=self.lang)
+        self._filename = os.path.join(data_dir, self.filestub)
 
-    def __repr__(self):
-        filepath = os.path.split(self.path)[-1]
-        return 'WikiReader("{}")'.format(filepath)
+    @property
+    def filename(self):
+        """
+        str: Full path on disk for Wikipedia database dump corresponding to
+            the ``lang`` and ``version`` used in instantiation.
+            ``None`` if file not found.
+        """
+        if os.path.isfile(self._filename):
+            return self._filename
+        else:
+            return None
+
+    def download(self, force=False):
+        """
+        Download the Wikipedia database dump corresponding to the ``lang`` and
+        ``version`` used in instantiation, and save it to disk under the
+        ``data_dir`` directory.
+
+        Args:
+            force (bool): Download the file, even if it already exists on disk.
+        """
+        url = compat.urljoin(DOWNLOAD_ROOT, self.filestub)
+        fname = self._filename
+        if os.path.isfile(fname) and force is False:
+            LOGGER.warning(
+                'File %s already exists; skipping download...', fname)
+            return
+        LOGGER.info(
+            'Downloading data from %s and writing it to %s', url, fname)
+        fileio.write_streaming_download_file(
+            url, fname, mode='wb', encoding=None,
+            auto_make_dirs=True, chunk_size=1024)
 
     def __iter__(self):
         """
@@ -124,12 +193,15 @@ class WikiReader(object):
         Yields:
             Tuple[str, str, str]: page id, title, content with wikimedia markup
         """
-        if is_python2 is False:
+        if not self.filename:
+            raise IOError('{} file not found'.format(self._filename))
+
+        if compat.is_python2 is False:
             events = ('end',)
-            f = open_sesame(self.path, mode='rt')
+            f = fileio.open_sesame(self.filename, mode='rt')
         else:  # Python 2 can't open bzip in text mode :(
             events = (b'end',)
-            f = open_sesame(self.path, mode='rb')
+            f = fileio.open_sesame(self.filename, mode='rb')
         with f:
 
             elems = (elem for _, elem in iterparse(f, events=events))
@@ -158,88 +230,73 @@ class WikiReader(object):
                         content = elem.find(text_path).text
                     if content is None:
                         content = ''
-                    elif not isinstance(content, unicode_):
-                        content = bytes_to_unicode(content, errors='ignore')
+                    elif not isinstance(content, compat.unicode_):
+                        content = compat.bytes_to_unicode(content, errors='ignore')
                     yield page_id, title, content
                     elem.clear()
 
-    def _parse_content(self, content, parser):
+    def _parse_content(self, content, parser, fast):
+        unicode_ = compat.unicode_  # for performance
         wikicode = parser.parse(content)
-        parsed_page = {'sections': []}
+
+        parsed_content = {}
 
         wikilinks = [unicode_(wc.title) for wc in wikicode.ifilter_wikilinks()]
-        parsed_page['categories'] = [wc for wc in wikilinks if wc.startswith('Category:')]
-        parsed_page['wiki_links'] = [wc for wc in wikilinks
-                                     if not wc.startswith('Category:') and
-                                     not wc.startswith('File:') and
-                                     not wc.startswith('Image:')]
-        parsed_page['ext_links'] = [
+        parsed_content['categories'] = [
+            wc for wc in wikilinks
+            if wc.startswith('Category:')]
+        parsed_content['wiki_links'] = [
+            wc for wc in wikilinks
+            if not wc.startswith('Category:') and
+            not wc.startswith('File:') and
+            not wc.startswith('Image:')]
+        parsed_content['ext_links'] = [
             unicode_(wc.url) for wc in wikicode.ifilter_external_links()]
 
-        def _filter_tags(obj):
-            return obj.tag == 'ref' or obj.tag == 'table'
+        # worse quality, but significantly faster
+        # just strip the markup from unicode, as is done for `.texts()`
+        if fast is True:
+            parsed_content['text'] = strip_markup(unicode_(wikicode))
+        else:
+            re_image_wl = re.compile(
+                '^(?:File|Image|Media):', flags=re.IGNORECASE | re.UNICODE)
+            bad_template_names = {
+                'reflist', 'notelist', 'notelist-ua', 'notelist-lr', 'notelist-ur', 'notelist-lg'}
+            bad_tags = {'ref', 'table'}
 
-        bad_section_titles = {'external links', 'notes', 'references'}
-        section_idx = 0
+            def is_bad_wikilink(obj):
+                return bool(re_image_wl.match(unicode_(obj.title)))
 
-        for section in wikicode.get_sections(flat=True, include_lead=True, include_headings=True):
-            headings = section.filter_headings()
-            sec = {'idx': section_idx}
+            def is_bad_tag(obj):
+                return unicode_(obj.tag) in bad_tags
 
-            if section_idx == 0 or len(headings) == 1:
-                try:
-                    sec_title = unicode_(headings[0].title)
-                    if sec_title.lower() in bad_section_titles:
-                        continue
-                    sec['title'] = sec_title
-                    sec['level'] = int(headings[0].level)
-                except IndexError:
-                    if section_idx == 0:
-                        sec['level'] = 1
-                # strip out references, tables, and file/image links
-                for obj in section.ifilter_tags(matches=_filter_tags, recursive=True):
+            def is_bad_template(obj):
+                return obj.name.lower() in bad_template_names
+
+            texts = []
+            # strip out references, tables, and file/image links
+            # then concatenate the stripped text of each section
+            for i, section in enumerate(wikicode.get_sections(flat=True, include_lead=True, include_headings=True)):
+                for obj in section.ifilter_wikilinks(matches=is_bad_wikilink, recursive=True):
                     try:
                         section.remove(obj)
                     except Exception:
                         continue
-                for obj in section.ifilter_wikilinks(recursive=True):
+                for obj in section.ifilter_templates(matches=is_bad_template, recursive=True):
                     try:
-                        obj_title = unicode_(obj.title)
-                        if obj_title.startswith('File:') or obj_title.startswith('Image:'):
-                            section.remove(obj)
+                        section.remove(obj)
                     except Exception:
-                        pass
-                sec['text'] = unicode_(section.strip_code(normalize=True, collapse=True)).strip()
-                if sec.get('title'):
-                    sec['text'] = re.sub(r'^' + re.escape(sec['title']) + r'\s*', '', sec['text'])
-                parsed_page['sections'].append(sec)
-                section_idx += 1
-
-            # dammit! the parser has failed us; let's handle it as best we can
-            elif len(headings) > 1:
-                titles = [unicode_(h.title).strip() for h in headings]
-                levels = [int(h.level) for h in headings]
-                sub_sections = [
-                    unicode_(ss) for ss in
-                    re.split(r'\s*' + '|'.join(re.escape(unicode_(h)) for h in headings) + r'\s*', unicode_(section))]
-                # re.split leaves an empty string result up front :shrug:
-                if sub_sections[0] == '':
-                    del sub_sections[0]
-                if len(headings) != len(sub_sections):
-                    LOGGER.warning(
-                        '# headings = %s, but # sections = %s',
-                        len(headings), len(sub_sections))
-                for i, sub_section in enumerate(sub_sections):
-                    try:
-                        if titles[i].lower() in bad_section_titles:
-                            continue
-                        parsed_page['sections'].append({'title': titles[i], 'level': levels[i], 'idx': section_idx,
-                                                        'text': strip_markup(sub_section)})
-                        section_idx += 1
-                    except IndexError:
                         continue
+                for obj in section.ifilter_tags(matches=is_bad_tag, recursive=True):
+                    try:
+                        section.remove(obj)
+                    except Exception:
+                        continue
+                texts.append(section.strip_code().strip())
 
-        return parsed_page
+            parsed_content['text'] = '\n\n'.join(texts)
+
+        return parsed_content
 
     def texts(self, min_len=100, limit=-1):
         """
@@ -257,7 +314,7 @@ class WikiReader(object):
 
         Notes:
             Page and section titles appear immediately before the text content
-                that they label, separated by a single newline character.
+                that they label, separated by an empty line.
         """
         n_pages = 0
         for _, title, content in self:
@@ -271,7 +328,7 @@ class WikiReader(object):
             if n_pages == limit:
                 break
 
-    def records(self, min_len=100, limit=-1):
+    def records(self, min_len=100, limit=-1, fast=False):
         """
         Iterate over the pages in a Wikipedia articles database dump
         (``*articles.xml.bz2``), yielding one page whose structure and content
@@ -282,31 +339,36 @@ class WikiReader(object):
                 for it to be returned; too-short pages are skipped
             limit (int): maximum number of pages (passing ``min_len``) to yield;
                 if -1, all pages in the db dump are iterated over (optional)
+            fast (bool): If True, text is extracted using a faster method but
+                which gives lower quality results. Otherwise, a slower but better
+                method is used to extract article text.
 
         Yields:
-            dict: the next page's parsed content, including 'title' and 'page_id'
+            dict: the next page's parsed content, including key:value pairs for
+                'title', 'page_id', 'text', 'categories', 'wiki_links', 'ext_links'
 
-                Key 'sections' includes a list of all page sections, each with 'title'
-                for the section title, 'text' for plain text content,'idx' for position
-                on page, and 'level' for the depth of the section within the page's hierarchy
-
-        .. note:: This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
+        Notes:
+            This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
         """
+        # hiding this here; don't want another required dep
         try:
-            import mwparserfromhell  # hiding this here; don't want another required dep
+            import mwparserfromhell
         except ImportError:
             LOGGER.exception(
-                'mwparserfromhell package must be installed; see http://pythonhosted.org/mwparserfromhell/')
+                'mwparserfromhell package must be installed; '
+                'see http://pythonhosted.org/mwparserfromhell/')
             raise
         parser = mwparserfromhell.parser.Parser()
 
         n_pages = 0
         for page_id, title, content in self:
-            page = self._parse_content(content, parser)
-            if len(' '.join(s['text'] for s in page['sections'])) < min_len:
+
+            page = self._parse_content(content, parser, fast)
+            if len(page['text']) < min_len:
                 continue
             page['title'] = title
             page['page_id'] = page_id
+            page['text'] = title + '\n\n' + page['text']
 
             yield page
 
