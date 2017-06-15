@@ -17,7 +17,7 @@ from spacy.strings import StringStore
 
 def doc_term_matrix(terms_lists, weighting='tf',
                     normalize=False, sublinear_tf=False, smooth_idf=True,
-                    min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None):
+                    min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None, vocabulary=None):
     """
     Get a document-term matrix of shape (# docs, # unique terms) from a sequence
     of documents, each represented as a sequence of (str) terms, with a variety
@@ -62,6 +62,8 @@ def doc_term_matrix(terms_lists, weighting='tf',
             ``min_ic``; value must be in [0.0, 1.0].
         max_n_terms (int): Only include terms whose document frequency is within
             the top ``max_n_terms``.
+        vocabulary (:dict:(int,str)):  Take dictionary of id to term mapping as
+            vocabulary.
 
     Returns:
         :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
@@ -71,6 +73,13 @@ def doc_term_matrix(terms_lists, weighting='tf',
             values are corresponding strings
     """
     stringstore = StringStore()
+    _vocab_test = lambda term: True
+    if vocabulary is not None:
+        # Restore the terms in stringstore -- uses ordered dictionary to retain indices
+        for term_id, term in vocabulary.iteritems():
+            stringstore[term]
+        # Create the correct vocab test when we have a prior stringstore
+        _vocab_test = lambda term: term in stringstore
     data = []
     rows = []
     cols = []
@@ -81,26 +90,34 @@ def doc_term_matrix(terms_lists, weighting='tf',
         # so, we subtract 1 from the stringstore's assigned id
         bow = tuple((stringstore[term] - 1, count)
                     for term, count in collections.Counter(terms_list).items()
-                    if term)
+                    if term and _vocab_test(term))
 
         data.extend(count for _, count in bow)
         cols.extend(term_id for term_id, _ in bow)
         rows.extend(itertools.repeat(row_idx, times=len(bow)))
 
-    doc_term_matrix = sp.coo_matrix((data, (rows, cols)), dtype=int).tocsr()
+    if vocabulary is not None:
+        doc_term_matrix = sp.coo_matrix((data, (rows, cols)), shape=(row_idx+1, len(vocabulary)), dtype=int).tocsr()
+    else:
+        doc_term_matrix = sp.coo_matrix((data, (rows, cols)), dtype=int).tocsr()
+
     # ignore the 0-index empty string in stringstore, as above
-    id_to_term = {term_id - 1: term for term_id, term in enumerate(stringstore)
-                  if term_id != 0}
+    id_to_term = collections.OrderedDict()
+    for term_id, term in enumerate(stringstore):
+        if term_id != 0:
+            id_to_term[term_id - 1] = term
 
     # filter terms by document frequency or information content?
-    if max_df != 1.0 or min_df != 1 or max_n_terms is not None:
-        doc_term_matrix, id_to_term = filter_terms_by_df(
-            doc_term_matrix, id_to_term,
-            max_df=max_df, min_df=min_df, max_n_terms=max_n_terms)
-    if min_ic != 0.0:
-        doc_term_matrix, id_to_term = filter_terms_by_ic(
-            doc_term_matrix, id_to_term,
-            min_ic=min_ic, max_n_terms=max_n_terms)
+    # But only if we are determining the vocabulary.
+    if vocabulary is None:
+        if max_df != 1.0 or min_df != 1 or max_n_terms is not None:
+            doc_term_matrix, id_to_term = filter_terms_by_df(
+                doc_term_matrix, id_to_term,
+                max_df=max_df, min_df=min_df, max_n_terms=max_n_terms)
+        if min_ic != 0.0:
+            doc_term_matrix, id_to_term = filter_terms_by_ic(
+                doc_term_matrix, id_to_term,
+                min_ic=min_ic, max_n_terms=max_n_terms)
 
     if weighting == 'binary':
         doc_term_matrix = binarize_mat(doc_term_matrix, threshold=0.0, copy=False)
