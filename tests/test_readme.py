@@ -114,8 +114,8 @@ class ReadmeTestCase(unittest.TestCase):
         # sort by term ascending, then count descending
         observed_2 = sorted(bot.items(), key=itemgetter(1, 0), reverse=True)[:10]
         expected_2 = [
-            ('nation', 6), ('world', 4), ('u.s.', 4), ('incarceration', 4),
-            ('decade', 4), ('system', 3), ('state', 3), ('record', 3),
-            ('problem', 3), ('people', 3)]
+            ('nation', 6), ('world', 4), ('incarceration', 4), ('system', 3),
+            ('state', 3), ('problem', 3), ('people', 3), ('minimum', 3),
+            ('mandatory', 3), ('lead', 3)]
         self.assertEqual(observed_1, expected_1)
         self.assertEqual(observed_2, expected_2)

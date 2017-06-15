@@ -472,7 +472,7 @@ class Doc(object):
                 if n == 1:
                     terms.append(
                         (word for word in textacy.extract.words(self, **ngram_kwargs)
-                         if (word.idx, word.idx + 1) not in ent_idxs))
+                         if (word.i, word.i + 1) not in ent_idxs))
                 else:
                     terms.append(
                         (ngram for ngram in textacy.extract.ngrams(self, n, **ngram_kwargs)
