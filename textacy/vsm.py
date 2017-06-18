@@ -5,14 +5,323 @@ weighting schemes for the values.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+from array import array
 import collections
 import itertools
+from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
 from sklearn.preprocessing import binarize as binarize_mat
 from sklearn.preprocessing import normalize as normalize_mat
 from spacy.strings import StringStore
+
+
+class Vectorizer(object):
+    """
+    Args:
+        weighting ({'tf', 'tfidf', 'binary'}): Weighting to assign to terms in
+            the doc-term matrix. If 'tf', matrix values (i, j) correspond to the
+            number of occurrences of term j in doc i; if 'tfidf', term frequencies
+            (tf) are multiplied by their corresponding inverse document frequencies
+            (idf); if 'binary', all non-zero values are set equal to 1.
+        normalize (bool): If True, normalize term frequencies by the
+            L2 norms of the vectors.
+        binarize (bool): If True, set all term frequencies > 0 equal to 1.
+        sublinear_tf (bool): If True, apply sub-linear term-frequency scaling,
+            i.e. tf => 1 + log(tf).
+        smooth_idf (bool): If True, add 1 to all document frequencies, equivalent
+            to adding a single document to the corpus containing every unique term.
+        vocabulary (Dict[str, int] or Iterable[str]): Mapping of unique term
+            string (str) to unique term id (int) or an iterable of term strings
+            (which gets converted into a suitable mapping).
+        min_df (float or int): If float, value is the fractional proportion of
+            the total number of documents, which must be in [0.0, 1.0]. If int,
+            value is the absolute number. Filter terms whose document frequency
+            is less than ``min_df``.
+        max_df (float or int): If float, value is the fractional proportion of
+            the total number of documents, which must be in [0.0, 1.0]. If int,
+            value is the absolute number. Filter terms whose document frequency
+            is greater than ``max_df``.
+        min_ic (float): Filter terms whose information content is less than
+            ``min_ic``; value must be in [0.0, 1.0].
+        max_n_terms (int): Only include terms whose document frequency is within
+            the top ``max_n_terms``.
+
+    Attributes:
+        vocabulary
+        is_fixed_vocabulary
+        id_to_term
+        feature_names
+    """
+
+    def __init__(self,
+                 weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
+                 vocabulary=None, min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None):
+        self.weighting = weighting
+        self.normalize = normalize
+        self.sublinear_tf = sublinear_tf
+        self.smooth_idf = smooth_idf
+        # sanity check numeric arguments
+        if min_df < 0 or max_df < 0:
+            raise ValueError('``min_df`` and ``max_df`` must be positive integers or None')
+        if min_ic < 0.0 or min_ic > 1.0:
+            raise ValueError('``min_ic`` must be a float in the interval [0.0, 1.0]')
+        if max_n_terms and max_n_terms < 0:
+            raise ValueError('``max_n_terms`` must be a positive integer or None')
+        self.min_df = min_df
+        self.max_df = max_df
+        self.min_ic = min_ic
+        self.max_n_terms = max_n_terms
+        self.vocabulary, self.is_fixed_vocabulary = self._validate_vocabulary(vocabulary)
+        self.id_to_term_ = {}
+
+    def _validate_vocabulary(self, vocabulary):
+        """
+        Validate an input vocabulary. If it's a mapping, ensure that term ids
+        are unique and compact (i.e. without any gaps between 0 and the number
+        of terms in ``vocabulary``. If it's a sequence, sort terms then assign
+        integer ids in ascending order.
+        """
+        if vocabulary is not None:
+            if not isinstance(vocabulary, collections.Mapping):
+                vocab = {}
+                for i, term in enumerate(sorted(vocabulary)):
+                    if vocab.setdefault(term, i) != i:
+                        raise ValueError(
+                            'Duplicate term in ``vocabulary``: "{}".'.format(term))
+                vocabulary = vocab
+            else:
+                idxs = set(vocabulary.values())
+                if len(idxs) != len(vocabulary):
+                    raise ValueError('``vocabulary`` contains repeated indices.')
+                for i in range(len(vocabulary)):
+                    if i not in idxs:
+                        raise ValueError(
+                            '``vocabulary`` of {} terms is missing index {}.'.format(
+                                len(vocabulary), i))
+            if not vocabulary:
+                raise ValueError('``vocabulary`` may not be empty.')
+            is_fixed_vocabulary = True
+        else:
+            is_fixed_vocabulary = False
+        return vocabulary, is_fixed_vocabulary
+
+    @property
+    def id_to_term(self):
+        """
+        dict: Mapping of unique term id (int) to unique term string (str), i.e.
+            the inverse of :attr:`Vectorizer.vocabulary`. This attribute is only
+            generated if needed, and it is automatically kept in sync with the
+            corresponding vocabulary.
+        """
+        if len(self.id_to_term_) != self.vocabulary:
+            self.id_to_term_ = {
+                term_id: term_str for term_str, term_id in self.vocabulary.items()}
+        return self.id_to_term_
+
+    @id_to_term.setter
+    def id_to_term(self, new_id_to_term):
+        self.id_to_term_ = new_id_to_term
+        self.vocabulary = {
+            term_str: term_id for term_id, term_str in new_id_to_term.items()}
+
+    def fit(self, terms_list):
+        """
+        Args:
+            terms_list (Iterable[Iterable[str]]): A sequence of tokenized documents,
+                where each document is a sequence of (str) terms. For example::
+
+                >>> ([tok.lemma_ for tok in spacy_doc]
+                ...  for spacy_doc in spacy_docs)
+                >>> ((ne.text for ne in extract.named_entities(doc))
+                ...  for doc in corpus)
+                >>> (tuple(ng.text for ng in
+                           itertools.chain.from_iterable(extract.ngrams(doc, i)
+                                                         for i in range(1, 3)))
+                ...  for doc in docs)
+        """
+        self.fit_transform(terms_list)
+        return self
+
+    def fit_transform(self, terms_list):
+        """
+        Args:
+            terms_list (Iterable[Iterable[str]]): A sequence of tokenized documents,
+                where each document is a sequence of (str) terms. For example::
+
+                >>> ([tok.lemma_ for tok in spacy_doc]
+                ...  for spacy_doc in spacy_docs)
+                >>> ((ne.text for ne in extract.named_entities(doc))
+                ...  for doc in corpus)
+                >>> (tuple(ng.text for ng in
+                           itertools.chain.from_iterable(extract.ngrams(doc, i)
+                                                         for i in range(1, 3)))
+                ...  for doc in docs)
+        """
+        # count terms and build up a vocabulary
+        doc_term_matrix, self.vocabulary = self._count_terms(
+            terms_list, self.is_fixed_vocabulary)
+
+        # filter terms by doc freq or info content, as specified in init
+        doc_term_matrix, id_to_term = self._filter_terms(
+            doc_term_matrix, self.id_to_term)
+        self.id_to_term = id_to_term
+
+        # re-weight values in doc-term matrix, as specified in init
+        doc_term_matrix = self._reweight_values(doc_term_matrix)
+
+        return doc_term_matrix
+
+    def transform(self, terms_list):
+        """
+        Args:
+            terms_list (Iterable[Iterable[str]]): A sequence of tokenized documents,
+                where each document is a sequence of (str) terms. For example::
+
+                >>> ([tok.lemma_ for tok in spacy_doc]
+                ...  for spacy_doc in spacy_docs)
+                >>> ((ne.text for ne in extract.named_entities(doc))
+                ...  for doc in corpus)
+                >>> (tuple(ng.text for ng in
+                           itertools.chain.from_iterable(extract.ngrams(doc, i)
+                                                         for i in range(1, 3)))
+                ...  for doc in docs)
+        """
+        self._check_vocabulary()
+        doc_term_matrix, _ = self._count_terms(
+            terms_list, True)
+        return self._reweight_values(doc_term_matrix)
+
+    def _count_terms(self, terms_list, fixed_vocab):
+        """
+        Count terms and build up a vocabulary, based on the terms found in the
+        ``terms_list``.
+
+        Args:
+            terms_lists (Iterable[Iterable[str]]): A sequence of documents, each
+                as a sequence of (str) terms.
+            fixed_vocab (bool): If False, a new vocabulary is built from terms
+                in ``terms_list``; if True, only terms already found in the
+                :attr:`Vectorizer.vocabulary` are counted.
+
+        Returns:
+            :class:`sp.sparse.csr_matrix`
+            dict
+        """
+        if fixed_vocab is False:
+            # add a new value when a new vocabulary item is seen
+            vocabulary = collections.defaultdict()
+            vocabulary.default_factory = vocabulary.__len__
+        else:
+            vocabulary = self.vocabulary
+
+        data = array(str('i'))
+        indices = array(str('i'))
+        indptr = array(str('i'), [0])
+        for terms in terms_list:
+            term_counter = collections.defaultdict(int)
+            for term in terms:
+                try:
+                    term_idx = vocabulary[term]
+                    term_counter[term_idx] += 1
+                except KeyError:
+                    # ignore out-of-vocabulary terms when is_fixed_vocabulary=True
+                    continue
+
+            data.extend(term_counter.values())
+            indices.extend(term_counter.keys())
+            indptr.append(len(indices))
+
+        if fixed_vocab is False:
+            # we no longer want defaultdict behaviour
+            vocabulary = dict(vocabulary)
+
+        data = np.frombuffer(data, dtype=np.intc)
+        indices = np.asarray(indices, dtype=np.intc)
+        indptr = np.frombuffer(indptr, dtype=np.intc)
+
+        doc_term_matrix = sp.csr_matrix(
+            (data, indices, indptr),
+            shape=(len(indptr) - 1, len(vocabulary)),
+            dtype=np.int32)
+        doc_term_matrix.sort_indices()
+
+        return doc_term_matrix, vocabulary
+
+    def _filter_terms(self, doc_term_matrix, vocabulary):
+        """
+        Filter terms in ``vocabulary`` by their document frequency or information
+        content, as specified in ``Vectorizer`` initialization.
+
+        Args:
+            doc_term_matrix (:class:`sp.sparse.csr_matrix`): Sparse matrix of
+                shape (# docs, # unique terms), where value (i, j) is the weight
+                of term j in doc i.
+            vocabulary (dict): Mapping of unique integer term ids to their string
+                values, e.g. ``{0: "hello", 1: "world"}``.
+
+        Returns:
+            :class:`sp.sparse.csr_matrix`
+            dict
+        """
+        if self.is_fixed_vocabulary:
+            return doc_term_matrix, vocabulary
+        else:
+            if self.max_df != 1.0 or self.min_df != 1 or self.max_n_terms is not None:
+                doc_term_matrix, vocabulary = filter_terms_by_df(
+                    doc_term_matrix, vocabulary,
+                    max_df=self.max_df, min_df=self.min_df, max_n_terms=self.max_n_terms)
+            if self.min_ic != 0.0:
+                doc_term_matrix, vocabulary = filter_terms_by_ic(
+                    doc_term_matrix, vocabulary,
+                    min_ic=self.min_ic, max_n_terms=self.max_n_terms)
+            return doc_term_matrix, vocabulary
+
+    def _reweight_values(self, doc_term_matrix):
+        """
+        Re-weight values in a doc-term matrix according to parameters specified
+        in ``Vectorizer`` initialization: binary or tf-idf weighting, sublinear
+        term-frequency, document-normalized weights.
+
+        Args:
+            doc_term_matrix (:class:`sp.sparse.csr_matrix`): Sparse matrix of
+                shape (# docs, # unique terms), where value (i, j) is the weight
+                of term j in doc i.
+
+        Returns:
+            :class:`sp.sparse.csr_matrix`: Re-weighted doc-term matrix.
+        """
+        if self.weighting == 'binary':
+            doc_term_matrix.fill(1)
+        else:
+            if self.sublinear_tf is True:
+                doc_term_matrix = doc_term_matrix.astype(np.float64)
+                _ = np.log(doc_term_matrix.data, doc_term_matrix.data)
+                doc_term_matrix.data += 1
+            if self.weighting == 'tfidf':
+                doc_term_matrix = apply_idf_weighting(
+                    doc_term_matrix,
+                    smooth_idf=self.smooth_idf)
+
+        if self.normalize is True:
+            doc_term_matrix = normalize_mat(
+                doc_term_matrix,
+                norm='l2', axis=1, copy=False)
+
+        return doc_term_matrix
+
+    @property
+    def feature_names(self):
+        """Array mapping from feature integer indices to feature name."""
+        self._check_vocabulary()
+        return [term_str for term_str, _
+                in sorted(self.vocabulary.items(), key=itemgetter(1))]
+
+    def _check_vocabulary(self):
+        if not isinstance(self.vocabulary, collections.Mapping):
+            raise ValueError(
+                'vocabulary hasn\'t yet been fitted; call ``Vectorizer.fit()`` first')
 
 
 def doc_term_matrix(terms_lists, weighting='tf',
