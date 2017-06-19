@@ -19,6 +19,40 @@ from spacy.strings import StringStore
 
 class Vectorizer(object):
     """
+    Transform one or more tokenized documents into a document-term matrix of
+    shape (# docs, # unique terms), with tf-, tf-idf, or binary-weighted values.
+
+    Stream a corpus with metadata from disk::
+
+        >>> cw = textacy.datasets.CapitolWords()
+        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+        ...     cw.records(limit=1000), 'text', itemwise=False)
+        >>> corpus = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
+        >>> corpus
+        Corpus(1000 docs; 537742 tokens)
+
+    Tokenize and vectorize (the first half of) a corpus::
+
+        >>> terms_list = (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+                          for doc in corpus[:500])
+        >>> vectorizer = Vectorizer(
+        ...     weighting='tfidf', normalize=True, smooth_idf=True,
+        ...     min_df=3, max_df=0.95, max_n_terms=100000)
+        >>> doc_term_matrix = vectorizer.fit_transform(terms_list)
+        >>> doc_term_matrix
+        <500x3811 sparse matrix of type '<class 'numpy.float64'>'
+               with 54530 stored elements in Compressed Sparse Row format>
+
+    Tokenize and vectorize (the *other* half of) a corpus, using only the terms
+    and weights learned in the previous step:
+
+        >>> terms_list = (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+        ...               for doc in corpus[:500])
+        >>> doc_term_matrix = vectorizer.transform(terms_list)
+        >>> doc_term_matrix
+        <500x3811 sparse matrix of type '<class 'numpy.float64'>'
+               with 44788 stored elements in Compressed Sparse Row format>
+
     Args:
         weighting ({'tf', 'tfidf', 'binary'}): Weighting to assign to terms in
             the doc-term matrix. If 'tf', matrix values (i, j) correspond to the
@@ -128,6 +162,9 @@ class Vectorizer(object):
 
     def fit(self, terms_list):
         """
+        Count terms and build up a vocabulary based on the terms found in the
+        ``terms_list``.
+
         Args:
             terms_list (Iterable[Iterable[str]]): A sequence of tokenized documents,
                 where each document is a sequence of (str) terms. For example::
@@ -140,12 +177,20 @@ class Vectorizer(object):
                            itertools.chain.from_iterable(extract.ngrams(doc, i)
                                                          for i in range(1, 3)))
                 ...  for doc in docs)
+
+        Returns:
+            :class:`Vectorizer`: The instance that has just been fit.
         """
-        self.fit_transform(terms_list)
+        _ = self.fit_transform(terms_list)
         return self
 
     def fit_transform(self, terms_list):
         """
+        Count terms and build up a vocabulary based on the terms found in the
+        ``terms_list``, then transform the ``terms_list`` into a document-term
+        matrix with values weighted according to the parameters specified in
+        ``Vectorizer`` initialization.
+
         Args:
             terms_list (Iterable[Iterable[str]]): A sequence of tokenized documents,
                 where each document is a sequence of (str) terms. For example::
@@ -158,6 +203,10 @@ class Vectorizer(object):
                            itertools.chain.from_iterable(extract.ngrams(doc, i)
                                                          for i in range(1, 3)))
                 ...  for doc in docs)
+
+        Returns:
+            :class:`scipy.sparse.csr_matrix`: The transformed document-term matrix.
+                Rows correspond to documents and columns correspond to terms.
         """
         # count terms and build up a vocabulary
         doc_term_matrix, self.vocabulary = self._count_terms(
@@ -175,6 +224,10 @@ class Vectorizer(object):
 
     def transform(self, terms_list):
         """
+        Transform the ``terms_list`` into a document-term matrix with values
+        weighted according to the parameters specified in ``Vectorizer``
+        initialization.
+
         Args:
             terms_list (Iterable[Iterable[str]]): A sequence of tokenized documents,
                 where each document is a sequence of (str) terms. For example::
@@ -187,6 +240,13 @@ class Vectorizer(object):
                            itertools.chain.from_iterable(extract.ngrams(doc, i)
                                                          for i in range(1, 3)))
                 ...  for doc in docs)
+
+        Returns:
+            :class:`scipy.sparse.csr_matrix`: The transformed document-term matrix.
+                Rows correspond to documents and columns correspond to terms.
+
+        .. note:: This requires an existing vocabulary, either built when calling
+            :meth:`Vectorizer.fit()` or provided in ``Vectorizer`` initialization.
         """
         self._check_vocabulary()
         doc_term_matrix, _ = self._count_terms(
@@ -195,7 +255,7 @@ class Vectorizer(object):
 
     def _count_terms(self, terms_list, fixed_vocab):
         """
-        Count terms and build up a vocabulary, based on the terms found in the
+        Count terms and build up a vocabulary based on the terms found in the
         ``terms_list``.
 
         Args:
@@ -206,7 +266,7 @@ class Vectorizer(object):
                 :attr:`Vectorizer.vocabulary` are counted.
 
         Returns:
-            :class:`sp.sparse.csr_matrix`
+            :class:`scipy.sparse.csr_matrix`
             dict
         """
         if fixed_vocab is False:
@@ -262,7 +322,7 @@ class Vectorizer(object):
                 values, e.g. ``{0: "hello", 1: "world"}``.
 
         Returns:
-            :class:`sp.sparse.csr_matrix`
+            :class:`scipy.sparse.csr_matrix`
             dict
         """
         if self.is_fixed_vocabulary:
@@ -290,7 +350,7 @@ class Vectorizer(object):
                 of term j in doc i.
 
         Returns:
-            :class:`sp.sparse.csr_matrix`: Re-weighted doc-term matrix.
+            :class:`scipy.sparse.csr_matrix`: Re-weighted doc-term matrix.
         """
         if self.weighting == 'binary':
             doc_term_matrix.fill(1)
@@ -321,7 +381,9 @@ class Vectorizer(object):
     def _check_vocabulary(self):
         if not isinstance(self.vocabulary, collections.Mapping):
             raise ValueError(
-                'vocabulary hasn\'t yet been fitted; call ``Vectorizer.fit()`` first')
+                'vocabulary hasn\'t been built; call ``Vectorizer.fit()``')
+        if len(self.vocabulary) == 0:
+            raise ValueError('vocabulary is empty')
 
 
 def doc_term_matrix(terms_lists, weighting='tf',
@@ -446,13 +508,12 @@ def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
             weight of term j in doc i
     """
     dfs = get_doc_freqs(doc_term_matrix, normalized=False)
-    n_docs = doc_term_matrix.shape[0]
+    n_docs, _ = doc_term_matrix.shape
     if smooth_idf is True:
         n_docs += 1
         dfs += 1
     idfs = np.log(n_docs / dfs) + 1.0
-    # return doc_term_matrix.multiply(idfs)
-    return doc_term_matrix.dot(sp.diags(idfs, 0))  # same as above, but 100x faster?!
+    return doc_term_matrix.dot(sp.diags(idfs, 0))
 
 
 def get_term_freqs(doc_term_matrix, normalized=True):
