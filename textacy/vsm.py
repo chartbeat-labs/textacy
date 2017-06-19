@@ -12,9 +12,7 @@ from operator import itemgetter
 
 import numpy as np
 import scipy.sparse as sp
-from sklearn.preprocessing import binarize as binarize_mat
 from sklearn.preprocessing import normalize as normalize_mat
-from spacy.strings import StringStore
 
 
 class Vectorizer(object):
@@ -353,7 +351,7 @@ class Vectorizer(object):
             :class:`scipy.sparse.csr_matrix`: Re-weighted doc-term matrix.
         """
         if self.weighting == 'binary':
-            doc_term_matrix.fill(1)
+            doc_term_matrix.data.fill(1)
         else:
             if self.sublinear_tf is True:
                 doc_term_matrix = doc_term_matrix.astype(np.float64)
