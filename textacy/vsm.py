@@ -81,10 +81,10 @@ class Vectorizer(object):
             the top ``max_n_terms``.
 
     Attributes:
-        vocabulary
-        is_fixed_vocabulary
-        id_to_term
-        feature_names
+        vocabulary (Dict[str, int])
+        is_fixed_vocabulary (bool)
+        id_to_term (Dict[int, str])
+        feature_names (List[str])
     """
 
     def __init__(self,
@@ -211,9 +211,8 @@ class Vectorizer(object):
             terms_list, self.is_fixed_vocabulary)
 
         # filter terms by doc freq or info content, as specified in init
-        doc_term_matrix, id_to_term = self._filter_terms(
-            doc_term_matrix, self.id_to_term)
-        self.id_to_term = id_to_term
+        doc_term_matrix, self.vocabulary = self._filter_terms(
+            doc_term_matrix, self.vocabulary)
 
         # re-weight values in doc-term matrix, as specified in init
         doc_term_matrix = self._reweight_values(doc_term_matrix)
@@ -316,12 +315,12 @@ class Vectorizer(object):
             doc_term_matrix (:class:`sp.sparse.csr_matrix`): Sparse matrix of
                 shape (# docs, # unique terms), where value (i, j) is the weight
                 of term j in doc i.
-            vocabulary (dict): Mapping of unique integer term ids to their string
-                values, e.g. ``{0: "hello", 1: "world"}``.
+            vocabulary (Dict[str, int]): Mapping of term strings to their unique
+                integer ids, like ``{"hello": 0, "world": 1}``.
 
         Returns:
             :class:`scipy.sparse.csr_matrix`
-            dict
+            Dict[str, int]
         """
         if self.is_fixed_vocabulary:
             return doc_term_matrix, vocabulary
@@ -502,7 +501,7 @@ def get_information_content(doc_term_matrix):
     return ics
 
 
-def filter_terms_by_df(doc_term_matrix, id_to_term,
+def filter_terms_by_df(doc_term_matrix, term_to_id,
                        max_df=1.0, min_df=1, max_n_terms=None):
     """
     Filter out terms that are too common and/or too rare (by document frequency),
@@ -510,10 +509,10 @@ def filter_terms_by_df(doc_term_matrix, id_to_term,
     Borrows heavily from the ``sklearn.feature_extraction.text`` module.
 
     Args:
-        doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
-            M X N matrix, where M is the # of docs and N is the # of unique terms
-        id_to_term (dict): mapping of unique integer term identifiers to their
-            corresponding normalized strings
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N matrix, where
+            M is the # of docs and N is the # of unique terms.
+        term_to_id (Dict[str, int]): Mapping of term string to unique term id,
+            e.g. :attr:`Vectorizer.vocabulary`.
         min_df (float or int): if float, value is the fractional proportion of
             the total number of documents and must be in [0.0, 1.0]; if int,
             value is the absolute number; filter terms whose document frequency
@@ -536,7 +535,7 @@ def filter_terms_by_df(doc_term_matrix, id_to_term,
         ValueError: if ``max_df`` or ``min_df`` or ``max_n_terms`` < 0
     """
     if max_df == 1.0 and min_df == 1 and max_n_terms is None:
-        return doc_term_matrix, id_to_term
+        return doc_term_matrix, term_to_id
     if max_df < 0 or min_df < 0 or (max_n_terms is not None and max_n_terms < 0):
         raise ValueError('max_df, min_df, and max_n_terms may not be negative')
 
@@ -562,8 +561,8 @@ def filter_terms_by_df(doc_term_matrix, id_to_term,
 
     # map old term indices to new ones
     new_indices = np.cumsum(mask) - 1
-    id_to_term = {new_indices[old_index]: term
-                  for old_index, term in id_to_term.items()
+    term_to_id = {term: new_indices[old_index]
+                  for term, old_index in term_to_id.items()
                   if mask[old_index]}
 
     kept_indices = np.where(mask)[0]
@@ -571,10 +570,10 @@ def filter_terms_by_df(doc_term_matrix, id_to_term,
         msg = 'After filtering, no terms remain; try a lower `min_df` or higher `max_df`'
         raise ValueError(msg)
 
-    return (doc_term_matrix[:, kept_indices], id_to_term)
+    return (doc_term_matrix[:, kept_indices], term_to_id)
 
 
-def filter_terms_by_ic(doc_term_matrix, id_to_term,
+def filter_terms_by_ic(doc_term_matrix, term_to_id,
                        min_ic=0.0, max_n_terms=None):
     """
     Filter out terms that are too common and/or too rare (by information content),
@@ -582,10 +581,10 @@ def filter_terms_by_ic(doc_term_matrix, id_to_term,
     Borrows heavily from the ``sklearn.feature_extraction.text`` module.
 
     Args:
-        doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
-            M X N matrix, where M is the # of docs and N is the # of unique terms
-        id_to_term (dict): mapping of unique integer term identifiers to
-            corresponding normalized strings as values
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N matrix, where
+            M is the # of docs and N is the # of unique terms.
+        term_to_id (Dict[str, int]): Mapping of term string to unique term id,
+            e.g. :attr:`Vectorizer.vocabulary`.
         min_ic (float): filter terms whose information content is less than this
             value; must be in [0.0, 1.0]
         max_n_terms (int): only include terms whose information content is within
@@ -602,7 +601,7 @@ def filter_terms_by_ic(doc_term_matrix, id_to_term,
         ValueError: if ``min_ic`` not in [0.0, 1.0] or ``max_n_terms`` < 0
     """
     if min_ic == 0.0 and max_n_terms is None:
-        return doc_term_matrix, id_to_term
+        return doc_term_matrix, term_to_id
     if min_ic < 0.0 or min_ic > 1.0:
         raise ValueError('min_ic must be a float in [0.0, 1.0]')
     if max_n_terms is not None and max_n_terms < 0:
@@ -623,12 +622,12 @@ def filter_terms_by_ic(doc_term_matrix, id_to_term,
 
     # map old term indices to new ones
     new_indices = np.cumsum(mask) - 1
-    id_to_term = {new_indices[old_index]: term
-                  for old_index, term in id_to_term.items()
+    term_to_id = {term: new_indices[old_index]
+                  for term, old_index in term_to_id.items()
                   if mask[old_index]}
 
     kept_indices = np.where(mask)[0]
     if len(kept_indices) == 0:
         raise ValueError('After filtering, no terms remain; try a lower `min_ic`')
 
-    return (doc_term_matrix[:, kept_indices], id_to_term)
+    return (doc_term_matrix[:, kept_indices], term_to_id)

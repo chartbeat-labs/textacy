@@ -27,10 +27,10 @@ class VSMTestCase(unittest.TestCase):
             weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
             min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
         self.doc_term_matrix = self.vectorizer.fit_transform(term_lists)
-        print([k for k, v in self.vectorizer.id_to_term.items() if v == 'lamb'][0])
-
-        self.idx_lamb = [k for k, v in self.vectorizer.id_to_term.items() if v == 'lamb'][0]
-        self.idx_child = [k for k, v in self.vectorizer.id_to_term.items() if v == 'child'][0]
+        self.idx_lamb = [
+            id_ for term, id_ in self.vectorizer.vocabulary.items() if term == 'lamb'][0]
+        self.idx_child = [
+            id_ for term, id_ in self.vectorizer.vocabulary.items() if term == 'child'][0]
 
     def test_vectorizer_feature_names(self):
         expected = [
@@ -101,38 +101,38 @@ class VSMTestCase(unittest.TestCase):
         self.assertAlmostEqual(ics[self.idx_child], 0.81127, places=4)
 
     def test_filter_terms_by_df_identity(self):
-        dtm, i2t = vsm.filter_terms_by_df(self.doc_term_matrix, self.vectorizer.id_to_term,
-                                          max_df=1.0, min_df=1, max_n_terms=None)
+        dtm, vocab = vsm.filter_terms_by_df(self.doc_term_matrix, self.vectorizer.vocabulary,
+                                            max_df=1.0, min_df=1, max_n_terms=None)
         self.assertEqual(dtm.shape, self.doc_term_matrix.shape)
-        self.assertEqual(i2t, self.vectorizer.id_to_term)
+        self.assertEqual(vocab, self.vectorizer.vocabulary)
 
     def test_filter_terms_by_df_max_n_terms(self):
-        dtm, i2t = vsm.filter_terms_by_df(self.doc_term_matrix, self.vectorizer.id_to_term,
-                                          max_df=1.0, min_df=1, max_n_terms=2)
+        dtm, vocab = vsm.filter_terms_by_df(self.doc_term_matrix, self.vectorizer.vocabulary,
+                                            max_df=1.0, min_df=1, max_n_terms=2)
         self.assertEqual(dtm.shape, (8, 2))
-        self.assertEqual(sorted(i2t.values()), ['lamb', 'mary'])
+        self.assertEqual(sorted(vocab.keys()), ['lamb', 'mary'])
 
     def test_filter_terms_by_df_min_df(self):
-        dtm, i2t = vsm.filter_terms_by_df(self.doc_term_matrix, self.vectorizer.id_to_term,
-                                          max_df=1.0, min_df=2, max_n_terms=None)
+        dtm, vocab = vsm.filter_terms_by_df(self.doc_term_matrix, self.vectorizer.vocabulary,
+                                            max_df=1.0, min_df=2, max_n_terms=None)
         self.assertEqual(dtm.shape, (8, 6))
         self.assertEqual(
-            sorted(i2t.values()),
+            sorted(vocab.keys()),
             ['child', 'lamb', 'love', 'mary', 'school', 'teacher'])
 
     def test_filter_terms_by_df_exception(self):
         self.assertRaises(ValueError, vsm.filter_terms_by_df,
-                          self.doc_term_matrix, self.vectorizer.id_to_term,
+                          self.doc_term_matrix, self.vectorizer.vocabulary,
                           max_df=1.0, min_df=6, max_n_terms=None)
 
     def test_filter_terms_by_ic_identity(self):
-        dtm, i2t = vsm.filter_terms_by_ic(self.doc_term_matrix, self.vectorizer.id_to_term,
-                                          min_ic=0.0, max_n_terms=None)
+        dtm, vocab = vsm.filter_terms_by_ic(self.doc_term_matrix, self.vectorizer.vocabulary,
+                                            min_ic=0.0, max_n_terms=None)
         self.assertEqual(dtm.shape, self.doc_term_matrix.shape)
-        self.assertEqual(i2t, self.vectorizer.id_to_term)
+        self.assertEqual(vocab, self.vectorizer.vocabulary)
 
     def test_filter_terms_by_ic_max_n_terms(self):
-        dtm, i2t = vsm.filter_terms_by_ic(self.doc_term_matrix, self.vectorizer.id_to_term,
-                                          min_ic=0.0, max_n_terms=3)
+        dtm, vocab = vsm.filter_terms_by_ic(self.doc_term_matrix, self.vectorizer.vocabulary,
+                                            min_ic=0.0, max_n_terms=3)
         self.assertEqual(dtm.shape, (8, 3))
-        self.assertEqual(len(i2t), 3)
+        self.assertEqual(len(vocab), 3)
