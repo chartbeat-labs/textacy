@@ -9,7 +9,7 @@ import unittest
 import numpy as np
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
-from textacy.vsm import doc_term_matrix
+from textacy.vsm import Vectorizer
 from textacy import Corpus
 from textacy.tm import TopicModel
 
@@ -25,13 +25,13 @@ class TopicModelTestCase(unittest.TestCase):
                  "It waited patiently about until Mary did appear.",
                  "Why does the lamb love Mary so? The eager children cry.",
                  "Mary loves the lamb, you know, the teacher did reply."]
-        textcorpus = Corpus('en_core_web_sm', texts=texts)
+        corpus = Corpus('en_core_web_sm', texts=texts)
         term_lists = [doc.to_terms_list(ngrams=1, named_entities=False, as_strings=True)
-                      for doc in textcorpus]
-        self.doc_term_matrix, self.id2term = doc_term_matrix(
-            term_lists,
+                      for doc in corpus]
+        self.vectorizer = Vectorizer(
             weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
             min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
+        self.doc_term_matrix = self.vectorizer.fit_transform(term_lists)
         self.model = TopicModel('nmf', n_topics=5)
         self.model.fit(self.doc_term_matrix)
         self.tempdir = tempfile.mkdtemp(
@@ -76,25 +76,25 @@ class TopicModelTestCase(unittest.TestCase):
 
     def test_top_topic_terms_topics(self):
         self.assertEqual(
-            len(list(self.model.top_topic_terms(self.id2term, topics=-1))),
+            len(list(self.model.top_topic_terms(self.vectorizer.id_to_term, topics=-1))),
             self.model.n_topics)
         self.assertEqual(
-            len(list(self.model.top_topic_terms(self.id2term, topics=0))), 1)
+            len(list(self.model.top_topic_terms(self.vectorizer.id_to_term, topics=0))), 1)
         self.assertEqual(
             [topic_idx for topic_idx, _
-             in self.model.top_topic_terms(self.id2term, topics=(1, 2, 3))],
+             in self.model.top_topic_terms(self.vectorizer.id_to_term, topics=(1, 2, 3))],
             [1, 2, 3])
 
     def test_top_topic_terms_top_n(self):
         self.assertEqual(
-            len(list(self.model.top_topic_terms(self.id2term, topics=0, top_n=10))[0][1]),
+            len(list(self.model.top_topic_terms(self.vectorizer.id_to_term, topics=0, top_n=10))[0][1]),
             10)
         self.assertEqual(
-            len(list(self.model.top_topic_terms(self.id2term, topics=0, top_n=5))[0][1]),
+            len(list(self.model.top_topic_terms(self.vectorizer.id_to_term, topics=0, top_n=5))[0][1]),
             5)
 
     def test_top_topic_terms_weights(self):
-        observed = list(self.model.top_topic_terms(self.id2term, topics=-1,
+        observed = list(self.model.top_topic_terms(self.vectorizer.id_to_term, topics=-1,
                                                    top_n=10, weights=True))
         self.assertTrue(isinstance(observed[0][1][0], tuple))
         for topic_idx, term_weights in observed:
