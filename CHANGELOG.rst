@@ -1,6 +1,86 @@
 Changelog
 =========
 
+0.4.0 (2017-06-21)
+------------------
+
+Changes:
+
+- Refactored and expanded built-in ``corpora``, now called ``datasets`` (PR #112)
+    - The various classes in the old ``corpora`` subpackage had a similar but
+      frustratingly not-identical API. Also, some fetched the corresponding dataset
+      automatically, while others required users to do it themselves. Ugh.
+    - These classes have been ported over to a new ``datasets`` subpackage; they
+      now have a consistent API, consistent features, and consistent documentation.
+      They also have some new functionality, including pain-free downloading of
+      the data and saving it to disk in a stream (so as not to use all your RAM).
+    - Also, there's a new dataset: A collection of 2.7k Creative Commons texts
+      from the Oxford Text Archive, which rounds out the included datasets with
+      English-language, 16th-20th century _literary_ works. (h/t @JonathanReeve)
+- A ``Vectorizer`` class to convert tokenized texts into variously weighted
+  document-term matrices (Issue #69, PR #113)
+    - This class uses the familiar ``scikit-learn`` API (which is also consistent
+      with the ``textacy.tm.TopicModel`` class) to convert one or more documents
+      in the form of "term lists" into weighted vectors. An initial set of documents
+      is used to build up the matrix vocabulary (via ``.fit()``), which can then
+      be applied to new documents (via ``.transform()``).
+    - It's similar in concept and usage to sklearn's ``CountVectorizer`` or
+      ``TfidfVectorizer``, but doesn't convolve the tokenization task as they do.
+      This means users have more flexibility in deciding which terms to vectorize.
+      This class outright replaces the ``textacy.vsm.doc_term_matrix()`` function.
+- Customizable automatic language detection for ``Doc`` s
+    - Although ``cld2-cffi`` is fast and accurate, its installation is problematic
+      for some users. Since other language detection libraries are available
+      (e.g. [``langdetect``](https://github.com/Mimino666/langdetect) and
+      [``langid``](https://github.com/saffsd/langid.py)), it makes sense to let
+      users choose, as needed or desired.
+    - First, ``cld2-cffi`` is now an optional dependency, i.e. is not installed
+      by default. To install it, do ``pip install textacy[lang]`` or (for it and
+      all other optional deps) do ``pip install textacy[all]``. (PR #86)
+    - Second, the ``lang`` param used to instantiate ``Doc`` objects may now
+      be a callable that accepts a unicode string and returns a standard 2-letter
+      language code. This could be a function that uses ``langdetect`` under the
+      hood, or a function that always returns "de" -- it's up to users. Note that
+      the default value is now ``textacy.text_utils.detect_language()``, which
+      uses ``cld2-cffi``, so the default behavior is unchanged.
+- Customizable punctuation removal in the ``preprocessing`` module (Issue #91)
+    - Users can now specify which punctuation marks they wish to remove, rather
+      than always removing _all_ marks.
+    - In the case that all marks are removed, however, performance is now 5-10x
+      faster by using Python's built-in ``str.translate()`` method instead of
+      a regular expression.
+- ``textacy``, installable via ``conda`` (PR #100)
+    - The package has been added to Conda-Forge ([here](https://github.com/conda-forge/textacy-feedstock)),
+      and installation instructions have been added to the docs. Hurray!
+- ``textacy``, now with helpful badges
+    - Builds are now automatically tested via Travis CI, and there's a badge in
+      the docs showing whether the build passed or not. The days of my ignoring
+      broken tests in ``master`` are (probably) over...
+    - There are also badges showing the latest releases on GitHub, pypi, and
+      conda-forge (see above).
+
+Bugfixes:
+
+- Fixed the check for overlap between named entities and unigrams in the
+  ``Doc.to_terms_list()`` method (PR #111)
+- ``Corpus.add_texts()`` uses CPU_COUNT - 1 threads by default, rather than
+  always assuming that 4 cores are available (Issue #89)
+- Added a missing coding declaration to a test file, without which tests failed
+  for Python 2 (PR #99)
+- ``readability_stats()`` now catches an exception raised on empty documents and
+  logs a message, rather than barfing with an unhelpful ``ZeroDivisionError``.
+  (Issue #88)
+- Added a check for empty terms list in ``terms_to_semantic_network`` (Issue #105)
+- Added and standardized module-specific loggers throughout the code base; not
+  a bug per sé, but certainly some much-needed housecleaning
+- Added a note to the docs about expectations for bytes vs. unicode text (PR #103)
+
+Contributors:
+
+Thanks to @henridwyer, @rolando, @pavlin99th, and @kyocum for their contributions!
+:raised_hands:
+
+
 0.3.4 (2017-04-17)
 ------------------
 
