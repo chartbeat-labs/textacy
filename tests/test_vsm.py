@@ -23,12 +23,34 @@ class VSMTestCase(unittest.TestCase):
         corpus = Corpus('en_core_web_sm', texts=texts)
         term_lists = [doc.to_terms_list(ngrams=1, named_entities=False, as_strings=True)
                       for doc in corpus]
-        self.doc_term_matrix, self.id_to_term = vsm.doc_term_matrix(
-            term_lists,
+        self.vectorizer = vsm.Vectorizer(
             weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
             min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
-        self.idx_lamb = [k for k, v in self.id_to_term.items() if v == 'lamb'][0]
-        self.idx_child = [k for k, v in self.id_to_term.items() if v == 'child'][0]
+        self.doc_term_matrix = self.vectorizer.fit_transform(term_lists)
+        self.idx_lamb = [
+            id_ for term, id_ in self.vectorizer.vocabulary.items() if term == 'lamb'][0]
+        self.idx_child = [
+            id_ for term, id_ in self.vectorizer.vocabulary.items() if term == 'child'][0]
+
+    def test_vectorizer_feature_names(self):
+        expected = [
+            'mary', 'little', 'lamb', 'fleece', 'white', 'snow', 'go', 'sure',
+            'follow', 'school', 'day', 'rule', 'child', 'laugh', 'play', 'teacher',
+            'turn', 'linger', 'near', 'wait', 'patiently', 'appear', 'love',
+            'eager', 'cry', 'know', 'reply']
+        self.assertEqual(self.vectorizer.feature_names, expected)
+
+    def test_vectorizer_bad_init_params(self):
+        bad_init_params = (
+            {'min_df': -1},
+            {'max_df': -1},
+            {'max_n_terms': -1},
+            {'min_ic': -1.0},
+            {'vocabulary': 'foo bar bat baz'},
+            )
+        for bad_init_param in bad_init_params:
+            with self.assertRaises(ValueError):
+                vsm.Vectorizer(**bad_init_param)
 
     def test_get_term_freqs(self):
         term_freqs = vsm.get_term_freqs(self.doc_term_matrix, normalized=False)
@@ -79,38 +101,38 @@ class VSMTestCase(unittest.TestCase):
         self.assertAlmostEqual(ics[self.idx_child], 0.81127, places=4)
 
     def test_filter_terms_by_df_identity(self):
-        dtm, i2t = vsm.filter_terms_by_df(self.doc_term_matrix, self.id_to_term,
-                                          max_df=1.0, min_df=1, max_n_terms=None)
+        dtm, vocab = vsm.filter_terms_by_df(self.doc_term_matrix, self.vectorizer.vocabulary,
+                                            max_df=1.0, min_df=1, max_n_terms=None)
         self.assertEqual(dtm.shape, self.doc_term_matrix.shape)
-        self.assertEqual(i2t, self.id_to_term)
+        self.assertEqual(vocab, self.vectorizer.vocabulary)
 
     def test_filter_terms_by_df_max_n_terms(self):
-        dtm, i2t = vsm.filter_terms_by_df(self.doc_term_matrix, self.id_to_term,
-                                          max_df=1.0, min_df=1, max_n_terms=2)
+        dtm, vocab = vsm.filter_terms_by_df(self.doc_term_matrix, self.vectorizer.vocabulary,
+                                            max_df=1.0, min_df=1, max_n_terms=2)
         self.assertEqual(dtm.shape, (8, 2))
-        self.assertEqual(sorted(i2t.values()), ['lamb', 'mary'])
+        self.assertEqual(sorted(vocab.keys()), ['lamb', 'mary'])
 
     def test_filter_terms_by_df_min_df(self):
-        dtm, i2t = vsm.filter_terms_by_df(self.doc_term_matrix, self.id_to_term,
-                                          max_df=1.0, min_df=2, max_n_terms=None)
+        dtm, vocab = vsm.filter_terms_by_df(self.doc_term_matrix, self.vectorizer.vocabulary,
+                                            max_df=1.0, min_df=2, max_n_terms=None)
         self.assertEqual(dtm.shape, (8, 6))
         self.assertEqual(
-            sorted(i2t.values()),
+            sorted(vocab.keys()),
             ['child', 'lamb', 'love', 'mary', 'school', 'teacher'])
 
     def test_filter_terms_by_df_exception(self):
         self.assertRaises(ValueError, vsm.filter_terms_by_df,
-                          self.doc_term_matrix, self.id_to_term,
+                          self.doc_term_matrix, self.vectorizer.vocabulary,
                           max_df=1.0, min_df=6, max_n_terms=None)
 
     def test_filter_terms_by_ic_identity(self):
-        dtm, i2t = vsm.filter_terms_by_ic(self.doc_term_matrix, self.id_to_term,
-                                          min_ic=0.0, max_n_terms=None)
+        dtm, vocab = vsm.filter_terms_by_ic(self.doc_term_matrix, self.vectorizer.vocabulary,
+                                            min_ic=0.0, max_n_terms=None)
         self.assertEqual(dtm.shape, self.doc_term_matrix.shape)
-        self.assertEqual(i2t, self.id_to_term)
+        self.assertEqual(vocab, self.vectorizer.vocabulary)
 
     def test_filter_terms_by_ic_max_n_terms(self):
-        dtm, i2t = vsm.filter_terms_by_ic(self.doc_term_matrix, self.id_to_term,
-                                          min_ic=0.0, max_n_terms=3)
+        dtm, vocab = vsm.filter_terms_by_ic(self.doc_term_matrix, self.vectorizer.vocabulary,
+                                            min_ic=0.0, max_n_terms=3)
         self.assertEqual(dtm.shape, (8, 3))
-        self.assertEqual(len(i2t), 3)
+        self.assertEqual(len(vocab), 3)

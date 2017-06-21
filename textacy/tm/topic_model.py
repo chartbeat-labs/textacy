@@ -18,25 +18,14 @@ class TopicModel(object):
     implementations of LSA, LDA, and NMF models. Inspect and visualize results.
     Save and load trained models to and from disk.
 
-    Stream a corpus with metadata from disk::
+    Prepare a vectorized corpus (i.e. document-term matrix) and corresponding
+    vocabulary (i.e. mapping of term strings to column indices in the matrix).
+    See :class:`textacy.vsm.Vectorizer` for details. In short::
 
-        >>> cw = textacy.datasets.CapitolWords()
-        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
-        ...     cw.records(limit=1000), 'text', itemwise=False)
-        >>> corpus = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
-        >>> corpus
-        Corpus(1000 docs; 537742 tokens)
-
-    Tokenize and vectorize the corpus::
-
-        >>> terms_lists = (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
-        ...                for doc in corpus)
-        >>> doc_term_matrix, id2term = textacy.vsm.doc_term_matrix(
-        ...     terms_lists, weighting='tfidf', normalize=True, smooth_idf=True,
+        >>> vectorizer = Vectorizer(
+        ...     weighting='tfidf', normalize=True, smooth_idf=True,
         ...     min_df=3, max_df=0.95, max_n_terms=100000)
-        >>> doc_term_matrix
-        <1000x5579 sparse matrix of type '<class 'numpy.float64'>'
-                with 105632 stored elements in Compressed Sparse Row format>
+        >>> doc_term_matrix = vectorizer.fit_transform(terms_list)
 
     Initialize and train a topic model::
 
@@ -48,7 +37,7 @@ class TopicModel(object):
     Transform the corpus and interpret our model::
 
         >>> doc_topic_matrix = model.transform(doc_term_matrix)
-        >>> for topic_idx, top_terms in model.top_topic_terms(id2term, topics=[0,1]):
+        >>> for topic_idx, top_terms in model.top_topic_terms(vectorizer.id_to_term, topics=[0,1]):
         ...     print('topic', topic_idx, ':', '   '.join(top_terms))
         topic 0 : people   american   go   year   work   think   $   today   money   america
         topic 1 : rescind   quorum   order   unanimous   consent   ask   president   mr.   madam   absence
@@ -84,7 +73,7 @@ class TopicModel(object):
 
     Visualize the model::
 
-        >>> model.termite_plot(doc_term_matrix, id2term,
+        >>> model.termite_plot(doc_term_matrix, vectorizer.id_to_term,
         ...                    topics=-1,  n_terms=25, sort_terms_by='seriation')
 
     Persist our topic model to disk::
