@@ -366,10 +366,12 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
     bool_array_grp1 = np.array(bool_array_grp1)
     bool_array_grp2 = np.invert(bool_array_grp1)
 
-    dtm, id2term = vsm.doc_term_matrix(
-        terms_lists, weighting='tf', normalize=False,
+    vectorizer = vsm.Vectorizer(
+        weighting='tf', normalize=False,
         sublinear_tf=False, smooth_idf=True,
         min_df=3, max_df=0.95, min_ic=0.0, max_n_terms=max_n_terms)
+    dtm = vectorizer.fit_transform(terms_lists)
+    id2term = vectorizer.id_to_term
 
     # get doc freqs for all terms in grp1 documents
     dtm_grp1 = dtm[bool_array_grp1, :]
