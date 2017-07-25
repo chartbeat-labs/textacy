@@ -432,7 +432,7 @@ class Doc(object):
                 warnings.warn(msg, DeprecationWarning)
         if not named_entities and not ngrams:
             raise ValueError('either `named_entities` or `ngrams` must be included')
-        if isinstance(ngrams, int):
+        if ngrams and isinstance(ngrams, int):
             ngrams = (ngrams,)
         if named_entities is True:
             ne_kwargs = {
