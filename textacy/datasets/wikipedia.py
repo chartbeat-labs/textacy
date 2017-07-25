@@ -198,7 +198,7 @@ class Wikipedia(Dataset):
 
         if compat.is_python2 is False:
             events = ('end',)
-            f = fileio.open_sesame(self.path, mode='rt', encoding="UTF-8")
+            f = fileio.open_sesame(self.filename, mode='rt', encoding="UTF-8")
         else:  # Python 2 can't open bzip in text mode :(
             events = (b'end',)
             f = fileio.open_sesame(self.filename, mode='rb')
