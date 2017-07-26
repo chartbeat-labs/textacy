@@ -73,7 +73,7 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
     window_width = min(n_toks, window_width)
     min_term_freq = min(n_toks // 1000, 4)
     if isinstance(ngrams, int):
-            ngrams = (ngrams,)
+        ngrams = (ngrams,)
 
     # build full list of candidate terms
     # if inverse doc freqs available, include nouns, adjectives, and verbs;
