@@ -1,6 +1,30 @@
 Changelog
 =========
 
+0.4.1 (2017-07-27)
+------------------
+
+Changes:
+
+- Added key classes to the top-level ``textacy`` imports, for convenience:
+    - ``textacy.text_stats.TextStats`` => ``textacy.TextStats``
+    - ``textacy.vsm.Vectorizer`` => ``textacy.Vectorizer``
+    - ``textacy.tm.TopicModel`` => ``textacy.TopicModel``
+- Added tests for ``textacy.Doc`` and updated the README's usage example
+
+Bugfixes:
+
+- Added explicit encoding when opening Wikipedia database files in text mode to
+  resolve an issue when doing so without encoding on Windows (PR #118)
+- Fixed ``keyterms.most_discriminating_terms`` to use the ``vsm.Vectorizer`` class
+  rather than the ``vsm.doc_term_matrix`` function that it replaced (PR #120)
+- Fixed mishandling of a couple optional args in ``Doc.to_terms_list``
+
+Contributors:
+
+Thanks to @minketeer and @Gregory-Howard for the fixes!
+
+
 0.4.0 (2017-06-21)
 ------------------
 

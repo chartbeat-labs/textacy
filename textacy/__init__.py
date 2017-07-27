@@ -4,7 +4,7 @@ import logging
 import os
 # import pkgutil
 
-__version__ = '0.4.0'
+__version__ = '0.4.1'
 # __resources_dir__ = os.path.join(
 #     os.path.dirname(pkgutil.get_loader('textacy').get_filename()),
 #     'resources')
