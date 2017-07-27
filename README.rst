@@ -104,7 +104,7 @@ Represent corpus as a document-term matrix, with flexible weighting and filterin
 
 .. code-block:: pycon
 
-    >>> vectorizer = Vectorizer(
+    >>> vectorizer = textacy.Vectorizer(
     ...     weighting='tfidf', normalize=True, smooth_idf=True,
     ...     min_df=2, max_df=0.95)
     >>> doc_term_matrix = vectorizer.fit_transform(
@@ -118,7 +118,7 @@ Train and interpret a topic model:
 
 .. code-block:: pycon
 
-    >>> model = textacy.tm.TopicModel('nmf', n_topics=10)
+    >>> model = textacy.TopicModel('nmf', n_topics=10)
     >>> model.fit(doc_term_matrix)
     >>> doc_topic_matrix = model.transform(doc_term_matrix)
     >>> doc_topic_matrix.shape
@@ -241,7 +241,7 @@ Compute basic counts and readability statistics for a given text:
 
 .. code-block:: pycon
 
-    >>> ts = textacy.text_stats.TextStats(doc)
+    >>> ts = textacy.TextStats(doc)
     >>> ts.n_unique_words
     1107
     >>> ts.basic_counts

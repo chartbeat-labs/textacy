@@ -32,6 +32,9 @@ from textacy.data import load_spacy
 from textacy.preprocess import preprocess_text
 from textacy.doc import Doc
 from textacy.corpus import Corpus
+from textacy.text_stats import TextStats
+from textacy.tm import TopicModel
+from textacy.vsm import Vectorizer
 
 logger = logging.getLogger('textacy')
 if len(logger.handlers) == 0:  # To ensure reload() doesn't add another one
