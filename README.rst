@@ -86,6 +86,7 @@ Usage Example
 .. code-block:: pycon
 
     >>> import textacy
+    >>> import textacy.datasets
 
 Efficiently stream documents from disk and into a processed corpus:
 
@@ -103,13 +104,15 @@ Represent corpus as a document-term matrix, with flexible weighting and filterin
 
 .. code-block:: pycon
 
-    >>> doc_term_matrix, id2term = textacy.vsm.doc_term_matrix(
+    >>> vectorizer = Vectorizer(
+    ...     weighting='tfidf', normalize=True, smooth_idf=True,
+    ...     min_df=2, max_df=0.95)
+    >>> doc_term_matrix = vectorizer.fit_transform(
     ...     (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
-    ...      for doc in corpus),
-    ...     weighting='tfidf', normalize=True, smooth_idf=True, min_df=2, max_df=0.95)
+    ...      for doc in corpus))
     >>> print(repr(doc_term_matrix))
-    <1241x11364 sparse matrix of type '<class 'numpy.float64'>'
-	   with 211602 stored elements in Compressed Sparse Row format>
+    <1241x11708 sparse matrix of type '<class 'numpy.float64'>'
+        with 215182 stored elements in Compressed Sparse Row format>
 
 Train and interpret a topic model:
 
@@ -120,7 +123,7 @@ Train and interpret a topic model:
     >>> doc_topic_matrix = model.transform(doc_term_matrix)
     >>> doc_topic_matrix.shape
     (1241, 10)
-    >>> for topic_idx, top_terms in model.top_topic_terms(id2term, top_n=10):
+    >>> for topic_idx, top_terms in model.top_topic_terms(vectorizer.id_to_term, top_n=10):
     ...     print('topic', topic_idx, ':', '   '.join(top_terms))
     topic 0 : new   people   's   american   senate   need   iraq   york   americans   work
     topic 1 : rescind   quorum   order   consent   unanimous   ask   president   mr.   madam   aside
