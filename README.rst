@@ -93,6 +93,7 @@ Efficiently stream documents from disk and into a processed corpus:
 .. code-block:: pycon
 
     >>> cw = textacy.datasets.CapitolWords()
+    >>> cw.download()
     >>> records = cw.records(speaker_name={'Hillary Clinton', 'Barack Obama'})
     >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
     ...     records, 'text')
