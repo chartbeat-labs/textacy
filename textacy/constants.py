@@ -45,7 +45,7 @@ PUNCT_TRANSLATE_BYTES = ''.join(
 
 ACRONYM_REGEX = re.compile(r"(?:^|(?<=\W))(?:(?:(?:(?:[A-Z]\.?)+[a-z0-9&/-]?)+(?:[A-Z][s.]?|[0-9]s?))|(?:[0-9](?:\-?[A-Z])+))(?:$|(?=\W))", flags=re.UNICODE)
 EMAIL_REGEX = re.compile(r"(?:^|(?<=[^\w@.)]))([\w+-](\.(?!\.))?)*?[\w+-]@(?:\w-?)*?\w+(\.([a-z]{2,})){1,3}(?:$|(?=\b))", flags=re.IGNORECASE | re.UNICODE)
-PHONE_REGEX = re.compile(r'(?:^|(?<=[^\w)]))(\+?1[ .-]?)?(\(?\d{3}\)?[ .-]?)?\d{3}[ .-]?\d{4}(\s?(?:ext\.?|[#x-])\s?\d{2,6})?(?:$|(?=\W))')
+PHONE_REGEX = re.compile(r'(?:^|(?<=[^\w)]))(\+?1[ .-]?)?(\(?\d{3}\)?[ .-]?)?(\d{3}[ .-]?\d{4})(\s?(?:ext\.?|[#x-])\s?\d{2,6})?(?:$|(?=\W))')
 NUMBERS_REGEX = re.compile(r'(?:^|(?<=[^\w,.]))[+–-]?(([1-9]\d{0,2}(,\d{3})+(\.\d*)?)|([1-9]\d{0,2}([ .]\d{3})+(,\d*)?)|(\d*?[.,]\d+)|\d+)(?:$|(?=\b))')
 CURRENCY_REGEX = re.compile('[{0}]+'.format(''.join(CURRENCIES.keys())))
 LINEBREAK_REGEX = re.compile(r'((\r\n)|[\n\v])+')
