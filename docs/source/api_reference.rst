@@ -52,7 +52,7 @@ Datasets
 .. automodule:: textacy.datasets.wikipedia
     :members:
 
-.. automodule:: textacy.datasets.supreme_court
+.. automodule:: textacy.datasets.reddit_comments
     :members:
 
 .. automodule:: textacy.datasets.oxford_text_archive
