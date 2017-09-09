@@ -158,6 +158,8 @@ class Doc(object):
             raise ValueError(
                 '`Doc` must be initialized with {} content, not "{}"'.format(
                     {unicode_, SpacyDoc}, type(content)))
+        self._counted_ngrams = set()
+        self._counts = Counter()
 
     def __repr__(self):
         snippet = self.text[:50].replace('\n', ' ')
@@ -286,9 +288,6 @@ class Doc(object):
         # reset counts, since merging spans invalidates existing counts
         self._counts.clear()
         self._counted_ngrams = set()
-
-    _counted_ngrams = set()
-    _counts = Counter()
 
     def count(self, term):
         """
