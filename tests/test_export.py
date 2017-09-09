@@ -12,7 +12,7 @@ class ExportTestCase(unittest.TestCase):
 
     def setUp(self):
         text = "I would have lived in peace. But my enemies brought me war."
-        spacy_lang = data.load_spacy('en_core_web_sm')
+        spacy_lang = data.load_spacy('en')
         self.spacy_doc = spacy_lang(text)
         cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
         values = np.array(

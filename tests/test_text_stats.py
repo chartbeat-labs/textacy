@@ -16,7 +16,7 @@ Mr. Speaker, that is what the American people want, that is what they need, and 
 class TextStatsTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.doc = Doc(TEXT, lang='en_core_web_sm')
+        self.doc = Doc(TEXT, lang='en')
         self.ts = text_stats.TextStats(self.doc)
 
     def test_n_sents(self):

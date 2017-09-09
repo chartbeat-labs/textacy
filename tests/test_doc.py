@@ -25,7 +25,7 @@ class DocInitTestCase(unittest.TestCase):
         self.assertIsInstance(Doc('This is an English sentence.'), Doc)
 
     def test_spacydoc_content(self):
-        spacy_lang = data.load_spacy('en_core_web_sm')
+        spacy_lang = data.load_spacy('en')
         spacy_doc = spacy_lang('This is an English sentence.')
         self.assertIsInstance(Doc(spacy_doc), Doc)
 
@@ -44,7 +44,7 @@ class DocInitTestCase(unittest.TestCase):
             Doc('This is an English sentence.', lang='en'), Doc)
 
     def test_lang_spacylang(self):
-        spacy_lang = data.load_spacy('en_core_web_sm')
+        spacy_lang = data.load_spacy('en')
         self.assertIsInstance(
             Doc('This is an English sentence.', lang=spacy_lang), Doc)
 
@@ -63,7 +63,7 @@ class DocInitTestCase(unittest.TestCase):
                 Doc('This is an English sentence.', lang=invalid_lang)
 
     def test_invalid_content_lang_combo(self):
-        spacy_lang = data.load_spacy('en_core_web_sm')
+        spacy_lang = data.load_spacy('en')
         with self.assertRaises(ValueError):
             Doc(spacy_lang('Hola, cómo estás mi amigo?'), lang='es')
 
@@ -71,7 +71,7 @@ class DocInitTestCase(unittest.TestCase):
 class DocMethodsTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.doc = Doc(TEXT.strip(), lang='en_core_web_sm')
+        self.doc = Doc(TEXT.strip(), lang='en')
 
     def test_n_tokens_and_sents(self):
         self.assertEqual(self.doc.n_tokens, 241)

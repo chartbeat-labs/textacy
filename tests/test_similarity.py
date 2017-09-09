@@ -11,8 +11,8 @@ class SimilarityTestCase(unittest.TestCase):
     def setUp(self):
         self.text1 = 'She spoke to the assembled journalists.'
         self.text2 = 'He chatted with the gathered press.'
-        self.doc1 = textacy.Doc(self.text1, lang='en_core_web_sm')
-        self.doc2 = textacy.Doc(self.text2, lang='en_core_web_sm')
+        self.doc1 = textacy.Doc(self.text1, lang='en')
+        self.doc2 = textacy.Doc(self.text2, lang='en')
 
     def test_word_movers(self):
         metrics = ('cosine', 'l1', 'manhattan', 'l2', 'euclidean')

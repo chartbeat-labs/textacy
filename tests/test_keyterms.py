@@ -14,7 +14,7 @@ class ExtractTestCase(unittest.TestCase):
     """
 
     def setUp(self):
-        spacy_lang = data.load_spacy('en_core_web_sm')
+        spacy_lang = data.load_spacy('en')
         text = """
         Friedman joined the London bureau of United Press International after completing his master's degree. He was dispatched a year later to Beirut, where he lived from June 1979 to May 1981 while covering the Lebanon Civil War. He was hired by The New York Times as a reporter in 1981 and re-dispatched to Beirut at the start of the 1982 Israeli invasion of Lebanon. His coverage of the war, particularly the Sabra and Shatila massacre, won him the Pulitzer Prize for International Reporting (shared with Loren Jenkins of The Washington Post). Alongside David K. Shipler he also won the George Polk Award for foreign reporting.
 
