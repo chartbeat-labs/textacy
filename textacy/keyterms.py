@@ -565,13 +565,13 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
     """
     alpha = float(alpha)
 
-    nodes_list = graph.nodes()
+    nodes_list = list(dict(graph.nodes()))
 
     # ranks: array of PageRank values, summing up to 1
     ranks = nx.pagerank_scipy(graph, alpha=0.85, max_iter=100, tol=1e-08, weight='weight')
     sorted_ranks = sorted(ranks.items(), key=itemgetter(1), reverse=True)
 
-    avg_degree = sum(deg for _, deg in graph.degree_iter()) / len(nodes_list)
+    avg_degree = sum(deg for _, deg in graph.degree()) / len(nodes_list)
     # relaxation parameter, k' in the paper
     k_prime = int(k * avg_degree * c)
 
@@ -712,7 +712,7 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
                      key=itemgetter(1), reverse=True)
 
     # replace node number by node value
-    nodes_list = graph.nodes()
+    nodes_list = list(dict(graph.nodes()))
     divranks = {nodes_list[result[0]]: result[1] for result in results}
 
     return divranks
