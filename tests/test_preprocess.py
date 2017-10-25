@@ -49,11 +49,17 @@ class PreprocessTestCase(unittest.TestCase):
         self.assertEqual(preprocess.remove_punct(text, marks="-'\""), proc_text)
 
     def test_replace_currency_symbols(self):
-        text = '$1.00 equals £0.67 equals €0.91.'
-        proc_text1 = 'USD1.00 equals GBP0.67 equals EUR0.91.'
-        proc_text2 = '*CUR* 1.00 equals *CUR* 0.67 equals *CUR* 0.91.'
-        self.assertEqual(preprocess.replace_currency_symbols(text, replace_with=None), proc_text1)
-        self.assertEqual(preprocess.replace_currency_symbols(text, replace_with='*CUR* '), proc_text2)
+        tests = [
+            ('$1.00 equals £0.67 equals €0.91.',
+             'USD1.00 equals GBP0.67 equals EUR0.91.',
+             '*CUR* 1.00 equals *CUR* 0.67 equals *CUR* 0.91.'),
+            ('this zebra costs $100.',
+             'this zebra costs USD100.',
+             'this zebra costs *CUR* 100.'),
+            ]
+        for text, proc_text1, proc_text2 in tests:
+            self.assertEqual(preprocess.replace_currency_symbols(text, replace_with=None), proc_text1)
+            self.assertEqual(preprocess.replace_currency_symbols(text, replace_with='*CUR* '), proc_text2)
 
     def test_remove_accents(self):
         text = "El niño se asustó -- qué miedo!"
