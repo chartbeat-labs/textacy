@@ -23,10 +23,10 @@ import pyphen
 import spacy
 
 import textacy
+from textacy import data_dir as DEFAULT_DATA_DIR
 from textacy.compat import is_python2, bytes_
 
 LOGGER = logging.getLogger(__name__)
-DEFAULT_DATA_DIR = textacy.__resources_dir__
 MAX_CACHE_SIZE = 2147483648  # 2 GB, in bytes
 
 
@@ -71,7 +71,7 @@ def load_hyphenator(lang='en'):
     not all syllable divisions are valid hyphenation points. But it's decent.
 
     Args:
-        lang (str, optional): standard 2-letter language abbreviation;
+        lang (str): Standard 2-letter language abbreviation;
             to get list of valid values::
 
                 >>> import pyphen; pyphen.LANGUAGES
@@ -79,13 +79,14 @@ def load_hyphenator(lang='en'):
     Returns:
         :class:`pyphen.Pyphen()`
     """
-    LOGGER.info('Loading "%s" language hyphenator', lang)
+    LOGGER.debug('Loading "%s" language hyphenator', lang)
     return pyphen.Pyphen(lang=lang)
 
 
 @cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
         key=partial(hashkey, 'depechemood'))
-def load_depechemood(data_dir=None, download_if_missing=True,
+def load_depechemood(data_dir=os.path.join(DATA_DIR, 'DepecheMood_V1.0'),
+                     download_if_missing=True,
                      weighting='normfreq'):
     """
     Load DepecheMood lexicon text file from disk, munge into nested dictionary
@@ -98,12 +99,12 @@ def load_depechemood(data_dir=None, download_if_missing=True,
     following emotions: AFRAID, AMUSED, ANGRY, ANNOYED, DONT_CARE, HAPPY, INSPIRED, SAD.
 
     Args:
-        data_dir (str, optional): directory on disk where DepecheMood lexicon
+        data_dir (str): directory on disk where DepecheMood lexicon
             text files are stored, i.e. the location of the 'DepecheMood_V1.0'
             directory created when unzipping the DM dataset
-        download_if_missing (bool, optional): if True and data not found on disk,
+        download_if_missing (bool): if True and data not found on disk,
             it will be automatically downloaded and saved to disk
-        weighting (str {'freq', 'normfreq', 'tfidf'}, optional): type of word
+        weighting ({'freq', 'normfreq', 'tfidf'}): type of word
             weighting used in building DepecheMood matrix
 
     Returns:
@@ -116,6 +117,7 @@ def load_depechemood(data_dir=None, download_if_missing=True,
         Data available at https://github.com/marcoguerini/DepecheMood/releases .
     """
     # make sure data_dir is in the required format
+    # TODO: make *all* of this depechemood stuff better, it's weird
     if data_dir is None:
         data_dir = os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0')
     else:
@@ -138,7 +140,7 @@ def load_depechemood(data_dir=None, download_if_missing=True,
             LOGGER.exception('unable to load DepecheMood from %s', data_dir)
             raise
 
-    LOGGER.info('loading DepecheMood lexicon from %s', fname)
+    LOGGER.debug('loading DepecheMood lexicon from %s', fname)
     cols = rows[0]
     return {row[0]: {cols[i]: float(row[i]) for i in range(1, 9)}
             for row in rows[1:]}
