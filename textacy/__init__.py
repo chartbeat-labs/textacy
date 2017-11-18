@@ -7,10 +7,7 @@ import os
 __version__ = '0.4.1'
 # __resources_dir__ = os.path.join(
 #     os.path.dirname(pkgutil.get_loader('textacy').get_filename()),
-#     'resources')
-__resources_dir__ = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    'resources')
+#     'data')
 data_dir = os.path.join(
     os.path.dirname(os.path.abspath(__file__)),
     'data')
