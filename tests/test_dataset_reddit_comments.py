@@ -42,7 +42,7 @@ class RedditCommentsTestCase(unittest.TestCase):
             self.assertEqual(sum(1 for _ in DATASET.texts(limit=limit)), limit)
 
     def test_texts_min_len(self):
-        for min_len in (100, 200, 1000):
+        for min_len in (100, 200, 500):
             self.assertTrue(
                 all(len(text) >= min_len
                     for text in DATASET.texts(min_len=min_len, limit=10)))
@@ -52,7 +52,7 @@ class RedditCommentsTestCase(unittest.TestCase):
             self.assertIsInstance(record, dict)
 
     def test_records_subreddit(self):
-        subreddits = ({'exmormon'}, {'CanadaPolitics', 'AdviceAnimals'})
+        subreddits = ({'politics'}, {'politics', 'programming'})
         for subreddit in subreddits:
             self.assertTrue(
                 all(r['subreddit'] in subreddit

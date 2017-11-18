@@ -85,7 +85,7 @@ def load_hyphenator(lang='en'):
 
 @cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
         key=partial(hashkey, 'depechemood'))
-def load_depechemood(data_dir=os.path.join(DATA_DIR, 'DepecheMood_V1.0'),
+def load_depechemood(data_dir=os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0'),
                      download_if_missing=True,
                      weighting='normfreq'):
     """
