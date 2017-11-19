@@ -90,7 +90,7 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
     if normalize == 'lemma':
         terms = [(term.lemma_, term.start, len(term)) for term in terms]
     elif normalize == 'lower':
-        terms = [(term.orth_.lower(), term.start, len(term)) for term in terms]
+        terms = [(term.lower_, term.start, len(term)) for term in terms]
     elif not normalize:
         terms = [(term.text, term.start, len(term)) for term in terms]
     else:
