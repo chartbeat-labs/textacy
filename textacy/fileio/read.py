@@ -168,6 +168,7 @@ def read_spacy_docs(spacy_vocab, filepath):
     Yields:
         the next deserialized ``spacy.Doc``
     """
+    # TODO: update this for spacy v2 compatibility
     with open_sesame(filepath, mode='rb') as f:
         for bytes_string in SpacyDoc.read_bytes(f):
             yield SpacyDoc(spacy_vocab).from_bytes(bytes_string)
