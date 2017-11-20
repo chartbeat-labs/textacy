@@ -154,6 +154,7 @@ def write_spacy_docs(spacy_docs, filepath, auto_make_dirs=False):
         filepath (str): /path/to/file on disk to which spacy docs will be streamed
         auto_make_dirs (bool)
     """
+    # TODO: update this for spacy v2 compatibility
     if isinstance(spacy_docs, SpacyDoc):
         spacy_docs = (spacy_docs,)
     with open_sesame(filepath, mode='wb', auto_make_dirs=auto_make_dirs) as f:
