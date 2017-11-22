@@ -15,10 +15,9 @@ from Levenshtein import (distance as _levenshtein,
 import numpy as np
 from pyemd import emd
 from sklearn.metrics import pairwise_distances
-from spacy.strings import StringStore
 
 import textacy
-from textacy import extract
+from textacy.extract import words as extract_words
 from textacy.compat import string_types, unicode_, bytes_, bytes_to_unicode
 
 
@@ -31,13 +30,13 @@ def word_movers(doc1, doc2, metric='cosine'):
     Distance.
 
     Args:
-        doc1 (``textacy.Doc`` or ``spacy.Doc``)
-        doc2 (``textacy.Doc`` or ``spacy.Doc``)
+        doc1 (:class:`textacy.Doc` or :class:`spacy.Doc`)
+        doc2 (:class:`textacy.Doc` or :class:`spacy.Doc`)
         metric ({'cosine', 'euclidean', 'l1', 'l2', 'manhattan'})
 
     Returns:
-        float: similarity between `doc1` and `doc2` in the interval [0.0, 1.0],
-            where larger values correspond to more similar documents
+        float: Similarity between ``doc1`` and ``doc2`` in the interval [0.0, 1.0],
+            where larger values correspond to more similar documents.
 
     References:
         Ofir Pele and Michael Werman, "A linear time histogram metric for improved
@@ -48,30 +47,30 @@ def word_movers(doc1, doc2, metric='cosine'):
             Proceedings of the 32nd International Conference on Machine Learning
             (ICML 2015). 2015. http://jmlr.org/proceedings/papers/v37/kusnerb15.pdf
     """
-    stringstore = StringStore()
+    word_idxs = dict()
 
     n = 0
     word_vecs = []
-    for word in itertoolz.concatv(extract.words(doc1), extract.words(doc2)):
-        if word.has_vector:
-            if stringstore[word.text] - 1 == n:  # stringstore[0] always empty space
-                word_vecs.append(word.vector)
-                n += 1
+    for word in itertoolz.concatv(extract_words(doc1), extract_words(doc2)):
+        if word.has_vector and word.orth not in word_idxs:
+            word_vecs.append(word.vector)
+            word_idxs[word.orth] = n
+            n += 1
     distance_mat = pairwise_distances(np.array(word_vecs), metric=metric).astype(np.double)
     distance_mat /= distance_mat.max()
 
     vec1 = collections.Counter(
-        stringstore[word.text] - 1
-        for word in extract.words(doc1)
+        word_idxs[word.orth]
+        for word in extract_words(doc1)
         if word.has_vector)
-    vec1 = np.array([vec1[word_idx] for word_idx in range(len(stringstore))]).astype(np.double)
+    vec1 = np.array([vec1[word_idx] for word_idx in range(len(word_idxs))]).astype(np.double)
     vec1 /= vec1.sum()  # normalize word counts
 
     vec2 = collections.Counter(
-        stringstore[word.text] - 1
-        for word in extract.words(doc2)
+        word_idxs[word.orth]
+        for word in extract_words(doc2)
         if word.has_vector)
-    vec2 = np.array([vec2[word_idx] for word_idx in range(len(stringstore))]).astype(np.double)
+    vec2 = np.array([vec2[word_idx] for word_idx in range(len(word_idxs))]).astype(np.double)
     vec2 /= vec2.sum()  # normalize word counts
 
     return 1.0 - emd(vec1, vec2, distance_mat)
