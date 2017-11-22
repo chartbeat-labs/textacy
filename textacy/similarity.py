@@ -52,9 +52,8 @@ def word_movers(doc1, doc2, metric='cosine'):
     n = 0
     word_vecs = []
     for word in itertoolz.concatv(extract_words(doc1), extract_words(doc2)):
-        if word.has_vector and word.orth not in word_idxs:
+        if word.has_vector and word_idxs.setdefault(word.orth, n) == n:
             word_vecs.append(word.vector)
-            word_idxs[word.orth] = n
             n += 1
     distance_mat = pairwise_distances(np.array(word_vecs), metric=metric).astype(np.double)
     distance_mat /= distance_mat.max()
