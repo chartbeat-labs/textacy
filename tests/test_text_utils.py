@@ -60,38 +60,41 @@ class TextUtilsTestCase(unittest.TestCase):
         for lang, sent in LANG_SENTS:
             self.assertEqual(text_utils.detect_language(sent), lang)
 
-    def test_keyword_in_context(self):
-        observed = list(text_utils.keyword_in_context(
-            TEXT, 'clinton', ignore_case=True, window_width=50, print_only=False))
-        expected = [
-            ('rtunes has been stark. Two decades ago, when Bill ', 'Clinton', ' was elected president, the 400 highest-earning ta'),
-            ('  While Democrats like Bernie Sanders and Hillary ', 'Clinton', ' have pledged to raise taxes on these voters, virt')]
-        for o, e in zip(observed, expected):
-            self.assertEqual(o, e)
+    def test_keyword_in_context_keyword(self):
+        for keyword in ('clinton', 'all'):
+            results = list(text_utils.keyword_in_context(
+                TEXT, keyword, ignore_case=True, window_width=50, print_only=False))
+            for pre, kw, post in results:
+                self.assertEqual(kw.lower(), keyword)
 
-    def test_keyword_in_context_width(self):
-        observed = list(text_utils.keyword_in_context(
-            TEXT, 'clinton', ignore_case=True, window_width=10, print_only=False))
-        expected = [
-            ('when Bill ', 'Clinton', ' was elect'),
-            ('d Hillary ', 'Clinton', ' have pled')]
-        for o, e in zip(observed, expected):
-            self.assertEqual(o, e)
+    def test_keyword_in_context_ignore_case(self):
+        for keyword in ('All', 'all'):
+            results = list(text_utils.keyword_in_context(
+                TEXT, keyword, ignore_case=False, window_width=50, print_only=False))
+            for pre, kw, post in results:
+                self.assertEqual(kw, keyword)
+        # also test for a null result, bc of case
+        results = list(text_utils.keyword_in_context(
+                TEXT, 'clinton', ignore_case=False, window_width=50, print_only=False))
+        self.assertEqual(results, [])
 
-    def test_keyword_in_context_case(self):
-        observed = list(text_utils.keyword_in_context(
-            TEXT, 'clinton', ignore_case=False, window_width=50, print_only=False))
-        expected = []
-        for o, e in zip(observed, expected):
-            self.assertEqual(o, e)
+    def test_keyword_in_context_window_width(self):
+        for window_width in (10, 20):
+            results = list(text_utils.keyword_in_context(
+                TEXT, 'clinton', ignore_case=True, print_only=False,
+                window_width=window_width))
+            for pre, kw, post in results:
+                self.assertTrue(len(pre) <= window_width)
+                self.assertTrue(len(post) <= window_width)
 
     def test_keyword_in_context_unicode(self):
-        text = 'No llores porque ya se terminó, sonríe porque sucedió.'
-        observed = list(text_utils.keyword_in_context(
-            text, 'terminó', print_only=False))
-        expected = [('No llores porque ya se ', 'terminó', ', sonríe porque sucedió.')]
-        for o, e in zip(observed, expected):
-            self.assertEqual(o, e)
+        keyword = 'terminó'
+        results = list(text_utils.keyword_in_context(
+            'No llores porque ya se terminó, sonríe porque sucedió.',
+            keyword,
+            print_only=False))
+        for pre, kw, post in results:
+            self.assertEqual(kw, keyword)
 
     def test_clean_terms_good(self):
         observed = list(text_utils.clean_terms(GOOD_TERMS))
