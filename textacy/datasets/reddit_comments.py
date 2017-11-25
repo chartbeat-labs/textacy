@@ -128,7 +128,7 @@ class RedditComments(Dataset):
         date_range = self._parse_date_range(date_range)
         fstubs = self._generate_filestubs(date_range)
         for fstub in fstubs:
-            url = compat.urljoin(DOWNLOAD_ROOT, fname)
+            url = compat.urljoin(DOWNLOAD_ROOT, fstub)
             filename = os.path.join(self.data_dir, fstub)
             if os.path.isfile(filename) and force is False:
                 LOGGER.warning(
