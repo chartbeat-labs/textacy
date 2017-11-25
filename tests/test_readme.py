@@ -57,7 +57,6 @@ class ReadmeTestCase(unittest.TestCase):
     def test_plaintext_functionality(self):
         preprocessed_text = textacy.preprocess_text(
             self.text, lowercase=True, no_punct=True)[:100]
-        print(preprocessed_text)
         self.assertTrue(
             all(char.islower() for char in preprocessed_text if char.isalpha()))
         self.assertTrue(
