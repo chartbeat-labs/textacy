@@ -61,8 +61,9 @@ if __name__ == '__main__':
         else:
             dataset = DATASET_NAME_TO_CLASS[args['dataset_name']]()
         # download data using the class method
-        download_args = ['date_range', 'lang', 'version' 'force']
-        dataset.download(**{key: args[key] for key in download_args if args.get(key)})
+        download_args = ['date_range', 'lang', 'version', 'force']
+        dataset.download(
+            **{key: args[key] for key in download_args if args.get(key) is not None})
 
     if args['subcommand'] == 'info':
         dataset = DATASET_NAME_TO_CLASS[args['dataset_name']]()
