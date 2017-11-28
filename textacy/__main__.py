@@ -16,24 +16,35 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument(
-        'dataset_name', type=str, choices=list(DATASET_NAME_TO_CLASS.keys())
-    )
-    parser.add_argument(
+    subparsers = parser.add_subparsers()
+
+    # download command
+    parser_download = subparsers.add_parser(
+        'download', help='download datasets and such')
+    parser_download.add_argument(
+        'dataset_name', type=str, choices=list(DATASET_NAME_TO_CLASS.keys()),
+        help='name of dataset to download')
+    parser_download.add_argument(
         '--data_dir', type=str, required=False,
-    )
-    parser.add_argument(
-        '--date_range', type=str, required=False,
-    )
-    parser.add_argument(
+        help='path on disk where dataaset will be saved on disk')
+    parser_download.add_argument(
+        '--date_range', nargs=2, type=str, required=False,
+        help='if `dataset_name` is "reddit_comments", the [start, end) range '
+             'of dates for which comments files will be downloaded, where each '
+             'item is a string formatted as YYYY-MM or YYYY-MM-DD')
+    parser_download.add_argument(
         '--lang', type=str, required=False,
-    )
-    parser.add_argument(
+        help='if `dataset_name` is "wikipedia", language of wikipedia '
+             'database dump to download')
+    parser_download.add_argument(
         '--version', type=str, required=False,
-    )
-    parser.add_argument(
+        help='if `dataset_name` is "wikipedia", version of wikipedia '
+             'database dump to download')
+    parser_download.add_argument(
         '--force', default=False, action='store_true',
-    )
+        help='if specified, force a download of `dataset_name` to `data_dir`, '
+             'whether or not that dataset already exists in this directory')
+
     args = vars(parser.parse_args())
 
     # initialize dataset
