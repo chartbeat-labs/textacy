@@ -67,7 +67,7 @@ NAME = 'supreme_court'
 DESCRIPTION = ('Collection of ~8.4k decisions issued by the U.S. Supreme Court '
                'between November 1946 and June 2016.')
 SITE_URL = 'http://caselaw.findlaw.com/court/us-supreme-court'
-DOWNLOAD_ROOT = 'https://s3.amazonaws.com/chartbeat-labs/'
+DOWNLOAD_ROOT = 'https://github.com/bdewilde/textacy-data/releases/download/'
 DATA_DIR = os.path.join(data_dir, NAME)
 
 
@@ -557,8 +557,8 @@ class SupremeCourt(Dataset):
     def __init__(self, data_dir=DATA_DIR):
         super(SupremeCourt, self).__init__(
             name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
-        self.filestub = 'supreme-court-py2.json.gz' if compat.is_python2 \
-            else 'supreme-court-py3.json.gz'
+        self.filestub = 'supreme-court-py{py_version}.json.gz'.format(
+            py_version=2 if compat.is_python2 else 3)
         self._filename = os.path.join(data_dir, self.filestub)
 
     @property
@@ -580,7 +580,10 @@ class SupremeCourt(Dataset):
         Args:
             force (bool): Download the file, even if it already exists on disk.
         """
-        url = compat.urljoin(DOWNLOAD_ROOT, self.filestub)
+        release_tag = 'supreme_court_py{py_version}_v{data_version}'.format(
+            py_version=2 if compat.is_python2 else 3,
+            data_version=1.0)
+        url = compat.urljoin(DOWNLOAD_ROOT, release_tag + '/' + self.filestub)
         fname = self._filename
         if os.path.isfile(fname) and force is False:
             LOGGER.warning(
