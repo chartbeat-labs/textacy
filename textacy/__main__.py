@@ -1,6 +1,7 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import argparse
+from pprint import pprint
 
 import textacy.datasets
 
@@ -16,7 +17,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    subparsers = parser.add_subparsers()
+    subparsers = parser.add_subparsers(dest='subcommand')
 
     # download command
     parser_download = subparsers.add_parser(
@@ -45,14 +46,24 @@ if __name__ == '__main__':
         help='if specified, force a download of `dataset_name` to `data_dir`, '
              'whether or not that dataset already exists in this directory')
 
+    parser_info = subparsers.add_parser(
+        'info', help='get basic information about datasets and such')
+    parser_info.add_argument(
+        'dataset_name', type=str, choices=list(DATASET_NAME_TO_CLASS.keys()),
+        help='name of dataset to get basic information about')
+
     args = vars(parser.parse_args())
 
-    # initialize dataset
-    if args.get('data_dir'):
-        dataset = DATASET_NAME_TO_CLASS[args['dataset_name']](data_dir=args['data_dir'])
-    else:
-        dataset = DATASET_NAME_TO_CLASS[args['dataset_name']]()
+    if args['subcommand'] == 'download':
+        # initialize dataset
+        if args.get('data_dir'):
+            dataset = DATASET_NAME_TO_CLASS[args['dataset_name']](data_dir=args['data_dir'])
+        else:
+            dataset = DATASET_NAME_TO_CLASS[args['dataset_name']]()
+        # download data using the class method
+        download_args = ['date_range', 'lang', 'version' 'force']
+        dataset.download(**{key: args[key] for key in download_args if args.get(key)})
 
-    dataset.download(
-        **{key: args[key] for key in ['date_range', 'lang', 'version' 'force'] if args.get(key)}
-    )
+    if args['subcommand'] == 'info':
+        dataset = DATASET_NAME_TO_CLASS[args['dataset_name']]()
+        pprint(dataset.info)
