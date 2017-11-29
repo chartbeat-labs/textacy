@@ -32,7 +32,8 @@ if __name__ == '__main__':
 
     # the "download" command
     parser_download = subparsers.add_parser(
-        'download', help='download datasets and such')
+        'download', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        help='download datasets and such')
     parser_download.add_argument(
         'dataset_name', type=str, choices=list(DATASET_NAME_TO_CLASS.keys()),
         help='name of dataset to download')
@@ -58,7 +59,8 @@ if __name__ == '__main__':
              'whether or not that dataset already exists in this directory')
     # the "info" command
     parser_info = subparsers.add_parser(
-        'info', help='get basic information about datasets and such')
+        'info', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        help='get basic information about datasets and such')
     parser_info.add_argument(
         'dataset_name', type=str, choices=list(DATASET_NAME_TO_CLASS.keys()),
         help='name of dataset to get basic information about')
