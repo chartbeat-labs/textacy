@@ -1,6 +1,40 @@
 Changelog
 =========
 
+0.4.2 (2017-11-28)
+------------------
+
+Changes:
+
+- Added a CLI for downloading ``textacy``-related data, inspired by the ``spaCy``
+  equivalent. It's *temporarily* undocumented, but to see available commands and
+  options, just pass the usual flag: ``$ python -m textacy --help``. Expect more
+  functionality (and docs!) to be added soonish. (#144)
+  - Note: The existing ``Dataset.download()`` methods work as before, and in fact,
+    they are being called under the hood from the command line.
+- Made usage of ``networkx`` v2.0-compatible, and therefore dropped the <2.0
+  version requirement on that dependency. Upgrade as you please! (#131)
+- Improved the regex for identifying phone numbers so that it's easier to view
+  and interpret its matches. (#128)
+
+Bugfixes:
+
+- Fixed caching of counts on ``textacy.Doc`` instance-specific, rather than
+  shared by all instances of the class. Oops.
+- Fixed currency symbols regex, so as not to replace all instances of the letter "z"
+  when a custom string is passed into ``replace_currency_symbols()``. (#137)
+- Fixed README usage example, which skipped downloading of dataset data. Btw,
+  see above for another way! (#124)
+- Fixed typo in the API reference, which included the SupremeCourt dataset twice
+  and omitted the RedditComments dataset. (#129)
+- Fixed typo in ``RedditComments.download()`` that prevented it from downloading
+  any data. (#143)
+
+Contributors:
+
+Many thanks to @asifm, @harryhoch, and @mdlynch37 for submitting PRs!
+
+
 0.4.1 (2017-07-27)
 ------------------
 
