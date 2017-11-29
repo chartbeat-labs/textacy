@@ -6,11 +6,12 @@ dist: trusty
 os:
   - linux
 
-# command to install dependencies
+# command to install dependencies and data
 install:
     - "pip install -r requirements.txt"
     - "python -m spacy download en_core_web_sm"
     - "python -m spacy link en_core_web_sm en"
+    - "python -m textacy download capitol_words"
 
 # command to run tests
 script: nosetests -v

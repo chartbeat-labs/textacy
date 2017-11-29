@@ -1,6 +1,9 @@
+import logging
 import os
 
 from textacy.fileio import open_sesame
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Dataset(object):
@@ -60,4 +63,15 @@ class Dataset(object):
                 date_range = (date_range[0], self.max_date)
             except AttributeError:
                 raise ValueError('`date_range` maximum must be specified')
+        # check date range bounds
+        if date_range[0] < self.min_date:
+            LOGGER.warning(
+                'start of date_range %s < minimum valid date %s; clipping range '
+                'accordingly', date_range[0], self.min_date)
+            date_range[0] = self.min_date
+        if date_range[1] > self.max_date:
+            LOGGER.warning(
+                'end of date_range %s > maximum valid date %s; clipping range '
+                'accordingly', date_range[1], self.max_date)
+            date_range[1] = self.max_date
         return tuple(date_range)
