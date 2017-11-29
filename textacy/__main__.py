@@ -1,9 +1,20 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import argparse
+import logging
 from pprint import pprint
+import sys
 
 import textacy.datasets
+
+# let's cheat and add a handler to the datasets logger
+# whose messages we'll send to stdout
+LOGGER = logging.getLogger('textacy.datasets')
+ch = logging.StreamHandler(sys.stdout)
+ch.setFormatter(logging.Formatter('%(asctime)s | %(message)s', datefmt='%Y-%m-%d %H:%M:%S'))
+ch.setLevel(logging.INFO)
+LOGGER.addHandler(ch)
+LOGGER.setLevel(logging.INFO)
 
 DATASET_NAME_TO_CLASS = {
     'capitol_words': textacy.datasets.CapitolWords,
@@ -19,7 +30,7 @@ if __name__ == '__main__':
         formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     subparsers = parser.add_subparsers(dest='subcommand')
 
-    # download command
+    # the "download" command
     parser_download = subparsers.add_parser(
         'download', help='download datasets and such')
     parser_download.add_argument(
@@ -45,7 +56,7 @@ if __name__ == '__main__':
         '--force', default=False, action='store_true',
         help='if specified, force a download of `dataset_name` to `data_dir`, '
              'whether or not that dataset already exists in this directory')
-
+    # the "info" command
     parser_info = subparsers.add_parser(
         'info', help='get basic information about datasets and such')
     parser_info.add_argument(
@@ -61,10 +72,15 @@ if __name__ == '__main__':
         else:
             dataset = DATASET_NAME_TO_CLASS[args['dataset_name']]()
         # download data using the class method
-        download_args = ['date_range', 'lang', 'version', 'force']
-        dataset.download(
-            **{key: args[key] for key in download_args if args.get(key) is not None})
+        kwargs = {
+            key: args[key]
+            for key in ['date_range', 'lang', 'version', 'force']
+            if args.get(key) is not None}
+        dataset.download(**kwargs)
 
     if args['subcommand'] == 'info':
         dataset = DATASET_NAME_TO_CLASS[args['dataset_name']]()
         pprint(dataset.info)
+
+# finally, remove the handler that we snuck in above
+LOGGER.removeHandler(ch)
