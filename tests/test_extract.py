@@ -96,8 +96,6 @@ class ExtractTestCase(unittest.TestCase):
         include_types = {'PERSON', 'GPE'}
         result = [ent for ent in extract.named_entities(
             self.spacy_doc, include_types=include_types, drop_determiners=False)]
-        print([(ent.text, ent.label_) for ent in self.spacy_doc.ents])
-        print([(ent.text, ent.label_) for ent in result])
         self.assertTrue(all(ent.label_ in include_types for ent in result))
 
     def test_named_entities_min_freq(self):
