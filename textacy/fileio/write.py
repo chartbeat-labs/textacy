@@ -11,7 +11,7 @@ from scipy.sparse import csc_matrix, csr_matrix
 from spacy.tokens.doc import Doc as SpacyDoc
 from tqdm import tqdm
 
-from textacy.compat import csv, unicode_to_bytes
+from textacy.compat import csv, pickle, unicode_to_bytes
 from textacy.fileio import open_sesame, make_dirs
 
 
@@ -145,21 +145,21 @@ def write_csv(rows, filepath, encoding=None, auto_make_dirs=False,
 
 def write_spacy_docs(spacy_docs, filepath, auto_make_dirs=False):
     """
-    Serialize a sequence of ``spacy.Doc`` s to disk at ``filepath`` using Spacy's
-    ``spacy.Doc.to_bytes()`` functionality.
+    Serialize a sequence of ``spacy.Doc`` s to disk at ``filepath`` using pickle.
 
     Args:
         spacy_docs (``spacy.Doc`` or iterable(``spacy.Doc``)): a single spacy doc
             or a sequence of spacy docs to serialize to disk at ``filepath``
         filepath (str): /path/to/file on disk to which spacy docs will be streamed
         auto_make_dirs (bool)
+
+    .. note:: The docs are pickled together, as a list, so they are all loaded
+        into memory before saving. Mind your RAM usage!
     """
-    # TODO: update this for spacy v2 compatibility
     if isinstance(spacy_docs, SpacyDoc):
-        spacy_docs = (spacy_docs,)
+        spacy_docs = [spacy_docs]
     with open_sesame(filepath, mode='wb', auto_make_dirs=auto_make_dirs) as f:
-        for doc in spacy_docs:
-            f.write(doc.to_bytes())
+        pickle.dump(list(spacy_docs), f, protocol=-1)
 
 
 def write_sparse_matrix(matrix, filepath, compressed=True):

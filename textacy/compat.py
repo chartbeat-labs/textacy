@@ -7,6 +7,7 @@ is_osx = sys.platform == 'darwin'
 
 if is_python2:
     from backports import csv
+    import cPickle as pickle
     from itertools import izip as zip_
     from urlparse import urljoin
 
@@ -24,6 +25,7 @@ if is_python2:
 
 else:
     import csv
+    import pickle
     from urllib.parse import urljoin
 
     zip_ = zip
