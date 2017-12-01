@@ -196,10 +196,10 @@ class Doc(object):
         """
         if name:
             meta_fname = os.path.join(path, '_'.join([name, 'metadata.json']))
-            doc_fname = os.path.join(path, '_'.join([name, 'spacy_doc.bin']))
+            doc_fname = os.path.join(path, '_'.join([name, 'spacy_doc.pkl']))
         else:
             meta_fname = os.path.join(path, 'metadata.json')
-            doc_fname = os.path.join(path, 'spacy_doc.bin')
+            doc_fname = os.path.join(path, 'spacy_doc.pkl')
         package_info = {'textacy_lang': self.lang,
                         'spacy_version': spacy.about.__version__}
         fileio.write_json(
@@ -227,10 +227,10 @@ class Doc(object):
         """
         if name:
             meta_fname = os.path.join(path, '_'.join([name, 'metadata.json']))
-            docs_fname = os.path.join(path, '_'.join([name, 'spacy_doc.bin']))
+            docs_fname = os.path.join(path, '_'.join([name, 'spacy_doc.pkl']))
         else:
             meta_fname = os.path.join(path, 'metadata.json')
-            docs_fname = os.path.join(path, 'spacy_doc.bin')
+            docs_fname = os.path.join(path, 'spacy_doc.pkl')
         metadata = list(fileio.read_json(meta_fname))[0]
         lang = metadata.pop('textacy_lang')
         spacy_version = metadata.pop('spacy_version')
@@ -242,8 +242,7 @@ class Doc(object):
                 loaded Doc may not be valid!
                 """.format(spacy_version, spacy.about.__version__)
             warnings.warn(msg, UserWarning)
-        spacy_vocab = data.load_spacy(lang).vocab
-        return cls(list(fileio.read_spacy_docs(spacy_vocab, docs_fname))[0],
+        return cls(list(fileio.read_spacy_docs(docs_fname))[0],
                    lang=lang, metadata=metadata)
 
     ####################

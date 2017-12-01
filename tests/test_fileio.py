@@ -244,14 +244,14 @@ class FileIOTestCase(unittest.TestCase):
 
     def test_read_write_spacy_docs(self):
         expected = [tok.lemma_ for tok in self.spacy_doc]
-        for ext in ('.bin', '.bin.gz', '.bin.bz2', '.bin.xz'):
+        for ext in ('.pkl', '.pkl.gz', '.pkl.bz2', '.pkl.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_spacy_docs' + ext)
-            if is_python2 is True and ext == '.bin.xz':
+            if is_python2 is True and ext == '.pkl.xz':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wb', None, True)
-            elif is_python2 is True and ext == '.bin.gz':  # no idea why this is the case
+            elif is_python2 is True and ext == '.pkl.gz':  # no idea why this is the case
                 self.assertRaises(
                     TypeError, fileio.write_spacy_docs,
                     self.spacy_doc, filename, True)
@@ -259,7 +259,7 @@ class FileIOTestCase(unittest.TestCase):
                 fileio.write_spacy_docs(self.spacy_doc, filename, True)
                 observed = [
                     tok.lemma_
-                    for doc in fileio.read_spacy_docs(self.spacy_lang.vocab, filename)
+                    for doc in fileio.read_spacy_docs(filename)
                     for tok in doc]
                 self.assertEqual(observed, expected)
 
