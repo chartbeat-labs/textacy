@@ -7,11 +7,6 @@ from textacy import Doc
 from textacy import compat
 from textacy import data
 
-if compat.is_python2:
-    int_types = (int, long)
-else:
-    int_types = int
-
 TEXT = """
 Since the so-called "statistical revolution" in the late 1980s and mid 1990s, much Natural Language Processing research has relied heavily on machine learning.
 Formerly, many language-processing tasks typically involved the direct hand coding of rules, which is not in general robust to natural language variation. The machine-learning paradigm calls instead for using statistical inference to automatically learn such rules through the analysis of large corpora of typical real-world examples (a corpus is a set of documents, possibly with human or computer annotations).
@@ -102,7 +97,7 @@ class DocMethodsTestCase(unittest.TestCase):
         full_terms_list_ids = list(self.doc.to_terms_list(as_strings=False))
         self.assertEqual(len(full_terms_list), len(full_terms_list_ids))
         self.assertIsInstance(full_terms_list[0], compat.unicode_)
-        self.assertIsInstance(full_terms_list_ids[0], int)
+        self.assertIsInstance(full_terms_list_ids[0], compat.int_types)
         self.assertNotEqual(
             full_terms_list[0],
             list(self.doc.to_terms_list(as_strings=True, normalize=False))[0])
@@ -122,17 +117,17 @@ class DocMethodsTestCase(unittest.TestCase):
     def test_to_bag_of_words(self):
         bow = self.doc.to_bag_of_words(weighting='count')
         self.assertIsInstance(bow, dict)
-        self.assertIsInstance(list(bow.keys())[0], int_types)
+        self.assertIsInstance(list(bow.keys())[0], compat.int_types)
         self.assertIsInstance(list(bow.values())[0], int)
         bow = self.doc.to_bag_of_words(weighting='binary')
         self.assertIsInstance(bow, dict)
-        self.assertIsInstance(list(bow.keys())[0], int_types)
+        self.assertIsInstance(list(bow.keys())[0], compat.int_types)
         self.assertIsInstance(list(bow.values())[0], int)
         for value in list(bow.values())[0:10]:
             self.assertLess(value, 2)
         bow = self.doc.to_bag_of_words(weighting='freq')
         self.assertIsInstance(bow, dict)
-        self.assertIsInstance(list(bow.keys())[0], int_types)
+        self.assertIsInstance(list(bow.keys())[0], compat.int_types)
         self.assertIsInstance(list(bow.values())[0], float)
         bow = self.doc.to_bag_of_words(as_strings=True)
         self.assertIsInstance(bow, dict)

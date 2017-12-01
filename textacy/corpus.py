@@ -213,7 +213,7 @@ class Corpus(object):
         if name:
             info_fname = os.path.join(path, '_'.join([name, 'info.json']))
             meta_fname = os.path.join(path, '_'.join([name, 'metadatas.json']))
-            docs_fname = os.path.join(path, '_'.join([name, 'spacy_docs.bin']))
+            docs_fname = os.path.join(path, '_'.join([name, 'spacy_docs.pkl']))
         else:
             info_fname = os.path.join(path, 'info.json')
             meta_fname = os.path.join(path, 'metadatas.json')
@@ -254,11 +254,11 @@ class Corpus(object):
         if name:
             info_fname = os.path.join(path, '_'.join([name, 'info.json']))
             meta_fname = os.path.join(path, '_'.join([name, 'metadatas.json']))
-            docs_fname = os.path.join(path, '_'.join([name, 'spacy_docs.bin']))
+            docs_fname = os.path.join(path, '_'.join([name, 'spacy_docs.pkl']))
         else:
             info_fname = os.path.join(path, 'info.json')
             meta_fname = os.path.join(path, 'metadatas.json')
-            docs_fname = os.path.join(path, 'spacy_docs.bin')
+            docs_fname = os.path.join(path, 'spacy_docs.pkl')
         meta_fname = meta_fname + ('.gz' if compression == 'gzip'
                                    else '.bz2' if compression == 'bz2'
                                    else '.xz' if compression == 'lzma'
@@ -277,7 +277,7 @@ class Corpus(object):
             warnings.warn(msg, UserWarning)
         corpus = Corpus(lang)
         metadata_stream = fileio.read_json_lines(meta_fname, mode=meta_mode)
-        spacy_docs = fileio.read_spacy_docs(corpus.spacy_vocab, docs_fname)
+        spacy_docs = fileio.read_spacy_docs(docs_fname)
         for spacy_doc, metadata in zip_(spacy_docs, metadata_stream):
             corpus.add_doc(
                 Doc(spacy_doc, lang=corpus.spacy_lang, metadata=metadata))

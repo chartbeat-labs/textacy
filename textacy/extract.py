@@ -195,8 +195,17 @@ def named_entities(doc,
         exclude_types (str or Set[str]): remove named entities whose type IS
             in this param; if "NUMERIC", all numeric entity types ("DATE",
             "MONEY", "ORDINAL", etc.) are excluded
-        drop_determiners (bool): remove leading determiners (e.g. "the")
-            from named entities (e.g. "the United States" => "United States")
+        drop_determiners (bool): Remove leading determiners (e.g. "the")
+            from named entities (e.g. "the United States" => "United States").
+
+            .. note:: Entities from which a leading determiner has been removed
+               do *not* keep their entity type annotations. This is irritating
+               but unavoidable, since the only way to re-annotate them is to
+               modify ``doc`` directly, and this function is not meant to have
+               any side-effects. If you're only using the text of the returned
+               spans, this is no big deal; if you're using NE-like attributes
+               downstream, however, this is something to watch out for.
+
         min_freq (int): remove named entities that occur in `doc` fewer
             than `min_freq` times
 

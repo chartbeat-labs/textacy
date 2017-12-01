@@ -28,7 +28,7 @@ class ExtractTestCase(unittest.TestCase):
 
         In May 2011, The New York Times reported that President Barack Obama "has sounded out" Friedman concerning Middle East issues.
         """
-        self.spacy_doc = spacy_lang(preprocess_text(text), parse=False)
+        self.spacy_doc = spacy_lang(preprocess_text(text), disable=['parser'])
 
     def test_sgrank(self):
         expected = [

@@ -196,10 +196,10 @@ class Doc(object):
         """
         if name:
             meta_fname = os.path.join(path, '_'.join([name, 'metadata.json']))
-            doc_fname = os.path.join(path, '_'.join([name, 'spacy_doc.bin']))
+            doc_fname = os.path.join(path, '_'.join([name, 'spacy_doc.pkl']))
         else:
             meta_fname = os.path.join(path, 'metadata.json')
-            doc_fname = os.path.join(path, 'spacy_doc.bin')
+            doc_fname = os.path.join(path, 'spacy_doc.pkl')
         package_info = {'textacy_lang': self.lang,
                         'spacy_version': spacy.about.__version__}
         fileio.write_json(
@@ -227,10 +227,10 @@ class Doc(object):
         """
         if name:
             meta_fname = os.path.join(path, '_'.join([name, 'metadata.json']))
-            docs_fname = os.path.join(path, '_'.join([name, 'spacy_doc.bin']))
+            docs_fname = os.path.join(path, '_'.join([name, 'spacy_doc.pkl']))
         else:
             meta_fname = os.path.join(path, 'metadata.json')
-            docs_fname = os.path.join(path, 'spacy_doc.bin')
+            docs_fname = os.path.join(path, 'spacy_doc.pkl')
         metadata = list(fileio.read_json(meta_fname))[0]
         lang = metadata.pop('textacy_lang')
         spacy_version = metadata.pop('spacy_version')
@@ -242,8 +242,7 @@ class Doc(object):
                 loaded Doc may not be valid!
                 """.format(spacy_version, spacy.about.__version__)
             warnings.warn(msg, UserWarning)
-        spacy_vocab = data.load_spacy(lang).vocab
-        return cls(list(fileio.read_spacy_docs(spacy_vocab, docs_fname))[0],
+        return cls(list(fileio.read_spacy_docs(docs_fname))[0],
                    lang=lang, metadata=metadata)
 
     ####################
@@ -314,19 +313,19 @@ class Doc(object):
         # figure out what object we're dealing with here; convert as necessary
         if isinstance(term, unicode_):
             term_text = term
-            term_id = self.spacy_stringstore[term_text]
+            term_id = self.spacy_stringstore.add(term_text)
             term_len = term_text.count(' ') + 1
         elif isinstance(term, int):
             term_id = term
             term_text = self.spacy_stringstore[term_id]
             term_len = term_text.count(' ') + 1
         elif isinstance(term, SpacyToken):
-            term_text = term.orth_
-            term_id = self.spacy_stringstore[term_text]
+            term_text = term.text
+            term_id = self.spacy_stringstore.add(term_text)
             term_len = 1
         elif isinstance(term, SpacySpan):
-            term_text = term.orth_
-            term_id = self.spacy_stringstore[term_text]
+            term_text = term.text
+            term_id = self.spacy_stringstore.add(term_text)
             term_len = len(term)
         # we haven't counted terms of this length; let's do that now
         if term_len not in self._counted_ngrams:
@@ -339,7 +338,7 @@ class Doc(object):
                                                       filter_nums=False))
             else:
                 self._counts += Counter(
-                    self.spacy_stringstore[ngram.orth_]
+                    self.spacy_stringstore.add(ngram.text)
                     for ngram in textacy.extract.ngrams(self, term_len,
                                                         filter_stops=False,
                                                         filter_punct=False,
@@ -496,22 +495,22 @@ class Doc(object):
                     try:
                         yield term.lemma
                     except AttributeError:
-                        yield self.spacy_stringstore[term.lemma_]
+                        yield self.spacy_stringstore.add(term.lemma_)
             elif normalize == 'lower':
                 for term in terms:
                     try:
                         yield term.lower
                     except AttributeError:
-                        yield self.spacy_stringstore[term.orth_.lower()]
+                        yield self.spacy_stringstore.add(term.lower_)
             elif not normalize:
                 for term in terms:
                     try:
                         yield term.orth
                     except AttributeError:
-                        yield self.spacy_stringstore[term.orth_]
+                        yield self.spacy_stringstore.add(term.text)
             else:
                 for term in terms:
-                    yield self.spacy_stringstore[normalize(term)]
+                    yield self.spacy_stringstore.add(normalize(term))
 
         # convert token and span objects into strings
         else:
@@ -520,13 +519,10 @@ class Doc(object):
                     yield term.lemma_
             elif normalize == 'lower':
                 for term in terms:
-                    try:
-                        yield term.lower_
-                    except AttributeError:
-                        yield term.orth_.lower()
+                    yield term.lower_
             elif not normalize:
                 for term in terms:
-                    yield term.orth_
+                    yield term.text
             else:
                 for term in terms:
                     yield normalize(term)

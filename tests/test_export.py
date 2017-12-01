@@ -16,14 +16,24 @@ class ExportTestCase(unittest.TestCase):
         self.spacy_doc = spacy_lang(text)
         cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
         values = np.array(
-            [[479, 3, 425], [471, 2, 401], [488, 1, 401],
-             [491, 0, 512817], [466, -1, 439], [474, -1, 435],
-             [453, -3, 441], [458, 3, 403], [480, 1, 436],
-             [477, 1, 425], [489, 0, 512817], [479, -1, 412],
-             [474, -2, 412], [453, -3, 441]], dtype='int32')
+            [[13656873538139661788, 3, 426],
+             [16235386156175103506, 2, 402],
+             [14200088355797579614, 1, 402],
+             [3822385049556375858, 0, 8206900633647566924],
+             [1292078113972184607, 18446744073709551615, 440],
+             [15308085513773655218, 18446744073709551615, 436],
+             [12646065887601541794, 18446744073709551613, 442],
+             [17571114184892886314, 3, 404],
+             [4062917326063685704, 1, 437],
+             [783433942507015291, 1, 426],
+             [17109001835818727656, 0, 8206900633647566924],
+             [13656873538139661788, 18446744073709551615, 3965108062993911700],
+             [15308085513773655218, 18446744073709551614, 413],
+             [12646065887601541794, 18446744073709551613, 442]],
+            dtype='uint64')
         self.spacy_doc.from_array(cols, values)
 
     def test_write_conll(self):
-        expected = '# sent_id 1\n1\tI\t-PRON-\tPRON\tPRP\t_\t4\tnsubj\t_\t_\n2\twould\twould\tVERB\tMD\t_\t4\taux\t_\t_\n3\thave\thave\tVERB\tVB\t_\t4\taux\t_\t_\n4\tlived\tlive\tVERB\tVBN\t_\t0\troot\t_\t_\n5\tin\tin\tADP\tIN\t_\t4\tprep\t_\t_\n6\tpeace\tpeace\tNOUN\tNN\t_\t5\tpobj\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t4\tpunct\t_\t_\n\n# sent_id 2\n1\tBut\tbut\tCCONJ\tCC\t_\t4\tcc\t_\t_\n2\tmy\t-PRON-\tADJ\tPRP$\t_\t3\tposs\t_\t_\n3\tenemies\tenemy\tNOUN\tNNS\t_\t4\tnsubj\t_\t_\n4\tbrought\tbring\tVERB\tVBD\t_\t0\troot\t_\t_\n5\tme\t-PRON-\tPRON\tPRP\t_\t4\tdobj\t_\t_\n6\twar\twar\tNOUN\tNN\t_\t4\tdobj\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t4\tpunct\t_\tSpaceAfter=No\n'
+        expected = '# sent_id 1\n1\tI\t-PRON-\tPRON\tPRP\t_\t4\tnsubj\t_\t_\n2\twould\twould\tVERB\tMD\t_\t4\taux\t_\t_\n3\thave\thave\tVERB\tVB\t_\t4\taux\t_\t_\n4\tlived\tlive\tVERB\tVBN\t_\t0\troot\t_\t_\n5\tin\tin\tADP\tIN\t_\t4\tprep\t_\t_\n6\tpeace\tpeace\tNOUN\tNN\t_\t5\tpobj\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t4\tpunct\t_\t_\n\n# sent_id 2\n1\tBut\tbut\tCCONJ\tCC\t_\t4\tcc\t_\t_\n2\tmy\t-PRON-\tADJ\tPRP$\t_\t3\tposs\t_\t_\n3\tenemies\tenemy\tNOUN\tNNS\t_\t4\tnsubj\t_\t_\n4\tbrought\tbring\tVERB\tVBD\t_\t0\troot\t_\t_\n5\tme\t-PRON-\tPRON\tPRP\t_\t4\tdative\t_\t_\n6\twar\twar\tNOUN\tNN\t_\t4\tdobj\t_\tSpaceAfter=No\n7\t.\t.\tPUNCT\t.\t_\t4\tpunct\t_\tSpaceAfter=No\n'
         observed = export.doc_to_conll(self.spacy_doc)
         self.assertEqual(observed, expected)

@@ -7,12 +7,14 @@ is_osx = sys.platform == 'darwin'
 
 if is_python2:
     from backports import csv
+    import cPickle as pickle
     from itertools import izip as zip_
     from urlparse import urljoin
 
     bytes_ = str
     unicode_ = unicode
     string_types = (str, unicode)
+    int_types = (int, long)
     chr_ = unichr
 
     def unicode_to_bytes(s, encoding='utf8', errors='strict'):
@@ -23,12 +25,14 @@ if is_python2:
 
 else:
     import csv
+    import pickle
     from urllib.parse import urljoin
 
     zip_ = zip
     bytes_ = bytes
     unicode_ = str
     string_types = (bytes, str)
+    int_types = (int,)
     chr_ = chr
 
     def unicode_to_bytes(s, encoding='utf8', errors='strict'):

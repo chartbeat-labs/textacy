@@ -5,7 +5,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 from itertools import takewhile
 import logging
-from spacy.parts_of_speech import NOUN, PROPN, VERB
+from spacy.symbols import NOUN, PROPN, VERB
 from spacy.tokens.token import Token as SpacyToken
 from spacy.tokens.span import Span as SpacySpan
 
@@ -27,7 +27,10 @@ def is_plural_noun(token):
     """
     if token.doc.is_tagged is False:
         raise ValueError('token is not POS-tagged')
-    return True if token.pos == NOUN and token.lemma != token.lower else False
+    if token.pos == NOUN and token.lemma != token.lower:
+        return True
+    else:
+        return False
 
 
 def is_negated_verb(token):
@@ -48,10 +51,8 @@ def is_negated_verb(token):
         raise ValueError('token is not parsed')
     if token.pos == VERB and any(c.dep_ == 'neg' for c in token.children):
         return True
-    # if (token.pos == NOUN
-    #         and any(c.dep_ == 'det' and c.lower_ == 'no' for c in token.children)):
-    #     return True
-    return False
+    else:
+        return False
 
 
 def preserve_case(token):
@@ -66,7 +67,10 @@ def preserve_case(token):
     """
     if token.doc.is_tagged is False:
         raise ValueError('token is not POS-tagged')
-    return token.pos == PROPN or is_acronym(token.text)
+    if token.pos == PROPN or is_acronym(token.text):
+        return True
+    else:
+        return False
 
 
 def normalized_str(token):
@@ -86,8 +90,9 @@ def normalized_str(token):
         return ' '.join(subtok.text if preserve_case(subtok) else subtok.lemma_
                         for subtok in token)
     else:
-        msg = 'Input must be a spacy Token or Span, not {}.'.format(type(token))
-        raise TypeError(msg)
+        raise TypeError(
+            'Input must be a spacy Token or Span, not {}.'.format(type(token))
+            )
 
 
 def merge_spans(spans):

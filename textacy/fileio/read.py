@@ -11,7 +11,7 @@ from numpy import load as np_load
 from scipy.sparse import csc_matrix, csr_matrix
 from spacy.tokens.doc import Doc as SpacyDoc
 
-from textacy.compat import csv
+from textacy.compat import csv, pickle
 from textacy.fileio import open_sesame
 
 JSON_DECODER = json.JSONDecoder()
@@ -155,22 +155,20 @@ def read_csv(filepath, encoding=None, dialect='excel', delimiter=','):
             yield row
 
 
-def read_spacy_docs(spacy_vocab, filepath):
+def read_spacy_docs(filepath):
     """
     Stream ``spacy.Doc`` s from disk at ``filepath`` where they were serialized
-    using Spacy's ``spacy.Doc.to_bytes()`` functionality.
+    via pickle.
 
     Args:
-        spacy_vocab (``spacy.Vocab``): the spacy vocab object used to serialize
-            the docs in ``filepath``
         filepath (str): /path/to/file on disk from which spacy docs will be streamed
 
     Yields:
-        the next deserialized ``spacy.Doc``
+        The next deserialized ``spacy.Doc``.
     """
     with open_sesame(filepath, mode='rb') as f:
-        for bytes_string in SpacyDoc.read_bytes(f):
-            yield SpacyDoc(spacy_vocab).from_bytes(bytes_string)
+        for spacy_doc in pickle.load(f):
+            yield spacy_doc
 
 
 def read_sparse_csr_matrix(filepath):

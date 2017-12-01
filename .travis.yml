@@ -11,6 +11,8 @@ install:
     - "pip install -r requirements.txt"
     - "python -m spacy download en_core_web_sm"
     - "python -m spacy link en_core_web_sm en"
+    - "python -m spacy download es_core_news_sm"
+    - "python -m spacy link es_core_news_sm es"
     - "python -m textacy download capitol_words"
 
 # command to run tests

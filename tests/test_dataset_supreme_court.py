@@ -40,7 +40,7 @@ class SupremeCourtTestCase(unittest.TestCase):
             self.assertEqual(sum(1 for _ in DATASET.texts(limit=limit)), limit)
 
     def test_texts_min_len(self):
-        for min_len in (100, 200, 1000):
+        for min_len in (100, 200, 500):
             self.assertTrue(
                 all(len(text) >= min_len
                     for text in DATASET.texts(min_len=min_len, limit=10)))
@@ -50,7 +50,7 @@ class SupremeCourtTestCase(unittest.TestCase):
             self.assertIsInstance(record, dict)
 
     def test_records_opinion_author(self):
-        opinion_authors = ({109}, {113, 114})
+        opinion_authors = ({78}, {78, 81})
         for opinion_author in opinion_authors:
             self.assertTrue(
                 all(r['maj_opinion_author'] in opinion_author
@@ -72,8 +72,8 @@ class SupremeCourtTestCase(unittest.TestCase):
 
     def test_records_date_range(self):
         date_ranges = (
-            ['1970-01-01', '1980-01-01'],
-            ('2000-01-01', '2000-02-01'),
+            ['1970-01-01', '1971-01-01'],
+            ('1971-07-01', '1971-12-31'),
             )
         for date_range in date_ranges:
             self.assertTrue(

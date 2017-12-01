@@ -4,10 +4,11 @@ Functions to load and cache language data and other NLP resources.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import csv
+from functools import partial
 import io
 import logging
 import os
-import pyphen
+import sys
 try:
     from urllib.request import urlopen
     from urllib.error import HTTPError
@@ -16,67 +17,52 @@ except ImportError:
     from urllib2 import HTTPError
 import zipfile
 
-from cachetools import cached, Cache
+from cachetools import cached, LRUCache
 from cachetools.keys import hashkey
-from functools import partial
+import pyphen
 import spacy
 
 import textacy
+from textacy import data_dir as DEFAULT_DATA_DIR
 from textacy.compat import is_python2, bytes_
 
 LOGGER = logging.getLogger(__name__)
-
-DEFAULT_DATA_DIR = textacy.__resources_dir__
-
-_CACHE = {}
-"""dict: key-value store used to cache datasets and such in memory"""
+MAX_CACHE_SIZE = 2147483648  # 2 GB, in bytes
 
 
-@cached(Cache(1), key=partial(hashkey, 'spacy'))
-def load_spacy(name, path=None, create_pipeline=None, **kwargs):
+@cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
+        key=partial(hashkey, 'spacy'))
+def load_spacy(name, disable=None):
     """
-    Load a language-specific spaCy pipeline (collection of data, models, and
-    resources) for tokenizing, tagging, parsing, etc. text. The most recent
-    result is cached.
+    Load a spaCy pipeline (model weights as binary data, ordered sequence of
+    component functions, and language-specific data) for tokenizing and annotating
+    text. An LRU cache saves pipelines in memory up to ``MAX_CACHE_SIZE`` bytes.
 
     Args:
-        name (str): Standard 2-letter language abbreviation for a language.
-            Currently, spaCy supports English ('en') and German ('de').
-        path (str): path/to/directory on disk where spaCy models are saved. If
-            None, spaCy's default data path is used.
-        create_pipeline (func): Callable that takes a spaCy Language instance
-            as its argument and returns a sequence of callables. Each callable
-            takes a ``SpacyDoc`` as its sole positional argument and modifies
-            the document in place.
-        **kwargs: Keyword arguments passed to :func:`spacy.load()`.
-
-            * vocab
-            * tokenizer
-            * tagger
-            * parser
-            * matcher
-            * entity
-            * add_vectors
-            * create_make_doc
+        name (str or :class:`pathlib.Path`): spaCy model to load, i.e. a shortcut
+            link, full package name, or path to model directory.
+        disable (Tuple[str]): Names of pipeline components to disable, if any.
+            .. note:: Although spaCy's API specifies this argument as a list,
+               here we require a tuple. Pipelines are stored in the LRU cache
+               with unique identifiers generated from the hash of the function
+               name and args, and lists aren't hashable.
 
     Returns:
-        :class:`spacy.<lang>.<Language>`
+        :class:`spacy.<lang>.<Language>`: A Language object with the loaded model.
 
     Raises:
         RuntimeError: if package can't be loaded
 
-    See Also:
-        https://spacy.io/docs/#language
+    .. seealso:: https://spacy.io/api/top-level#spacy.load
     """
-    LOGGER.info('Loading "%s" spaCy language models', name)
-    if path is not None:
-        kwargs['path'] = path
-    if create_pipeline is not None:
-        kwargs['create_pipeline'] = create_pipeline
-    return spacy.load(name, **kwargs)
+    if disable is None:
+        disable = []
+    LOGGER.debug('Loading "%s" spaCy pipeline', name)
+    return spacy.load(name, disable=disable)
 
 
-@cached(_CACHE, key=partial(hashkey, 'hyphenator'))
+@cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
+        key=partial(hashkey, 'hyphenator'))
 def load_hyphenator(lang='en'):
     """
     Load an object that hyphenates words at valid points, as used in LaTex typesetting.
@@ -85,7 +71,7 @@ def load_hyphenator(lang='en'):
     not all syllable divisions are valid hyphenation points. But it's decent.
 
     Args:
-        lang (str, optional): standard 2-letter language abbreviation;
+        lang (str): Standard 2-letter language abbreviation;
             to get list of valid values::
 
                 >>> import pyphen; pyphen.LANGUAGES
@@ -93,12 +79,14 @@ def load_hyphenator(lang='en'):
     Returns:
         :class:`pyphen.Pyphen()`
     """
-    LOGGER.info('Loading "%s" language hyphenator', lang)
+    LOGGER.debug('Loading "%s" language hyphenator', lang)
     return pyphen.Pyphen(lang=lang)
 
 
-@cached(_CACHE, key=partial(hashkey, 'depechemood'))
-def load_depechemood(data_dir=None, download_if_missing=True,
+@cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
+        key=partial(hashkey, 'depechemood'))
+def load_depechemood(data_dir=os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0'),
+                     download_if_missing=True,
                      weighting='normfreq'):
     """
     Load DepecheMood lexicon text file from disk, munge into nested dictionary
@@ -111,12 +99,12 @@ def load_depechemood(data_dir=None, download_if_missing=True,
     following emotions: AFRAID, AMUSED, ANGRY, ANNOYED, DONT_CARE, HAPPY, INSPIRED, SAD.
 
     Args:
-        data_dir (str, optional): directory on disk where DepecheMood lexicon
+        data_dir (str): directory on disk where DepecheMood lexicon
             text files are stored, i.e. the location of the 'DepecheMood_V1.0'
             directory created when unzipping the DM dataset
-        download_if_missing (bool, optional): if True and data not found on disk,
+        download_if_missing (bool): if True and data not found on disk,
             it will be automatically downloaded and saved to disk
-        weighting (str {'freq', 'normfreq', 'tfidf'}, optional): type of word
+        weighting ({'freq', 'normfreq', 'tfidf'}): type of word
             weighting used in building DepecheMood matrix
 
     Returns:
@@ -129,6 +117,7 @@ def load_depechemood(data_dir=None, download_if_missing=True,
         Data available at https://github.com/marcoguerini/DepecheMood/releases .
     """
     # make sure data_dir is in the required format
+    # TODO: make *all* of this depechemood stuff better, it's weird
     if data_dir is None:
         data_dir = os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0')
     else:
@@ -151,7 +140,7 @@ def load_depechemood(data_dir=None, download_if_missing=True,
             LOGGER.exception('unable to load DepecheMood from %s', data_dir)
             raise
 
-    LOGGER.info('loading DepecheMood lexicon from %s', fname)
+    LOGGER.debug('loading DepecheMood lexicon from %s', fname)
     cols = rows[0]
     return {row[0]: {cols[i]: float(row[i]) for i in range(1, 9)}
             for row in rows[1:]}

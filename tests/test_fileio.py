@@ -22,15 +22,36 @@ class FileIOTestCase(unittest.TestCase):
         self.spacy_doc = self.spacy_lang(self.text)
         cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
         values = np.array(
-            [[460, 1, 411], [474, 1, 425], [489, 0, 512817], [459, -1, 399],
-             [450, -1, 441], [458, -2, 403], [474, 1, 425], [489, -4, 406],
-             [481, 1, 396], [467, -2, 394], [453, -8, 441], [479, 1, 425],
-             [489, 0, 512817], [481, 2, 438], [481, 1, 396], [467, -3, 394],
-             [466, -1, 439], [475, -1, 435], [458, -1, 403], [460, 1, 411],
-             [474, -5, 412], [453, -9, 441], [479, 1, 425], [489, 0, 512817],
-             [467, -1, 394], [460, 2, 411], [494, 1, 411], [474, -3, 758141],
-             [453, -5, 441]],
-            dtype='int32')
+            [[15267657372422890137, 1, 412],
+             [15308085513773655218, 1, 426],
+             [17109001835818727656, 0, 8206900633647566924],
+             [8427216679587749980, 18446744073709551615, 401],
+             [2593208677638477497, 18446744073709551614, 442],
+             [17571114184892886314, 18446744073709551613, 404],
+             [15308085513773655218, 1, 426],
+             [17109001835818727656, 18446744073709551611, 407],
+             [164681854541413346, 18446744073709551615, 397],
+             [10554686591937588953, 18446744073709551614, 395],
+             [12646065887601541794, 18446744073709551613, 442],
+             [13656873538139661788, 1, 426],
+             [17109001835818727656, 0, 8206900633647566924],
+             [164681854541413346, 18446744073709551615, 422],
+             [164681854541413346, 1, 397],
+             [10554686591937588953, 18446744073709551613, 395],
+             [1292078113972184607, 18446744073709551615, 440],
+             [15794550382381185553, 18446744073709551615, 436],
+             [17571114184892886314, 18446744073709551615, 404],
+             [15267657372422890137, 1, 412],
+             [15308085513773655218, 18446744073709551613, 407],
+             [12646065887601541794, 18446744073709551607, 442],
+             [13656873538139661788, 1, 426],
+             [17109001835818727656, 0, 8206900633647566924],
+             [10554686591937588953, 18446744073709551615, 395],
+             [15267657372422890137, 2, 13323405159917154080],
+             [17202369883303991778, 1, 412],
+             [15308085513773655218, 18446744073709551612, 425],
+             [12646065887601541794, 18446744073709551611, 442]],
+            dtype='uint64')
         self.spacy_doc.from_array(cols, values)
         self.tempdir = tempfile.mkdtemp(
             prefix='test_fileio', dir=os.path.dirname(os.path.abspath(__file__)))
@@ -223,22 +244,18 @@ class FileIOTestCase(unittest.TestCase):
 
     def test_read_write_spacy_docs(self):
         expected = [tok.lemma_ for tok in self.spacy_doc]
-        for ext in ('.bin', '.bin.gz', '.bin.bz2', '.bin.xz'):
+        for ext in ('.pkl', '.pkl.gz', '.pkl.bz2', '.pkl.xz'):
             filename = os.path.join(
                 self.tempdir, 'test_read_write_spacy_docs' + ext)
-            if is_python2 is True and ext == '.bin.xz':
+            if is_python2 is True and ext == '.pkl.xz':
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wb', None, True)
-            elif is_python2 is True and ext == '.bin.gz':  # no idea why this is the case
-                self.assertRaises(
-                    TypeError, fileio.write_spacy_docs,
-                    self.spacy_doc, filename, True)
             else:
                 fileio.write_spacy_docs(self.spacy_doc, filename, True)
                 observed = [
                     tok.lemma_
-                    for doc in fileio.read_spacy_docs(self.spacy_lang.vocab, filename)
+                    for doc in fileio.read_spacy_docs(filename)
                     for tok in doc]
                 self.assertEqual(observed, expected)
 
