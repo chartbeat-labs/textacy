@@ -251,10 +251,6 @@ class FileIOTestCase(unittest.TestCase):
                 self.assertRaises(
                     ValueError, fileio.open_sesame,
                     filename, 'wb', None, True)
-            elif is_python2 is True and ext == '.pkl.gz':  # no idea why this is the case
-                self.assertRaises(
-                    TypeError, fileio.write_spacy_docs,
-                    self.spacy_doc, filename, True)
             else:
                 fileio.write_spacy_docs(self.spacy_doc, filename, True)
                 observed = [
