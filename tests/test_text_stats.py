@@ -116,14 +116,6 @@ class TextStatsTestCase(unittest.TestCase):
         for key in readability_stats_keys:
             self.assertEqual(readability_stats[key], getattr(self.ts, key))
 
-    def test_readability_stats_function(self):
-        self.assertIsInstance(text_stats.readability_stats(self.doc), dict)
-
-    def test_readability_stats_lang_function(self):
-        tmp_doc = Doc('Buenos días, amigo mío!', lang='es')
-        self.assertRaises(
-            NotImplementedError, text_stats.readability_stats, tmp_doc)
-
     def test_wiener_sachtextformel_variant1(self):
         self.assertEqual(
             self.ts.wiener_sachtextformel,
