@@ -11,13 +11,11 @@ import types
 import warnings
 
 from cytoolz import itertoolz
-import spacy.about
 from spacy import attrs
 from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
-from spacy.util import get_lang_class
 
 import textacy
 from textacy.compat import unicode_
@@ -75,8 +73,8 @@ class Doc(object):
 
     Save to and load from disk::
 
-        >>> doc.save('~/Desktop', name='leptoquarks')
-        >>> doc = textacy.Doc.load('~/Desktop', name='leptoquarks')
+        >>> doc.save('~/Desktop/leptoquarks.pkl')
+        >>> doc = textacy.Doc.load('~/Desktop/leptoquarks.pkl')
         >>> print(doc)
         Doc(71 tokens; "The apparent symmetry between the quark and lep...")
 
@@ -100,15 +98,15 @@ class Doc(object):
 
             **Note:** The ``spacy.Language`` object parses ``content``
             (if str) and sets the :attr:`spacy_vocab` and :attr:`spacy_stringstore`
-            attributes. See https://spacy.io/docs/usage/models#available for
+            attributes. See https://spacy.io/usage/models#section-available for
             available spacy models.
 
     Attributes:
         lang (str): 2-letter code for language of ``Doc``.
         metadata (dict): Dictionary of relevant information about content.
-        spacy_doc (``spacy.Doc``): https://spacy.io/docs#doc
-        spacy_vocab (``spacy.Vocab``): https://spacy.io/docs#vocab
-        spacy_stringstore (``spacy.StringStore``): https://spacy.io/docs#stringstore
+        spacy_doc (``spacy.Doc``): https://spacy.io/api/doc
+        spacy_vocab (``spacy.Vocab``): https://spacy.io/api/vocab
+        spacy_stringstore (``spacy.StringStore``): https://spacy.io/api/stringstore
     """
     def __init__(self, content, metadata=None, lang=detect_language):
 
@@ -202,7 +200,7 @@ class Doc(object):
 
     def save(self, filepath):
         """
-        Save ``Doc`` content and metadata to disk, as a ``pickle`` file.
+        Save :class:`Doc` content and metadata to disk, as a ``pickle`` file.
 
         Args:
             filepath (str): Full path to file on disk where document content and
@@ -215,14 +213,14 @@ class Doc(object):
     @classmethod
     def load(cls, filepath):
         """
-        Load pickled content and metadata from disk, and initialize a ``Doc``.
+        Load pickled content and metadata from disk, and initialize a :class:`Doc`.
 
         Args:
             filepath (str): Full path to file on disk where document content and
                 metadata are saved.
 
         Returns:
-            :class:`textacy.Doc`
+            :class:`Doc`
 
         .. seealso:: :meth:`Doc.save()`
         """
@@ -251,7 +249,7 @@ class Doc(object):
 
     @property
     def n_tokens(self):
-        """The number of tokens in the document — including punctuation."""
+        """The number of tokens in the document -- including punctuation."""
         return len(self.spacy_doc)
 
     @property
@@ -261,7 +259,7 @@ class Doc(object):
 
     def merge(self, spans):
         """
-        Merge spans *in-place* within ``Doc`` so that each takes up a single
+        Merge spans *in-place* within :class:`Doc` so that each takes up a single
         token. Note: All cached counts on this doc are cleared after a merge.
 
         Args:
@@ -276,7 +274,7 @@ class Doc(object):
 
     def count(self, term):
         """
-        Get the number of occurrences (i.e. count) of ``term`` in ``Doc``.
+        Get the number of occurrences (i.e. count) of ``term`` in :class:`Doc`.
 
         Args:
             term (str or int or ``spacy.Token`` or ``spacy.Span``): The term to
@@ -285,7 +283,7 @@ class Doc(object):
                 different forms are the same!
 
         Returns:
-            int: Count of ``term`` in ``Doc``.
+            int: Count of ``term`` in :class:`Doc`.
 
         .. tip:: Counts are cached. The first time a single word's count is
             looked up, *all* words' counts are saved, resulting in a slower
@@ -359,9 +357,9 @@ class Doc(object):
                       normalize='lemma', lemmatize=None, lowercase=None,
                       as_strings=False, **kwargs):
         """
-        Transform ``Doc`` into a sequence of ngrams and/or named entities, which
+        Transform :class:`Doc` into a sequence of ngrams and/or named entities, which
         aren't necessarily in order of appearance, where each term appears in
-        the list with the same frequency that it appears in ``Doc``.
+        the list with the same frequency that it appears in :class:`Doc`.
 
         Args:
             ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3)``
@@ -516,8 +514,9 @@ class Doc(object):
     def to_bag_of_words(self, normalize='lemma', lemmatize=None, lowercase=None,
                         weighting='count', as_strings=False):
         """
-        Transform ``Doc`` into a bag-of-words: the set of unique words in ``Doc``
-        mapped to their absolute, relative, or binary frequency of occurrence.
+        Transform :class:`Doc` into a bag-of-words: the set of unique words in
+        :class:`Doc` mapped to their absolute, relative, or binary frequency of
+        occurrence.
 
         Args:
             normalize (str): if 'lemma', lemmatize words before counting; if
@@ -585,9 +584,9 @@ class Doc(object):
                         normalize='lemma', lemmatize=None, lowercase=None,
                         weighting='count', as_strings=False, **kwargs):
         """
-        Transform ``Doc`` into a bag-of-terms: the set of unique terms in ``Doc``
-        mapped to their frequency of occurrence, where "terms" includes ngrams
-        and/or named entities.
+        Transform :class:`Doc` into a bag-of-terms: the set of unique terms in
+        :class:`Doc` mapped to their frequency of occurrence, where "terms"
+        includes ngrams and/or named entities.
 
         Args:
             ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3)``
@@ -661,8 +660,8 @@ class Doc(object):
     def to_semantic_network(self, nodes='words', normalize='lemma',
                             edge_weighting='default', window_width=10):
         """
-        Transform ``Doc`` into a semantic network, where nodes are either 'words'
-        or 'sents' and edges between nodes may be weighted in different ways.
+        Transform :class:`Doc` into a semantic network, where nodes are either
+        'words' or 'sents' and edges between nodes may be weighted in different ways.
 
         Args:
             nodes ({'words', 'sents'}): type of doc component to use as nodes
@@ -680,11 +679,11 @@ class Doc(object):
                 determines which are said to co-occur; only applicable if 'words'
 
         Returns:
-            :class:`networkx.Graph <networkx.Graph>`: where nodes represent either
-                terms or sentences in doc; edges, the relationships between them
+            ``networkx.Graph``: where nodes represent either terms or sentences
+                in doc; edges, the relationships between them.
 
         Raises:
-            ValueError: if ``nodes`` is neither 'words' nor 'sents'
+            ValueError: if ``nodes`` is neither 'words' nor 'sents'.
 
         See Also:
             :func:`terms_to_semantic_network() <textacy.network.terms_to_semantic_network>`
