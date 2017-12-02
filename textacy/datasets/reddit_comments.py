@@ -15,8 +15,8 @@ Records include the following key fields (plus a few others):
     * ``score``: Net score (upvotes - downvotes) on the comment.
     * ``gilded``: Number of times this comment received reddit gold.
 
-This dataset is just an interface built on top of the raw data, originally
-collected by [FOO] and stored for posterity by the `Internet Archive <https://archive.org>`_.
+The raw data was originally collected by /u/Stuck_In_the_Matrix via Reddit's
+APIS, and stored for posterity by the `Internet Archive <https://archive.org>`_.
 For more details, refer to https://archive.org/details/2015_reddit_comments_corpus.
 """
 from __future__ import unicode_literals
