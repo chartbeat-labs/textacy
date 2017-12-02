@@ -12,6 +12,7 @@ import multiprocessing
 import os
 import warnings
 
+from cytoolz import itertoolz
 import numpy as np
 import spacy.about
 from spacy.language import Language as SpacyLang
@@ -191,95 +192,50 @@ class Corpus(object):
     ##########
     # FILEIO #
 
-    def save(self, path, name=None, compression=None):
+    def save(self, filepath):
         """
-        Save ``Corpus`` content and metadata to disk.
+        Save ``Corpus`` documents' content and metadata to disk, as a ``pickle`` file.
 
         Args:
-            path (str): Directory on disk where content + metadata will be saved.
-            name (str): Prepend default filenames 'spacy_docs.bin', 'metadatas.json',
-                and 'info.json' with a name to identify/uniquify this particular
-                corpus.
-            compression ({'gzip', 'bz2', 'lzma'} or None): Type of compression
-                used to reduce size of 'metadatas.json' file, if any.
+            filepath (str): Full path to file on disk where documents' content and
+                metadata are to be saved.
 
-        .. warning:: If the ``spacy.Vocab`` object used to save this corpus is
-            not the same as the one used to load it, there will be problems!
-            Consequently, this functionality is only useful as short-term but
-            not long-term storage.
+        .. seealso:: :meth:`Corpus.load()`
         """
-        if name:
-            info_fname = os.path.join(path, '_'.join([name, 'info.json']))
-            meta_fname = os.path.join(path, '_'.join([name, 'metadatas.json']))
-            docs_fname = os.path.join(path, '_'.join([name, 'spacy_docs.pkl']))
-        else:
-            info_fname = os.path.join(path, 'info.json')
-            meta_fname = os.path.join(path, 'metadatas.json')
-            docs_fname = os.path.join(path, 'spacy_docs.bin')
-        meta_fname = meta_fname + ('.gz' if compression == 'gzip'
-                                   else '.bz2' if compression == 'bz2'
-                                   else '.xz' if compression == 'lzma'
-                                   else '')
-        meta_mode = 'wt' if is_python2 is False or compression is None else 'wb'
-        package_info = {'textacy_lang': self.lang, 'spacy_version': spacy.about.__version__}
-        fileio.write_json(package_info, info_fname)
-        fileio.write_json_lines(
-            (doc.metadata for doc in self), meta_fname, mode=meta_mode,
-            ensure_ascii=False, separators=(',', ':'))
-        fileio.write_spacy_docs((doc.spacy_doc for doc in self), docs_fname)
+        # HACK: add spacy language metadata to first doc's user_data
+        # so we can re-instantiate the same language upon Corpus.load()
+        self[0].spacy_doc.user_data['textacy']['spacy_lang_meta'] = self.spacy_lang.meta
+        fileio.write_spacy_docs((doc.spacy_doc for doc in self), filepath)
 
     @classmethod
-    def load(cls, path, name=None, compression=None):
+    def load(cls, filepath):
         """
-        Load content and metadata from disk, and initialize a ``Corpus``.
+        Load documents' pickled content and metadata from disk, and initialize
+        a ``Corpus`` with a spacy language pipeline equivalent to what was in use
+        previously, when the corpus was saved.
 
         Args:
-            path (str): Directory on disk where content + metadata are saved.
-            name (str): Identifying/uniquifying name prepended to the default
-                filenames 'spacy_docs.bin', 'metadatas.json', and 'info.json',
-                used when corpus was saved to disk via :meth:`Corpus.save()`.
-            compression ({'gzip', 'bz2', 'lzma'} or None): Type of compression
-                used to reduce size of 'metadatas.json' file when saved, if any.
+            filepath (str): Full path to file on disk where documents' content and
+                metadata are saved.
 
         Returns:
-            :class:`textacy.Corpus <Corpus>`
+            :class:`textacy.Corpus`
 
-        .. warning:: If the ``spacy.Vocab`` object used to save this document is
-            not the same as the one used to load it, there will be problems!
-            Consequently, this functionality is only useful as short-term but
-            not long-term storage.
+        .. seealso:: :meth:`Corpus.save()`
         """
-        if name:
-            info_fname = os.path.join(path, '_'.join([name, 'info.json']))
-            meta_fname = os.path.join(path, '_'.join([name, 'metadatas.json']))
-            docs_fname = os.path.join(path, '_'.join([name, 'spacy_docs.pkl']))
-        else:
-            info_fname = os.path.join(path, 'info.json')
-            meta_fname = os.path.join(path, 'metadatas.json')
-            docs_fname = os.path.join(path, 'spacy_docs.pkl')
-        meta_fname = meta_fname + ('.gz' if compression == 'gzip'
-                                   else '.bz2' if compression == 'bz2'
-                                   else '.xz' if compression == 'lzma'
-                                   else '')
-        meta_mode = 'rt' if is_python2 is False or compression is None else 'rb'
-        package_info = list(fileio.read_json(info_fname))[0]
-        lang = package_info['textacy_lang']
-        spacy_version = package_info['spacy_version']
-        if spacy_version != spacy.about.__version__:
-            msg = """
-                the spaCy version used to save this Corpus to disk is not the
-                same as the version currently installed ('{}' vs. '{}'); if the
-                data underlying the associated `spacy.Vocab` has changed, this
-                loaded Corpus may not be valid!
-                """.format(spacy_version, spacy.about.__version__)
-            warnings.warn(msg, UserWarning)
-        corpus = Corpus(lang)
-        metadata_stream = fileio.read_json_lines(meta_fname, mode=meta_mode)
-        spacy_docs = fileio.read_spacy_docs(docs_fname)
-        for spacy_doc, metadata in zip_(spacy_docs, metadata_stream):
-            corpus.add_doc(
-                Doc(spacy_doc, lang=corpus.spacy_lang, metadata=metadata))
-        return corpus
+        spacy_docs = fileio.read_spacy_docs(filepath)
+        # HACK: pop spacy language metadata from first doc's user_data
+        # so we can (more or less...) re-instantiate the same language pipeline
+        first_spacy_doc, spacy_docs = itertoolz.peek(spacy_docs)
+        spacy_lang_meta = first_spacy_doc.user_data['textacy'].pop('spacy_lang_meta')
+        # manually instantiate the spacy language pipeline and
+        # hope that the spacy folks either make this easier or don't touch it
+        from spacy.util import get_lang_class
+        spacy_lang = get_lang_class(spacy_lang_meta['lang'])(
+            vocab=first_spacy_doc.vocab, meta=spacy_lang_meta)
+        for name in spacy_lang_meta['pipeline']:
+            spacy_lang.add_pipe(spacy_lang.create_pipe(name))
+        return cls(spacy_lang, docs=spacy_docs)
 
     #################
     # ADD DOCUMENTS #
