@@ -1,11 +1,14 @@
 API Reference
 =============
 
-Doc and Corpus
---------------
+Doc
+---
 
 .. automodule:: textacy.doc
     :members:
+
+Corpus
+------
 
 .. automodule:: textacy.corpus
     :members:

@@ -2,7 +2,11 @@
 textacy: higher-level NLP built on spaCy
 ========================================
 
-``textacy`` is a Python library for performing higher-level natural language processing (NLP) tasks, built on the high-performance spaCy_ library. With the basics --- tokenization, part-of-speech tagging, dependency parsing, etc. --- offloaded to another library, ``textacy`` focuses on tasks facilitated by the ready availability of tokenized, POS-tagged, and parsed text.
+``textacy`` is a Python library for performing higher-level natural language
+processing (NLP) tasks, built on the high-performance spaCy_ library. With the
+fundamentals --- tokenization, part-of-speech tagging, dependency parsing, etc. ---
+offloaded to another library, ``textacy`` focuses on tasks facilitated by the
+ready availability of tokenized, POS-tagged, and parsed text.
 
 .. image:: https://img.shields.io/travis/chartbeat-labs/textacy/master.svg?style=flat-square
     :target: https://travis-ci.org/chartbeat-labs/textacy
@@ -25,13 +29,18 @@ Features
 
 - Stream text, json, csv, and spaCy binary data to and from disk
 - Clean and normalize raw text, *before* analyzing it
-- Explore a variety of included datasets, with both text data and metadata from Congressional speeches to historical literature to Reddit comments
-- Access and filter basic linguistic elements, such as words and ngrams, noun chunks and sentences
-- Extract named entities, acronyms and their definitions, direct quotations, key terms, and more from documents
+- Explore a variety of included datasets, with both text data and metadata from
+  Congressional speeches to historical literature to Reddit comments
+- Access and filter basic linguistic elements, such as words and ngrams, noun
+  chunks and sentences
+- Extract named entities, acronyms and their definitions, direct quotations,
+  key terms, and more from documents
 - Compare strings, sets, and documents by a variety of similarity metrics
 - Transform documents and corpora into vectorized and semantic network representations
-- Train, interpret, visualize, and save ``sklearn``-style topic models using LSA, LDA, or NMF methods
-- Identify a text's language, display key words in context (KWIC), true-case words, and navigate a parse tree
+- Train, interpret, visualize, and save ``sklearn``-style topic models using
+  LSA, LDA, or NMF methods
+- Identify a text's language, display key words in context (KWIC), true-case words,
+  and navigate a parse tree
 
 ... and more!
 
@@ -59,25 +68,49 @@ or ``conda``:
 
     $ conda install -c conda-forge textacy
 
-**Note:** If you use ``pip``, some dependencies have been made optional, because they can be difficult to install and/or are only needed in certain uses cases. To use visualization functions, you'll need ``matplotlib`` installed; you can do so via ``pip install textacy[viz]``. For automatic language detection, you'll need ``cld2-cffi`` installed; do ``pip install textacy[lang]``. To install all optional dependencies:
+**Note:** If you use ``pip``, some dependencies have been made optional, because
+they can be difficult to install and/or are only needed in certain uses cases.
+To use visualization functions, you'll need ``matplotlib`` installed; you can do
+so via ``pip install textacy[viz]``. For automatic language detection, you'll
+need ``cld2-cffi`` installed; do ``pip install textacy[lang]``. To install all
+optional dependencies:
 
 .. code-block:: console
 
     $ pip install textacy[all]
 
-Otherwise, you can download and unzip the source ``tar.gz`` from  PyPi_, then install manually:
+Otherwise, you can download and unzip the source ``tar.gz`` from  PyPi_,
+then install manually:
 
 .. code-block:: console
 
     $ python setup.py install
 
 
-spaCy Language Data
-~~~~~~~~~~~~~~~~~~~
+Downloading Data
+~~~~~~~~~~~~~~~~
 
-For most uses of ``textacy``, language-specific model data for ``spacy`` must first be downloaded. Follow the directions `here <https://spacy.io/docs/usage/models>`_.
+For most uses of ``textacy``, language-specific model data in ``spacy`` is
+required. Follow the directions `here <https://spacy.io/docs/usage/models>`_
+to download the necessary files. Currently available language models are listed
+`here <https://spacy.io/usage/models#section-available>`_.
 
-Currently available language models are listed `here <https://spacy.io/docs/api/language-models>`_.
+``textacy`` features convenient access to several datasets comprised of thousands
+of text + metadata records. Data can be downloaded via the ``.download()`` method
+on corresponding dataset classes, *or* directly from the command line.
+For example:
+
+.. code-block:: console
+
+    $ python -m textacy download capitol_words
+
+will download and save a compressed json file with ~11k speeches given by the
+main protagonists of the 2016 U.S. Presidential election (that had previously
+served in the U.S. Congress). For more details, do
+
+.. code-block:: console
+
+    $ python -m textacy --help
 
 
 Usage Example
@@ -267,7 +300,8 @@ Compute basic counts and readability statistics for a given text:
      'smog_index': 11.683781121521076,
      'wiener_sachtextformel': 5.401029023140788}
 
-Count terms individually, and represent documents as a bag-of-terms with flexible weighting and inclusion criteria:
+Count terms individually, and represent documents as a bag-of-terms with flexible
+weighting and inclusion criteria:
 
 .. code-block:: pycon
 
@@ -286,11 +320,14 @@ Count terms individually, and represent documents as a bag-of-terms with flexibl
      ('chuck', 3),
      ('lot of fun', 2)]
 
-**Note:** In almost all cases, ``textacy`` expects to be working with unicode text. Docstrings indicate this as ``str``, which is clear and correct for Python 3 but not Python 2. In the latter case, users should cast ``str`` bytes to ``unicode``, as needed.
+**Note:** In almost all cases, ``textacy`` expects to be working with unicode text.
+Docstrings indicate this as ``str``, which is clear and correct for Python 3 but
+not Python 2. In the latter case, users should cast ``str`` bytes to ``unicode``,
+as needed.
 
 
-Authors
--------
+Maintainer
+----------
 
 - Burton DeWilde (<burton@chartbeat.net>)
 
