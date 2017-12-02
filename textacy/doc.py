@@ -115,17 +115,17 @@ class Doc(object):
         # Doc instantiated from text, so must be parsed with a spacy.Language
         if isinstance(content, unicode_):
             if isinstance(lang, SpacyLang):
-                self.lang = lang.lang
                 spacy_lang = lang
+                langstr = spacy_lang.lang
             elif isinstance(lang, unicode_):
-                self.lang = get_lang_class(lang).lang
                 spacy_lang = data.load_spacy(lang)
+                langstr = spacy_lang.lang
             elif callable(lang):
-                self.lang = lang(content)
-                spacy_lang = data.load_spacy(self.lang)
+                langstr = lang(content)
+                spacy_lang = data.load_spacy(langstr)
             else:
-                raise ValueError(
-                    '`lang` must be {}, not "{}"'.format(
+                raise TypeError(
+                    '`lang` must be {}, not {}'.format(
                         {unicode_, SpacyLang, types.FunctionType}, type(lang)))
             self.spacy_vocab = spacy_lang.vocab
             self.spacy_stringstore = self.spacy_vocab.strings
@@ -135,7 +135,7 @@ class Doc(object):
             self.spacy_vocab = content.vocab
             self.spacy_stringstore = self.spacy_vocab.strings
             self.spacy_doc = content
-            self.lang = self.spacy_vocab.lang
+            langstr = self.spacy_vocab.lang
             # these checks are probably unnecessary, but in case a user
             # has done something strange, we should complain...
             if isinstance(lang, SpacyLang):
@@ -144,13 +144,16 @@ class Doc(object):
                         '`spacy.Vocab` used to parse `content` must be the same '
                         'as the one associated with the `lang` param')
             elif isinstance(lang, unicode_):
-                if lang != self.lang:
+                # a `lang` as str could be a specific spacy model name,
+                # e.g. "en_core_web_sm", while `langstr` would only be "en"
+                if not lang.startswith(langstr):
                     raise ValueError(
-                        'lang of spacy models used to parse `content` must be '
-                        'the same as the `lang` param')
+                        'lang of spacy model used to parse `content` ({}) '
+                        'must be the same as the `lang` param ({})'.format(
+                            lang, langstr))
             elif callable(lang) is False:
-                raise ValueError(
-                    '`lang` must be {}, not "{}"'.format(
+                raise TypeError(
+                    '`lang` must be {}, not {}'.format(
                         {unicode_, SpacyLang, types.FunctionType}, type(lang)))
         # oops, user has made some sort of mistake
         else:
@@ -158,7 +161,8 @@ class Doc(object):
                 '`Doc` must be initialized with {} content, not "{}"'.format(
                     {unicode_, SpacyDoc}, type(content)))
 
-        self.spacy_doc.user_data['metadata'] = metadata or {}
+        self.spacy_doc.user_data['textacy'] = {'lang': langstr}
+        self.spacy_doc.user_data['textacy']['metadata'] = metadata or {}
         self._counted_ngrams = set()
         self._counts = Counter()
 
@@ -180,81 +184,52 @@ class Doc(object):
 
     @property
     def metadata(self):
-        """Access :class:`Doc` metadata, stored in ``SpacyDoc.user_data['metadata']``."""
-        return self.spacy_doc.user_data['metadata']
+        """Get :class:`Doc` metadata, stored in ``SpacyDoc.user_data``."""
+        return self.spacy_doc.user_data['textacy']['metadata']
 
     @metadata.setter
     def metadata(self, value):
-        """Set :class:`Doc` metadata, stored in ``SpacyDoc.user_data['metadata']``."""
-        self.spacy_doc.user_data['metadata'] = value
+        """Set :class:`Doc` metadata, stored in ``SpacyDoc.user_data``."""
+        self.spacy_doc.user_data['textacy']['metadata'] = value
+
+    @property
+    def lang(self):
+        """Get :class:`Doc` language, stored in ``SpacyDoc.user_data``."""
+        return self.spacy_doc.user_data['textacy']['lang']
 
     ##########
     # FILEIO #
 
-    def save(self, path, name=None):
+    def save(self, filepath):
         """
-        Save ``Doc`` content and metadata to disk.
+        Save ``Doc`` content and metadata to disk, as a ``pickle`` file.
 
         Args:
-            path (str): Directory on disk where content + metadata will be saved.
-            name (str): Prepend default filenames 'spacy_doc.bin' and 'metadata.json'
-                with a name to identify/uniquify this particular document.
+            filepath (str): Full path to file on disk where document content and
+                metadata are to be saved.
 
-        .. warning:: If the ``spacy.Vocab`` object used to save this document is
-            not the same as the one used to load it, there will be problems!
-            Consequently, this functionality is only useful as short-term but
-            not long-term storage.
+        .. seealso:: :meth:`Doc.load()`
         """
-        if name:
-            meta_fname = os.path.join(path, '_'.join([name, 'metadata.json']))
-            doc_fname = os.path.join(path, '_'.join([name, 'spacy_doc.pkl']))
-        else:
-            meta_fname = os.path.join(path, 'metadata.json')
-            doc_fname = os.path.join(path, 'spacy_doc.pkl')
-        package_info = {'textacy_lang': self.lang,
-                        'spacy_version': spacy.about.__version__}
-        fileio.write_json(
-            dict(package_info, **self.metadata), meta_fname)
-        fileio.write_spacy_docs(self.spacy_doc, doc_fname)
+        fileio.write_spacy_docs(self.spacy_doc, filepath)
 
     @classmethod
-    def load(cls, path, name=None):
+    def load(cls, filepath):
         """
-        Load content and metadata from disk, and initialize a ``Doc``.
+        Load pickled content and metadata from disk, and initialize a ``Doc``.
 
         Args:
-            path (str): Directory on disk where content and metadata are saved.
-            name (str): Identifying/uniquifying name prepended to the default
-                filenames 'spacy_doc.bin' and 'metadata.json', used when doc was
-                saved to disk via :meth:`Doc.save()`.
+            filepath (str): Full path to file on disk where document content and
+                metadata are saved.
 
         Returns:
-            :class:`textacy.Doc <Doc>`
+            :class:`textacy.Doc`
 
-        .. warning:: If the ``spacy.Vocab`` object used to save this document is
-            not the same as the one used to load it, there will be problems!
-            Consequently, this functionality is only useful as short-term but
-            not long-term storage.
+        .. seealso:: :meth:`Doc.save()`
         """
-        if name:
-            meta_fname = os.path.join(path, '_'.join([name, 'metadata.json']))
-            docs_fname = os.path.join(path, '_'.join([name, 'spacy_doc.pkl']))
-        else:
-            meta_fname = os.path.join(path, 'metadata.json')
-            docs_fname = os.path.join(path, 'spacy_doc.pkl')
-        metadata = list(fileio.read_json(meta_fname))[0]
-        lang = metadata.pop('textacy_lang')
-        spacy_version = metadata.pop('spacy_version')
-        if spacy_version != spacy.about.__version__:
-            msg = """
-                the spaCy version used to save this Doc to disk is not the
-                same as the version currently installed ('{}' vs. '{}'); if the
-                data underlying the associated `spacy.Vocab` has changed, this
-                loaded Doc may not be valid!
-                """.format(spacy_version, spacy.about.__version__)
-            warnings.warn(msg, UserWarning)
-        return cls(list(fileio.read_spacy_docs(docs_fname))[0],
-                   lang=lang, metadata=metadata)
+        spacy_doc = list(fileio.read_spacy_docs(filepath))[0]
+        return cls(spacy_doc,
+                   lang=spacy_doc.user_data['textacy']['lang'],
+                   metadata=spacy_doc.user_data['textacy']['metadata'])
 
     ####################
     # BASIC COMPONENTS #

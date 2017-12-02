@@ -1,6 +1,9 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import os
+import shutil
+import tempfile
 import unittest
 
 from textacy import Doc
@@ -54,7 +57,7 @@ class DocInitTestCase(unittest.TestCase):
     def test_invalid_lang(self):
         invalid_langs = [b'en', ['en', 'en_core_web_sm'], True]
         for invalid_lang in invalid_langs:
-            with self.assertRaises(ValueError):
+            with self.assertRaises(TypeError):
                 Doc('This is an English sentence.', lang=invalid_lang)
 
     def test_invalid_content_lang_combo(self):
@@ -66,7 +69,9 @@ class DocInitTestCase(unittest.TestCase):
 class DocMethodsTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.doc = Doc(TEXT.strip(), lang='en')
+        self.tempdir = tempfile.mkdtemp(
+            prefix='test_doc', dir=os.path.dirname(os.path.abspath(__file__)))
+        self.doc = Doc(TEXT.strip(), lang='en', metadata={'foo': 'bar!'})
 
     def test_n_tokens_and_sents(self):
         self.assertEqual(self.doc.n_tokens, 241)
@@ -132,3 +137,15 @@ class DocMethodsTestCase(unittest.TestCase):
         bow = self.doc.to_bag_of_words(as_strings=True)
         self.assertIsInstance(bow, dict)
         self.assertIsInstance(list(bow.keys())[0], compat.unicode_)
+
+    def test_doc_save_and_load(self):
+        filepath = os.path.join(self.tempdir, 'test_doc_save_and_load.pkl')
+        self.doc.save(filepath)
+        new_doc = Doc.load(filepath)
+        self.assertIsInstance(new_doc, Doc)
+        self.assertEqual(len(new_doc), len(self.doc))
+        self.assertEqual(new_doc.lang, self.doc.lang)
+        self.assertEqual(new_doc.metadata, self.doc.metadata)
+
+    def tearDown(self):
+        shutil.rmtree(self.tempdir)
