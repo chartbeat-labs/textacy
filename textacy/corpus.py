@@ -10,7 +10,6 @@ import logging
 from math import log
 import multiprocessing
 import os
-import warnings
 
 from cytoolz import itertoolz
 import numpy as np
@@ -449,8 +448,7 @@ class Corpus(object):
                     break
         self._remove_many_docs_by_index(matched_indexes)
 
-    def word_freqs(self, normalize='lemma', lemmatize=None, lowercase=None,
-                   weighting='count', as_strings=False):
+    def word_freqs(self, normalize='lemma', weighting='count', as_strings=False):
         """
         Map the set of unique words in :class:`Corpus` to their counts as absolute,
         relative, or binary frequencies of occurence. This is akin to
@@ -460,12 +458,6 @@ class Corpus(object):
             normalize (str): if 'lemma', lemmatize words before counting; if
                 'lower', lowercase words before counting; otherwise, words are
                 counted using the form with which they they appear in docs
-            lemmatize (bool): if True, words are lemmatized before counting;
-                for example, 'happy', 'happier', and 'happiest' would be grouped
-                together as 'happy', with a count of 3 (*DEPRECATED*)
-            lowercase (bool): if True and ``lemmatize`` is False, words are lower-
-                cased before counting; for example, 'happy' and 'Happy' would be
-                grouped together as 'happy', with a count of 2 (*DEPRECATED*)
             weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
                 words. If 'count' (default), weights are the absolute number of
                 occurrences (count) of word in corpus. If 'binary', all counts
@@ -485,14 +477,6 @@ class Corpus(object):
         See Also:
             :func:`vsm.get_term_freqs() <textacy.vsm.get_term_freqs>``
         """
-        if lemmatize is not None or lowercase is not None:
-            normalize = ('lemma' if lemmatize is True else
-                         'lower' if lowercase is True else
-                         False)
-            msg = '`lemmatize` and `lowercase` params are deprecated; use `normalize` instead'
-            with warnings.catch_warnings():
-                warnings.simplefilter('once', DeprecationWarning)
-                warnings.warn(msg, DeprecationWarning)
         word_counts = Counter()
         for doc in self:
             word_counts.update(doc.to_bag_of_words(
@@ -507,8 +491,8 @@ class Corpus(object):
             word_counts = {word: 1 for word in word_counts.keys()}
         return word_counts
 
-    def word_doc_freqs(self, normalize='lemma', lemmatize=None, lowercase=None,
-                       weighting='count', smooth_idf=True, as_strings=False):
+    def word_doc_freqs(self, normalize='lemma', weighting='count',
+                       smooth_idf=True, as_strings=False):
         """
         Map the set of unique words in :class:`Corpus` to their *document* counts
         as absolute, relative, inverse, or binary frequencies of occurence.
@@ -517,12 +501,6 @@ class Corpus(object):
             normalize (str): if 'lemma', lemmatize words before counting; if
                 'lower', lowercase words before counting; otherwise, words are
                 counted using the form with which they they appear in docs
-            lemmatize (bool): if True, words are lemmatized before counting;
-                for example, 'happy', 'happier', and 'happiest' would be grouped
-                together as 'happy', with a count of 3 (*DEPRECATED*)
-            lowercase (bool): if True and ``lemmatize`` is False, words are lower-
-                cased before counting; for example, 'happy' and 'Happy' would be
-                grouped together as 'happy', with a count of 2 (*DEPRECATED*)
             weighting ({'count', 'freq', 'idf', 'binary'}): Type of weight to
                 assign to words. If 'count' (default), weights are the absolute
                 number (count) of documents in which word appears. If 'binary',
@@ -546,14 +524,6 @@ class Corpus(object):
         See Also:
             :func:`vsm.get_doc_freqs() <textacy.vsm.get_doc_freqs>`
         """
-        if lemmatize is not None or lowercase is not None:
-            normalize = ('lemma' if lemmatize is True else
-                         'lower' if lowercase is True else
-                         False)
-            msg = '`lemmatize` and `lowercase` params are deprecated; use `normalize` instead'
-            with warnings.catch_warnings():
-                warnings.simplefilter('once', DeprecationWarning)
-                warnings.warn(msg, DeprecationWarning)
         word_doc_counts = Counter()
         for doc in self:
             word_doc_counts.update(doc.to_bag_of_words(

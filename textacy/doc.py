@@ -1,14 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Load, process, iterate, transform, and save text content paired with metadata
-— a document.
+-- a document.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from collections import Counter
 import os
 import types
-import warnings
 
 from cytoolz import itertoolz
 from spacy import attrs
@@ -28,8 +27,8 @@ from textacy import network
 class Doc(object):
     """
     A text document parsed by spaCy and, optionally, paired with key metadata.
-    Transform ``Doc`` into an easily-customized list of terms, a bag-of-words or
-    (more general) bag-of-terms, or a semantic network; save and load parsed
+    Transform :class:`Doc` into an easily-customized list of terms, a bag-of-words
+    or (more general) bag-of-terms, or a semantic network; save and load parsed
     content and metadata to and from disk; index, slice, and iterate through
     tokens and sentences; and more.
 
@@ -354,8 +353,7 @@ class Doc(object):
     # TRANSFORM DOC #
 
     def to_terms_list(self, ngrams=(1, 2, 3), named_entities=True,
-                      normalize='lemma', lemmatize=None, lowercase=None,
-                      as_strings=False, **kwargs):
+                      normalize='lemma', as_strings=False, **kwargs):
         """
         Transform :class:`Doc` into a sequence of ngrams and/or named entities, which
         aren't necessarily in order of appearance, where each term appears in
@@ -369,9 +367,6 @@ class Doc(object):
                 in the terms list; note: if ngrams are also included, named
                 entities are added *first*, and any ngrams that exactly overlap
                 with an entity are skipped to prevent double-counting
-            lemmatize (bool): *deprecated* if True (default), lemmatize all terms
-            lowercase (bool): *deprecated* if True and `lemmatize` is False, words
-                are lower-cased
             normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
                 lowercase terms; if false-y, use the form of terms as they appear
                 in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
@@ -404,14 +399,6 @@ class Doc(object):
         .. note:: Despite the name, this is a generator function; to get an
             actual list of terms, call ``list(doc.to_terms_list())``.
         """
-        if lemmatize is not None or lowercase is not None:
-            normalize = ('lemma' if lemmatize is True else
-                         'lower' if lowercase is True else
-                         False)
-            msg = '`lemmatize` and `lowercase` params are deprecated; use `normalize` instead'
-            with warnings.catch_warnings():
-                warnings.simplefilter('once', DeprecationWarning)
-                warnings.warn(msg, DeprecationWarning)
         if not named_entities and not ngrams:
             raise ValueError('either `named_entities` or `ngrams` must be included')
         if ngrams and isinstance(ngrams, int):
@@ -511,8 +498,7 @@ class Doc(object):
                 for term in terms:
                     yield normalize(term)
 
-    def to_bag_of_words(self, normalize='lemma', lemmatize=None, lowercase=None,
-                        weighting='count', as_strings=False):
+    def to_bag_of_words(self, normalize='lemma', weighting='count', as_strings=False):
         """
         Transform :class:`Doc` into a bag-of-words: the set of unique words in
         :class:`Doc` mapped to their absolute, relative, or binary frequency of
@@ -522,12 +508,6 @@ class Doc(object):
             normalize (str): if 'lemma', lemmatize words before counting; if
                 'lower', lowercase words before counting; otherwise, words are
                 counted using the form with which they they appear in doc
-            lemmatize (bool): if True, words are lemmatized before counting; for
-                example, 'happy', 'happier', and 'happiest' would be grouped
-                together as 'happy', with a count of 3 (*DEPRECATED*)
-            lowercase (bool): *deprecated* if True and ``lemmatize`` is False,
-                words are lower-cased before counting; for example, 'happy' and
-                'Happy' would be grouped together as 'happy', with a count of 2
             weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
                 words. If 'count' (default), weights are the absolute number of
                 occurrences (count) of word in doc. If 'binary', all counts are
@@ -544,14 +524,6 @@ class Doc(object):
                 of ``as_strings``) to its absolute, relative, or binary frequency
                 of occurrence (depending on the value of ``weighting``).
         """
-        if lemmatize is not None or lowercase is not None:
-            normalize = ('lemma' if lemmatize is True else
-                         'lower' if lowercase is True else
-                         False)
-            msg = '`lemmatize` and `lowercase` params are deprecated; use `normalize` instead'
-            with warnings.catch_warnings():
-                warnings.simplefilter('once', DeprecationWarning)
-                warnings.warn(msg, DeprecationWarning)
         if weighting not in {'count', 'freq', 'binary'}:
             raise ValueError('weighting "{}" is invalid'.format(weighting))
         count_by = (attrs.LEMMA if normalize == 'lemma' else
@@ -581,8 +553,8 @@ class Doc(object):
         return bow
 
     def to_bag_of_terms(self, ngrams=(1, 2, 3), named_entities=True,
-                        normalize='lemma', lemmatize=None, lowercase=None,
-                        weighting='count', as_strings=False, **kwargs):
+                        normalize='lemma', weighting='count', as_strings=False,
+                        **kwargs):
         """
         Transform :class:`Doc` into a bag-of-terms: the set of unique terms in
         :class:`Doc` mapped to their frequency of occurrence, where "terms"
@@ -595,12 +567,6 @@ class Doc(object):
             named_entities (bool): if True (default), include named entities;
                 note: if ngrams are also included, any ngrams that exactly
                 overlap with an entity are skipped to prevent double-counting
-            lemmatize (bool): *deprecated* if True, words are lemmatized before counting;
-                for example, 'happy', 'happier', and 'happiest' would be grouped
-                together as 'happy', with a count of 3
-            lowercase (bool): *deprecated* if True and ``lemmatize`` is False, words are lower-
-                cased before counting; for example, 'happy' and 'Happy' would be
-                grouped together as 'happy', with a count of 2
             normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
                 lowercase terms; if false-y, use the form of terms as they appear
                 in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
@@ -636,14 +602,6 @@ class Doc(object):
         See Also:
             :meth:`Doc.to_terms_list() <Doc.to_terms_list>`
         """
-        if lemmatize is not None or lowercase is not None:
-            normalize = ('lemma' if lemmatize is True else
-                         'lower' if lowercase is True else
-                         False)
-            msg = '`lemmatize` and `lowercase` params are deprecated; use `normalize` instead'
-            with warnings.catch_warnings():
-                warnings.simplefilter('once', DeprecationWarning)
-                warnings.warn(msg, DeprecationWarning)
         if weighting not in {'count', 'freq', 'binary'}:
             raise ValueError('weighting "{}" is invalid'.format(weighting))
         terms_list = self.to_terms_list(
