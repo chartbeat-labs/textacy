@@ -301,9 +301,8 @@ class Corpus(object):
 
         Args:
             doc (``textacy.Doc`` or ``spacy.Doc``)
-            metadata (dict): Dictionary of relevant document metadata. If ``doc``
-                is a ``spacy.Doc``, it will be paired as usual; if ``doc`` is a
-                ``textacy.Doc``, it will *overwrite* any existing metadata.
+            metadata (dict): Dictionary of relevant document metadata. Note:
+                If specified, this will *overwrite* any existing metadata.
 
         .. warning:: If ``doc`` was already added to this or another ``Corpus``,
             it will be deep-copied and then added as if a new document. A warning
@@ -325,6 +324,7 @@ class Corpus(object):
                 msg = 'SpacyDoc.vocab {} != Corpus.spacy_vocab {}'.format(
                     doc.vocab, self.spacy_vocab)
                 raise ValueError(msg)
+            metadata = metadata or doc.user_data.get('textacy', {}).get('metadata')
             self._add_textacy_doc(
                 Doc(doc, lang=self.spacy_lang, metadata=metadata))
         else:
