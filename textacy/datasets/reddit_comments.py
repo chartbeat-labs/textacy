@@ -3,17 +3,21 @@
 Reddit Comments
 ---------------
 
-A collection of up to ~1.5 billion Reddit comments posted from October 2007 through
-May 2015, as either texts (str) or records (dict) with both text and metadata.
+A collection of up to ~1.5 billion Reddit comments posted from
+October 2007 through May 2015.
 
-Record include the following key fields (plus a few others):
+Records include the following key fields (plus a few others):
 
-    * ``body``: full text of the comment
-    * ``created_utc``: date on which the comment was posted
-    * ``subreddit``: sub-reddit in which the comment was posted, excluding the
-      familiar '/r/' prefix
-    * ``score``: net score (upvotes - downvotes) on the comment
-    * ``gilded``: number of times this comment received reddit gold
+    * ``body``: Full text of the comment.
+    * ``created_utc``: Date on which the comment was posted.
+    * ``subreddit``: Sub-reddit in which the comment was posted, excluding the
+      familiar "/r/" prefix.
+    * ``score``: Net score (upvotes - downvotes) on the comment.
+    * ``gilded``: Number of times this comment received reddit gold.
+
+This dataset is just an interface built on top of the raw data, originally
+collected by [FOO] and stored for posterity by the `Internet Archive <https://archive.org>`_.
+For more details, refer to https://archive.org/details/2015_reddit_comments_corpus.
 """
 from __future__ import unicode_literals
 
@@ -78,17 +82,18 @@ class RedditComments(Dataset):
         ...     print(record['body'], len(record['body']))
 
     Args:
-        data_dir (str): Path to directory on disk under which Reddit comments
-            files are stored. Each file is expected at ``YYYY/RC_YYYY-MM.bz2``
-            immediately under this directory.
+        data_dir (str): Path to directory on disk under which the data is stored.
+            Each file covers a given month, as indicated in the filenames like
+            "YYYY/RC_YYYY-MM.bz2".
 
     Attributes:
         min_date (str): Earliest date for which comments are available, as an
-            ISO-formatted string (YYYY-MM-DD).
+            ISO-formatted string ("YYYY-MM-DD").
         max_date (str): Latest date for which comments are available, as an
-            ISO-formatted string (YYYY-MM-DD).
+            ISO-formatted string ("YYYY-MM-DD").
         filenames (Tuple[str]): Full paths on disk for all Reddit comments files
-            found under the ``data_dir`` directory, sorted chronologically.
+            found under :attr:`ReddictComments.data_dir` directory, sorted
+            in chronological order.
     """
 
     min_date = '2007-10-01'
@@ -102,13 +107,12 @@ class RedditComments(Dataset):
     def filenames(self):
         """
         Tuple[str]: Full paths on disk for all Reddit comments files found under
-        the ``data_dir`` directory, sorted chronologically.
+            the ``data_dir`` directory, sorted chronologically.
         """
         if os.path.exists(self.data_dir):
             return tuple(sorted(fileio.get_filenames(self.data_dir, extension='.bz2', recursive=True)))
         else:
-            LOGGER.warning(
-                '%s data directory does not exist', self.data_dir)
+            LOGGER.warning('%s data directory does not exist', self.data_dir)
             return tuple()
 
     def download(self, date_range=(None, None), force=False):
@@ -123,7 +127,8 @@ class RedditComments(Dataset):
                 to the corresponding YYYY-MM value). Both start and end values
                 must be specified, but a null value for either is automatically
                 replaced by the minimum or maximum valid values, respectively.
-            force (bool): Download the file, even if it already exists on disk.
+            force (bool): If True, download the dataset, even if it already
+                exists on disk under ``data_dir``.
         """
         date_range = self._parse_date_range(date_range)
         fstubs = self._generate_filestubs(date_range)
@@ -182,8 +187,9 @@ class RedditComments(Dataset):
     def texts(self, subreddit=None, date_range=None, score_range=None,
               min_len=0, limit=-1):
         """
-        Iterate over the comments in 1 or more Reddit comments files,
-        yielding the plain text of comments, one at a time.
+        Iterate over comments (text-only) in 1 or more files of this dataset,
+        optionally filtering by a variety of metadata and/or text length,
+        in chronological order.
 
         Args:
             subreddit (str or Set[str]): Filter comments for those which were
@@ -205,7 +211,8 @@ class RedditComments(Dataset):
                 If -1, all comments are iterated over.
 
         Yields:
-            str: Plain text of the next comment passing all filters.
+            str: Plain text of next (by chronological order) comment in dataset
+                passing all filter params.
         """
         texts = self._iterate(
             True, subreddit=subreddit, date_range=date_range,
@@ -216,8 +223,9 @@ class RedditComments(Dataset):
     def records(self, subreddit=None, date_range=None, score_range=None,
                 min_len=0, limit=-1):
         """
-        Iterate over the comments in 1 or more Reddit comments files,
-        yielding one (lightly parsed) comment at a time, as a dict.
+        Iterate over comments (including text and metadata) in 1 or more files
+        of this dataset, optionally filtering by a variety of metadata and/or
+        text length, in chronological order.
 
         Args:
             subreddit (str or Set[str]): Filter comments for those which were
@@ -239,7 +247,8 @@ class RedditComments(Dataset):
                 If -1, all comments are iterated over.
 
         Yields:
-            dict: Text and metadata of the next comment passing all filters.
+            dict: Full text and metadata of next (by chronological order) comment
+                in dataset passing all filter params.
         """
         records = self._iterate(
             False, subreddit=subreddit, date_range=date_range,
@@ -250,7 +259,7 @@ class RedditComments(Dataset):
     def _iterate(self, text_only, subreddit, date_range, score_range,
                  min_len, limit):
         """
-        Low-level method to iterate over the records this dataset. Used by
+        Low-level method to iterate over the records in this dataset. Used by
         :meth:`RedditComments.texts()` and :meth:`RedditComments.records()`.
         """
         if subreddit:

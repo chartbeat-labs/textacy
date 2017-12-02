@@ -3,17 +3,18 @@
 Wikipedia
 ---------
 
-All articles for a given language- and version-specific Wikipedia site snapshot,
-as either texts (str) or records (dict) with both text and metadata.
+All articles for a given language- and version-specific Wikipedia site snapshot.
 
 Records include the following fields:
 
-    * ``text``: text content of the article, with markup stripped out
-    * ``title``: title of the Wikipedia article
-    * ``page_id``: unique identifier of the page, usable in Wikimedia APIs
-    * ``wiki_links``: a list of other article pages linked to from this page
-    * ``ext_links``: a list of external URLs linked to from this page
-    * ``categories``: a list of Wikipedia categories to which this page belongs
+    * ``text``: Text content of the article, with markup stripped out.
+    * ``title``: Title of the Wikipedia article.
+    * ``page_id``: Unique identifier of the page, usable in Wikimedia APIs.
+    * ``wiki_links``: A list of other article pages linked to from this page.
+    * ``ext_links``: A list of external URLs linked to from this page.
+    * ``categories``: A list of Wikipedia categories to which this page belongs.
+
+Site snapshots are provided by the Wikimedia Foundation, etc. TODO
 """
 from __future__ import unicode_literals
 
@@ -124,7 +125,7 @@ class Wikipedia(Dataset):
 
     Args:
         data_dir (str): Path to directory on disk under which database dump
-            files are stored. Each file is expected at
+            files are stored. Each file is expected as
             ``{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2``
             immediately under this directory.
         lang (str): Standard two-letter language code, e.g. "en" => "English",
@@ -166,12 +167,12 @@ class Wikipedia(Dataset):
 
     def download(self, force=False):
         """
-        Download the Wikipedia database dump corresponding to the ``lang`` and
-        ``version`` used in instantiation, and save it to disk under the
-        ``data_dir`` directory.
+        Download the data corresponding to the given ``lang`` and ``version``
+        as a compressed XML file and save it to disk under the ``data_dir`` directory.
 
         Args:
-            force (bool): Download the file, even if it already exists on disk.
+            force (bool): If True, download the dataset, even if it already
+                exists on disk under ``data_dir``.
         """
         url = compat.urljoin(DOWNLOAD_ROOT, self.filestub)
         fname = self._filename
@@ -187,11 +188,11 @@ class Wikipedia(Dataset):
 
     def __iter__(self):
         """
-        Iterate over the pages of a Wikipedia articles database dump (*articles.xml.bz2),
-        yielding one (page id, page title, page content) 3-tuple at a time.
+        Iterate over the pages of a Wikipedia articles database dump,
+        yielding one (page id, page title, page content) triplet at a time.
 
         Yields:
-            Tuple[str, str, str]: page id, title, content with wikimedia markup
+            Tuple[str, str, str]: Page id, title, content with wikimedia markup.
         """
         if not self.filename:
             raise IOError('{} file not found'.format(self._filename))
@@ -300,17 +301,17 @@ class Wikipedia(Dataset):
 
     def texts(self, min_len=100, limit=-1):
         """
-        Iterate over the pages in a Wikipedia articles database dump
-        (``*articles.xml.bz2``), yielding the text of a page, one at a time.
+        Iterate over pages (text-only) in a Wikipedia database dump, optionally
+        filtering by text length.
 
         Args:
-            min_len (int): minimum length in chars that a page must have
-                for it to be returned; too-short pages are skipped (optional)
-            limit (int): maximum number of pages (passing `min_len`) to yield;
-                if -1, all pages in the db dump are iterated over (optional)
+            min_len (int): Minimum length in chars that a page must have
+                for it to be returned; too-short pages are skipped.
+            limit (int): Maximum number of pages (passing ``min_len``) to yield;
+                if -1, all pages in the db dump are iterated over.
 
         Yields:
-            str: plain text for the next page in the wikipedia database dump
+            str: Full text of next page in the Wikipedia database dump.
 
         Notes:
             Page and section titles appear immediately before the text content
@@ -330,25 +331,22 @@ class Wikipedia(Dataset):
 
     def records(self, min_len=100, limit=-1, fast=False):
         """
-        Iterate over the pages in a Wikipedia articles database dump
-        (``*articles.xml.bz2``), yielding one page whose structure and content
-        have been parsed, as a dict.
+        Iterate over pages (parsed text and metadata) in a Wikipedia database dump,
+        optionally filtering by text length.
 
         Args:
-            min_len (int): minimum length in chars that a page must have
-                for it to be returned; too-short pages are skipped
-            limit (int): maximum number of pages (passing ``min_len``) to yield;
-                if -1, all pages in the db dump are iterated over (optional)
+            min_len (int): Minimum length in chars that a page must have
+                for it to be returned; too-short pages are skipped.
+            limit (int): Maximum number of pages (passing ``min_len``) to yield;
+                if -1, all pages in the db dump are iterated over.
             fast (bool): If True, text is extracted using a faster method but
                 which gives lower quality results. Otherwise, a slower but better
                 method is used to extract article text.
 
         Yields:
-            dict: the next page's parsed content, including key:value pairs for
-                'title', 'page_id', 'text', 'categories', 'wiki_links', 'ext_links'
+            dict: Parsed text and metadata of next page in dataset.
 
-        Notes:
-            This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
+        .. note:: This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
         """
         # hiding this here; don't want another required dep
         try:

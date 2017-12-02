@@ -4,22 +4,22 @@ Capitol Words
 -------------
 
 A collection of ~11k (almost all) speeches given by the main protagonists of the
-2016 U.S. Presidential election that had previously served in the U.S. Congress —
-including Hillary Clinton, Bernie Sanders, Barack Obama, Ted Cruz, and John Kasich —
+2016 U.S. Presidential election that had previously served in the U.S. Congress --
+including Hillary Clinton, Bernie Sanders, Barack Obama, Ted Cruz, and John Kasich --
 from January 1996 through June 2016.
 
 Records include the following fields:
 
-    * ``text``: full text of the Congressperson's remarks
-    * ``title``: title of the speech, in all caps
-    * ``date``: date on which the speech was given, as an ISO-standard string
-    * ``speaker_name``: first and last name of the speaker
-    * ``speaker_party``: political party of the speaker ('R' for Republican,
-      'D' for Democrat, and 'I' for Independent)
-    * ``congress``: number of the Congress in which the speech was given; ranges
-      continuously between 104 and 114
-    * ``chamber``: chamber of Congress in which the speech was given; almost all
-      are either 'House' or 'Senate', with a small number of 'Extensions'
+    * ``text``: Full text of the Congressperson's remarks.
+    * ``title``: Title of the speech, in all caps.
+    * ``date``: Date on which the speech was given, as an ISO-standard string.
+    * ``speaker_name``: First and last name of the speaker.
+    * ``speaker_party``: Political party of the speaker: "R" for Republican,
+      "D" for Democrat, "I" for Independent.
+    * ``congress``: Number of the Congress in which the speech was given: ranges
+      continuously between 104 and 114.
+    * ``chamber``: Chamber of Congress in which the speech was given: almost all
+      are either "House" or "Senate", with a small number of "Extensions".
 
 This dataset was derived from data provided by the (now defunct) Sunlight
 Foundation's `Capitol Words API <http://sunlightlabs.github.io/Capitol-Words/>`_.
@@ -51,14 +51,15 @@ class CapitolWords(Dataset):
     Stream Congressional speeches from a compressed json file on disk, either
     as texts (str) or records (dict) with both text content and metadata.
 
-    Download a Python version-specific file from s3::
+    Download a Python version-specific compressed json file from the
+    `textacy-data <https://github.com/bdewilde/textacy-data>`_ repo::
 
         >>> cw = CapitolWords()
         >>> cw.download()
         >>> cw.info
         {'data_dir': 'path/to/textacy/data/capitolwords',
          'description': 'Collection of ~11k speeches in the Congressional Record given by notable U.S. politicians between Jan 1996 and Jun 2016.',
-         'name': 'capitolwords',
+         'name': 'capitol_words',
          'site_url': 'http://sunlightlabs.github.io/Capitol-Words/'}
 
     Iterate over speeches as plain texts or records with both text and metadata::
@@ -91,22 +92,22 @@ class CapitolWords(Dataset):
         Corpus(100 docs; 70500 tokens)
 
     Args:
-        data_dir (str): Path to directory on disk under which compressed json
-            files are stored.
+        data_dir (str): Path to directory on disk under which the data
+            (a compressed json file like ``capitol-words-py3.json.gz``) is stored.
 
     Attributes:
         min_date (str): Earliest date for which speeches are available, as an
             ISO-formatted string (YYYY-MM-DD).
         max_date (str): Latest date for which speeches are available, as an
             ISO-formatted string (YYYY-MM-DD).
-        speaker_names (Set[str]): full names of all speakers included in corpus,
-            e.g. `'Bernie Sanders'`
-        speaker_parties (Set[str]): all distinct political parties of speakers,
-            e.g. `'R'`
-        chambers (Set[str]): all distinct chambers in which speeches were given,
-            e.g. `'House'`
-        congresses (Set[int]): all distinct numbers of the congresses in which
-            speeches were given, e.g. `114`
+        speaker_names (Set[str]): Full names of all speakers included in corpus,
+            e.g. "Bernie Sanders".
+        speaker_parties (Set[str]): All distinct political parties of speakers,
+            e.g. "R".
+        chambers (Set[str]): All distinct chambers in which speeches were given,
+            e.g. "House".
+        congresses (Set[int]): All distinct numbers of the congresses in which
+            speeches were given, e.g. 114.
     """
 
     min_date = '1996-01-01'
@@ -140,11 +141,12 @@ class CapitolWords(Dataset):
 
     def download(self, force=False):
         """
-        Download a Python version-specific compressed json file from s3,
-        and save it to disk under the ``data_dir`` directory.
+        Download the data as a Python version-specific compressed json file and
+        save it to disk under the ``data_dir`` directory.
 
         Args:
-            force (bool): Download the file, even if it already exists on disk.
+            force (bool): If True, download the dataset, even if it already
+                exists on disk under ``data_dir``.
         """
         release_tag = 'capitol_words_py{py_version}_v{data_version}'.format(
             py_version=2 if compat.is_python2 else 3,
@@ -164,29 +166,29 @@ class CapitolWords(Dataset):
     def texts(self, speaker_name=None, speaker_party=None, chamber=None,
               congress=None, date_range=None, min_len=None, limit=-1):
         """
-        Iterate over texts in this dataset, optionally filtering by a variety of
-        metadata and/or text length, in chronological order.
+        Iterate over speeches (text-only) in this dataset, optionally filtering
+        by a variety of metadata and/or text length, in chronological order.
 
         Args:
-            speaker_name (str or Set[str]): Filter texts by the speakers' name;
-                see :meth:`speaker_names <CapitolWords.speaker_names>`.
-            speaker_party (str or Set[str]): Filter texts by the speakers' party;
-                see :meth:`speaker_parties <CapitolWords.speaker_parties>`.
-            chamber (str or Set[str]): Filter texts by the chamber in which they
-                were given; see :meth:`chambers <CapitolWords.chambers>`.
-            congress (int or Set[int]): Filter texts by the congress in which
-                they were given; see :meth:`congresses <CapitolWords.congresses>`.
-            date_range (List[str] or Tuple[str]): Filter texts by the date on
+            speaker_name (str or Set[str]): Filter speeches by the speakers' name;
+                see :attr:`speaker_names <CapitolWords.speaker_names>`.
+            speaker_party (str or Set[str]): Filter speeches by the speakers' party;
+                see :attr:`speaker_parties <CapitolWords.speaker_parties>`.
+            chamber (str or Set[str]): Filter speeches by the chamber in which they
+                were given; see :attr:`chambers <CapitolWords.chambers>`.
+            congress (int or Set[int]): Filter speeches by the congress in which
+                they were given; see :attr:`congresses <CapitolWords.congresses>`.
+            date_range (List[str] or Tuple[str]): Filter speeches by the date on
                 which they were given. Both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
-                available in the dataset.
-            min_len (int): Filter texts by the length (number of characters)
+                available for the dataset.
+            min_len (int): Filter speeches by the length (number of characters)
                 of their text content.
-            limit (int): Return no more than ``limit`` texts,
-                chronological order.
+            limit (int): Yield no more than ``limit`` speeches that match all
+                specified filters, in chronological order.
 
         Yields:
-            str: Full text of next (by chronological order) text in dataset
+            str: Full text of next (by chronological order) speech in dataset
                 passing all filter params.
 
         Raises:
@@ -202,30 +204,29 @@ class CapitolWords(Dataset):
     def records(self, speaker_name=None, speaker_party=None, chamber=None,
                 congress=None, date_range=None, min_len=None, limit=-1):
         """
-        Iterate over records (including text and metadata) in this dataset,
-        optionally filtering by a variety of metadata and/or text length,
-        in chronological order.
+        Iterate over speeches (text and metadata) in this dataset, optionally
+        filtering by a variety of metadata and/or text length, in chronological order.
 
         Args:
-            speaker_name (str or Set[str]): Filter records by the speakers' name;
-                see :meth:`speaker_names <CapitolWords.speaker_names>`.
-            speaker_party (str or Set[str]): Filter records by the speakers'
-                party; see :meth:`speaker_parties <CapitolWords.speaker_parties>`.
-            chamber (str or Set[str]): Filter records by the chamber in which
-                they were given; see :meth:`chambers <CapitolWords.chambers>`.
-            congress (int or Set[int]): Filter records by the congress in which
-                they were given; see :meth:`congresses <CapitolWords.congresses>`.
-            date_range (List[str] or Tuple[str]): Filter records by the date on
+            speaker_name (str or Set[str]): Filter speeches by the speakers' name;
+                see :attr:`speaker_names <CapitolWords.speaker_names>`.
+            speaker_party (str or Set[str]): Filter speeches by the speakers'
+                party; see :attr:`speaker_parties <CapitolWords.speaker_parties>`.
+            chamber (str or Set[str]): Filter speeches by the chamber in which
+                they were given; see :attr:`chambers <CapitolWords.chambers>`.
+            congress (int or Set[int]): Filter speeches by the congress in which
+                they were given; see :attr:`congresses <CapitolWords.congresses>`.
+            date_range (List[str] or Tuple[str]): Filter speeches by the date on
                 which they were given. Both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
-                available in the dataset.
-            min_len (int): Filter records by the length (number of characters)
+                available for the dataset.
+            min_len (int): Filter speeches by the length (number of characters)
                 of their text content.
-            limit (int): Return no more than ``limit`` records,
-                in chronological order.
+            limit (int): Yield no more than ``limit`` speeches that match all
+                specified filters, in chronological order.
 
         Yields:
-            dict: Full text and metadata of next (by chronological order) record
+            dict: Full text and metadata of next (by chronological order) speech
                 in dataset passing all filter params.
 
         Raises:
@@ -240,7 +241,7 @@ class CapitolWords(Dataset):
     def _iterate(self, text_only, speaker_name, speaker_party, chamber, congress,
                  date_range, min_len, limit):
         """
-        Low-level method to iterate over the records this dataset. Used by
+        Low-level method to iterate over the records in this dataset. Used by
         :meth:`CapitolWords.texts()` and :meth:`CapitolWords.records()`.
         """
         if not self.filename:

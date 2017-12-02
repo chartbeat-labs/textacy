@@ -8,11 +8,11 @@ containing primarily English-language 16th-20th century literature and history.
 
 Record include the following fields:
 
-    * ``text``: full text of the literary work
-    * ``title``: title of the literary work
-    * ``author``: author(s) of the literary work
-    * ``year``: year that the literary work was published
-    * ``url``: url at which literary work can be found online via the OTA
+    * ``text``: Full text of the literary work.
+    * ``title``: Title of the literary work.
+    * ``author``: Author(s) of the literary work.
+    * ``year``: Year that the literary work was published.
+    * ``url``: URL at which literary work can be found online via the OTA.
 
 This dataset was compiled by [DAVID?] Mimno from the Oxford Text Archive and
 stored in his GitHub repo to avoid unnecessary scraping of the OTA site. It is
@@ -89,15 +89,15 @@ class OxfordTextArchive(Dataset):
 
     Args:
         data_dir (str): Path to directory on disk under which dataset's file
-            is stored.
+            ("ota-master.zip") is stored.
 
     Attributes:
         min_date (str): Earliest date for which speeches are available, as an
-            ISO-formatted string (YYYY-MM-DD).
+            ISO-formatted string ("YYYY-MM-DD").
         max_date (str): Latest date for which speeches are available, as an
-            ISO-formatted string (YYYY-MM-DD).
+            ISO-formatted string ("YYYY-MM-DD").
         authors (Set[str]): Full names of all distinct authors included in this
-            dataset, e.g. ``'Shakespeare, William'``.
+            dataset, e.g. "Shakespeare, William".
     """
 
     min_date = '0018-01-01'
@@ -125,12 +125,12 @@ class OxfordTextArchive(Dataset):
 
     def download(self, force=False):
         """
-        Download dataset from :obj:`DOWNLOAD_ROOT` and save it to disk under the
-        :attr:`OxfordTextArchive.data_dir` directory.
+        Download the data as a zip archive file and save it to disk under the
+        ``data_dir`` directory.
 
         Args:
-            force (bool): If True, download the file, even if it already exists
-                on disk.
+            force (bool): If True, download the dataset, even if it already
+                exists on disk under ``data_dir``.
         """
         url = DOWNLOAD_ROOT
         fname = self._filename
@@ -195,12 +195,12 @@ class OxfordTextArchive(Dataset):
 
     def texts(self, author=None, date_range=None, min_len=None, limit=-1):
         """
-        Iterate over texts in the dataset, optionally filtering by a variety of
-        metadata and/or text length.
+        Iterate over works (text-only) in this dataset, optionally filtering
+        by a variety of metadata and/or text length.
 
         Args:
             author (str or Set[str]): Filter texts by the authors' name;
-                see :meth:`authors <OxfordTextArchive.authors>`.
+                see :attr:`authors <OxfordTextArchive.authors>`.
             date_range (List[str] or Tuple[str]): Filter texts by the date on
                 which it was published; both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
@@ -210,7 +210,7 @@ class OxfordTextArchive(Dataset):
             limit (int): Return no more than ``limit`` texts.
 
         Yields:
-            str: Full text of next document in dataset passing all filter params.
+            str: Full text of next work in dataset passing all filter params.
 
         Raises:
             ValueError: If any filtering options are invalid.
@@ -221,22 +221,22 @@ class OxfordTextArchive(Dataset):
 
     def records(self, author=None, date_range=None, min_len=None, limit=-1):
         """
-        Iterate over records (including text and metadata) in this dataset,
+        Iterate over works (including text and metadata) in this dataset,
         optionally filtering by a variety of metadata and/or text length.
 
         Args:
             author (str or Set[str]): Filter records by the authors' name;
-                see :meth:`authors <OxfordTextArchive.authors>`.
+                see :attr:`authors <OxfordTextArchive.authors>`.
             date_range (List[str] or Tuple[str]): Filter records by the date on
                 which it was published; both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
                 available in the dataset.
             min_len (int): Filter records by the length (number of characters)
                 of their text content.
-            limit (int): Return no more than ``limit`` records.
+            limit (int): Yield no more than ``limit`` records.
 
         Yields:
-            dict: Text and metadata of next document in dataset passing all
+            dict: Text and metadata of next work in dataset passing all
                 filter params.
 
         Raises:
@@ -248,7 +248,7 @@ class OxfordTextArchive(Dataset):
 
     def _iterate(self, text_only, author, date_range, min_len, limit):
         """
-        Low-level method to iterate over the records this dataset. Used by
+        Low-level method to iterate over the records in this dataset. Used by
         :meth:`OxfordTextArchive.texts()` and :meth:`OxfordTextArchive.records()`.
         """
         if not self.filename:
