@@ -27,7 +27,8 @@ DATASET_NAME_TO_CLASS = {
 if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(
-        formatter_class=argparse.ArgumentDefaultsHelpFormatter)
+        formatter_class=argparse.ArgumentDefaultsHelpFormatter,
+        description='command line interface for textacy')
     subparsers = parser.add_subparsers(dest='subcommand')
 
     # the "download" command
@@ -69,19 +70,21 @@ if __name__ == '__main__':
 
     if args['subcommand'] == 'download':
         # initialize dataset
-        if args.get('data_dir'):
-            dataset = DATASET_NAME_TO_CLASS[args['dataset_name']](data_dir=args['data_dir'])
-        else:
-            dataset = DATASET_NAME_TO_CLASS[args['dataset_name']]()
-        # download data using the class method
-        kwargs = {
-            key: args[key]
-            for key in ['date_range', 'lang', 'version', 'force']
+        kwargs_init = {
+            key: args[key] for key in ['data_dir', 'lang', 'version']
             if args.get(key) is not None}
-        dataset.download(**kwargs)
+        dataset = DATASET_NAME_TO_CLASS[args['dataset_name']](**kwargs_init)
+        # download data using the class method
+        kwargs_dl = {
+            key: args[key] for key in ['date_range', 'force']
+            if args.get(key) is not None}
+        dataset.download(**kwargs_dl)
 
     if args['subcommand'] == 'info':
-        dataset = DATASET_NAME_TO_CLASS[args['dataset_name']]()
+        kwargs_init = {
+            key: args[key] for key in ['data_dir']
+            if args.get(key) is not None}
+        dataset = DATASET_NAME_TO_CLASS[args['dataset_name']](**kwargs_init)
         pprint(dataset.info)
 
 # finally, remove the handler that we snuck in above
