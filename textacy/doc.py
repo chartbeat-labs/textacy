@@ -111,7 +111,6 @@ class Doc(object):
         spacy_stringstore (``spacy.StringStore``): https://spacy.io/docs#stringstore
     """
     def __init__(self, content, metadata=None, lang=detect_language):
-        self.metadata = metadata or {}
 
         # Doc instantiated from text, so must be parsed with a spacy.Language
         if isinstance(content, unicode_):
@@ -158,6 +157,8 @@ class Doc(object):
             raise ValueError(
                 '`Doc` must be initialized with {} content, not "{}"'.format(
                     {unicode_, SpacyDoc}, type(content)))
+
+        self.spacy_doc.user_data['metadata'] = metadata or {}
         self._counted_ngrams = set()
         self._counts = Counter()
 
@@ -176,6 +177,16 @@ class Doc(object):
     def __iter__(self):
         for tok in self.spacy_doc:
             yield tok
+
+    @property
+    def metadata(self):
+        """Access :class:`Doc` metadata, stored in ``SpacyDoc.user_data['metadata']``."""
+        return self.spacy_doc.user_data['metadata']
+
+    @metadata.setter
+    def metadata(self, value):
+        """Set :class:`Doc` metadata, stored in ``SpacyDoc.user_data['metadata']``."""
+        self.spacy_doc.user_data['metadata'] = value
 
     ##########
     # FILEIO #
