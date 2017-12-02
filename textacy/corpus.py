@@ -131,15 +131,13 @@ class Corpus(object):
     """
     def __init__(self, lang, texts=None, docs=None, metadatas=None):
         if isinstance(lang, unicode_):
-            self.lang = get_lang_class(lang).lang
             self.spacy_lang = data.load_spacy(lang)
         elif isinstance(lang, SpacyLang):
-            self.lang = lang.lang
             self.spacy_lang = lang
         else:
-            msg = '`lang` must be {}, not "{}"'.format(
-                {unicode_, SpacyLang}, type(lang))
-            raise ValueError(msg)
+            raise TypeError(
+                '`lang` must be {}, not {}'.format({unicode_, SpacyLang}, type(lang)))
+        self.lang = self.spacy_lang.lang
         self.spacy_vocab = self.spacy_lang.vocab
         self.spacy_stringstore = self.spacy_vocab.strings
         self.docs = []
