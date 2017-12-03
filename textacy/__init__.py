@@ -7,17 +7,17 @@ __version__ = '0.4.2'
 data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 # subpackages
-from textacy import fileio
-from textacy import tm
-from textacy import viz
+# from textacy import fileio
+# from textacy import tm
+# from textacy import viz
 # top-level modules
-from textacy import compat, constants, math_utils, spacy_pipelines, vsm
-from textacy import data, preprocess, text_utils
-from textacy import lexicon_methods, spacy_utils, text_stats
-from textacy import doc
-from textacy import corpus
-from textacy import extract
-from textacy import export, keyterms, network, similarity
+# from textacy import compat, constants, math_utils, spacy_pipelines, vsm
+# from textacy import data, preprocess, text_utils
+# from textacy import lexicon_methods, spacy_utils, text_stats
+# from textacy import doc
+# from textacy import corpus
+# from textacy import extract
+# from textacy import export, keyterms, network, similarity
 
 from textacy.data import load_spacy
 from textacy.preprocess import preprocess_text

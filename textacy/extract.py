@@ -20,7 +20,6 @@ from . import compat
 from . import constants
 from . import spacy_utils
 from . import text_utils
-from .doc import Doc
 
 
 def words(doc,
@@ -214,7 +213,7 @@ def named_entities(doc,
         TypeError: if `include_types` or `exclude_types` is not a str, a set of
             str, or a falsy value
     """
-    if isinstance(doc, Doc):
+    if hasattr(doc, 'spacy_doc'):
         nes = doc.spacy_doc.ents
     else:
         nes = doc.ents
@@ -272,7 +271,7 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
         ``spacy.Span``: the next noun chunk from ``doc`` in order of appearance
              in the document
     """
-    if isinstance(doc, Doc):
+    if hasattr(doc, 'spacy_doc'):
         ncs = doc.spacy_doc.noun_chunks
     else:
         ncs = doc.noun_chunks
@@ -752,10 +751,13 @@ def direct_quotations(doc):
 
     TODO: Better approach would use ML, but needs a training dataset.
     """
-    if isinstance(doc, Doc):
-        if doc.lang != 'en':
-            raise NotImplementedError('sorry, English-language texts only :(')
+    if hasattr(doc, 'spacy_doc'):
+        doc_lang = doc.lang
         doc = doc.spacy_doc
+    else:
+        doc_lang = doc.vocab.lang
+    if doc.lang != 'en':
+        raise NotImplementedError('sorry, English-language texts only :(')
     quote_end_punct = {',', '.', '?', '!'}
     quote_indexes = set(itertoolz.concat(
         (m.start(), m.end() - 1) for m in re.finditer(r"(\".*?\")|(''.*?'')|(``.*?'')", doc.string)))

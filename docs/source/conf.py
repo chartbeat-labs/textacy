@@ -76,7 +76,7 @@ release = '0.4.2'
 # Usually you set "language" from the command line for these cases.
 language = None
 
-intersphinx_mapping = {'python': ('https://docs.python.org/3.5', None),
+intersphinx_mapping = {'python': ('https://docs.python.org/3.6', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
                        'networkx': ('https://networkx.github.io/documentation/latest/reference/', None)}
 

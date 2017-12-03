@@ -48,14 +48,11 @@ setup(
     version='0.4.2',
     description='Higher-level text processing, built on spaCy',
     long_description=read_file('README.rst'),
-
     url='https://github.com/chartbeat-labs/textacy',
     download_url='https://pypi.python.org/pypi/textacy',
-
-    author='Burton DeWilde',
-    author_email='burtdewilde@gmail.com',
+    maintainer='Burton DeWilde',
+    maintainer_email='burtdewilde@gmail.com',
     license='Apache',
-
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: Apache Software License',
@@ -71,7 +68,6 @@ setup(
         'Topic :: Text Processing :: Linguistic',
         ],
     keywords='textacy, spacy, nlp, text processing, linguistics',
-
     packages=find_packages(),
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,

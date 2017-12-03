@@ -8,8 +8,8 @@ from math import sqrt
 
 from spacy.tokens import Doc as SpacyDoc
 
-import textacy
-from textacy import data, extract
+from . import data
+from . import extract
 
 LOGGER = logging.getLogger(__name__)
 
@@ -87,11 +87,9 @@ class TextStats(object):
         if isinstance(doc, SpacyDoc):
             lang = doc.vocab.lang
             self.n_sents = sum(1 for _ in doc.sents)
-        elif isinstance(doc, textacy.Doc):
+        else:
             lang = doc.lang
             self.n_sents = doc.n_sents
-        else:
-            raise ValueError('``doc`` must be a ``textacy.Doc`` or ``spacy.Doc``')
         # get objs for basic count computations
         hyphenator = data.load_hyphenator(lang=lang)
         words = tuple(extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False))
