@@ -17,11 +17,11 @@ LOGGER.addHandler(ch)
 LOGGER.setLevel(logging.INFO)
 
 DATASET_NAME_TO_CLASS = {
-    'capitol_words': textacy.datasets.CapitolWords,
-    'oxford_text_archive': textacy.datasets.OxfordTextArchive,
-    'reddit_comments': textacy.datasets.RedditComments,
-    'supreme_court': textacy.datasets.SupremeCourt,
-    'wikipedia': textacy.datasets.Wikipedia,
+    'capitol_words': datasets.CapitolWords,
+    'oxford_text_archive': datasets.OxfordTextArchive,
+    'reddit_comments': datasets.RedditComments,
+    'supreme_court': datasets.SupremeCourt,
+    'wikipedia': datasets.Wikipedia,
 }
 
 if __name__ == '__main__':
