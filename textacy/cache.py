@@ -10,13 +10,6 @@ import inspect
 import logging
 import os
 import sys
-import zipfile
-try:
-    from urllib.request import urlopen
-    from urllib.error import HTTPError
-except ImportError:
-    from urllib2 import urlopen
-    from urllib2 import HTTPError
 
 import spacy
 from cachetools import cached, LRUCache
@@ -73,7 +66,7 @@ def load_spacy(name, disable=None):
     """
     Load a spaCy pipeline (model weights as binary data, ordered sequence of
     component functions, and language-specific data) for tokenizing and annotating
-    text. An LRU cache saves pipelines in memory up to ``MAX_CACHE_SIZE`` bytes.
+    text. An LRU cache saves pipelines in memory, up to 2GB.
 
     Args:
         name (str or :class:`pathlib.Path`): spaCy model to load, i.e. a shortcut
@@ -119,9 +112,7 @@ def load_hyphenator(lang):
 
 
 @cached(LRU_CACHE, key=functools.partial(hashkey, 'depechemood'))
-def load_depechemood(data_dir=os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0'),
-                     download_if_missing=True,
-                     weighting='normfreq'):
+def load_depechemood(data_dir=None, weighting='normfreq'):
     """
     Load DepecheMood lexicon text file from disk, munge into nested dictionary
     for convenient lookup by lemma#POS. NB: English only!
@@ -133,11 +124,9 @@ def load_depechemood(data_dir=os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0')
     following emotions: AFRAID, AMUSED, ANGRY, ANNOYED, DONT_CARE, HAPPY, INSPIRED, SAD.
 
     Args:
-        data_dir (str): Directory on disk where DepecheMood lexicon
-            text files are stored, i.e. the location of the 'DepecheMood_V1.0'
-            directory created when unzipping the DM dataset.
-        download_if_missing (bool): if True and data not found on disk,
-            it will be automatically downloaded and saved to disk
+        data_dir (str): Directory on disk where DepecheMood lexicon text fields,
+            i.e. the location of the 'DepecheMood_V1.0' directory created when
+            unzipping the DM dataset.
         weighting ({'freq', 'normfreq', 'tfidf'}): Type of word
             weighting used in building DepecheMood matrix.
 
@@ -149,58 +138,29 @@ def load_depechemood(data_dir=os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0')
         Staiano, J., & Guerini, M. (2014). "DepecheMood: a Lexicon for Emotion
         Analysis from Crowd-Annotated News". Proceedings of ACL-2014. (arXiv:1405.1605)
         Data available at https://github.com/marcoguerini/DepecheMood/releases .
+
+    .. seealso:: :func:`download_depechemood <textacy.lexicon_methods.download_depechemood>`
     """
-    # make sure data_dir is in the required format
-    # TODO: make *all* of this depechemood stuff better, it's weird
     if data_dir is None:
-        data_dir = os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0')
-    else:
-        head, tail = os.path.split(data_dir)
-        if (tail and tail != 'DepecheMood_V1.0') or head != 'DepecheMood_V1.0':
-            data_dir = os.path.join(data_dir, 'DepecheMood_V1.0')
-    fname = os.path.join(data_dir, 'DepecheMood_' + weighting + '.txt')
+        data_dir = os.path.join(DEFAULT_DATA_DIR, 'depeche_mood', 'DepecheMood_V1.0')
+    fname = os.path.join(
+        data_dir, 'DepecheMood_{weighting}.txt'.format(weighting=weighting))
     delimiter = compat.bytes_('\t') if compat.is_python2 else '\t'  # HACK: Py2's csv module fail
     try:
         with io.open(fname, mode='rt') as csvfile:
             csvreader = csv.reader(csvfile, delimiter=delimiter)
             rows = list(csvreader)
     except (OSError, IOError):
-        if download_if_missing is True:
-            _download_depechemood(os.path.split(data_dir)[0])
-            with io.open(fname, mode='rt') as csvfile:
-                csvreader = csv.reader(csvfile, delimiter=delimiter)
-                rows = list(csvreader)
-        else:
-            LOGGER.exception('unable to load DepecheMood from %s', data_dir)
-            raise
-
-    LOGGER.debug('loading DepecheMood lexicon from %s', fname)
+        LOGGER.exception(
+            'Unable to load DepecheMood from %s.'
+            '\n\nHave you downloaded the data? If not, you can use the '
+            '`textacy.lexicon_methods.download_depechemood()` function.'
+            '\n\nIf so, have you given the correct `data_dir`? The directory '
+            'should have a `DepecheMood_V1.0` subdirectory, within which are '
+            'three text files and a README.',
+            data_dir)
+        raise
+    LOGGER.debug('Loading DepecheMood lexicon from %s', fname)
     cols = rows[0]
     return {row[0]: {cols[i]: float(row[i]) for i in range(1, 9)}
             for row in rows[1:]}
-
-
-def _download_depechemood(data_dir):
-    """
-    Download the DepecheMood dataset from GitHub, save to disk as .txt files.
-
-    Args:
-        data_dir (str): path on disk where corpus will be saved
-
-    Raises:
-        HTTPError: if something goes wrong with the download
-    """
-    url = 'https://github.com/marcoguerini/DepecheMood/releases/download/v1.0/DepecheMood_V1.0.zip'
-    try:
-        data = urlopen(url).read()
-    except HTTPError as e:
-        LOGGER.exception(
-            'unable to download DepecheMood from %s; status code %s', url, e.code)
-        raise
-    LOGGER.info('DepecheMood downloaded from %s (4 MB)', url)
-    with zipfile.ZipFile(io.BytesIO(data)) as f:
-        members = ['DepecheMood_V1.0/DepecheMood_freq.txt',
-                   'DepecheMood_V1.0/DepecheMood_normfreq.txt',
-                   'DepecheMood_V1.0/DepecheMood_tfidf.txt',
-                   'DepecheMood_V1.0/README.txt']
-        f.extractall(data_dir, members=members)
