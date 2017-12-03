@@ -72,6 +72,7 @@ def load_spacy(name, disable=None):
         name (str or :class:`pathlib.Path`): spaCy model to load, i.e. a shortcut
             link, full package name, or path to model directory.
         disable (Tuple[str]): Names of pipeline components to disable, if any.
+
             .. note:: Although spaCy's API specifies this argument as a list,
                here we require a tuple. Pipelines are stored in the LRU cache
                with unique identifiers generated from the hash of the function
@@ -131,15 +132,16 @@ def load_depechemood(data_dir=None, weighting='normfreq'):
             weighting used in building DepecheMood matrix.
 
     Returns:
-        Dict[dict]: top-level keys are Lemma#POS strings, values are nested dicts
-            with emotion names as keys and weights as floats
+        Dict[dict]: Top-level keys are Lemma#POS strings, values are nested dicts
+        with emotion names as keys and weights as floats.
 
     References:
         Staiano, J., & Guerini, M. (2014). "DepecheMood: a Lexicon for Emotion
         Analysis from Crowd-Annotated News". Proceedings of ACL-2014. (arXiv:1405.1605)
         Data available at https://github.com/marcoguerini/DepecheMood/releases .
 
-    .. seealso:: :func:`download_depechemood <textacy.lexicon_methods.download_depechemood>`
+    See Also:
+        :func:`download_depechemood <textacy.lexicon_methods.download_depechemood>`
     """
     if data_dir is None:
         data_dir = os.path.join(DEFAULT_DATA_DIR, 'depechemood', 'DepecheMood_V1.0')

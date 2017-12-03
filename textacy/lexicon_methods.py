@@ -23,8 +23,9 @@ LOGGER = logging.getLogger(__name__)
 
 def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting='normfreq'):
     """
-    Get average emotional valence over all words for the following emotions:
-    AFRAID, AMUSED, ANGRY, ANNOYED, DONT_CARE, HAPPY, INSPIRED, SAD.
+    Get average emotional valence over all words for the following emotions --
+    AFRAID, AMUSED, ANGRY, ANNOYED, DONT_CARE, HAPPY, INSPIRED, SAD -- using
+    the [DepecheMood]_ dataset.
 
     Args:
         words (List[``spacy.Token``]): list of words for which to get
@@ -45,7 +46,8 @@ def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting='norm
            Analysis from Crowd-Annotated News. 2014.
            Data available at https://github.com/marcoguerini/DepecheMood/releases
 
-    .. seealso:: :func:`cache.load_depechemood() <textacy.cache.load_depechemood>`
+    See Also:
+        :func:`cache.load_depechemood() <textacy.cache.load_depechemood>`
     """
     dm = cache.load_depechemood(data_dir=dm_data_dir, weighting=dm_weighting)
     pos_to_letter = {NOUN: 'n', ADJ: 'a', ADV: 'r', VERB: 'v'}

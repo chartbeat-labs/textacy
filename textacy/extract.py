@@ -44,14 +44,15 @@ def words(doc,
 
     Yields:
         ``spacy.Token``: the next token from ``doc`` passing specified filters
-            in order of appearance in the document
+        in order of appearance in the document
 
     Raises:
         TypeError: if `include_pos` or `exclude_pos` is not a str, a set of str,
             or a falsy value
 
-    .. note:: Filtering by part-of-speech tag uses the universal POS tag set,
-        http://universaldependencies.org/u/pos/
+    Note:
+        Filtering by part-of-speech tag uses the universal POS tag set,
+        http://universaldependencies.org/u/pos/.
     """
     words_ = (w for w in doc if not w.is_space)
     if filter_stops is True:
@@ -111,20 +112,21 @@ def ngrams(doc, n,
             tokens' part-of-speech tags ARE NOT included in this param
         exclude_pos (str or Set[str]): remove ngrams if any of their constituent
             tokens' part-of-speech tags ARE included in this param
-        min_freq (int, optional): remove ngrams that occur in `doc` fewer than
-            `min_freq` times
+        min_freq (int): remove ngrams that occur in ``doc`` fewer than
+            ``min_freq`` times
 
     Yields:
         ``spacy.Span``: the next ngram from ``doc`` passing all specified
-            filters, in order of appearance in the document
+        filters, in order of appearance in the document
 
     Raises:
         ValueError: if ``n`` < 1
         TypeError: if `include_pos` or `exclude_pos` is not a str, a set of str,
             or a falsy value
 
-    .. note:: Filtering by part-of-speech tag uses the universal POS tag set,
-        http://universaldependencies.org/u/pos/
+    Note:
+        Filtering by part-of-speech tag uses the universal POS tag set,
+        http://universaldependencies.org/u/pos/.
     """
     if n < 1:
         raise ValueError('n must be greater than or equal to 1')
@@ -207,9 +209,9 @@ def named_entities(doc,
 
     Yields:
         ``spacy.Span``: the next named entity from ``doc`` passing all specified
-            filters in order of appearance in the document
+        filters in order of appearance in the document
 
-    Raise:
+    Raises:
         TypeError: if `include_types` or `exclude_types` is not a str, a set of
             str, or a falsy value
     """
@@ -269,7 +271,7 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
 
     Yields:
         ``spacy.Span``: the next noun chunk from ``doc`` in order of appearance
-             in the document
+        in the document
     """
     if hasattr(doc, 'spacy_doc'):
         ncs = doc.spacy_doc.noun_chunks
@@ -311,7 +313,7 @@ def pos_regex_matches(doc, pattern):
 
     Yields:
         ``spacy.Span``: the next span of consecutive tokens from ``doc`` whose
-            parts-of-speech match ``pattern``, in order of apperance
+        parts-of-speech match ``pattern``, in order of apperance
     """
     # standardize and transform the regular expression pattern...
     pattern = re.sub(r'\s', '', pattern)
@@ -333,9 +335,9 @@ def subject_verb_object_triples(doc):
         doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
 
     Yields:
-        Tuple[``spacy.Span``, ``spacy.Span``, ``spacy.Span``]: the next 3-tuple
-            of spans from ``doc`` representing a (subject, verb, object) triple,
-            in order of appearance
+        Tuple[``spacy.Span``, ``spacy.Span``, ``spacy.Span``]: The next 3-tuple
+        of spans from ``doc`` representing a (subject, verb, object) triple,
+        in order of appearance.
     """
     # TODO: What to do about questions, where it may be VSO instead of SVO?
     # TODO: What about non-adjacent verb negations?
@@ -383,7 +385,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
 
     Args:
         doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
-        known_acro_defs (dict, optional): if certain acronym/definition pairs
+        known_acro_defs (dict): if certain acronym/definition pairs
             are known, pass them in as {acronym (str): definition (str)};
             algorithm will not attempt to find new definitions
 
@@ -392,7 +394,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
 
     References:
         Taghva, Kazem, and Jeff Gilbreth. "Recognizing acronyms and their definitions."
-            International Journal on Document Analysis and Recognition 1.4 (1999): 191-198.
+        International Journal on Document Analysis and Recognition 1.4 (1999): 191-198.
     """
     # process function arguments
     acro_defs = collections.defaultdict(list)
@@ -470,16 +472,16 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
         acronym (str): acronym for which definition is sought
         window (``spacy.Span``): a span of tokens from which definition
             extraction will be attempted
-        threshold (float, optional): minimum "confidence" in definition required
+        threshold (float): minimum "confidence" in definition required
             for acceptance; valid values in [0.0, 1.0]; higher value => stricter threshold
 
     Returns:
         Tuple[str, float]: most likely definition for given acronym ('' if none found),
-            along with the confidence assigned to it
+        along with the confidence assigned to it
 
     References:
         Taghva, Kazem, and Jeff Gilbreth. "Recognizing acronyms and their definitions."
-            International Journal on Document Analysis and Recognition 1.4 (1999): 191-198.
+        International Journal on Document Analysis and Recognition 1.4 (1999): 191-198.
     """
     def build_lcs_matrix(X, Y):
         m = len(X)
@@ -626,15 +628,15 @@ def semistructured_statements(doc, entity, cue='be', ignore_entity_case=True,
         doc (``textacy.Doc`` or ``spacy.Doc``)
         entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
             "global warming", "Python")
-        cue (str, optional): verb lemma with which `entity` is associated
+        cue (str): verb lemma with which `entity` is associated
             (e.g. "talk about", "have", "write")
-        ignore_entity_case (bool, optional): if True, entity matching is case-independent
-        min_n_words (int, optional): min number of tokens allowed in a matching fragment
-        max_n_words (int, optional): max number of tokens allowed in a matching fragment
+        ignore_entity_case (bool): if True, entity matching is case-independent
+        min_n_words (int): min number of tokens allowed in a matching fragment
+        max_n_words (int): max number of tokens allowed in a matching fragment
 
     Yields:
         (``spacy.Span`` or ``spacy.Token``, ``spacy.Span`` or ``spacy.Token``, ``spacy.Span``):
-              where each element is a matching (entity, cue, fragment) triple
+        where each element is a matching (entity, cue, fragment) triple
 
     Notes:
         Inspired by N. Diakopoulos, A. Zhang, A. Salway. Visual Analytics of
@@ -743,7 +745,7 @@ def direct_quotations(doc):
 
     Yields:
         (``spacy.Span``, ``spacy.Token``, ``spacy.Span``): next quotation in ``doc``
-            represented as a (speaker, reporting verb, quotation) 3-tuple
+        represented as a (speaker, reporting verb, quotation) 3-tuple
 
     Notes:
         Loosely inspired by Krestel, Bergler, Witte. "Minding the Source: Automatic

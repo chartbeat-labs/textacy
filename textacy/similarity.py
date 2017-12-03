@@ -36,16 +36,16 @@ def word_movers(doc1, doc2, metric='cosine'):
 
     Returns:
         float: Similarity between ``doc1`` and ``doc2`` in the interval [0.0, 1.0],
-            where larger values correspond to more similar documents.
+        where larger values correspond to more similar documents.
 
     References:
-        Ofir Pele and Michael Werman, "A linear time histogram metric for improved
-            SIFT matching," in Computer Vision - ECCV 2008, Marseille, France, 2008.
-        Ofir Pele and Michael Werman, "Fast and robust earth mover's distances,"
-            in Proc. 2009 IEEE 12th Int. Conf. on Computer Vision, Kyoto, Japan, 2009.
-        Kusner, Matt J., et al. "From word embeddings to document distances."
-            Proceedings of the 32nd International Conference on Machine Learning
-            (ICML 2015). 2015. http://jmlr.org/proceedings/papers/v37/kusnerb15.pdf
+        - Ofir Pele and Michael Werman, "A linear time histogram metric for improved
+          SIFT matching," in Computer Vision - ECCV 2008, Marseille, France, 2008.
+        - Ofir Pele and Michael Werman, "Fast and robust earth mover's distances,"
+          in Proc. 2009 IEEE 12th Int. Conf. on Computer Vision, Kyoto, Japan, 2009.
+        - Kusner, Matt J., et al. "From word embeddings to document distances."
+          Proceedings of the 32nd International Conference on Machine Learning
+          (ICML 2015). 2015. http://jmlr.org/proceedings/papers/v37/kusnerb15.pdf
     """
     word_idxs = dict()
 
@@ -87,7 +87,7 @@ def word2vec(obj1, obj2):
 
     Returns
         float: similarity between `obj1` and `obj2` in the interval [0.0, 1.0],
-            where larger values correspond to more similar objects
+        where larger values correspond to more similar objects
     """
     if isinstance(obj1, Doc) and isinstance(obj2, Doc):
         obj1 = obj1.spacy_doc
@@ -112,8 +112,8 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
 
     Returns:
         float: similarity between `obj1` and `obj2` in the interval [0.0, 1.0],
-            where larger values correspond to more similar strings or sequences
-            of strings
+        where larger values correspond to more similar strings or sequences
+        of strings
 
     Raises:
         ValueError: if `fuzzy_match` is True but `obj1` and `obj2` are strings
@@ -154,9 +154,10 @@ def hamming(str1, str2):
 
     Returns:
         float: similarity between `str1` and `str2` in the interval [0.0, 1.0],
-            where larger values correspond to more similar strings
+        where larger values correspond to more similar strings
 
-    .. note:: This uses a *modified* Hamming distance in that it permits strings
+    Note:
+        This uses a *modified* Hamming distance in that it permits strings
         of different lengths to be compared.
     """
     len_str1 = len(str1)
@@ -189,7 +190,7 @@ def levenshtein(str1, str2):
 
     Returns:
         float: similarity between `str1` and `str2` in the interval [0.0, 1.0],
-            where larger values correspond to more similar strings
+        where larger values correspond to more similar strings
     """
     distance = _levenshtein(str1, str2)
     distance /= max(len(str1), len(str2))
@@ -209,7 +210,7 @@ def jaro_winkler(str1, str2, prefix_weight=0.1):
 
     Returns:
         float: similarity between `str1` and `str2` in the interval [0.0, 1.0],
-            where larger values correspond to more similar strings
+        where larger values correspond to more similar strings
     """
     return _jaro_winkler(str1, str2, prefix_weight)
 
@@ -225,7 +226,7 @@ def token_sort_ratio(str1, str2):
 
     Returns:
         float: similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
-            where larger values correspond to more similar strings.
+        where larger values correspond to more similar strings.
     """
     if not str1 or not str2:
         return 0

@@ -22,7 +22,8 @@ def write_file(content, filepath, mode='wt', encoding=None,
     are compressed with gzip or bz2 automatically. Any intermediate folders
     not found on disk may automatically be created.
 
-    .. seealso:: :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
+    See Also:
+        :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
     """
     with open_sesame(filepath, mode=mode, encoding=encoding,
                      auto_make_dirs=auto_make_dirs) as f:
@@ -67,7 +68,8 @@ def write_json(json_object, filepath, mode='wt', encoding=None,
         separators (tuple[str])
         sort_keys (bool)
 
-    .. seealso:: https://docs.python.org/3/library/json.html#json.dump
+    See Also:
+        https://docs.python.org/3/library/json.html#json.dump
     """
     with open_sesame(filepath, mode=mode, encoding=encoding,
                      auto_make_dirs=auto_make_dirs) as f:
@@ -97,7 +99,8 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
         separators (tuple[str])
         sort_keys (bool)
 
-    .. seealso:: https://docs.python.org/3/library/json.html#json.dump
+    See Also:
+        https://docs.python.org/3/library/json.html#json.dump
     """
     newline = '\n' if 't' in mode else compat.unicode_to_bytes('\n')
     with open_sesame(filepath, mode=mode, encoding=encoding,
@@ -131,9 +134,11 @@ def write_csv(rows, filepath, encoding=None, auto_make_dirs=False,
             the tabular data is parsed when reading/writing
         delimiter (str): 1-character string used to separate fields in a row
 
-    .. seealso:: https://docs.python.org/3/library/csv.html#csv.writer
+    See Also:
+        https://docs.python.org/3/library/csv.html#csv.writer
 
-    .. note:: Here, CSV is used as a catch-all term for *any* delimited file
+    Note:
+        Here, CSV is used as a catch-all term for *any* delimited file
         format, and ``delimiter=','`` is merely the function's default value.
         Other common delimited formats are TSV (tab-separated-value, with
         ``delimiter='\\t'``) and PSV (pipe-separated-value, with ``delimiter='|'``.
@@ -153,7 +158,8 @@ def write_spacy_docs(spacy_docs, filepath, auto_make_dirs=False):
         filepath (str): /path/to/file on disk to which spacy docs will be streamed
         auto_make_dirs (bool)
 
-    .. note:: The docs are pickled together, as a list, so they are all loaded
+    Note:
+        The docs are pickled together, as a list, so they are all loaded
         into memory before saving. Mind your RAM usage!
     """
     if isinstance(spacy_docs, SpacyDoc):
@@ -175,8 +181,9 @@ def write_sparse_matrix(matrix, filepath, compressed=True):
         compressed (bool): if True, save arrays into a single file in compressed
             .npz format
 
-    .. seealso:: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez.html
-    .. seealso:: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez_compressed.html
+    See Also:
+        - http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez.html
+        - http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez_compressed.html
     """
     if not isinstance(matrix, (sp.csc_matrix, sp.csr_matrix)):
         raise TypeError('input matrix must be a scipy sparse csr or csc matrix')
@@ -199,7 +206,8 @@ def write_streaming_download_file(url, filepath, mode='wt', encoding=None,
     are compressed with gzip or bz2 automatically. Any intermediate folders
     not found on disk may automatically be created.
 
-    .. seealso:: :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
+    See Also:
+        :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
     """
     decode_unicode = True if 't' in mode else False
     if auto_make_dirs is True:

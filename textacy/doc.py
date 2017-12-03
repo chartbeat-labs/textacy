@@ -206,7 +206,8 @@ class Doc(object):
             filepath (str): Full path to file on disk where document content and
                 metadata are to be saved.
 
-        .. seealso:: :meth:`Doc.load()`
+        See Also:
+            :meth:`Doc.load()`
         """
         fileio.write_spacy_docs(self.spacy_doc, filepath)
 
@@ -222,7 +223,8 @@ class Doc(object):
         Returns:
             :class:`Doc`
 
-        .. seealso:: :meth:`Doc.save()`
+        See Also:
+            :meth:`Doc.save()`
         """
         spacy_doc = list(fileio.read_spacy_docs(filepath))[0]
         return cls(spacy_doc,
@@ -286,13 +288,13 @@ class Doc(object):
             int: Count of ``term`` in :class:`Doc`.
 
         .. tip:: Counts are cached. The first time a single word's count is
-            looked up, *all* words' counts are saved, resulting in a slower
-            runtime the first time but orders of magnitude faster runtime for
-            subsequent calls for this or any other word. Similarly, if a
-            bigram's count is looked up, all bigrams' counts are stored — etc.
-            If spans are merged using :meth:`Doc.merge()`, all cached counts are
-            deleted, since merging spans will invalidate many counts. Better to
-            merge first, count second!
+           looked up, *all* words' counts are saved, resulting in a slower
+           runtime the first time but orders of magnitude faster runtime for
+           subsequent calls for this or any other word. Similarly, if a
+           bigram's count is looked up, all bigrams' counts are stored — etc.
+           If spans are merged using :meth:`Doc.merge()`, all cached counts are
+           deleted, since merging spans will invalidate many counts. Better to
+           merge first, count second!
         """
         # figure out what object we're dealing with here; convert as necessary
         if isinstance(term, compat.unicode_):
@@ -392,12 +394,13 @@ class Doc(object):
 
         Yields:
             int or str: the next term in the terms list, either as a unique
-                integer id or as a string
+            integer id or as a string
 
         Raises:
             ValueError: if neither ``named_entities`` nor ``ngrams`` are included
 
-        .. note:: Despite the name, this is a generator function; to get an
+        Note:
+            Despite the name, this is a generator function; to get an
             actual list of terms, call ``list(doc.to_terms_list())``.
         """
         if not named_entities and not ngrams:
@@ -522,8 +525,8 @@ class Doc(object):
 
         Returns:
             dict: mapping of a unique word id or string (depending on the value
-                of ``as_strings``) to its absolute, relative, or binary frequency
-                of occurrence (depending on the value of ``weighting``).
+            of ``as_strings``) to its absolute, relative, or binary frequency
+            of occurrence (depending on the value of ``weighting``).
         """
         if weighting not in {'count', 'freq', 'binary'}:
             raise ValueError('weighting "{}" is invalid'.format(weighting))
@@ -597,8 +600,8 @@ class Doc(object):
 
         Returns:
             dict: mapping of a unique term id or string (depending on the value
-                of ``as_strings``) to its absolute, relative, or binary frequency
-                of occurrence (depending on the value of ``weighting``).
+            of ``as_strings``) to its absolute, relative, or binary frequency
+            of occurrence (depending on the value of ``weighting``).
 
         See Also:
             :meth:`Doc.to_terms_list() <Doc.to_terms_list>`
@@ -639,14 +642,14 @@ class Doc(object):
 
         Returns:
             ``networkx.Graph``: where nodes represent either terms or sentences
-                in doc; edges, the relationships between them.
+            in doc; edges, the relationships between them.
 
         Raises:
             ValueError: if ``nodes`` is neither 'words' nor 'sents'.
 
         See Also:
-            :func:`terms_to_semantic_network() <textacy.network.terms_to_semantic_network>`
-            :func:`sents_to_semantic_network() <textacy.network.sents_to_semantic_network>`
+            - :func:`terms_to_semantic_network() <textacy.network.terms_to_semantic_network>`
+            - :func:`sents_to_semantic_network() <textacy.network.sents_to_semantic_network>`
         """
         if nodes == 'words':
             if edge_weighting == 'default':

@@ -78,7 +78,7 @@ language = None
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3.6', None),
                        'numpy': ('http://docs.scipy.org/doc/numpy/', None),
-                       'networkx': ('https://networkx.github.io/documentation/latest/reference/', None)}
+                       }
 
 # There are two options for replacing |today|: either, you set today to some
 # non-false value, then it is used:

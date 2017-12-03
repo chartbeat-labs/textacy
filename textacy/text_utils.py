@@ -143,9 +143,10 @@ def clean_terms(terms):
 
     Yields:
         str: next term in `terms` but with the cruft cleaned up, excluding terms
-            that were _entirely_ cruft
+        that were _entirely_ cruft
 
-    .. warning:: Terms with (intentionally) unusual punctuation may get "cleaned"
+    Warning:
+        Terms with (intentionally) unusual punctuation may get "cleaned"
         into a form that changes or obscures the original meaning of the term.
     """
     # get rid of leading/trailing junk characters

@@ -625,7 +625,7 @@ class SupremeCourt(Dataset):
 
         Yields:
             str: Full text of next (by chronological order) case in dataset
-                passing all filter params.
+            passing all filter params.
 
         Raises:
             ValueError: If any filtering options are invalid.
@@ -665,7 +665,7 @@ class SupremeCourt(Dataset):
 
         Yields:
             dict: Full text and metadata of next (by chronological order) case
-                in dataset passing all filter params.
+            in dataset passing all filter params.
 
         Raises:
             ValueError: If any filtering options are invalid.

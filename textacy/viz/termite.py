@@ -61,26 +61,28 @@ def draw_termite_plot(values_mat, col_labels, row_labels,
         save (str, optional): give the full /path/to/fname on disk to save figure
 
     Returns:
-        ``matplotlib.axes.Axes.axis``: axis on which termite plot is plotted
+        ``matplotlib.axes.Axes.axis``: Axis on which termite plot is plotted.
 
     Raises:
         ValueError: if more columns are selected for highlighting than colors
             or if any of the inputs' dimensions don't match
 
     References:
-        .. Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
-            Visualization techniques for assessing textual topic models."
-            Proceedings of the International Working Conference on Advanced
-            Visual Interfaces. ACM, 2012.
+        Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
+        Visualization techniques for assessing textual topic models."
+        Proceedings of the International Working Conference on Advanced
+        Visual Interfaces. ACM, 2012.
 
-    .. seealso:: :func:`TopicModel.termite_plot <textacy.tm.TopicModel.termite_plot>`
+    See Also:
+        :func:`TopicModel.termite_plot <textacy.tm.TopicModel.termite_plot>`
     """
     try:
         plt
     except NameError:
         raise ImportError(
-            'matplotlib is not installed, so textacy.viz won\'t work; install it \
-            individually, or along with textacy via `pip install textacy[viz]`')
+            '`matplotlib` is not installed, so `textacy.viz` won\'t work; '
+            'install it individually via `$ pip install matplotlib`, or '
+            'along with textacy via `pip install textacy[viz]`.')
     n_rows, n_cols = values_mat.shape
     max_val = np.max(values_mat)
 

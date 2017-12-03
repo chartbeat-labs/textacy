@@ -26,11 +26,12 @@ def docs_to_gensim(spacy_docs, spacy_vocab, lemmatize=True, lowercase=False,
 
     Returns:
         str: words, their integer ids, and their document frequencies in
-            ``spacy_docs``, as a string formatted like `id[TAB]word[TAB]df[NEWLINE]`;
-            when written to file, can be converted into a gensim ``Dictionary``
-            via :meth:`gensim.corpora.Dictionary.load_from_text()`
+        ``spacy_docs``, as a string formatted like `id[TAB]word[TAB]df[NEWLINE]`;
+        when written to file, can be converted into a gensim ``Dictionary``
+        via :meth:`gensim.corpora.Dictionary.load_from_text()`
+
         List[List[Tuple[int, int]]]: list of documents as bags-of-words, where
-            each doc is a list of (integer word ID, word count) 2-tuples
+        each doc is a list of (integer word ID, word count) 2-tuples
     """
     count_by = (attrs.LEMMA if lemmatize is True else
                 attrs.LOWER if lowercase is True else

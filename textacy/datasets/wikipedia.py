@@ -25,6 +25,10 @@ import re
 from xml.etree.cElementTree import iterparse
 
 import ftfy
+try:
+    import mwparserfromhell
+except ImportError:
+    pass
 
 from .. import compat
 from .. import data_dir
@@ -314,9 +318,9 @@ class Wikipedia(Dataset):
         Yields:
             str: Full text of next page in the Wikipedia database dump.
 
-        Notes:
+        Note:
             Page and section titles appear immediately before the text content
-                that they label, separated by an empty line.
+            that they label, separated by an empty line.
         """
         n_pages = 0
         for _, title, content in self:
@@ -345,18 +349,19 @@ class Wikipedia(Dataset):
                 method is used to extract article text.
 
         Yields:
-            dict: Parsed text and metadata of next page in dataset.
+            dict: Parsed text and metadata of next page in the Wikipedia database dump.
 
-        .. note:: This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
+        Note:
+            This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_.
         """
-        # hiding this here; don't want another required dep
         try:
-            import mwparserfromhell
-        except ImportError:
-            LOGGER.exception(
-                'mwparserfromhell package must be installed; '
-                'see http://pythonhosted.org/mwparserfromhell/')
-            raise
+            mwparserfromhell
+        except NameError:
+            raise ImportError(
+                '`mwparserfromhell` is not installed, so :meth:`Wikipedia.records()` '
+                'won\'t work; install it via `$ pip install mwparserfromhell`.'
+                '\nFor details, see http://pythonhosted.org/mwparserfromhell/.')
+
         parser = mwparserfromhell.parser.Parser()
 
         n_pages = 0
@@ -378,8 +383,8 @@ class Wikipedia(Dataset):
 
 def strip_markup(wikitext):
     """
-    Strip Wikimedia markup from the text content of a Wikipedia page and return
-    the page as plain-text.
+    Strip Wikimedia markup from the (wiki-)text content of a Wikipedia page and
+    return the page as plain-text.
 
     Args:
         wikitext (str)
@@ -391,7 +396,7 @@ def strip_markup(wikitext):
         return ''
 
     # remove templates
-    text = remove_templates(wikitext)
+    text = _remove_templates(wikitext)
 
     # remove irrelevant spans
     text = re_comments.sub('', text)
@@ -402,14 +407,14 @@ def strip_markup(wikitext):
     text = re_files_images.sub('', text)  # TODO: keep file/image captions?
 
     # replace external links with just labels or just URLs
-    text = replace_external_links(text)
+    text = _replace_external_links(text)
 
     # drop magic words behavioral switches
     text = re_magic_words.sub('', text)
 
     # replace internal links with just their labels
-    text = replace_internal_links(text)
-    # text = replace_internal_links(text)  # TODO: is this needed?
+    text = _replace_internal_links(text)
+    # text = _replace_internal_links(text)  # TODO: is this needed?
 
     # remove table markup
     text = text.replace('||', '\n|').replace('!!', '\n!')  # put each cell on a separate line
@@ -439,7 +444,7 @@ def strip_markup(wikitext):
     return text.strip()
 
 
-def remove_templates(wikitext):
+def _remove_templates(wikitext):
     """
     Return ``wikitext`` with all wikimedia markup templates removed,
     where templates are identified by opening '{{' and closing '}}'.
@@ -449,7 +454,7 @@ def remove_templates(wikitext):
     """
     pieces = []
     cur_idx = 0
-    for s, e in get_delimited_spans(wikitext, open_delim='{{', close_delim='}}'):
+    for s, e in _get_delimited_spans(wikitext, open_delim='{{', close_delim='}}'):
         pieces.append(wikitext[cur_idx: s])
         cur_idx = e
     return ''.join(pieces)
@@ -482,7 +487,7 @@ def remove_templates(wikitext):
     #     for opening_idx, closing_idx in zip(opening_idxs + [None], [-1] + closing_idxs))
 
 
-def get_delimited_spans(wikitext, open_delim='[[', close_delim=']]'):
+def _get_delimited_spans(wikitext, open_delim='[[', close_delim=']]'):
     """
     Args:
         wikitext (str)
@@ -529,14 +534,14 @@ def get_delimited_spans(wikitext, open_delim='[[', close_delim=']]'):
         cur_idx = next_span.end()
 
 
-def replace_internal_links(wikitext):
+def _replace_internal_links(wikitext):
     """
     Replace internal links of the form ``[[title |...|label]]trail``
     with just ``label``.
     """
     pieces = []
     cur_idx = 0
-    for s, e in get_delimited_spans(wikitext, '[[', ']]'):
+    for s, e in _get_delimited_spans(wikitext, '[[', ']]'):
         link_trail = re_link_trails.match(wikitext, pos=e)
         if link_trail is not None:
             end = link_trail.end()
@@ -560,7 +565,7 @@ def replace_internal_links(wikitext):
     return ''.join(pieces)
 
 
-def replace_external_links(wikitext):
+def _replace_external_links(wikitext):
     """
     Replace external links of the form ``[URL text]`` with just
     ``text`` if present or just ``URL`` if not.

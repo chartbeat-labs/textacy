@@ -212,7 +212,7 @@ class RedditComments(Dataset):
 
         Yields:
             str: Plain text of next (by chronological order) comment in dataset
-                passing all filter params.
+            passing all filter params.
         """
         texts = self._iterate(
             True, subreddit=subreddit, date_range=date_range,
@@ -248,7 +248,7 @@ class RedditComments(Dataset):
 
         Yields:
             dict: Full text and metadata of next (by chronological order) comment
-                in dataset passing all filter params.
+            in dataset passing all filter params.
         """
         records = self._iterate(
             False, subreddit=subreddit, date_range=date_range,

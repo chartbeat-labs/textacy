@@ -237,7 +237,7 @@ class OxfordTextArchive(Dataset):
 
         Yields:
             dict: Text and metadata of next work in dataset passing all
-                filter params.
+            filter params.
 
         Raises:
             ValueError: If any filtering options are invalid.

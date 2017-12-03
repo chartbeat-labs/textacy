@@ -136,7 +136,8 @@ def remove_punct(text, marks=None):
     Returns:
         str
 
-    .. note:: When ``marks=None``, Python's built-in :meth:`str.translate()` is
+    Note:
+        When ``marks=None``, Python's built-in :meth:`str.translate()` is
         used to remove punctuation; otherwise,, a regular expression is used
         instead. The former's performance is about 5-10x faster.
     """
@@ -212,9 +213,9 @@ def preprocess_text(text, fix_unicode=False, lowercase=False, transliterate=Fals
     Returns:
         str: input ``text`` processed according to function args
 
-    .. warning:: These changes may negatively affect subsequent NLP analysis
-        performed on the text, so choose carefully, and preprocess at your own
-        risk!
+    Warning:
+        These changes may negatively affect subsequent NLP analysis performed
+        on the text, so choose carefully, and preprocess at your own risk!
     """
     if fix_unicode is True:
         text = fix_bad_unicode(text, normalization='NFC')

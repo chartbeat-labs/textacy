@@ -58,10 +58,10 @@ def read_json(filepath, mode='rt', encoding=None, prefix=''):
             if 'item.text', each array item's 'text' value will be read in successively
 
     Yields:
-        next matching JSON object; could be a dict, list, int, float, str,
-            depending on the value of ``prefix``
+        Next matching JSON object; could be a dict, list, int, float, str,
+        depending on the value of ``prefix``.
 
-    Notes:
+    Note:
         Refer to ``ijson`` at https://pypi.python.org/pypi/ijson/ for usage details.
     """
     with open_sesame(filepath, mode=mode, encoding=encoding) as f:
@@ -88,7 +88,7 @@ def read_json_lines(filepath, mode='rt', encoding=None):
         encoding (str, optional)
 
     Yields:
-        dict: next valid JSON object, converted to native Python equivalent
+        dict: Next valid JSON object, converted to native Python equivalent.
     """
     with open_sesame(filepath, mode=mode, encoding=encoding) as f:
         for line in f:
@@ -112,7 +112,7 @@ def read_json_mash(filepath, mode='rt', encoding=None, buffersize=2048):
         buffersize (int, optional): number of bytes to read in as a chunk
 
     Yields:
-        dict: next valid JSON object, converted to native Python equivalent
+        dict: Next valid JSON object, converted to native Python equivalent.
     """
     with open_sesame(filepath, mode=mode, encoding=encoding) as f:
         buffer = ''
@@ -143,7 +143,7 @@ def read_csv(filepath, encoding=None, dialect='excel', delimiter=','):
         delimiter (str): 1-character string used to separate fields in a row
 
     Yields:
-        List[obj]: next row, whose elements are strings and/or numbers
+        List[obj]: Next row, whose elements are strings and/or numbers.
 
     .. seealso:: https://docs.python.org/3/library/csv.html#csv.reader
     """
@@ -164,7 +164,7 @@ def read_spacy_docs(filepath):
         filepath (str): /path/to/file on disk from which spacy docs will be streamed
 
     Yields:
-        The next deserialized ``spacy.Doc``.
+        Next deserialized ``spacy.Doc``.
     """
     with open_sesame(filepath, mode='rb') as f:
         for spacy_doc in compat.pickle.load(f):

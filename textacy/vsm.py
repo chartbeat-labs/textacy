@@ -167,14 +167,14 @@ class Vectorizer(object):
             terms_list (Iterable[Iterable[str]]): A sequence of tokenized documents,
                 where each document is a sequence of (str) terms. For example::
 
-                >>> ([tok.lemma_ for tok in spacy_doc]
-                ...  for spacy_doc in spacy_docs)
-                >>> ((ne.text for ne in extract.named_entities(doc))
-                ...  for doc in corpus)
-                >>> (tuple(ng.text for ng in
-                           itertools.chain.from_iterable(extract.ngrams(doc, i)
-                                                         for i in range(1, 3)))
-                ...  for doc in docs)
+                    >>> ([tok.lemma_ for tok in spacy_doc]
+                    ...  for spacy_doc in spacy_docs)
+                    >>> ((ne.text for ne in extract.named_entities(doc))
+                    ...  for doc in corpus)
+                    >>> (tuple(ng.text for ng in
+                    ...        itertools.chain.from_iterable(extract.ngrams(doc, i)
+                    ...                                      for i in range(1, 3)))
+                    ...  for doc in docs)
 
         Returns:
             :class:`Vectorizer`: The instance that has just been fit.
@@ -193,18 +193,18 @@ class Vectorizer(object):
             terms_list (Iterable[Iterable[str]]): A sequence of tokenized documents,
                 where each document is a sequence of (str) terms. For example::
 
-                >>> ([tok.lemma_ for tok in spacy_doc]
-                ...  for spacy_doc in spacy_docs)
-                >>> ((ne.text for ne in extract.named_entities(doc))
-                ...  for doc in corpus)
-                >>> (tuple(ng.text for ng in
-                           itertools.chain.from_iterable(extract.ngrams(doc, i)
-                                                         for i in range(1, 3)))
-                ...  for doc in docs)
+                    >>> ([tok.lemma_ for tok in spacy_doc]
+                    ...  for spacy_doc in spacy_docs)
+                    >>> ((ne.text for ne in extract.named_entities(doc))
+                    ...  for doc in corpus)
+                    >>> (tuple(ng.text for ng in
+                    ...        itertools.chain.from_iterable(extract.ngrams(doc, i)
+                    ...                                      for i in range(1, 3)))
+                    ...  for doc in docs)
 
         Returns:
             :class:`scipy.sparse.csr_matrix`: The transformed document-term matrix.
-                Rows correspond to documents and columns correspond to terms.
+            Rows correspond to documents and columns correspond to terms.
         """
         # count terms and build up a vocabulary
         doc_term_matrix, self.vocabulary = self._count_terms(
@@ -229,20 +229,21 @@ class Vectorizer(object):
             terms_list (Iterable[Iterable[str]]): A sequence of tokenized documents,
                 where each document is a sequence of (str) terms. For example::
 
-                >>> ([tok.lemma_ for tok in spacy_doc]
-                ...  for spacy_doc in spacy_docs)
-                >>> ((ne.text for ne in extract.named_entities(doc))
-                ...  for doc in corpus)
-                >>> (tuple(ng.text for ng in
-                           itertools.chain.from_iterable(extract.ngrams(doc, i)
-                                                         for i in range(1, 3)))
-                ...  for doc in docs)
+                    >>> ([tok.lemma_ for tok in spacy_doc]
+                    ...  for spacy_doc in spacy_docs)
+                    >>> ((ne.text for ne in extract.named_entities(doc))
+                    ...  for doc in corpus)
+                    >>> (tuple(ng.text for ng in
+                    ...        itertools.chain.from_iterable(extract.ngrams(doc, i)
+                    ...                                      for i in range(1, 3)))
+                    ...  for doc in docs)
 
         Returns:
             :class:`scipy.sparse.csr_matrix`: The transformed document-term matrix.
-                Rows correspond to documents and columns correspond to terms.
+            Rows correspond to documents and columns correspond to terms.
 
-        .. note:: This requires an existing vocabulary, either built when calling
+        Note:
+            This requires an existing vocabulary, either built when calling
             :meth:`Vectorizer.fit()` or provided in ``Vectorizer`` initialization.
         """
         self._check_vocabulary()
@@ -264,6 +265,7 @@ class Vectorizer(object):
 
         Returns:
             :class:`scipy.sparse.csr_matrix`
+
             dict
         """
         if fixed_vocab is False:
@@ -320,6 +322,7 @@ class Vectorizer(object):
 
         Returns:
             :class:`scipy.sparse.csr_matrix`
+
             Dict[str, int]
         """
         if self.is_fixed_vocabulary:
@@ -396,8 +399,8 @@ def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
 
     Returns:
         :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
-            of shape (# docs, # unique terms), where value (i, j) is the tfidf
-            weight of term j in doc i
+        of shape (# docs, # unique terms), where value (i, j) is the tfidf
+        weight of term j in doc i
     """
     dfs = get_doc_freqs(doc_term_matrix, normalized=False)
     n_docs, _ = doc_term_matrix.shape
@@ -425,8 +428,8 @@ def get_term_freqs(doc_term_matrix, normalized=True):
 
     Returns:
         :class:`numpy.ndarray <numpy.ndarray>`: array of absolute or relative term
-            frequencies, with length equal to the # of unique terms, i.e. # of
-            columns in ``doc_term_matrix``
+        frequencies, with length equal to the # of unique terms, i.e. # of
+        columns in ``doc_term_matrix``
 
     Raises:
         ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries
@@ -458,8 +461,8 @@ def get_doc_freqs(doc_term_matrix, normalized=True):
 
     Returns:
         :class:`numpy.ndarray`: array of absolute or relative document
-            frequencies, with length equal to the # of unique terms, i.e. # of
-            columns in ``doc_term_matrix``
+        frequencies, with length equal to the # of unique terms, i.e. # of
+        columns in ``doc_term_matrix``
 
     Raises:
         ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries
@@ -489,8 +492,8 @@ def get_information_content(doc_term_matrix):
 
     Returns:
         :class:`numpy.ndarray`: array of term information content values,
-            with length equal to the # of unique terms, i.e. # of
-            columns in ``doc_term_matrix``
+        with length equal to the # of unique terms, i.e. # of
+        columns in ``doc_term_matrix``
 
     Raises:
         ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries
@@ -526,10 +529,11 @@ def filter_terms_by_df(doc_term_matrix, term_to_id,
 
     Returns:
         :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
-            of shape (# docs, # unique *filtered* terms), where value (i, j) is the
-            weight of term j in doc i
+        of shape (# docs, # unique *filtered* terms), where value (i, j) is the
+        weight of term j in doc i
+
         dict: id to term mapping, where keys are unique *filtered* integers as
-            term ids and values are corresponding strings
+        term ids and values are corresponding strings
 
     Raises:
         ValueError: if ``max_df`` or ``min_df`` or ``max_n_terms`` < 0
@@ -592,10 +596,11 @@ def filter_terms_by_ic(doc_term_matrix, term_to_id,
 
     Returns:
         :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
-            of shape (# docs, # unique *filtered* terms), where value (i, j) is the
-            weight of term j in doc i
+        of shape (# docs, # unique *filtered* terms), where value (i, j) is the
+        weight of term j in doc i
+
         dict: id to term mapping, where keys are unique *filtered* integers as
-            term ids and values are corresponding strings
+        term ids and values are corresponding strings
 
     Raises:
         ValueError: if ``min_ic`` not in [0.0, 1.0] or ``max_n_terms`` < 0

@@ -135,17 +135,21 @@ def split_record_fields(items, content_field, itemwise=False):
             a (iterable(content), iterable(metadata)) 2-tuple
 
     Returns:
-        generator(Tuple[str, dict]): if ``itemwise`` is True and ``items`` is an
-            iterable of dicts; the first element in each tuple is the item's content,
+        generator(Tuple[str, dict]):
+            if ``itemwise`` is True and ``items`` is an iterable of dicts;
+            the first element in each tuple is the item's content,
             the second element is its metadata as a dictionary
-        generator(Tuple[str, list]): if ``itemwise`` is True and ``items`` is an
-            iterable of lists; the first element in each tuple is the item's content,
+        generator(Tuple[str, list]):
+            if ``itemwise`` is True and ``items`` is an iterable of lists;
+            the first element in each tuple is the item's content,
             the second element is its metadata as a list
-        Tuple[Iterable[str], Iterable[dict]]: if ``itemwise`` is False and ``items``
-            is an iterable of dicts; the first element of the tuple is an iterable
+        Tuple[Iterable[str], Iterable[dict]]:
+            if ``itemwise`` is False and ``items`` is an iterable of dicts;
+            the first element of the tuple is an iterable
             of items' contents, the second is an iterable of their metadata dicts
-        Tuple[Iterable[str], Iterable[list]]: if ``itemwise`` is False and ``items``
-            is an iterable of lists; the first element of the tuple is an iterable
+        Tuple[Iterable[str], Iterable[list]]:
+            if ``itemwise`` is False and ``items`` is an iterable of lists;
+            the first element of the tuple is an iterable
             of items' contents, the second is an iterable of their metadata lists
     """
     if itemwise is True:
@@ -196,7 +200,7 @@ def get_filenames(dirname, match_substr=None, ignore_substr=None,
             ``dirname``
 
     Yields:
-        str: next file's name, including the full path on disk
+        str: Next file's name, including the full path on disk.
 
     Raises:
         OSError: if ``dirname`` is not found on disk

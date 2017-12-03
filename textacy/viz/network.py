@@ -60,14 +60,18 @@ def draw_semantic_network(graph, node_weights=None, spread=3.0,
         save (str): give the full /path/to/fname on disk to save figure (optional)
 
     Returns:
-        ``matplotlib.axes.Axes.axis``: axis on which network plot is drawn
+        ``matplotlib.axes.Axes.axis``: Axis on which network plot is drawn.
+
+    Note:
+        This function requires `matplotlib <https://matplotlib.org/>`_.
     """
     try:
         plt
     except NameError:
         raise ImportError(
-            'matplotlib is not installed, so textacy.viz won\'t work; install it \
-            individually, or along with textacy via `pip install textacy[viz]`')
+            '`matplotlib` is not installed, so `textacy.viz` won\'t work; '
+            'install it individually via `$ pip install matplotlib`, or '
+            'along with textacy via `pip install textacy[viz]`.')
     with plt.rc_context(RC_PARAMS):
         fig, ax = plt.subplots(figsize=(12, 12))
 

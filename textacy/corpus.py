@@ -199,7 +199,8 @@ class Corpus(object):
             filepath (str): Full path to file on disk where documents' content and
                 metadata are to be saved.
 
-        .. seealso:: :meth:`Corpus.load()`
+        See Also:
+            :meth:`Corpus.load()`
         """
         # HACK: add spacy language metadata to first doc's user_data
         # so we can re-instantiate the same language upon Corpus.load()
@@ -220,7 +221,8 @@ class Corpus(object):
         Returns:
             :class:`Corpus`
 
-        .. seealso:: :meth:`Corpus.save()`
+        See Also:
+            :meth:`Corpus.save()`
         """
         spacy_docs = fileio.read_spacy_docs(filepath)
         # HACK: pop spacy language metadata from first doc's user_data
@@ -271,8 +273,8 @@ class Corpus(object):
             batch_size (int): Number of texts to process at a time.
 
         See Also:
-            :func:`fileio.split_record_fields()`
-            https://spacy.io/api/language#pipe
+            - :func:`fileio.split_record_fields()`
+            - https://spacy.io/api/language#pipe
         """
         spacy_docs = self.spacy_lang.pipe(
             texts, n_threads=n_threads, batch_size=batch_size)
@@ -291,7 +293,8 @@ class Corpus(object):
         then add it to the corpus.
 
         Args:
-            text (str): Document (text) content to add to corpus as a :class:`Doc <textacy.doc.Doc>`.
+            text (str): Document (text) content to add to corpus as a
+                :class:`Doc <textacy.doc.Doc>`.
             metadata (dict): Dictionary of relevant document metadata.
         """
         self._add_textacy_doc(Doc(text, lang=self.spacy_lang, metadata=metadata))
@@ -306,7 +309,8 @@ class Corpus(object):
             metadata (dict): Dictionary of relevant document metadata. Note:
                 If specified, this will *overwrite* any existing metadata.
 
-        .. warning:: If ``doc`` was already added to this or another :class:`Corpus`,
+        Warning:
+            If ``doc`` was already added to this or another :class:`Corpus`,
             it will be deep-copied and then added as if a new document. A warning
             message will be logged. This is probably not a thing you should do.
         """
@@ -356,15 +360,15 @@ class Corpus(object):
             limit (int): Maximum number of matched docs to return.
 
         Yields:
-            :class:`Doc <textacy.doc.Doc>`: next document passing
-                ``match_func`` up to ``limit`` docs
+            :class:`Doc <textacy.doc.Doc>`: Next document passing
+            ``match_func`` up to ``limit`` docs.
 
         See Also:
             :meth:`Corpus.remove()`
 
         .. tip:: To get doc(s) by index, treat :class:`Corpus` as a list and use
-            Python's usual indexing and slicing: ``Corpus[0]`` gets the first
-            document in the corpus; ``Corpus[:5]`` gets the first 5; etc.
+           Python's usual indexing and slicing: ``Corpus[0]`` gets the first
+           document in the corpus; ``Corpus[:5]`` gets the first 5; etc.
         """
         n_matched_docs = 0
         for doc in self:
@@ -435,9 +439,9 @@ class Corpus(object):
             :meth:`Corpus.get()`
 
         .. tip:: To remove doc(s) by index, treat :class:`Corpus` as a list and use
-            Python's usual indexing and slicing: ``del Corpus[0]`` removes the
-            first document in the corpus; ``del Corpus[:5]`` removes the first
-            5; etc.
+           Python's usual indexing and slicing: ``del Corpus[0]`` removes the
+           first document in the corpus; ``del Corpus[:5]`` removes the first
+           5; etc.
         """
         n_matched_docs = 0
         matched_indexes = []
@@ -472,8 +476,8 @@ class Corpus(object):
 
         Returns:
             dict: mapping of a unique word id or string (depending on the value
-                of ``as_strings``) to its absolute, relative, or binary frequency
-                of occurrence (depending on the value of ``weighting``).
+            of ``as_strings``) to its absolute, relative, or binary frequency
+            of occurrence (depending on the value of ``weighting``).
 
         See Also:
             :func:`vsm.get_term_freqs() <textacy.vsm.get_term_freqs>``
@@ -518,9 +522,9 @@ class Corpus(object):
 
         Returns:
             dict: mapping of a unique word id or string (depending on the value
-                of ``as_strings``) to the number of documents in which it appears
-                weighted as absolute, relative, or binary frequencies (depending
-                on the value of ``weighting``).
+            of ``as_strings``) to the number of documents in which it appears
+            weighted as absolute, relative, or binary frequencies (depending
+            on the value of ``weighting``).
 
         See Also:
             :func:`vsm.get_doc_freqs() <textacy.vsm.get_doc_freqs>`

@@ -43,8 +43,7 @@ def terms_to_semantic_network(terms,
             that the connected nodes co-occur in a sliding window
 
     Returns:
-        :class:`networkx.Graph <networkx.Graph>`: nodes are terms, edges are for
-            co-occurrences of terms
+        ``networkx.Graph``: Nodes are terms, edges are for co-occurrences of terms.
 
     Notes:
         - Be sure to filter out stopwords, punctuation, certain parts of speech, etc.
@@ -128,13 +127,13 @@ def sents_to_semantic_network(sents,
             all words in a given sentence pair
 
     Returns:
-        :class:`networkx.Graph`: nodes are the integer indexes of the sentences
-            in the input ``sents`` list, *not* the actual text of the sentences!
+        ``networkx.Graph``: nodes are the integer indexes of the sentences
+        in the input ``sents`` list, *not* the actual text of the sentences!
 
     Notes:
-        * If passing sentences as strings, be sure to filter out stopwords, punctuation,
+        - If passing sentences as strings, be sure to filter out stopwords, punctuation,
           certain parts of speech, etc. beforehand
-        * Consider normalizing the strings so that like terms are counted together
+        - Consider normalizing the strings so that like terms are counted together
           (see :func:`normalized_str() <textacy.spacy_utils.normalized_str>`)
     """
     n_sents = len(sents)

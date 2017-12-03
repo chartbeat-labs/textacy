@@ -177,7 +177,7 @@ class TopicModel(object):
                 i.e. topic weights on each document sum to 1
 
         Returns:
-            ``numpy.ndarray``: document-topic matrix with shape (n_docs, n_topics)
+            ``numpy.ndarray``: Document-topic matrix with shape (n_docs, n_topics).
         """
         doc_topic_matrix = self.transform(doc_term_matrix)
         if normalize is True:
@@ -365,7 +365,7 @@ class TopicModel(object):
             save (str): give the full /path/to/fname on disk to save figure
 
         Returns:
-            ``matplotlib.axes.Axes.axis``: axis on which termite plot is plotted
+            ``matplotlib.axes.Axes.axis``: Axis on which termite plot is plotted.
 
         Raises:
             ValueError: if more than 6 topics are selected for highlighting, or
@@ -373,13 +373,14 @@ class TopicModel(object):
                 and/or sort_terms_by params
 
         References:
-            .. Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
-                Visualization techniques for assessing textual topic models."
-                Proceedings of the International Working Conference on Advanced
-                Visual Interfaces. ACM, 2012.
-            .. for sorting by "seriation", see https://arxiv.org/abs/1406.5370
+            - Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
+              Visualization techniques for assessing textual topic models."
+              Proceedings of the International Working Conference on Advanced
+              Visual Interfaces. ACM, 2012.
+            - for sorting by "seriation", see https://arxiv.org/abs/1406.5370
 
-        .. seealso:: :func:`viz.termite_plot <textacy.viz.termite.termite_plot>`
+        See Also:
+            :func:`viz.termite_plot <textacy.viz.termite.termite_plot>`
 
         TODO: `rank_terms_by` other metrics, e.g. topic salience or relevance
         """

@@ -53,7 +53,7 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
 
     Returns:
         List[Tuple[str, float]]: sorted list of top ``n_keyterms`` key terms and
-            their corresponding SGRank scores
+        their corresponding SGRank scores
 
     Raises:
         ValueError: If ``n_keyterms`` is a float but not in (0.0, 1.0] or
@@ -263,7 +263,7 @@ def key_terms_from_semantic_network(doc, normalize='lemma',
 
     Returns:
         List[Tuple[str, float]]: sorted list of top ``n_keyterms`` key terms and
-            their corresponding ranking scores
+        their corresponding ranking scores
 
     Raises:
         ValueError: if ``n_keyterms`` is a float but not in (0.0, 1.0]
@@ -353,12 +353,13 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
 
     Returns:
         List[str]: top `top_n_terms` most discriminating terms for grp1-not-grp2
+
         List[str]: top `top_n_terms` most discriminating terms for grp2-not-grp1
 
     References:
         King, Gary, Patrick Lam, and Margaret Roberts. "Computer-Assisted Keyword
-            and Document Set Discovery from Unstructured Text." (2014).
-            http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.458.1445&rep=rep1&type=pdf
+        and Document Set Discovery from Unstructured Text." (2014).
+        http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.458.1445&rep=rep1&type=pdf
     """
     alpha_grp1 = 1
     alpha_grp2 = 1
@@ -555,7 +556,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
 
     Returns:
         dict: top ``k`` nodes as ranked by bestcoverage algorithm; keys as node
-            identifiers, values as corresponding ranking scores
+        identifiers, values as corresponding ranking scores
 
     References:
         .. [BestCoverage] Küçüktunç, O., Saule, E., Kaya, K., & Çatalyürek, Ü. V.

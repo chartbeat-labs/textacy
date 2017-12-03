@@ -189,7 +189,7 @@ class CapitolWords(Dataset):
 
         Yields:
             str: Full text of next (by chronological order) speech in dataset
-                passing all filter params.
+            passing all filter params.
 
         Raises:
             ValueError: If any filtering options are invalid.
@@ -227,7 +227,7 @@ class CapitolWords(Dataset):
 
         Yields:
             dict: Full text and metadata of next (by chronological order) speech
-                in dataset passing all filter params.
+            in dataset passing all filter params.
 
         Raises:
             ValueError: If any filtering options are invalid.
