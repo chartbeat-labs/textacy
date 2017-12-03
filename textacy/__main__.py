@@ -6,6 +6,7 @@ import sys
 from pprint import pprint
 
 from . import datasets
+from . import lexicon_methods
 
 # let's cheat and add a handler to the datasets logger
 # whose messages we'll send to stdout
@@ -22,6 +23,7 @@ DATASET_NAME_TO_CLASS = {
     'reddit_comments': datasets.RedditComments,
     'supreme_court': datasets.SupremeCourt,
     'wikipedia': datasets.Wikipedia,
+    'depechemood': lexicon_methods.download_depechemood,
 }
 
 if __name__ == '__main__':
@@ -69,23 +71,35 @@ if __name__ == '__main__':
     args = vars(parser.parse_args())
 
     if args['subcommand'] == 'download':
-        # initialize dataset
-        kwargs_init = {
-            key: args[key] for key in ['data_dir', 'lang', 'version']
-            if args.get(key) is not None}
-        dataset = DATASET_NAME_TO_CLASS[args['dataset_name']](**kwargs_init)
-        # download data using the class method
-        kwargs_dl = {
-            key: args[key] for key in ['date_range', 'force']
-            if args.get(key) is not None}
-        dataset.download(**kwargs_dl)
+        # do we have a `Dataset`?
+        if hasattr(DATASET_NAME_TO_CLASS[args['dataset_name']], 'download'):
+            # initialize dataset
+            kwargs_init = {
+                key: args[key] for key in ['data_dir', 'lang', 'version']
+                if args.get(key) is not None}
+            dataset = DATASET_NAME_TO_CLASS[args['dataset_name']](**kwargs_init)
+            # download data using the class method
+            kwargs_dl = {
+                key: args[key] for key in ['date_range', 'force']
+                if args.get(key) is not None}
+            dataset.download(**kwargs_dl)
+        # if not, let's assume it's a function that takes similar kwargs
+        else:
+            kwargs_func = {
+                key: args[key] for key in ['data_dir', 'force']
+                if args.get(key) is not None}
+            DATASET_NAME_TO_CLASS[args['dataset_name']](**kwargs_func)
 
     if args['subcommand'] == 'info':
-        kwargs_init = {
-            key: args[key] for key in ['data_dir']
-            if args.get(key) is not None}
-        dataset = DATASET_NAME_TO_CLASS[args['dataset_name']](**kwargs_init)
-        pprint(dataset.info)
+        # do we have a `Dataset`?
+        if hasattr(DATASET_NAME_TO_CLASS[args['dataset_name']], 'info'):
+            kwargs_init = {
+                key: args[key] for key in ['data_dir']
+                if args.get(key) is not None}
+            dataset = DATASET_NAME_TO_CLASS[args['dataset_name']](**kwargs_init)
+            pprint(dataset.info)
+        else:
+            LOGGER.info('no info available for dataset %s', args['dataset_name'])
 
 # finally, remove the handler that we snuck in above
 LOGGER.removeHandler(ch)
