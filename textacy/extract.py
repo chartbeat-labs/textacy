@@ -6,24 +6,21 @@ triples, and acronyms.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from collections import defaultdict
-from itertools import takewhile
-from operator import itemgetter
+import collections
+import itertools
+import operator
 import re
 
+import numpy as np
 from cytoolz import itertoolz
-from numpy import nanmin, nanmax, zeros, NaN
 from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
 from spacy.tokens.span import Span as SpacySpan
 
-import textacy
-from textacy import spacy_utils, text_utils
-from textacy.compat import unicode_
-from textacy.spacy_utils import (normalized_str, get_main_verbs_of_sent,
-                                 get_subjects_of_verb, get_objects_of_verb,
-                                 get_span_for_compound_noun,
-                                 get_span_for_verb_auxiliaries)
-from textacy.constants import NUMERIC_NE_TYPES, REPORTING_VERBS
+from . import compat
+from . import constants
+from . import spacy_utils
+from . import text_utils
+from .doc import Doc
 
 
 def words(doc,
@@ -65,7 +62,7 @@ def words(doc,
     if filter_nums is True:
         words_ = (w for w in words_ if not w.like_num)
     if include_pos:
-        if isinstance(include_pos, unicode_):
+        if isinstance(include_pos, compat.unicode_):
             include_pos = include_pos.upper()
             words_ = (w for w in words_ if w.pos_ == include_pos)
         elif isinstance(include_pos, (set, frozenset, list, tuple)):
@@ -75,7 +72,7 @@ def words(doc,
             msg = 'invalid `include_pos` type: "{}"'.format(type(include_pos))
             raise TypeError(msg)
     if exclude_pos:
-        if isinstance(exclude_pos, unicode_):
+        if isinstance(exclude_pos, compat.unicode_):
             exclude_pos = exclude_pos.upper()
             words_ = (w for w in words_ if w.pos_ != exclude_pos)
         elif isinstance(exclude_pos, (set, frozenset, list, tuple)):
@@ -147,7 +144,7 @@ def ngrams(doc, n,
         ngrams_ = (ngram for ngram in ngrams_
                    if not any(w.like_num for w in ngram))
     if include_pos:
-        if isinstance(include_pos, unicode_):
+        if isinstance(include_pos, compat.unicode_):
             include_pos = include_pos.upper()
             ngrams_ = (ngram for ngram in ngrams_
                        if all(w.pos_ == include_pos for w in ngram))
@@ -159,7 +156,7 @@ def ngrams(doc, n,
             msg = 'invalid `include_pos` type: "{}"'.format(type(include_pos))
             raise TypeError(msg)
     if exclude_pos:
-        if isinstance(exclude_pos, unicode_):
+        if isinstance(exclude_pos, compat.unicode_):
             exclude_pos = exclude_pos.upper()
             ngrams_ = (ngram for ngram in ngrams_
                        if all(w.pos_ != exclude_pos for w in ngram))
@@ -217,15 +214,15 @@ def named_entities(doc,
         TypeError: if `include_types` or `exclude_types` is not a str, a set of
             str, or a falsy value
     """
-    if isinstance(doc, textacy.Doc):
+    if isinstance(doc, Doc):
         nes = doc.spacy_doc.ents
     else:
         nes = doc.ents
     if include_types:
-        if isinstance(include_types, unicode_):
+        if isinstance(include_types, compat.unicode_):
             include_types = include_types.upper()
             if include_types == 'NUMERIC':
-                include_types = NUMERIC_NE_TYPES  # we now go to next if block
+                include_types = constants.NUMERIC_NE_TYPES  # we now go to next if block
             else:
                 nes = (ne for ne in nes if ne.label_ == include_types)
         if isinstance(include_types, (set, frozenset, list, tuple)):
@@ -235,10 +232,10 @@ def named_entities(doc,
             msg = 'invalid `include_types` type: "{}"'.format(type(include_types))
             raise TypeError(msg)
     if exclude_types:
-        if isinstance(exclude_types, unicode_):
+        if isinstance(exclude_types, compat.unicode_):
             exclude_types = exclude_types.upper()
             if exclude_types == 'NUMERIC':
-                exclude_types = NUMERIC_NE_TYPES  # we now go to next if block
+                exclude_types = constants.NUMERIC_NE_TYPES  # we now go to next if block
             else:
                 nes = (ne for ne in nes if ne.label_ != exclude_types)
         if isinstance(exclude_types, (set, frozenset, list, tuple)):
@@ -275,7 +272,7 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
         ``spacy.Span``: the next noun chunk from ``doc`` in order of appearance
              in the document
     """
-    if isinstance(doc, textacy.Doc):
+    if isinstance(doc, Doc):
         ncs = doc.spacy_doc.noun_chunks
     else:
         ncs = doc.noun_chunks
@@ -352,26 +349,26 @@ def subject_verb_object_triples(doc):
     for sent in sents:
         start_i = sent[0].i
 
-        verbs = get_main_verbs_of_sent(sent)
+        verbs = spacy_utils.get_main_verbs_of_sent(sent)
         for verb in verbs:
-            subjs = get_subjects_of_verb(verb)
+            subjs = spacy_utils.get_subjects_of_verb(verb)
             if not subjs:
                 continue
-            objs = get_objects_of_verb(verb)
+            objs = spacy_utils.get_objects_of_verb(verb)
             if not objs:
                 continue
 
             # add adjacent auxiliaries to verbs, for context
             # and add compounds to compound nouns
-            verb_span = get_span_for_verb_auxiliaries(verb)
+            verb_span = spacy_utils.get_span_for_verb_auxiliaries(verb)
             verb = sent[verb_span[0] - start_i: verb_span[1] - start_i + 1]
             for subj in subjs:
-                subj = sent[get_span_for_compound_noun(subj)[0] - start_i: subj.i - start_i + 1]
+                subj = sent[spacy_utils.get_span_for_compound_noun(subj)[0] - start_i: subj.i - start_i + 1]
                 for obj in objs:
                     if obj.pos == NOUN:
-                        span = get_span_for_compound_noun(obj)
+                        span = spacy_utils.get_span_for_compound_noun(obj)
                     elif obj.pos == VERB:
-                        span = get_span_for_verb_auxiliaries(obj)
+                        span = spacy_utils.get_span_for_verb_auxiliaries(obj)
                     else:
                         span = (obj.i, obj.i)
                     obj = sent[span[0] - start_i: span[1] - start_i + 1]
@@ -399,7 +396,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
             International Journal on Document Analysis and Recognition 1.4 (1999): 191-198.
     """
     # process function arguments
-    acro_defs = defaultdict(list)
+    acro_defs = collections.defaultdict(list)
     if not known_acro_defs:
         known_acronyms = set()
     else:
@@ -461,7 +458,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
         if len(defs) == 1:
             acro_defs[acro] = defs[0][0]
         else:
-            acro_defs[acro] = sorted(defs, key=itemgetter(1), reverse=True)[0][0]
+            acro_defs[acro] = sorted(defs, key=operator.itemgetter(1), reverse=True)[0][0]
 
     return dict(acro_defs)
 
@@ -488,8 +485,8 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
     def build_lcs_matrix(X, Y):
         m = len(X)
         n = len(Y)
-        b = zeros((m, n), dtype=int)
-        c = zeros((m, n), dtype=int)
+        b = np.zeros((m, n), dtype=int)
+        c = np.zeros((m, n), dtype=int)
         for i in range(0, m):
             for j in range(0, n):
                 if X[i] == Y[j]:
@@ -510,7 +507,7 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
                     s = (i, j)
                     stack.append(s)
                     if lcs_length == 1:
-                        vec = [NaN] * n
+                        vec = [np.NaN] * n
                         for k, l in stack:
                             vec[l] = k
                         vectors.append(vec)
@@ -521,8 +518,8 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
 
     def vector_values(v, types):
         vv = {}
-        first = v.index(int(nanmin(v)))
-        last = v.index(int(nanmax(v)))
+        first = v.index(int(np.nanmin(v)))
+        last = v.index(int(np.nanmax(v)))
         vv['size'] = (last - first) + 1
         vv['distance'] = len(v) - last
         vv['stop_count'] = 0
@@ -610,8 +607,8 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
     for vec in vecs[1:]:
         best_vec = compare_vectors(best_vec, vec, def_types)
 
-    first = best_vec.index(int(nanmin(best_vec)))
-    last = best_vec.index(int(nanmax(best_vec)))
+    first = best_vec.index(int(np.nanmin(best_vec)))
+    last = best_vec.index(int(np.nanmax(best_vec)))
 
     definition = window[first: last + 1].text
     if len(definition.split()) == 1:
@@ -704,12 +701,12 @@ def semistructured_statements(doc, entity, cue='be', ignore_entity_case=True,
 
             # now add adjacent auxiliary and negating tokens to the cue, for context
             try:
-                min_cue_i = min(left.i for left in takewhile(
+                min_cue_i = min(left.i for left in itertools.takewhile(
                     lambda x: x.dep_ in {'aux', 'neg'}, reversed(list(the_cue.lefts))))
             except ValueError:
                 pass
             try:
-                max_cue_i = max(right.i for right in takewhile(
+                max_cue_i = max(right.i for right in itertools.takewhile(
                     lambda x: x.dep_ in {'aux', 'neg'}, the_cue.rights))
             except ValueError:
                 pass
@@ -755,7 +752,7 @@ def direct_quotations(doc):
 
     TODO: Better approach would use ML, but needs a training dataset.
     """
-    if isinstance(doc, textacy.Doc):
+    if isinstance(doc, Doc):
         if doc.lang != 'en':
             raise NotImplementedError('sorry, English-language texts only :(')
         doc = doc.spacy_doc
@@ -789,7 +786,7 @@ def direct_quotations(doc):
             # get any reporting verbs
             rvs = [tok for tok in sent
                    if spacy_utils.preserve_case(tok) is False and
-                   tok.lemma_ in REPORTING_VERBS and
+                   tok.lemma_ in constants.REPORTING_VERBS and
                    tok.pos_ == 'VERB' and
                    not any(oq0 <= tok.i <= oq1 for oq0, oq1 in quote_positions)]
 
@@ -812,7 +809,7 @@ def direct_quotations(doc):
 
             try:
                 # rv_subj = _find_subjects(rv)[0]
-                rv_subj = get_subjects_of_verb(rv)[0]
+                rv_subj = spacy_utils.get_subjects_of_verb(rv)[0]
             except IndexError:
                 continue
     #         if rv_subj.text in {'he', 'she'}:
@@ -822,7 +819,7 @@ def direct_quotations(doc):
     #                 else:
     #                     break
     #         else:
-            span = get_span_for_compound_noun(rv_subj)
+            span = spacy_utils.get_span_for_compound_noun(rv_subj)
             speaker = doc[span[0]: span[1] + 1]
 
             yield (speaker, rv, quote)

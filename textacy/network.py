@@ -6,14 +6,14 @@ import collections
 import itertools
 import logging
 
-from cytoolz import itertoolz
 import networkx as nx
+from cytoolz import itertoolz
 from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
 
-from textacy.compat import unicode_
-from textacy import extract
+from . import compat
+from . import extract
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def terms_to_semantic_network(terms,
             len(terms), window_width)
         window_width = len(terms)
 
-    if isinstance(terms[0], unicode_):
+    if isinstance(terms[0], compat.unicode_):
         windows = itertoolz.sliding_window(window_width, terms)
     elif isinstance(terms[0], SpacyToken):
         if normalize == 'lemma':
@@ -138,7 +138,7 @@ def sents_to_semantic_network(sents,
           (see :func:`normalized_str() <textacy.spacy_utils.normalized_str>`)
     """
     n_sents = len(sents)
-    if isinstance(sents[0], unicode_):
+    if isinstance(sents[0], compat.unicode_):
         pass
     elif isinstance(sents[0], SpacySpan):
         if normalize == 'lemma':

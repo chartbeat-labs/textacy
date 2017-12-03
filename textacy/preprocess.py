@@ -13,12 +13,8 @@ import unicodedata
 from ftfy import fix_text
 from unidecode import unidecode
 
-from textacy.compat import unicode_
-from textacy.constants import (CURRENCIES, URL_REGEX, SHORT_URL_REGEX, EMAIL_REGEX,
-                               PHONE_REGEX, NUMBERS_REGEX, CURRENCY_REGEX,
-                               LINEBREAK_REGEX, NONBREAKING_SPACE_REGEX,
-                               PUNCT_TRANSLATE_UNICODE,
-                               PUNCT_TRANSLATE_BYTES)
+from . import compat
+from . import constants
 
 
 def fix_bad_unicode(text, normalization='NFC'):
@@ -60,7 +56,7 @@ def normalize_whitespace(text):
     Given ``text`` str, replace one or more spacings with a single space, and one
     or more linebreaks with a single newline. Also strip leading/trailing whitespace.
     """
-    return NONBREAKING_SPACE_REGEX.sub(' ', LINEBREAK_REGEX.sub(r'\n', text)).strip()
+    return constants.NONBREAKING_SPACE_REGEX.sub(' ', constants.LINEBREAK_REGEX.sub(r'\n', text)).strip()
 
 
 def unpack_contractions(text):
@@ -86,22 +82,22 @@ def unpack_contractions(text):
 
 def replace_urls(text, replace_with='*URL*'):
     """Replace all URLs in ``text`` str with ``replace_with`` str."""
-    return URL_REGEX.sub(replace_with, SHORT_URL_REGEX.sub(replace_with, text))
+    return constants.URL_REGEX.sub(replace_with, constants.SHORT_URL_REGEX.sub(replace_with, text))
 
 
 def replace_emails(text, replace_with='*EMAIL*'):
     """Replace all emails in ``text`` str with ``replace_with`` str."""
-    return EMAIL_REGEX.sub(replace_with, text)
+    return constants.EMAIL_REGEX.sub(replace_with, text)
 
 
 def replace_phone_numbers(text, replace_with='*PHONE*'):
     """Replace all phone numbers in ``text`` str with ``replace_with`` str."""
-    return PHONE_REGEX.sub(replace_with, text)
+    return constants.PHONE_REGEX.sub(replace_with, text)
 
 
 def replace_numbers(text, replace_with='*NUMBER*'):
     """Replace all numbers in ``text`` str with ``replace_with`` str."""
-    return NUMBERS_REGEX.sub(replace_with, text)
+    return constants.NUMBERS_REGEX.sub(replace_with, text)
 
 
 def replace_currency_symbols(text, replace_with=None):
@@ -119,11 +115,11 @@ def replace_currency_symbols(text, replace_with=None):
         str
     """
     if replace_with is None:
-        for k, v in CURRENCIES.items():
+        for k, v in constants.CURRENCIES.items():
             text = text.replace(k, v)
         return text
     else:
-        return CURRENCY_REGEX.sub(replace_with, text)
+        return constants.CURRENCY_REGEX.sub(replace_with, text)
 
 
 def remove_punct(text, marks=None):
@@ -147,10 +143,10 @@ def remove_punct(text, marks=None):
     if marks:
         return re.sub('[{}]+'.format(re.escape(marks)), '', text, flags=re.UNICODE)
     else:
-        if isinstance(text, unicode_):
-            return text.translate(PUNCT_TRANSLATE_UNICODE)
+        if isinstance(text, compat.unicode_):
+            return text.translate(constants.PUNCT_TRANSLATE_UNICODE)
         else:
-            return text.translate(None, PUNCT_TRANSLATE_BYTES)
+            return text.translate(None, constants.PUNCT_TRANSLATE_BYTES)
 
 
 def remove_accents(text, method='unicode'):

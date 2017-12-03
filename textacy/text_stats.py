@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 from math import sqrt
-import warnings
 
 from spacy.tokens import Doc as SpacyDoc
 

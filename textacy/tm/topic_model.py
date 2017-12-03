@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 from sklearn.externals import joblib
 
-from textacy import viz
+from .. import viz
 
 LOGGER = logging.getLogger(__name__)
 

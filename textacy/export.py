@@ -1,11 +1,11 @@
 """
 Module for exporting textacy/spacy objects into "third-party" formats.
 """
-from collections import Counter
-from operator import itemgetter
+import collections
+import operator
 
 from spacy import attrs
-from spacy.strings import StringStore
+from spacy import strings
 
 
 def docs_to_gensim(spacy_docs, spacy_vocab, lemmatize=True, lowercase=False,
@@ -36,8 +36,8 @@ def docs_to_gensim(spacy_docs, spacy_vocab, lemmatize=True, lowercase=False,
                 attrs.LOWER if lowercase is True else
                 attrs.ORTH)
     gcorpus = []
-    stringstore = StringStore()
-    doc_freqs = Counter()
+    stringstore = strings.StringStore()
+    doc_freqs = collections.Counter()
 
     for spacy_doc in spacy_docs:
         bow = ((spacy_vocab[tok_id], count)
@@ -50,14 +50,14 @@ def docs_to_gensim(spacy_docs, spacy_vocab, lemmatize=True, lowercase=False,
         if filter_nums is True:
             bow = ((lex, count) for lex, count in bow if not lex.like_num)
         bow = sorted(((stringstore[lex.orth_], count) for lex, count in bow),
-                     key=itemgetter(0))
+                     key=operator.itemgetter(0))
 
         doc_freqs.update(tok_id for tok_id, _ in bow)
         gcorpus.append(bow)
 
     gdict_str = '\n'.join(
         '{}\t{}\t{}'.format(i, s, doc_freqs[i])
-        for i, s in sorted(enumerate(stringstore), key=itemgetter(1)))
+        for i, s in sorted(enumerate(stringstore), key=operator.itemgetter(1)))
 
     return (gdict_str, gcorpus)
 

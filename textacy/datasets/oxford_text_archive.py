@@ -29,11 +29,11 @@ import zipfile
 
 import requests
 
-from textacy import data_dir
-from textacy import compat
-from textacy.datasets.base import Dataset
-from textacy import fileio
-from textacy import preprocess
+from .. import compat
+from .. import data_dir
+from .. import fileio
+from .. import preprocess
+from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
 

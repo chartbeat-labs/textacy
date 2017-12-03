@@ -1,18 +1,18 @@
 """Functions for writing content to disk in common formats."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from contextlib import closing
 import io
 import json
+from contextlib import closing
 
-from numpy import savez, savez_compressed
+import numpy as np
 import requests
-from scipy.sparse import csc_matrix, csr_matrix
+import scipy.sparse as sp
 from spacy.tokens.doc import Doc as SpacyDoc
 from tqdm import tqdm
 
-from textacy.compat import csv, pickle, unicode_to_bytes
-from textacy.fileio import open_sesame, make_dirs
+from .. import compat
+from .utils import make_dirs, open_sesame
 
 
 def write_file(content, filepath, mode='wt', encoding=None,
@@ -36,7 +36,7 @@ def write_file_lines(lines, filepath, mode='wt', encoding=None,
     with appropriate extensions are compressed with gzip or bz2 automatically.
     Any intermediate folders not found on disk may automatically be created.
     """
-    newline = '\n' if 't' in mode else unicode_to_bytes('\n')
+    newline = '\n' if 't' in mode else compat.unicode_to_bytes('\n')
     with open_sesame(filepath, mode=mode, encoding=encoding,
                      auto_make_dirs=auto_make_dirs) as f:
         for line in lines:
@@ -99,7 +99,7 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
 
     .. seealso:: https://docs.python.org/3/library/json.html#json.dump
     """
-    newline = '\n' if 't' in mode else unicode_to_bytes('\n')
+    newline = '\n' if 't' in mode else compat.unicode_to_bytes('\n')
     with open_sesame(filepath, mode=mode, encoding=encoding,
                      auto_make_dirs=auto_make_dirs) as f:
         for json_object in json_objects:
@@ -139,7 +139,7 @@ def write_csv(rows, filepath, encoding=None, auto_make_dirs=False,
         ``delimiter='\\t'``) and PSV (pipe-separated-value, with ``delimiter='|'``.
     """
     with open_sesame(filepath, mode='wt', encoding=encoding, newline='') as f:
-        csv_writer = csv.writer(f, dialect=dialect, delimiter=delimiter)
+        csv_writer = compat.csv.writer(f, dialect=dialect, delimiter=delimiter)
         csv_writer.writerows(rows)
 
 
@@ -159,7 +159,7 @@ def write_spacy_docs(spacy_docs, filepath, auto_make_dirs=False):
     if isinstance(spacy_docs, SpacyDoc):
         spacy_docs = [spacy_docs]
     with open_sesame(filepath, mode='wb', auto_make_dirs=auto_make_dirs) as f:
-        pickle.dump(list(spacy_docs), f, protocol=-1)
+        compat.pickle.dump(list(spacy_docs), f, protocol=-1)
 
 
 def write_sparse_matrix(matrix, filepath, compressed=True):
@@ -178,17 +178,17 @@ def write_sparse_matrix(matrix, filepath, compressed=True):
     .. seealso:: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez.html
     .. seealso:: http://docs.scipy.org/doc/numpy-1.10.0/reference/generated/numpy.savez_compressed.html
     """
-    if not isinstance(matrix, (csc_matrix, csr_matrix)):
+    if not isinstance(matrix, (sp.csc_matrix, sp.csr_matrix)):
         raise TypeError('input matrix must be a scipy sparse csr or csc matrix')
     make_dirs(filepath, 'w')
     if compressed is False:
-        savez(filepath,
-              data=matrix.data, indices=matrix.indices,
-              indptr=matrix.indptr, shape=matrix.shape)
+        np.savez(filepath,
+                 data=matrix.data, indices=matrix.indices,
+                 indptr=matrix.indptr, shape=matrix.shape)
     else:
-        savez_compressed(filepath,
-                         data=matrix.data, indices=matrix.indices,
-                         indptr=matrix.indptr, shape=matrix.shape)
+        np.savez_compressed(filepath,
+                            data=matrix.data, indices=matrix.indices,
+                            indptr=matrix.indptr, shape=matrix.shape)
 
 
 def write_streaming_download_file(url, filepath, mode='wt', encoding=None,

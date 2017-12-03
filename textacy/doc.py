@@ -5,7 +5,7 @@ Load, process, iterate, transform, and save text content paired with metadata
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from collections import Counter
+import collections
 import os
 import types
 
@@ -16,12 +16,14 @@ from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
 
-import textacy
-from textacy.compat import unicode_
-from textacy.constants import NUMERIC_NE_TYPES
-from textacy.text_utils import detect_language
-from textacy import data, fileio, spacy_utils
-from textacy import network
+from . import compat
+from . import constants
+from . import data
+from . import extract
+from . import fileio
+from . import network
+from . import spacy_utils
+from . import text_utils
 
 
 class Doc(object):
@@ -107,14 +109,14 @@ class Doc(object):
         spacy_vocab (``spacy.Vocab``): https://spacy.io/api/vocab
         spacy_stringstore (``spacy.StringStore``): https://spacy.io/api/stringstore
     """
-    def __init__(self, content, metadata=None, lang=detect_language):
+    def __init__(self, content, metadata=None, lang=text_utils.detect_language):
 
         # Doc instantiated from text, so must be parsed with a spacy.Language
-        if isinstance(content, unicode_):
+        if isinstance(content, compat.unicode_):
             if isinstance(lang, SpacyLang):
                 spacy_lang = lang
                 langstr = spacy_lang.lang
-            elif isinstance(lang, unicode_):
+            elif isinstance(lang, compat.unicode_):
                 spacy_lang = data.load_spacy(lang)
                 langstr = spacy_lang.lang
             elif callable(lang):
@@ -123,7 +125,7 @@ class Doc(object):
             else:
                 raise TypeError(
                     '`lang` must be {}, not {}'.format(
-                        {unicode_, SpacyLang, types.FunctionType}, type(lang)))
+                        {compat.unicode_, SpacyLang, types.FunctionType}, type(lang)))
             self.spacy_vocab = spacy_lang.vocab
             self.spacy_stringstore = self.spacy_vocab.strings
             self.spacy_doc = spacy_lang(content)
@@ -140,7 +142,7 @@ class Doc(object):
                     raise ValueError(
                         '`spacy.Vocab` used to parse `content` must be the same '
                         'as the one associated with the `lang` param')
-            elif isinstance(lang, unicode_):
+            elif isinstance(lang, compat.unicode_):
                 # a `lang` as str could be a specific spacy model name,
                 # e.g. "en_core_web_sm", while `langstr` would only be "en"
                 if not lang.startswith(langstr):
@@ -151,17 +153,17 @@ class Doc(object):
             elif callable(lang) is False:
                 raise TypeError(
                     '`lang` must be {}, not {}'.format(
-                        {unicode_, SpacyLang, types.FunctionType}, type(lang)))
+                        {compat.unicode_, SpacyLang, types.FunctionType}, type(lang)))
         # oops, user has made some sort of mistake
         else:
             raise ValueError(
                 '`Doc` must be initialized with {} content, not "{}"'.format(
-                    {unicode_, SpacyDoc}, type(content)))
+                    {compat.unicode_, SpacyDoc}, type(content)))
 
         self.spacy_doc.user_data['textacy'] = {'lang': langstr}
         self.spacy_doc.user_data['textacy']['metadata'] = metadata or {}
         self._counted_ngrams = set()
-        self._counts = Counter()
+        self._counts = collections.Counter()
 
     def __repr__(self):
         snippet = self.text[:50].replace('\n', ' ')
@@ -294,7 +296,7 @@ class Doc(object):
             merge first, count second!
         """
         # figure out what object we're dealing with here; convert as necessary
-        if isinstance(term, unicode_):
+        if isinstance(term, compat.unicode_):
             term_text = term
             term_id = self.spacy_stringstore.add(term_text)
             term_len = term_text.count(' ') + 1
@@ -313,19 +315,19 @@ class Doc(object):
         # we haven't counted terms of this length; let's do that now
         if term_len not in self._counted_ngrams:
             if term_len == 1:
-                self._counts += Counter(
+                self._counts += collections.Counter(
                     word.orth
-                    for word in textacy.extract.words(self,
-                                                      filter_stops=False,
-                                                      filter_punct=False,
-                                                      filter_nums=False))
+                    for word in extract.words(self,
+                                              filter_stops=False,
+                                              filter_punct=False,
+                                              filter_nums=False))
             else:
-                self._counts += Counter(
+                self._counts += collections.Counter(
                     self.spacy_stringstore.add(ngram.text)
-                    for ngram in textacy.extract.ngrams(self, term_len,
-                                                        filter_stops=False,
-                                                        filter_punct=False,
-                                                        filter_nums=False))
+                    for ngram in extract.ngrams(self, term_len,
+                                                filter_stops=False,
+                                                filter_punct=False,
+                                                filter_nums=False))
             self._counted_ngrams.add(term_len)
         return self._counts[term_id]
 
@@ -414,9 +416,9 @@ class Doc(object):
                 if ne_kwargs['exclude_types']:
                     if isinstance(ne_kwargs['exclude_types'], (set, frozenset, list, tuple)):
                         ne_kwargs['exclude_types'] = set(ne_kwargs['exclude_types'])
-                        ne_kwargs['exclude_types'].add(NUMERIC_NE_TYPES)
+                        ne_kwargs['exclude_types'].add(constants.NUMERIC_NE_TYPES)
                 else:
-                    ne_kwargs['exclude_types'] = NUMERIC_NE_TYPES
+                    ne_kwargs['exclude_types'] = constants.NUMERIC_NE_TYPES
         if ngrams:
             ngram_kwargs = {
                 'filter_stops': kwargs.get('filter_stops', True),
@@ -427,35 +429,35 @@ class Doc(object):
                 'min_freq': kwargs.get('min_freq', 1)}
             # if numeric entities are to be filtered, we should filter numeric ngrams
             if (named_entities and ne_kwargs['exclude_types'] and
-                    any(ne_type in ne_kwargs['exclude_types'] for ne_type in NUMERIC_NE_TYPES)):
+                    any(ne_type in ne_kwargs['exclude_types'] for ne_type in constants.NUMERIC_NE_TYPES)):
                 ngram_kwargs['filter_nums'] = True
 
         terms = []
         # special case: ensure that named entities aren't double-counted when
         # adding words or ngrams that were already added as named entities
         if named_entities is True and ngrams:
-            ents = tuple(textacy.extract.named_entities(self, **ne_kwargs))
+            ents = tuple(extract.named_entities(self, **ne_kwargs))
             ent_idxs = {(ent.start, ent.end) for ent in ents}
             terms.append(ents)
             for n in ngrams:
                 if n == 1:
                     terms.append(
-                        (word for word in textacy.extract.words(self, **ngram_kwargs)
+                        (word for word in extract.words(self, **ngram_kwargs)
                          if (word.i, word.i + 1) not in ent_idxs))
                 else:
                     terms.append(
-                        (ngram for ngram in textacy.extract.ngrams(self, n, **ngram_kwargs)
+                        (ngram for ngram in extract.ngrams(self, n, **ngram_kwargs)
                          if (ngram.start, ngram.end) not in ent_idxs))
         # otherwise, no need to check for overlaps
         else:
             if named_entities is True:
-                terms.append(textacy.extract.named_entities(self, **ne_kwargs))
+                terms.append(extract.named_entities(self, **ne_kwargs))
             else:
                 for n in ngrams:
                     if n == 1:
-                        terms.append(textacy.extract.words(self, **ngram_kwargs))
+                        terms.append(extract.words(self, **ngram_kwargs))
                     else:
-                        terms.append(textacy.extract.ngrams(self, n, **ngram_kwargs))
+                        terms.append(extract.ngrams(self, n, **ngram_kwargs))
 
         terms = itertoolz.concat(terms)
 
@@ -651,7 +653,7 @@ class Doc(object):
             if edge_weighting == 'default':
                 edge_weighting = 'cooc_freq'
             return network.terms_to_semantic_network(
-                list(textacy.extract.words(self)),
+                list(extract.words(self)),
                 normalize=normalize,
                 window_width=window_width,
                 edge_weighting=edge_weighting)

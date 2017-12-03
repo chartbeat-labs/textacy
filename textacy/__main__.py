@@ -2,10 +2,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import argparse
 import logging
-from pprint import pprint
 import sys
+from pprint import pprint
 
-import textacy.datasets
+from . import datasets
 
 # let's cheat and add a handler to the datasets logger
 # whose messages we'll send to stdout

@@ -8,7 +8,7 @@ import re
 import sys
 import unicodedata
 
-from textacy.compat import chr_
+from . import compat
 
 
 NUMERIC_NE_TYPES = {'ORDINAL', 'CARDINAL', 'MONEY', 'QUANTITY', 'PERCENT', 'TIME', 'DATE'}
@@ -38,9 +38,9 @@ POS_REGEX_PATTERNS = {
 
 PUNCT_TRANSLATE_UNICODE = dict.fromkeys(
     i for i in range(sys.maxunicode)
-    if unicodedata.category(chr_(i)).startswith('P'))
+    if unicodedata.category(compat.chr_(i)).startswith('P'))
 PUNCT_TRANSLATE_BYTES = ''.join(
-    chr_(i) for i in PUNCT_TRANSLATE_UNICODE.keys()
+    compat.chr_(i) for i in PUNCT_TRANSLATE_UNICODE.keys()
     ).encode('utf-8')
 
 ACRONYM_REGEX = re.compile(r"(?:^|(?<=\W))(?:(?:(?:(?:[A-Z]\.?)+[a-z0-9&/-]?)+(?:[A-Z][s.]?|[0-9]s?))|(?:[0-9](?:\-?[A-Z])+))(?:$|(?=\W))", flags=re.UNICODE)

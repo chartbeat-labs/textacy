@@ -2,15 +2,9 @@ from __future__ import absolute_import
 
 import logging
 import os
-# import pkgutil
 
 __version__ = '0.4.2'
-# __resources_dir__ = os.path.join(
-#     os.path.dirname(pkgutil.get_loader('textacy').get_filename()),
-#     'data')
-data_dir = os.path.join(
-    os.path.dirname(os.path.abspath(__file__)),
-    'data')
+data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 # subpackages
 from textacy import fileio
@@ -34,5 +28,5 @@ from textacy.tm import TopicModel
 from textacy.vsm import Vectorizer
 
 logger = logging.getLogger('textacy')
-if len(logger.handlers) == 0:  # To ensure reload() doesn't add another one
+if len(logger.handlers) == 0:  # ensure reload() doesn't add another handler
     logger.addHandler(logging.NullHandler())

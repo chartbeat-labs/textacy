@@ -4,22 +4,23 @@ Load, process, iterate, transform, and save a collection of documents — a corp
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from collections import Counter
+import collections
 import copy
 import logging
-from math import log
+import math
 import multiprocessing
 import os
 
-from cytoolz import itertoolz
 import numpy as np
+from cytoolz import itertoolz
 from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.util import get_lang_class
 
-from textacy import data, fileio
-from textacy.compat import is_python2, unicode_, zip_
-from textacy.doc import Doc
+from . import compat
+from . import data
+from . import fileio
+from .doc import Doc
 
 LOGGER = logging.getLogger(__name__)
 
@@ -128,13 +129,13 @@ class Corpus(object):
         spacy_stringstore (``spacy.StringStore``): https://spacy.io/docs#stringstore
     """
     def __init__(self, lang, texts=None, docs=None, metadatas=None):
-        if isinstance(lang, unicode_):
+        if isinstance(lang, compat.unicode_):
             self.spacy_lang = data.load_spacy(lang)
         elif isinstance(lang, SpacyLang):
             self.spacy_lang = lang
         else:
             raise TypeError(
-                '`lang` must be {}, not {}'.format({unicode_, SpacyLang}, type(lang)))
+                '`lang` must be {}, not {}'.format({compat.unicode_, SpacyLang}, type(lang)))
         self.lang = self.spacy_lang.lang
         self.spacy_vocab = self.spacy_lang.vocab
         self.spacy_stringstore = self.spacy_vocab.strings
@@ -150,7 +151,7 @@ class Corpus(object):
             self.add_texts(texts, metadatas=metadatas)
         elif docs:
             if metadatas:
-                for doc, metadata in zip_(docs, metadatas):
+                for doc, metadata in compat.zip_(docs, metadatas):
                     self.add_doc(doc, metadata=metadata)
             else:
                 for doc in docs:
@@ -276,7 +277,7 @@ class Corpus(object):
         spacy_docs = self.spacy_lang.pipe(
             texts, n_threads=n_threads, batch_size=batch_size)
         if metadatas:
-            for spacy_doc, metadata in zip_(spacy_docs, metadatas):
+            for spacy_doc, metadata in compat.zip_(spacy_docs, metadatas):
                 self._add_textacy_doc(
                     Doc(spacy_doc, lang=self.spacy_lang, metadata=metadata))
         else:
@@ -477,7 +478,7 @@ class Corpus(object):
         See Also:
             :func:`vsm.get_term_freqs() <textacy.vsm.get_term_freqs>``
         """
-        word_counts = Counter()
+        word_counts = collections.Counter()
         for doc in self:
             word_counts.update(doc.to_bag_of_words(
                 normalize=normalize, weighting='count', as_strings=as_strings))
@@ -524,7 +525,7 @@ class Corpus(object):
         See Also:
             :func:`vsm.get_doc_freqs() <textacy.vsm.get_doc_freqs>`
         """
-        word_doc_counts = Counter()
+        word_doc_counts = collections.Counter()
         for doc in self:
             word_doc_counts.update(doc.to_bag_of_words(
                 normalize=normalize, weighting='binary', as_strings=as_strings))
@@ -537,10 +538,10 @@ class Corpus(object):
         elif weighting == 'idf':
             n_docs = self.n_docs
             if smooth_idf is True:
-                word_doc_counts = {word: log(1 + n_docs / count)
+                word_doc_counts = {word: math.log(1 + n_docs / count)
                                    for word, count in word_doc_counts.items()}
             else:
-                word_doc_counts = {word: log(n_docs / count)
+                word_doc_counts = {word: math.log(n_docs / count)
                                    for word, count in word_doc_counts.items()}
         elif weighting == 'binary':
             word_doc_counts = {word: 1 for word in word_doc_counts.keys()}

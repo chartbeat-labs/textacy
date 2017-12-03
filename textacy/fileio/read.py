@@ -3,16 +3,16 @@ Module with functions for reading content from disk in common formats.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from functools import partial
+import functools
 import json
 
 import ijson
-from numpy import load as np_load
-from scipy.sparse import csc_matrix, csr_matrix
+import numpy as np
+import scipy.sparse as sp
 from spacy.tokens.doc import Doc as SpacyDoc
 
-from textacy.compat import csv, pickle
-from textacy.fileio import open_sesame
+from .. import compat
+from .utils import open_sesame
 
 JSON_DECODER = json.JSONDecoder()
 
@@ -116,7 +116,7 @@ def read_json_mash(filepath, mode='rt', encoding=None, buffersize=2048):
     """
     with open_sesame(filepath, mode=mode, encoding=encoding) as f:
         buffer = ''
-        for chunk in iter(partial(f.read, buffersize), ''):
+        for chunk in iter(functools.partial(f.read, buffersize), ''):
             buffer += chunk
             while buffer:
                 try:
@@ -149,9 +149,9 @@ def read_csv(filepath, encoding=None, dialect='excel', delimiter=','):
     """
     with open_sesame(filepath, mode='rt', encoding=encoding, newline='') as f:
         if dialect == 'infer':
-            dialect = csv.Sniffer().sniff(f.read(1024))
+            dialect = compat.csv.Sniffer().sniff(f.read(1024))
             f.seek(0)
-        for row in csv.reader(f, dialect=dialect, delimiter=delimiter):
+        for row in compat.csv.reader(f, dialect=dialect, delimiter=delimiter):
             yield row
 
 
@@ -167,7 +167,7 @@ def read_spacy_docs(filepath):
         The next deserialized ``spacy.Doc``.
     """
     with open_sesame(filepath, mode='rb') as f:
-        for spacy_doc in pickle.load(f):
+        for spacy_doc in compat.pickle.load(f):
             yield spacy_doc
 
 
@@ -176,9 +176,9 @@ def read_sparse_csr_matrix(filepath):
     Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
     at ``filepath``, and return an instantiated ``scipy.sparse.csr_matrix``.
     """
-    npz_file = np_load(filepath)
-    return csr_matrix((npz_file['data'], npz_file['indices'], npz_file['indptr']),
-                      shape=npz_file['shape'])
+    npz_file = np.load(filepath)
+    return sp.csr_matrix((npz_file['data'], npz_file['indices'], npz_file['indptr']),
+                         shape=npz_file['shape'])
 
 
 def read_sparse_csc_matrix(filepath):
@@ -186,6 +186,6 @@ def read_sparse_csc_matrix(filepath):
     Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
     at ``filepath``, and return an instantiated ``scipy.sparse.csc_matrix``.
     """
-    npz_file = np_load(filepath)
-    return csc_matrix((npz_file['data'], npz_file['indices'], npz_file['indptr']),
-                      shape=npz_file['shape'])
+    npz_file = np.load(filepath)
+    return sp.csc_matrix((npz_file['data'], npz_file['indices'], npz_file['indptr']),
+                         shape=npz_file['shape'])

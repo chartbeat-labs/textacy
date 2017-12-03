@@ -5,10 +5,10 @@ weighting schemes for the values.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from array import array
 import collections
 import itertools
-from operator import itemgetter
+import operator
+from array import array
 
 import numpy as np
 import scipy.sparse as sp
@@ -373,7 +373,7 @@ class Vectorizer(object):
         """Array mapping from feature integer indices to feature name."""
         self._check_vocabulary()
         return [term_str for term_str, _
-                in sorted(self.vocabulary.items(), key=itemgetter(1))]
+                in sorted(self.vocabulary.items(), key=operator.itemgetter(1))]
 
     def _check_vocabulary(self):
         if not isinstance(self.vocabulary, collections.Mapping):

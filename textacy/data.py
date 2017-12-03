@@ -4,34 +4,33 @@ Functions to load and cache language data and other NLP resources.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import csv
-from functools import partial
+import functools
 import io
 import logging
 import os
 import sys
+import zipfile
 try:
     from urllib.request import urlopen
     from urllib.error import HTTPError
 except ImportError:
     from urllib2 import urlopen
     from urllib2 import HTTPError
-import zipfile
 
-from cachetools import cached, LRUCache
-from cachetools.keys import hashkey
 import pyphen
 import spacy
+from cachetools import cached, LRUCache
+from cachetools.keys import hashkey
 
-import textacy
-from textacy import data_dir as DEFAULT_DATA_DIR
-from textacy.compat import is_python2, bytes_
+from . import compat
+from . import data_dir as DEFAULT_DATA_DIR
 
 LOGGER = logging.getLogger(__name__)
 MAX_CACHE_SIZE = 2147483648  # 2 GB, in bytes
 
 
 @cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
-        key=partial(hashkey, 'spacy'))
+        key=functools.partial(hashkey, 'spacy'))
 def load_spacy(name, disable=None):
     """
     Load a spaCy pipeline (model weights as binary data, ordered sequence of
@@ -62,7 +61,7 @@ def load_spacy(name, disable=None):
 
 
 @cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
-        key=partial(hashkey, 'hyphenator'))
+        key=functools.partial(hashkey, 'hyphenator'))
 def load_hyphenator(lang='en'):
     """
     Load an object that hyphenates words at valid points, as used in LaTex typesetting.
@@ -84,7 +83,7 @@ def load_hyphenator(lang='en'):
 
 
 @cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
-        key=partial(hashkey, 'depechemood'))
+        key=functools.partial(hashkey, 'depechemood'))
 def load_depechemood(data_dir=os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0'),
                      download_if_missing=True,
                      weighting='normfreq'):
@@ -125,7 +124,7 @@ def load_depechemood(data_dir=os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0')
         if (tail and tail != 'DepecheMood_V1.0') or head != 'DepecheMood_V1.0':
             data_dir = os.path.join(data_dir, 'DepecheMood_V1.0')
     fname = os.path.join(data_dir, 'DepecheMood_' + weighting + '.txt')
-    delimiter = bytes_('\t') if is_python2 else '\t'  # HACK: Py2's csv module fail
+    delimiter = compat.bytes_('\t') if compat.is_python2 else '\t'  # HACK: Py2's csv module fail
     try:
         with io.open(fname, mode='rt') as csvfile:
             csvreader = csv.reader(csvfile, delimiter=delimiter)

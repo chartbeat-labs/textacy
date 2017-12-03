@@ -6,20 +6,21 @@ Also includes a function to aggregate common key term variants of the same idea.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-from collections import Counter, defaultdict
-from decimal import Decimal
+import collections
 import itertools
 import logging
 import math
-from operator import itemgetter
+import operator
+from decimal import Decimal
 
-from cytoolz import itertoolz
 import networkx as nx
 import numpy as np
+from cytoolz import itertoolz
 
-from textacy import extract, vsm
-from textacy.network import terms_to_semantic_network
-from textacy.similarity import token_sort_ratio
+from . import extract
+from . import network
+from . import similarity
+from . import vsm
 
 LOGGER = logging.getLogger(__name__)
 
@@ -98,14 +99,14 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
 
     # pre-filter terms to the top N ranked by TF or modified TF*IDF
     n_prefilter_kts = max(3 * n_keyterms, 100)
-    term_text_counts = Counter(term[0] for term in terms)
+    term_text_counts = collections.Counter(term[0] for term in terms)
     if idf:
         mod_tfidfs = {
             term: count * idf.get(term, 1) if ' ' not in term else count
             for term, count in term_text_counts.items()}
         terms_set = {
             term for term, _
-            in sorted(mod_tfidfs.items(), key=itemgetter(1), reverse=True)[:n_prefilter_kts]}
+            in sorted(mod_tfidfs.items(), key=operator.itemgetter(1), reverse=True)[:n_prefilter_kts]}
     else:
         terms_set = {term for term, _ in term_text_counts.most_common(n_prefilter_kts)}
     terms = [term for term in terms if term[0] in terms_set]
@@ -135,8 +136,8 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
     # filter terms to only those with positive weights
     terms = [term for term in terms if term_weights[term[0]] > 0]
 
-    n_coocs = defaultdict(lambda: defaultdict(int))
-    sum_logdists = defaultdict(lambda: defaultdict(float))
+    n_coocs = collections.defaultdict(lambda: collections.defaultdict(int))
+    sum_logdists = collections.defaultdict(lambda: collections.defaultdict(float))
 
     # iterate over windows
     log_ = math.log  # localize this, for performance
@@ -152,7 +153,7 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
             break
 
     # compute edge weights between co-occurring terms (nodes)
-    edge_weights = defaultdict(lambda: defaultdict(float))
+    edge_weights = collections.defaultdict(lambda: collections.defaultdict(float))
     for t1, t2s in sum_logdists.items():
         for t2 in t2s:
             edge_weights[t1][t2] = ((1.0 + sum_logdists[t1][t2]) / n_coocs[t1][t2]) * term_weights[t1] * term_weights[t2]
@@ -168,7 +169,7 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
     graph.add_edges_from(norm_edge_weights)
     term_ranks = nx.pagerank_scipy(graph)
 
-    return sorted(term_ranks.items(), key=itemgetter(1, 0), reverse=True)[:n_keyterms]
+    return sorted(term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True)[:n_keyterms]
 
 
 def textrank(doc, normalize='lemma', n_keyterms=10):
@@ -294,7 +295,7 @@ def key_terms_from_semantic_network(doc, normalize='lemma',
     # and may well happen with ``normalize`` as a callable
     # an empty string should never be considered a keyterm
     good_word_list = [word for word in good_word_list if word]
-    graph = terms_to_semantic_network(
+    graph = network.terms_to_semantic_network(
         good_word_list, window_width=window_width, edge_weighting=edge_weighting)
 
     # rank nodes by algorithm, and sort in descending order
@@ -310,11 +311,11 @@ def key_terms_from_semantic_network(doc, normalize='lemma',
     # bail out here if all we wanted was key *words* and not *terms*
     if join_key_words is False:
         return [(word, score) for word, score in
-                sorted(word_ranks.items(), key=itemgetter(1), reverse=True)[:n_keyterms]]
+                sorted(word_ranks.items(), key=operator.itemgetter(1), reverse=True)[:n_keyterms]]
 
     top_n = int(0.25 * len(word_ranks))
     top_word_ranks = {word: rank for word, rank in
-                      sorted(word_ranks.items(), key=itemgetter(1), reverse=True)[:top_n]}
+                      sorted(word_ranks.items(), key=operator.itemgetter(1), reverse=True)[:top_n]}
 
     # join consecutive key words into key terms
     seen_joined_key_terms = set()
@@ -328,7 +329,7 @@ def key_terms_from_semantic_network(doc, normalize='lemma',
             seen_joined_key_terms.add(term)
             joined_key_terms.append((term, sum(word_ranks[word] for word in words)))
 
-    return sorted(joined_key_terms, key=itemgetter(1, 0), reverse=True)[:n_keyterms]
+    return sorted(joined_key_terms, key=operator.itemgetter(1, 0), reverse=True)[:n_keyterms]
 
 
 def most_discriminating_terms(terms_lists, bool_array_grp1,
@@ -413,7 +414,7 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
         grp1_terms_likelihoods[id2term[term_id]] = term1 * term2
     top_grp1_terms = [term for term, likelihood
                       in sorted(grp1_terms_likelihoods.items(),
-                                key=itemgetter(1), reverse=True)[:top_n_terms]]
+                                key=operator.itemgetter(1), reverse=True)[:top_n_terms]]
 
     # get grp2 terms likelihoods, then sort for most discriminating grp2-not-grp1 terms
     grp2_terms_likelihoods = {}
@@ -423,7 +424,7 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
         grp2_terms_likelihoods[id2term[term_id]] = term1 * term2
     top_grp2_terms = [term for term, likelihood
                       in sorted(grp2_terms_likelihoods.items(),
-                                key=itemgetter(1), reverse=True)[:top_n_terms]]
+                                key=operator.itemgetter(1), reverse=True)[:top_n_terms]]
 
     return (top_grp1_terms, top_grp2_terms)
 
@@ -527,7 +528,7 @@ def aggregate_term_variants(terms,
             for other_term in sorted(terms.difference(seen_terms), key=len, reverse=True):
                 if len(other_term) < 13:
                     break
-                tsr = token_sort_ratio(term, other_term)
+                tsr = similarity.token_sort_ratio(term, other_term)
                 if tsr > 0.93:
                     variants.add(other_term)
                     seen_terms.add(other_term)
@@ -569,7 +570,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
 
     # ranks: array of PageRank values, summing up to 1
     ranks = nx.pagerank_scipy(graph, alpha=0.85, max_iter=100, tol=1e-08, weight='weight')
-    sorted_ranks = sorted(ranks.items(), key=itemgetter(1), reverse=True)
+    sorted_ranks = sorted(ranks.items(), key=operator.itemgetter(1), reverse=True)
 
     avg_degree = sum(deg for _, deg in graph.degree()) / len(nodes_list)
     # relaxation parameter, k' in the paper
@@ -604,7 +605,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
     top_k_exp_vertices = get_l_step_expanded_set([item[0] for item in top_k_sorted_ranks], c)
 
     # compute initial exprel contribution
-    taken = defaultdict(bool)
+    taken = collections.defaultdict(bool)
     contrib = {}
     for vertex in nodes_list:
         # get l-step expanded set
@@ -619,7 +620,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
         if not contrib:  # TODO: check that .items(): not needed
             break
         # find word with highest l-step expanded relevance score
-        max_word_score = sorted(contrib.items(), key=itemgetter(1), reverse=True)[0]
+        max_word_score = sorted(contrib.items(), key=operator.itemgetter(1), reverse=True)[0]
         sum_contrib += max_word_score[1]  # contrib[max_word[0]]
         results[max_word_score[0]] = max_word_score[1]
         # find its l-step expanded set
@@ -709,7 +710,7 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
 
     # sort nodes by divrank score
     results = sorted(((i, score) for i, score in enumerate(pr.flatten().tolist())),
-                     key=itemgetter(1), reverse=True)
+                     key=operator.itemgetter(1), reverse=True)
 
     # replace node number by node value
     nodes_list = list(dict(graph.nodes()))

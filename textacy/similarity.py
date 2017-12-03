@@ -7,18 +7,18 @@ import collections
 import re
 import warnings
 
+import numpy as np
 from cytoolz import itertoolz
 from Levenshtein import (distance as _levenshtein,
                          hamming as _hamming,
                          jaro_winkler as _jaro_winkler,
                          ratio as _ratio)
-import numpy as np
 from pyemd import emd
 from sklearn.metrics import pairwise_distances
 
-import textacy
-from textacy.extract import words as extract_words
-from textacy.compat import string_types, unicode_, bytes_, bytes_to_unicode
+from . import compat
+from . import extract
+from .doc import Doc
 
 
 NONWORDCHARS_REGEX = re.compile(r'\W+', flags=re.IGNORECASE | re.UNICODE)
@@ -51,7 +51,7 @@ def word_movers(doc1, doc2, metric='cosine'):
 
     n = 0
     word_vecs = []
-    for word in itertoolz.concatv(extract_words(doc1), extract_words(doc2)):
+    for word in itertoolz.concatv(extract.words(doc1), extract.words(doc2)):
         if word.has_vector and word_idxs.setdefault(word.orth, n) == n:
             word_vecs.append(word.vector)
             n += 1
@@ -60,14 +60,14 @@ def word_movers(doc1, doc2, metric='cosine'):
 
     vec1 = collections.Counter(
         word_idxs[word.orth]
-        for word in extract_words(doc1)
+        for word in extract.words(doc1)
         if word.has_vector)
     vec1 = np.array([vec1[word_idx] for word_idx in range(len(word_idxs))]).astype(np.double)
     vec1 /= vec1.sum()  # normalize word counts
 
     vec2 = collections.Counter(
         word_idxs[word.orth]
-        for word in extract_words(doc2)
+        for word in extract.words(doc2)
         if word.has_vector)
     vec2 = np.array([vec2[word_idx] for word_idx in range(len(word_idxs))]).astype(np.double)
     vec2 /= vec2.sum()  # normalize word counts
@@ -89,7 +89,7 @@ def word2vec(obj1, obj2):
         float: similarity between `obj1` and `obj2` in the interval [0.0, 1.0],
             where larger values correspond to more similar objects
     """
-    if isinstance(obj1, textacy.Doc) and isinstance(obj2, textacy.Doc):
+    if isinstance(obj1, Doc) and isinstance(obj2, Doc):
         obj1 = obj1.spacy_doc
         obj2 = obj2.spacy_doc
     return obj1.similarity(obj2)
@@ -128,8 +128,8 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
     intersection = len(set1 & set2)
     union = len(set1 | set2)
     if (fuzzy_match is True and
-            not isinstance(obj1, string_types) and
-            not isinstance(obj2, string_types)):
+            not isinstance(obj1, compat.string_types) and
+            not isinstance(obj2, compat.string_types)):
         for item1 in set1.difference(set2):
             if max(token_sort_ratio(item1, item2) for item2 in set2) >= match_threshold:
                 intersection += 1
@@ -238,12 +238,12 @@ def token_sort_ratio(str1, str2):
 
 def _force_unicode(s):
     """Force ``s`` into unicode, or die trying."""
-    if isinstance(s, unicode_):
+    if isinstance(s, compat.unicode_):
         return s
-    elif isinstance(s, bytes_):
-        return bytes_to_unicode(s)
+    elif isinstance(s, compat.bytes_):
+        return compat.bytes_to_unicode(s)
     else:
-        return unicode_(s)
+        return compat.unicode_(s)
 
 
 def _process_and_sort(s):

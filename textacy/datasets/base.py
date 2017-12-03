@@ -1,7 +1,7 @@
 import logging
 import os
 
-from textacy.fileio import open_sesame
+from ..fileio.utils import open_sesame
 
 LOGGER = logging.getLogger(__name__)
 

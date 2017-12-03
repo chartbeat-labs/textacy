@@ -11,11 +11,8 @@ try:
 except ImportError:
     pass
 
-from textacy.compat import is_python2, unicode_to_bytes
-from textacy.constants import (ACRONYM_REGEX, DANGLING_PARENS_TERM_RE,
-                               LEAD_HYPHEN_TERM_RE, LEAD_TAIL_CRUFT_TERM_RE,
-                               NEG_DIGIT_TERM_RE, NONBREAKING_SPACE_REGEX,
-                               WEIRD_HYPHEN_SPACE_TERM_RE, WEIRD_APOSTR_SPACE_TERM_RE)
+from . import compat
+from . import constants
 
 LOGGER = logging.getLogger(__name__)
 
@@ -41,8 +38,8 @@ def detect_language(text):
             'you may do so via `pip install cld2-cffi` or `pip install textacy[lang]`.'
             )
 
-    if is_python2:
-        is_reliable, _, best_guesses = cld2_detect(unicode_to_bytes(text), bestEffort=True)
+    if compat.is_python2:
+        is_reliable, _, best_guesses = cld2_detect(compat.unicode_to_bytes(text), bestEffort=True)
     else:
         is_reliable, _, best_guesses = cld2_detect(text, bestEffort=True)
     if is_reliable is False:
@@ -88,7 +85,7 @@ def is_acronym(token, exclude=None):
     if not 2 <= sum(1 for char in token if char.isalnum()) <= 10:
         return False
     # only certain combinations of letters, digits, and '&/.-' allowed
-    if not ACRONYM_REGEX.match(token):
+    if not constants.ACRONYM_REGEX.match(token):
         return False
     return True
 
@@ -152,25 +149,25 @@ def clean_terms(terms):
         into a form that changes or obscures the original meaning of the term.
     """
     # get rid of leading/trailing junk characters
-    terms = (LEAD_TAIL_CRUFT_TERM_RE.sub('', term)
+    terms = (constants.LEAD_TAIL_CRUFT_TERM_RE.sub('', term)
              for term in terms)
-    terms = (LEAD_HYPHEN_TERM_RE.sub(r'\1', term)
+    terms = (constants.LEAD_HYPHEN_TERM_RE.sub(r'\1', term)
              for term in terms)
     # handle dangling/backwards parens, don't allow '(' or ')' to appear without the other
     terms = ('' if term.count(')') != term.count('(') or term.find(')') < term.find('(')
              else term if '(' not in term
-             else DANGLING_PARENS_TERM_RE.sub(r'\1\2\3', term)
+             else constants.DANGLING_PARENS_TERM_RE.sub(r'\1\2\3', term)
              for term in terms)
     # handle oddly separated hyphenated words
     terms = (term if '-' not in term
-             else NEG_DIGIT_TERM_RE.sub(r'\1\2', WEIRD_HYPHEN_SPACE_TERM_RE.sub(r'\1', term))
+             else constants.NEG_DIGIT_TERM_RE.sub(r'\1\2', constants.WEIRD_HYPHEN_SPACE_TERM_RE.sub(r'\1', term))
              for term in terms)
     # handle oddly separated apostrophe'd words
-    terms = (WEIRD_APOSTR_SPACE_TERM_RE.sub(r'\1\2', term)
+    terms = (constants.WEIRD_APOSTR_SPACE_TERM_RE.sub(r'\1\2', term)
              if "'" in term else term
              for term in terms)
     # normalize whitespace
-    terms = (NONBREAKING_SPACE_REGEX.sub(' ', term).strip()
+    terms = (constants.NONBREAKING_SPACE_REGEX.sub(' ', term).strip()
              for term in terms)
     for term in terms:
         if re.search(r'\w', term):

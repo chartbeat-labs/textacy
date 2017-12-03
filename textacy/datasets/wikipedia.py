@@ -26,10 +26,10 @@ from xml.etree.cElementTree import iterparse
 
 import ftfy
 
-from textacy import data_dir
-from textacy import compat
-from textacy.datasets.base import Dataset
-from textacy import fileio
+from .. import compat
+from .. import data_dir
+from .. import fileio
+from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
 

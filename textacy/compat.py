@@ -6,8 +6,8 @@ is_linux = sys.platform.startswith('linux')
 is_osx = sys.platform == 'darwin'
 
 if is_python2:
-    from backports import csv
     import cPickle as pickle
+    from backports import csv
     from itertools import izip as zip_
     from urlparse import urljoin
 
@@ -26,9 +26,9 @@ if is_python2:
 else:
     import csv
     import pickle
+    from builtins import zip as zip_
     from urllib.parse import urljoin
 
-    zip_ = zip
     bytes_ = bytes
     unicode_ = str
     string_types = (bytes, str)

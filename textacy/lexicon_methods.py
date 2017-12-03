@@ -2,10 +2,11 @@
 Collection of lexicon-based methods for characterizing texts by sentiment,
 emotional valence, etc.
 """
-from collections import defaultdict
+import collections
+
 from spacy.parts_of_speech import ADJ, ADV, NOUN, VERB
 
-from textacy import data
+from . import data
 
 # TODO: Do something smarter for averaging emotional valences.
 
@@ -36,8 +37,8 @@ def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting='norm
     """
     dm = data.load_depechemood(data_dir=dm_data_dir, weighting=dm_weighting)
     pos_to_letter = {NOUN: 'n', ADJ: 'a', ADV: 'r', VERB: 'v'}
-    emo_matches = defaultdict(int)
-    emo_scores = defaultdict(float)
+    emo_matches = collections.defaultdict(int)
+    emo_scores = collections.defaultdict(float)
     for word in words:
         if word.pos in pos_to_letter:
             lemma_pos = word.lemma_ + '#' + pos_to_letter[word.pos]

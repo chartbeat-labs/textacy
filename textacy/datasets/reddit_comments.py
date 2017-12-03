@@ -21,19 +21,19 @@ For more details, refer to https://archive.org/details/2015_reddit_comments_corp
 """
 from __future__ import unicode_literals
 
-from datetime import datetime
 import io
 import logging
 import os
 import re
+from datetime import datetime
 
 import requests
 
-from textacy import data_dir
-from textacy import compat
-from textacy.datasets.base import Dataset
-from textacy import fileio
-from textacy import preprocess
+from .. import compat
+from .. import data_dir
+from .. import fileio
+from .. import preprocess
+from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
 

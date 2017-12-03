@@ -3,7 +3,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 import bz2
 import gzip
 import io
-from itertools import tee, starmap
+import itertools
 import os
 import re
 import warnings
@@ -12,9 +12,9 @@ try:  # Py3
 except ImportError:  # Py2
     pass
 
-from cytoolz.itertoolz import cons, pluck
+from cytoolz import itertoolz
 
-from textacy import compat
+from .. import compat
 
 
 def open_sesame(filepath, mode='rt',
@@ -167,8 +167,8 @@ def unzip(seq):
         return tuple()
     # and create them
     niters = len(first)
-    seqs = tee(cons(first, seq), niters)
-    return tuple(starmap(pluck, enumerate(seqs)))
+    seqs = itertools.tee(itertoolz.cons(first, seq), niters)
+    return tuple(itertools.starmap(itertoolz.pluck, enumerate(seqs)))
 
 
 def get_filenames(dirname, match_substr=None, ignore_substr=None,
