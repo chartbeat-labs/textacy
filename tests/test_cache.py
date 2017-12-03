@@ -20,6 +20,7 @@ class CacheTestCase(unittest.TestCase):
         for lang in ('en', 'es'):
             _ = cache.load_hyphenator(lang=lang)
 
+    @unittest.skip("We don't download DepecheMood for tests; just skip it")
     def test_load_depechemood(self):
         for weighting in ('freq', 'normfreq', 'tfidf'):
             _ = cache.load_depechemood(weighting=weighting)

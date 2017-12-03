@@ -142,7 +142,7 @@ def load_depechemood(data_dir=None, weighting='normfreq'):
     .. seealso:: :func:`download_depechemood <textacy.lexicon_methods.download_depechemood>`
     """
     if data_dir is None:
-        data_dir = os.path.join(DEFAULT_DATA_DIR, 'depeche_mood', 'DepecheMood_V1.0')
+        data_dir = os.path.join(DEFAULT_DATA_DIR, 'depechemood', 'DepecheMood_V1.0')
     fname = os.path.join(
         data_dir, 'DepecheMood_{weighting}.txt'.format(weighting=weighting))
     delimiter = compat.bytes_('\t') if compat.is_python2 else '\t'  # HACK: Py2's csv module fail
