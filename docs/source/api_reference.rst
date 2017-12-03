@@ -103,7 +103,7 @@ Other Stuff!
 .. automodule:: textacy.text_stats
     :members:
 
-.. automodule:: textacy.data
+.. automodule:: textacy.cache
     :members:
 
 .. automodule:: textacy.lexicon_methods

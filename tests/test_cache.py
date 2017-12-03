@@ -17,9 +17,17 @@ class CacheTestCase(unittest.TestCase):
             _ = cache.load_spacy('en', disable=['tagger', 'parser', 'ner'])
 
     def test_load_pyphen(self):
-        for lang in ('en', 'de', 'es'):
+        for lang in ('en', 'es'):
             _ = cache.load_hyphenator(lang=lang)
 
     def test_load_depechemood(self):
         for weighting in ('freq', 'normfreq', 'tfidf'):
             _ = cache.load_depechemood(weighting=weighting)
+
+    def test_cache(self):
+        _ = cache.load_hyphenator(lang='en')
+        _ = cache.load_spacy('en')
+        self.assertTrue(len(cache.LRU_CACHE.keys()) >= 2)
+        # check cache size; low thresh but still larger than if the size of
+        # loaded data was not being correctly assessed
+        self.assertTrue(cache.LRU_CACHE.currsize >= 1000)

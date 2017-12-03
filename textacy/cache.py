@@ -6,6 +6,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import csv
 import functools
 import io
+import inspect
 import logging
 import os
 import sys
@@ -17,7 +18,6 @@ except ImportError:
     from urllib2 import urlopen
     from urllib2 import HTTPError
 
-import pyphen
 import spacy
 from cachetools import cached, LRUCache
 from cachetools.keys import hashkey
@@ -26,11 +26,49 @@ from . import compat
 from . import data_dir as DEFAULT_DATA_DIR
 
 LOGGER = logging.getLogger(__name__)
-MAX_CACHE_SIZE = 2147483648  # 2 GB, in bytes
 
 
-@cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
-        key=functools.partial(hashkey, 'spacy'))
+def _get_size(obj, seen=None):
+    """
+    Recursively find the actual size of an object, in bytes.
+
+    Taken as-is (with a tweak in function name) from https://github.com/bosswissam/pysize.
+    """
+    size = sys.getsizeof(obj)
+    if seen is None:
+        seen = set()
+    obj_id = id(obj)
+    if obj_id in seen:
+        return 0
+    # Important mark as seen *before* entering recursion to gracefully handle
+    # self-referential objects
+    seen.add(obj_id)
+    if hasattr(obj, '__dict__'):
+        for cls in obj.__class__.__mro__:
+            if '__dict__' in cls.__dict__:
+                d = cls.__dict__['__dict__']
+                if inspect.isgetsetdescriptor(d) or inspect.ismemberdescriptor(d):
+                    size += _get_size(obj.__dict__, seen)
+                break
+    if isinstance(obj, dict):
+        size += sum((_get_size(v, seen) for v in obj.values()))
+        size += sum((_get_size(k, seen) for k in obj.keys()))
+    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+        size += sum((_get_size(i, seen) for i in obj))
+    return size
+
+
+LRU_CACHE = LRUCache(2147483648, getsizeof=_get_size)
+""":class:`cachetools.LRUCache`: Least Recently Used (LRU) cache, with 2GB max size."""
+
+
+def clear():
+    """Clear textacy's cache of loaded data."""
+    global LRU_CACHE
+    LRU_CACHE.clear()
+
+
+@cached(LRU_CACHE, key=functools.partial(hashkey, 'spacy'))
 def load_spacy(name, disable=None):
     """
     Load a spaCy pipeline (model weights as binary data, ordered sequence of
@@ -47,10 +85,7 @@ def load_spacy(name, disable=None):
                name and args, and lists aren't hashable.
 
     Returns:
-        :class:`spacy.<lang>.<Language>`: A Language object with the loaded model.
-
-    Raises:
-        RuntimeError: if package can't be loaded
+        ``spacy.<lang>.<Language>``: A Language object with the loaded model.
 
     .. seealso:: https://spacy.io/api/top-level#spacy.load
     """
@@ -60,30 +95,30 @@ def load_spacy(name, disable=None):
     return spacy.load(name, disable=disable)
 
 
-@cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
-        key=functools.partial(hashkey, 'hyphenator'))
-def load_hyphenator(lang='en'):
+@cached(LRU_CACHE, key=functools.partial(hashkey, 'hyphenator'))
+def load_hyphenator(lang):
     """
     Load an object that hyphenates words at valid points, as used in LaTex typesetting.
 
-    Note that while hyphenation points always fall on syllable divisions,
-    not all syllable divisions are valid hyphenation points. But it's decent.
-
     Args:
-        lang (str): Standard 2-letter language abbreviation;
-            to get list of valid values::
+        lang (str): Standard 2-letter language abbreviation. To get a list of
+            valid values::
 
                 >>> import pyphen; pyphen.LANGUAGES
 
     Returns:
         :class:`pyphen.Pyphen()`
+
+    Note:
+        While hyphenation points always fall on syllable divisions,
+        not all syllable divisions are valid hyphenation points. But it's decent.
     """
+    import pyphen
     LOGGER.debug('Loading "%s" language hyphenator', lang)
     return pyphen.Pyphen(lang=lang)
 
 
-@cached(LRUCache(MAX_CACHE_SIZE, getsizeof=sys.getsizeof),
-        key=functools.partial(hashkey, 'depechemood'))
+@cached(LRU_CACHE, key=functools.partial(hashkey, 'depechemood'))
 def load_depechemood(data_dir=os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0'),
                      download_if_missing=True,
                      weighting='normfreq'):
@@ -98,16 +133,16 @@ def load_depechemood(data_dir=os.path.join(DEFAULT_DATA_DIR, 'DepecheMood_V1.0')
     following emotions: AFRAID, AMUSED, ANGRY, ANNOYED, DONT_CARE, HAPPY, INSPIRED, SAD.
 
     Args:
-        data_dir (str): directory on disk where DepecheMood lexicon
+        data_dir (str): Directory on disk where DepecheMood lexicon
             text files are stored, i.e. the location of the 'DepecheMood_V1.0'
-            directory created when unzipping the DM dataset
+            directory created when unzipping the DM dataset.
         download_if_missing (bool): if True and data not found on disk,
             it will be automatically downloaded and saved to disk
-        weighting ({'freq', 'normfreq', 'tfidf'}): type of word
-            weighting used in building DepecheMood matrix
+        weighting ({'freq', 'normfreq', 'tfidf'}): Type of word
+            weighting used in building DepecheMood matrix.
 
     Returns:
-        dict[dict]: top-level keys are Lemma#POS strings, values are nested dicts
+        Dict[dict]: top-level keys are Lemma#POS strings, values are nested dicts
             with emotion names as keys and weights as floats
 
     References:
