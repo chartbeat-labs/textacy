@@ -14,7 +14,7 @@ import textacy.datasets
 class ReadmeTestCase(unittest.TestCase):
 
     def setUp(self):
-        self.spacy_lang = textacy.data.load_spacy('en')
+        self.spacy_lang = textacy.cache.load_spacy('en')
         self.cw = textacy.datasets.CapitolWords()
         self.text = list(self.cw.texts(speaker_name={'Bernie Sanders'}, limit=1))[0]
         self.doc = textacy.Doc(self.text.strip(), lang=self.spacy_lang)

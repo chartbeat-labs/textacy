@@ -8,8 +8,8 @@ import unittest
 
 from textacy import Corpus
 from textacy import Doc
+from textacy import cache
 from textacy import compat
-from textacy import data
 from textacy import fileio
 from textacy.datasets.capitol_words import CapitolWords
 
@@ -22,7 +22,7 @@ class CorpusInitTestCase(unittest.TestCase):
 
     def test_corpus_init_lang(self):
         self.assertIsInstance(Corpus('en'), Corpus)
-        self.assertIsInstance(Corpus(data.load_spacy('en')), Corpus)
+        self.assertIsInstance(Corpus(cache.load_spacy('en')), Corpus)
         for bad_lang in (b'en', None):
             with self.assertRaises(TypeError):
                 Corpus(bad_lang)

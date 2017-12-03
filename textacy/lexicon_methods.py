@@ -6,7 +6,7 @@ import collections
 
 from spacy.parts_of_speech import ADJ, ADV, NOUN, VERB
 
-from . import data
+from . import cache
 
 # TODO: Do something smarter for averaging emotional valences.
 
@@ -35,7 +35,7 @@ def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting='norm
            Analysis from Crowd-Annotated News. 2014.
            Data available at https://github.com/marcoguerini/DepecheMood/releases
     """
-    dm = data.load_depechemood(data_dir=dm_data_dir, weighting=dm_weighting)
+    dm = cache.load_depechemood(data_dir=dm_data_dir, weighting=dm_weighting)
     pos_to_letter = {NOUN: 'n', ADJ: 'a', ADV: 'r', VERB: 'v'}
     emo_matches = collections.defaultdict(int)
     emo_scores = collections.defaultdict(float)

@@ -2,13 +2,13 @@ from __future__ import absolute_import, unicode_literals
 
 import unittest
 
-from textacy import data, spacy_utils
+from textacy import cache, spacy_utils
 
 
 class SpacyUtilsTestCase(unittest.TestCase):
 
     def setUp(self):
-        spacy_lang = data.load_spacy('en')
+        spacy_lang = cache.load_spacy('en')
         text = """
         The unit tests aren't going well.
         I love Python, but I don't love backwards incompatibilities.

@@ -5,14 +5,14 @@ import unittest
 
 from spacy import attrs
 
-from textacy import data, export
+from textacy import cache, export
 
 
 class ExportTestCase(unittest.TestCase):
 
     def setUp(self):
         text = "I would have lived in peace. But my enemies brought me war."
-        spacy_lang = data.load_spacy('en')
+        spacy_lang = cache.load_spacy('en')
         self.spacy_doc = spacy_lang(text)
         cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
         values = np.array(

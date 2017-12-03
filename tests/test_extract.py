@@ -7,14 +7,14 @@ import unittest
 from spacy.tokens import Span as SpacySpan
 from spacy.tokens import Token as SpacyToken
 
-from textacy import constants, data, extract
+from textacy import cache, constants, extract
 
 
 class ExtractTestCase(unittest.TestCase):
 
     def setUp(self):
         self.maxDiff = None
-        spacy_lang = data.load_spacy('en')
+        spacy_lang = cache.load_spacy('en')
         text = """
             Two weeks ago, I was in Kuwait participating in an I.M.F. seminar for Arab educators. For 30 minutes, we discussed the impact of technology trends on education in the Middle East. And then an Egyptian education official raised his hand and asked if he could ask me a personal question: "I heard Donald Trump say we need to close mosques in the United States," he said with great sorrow. "Is that what we want our kids to learn?"
             """

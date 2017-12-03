@@ -10,7 +10,7 @@ import numpy as np
 from scipy import sparse as sp
 from spacy import attrs
 
-from textacy import data, fileio
+from textacy import cache, fileio
 from textacy.compat import is_python2, unicode_to_bytes
 
 
@@ -18,7 +18,7 @@ class FileIOTestCase(unittest.TestCase):
 
     def setUp(self):
         self.text = "The year was 2081, and everybody was finally equal. They weren't only equal before God and the law. They were equal every which way."
-        self.spacy_lang = data.load_spacy('en')
+        self.spacy_lang = cache.load_spacy('en')
         self.spacy_doc = self.spacy_lang(self.text)
         cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
         values = np.array(

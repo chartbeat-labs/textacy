@@ -7,8 +7,8 @@ import tempfile
 import unittest
 
 from textacy import Doc
+from textacy import cache
 from textacy import compat
-from textacy import data
 
 TEXT = """
 Since the so-called "statistical revolution" in the late 1980s and mid 1990s, much Natural Language Processing research has relied heavily on machine learning.
@@ -23,7 +23,7 @@ class DocInitTestCase(unittest.TestCase):
         self.assertIsInstance(Doc('This is an English sentence.'), Doc)
 
     def test_spacydoc_content(self):
-        spacy_lang = data.load_spacy('en')
+        spacy_lang = cache.load_spacy('en')
         spacy_doc = spacy_lang('This is an English sentence.')
         self.assertIsInstance(Doc(spacy_doc), Doc)
 
@@ -42,7 +42,7 @@ class DocInitTestCase(unittest.TestCase):
             Doc('This is an English sentence.', lang='en'), Doc)
 
     def test_lang_spacylang(self):
-        spacy_lang = data.load_spacy('en')
+        spacy_lang = cache.load_spacy('en')
         self.assertIsInstance(
             Doc('This is an English sentence.', lang=spacy_lang), Doc)
 
@@ -61,7 +61,7 @@ class DocInitTestCase(unittest.TestCase):
                 Doc('This is an English sentence.', lang=invalid_lang)
 
     def test_invalid_content_lang_combo(self):
-        spacy_lang = data.load_spacy('en')
+        spacy_lang = cache.load_spacy('en')
         with self.assertRaises(ValueError):
             Doc(spacy_lang('Hola, cómo estás mi amigo?'), lang='es')
 

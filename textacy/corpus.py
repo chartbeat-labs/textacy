@@ -17,8 +17,8 @@ from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.util import get_lang_class
 
+from . import cache
 from . import compat
-from . import data
 from . import fileio
 from .doc import Doc
 
@@ -130,7 +130,7 @@ class Corpus(object):
     """
     def __init__(self, lang, texts=None, docs=None, metadatas=None):
         if isinstance(lang, compat.unicode_):
-            self.spacy_lang = data.load_spacy(lang)
+            self.spacy_lang = cache.load_spacy(lang)
         elif isinstance(lang, SpacyLang):
             self.spacy_lang = lang
         else:

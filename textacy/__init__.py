@@ -19,7 +19,7 @@ data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 # from textacy import extract
 # from textacy import export, keyterms, network, similarity
 
-from textacy.data import load_spacy
+from textacy.cache import load_spacy
 from textacy.preprocess import preprocess_text
 from textacy.doc import Doc
 from textacy.corpus import Corpus

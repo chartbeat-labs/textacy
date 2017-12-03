@@ -16,9 +16,9 @@ from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
 
+from . import cache
 from . import compat
 from . import constants
-from . import data
 from . import extract
 from . import fileio
 from . import network
@@ -117,11 +117,11 @@ class Doc(object):
                 spacy_lang = lang
                 langstr = spacy_lang.lang
             elif isinstance(lang, compat.unicode_):
-                spacy_lang = data.load_spacy(lang)
+                spacy_lang = cache.load_spacy(lang)
                 langstr = spacy_lang.lang
             elif callable(lang):
                 langstr = lang(content)
-                spacy_lang = data.load_spacy(langstr)
+                spacy_lang = cache.load_spacy(langstr)
             else:
                 raise TypeError(
                     '`lang` must be {}, not {}'.format(
@@ -183,17 +183,16 @@ class Doc(object):
 
     @property
     def metadata(self):
-        """Get :class:`Doc` metadata, stored in ``SpacyDoc.user_data``."""
+        """:class:`Doc` metadata, stored in ``SpacyDoc.user_data``."""
         return self.spacy_doc.user_data['textacy']['metadata']
 
     @metadata.setter
     def metadata(self, value):
-        """Set :class:`Doc` metadata, stored in ``SpacyDoc.user_data``."""
         self.spacy_doc.user_data['textacy']['metadata'] = value
 
     @property
     def lang(self):
-        """Get :class:`Doc` language, stored in ``SpacyDoc.user_data``."""
+        """:class:`Doc` language, stored in ``SpacyDoc.user_data``."""
         return self.spacy_doc.user_data['textacy']['lang']
 
     ##########

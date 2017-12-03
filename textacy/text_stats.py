@@ -8,7 +8,7 @@ from math import sqrt
 
 from spacy.tokens import Doc as SpacyDoc
 
-from . import data
+from . import cache
 from . import extract
 
 LOGGER = logging.getLogger(__name__)
@@ -91,7 +91,7 @@ class TextStats(object):
             lang = doc.lang
             self.n_sents = doc.n_sents
         # get objs for basic count computations
-        hyphenator = data.load_hyphenator(lang=lang)
+        hyphenator = cache.load_hyphenator(lang=lang)
         words = tuple(extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False))
         syllables_per_word = tuple(len(hyphenator.positions(word.lower_)) + 1 for word in words)
         chars_per_word = tuple(len(word) for word in words)
