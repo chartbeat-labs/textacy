@@ -49,7 +49,7 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
             ``int(round(len(doc) * n_keyterms))``
         idf (dict): Mapping of ``normalize(term)`` to inverse document frequency
             for re-weighting of unigrams (n-grams with n > 1 have df assumed = 1).
-            NOTE: Results are typically better with idf information.
+            Results are typically better with idf information.
 
     Returns:
         List[Tuple[str, float]]: sorted list of top ``n_keyterms`` key terms and

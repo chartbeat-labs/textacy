@@ -41,7 +41,7 @@ https://creativecommons.org/licenses/by-nc/3.0/us/.
 This dataset's creation was inspired by a blog post by Emily Barry:
 http://www.emilyinamillion.me/blog/2016/7/13/visualizing-supreme-court-topics-over-time.
 
-NOTE: The two datasets were merged through much munging and a carefully
+The two datasets were merged through much munging and a carefully
 trained model using the ``dedupe`` package. The model's duplicate threshold
 was set so as to maximize the F-score where precision had twice as much
 weight as recall. Still, given occasionally baffling inconsistencies in case

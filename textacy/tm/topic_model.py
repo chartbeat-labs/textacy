@@ -170,9 +170,9 @@ class TopicModel(object):
         correspond to documents and columns to the topics in the topic model.
 
         Args:
-            doc_term_matrix (array-like or sparse matrix): corpus represented as a
-                document-term matrix with shape (n_docs, n_terms); NOTE: LDA expects
-                tf-weighting, while NMF and LSA may do better with tfidf-weighting!
+            doc_term_matrix (array-like or sparse matrix): Corpus represented as a
+                document-term matrix with shape (n_docs, n_terms). LDA expects
+                tf-weighting, while NMF and LSA may do better with tfidf-weighting.
             normalize (bool): if True, the values in each row are normalized,
                 i.e. topic weights on each document sum to 1
 

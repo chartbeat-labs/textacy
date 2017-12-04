@@ -1,4 +1,4 @@
-<!--- Provide a general summary of the issue in the Title above -->
+<!--- Provide a general summary of the issue in the title above -->
 
 ## Expected Behavior
 <!--- If you're describing a bug, tell us what should happen -->
@@ -15,17 +15,13 @@
 ## Steps to Reproduce (for bugs)
 <!--- Provide a link to a live example, or an unambiguous set of steps to -->
 <!--- reproduce this bug. Include code to reproduce, if relevant -->
-1.
-1.
-1.
 
 ## Context
 <!--- How has this issue affected you? What are you trying to accomplish? -->
 <!--- Providing context helps us come up with a solution that is most useful in the real world -->
 
 ## Your Environment
-<!--- Include relevant details about the environment in which you experienced the bug -->
-<!-- NOTE: For textacy v0.3.4+, just copy-paste the output of `textacy.compat.get_config()`-->
+<!--- Include relevant details about the environment in which you experienced the bug. For convenience, just copy-paste the output of `textacy.compat.get_config()`-->
 * `textacy` and `spacy` versions:
 * Python version:
 * Operating system and version:
