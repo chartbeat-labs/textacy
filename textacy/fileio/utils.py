@@ -6,7 +6,6 @@ import io
 import itertools
 import os
 import re
-import warnings
 try:  # Py3
     import lzma
 except ImportError:  # Py2
@@ -175,20 +174,15 @@ def unzip(seq):
     return tuple(itertools.starmap(itertoolz.pluck, enumerate(seqs)))
 
 
-def get_filenames(dirname, match_substr=None, ignore_substr=None,
-                  match_regex=None, ignore_regex=None,
+def get_filenames(dirname, match_regex=None, ignore_regex=None,
                   extension=None, ignore_invisible=True, recursive=False):
     """
     Yield full paths of files on disk under directory ``dirname``, optionally
-    filtering for or against particular substrings or file extensions and
+    filtering for or against particular patterns or file extensions and
     crawling all subdirectories.
 
     Args:
         dirname (str): /path/to/dir on disk where files to read are saved
-        match_substr (str): match only files with given substring
-            (DEPRECATED; use match_regex)
-        ignore_substr (str): match only files *without* given substring
-            (DEPRECATED; use ignore_regex)
         match_regex (str): include files whose names match this regex pattern
         ignore_regex (str): include files whose names do *not* match this regex pattern
         extension (str): if files only of a certain type are wanted,
@@ -207,24 +201,11 @@ def get_filenames(dirname, match_substr=None, ignore_substr=None,
     """
     if not os.path.exists(dirname):
         raise OSError('directory "{}" does not exist'.format(dirname))
-    # TODO: remove these params in, say, v0.4
-    if match_substr or ignore_substr:
-        with warnings.catch_warnings():
-            warnings.simplefilter('always', DeprecationWarning)
-            msg = """
-            the `match_substr` and `ignore_substr` params are deprecated!
-            use the more flexible `match_regex` and `ignore_regex` params instead
-            """.strip().replace('\n', ' ')
-            warnings.warn(msg, DeprecationWarning)
     match_regex = re.compile(match_regex) if match_regex else None
     ignore_regex = re.compile(ignore_regex) if ignore_regex else None
 
     def is_good_file(filename, filepath):
         if ignore_invisible and filename.startswith('.'):
-            return False
-        if match_substr and match_substr not in filename:
-            return False
-        if ignore_substr and ignore_substr in filename:
             return False
         if match_regex and not match_regex.search(filename):
             return False
