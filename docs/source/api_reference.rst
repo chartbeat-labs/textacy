@@ -13,6 +13,24 @@ Corpus
 .. automodule:: textacy.corpus
     :members:
 
+Datasets
+--------
+
+.. automodule:: textacy.datasets.capitol_words
+    :members:
+
+.. automodule:: textacy.datasets.supreme_court
+    :members:
+
+.. automodule:: textacy.datasets.wikipedia
+    :members:
+
+.. automodule:: textacy.datasets.reddit_comments
+    :members:
+
+.. automodule:: textacy.datasets.oxford_text_archive
+    :members:
+
 Text Preprocessing
 ------------------
 
@@ -41,24 +59,6 @@ Representations
     :members:
 
 .. automodule:: textacy.vsm
-    :members:
-
-Datasets
---------
-
-.. automodule:: textacy.datasets.capitol_words
-    :members:
-
-.. automodule:: textacy.datasets.supreme_court
-    :members:
-
-.. automodule:: textacy.datasets.wikipedia
-    :members:
-
-.. automodule:: textacy.datasets.reddit_comments
-    :members:
-
-.. automodule:: textacy.datasets.oxford_text_archive
     :members:
 
 File IO

@@ -6,4 +6,5 @@
    :caption: Contents
 
    api_reference
+   changelog
    license

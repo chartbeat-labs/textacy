@@ -1,6 +1,63 @@
 Changelog
 =========
 
+0.5.0 (2017-12-04)
+------------------
+
+Changes:
+
+- **Bumped version requirement for spaCy from < 2.0 to >= 2.0** --- textacy no longer
+  works with spaCy 1.x! It's worth the upgrade, though. v2.0's new features and
+  API enabled (or required) a few changes on textacy's end
+  - ``textacy.load_spacy()`` takes the same inputs as the new ``spacy.load()``,
+    i.e. a package ``name`` string and an optional list of pipes to ``disable``
+  - textacy's ``Doc`` metadata and language string are now stored in ``user_data``
+    directly on the spaCy ``Doc`` object; although the API from a user's perspective
+    is unchanged, this made the next change possible
+  - ``Doc`` and ``Corpus`` classes are now de/serialized via pickle into a single
+    file --- no more side-car JSON files for metadata! Accordingly, the ``.save()``
+    and ``.load()`` methods on both classes have a simpler API: they take
+    a single string specifying the file on disk where data is stored.
+- **Cleaned up docs, imports, and tests throughout the entire code base.**
+  - docstrings and https://textacy.readthedocs.io 's API reference are easier to
+    read, with better cross-referencing and far fewer broken web links
+  - namespaces are less cluttered, and textacy's source code is easier to follow
+  - ``import textacy`` takes less than half the time from before
+  - the full test suite also runs about twice as fast, and most tests are now
+    more robust to changes in the performance of spaCy's models
+  - consistent adherence to conventions eases users' cognitive load :)
+- **The module responsible for caching loaded data in memory was cleaned up and
+  improved**, as well as renamed: from ``data.py`` to ``cache.py``, which is more
+  descriptive of its purpose. Otherwise, you shouldn't notice much of a difference
+  besides *things working correctly*.
+  - All loaded data (e.g. spacy language pipelines) is now cached together in a
+    single LRU cache whose max size is set to 2GB, and the size of each element
+    in the cache is now accurately computed. (tl;dr: ``sys.getsizeof`` does not
+    work on non-built-in objects like, say, a ``spacy.tokens.Doc``.)
+  - Loading and downloading of the DepecheMood resource is now less hacky and
+    weird, and much closer to how users already deal with textacy's various
+    ``Dataset``s, In fact, it can be downloaded in exactly the same way as the
+    datasets via textacy's new CLI: ``$ python -m textacy download depechemood``.
+    P.S. A brief guide for using the CLI got added to the README.
+- **Several function/method arguments marked for deprecation have been removed.**
+  If you've been ignoring the warnings that print out when you use ``lemmatize=True``
+  instead of ``normalize='lemma'`` (etc.), now is the time to update your calls!
+  - Of particular note: The ``readability_stats()`` function has been removed;
+    use ``TextStats(doc).readability_stats`` instead.
+
+Bugfixes:
+
+- In certain situations, the text of a spaCy span was being returned without
+  whitespace between tokens; that has been avoided in textacy, and the source bug
+  in spaCy got fixed (by yours truly! https://github.com/explosion/spaCy/pull/1621).
+- When adding already-parsed ``Doc``s to a ``Corpus``, including ``metadata``
+  now correctly overwrites any existing metadata on those docs.
+- Fixed a couple related issues involving the assignment of a 2-letter language
+  string to the ``.lang`` attribute of ``Doc`` and ``Corpus`` objects.
+- textacy's CLI wasn't correctly handling certain dataset kwargs in all cases;
+  now, all kwargs get to their intended destinations.
+
+
 0.4.2 (2017-11-28)
 ------------------
 
