@@ -52,6 +52,10 @@ Project Links
 - `textacy @ GitHub <https://github.com/chartbeat-labs/textacy>`_
 - `textacy @ ReadTheDocs <http://textacy.readthedocs.io/en/latest/>`_
 
+**Note:** ReadTheDocs builds are currently failing, so those docs are currently
+out-of-date. As a temporary workaround, I've built v0.5.0's documentation and
+published it via GitHub Pages: https://chartbeat-labs.github.io/textacy.
+
 
 Installation
 ------------
