@@ -197,12 +197,12 @@ def named_entities(doc,
             from named entities (e.g. "the United States" => "United States").
 
             .. note:: Entities from which a leading determiner has been removed
-               do *not* keep their entity type annotations. This is irritating
-               but unavoidable, since the only way to re-annotate them is to
-               modify ``doc`` directly, and this function is not meant to have
-               any side-effects. If you're only using the text of the returned
-               spans, this is no big deal; if you're using NE-like attributes
-               downstream, however, this is something to watch out for.
+               are, effectively, *new* entities, and not saved to the ``SpacyDoc``
+               from which they came. This is irritating but unavoidable, since
+               this function is not meant to have side-effects on document state.
+               If you're only using the text of the returned spans, this is no
+               big deal, but watch out if you're counting on determiner-less
+               entities associated with the doc downstream.
 
         min_freq (int): remove named entities that occur in `doc` fewer
             than `min_freq` times
@@ -246,7 +246,9 @@ def named_entities(doc,
             msg = 'invalid `exclude_types` type: "{}"'.format(type(exclude_types))
             raise TypeError(msg)
     if drop_determiners is True:
-        nes = (ne if ne[0].pos != DET else ne[1:] for ne in nes)
+        nes = (
+            ne if ne[0].pos != DET else SpacySpan(ne.doc, ne.start + 1, ne.end, label=ne.label, vector=ne.vector)
+            for ne in nes)
     if min_freq > 1:
         nes = list(nes)
         freqs = itertoolz.frequencies(ne.lower_ for ne in nes)

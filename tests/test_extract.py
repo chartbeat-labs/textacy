@@ -110,6 +110,10 @@ class ExtractTestCase(unittest.TestCase):
             self.spacy_doc, drop_determiners=False) if ent[0].pos_ == 'DET']
         self.assertEqual(observed, expected)
 
+    def test_named_entities_drop_determiners(self):
+        ents = list(extract.named_entities(self.spacy_doc, drop_determiners=True))
+        self.assertTrue(all(ent.label for ent in ents))
+
     @unittest.skip('waiting to hear back from spaCy, see issue #365')
     def test_noun_chunks(self):
         expected = [
