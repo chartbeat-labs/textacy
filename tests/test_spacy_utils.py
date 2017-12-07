@@ -42,10 +42,10 @@ class SpacyUtilsTestCase(unittest.TestCase):
 
     def test_normalize_str(self):
         normalized_strs = [
-            'the', 'unit', 'test', 'be', 'not', 'go', 'good', '.', '-PRON-',
+            'the', 'unit', 'test', 'be', 'not', 'go', 'well', '.', '-PRON-',
             'love', 'Python', ',', 'but', '-PRON-', 'do', 'not', 'love',
             'backwards', 'incompatibility', '.', 'no', 'programmer', 'be',
-            'permanently', 'damage', 'for', 'textacy', 'have', 'sake', '.',
+            'permanently', 'damage', 'for', 'textacy', "'s", 'sake', '.',
             'thank', 'God', 'for', 'Stack', 'Overflow', '.']
         self.assertEqual(
             [spacy_utils.normalized_str(tok) for tok in self.spacy_doc if not tok.is_space],
