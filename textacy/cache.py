@@ -51,8 +51,14 @@ def _get_size(obj, seen=None):
     return size
 
 
-LRU_CACHE = LRUCache(2147483648, getsizeof=_get_size)
-""":class:`cachetools.LRUCache`: Least Recently Used (LRU) cache, with 2GB max size."""
+LRU_CACHE = LRUCache(
+    os.environ.get('TEXTACY_MAX_CACHE_SIZE', 2147483648),
+    getsizeof=_get_size)
+""":class:`cachetools.LRUCache`: Least Recently Used (LRU) cache for loaded data.
+
+The max cache size may be set by the `TEXTACY_MAX_CACHE_SIZE` environment variable,
+where the value must be an integer (in bytes). Otherwise, the max size is 2GB.
+"""
 
 
 def clear():
