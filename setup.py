@@ -43,16 +43,22 @@ def read_file(fname, encoding='utf-8'):
     return io.open(path, encoding=encoding).read()
 
 
+about = {}
+root_path = os.path.abspath(os.path.dirname(__file__))
+with io.open(os.path.join(root_path, 'textacy', 'about.py')) as f:
+    exec(f.read(), about)
+
+
 setup(
-    name='textacy',
-    version='0.5.0',
-    description='Higher-level text processing, built on spaCy',
+    name=about['__title__'],
+    version=about['__version__'],
+    description=about['__description__'],
     long_description=read_file('README.rst'),
-    url='https://github.com/chartbeat-labs/textacy',
-    download_url='https://pypi.python.org/pypi/textacy',
-    maintainer='Burton DeWilde',
-    maintainer_email='burtdewilde@gmail.com',
-    license='Apache',
+    url=about['__url__'],
+    download_url=about['__download_url__'],
+    maintainer=about['__maintainer__'],
+    maintainer_email=about['__maintainer_email__'],
+    license=about['__license__'],
     classifiers=[
         'Development Status :: 4 - Beta',
         'License :: OSI Approved :: Apache Software License',

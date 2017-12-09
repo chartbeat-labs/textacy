@@ -3,7 +3,9 @@ from __future__ import absolute_import
 import logging
 import os
 
-__version__ = '0.5.0'
+from .about import __version__
+
+
 data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 # subpackages
