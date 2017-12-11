@@ -1,10 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import os
-import shutil
-import tempfile
-import unittest
+import pytest
 
 from textacy import Doc
 from textacy import cache
@@ -17,135 +14,131 @@ Many different classes of machine learning algorithms have been applied to NLP t
 """
 
 
-class DocInitTestCase(unittest.TestCase):
-
-    def test_unicode_content(self):
-        self.assertIsInstance(Doc('This is an English sentence.'), Doc)
-
-    def test_spacydoc_content(self):
-        spacy_lang = cache.load_spacy('en')
-        spacy_doc = spacy_lang('This is an English sentence.')
-        self.assertIsInstance(Doc(spacy_doc), Doc)
-
-    def test_invalid_content(self):
-        invalid_contents = [
-            b'This is an English sentence in bytes.',
-            {'content': 'This is an English sentence as dict value.'},
-            True,
-            ]
-        for invalid_content in invalid_contents:
-            with self.assertRaises(ValueError):
-                Doc(invalid_content)
-
-    def test_lang_str(self):
-        self.assertIsInstance(
-            Doc('This is an English sentence.', lang='en'), Doc)
-
-    def test_lang_spacylang(self):
-        spacy_lang = cache.load_spacy('en')
-        self.assertIsInstance(
-            Doc('This is an English sentence.', lang=spacy_lang), Doc)
-
-    def test_lang_callable(self):
-        def dumb_detect_language(text):
-            return 'en'
-        self.assertIsInstance(
-            Doc('This is an English sentence.', lang=dumb_detect_language), Doc)
-        self.assertIsInstance(
-            Doc('This is an English sentence.', lang=lambda x: 'en'), Doc)
-
-    def test_invalid_lang(self):
-        invalid_langs = [b'en', ['en', 'en_core_web_sm'], True]
-        for invalid_lang in invalid_langs:
-            with self.assertRaises(TypeError):
-                Doc('This is an English sentence.', lang=invalid_lang)
-
-    def test_invalid_content_lang_combo(self):
-        spacy_lang = cache.load_spacy('en')
-        with self.assertRaises(ValueError):
-            Doc(spacy_lang('Hola, cómo estás mi amigo?'), lang='es')
+@pytest.fixture(scope='module')
+def doc(request):
+    return Doc(TEXT.strip(), lang='en', metadata={'foo': 'bar!'})
 
 
-class DocMethodsTestCase(unittest.TestCase):
+# init tests
 
-    def setUp(self):
-        self.tempdir = tempfile.mkdtemp(
-            prefix='test_doc', dir=os.path.dirname(os.path.abspath(__file__)))
-        self.doc = Doc(TEXT.strip(), lang='en', metadata={'foo': 'bar!'})
+def test_unicode_content():
+    assert isinstance(Doc('This is an English sentence.'), Doc)
 
-    def test_n_tokens_and_sents(self):
-        self.assertEqual(self.doc.n_tokens, 241)
-        self.assertEqual(self.doc.n_sents, 8)
 
-    def test_term_count(self):
-        self.assertEqual(self.doc.count('statistical'), 3)
-        self.assertEqual(self.doc.count('machine learning'), 2)
-        self.assertEqual(self.doc.count('foo'), 0)
+def test_spacydoc_content():
+    spacy_lang = cache.load_spacy('en')
+    spacy_doc = spacy_lang('This is an English sentence.')
+    assert isinstance(Doc(spacy_doc), Doc)
 
-    def test_tokenized_text(self):
-        tokenized_text = self.doc.tokenized_text
-        self.assertIsInstance(tokenized_text, list)
-        self.assertIsInstance(tokenized_text[0], list)
-        self.assertIsInstance(tokenized_text[0][0], compat.unicode_)
-        self.assertEqual(len(tokenized_text), self.doc.n_sents)
 
-    def test_pos_tagged_text(self):
-        pos_tagged_text = self.doc.pos_tagged_text
-        self.assertIsInstance(pos_tagged_text, list)
-        self.assertIsInstance(pos_tagged_text[0], list)
-        self.assertIsInstance(pos_tagged_text[0][0], tuple)
-        self.assertIsInstance(pos_tagged_text[0][0][0], compat.unicode_)
-        self.assertEqual(len(pos_tagged_text), self.doc.n_sents)
+def test_invalid_content():
+    invalid_contents = [
+        b'This is an English sentence in bytes.',
+        {'content': 'This is an English sentence as dict value.'},
+        True,
+        ]
+    for invalid_content in invalid_contents:
+        with pytest.raises(ValueError):
+            _ = Doc(invalid_content)
 
-    def test_to_terms_list(self):
-        full_terms_list = list(self.doc.to_terms_list(as_strings=True))
-        full_terms_list_ids = list(self.doc.to_terms_list(as_strings=False))
-        self.assertEqual(len(full_terms_list), len(full_terms_list_ids))
-        self.assertIsInstance(full_terms_list[0], compat.unicode_)
-        self.assertIsInstance(full_terms_list_ids[0], compat.int_types)
-        self.assertNotEqual(
-            full_terms_list[0],
-            list(self.doc.to_terms_list(as_strings=True, normalize=False))[0])
-        self.assertLess(
-            len(list(self.doc.to_terms_list(ngrams=False))),
-            len(full_terms_list))
-        self.assertLess(
-            len(list(self.doc.to_terms_list(ngrams=1))),
-            len(full_terms_list))
-        self.assertLess(
-            len(list(self.doc.to_terms_list(ngrams=(1, 2)))),
-            len(full_terms_list))
-        self.assertLess(
-            len(list(self.doc.to_terms_list(ngrams=False))),
-            len(full_terms_list))
 
-    def test_to_bag_of_words(self):
-        bow = self.doc.to_bag_of_words(weighting='count')
-        self.assertIsInstance(bow, dict)
-        self.assertIsInstance(list(bow.keys())[0], compat.int_types)
-        self.assertIsInstance(list(bow.values())[0], int)
-        bow = self.doc.to_bag_of_words(weighting='binary')
-        self.assertIsInstance(bow, dict)
-        self.assertIsInstance(list(bow.keys())[0], compat.int_types)
-        self.assertIsInstance(list(bow.values())[0], int)
-        for value in list(bow.values())[0:10]:
-            self.assertLess(value, 2)
-        bow = self.doc.to_bag_of_words(weighting='freq')
-        self.assertIsInstance(bow, dict)
-        self.assertIsInstance(list(bow.keys())[0], compat.int_types)
-        self.assertIsInstance(list(bow.values())[0], float)
-        bow = self.doc.to_bag_of_words(as_strings=True)
-        self.assertIsInstance(bow, dict)
-        self.assertIsInstance(list(bow.keys())[0], compat.unicode_)
+def test_lang_str():
+    assert isinstance(Doc('This is an English sentence.', lang='en'), Doc)
 
-    def test_doc_save_and_load(self):
-        filepath = os.path.join(self.tempdir, 'test_doc_save_and_load.pkl')
-        self.doc.save(filepath)
-        new_doc = Doc.load(filepath)
-        self.assertIsInstance(new_doc, Doc)
-        self.assertEqual(len(new_doc), len(self.doc))
-        self.assertEqual(new_doc.lang, self.doc.lang)
-        self.assertEqual(new_doc.metadata, self.doc.metadata)
 
-    def tearDown(self):
-        shutil.rmtree(self.tempdir)
+def test_lang_spacylang():
+    spacy_lang = cache.load_spacy('en')
+    assert isinstance(Doc('This is an English sentence.', lang=spacy_lang), Doc)
+
+
+def test_lang_callable():
+    def dumb_detect_language(text):
+        return 'en'
+    assert isinstance(Doc('This is an English sentence.', lang=dumb_detect_language), Doc)
+    assert isinstance(Doc('This is an English sentence.', lang=lambda x: 'en'), Doc)
+
+
+def test_invalid_lang():
+    invalid_langs = [b'en', ['en', 'en_core_web_sm'], True]
+    for invalid_lang in invalid_langs:
+        with pytest.raises(TypeError):
+            _ = Doc('This is an English sentence.', lang=invalid_lang)
+
+
+def test_invalid_content_lang_combo():
+    spacy_lang = cache.load_spacy('en')
+    with pytest.raises(ValueError):
+        _ = Doc(spacy_lang('Hola, cómo estás mi amigo?'), lang='es')
+
+
+# methods tests
+
+def test_n_tokens_and_sents(doc):
+    assert doc.n_tokens == 241
+    assert doc.n_sents == 8
+
+
+def test_term_count(doc):
+    assert doc.count('statistical') == 3
+    assert doc.count('machine learning') == 2
+    assert doc.count('foo') == 0
+
+
+def test_tokenized_text(doc):
+    tokenized_text = doc.tokenized_text
+    assert isinstance(tokenized_text, list)
+    assert isinstance(tokenized_text[0], list)
+    assert isinstance(tokenized_text[0][0], compat.unicode_)
+    assert len(tokenized_text) == doc.n_sents
+
+
+def test_pos_tagged_text(doc):
+    pos_tagged_text = doc.pos_tagged_text
+    assert isinstance(pos_tagged_text, list)
+    assert isinstance(pos_tagged_text[0], list)
+    assert isinstance(pos_tagged_text[0][0], tuple)
+    assert isinstance(pos_tagged_text[0][0][0], compat.unicode_)
+    assert len(pos_tagged_text) == doc.n_sents
+
+
+def test_to_terms_list(doc):
+    full_terms_list = list(doc.to_terms_list(as_strings=True))
+    full_terms_list_ids = list(doc.to_terms_list(as_strings=False))
+    assert len(full_terms_list) == len(full_terms_list_ids)
+    assert isinstance(full_terms_list[0], compat.unicode_)
+    assert isinstance(full_terms_list_ids[0], compat.int_types)
+    assert full_terms_list[0] != list(doc.to_terms_list(as_strings=True, normalize=False))[0]
+    assert len(list(doc.to_terms_list(ngrams=False))) < len(full_terms_list)
+    assert len(list(doc.to_terms_list(ngrams=1))) < len(full_terms_list)
+    assert len(list(doc.to_terms_list(ngrams=(1, 2)))) < len(full_terms_list)
+    assert len(list(doc.to_terms_list(ngrams=False))) < len(full_terms_list)
+
+
+def test_to_bag_of_words(doc):
+    bow = doc.to_bag_of_words(weighting='count')
+    assert isinstance(bow, dict)
+    assert isinstance(list(bow.keys())[0], compat.int_types)
+    assert isinstance(list(bow.values())[0], int)
+    bow = doc.to_bag_of_words(weighting='binary')
+    assert isinstance(bow, dict)
+    assert isinstance(list(bow.keys())[0], compat.int_types)
+    assert isinstance(list(bow.values())[0], int)
+    for value in list(bow.values())[0:10]:
+        assert value < 2
+    bow = doc.to_bag_of_words(weighting='freq')
+    assert isinstance(bow, dict)
+    assert isinstance(list(bow.keys())[0], compat.int_types)
+    assert isinstance(list(bow.values())[0], float)
+    bow = doc.to_bag_of_words(as_strings=True)
+    assert isinstance(bow, dict)
+    assert isinstance(list(bow.keys())[0], compat.unicode_)
+
+
+def test_doc_save_and_load(tmpdir, doc):
+    filepath = str(tmpdir.join('test_doc_save_and_load.pkl'))
+    doc.save(filepath)
+    new_doc = Doc.load(filepath)
+    assert isinstance(new_doc, Doc)
+    assert len(new_doc) == len(doc)
+    assert new_doc.lang == doc.lang
+    assert new_doc.metadata == doc.metadata
