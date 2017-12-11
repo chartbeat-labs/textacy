@@ -9,7 +9,7 @@ os:
 
 # command to install dependencies and data
 install:
-    - "pip install -r requirements.txt"
+    - "pip install -r requirements-dev.txt"
     - "python -m spacy download en_core_web_sm"
     - "python -m spacy link en_core_web_sm en"
     - "python -m spacy download es_core_news_sm"
@@ -17,4 +17,4 @@ install:
     - "python -m textacy download capitol_words"
 
 # command to run tests
-script: nosetests -v
+script: "python -m pytest -v"
