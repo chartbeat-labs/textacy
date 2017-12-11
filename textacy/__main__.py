@@ -5,6 +5,7 @@ import logging
 import sys
 from pprint import pprint
 
+from . import compat
 from . import datasets
 from . import lexicon_methods
 
@@ -65,7 +66,7 @@ if __name__ == '__main__':
         'info', formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         help='get basic information about datasets and such')
     parser_info.add_argument(
-        'dataset_name', type=str, choices=list(DATASET_NAME_TO_CLASS.keys()),
+        'dataset_name', type=str, nargs='?', choices=list(DATASET_NAME_TO_CLASS.keys()),
         help='name of dataset to get basic information about')
 
     args = vars(parser.parse_args())
@@ -91,8 +92,10 @@ if __name__ == '__main__':
             DATASET_NAME_TO_CLASS[args['dataset_name']](**kwargs_func)
 
     if args['subcommand'] == 'info':
+        if args.get('dataset_name') is None:
+            pprint(compat.get_config())
         # do we have a `Dataset`?
-        if hasattr(DATASET_NAME_TO_CLASS[args['dataset_name']], 'info'):
+        elif hasattr(DATASET_NAME_TO_CLASS[args['dataset_name']], 'info'):
             kwargs_init = {
                 key: args[key] for key in ['data_dir']
                 if args.get(key) is not None}

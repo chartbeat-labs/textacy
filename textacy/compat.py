@@ -46,7 +46,7 @@ def get_config():
     """Helper function to get relevant config info, especially when debugging."""
     from spacy.about import __version__ as spacy_version
     from spacy.util import get_data_path
-    from textacy import __version__ as textacy_version
+    from textacy.about import __version__ as textacy_version
 
     return {
         'python': sys.version,
