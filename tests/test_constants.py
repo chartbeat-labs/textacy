@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import unittest
-
 from textacy.constants import (ACRONYM_REGEX, URL_REGEX, EMAIL_REGEX,
                                PHONE_REGEX, NUMBERS_REGEX,
                                SHORT_URL_REGEX)
@@ -90,64 +88,76 @@ PARTIAL_NUMBERS = [
     '(555)123-456', '2015-12-24']
 
 
-class RegexesEtcTestCase(unittest.TestCase):
+def test_good_acronym_regex():
+    for item in GOOD_ACRONYMS:
+        assert item == ACRONYM_REGEX.search(item).group()
 
-    def test_good_acronym_regex(self):
-        for item in GOOD_ACRONYMS:
-            self.assertEqual(item, ACRONYM_REGEX.search(item).group())
 
-    def test_bad_acronym_regex(self):
-        for item in BAD_ACRONYMS:
-            self.assertIsNone(ACRONYM_REGEX.search(item))
+def test_bad_acronym_regex():
+    for item in BAD_ACRONYMS:
+        assert ACRONYM_REGEX.search(item) is None
 
-    def test_good_url_regex(self):
-        for item in GOOD_URLS:
-            self.assertEqual(item, URL_REGEX.search(item).group())
 
-    def test_bad_url_regex(self):
-        for item in BAD_URLS:
-            self.assertIsNone(URL_REGEX.search(item))
+def test_good_url_regex():
+    for item in GOOD_URLS:
+        assert item == URL_REGEX.search(item).group()
 
-    def test_partial_url_regex(self):
-        for item in PARTIAL_URLS:
-            self.assertNotEqual(item, URL_REGEX.search(item))
 
-    def test_good_short_url_regex(self):
-        for item in GOOD_SHORT_URLS:
-            self.assertEqual(item, SHORT_URL_REGEX.search(item).group())
+def test_bad_url_regex():
+    for item in BAD_URLS:
+        assert URL_REGEX.search(item) is None
 
-    def test_bad_short_url_regex(self):
-        for item in BAD_SHORT_URLS:
-            self.assertIsNone(SHORT_URL_REGEX.search(item))
 
-    def test_good_phone_regex(self):
-        for item in GOOD_PHONES:
-            self.assertEqual(item, PHONE_REGEX.search(item).group())
+def test_partial_url_regex():
+    for item in PARTIAL_URLS:
+        assert item != URL_REGEX.search(item)
 
-    def test_bad_phone_regex(self):
-        for item in BAD_PHONES:
-            self.assertIsNone(PHONE_REGEX.search(item))
 
-    def test_partial_phone_regex(self):
-        for item in PARTIAL_PHONES:
-            self.assertNotEqual(item, PHONE_REGEX.search(item))
+def test_good_short_url_regex():
+    for item in GOOD_SHORT_URLS:
+        assert item == SHORT_URL_REGEX.search(item).group()
 
-    def test_good_email_regex(self):
-        for item in GOOD_EMAILS:
-            self.assertEqual(item, EMAIL_REGEX.search(item).group())
 
-    def test_bad_email_regex(self):
-        for item in BAD_EMAILS:
-            self.assertIsNone(EMAIL_REGEX.search(item))
+def test_bad_short_url_regex():
+    for item in BAD_SHORT_URLS:
+        assert SHORT_URL_REGEX.search(item) is None
 
-    def test_good_number_regex(self):
-        for item in GOOD_NUMBERS:
-            self.assertEqual(item, NUMBERS_REGEX.search(item).group())
 
-    def test_bad_number_regex(self):
-        for item in BAD_NUMBERS:
-            self.assertIsNone(NUMBERS_REGEX.search(item))
+def test_good_phone_regex():
+    for item in GOOD_PHONES:
+        assert item == PHONE_REGEX.search(item).group()
 
-    def test_partial_number_regex(self):
-        for item in PARTIAL_NUMBERS:
-            self.assertNotEqual(item, NUMBERS_REGEX.search(item))
+
+def test_bad_phone_regex():
+    for item in BAD_PHONES:
+        assert PHONE_REGEX.search(item) is None
+
+
+def test_partial_phone_regex():
+    for item in PARTIAL_PHONES:
+        assert item != PHONE_REGEX.search(item)
+
+
+def test_good_email_regex():
+    for item in GOOD_EMAILS:
+        assert item == EMAIL_REGEX.search(item).group()
+
+
+def test_bad_email_regex():
+    for item in BAD_EMAILS:
+        assert EMAIL_REGEX.search(item) is None
+
+
+def test_good_number_regex():
+    for item in GOOD_NUMBERS:
+        assert item == NUMBERS_REGEX.search(item).group()
+
+
+def test_bad_number_regex():
+    for item in BAD_NUMBERS:
+        assert NUMBERS_REGEX.search(item) is None
+
+
+def test_partial_number_regex():
+    for item in PARTIAL_NUMBERS:
+        assert item != NUMBERS_REGEX.search(item)
