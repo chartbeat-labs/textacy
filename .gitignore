@@ -1,7 +1,7 @@
 # compiled code
 *.py[co]
 
-# OS X
+# macOS
 .DS_Store
 
 # distribution / packaging
@@ -9,12 +9,13 @@ build/
 dist/
 *.egg-info/
 
-# sphinx documentation
+# documentation
 docs/build/*
 
-# other stuff
+# testing
+.cache
 .coverage
 
-# datasets
+# textacy
 resources/
 data/
