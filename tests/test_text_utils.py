@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
-import unittest
-
 from textacy import text_utils
 
 GOOD_ACRONYMS = [
@@ -43,69 +41,77 @@ TEXT = """
     """
 
 
-class TextUtilsTestCase(unittest.TestCase):
+def test_is_acronym_good():
+    for item in GOOD_ACRONYMS:
+        assert text_utils.is_acronym(item)
 
-    def test_is_acronym_good(self):
-        for item in GOOD_ACRONYMS:
-            self.assertTrue(text_utils.is_acronym(item))
 
-    def test_is_acronym_bad(self):
-        for item in BAD_ACRONYMS:
-            self.assertFalse(text_utils.is_acronym(item))
+def test_is_acronym_bad():
+    for item in BAD_ACRONYMS:
+        assert not text_utils.is_acronym(item)
 
-    def test_is_acronym_exclude(self):
-        self.assertFalse(text_utils.is_acronym('NASA', exclude={'NASA'}))
 
-    def test_detect_language(self):
-        for lang, sent in LANG_SENTS:
-            self.assertEqual(text_utils.detect_language(sent), lang)
+def test_is_acronym_exclude():
+    assert not text_utils.is_acronym('NASA', exclude={'NASA'})
 
-    def test_keyword_in_context_keyword(self):
-        for keyword in ('clinton', 'all'):
-            results = list(text_utils.keyword_in_context(
-                TEXT, keyword, ignore_case=True, window_width=50, print_only=False))
-            for pre, kw, post in results:
-                self.assertEqual(kw.lower(), keyword)
 
-    def test_keyword_in_context_ignore_case(self):
-        for keyword in ('All', 'all'):
-            results = list(text_utils.keyword_in_context(
-                TEXT, keyword, ignore_case=False, window_width=50, print_only=False))
-            for pre, kw, post in results:
-                self.assertEqual(kw, keyword)
-        # also test for a null result, bc of case
+def test_detect_language():
+    for lang, sent in LANG_SENTS:
+        assert text_utils.detect_language(sent) == lang
+
+
+def test_keyword_in_context_keyword():
+    for keyword in ('clinton', 'all'):
         results = list(text_utils.keyword_in_context(
-                TEXT, 'clinton', ignore_case=False, window_width=50, print_only=False))
-        self.assertEqual(results, [])
-
-    def test_keyword_in_context_window_width(self):
-        for window_width in (10, 20):
-            results = list(text_utils.keyword_in_context(
-                TEXT, 'clinton', ignore_case=True, print_only=False,
-                window_width=window_width))
-            for pre, kw, post in results:
-                self.assertTrue(len(pre) <= window_width)
-                self.assertTrue(len(post) <= window_width)
-
-    def test_keyword_in_context_unicode(self):
-        keyword = 'terminó'
-        results = list(text_utils.keyword_in_context(
-            'No llores porque ya se terminó, sonríe porque sucedió.',
-            keyword,
-            print_only=False))
+            TEXT, keyword, ignore_case=True, window_width=50, print_only=False))
         for pre, kw, post in results:
-            self.assertEqual(kw, keyword)
+            assert kw.lower() == keyword
 
-    def test_clean_terms_good(self):
-        observed = list(text_utils.clean_terms(GOOD_TERMS))
-        self.assertEqual(observed, GOOD_TERMS)
 
-    def test_clean_terms_bad(self):
-        observed = list(text_utils.clean_terms(BAD_TERMS))
-        self.assertEqual(observed, [])
+def test_keyword_in_context_ignore_case():
+    for keyword in ('All', 'all'):
+        results = list(text_utils.keyword_in_context(
+            TEXT, keyword, ignore_case=False, window_width=50, print_only=False))
+        for pre, kw, post in results:
+            assert kw == keyword
+    # also test for a null result, bc of case
+    results = list(text_utils.keyword_in_context(
+            TEXT, 'clinton', ignore_case=False, window_width=50, print_only=False))
+    assert results == []
 
-    def test_clean_terms_crufty(self):
-        observed = list(text_utils.clean_terms(CRUFTY_TERMS))
-        expected = ['(foo bar)', 'foo-bar', '-123.4', 'foo bar', 'foo', 'bar?!',
-                    "foo's bar", "foo'll bar", 'foo bar', 'foo bar.']
-        self.assertEqual(observed, expected)
+
+def test_keyword_in_context_window_width():
+    for window_width in (10, 20):
+        results = list(text_utils.keyword_in_context(
+            TEXT, 'clinton', ignore_case=True, print_only=False,
+            window_width=window_width))
+        for pre, kw, post in results:
+            assert len(pre) <= window_width
+            assert len(post) <= window_width
+
+
+def test_keyword_in_context_unicode():
+    keyword = 'terminó'
+    results = list(text_utils.keyword_in_context(
+        'No llores porque ya se terminó, sonríe porque sucedió.',
+        keyword,
+        print_only=False))
+    for pre, kw, post in results:
+        assert kw == keyword
+
+
+def test_clean_terms_good():
+    observed = list(text_utils.clean_terms(GOOD_TERMS))
+    assert observed == GOOD_TERMS
+
+
+def test_clean_terms_bad():
+    observed = list(text_utils.clean_terms(BAD_TERMS))
+    assert observed == []
+
+
+def test_clean_terms_crufty():
+    observed = list(text_utils.clean_terms(CRUFTY_TERMS))
+    expected = ['(foo bar)', 'foo-bar', '-123.4', 'foo bar', 'foo', 'bar?!',
+                "foo's bar", "foo'll bar", 'foo bar', 'foo bar.']
+    assert observed == expected
