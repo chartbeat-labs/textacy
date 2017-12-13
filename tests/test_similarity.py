@@ -1,86 +1,93 @@
 from __future__ import absolute_import, unicode_literals
 
-import unittest
+import pytest
 
-import textacy
-from textacy.compat import is_python2
+from textacy import Doc
+from textacy import compat, similarity
 
 
-class SimilarityTestCase(unittest.TestCase):
+@pytest.fixture(scope='module')
+def text1():
+    return 'She spoke to the assembled journalists.'
 
-    def setUp(self):
-        self.text1 = 'She spoke to the assembled journalists.'
-        self.text2 = 'He chatted with the gathered press.'
-        self.doc1 = textacy.Doc(self.text1, lang='en')
-        self.doc2 = textacy.Doc(self.text2, lang='en')
 
-    def test_word_movers_metrics(self):
-        metrics = ('cosine', 'l1', 'manhattan', 'l2', 'euclidean')
-        for metric in metrics:
-            self.assertTrue(
-                0.0 <= textacy.similarity.word_movers(self.doc1, self.doc2, metric=metric) <= 1.0)
+@pytest.fixture(scope='module')
+def text2():
+    return 'He chatted with the gathered press.'
 
-    def test_word_movers_identity(self):
-        self.assertAlmostEqual(
-            textacy.similarity.word_movers(self.doc1, self.doc1),
-            1.0, places=4)
 
-    def test_word2vec(self):
-        pairs = ((self.doc1, self.doc2),
-                 (self.doc1[-2:], self.doc2[-2:]))
-        for pair in pairs:
-            self.assertTrue(
-                0.0 <= textacy.similarity.word2vec(pair[0], pair[1]) <= 1.0)
+@pytest.fixture(scope='module')
+def doc1(text1):
+    return Doc(text1, lang='en')
 
-    def test_word2vec_identity(self):
-        self.assertAlmostEqual(
-            textacy.similarity.word2vec(self.doc1, self.doc1),
-            1.0, places=4)
 
-    def test_jaccard(self):
-        pairs = ((self.text1, self.text2),
-                 (self.text1.split(), self.text2.split()))
-        expected_values = (0.4583333, 0.09091)
-        for pair, expected_value in zip(pairs, expected_values):
-            self.assertAlmostEqual(
-                textacy.similarity.jaccard(pair[0], pair[1]),
-                expected_value,
-                places=4)
+@pytest.fixture(scope='module')
+def doc2(text2):
+    return Doc(text2, lang='en')
 
-    def test_jaccard_exception(self):
-        self.assertRaises(
-            ValueError, textacy.similarity.jaccard,
-            self.text1, self.text2, True)
 
-    def test_jaccard_fuzzy_match(self):
-        thresholds = (0.50, 0.70, 0.90)
-        expected_values = (0.454546, 0.272728, 0.09091)
-        for thresh, expected_value in zip(thresholds, expected_values):
-            self.assertAlmostEqual(
-                textacy.similarity.jaccard(self.text1.split(), self.text2.split(),
-                                           fuzzy_match=True, match_threshold=thresh),
-                expected_value,
-                places=4)
+def test_word_movers_metrics(doc1, doc2):
+    metrics = ('cosine', 'l1', 'manhattan', 'l2', 'euclidean')
+    for metric in metrics:
+        assert 0.0 <= similarity.word_movers(doc1, doc2, metric=metric) <= 1.0
 
-    @unittest.skipIf(is_python2, "Python 2's unittest doesn't have ``assertWarns``")
-    def test_jaccard_fuzzy_match_warning(self):
-        thresh = 50
-        with self.assertWarns(UserWarning):
-            textacy.similarity.jaccard(
-                self.text1.split(), self.text2.split(),
-                fuzzy_match=True, match_threshold=thresh)
 
-    def test_hamming(self):
-        self.assertEqual(
-            textacy.similarity.hamming(self.text1, self.text2),
-            0.1282051282051282)
+def test_word_movers_identity(doc1, doc2):
+    assert similarity.word_movers(doc1, doc1) == pytest.approx(1.0, rel=1e-3)
 
-    def test_levenshtein(self):
-        self.assertEqual(
-            textacy.similarity.levenshtein(self.text1, self.text2),
-            0.3589743589743589)
 
-    def test_jaro_winkler(self):
-        self.assertEqual(
-            textacy.similarity.jaro_winkler(self.text1, self.text2),
-            0.5718004218004219)
+def test_word2vec(doc1, doc2):
+    pairs = ((doc1, doc2),
+             (doc1[-2:], doc2[-2:]))
+    for pair in pairs:
+        assert 0.0 <= similarity.word2vec(pair[0], pair[1]) <= 1.0
+
+
+def test_word2vec_identity(doc1, doc2):
+    assert similarity.word2vec(doc1, doc1) == pytest.approx(1.0, rel=1e-3)
+
+
+def test_jaccard(text1, text2):
+    pairs = ((text1, text2),
+             (text1.split(), text2.split()))
+    expected_values = (0.4583333, 0.09091)
+    for pair, expected_value in zip(pairs, expected_values):
+        assert (
+            similarity.jaccard(pair[0], pair[1]) ==
+            pytest.approx(expected_value, rel=1e-3)
+            )
+
+
+def test_jaccard_exception(text1, text2):
+    with pytest.raises(ValueError):
+        _ = similarity.jaccard(text1, text2, True)
+
+
+def test_jaccard_fuzzy_match(text1, text2):
+    thresholds = (0.50, 0.70, 0.90)
+    expected_values = (0.454546, 0.272728, 0.09091)
+    for thresh, expected_value in zip(thresholds, expected_values):
+        assert (
+            similarity.jaccard(text1.split(), text2.split(),
+                               fuzzy_match=True, match_threshold=thresh) ==
+            pytest.approx(expected_value, rel=1e-3)
+            )
+
+
+def test_jaccard_fuzzy_match_warning(text1, text2):
+    thresh = 50
+    with pytest.warns(UserWarning):
+        _ = similarity.jaccard(text1.split(), text2.split(),
+                               fuzzy_match=True, match_threshold=thresh)
+
+
+def test_hamming(text1, text2):
+    assert similarity.hamming(text1, text2) == 0.1282051282051282
+
+
+def test_levenshtein(text1, text2):
+    assert similarity.levenshtein(text1, text2) == 0.3589743589743589
+
+
+def test_jaro_winkler(text1, text2):
+    assert similarity.jaro_winkler(text1, text2) == 0.5718004218004219

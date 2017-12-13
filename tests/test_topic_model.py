@@ -6,9 +6,7 @@ import pytest
 import numpy as np
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
-from textacy.vsm import Vectorizer
-from textacy import Corpus
-from textacy.tm import TopicModel
+from textacy import Corpus, TopicModel, Vectorizer
 
 
 @pytest.fixture(scope='module')
@@ -28,7 +26,7 @@ def term_lists():
 
 
 @pytest.fixture(scope='module')
-def vectorizer(term_lists):
+def vectorizer():
     vectorizer_ = Vectorizer(
         weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
         min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
