@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 
 import numpy as np
 import pytest
-
 from spacy import attrs
 
 from textacy import cache, export

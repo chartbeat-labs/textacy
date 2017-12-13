@@ -7,9 +7,9 @@ import pytest
 import scipy.sparse as sp
 from spacy.tokens.span import Span as SpacySpan
 
-import textacy
 import textacy.datasets
-from textacy import compat, keyterms
+from textacy import Doc, Corpus, Vectorizer, TextStats, TopicModel, preprocess_text
+from textacy import cache, compat, constants, extract, fileio, keyterms, text_utils
 
 DATASET = textacy.datasets.CapitolWords()
 
@@ -25,35 +25,35 @@ def text():
 
 @pytest.fixture(scope='module')
 def doc(text):
-    spacy_lang = textacy.cache.load_spacy('en')
-    return textacy.Doc(text.strip(), lang=spacy_lang)
+    spacy_lang = cache.load_spacy('en')
+    return Doc(text.strip(), lang=spacy_lang)
 
 
 @pytest.fixture(scope='module')
 def corpus():
-    spacy_lang = textacy.cache.load_spacy('en')
+    spacy_lang = cache.load_spacy('en')
     records = DATASET.records(speaker_name={'Bernie Sanders'}, limit=10)
-    text_stream, metadata_stream = textacy.fileio.split_record_fields(
+    text_stream, metadata_stream = fileio.split_record_fields(
         records, 'text')
-    corpus = textacy.Corpus(spacy_lang, texts=text_stream, metadatas=metadata_stream)
+    corpus = Corpus(spacy_lang, texts=text_stream, metadatas=metadata_stream)
     return corpus
 
 
 def test_streaming_functionality(corpus):
     assert isinstance(DATASET, textacy.datasets.base.Dataset)
-    assert isinstance(corpus, textacy.Corpus)
+    assert isinstance(corpus, Corpus)
 
 
 def test_vectorization_and_topic_modeling_functionality(corpus):
     n_topics = 10
     top_n = 10
-    vectorizer = textacy.Vectorizer(
+    vectorizer = Vectorizer(
         weighting='tfidf', normalize=True, smooth_idf=True,
         min_df=2, max_df=0.95)
     doc_term_matrix = vectorizer.fit_transform(
         (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
          for doc in corpus))
-    model = textacy.TopicModel('nmf', n_topics=n_topics)
+    model = TopicModel('nmf', n_topics=n_topics)
     model.fit(doc_term_matrix)
     doc_topic_matrix = model.transform(doc_term_matrix)
     assert isinstance(doc_term_matrix, sp.csr_matrix)
@@ -65,17 +65,17 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
 
 
 def test_corpus_functionality(corpus):
-    assert isinstance(corpus[0], textacy.Doc)
+    assert isinstance(corpus[0], Doc)
     assert list(corpus.get(lambda doc: doc.metadata['speaker_name'] == 'Bernie Sanders'))
 
 
 def test_plaintext_functionality(text):
-    preprocessed_text = textacy.preprocess_text(
+    preprocessed_text = preprocess_text(
         text, lowercase=True, no_punct=True)[:100]
     assert all(char.islower() for char in preprocessed_text if char.isalpha())
     assert all(char.isalnum() or char.isspace() for char in preprocessed_text)
     keyword = 'America'
-    kwics = textacy.text_utils.keyword_in_context(
+    kwics = text_utils.keyword_in_context(
         text, keyword, window_width=35, print_only=False)
     for pre, kw, post in kwics:
         assert kw == keyword
@@ -84,31 +84,31 @@ def test_plaintext_functionality(text):
 
 
 def test_extract_functionality(doc):
-    bigrams = list(textacy.extract.ngrams(
+    bigrams = list(extract.ngrams(
         doc, 2, filter_stops=True, filter_punct=True, filter_nums=False))[:10]
     for bigram in bigrams:
         assert isinstance(bigram, SpacySpan)
         assert len(bigram) == 2
 
-    trigrams = list(textacy.extract.ngrams(
+    trigrams = list(extract.ngrams(
         doc, 3, filter_stops=True, filter_punct=True, min_freq=2))[:10]
     for trigram in trigrams:
         assert isinstance(trigram, SpacySpan)
         assert len(trigram) == 3
 
-    nes = list(textacy.extract.named_entities(
+    nes = list(extract.named_entities(
         doc, drop_determiners=False, exclude_types='numeric'))[:10]
     for ne in nes:
         assert isinstance(ne, SpacySpan)
         assert ne.label_
         assert ne.label_ != 'QUANTITY'
 
-    pos_regex_matches = list(textacy.extract.pos_regex_matches(
-        doc, textacy.constants.POS_REGEX_PATTERNS['en']['NP']))[:10]
+    pos_regex_matches = list(extract.pos_regex_matches(
+        doc, constants.POS_REGEX_PATTERNS['en']['NP']))[:10]
     for match in pos_regex_matches:
         assert isinstance(match, SpacySpan)
 
-    stmts = list(textacy.extract.semistructured_statements(
+    stmts = list(extract.semistructured_statements(
         doc, 'I', cue='be'))[:10]
     for stmt in stmts:
         assert isinstance(stmt, list)
@@ -125,7 +125,7 @@ def test_extract_functionality(doc):
 
 
 def test_text_stats_functionality(doc):
-    ts = textacy.TextStats(doc)
+    ts = TextStats(doc)
 
     assert isinstance(ts.n_words, int)
     assert isinstance(ts.flesch_kincaid_grade_level, float)

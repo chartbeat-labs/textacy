@@ -2,9 +2,9 @@
 from __future__ import absolute_import, unicode_literals
 
 import os
-import pytest
 
 import numpy as np
+import pytest
 from scipy import sparse as sp
 from spacy import attrs
 

@@ -2,8 +2,8 @@
 from __future__ import absolute_import, unicode_literals
 
 import collections
-import pytest
 
+import pytest
 from spacy.tokens import Span as SpacySpan
 from spacy.tokens import Token as SpacyToken
 

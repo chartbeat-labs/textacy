@@ -2,7 +2,6 @@
 from __future__ import absolute_import, unicode_literals
 
 import pytest
-
 from scipy.sparse import coo_matrix
 
 from textacy import Corpus
