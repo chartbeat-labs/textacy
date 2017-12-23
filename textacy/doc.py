@@ -110,60 +110,77 @@ class Doc(object):
         spacy_stringstore (``spacy.StringStore``): https://spacy.io/api/stringstore
     """
     def __init__(self, content, metadata=None, lang=text_utils.detect_language):
-
-        # Doc instantiated from text, so must be parsed with a spacy.Language
         if isinstance(content, compat.unicode_):
-            if isinstance(lang, SpacyLang):
-                spacy_lang = lang
-                langstr = spacy_lang.lang
-            elif isinstance(lang, compat.unicode_):
-                spacy_lang = cache.load_spacy(lang)
-                langstr = spacy_lang.lang
-            elif callable(lang):
-                langstr = lang(content)
-                spacy_lang = cache.load_spacy(langstr)
-            else:
-                raise TypeError(
-                    '`lang` must be {}, not {}'.format(
-                        {compat.unicode_, SpacyLang, types.FunctionType}, type(lang)))
-            self.spacy_vocab = spacy_lang.vocab
-            self.spacy_stringstore = self.spacy_vocab.strings
-            self.spacy_doc = spacy_lang(content)
-        # Doc instantiated from an already-parsed spacy.Doc
+            self._init_from_text(content, metadata, lang)
         elif isinstance(content, SpacyDoc):
-            self.spacy_vocab = content.vocab
-            self.spacy_stringstore = self.spacy_vocab.strings
-            self.spacy_doc = content
-            langstr = self.spacy_vocab.lang
-            # these checks are probably unnecessary, but in case a user
-            # has done something strange, we should complain...
-            if isinstance(lang, SpacyLang):
-                if self.spacy_vocab is not lang.vocab:
-                    raise ValueError(
-                        '`spacy.Vocab` used to parse `content` must be the same '
-                        'as the one associated with the `lang` param')
-            elif isinstance(lang, compat.unicode_):
-                # a `lang` as str could be a specific spacy model name,
-                # e.g. "en_core_web_sm", while `langstr` would only be "en"
-                if not lang.startswith(langstr):
-                    raise ValueError(
-                        'lang of spacy model used to parse `content` ({}) '
-                        'must be the same as the `lang` param ({})'.format(
-                            lang, langstr))
-            elif callable(lang) is False:
-                raise TypeError(
-                    '`lang` must be {}, not {}'.format(
-                        {compat.unicode_, SpacyLang, types.FunctionType}, type(lang)))
-        # oops, user has made some sort of mistake
+            self._init_from_spacy_doc(content, metadata, lang)
         else:
             raise ValueError(
                 '`Doc` must be initialized with {} content, not "{}"'.format(
                     {compat.unicode_, SpacyDoc}, type(content)))
 
-        self.spacy_doc.user_data['textacy'] = {'lang': langstr}
-        self.spacy_doc.user_data['textacy']['metadata'] = metadata or {}
         self._counted_ngrams = set()
         self._counts = collections.Counter()
+
+    def _init_from_text(self, content, metadata, lang):
+        """Doc instantiated from text, so must be parsed with a spacy.Language.
+        """
+        if isinstance(lang, SpacyLang):
+            spacy_lang = lang
+            langstr = spacy_lang.lang
+        elif isinstance(lang, compat.unicode_):
+            spacy_lang = cache.load_spacy(lang)
+            langstr = spacy_lang.lang
+        elif callable(lang):
+            langstr = lang(content)
+            spacy_lang = cache.load_spacy(langstr)
+        else:
+            raise TypeError(
+                '`lang` must be {}, not {}'.format(
+                    {compat.unicode_, SpacyLang, types.FunctionType}, type(lang)))
+        self.spacy_vocab = spacy_lang.vocab
+        self.spacy_stringstore = self.spacy_vocab.strings
+        self.spacy_doc = spacy_lang(content)
+        self.spacy_doc.user_data['textacy'] = {
+            'lang': langstr,
+            'metadata': metadata or {},
+            }
+
+    def _init_from_spacy_doc(self, content, metadata, lang):
+        """Doc instantiated from an already-parsed spacy.Doc. Ensure agreement
+        between various spacy objects and inputs, and check for existing metadata
+        rather than always overwriting it.
+        """
+        self.spacy_vocab = content.vocab
+        self.spacy_stringstore = self.spacy_vocab.strings
+        self.spacy_doc = content
+        langstr = self.spacy_vocab.lang
+        # these checks are probably unnecessary, but in case a user
+        # has done something strange, we should complain...
+        if isinstance(lang, SpacyLang):
+            if self.spacy_vocab is not lang.vocab:
+                raise ValueError(
+                    '`spacy.Vocab` used to parse `content` must be the same '
+                    'as the one associated with the `lang` param')
+        elif isinstance(lang, compat.unicode_):
+            # a `lang` as str could be a specific spacy model name,
+            # e.g. "en_core_web_sm", while `langstr` would only be "en"
+            if not lang.startswith(langstr):
+                raise ValueError(
+                    'lang of spacy model used to parse `content` ({}) '
+                    'must be the same as the `lang` param ({})'.format(
+                        lang, langstr))
+        elif callable(lang) is False:
+            raise TypeError(
+                '`lang` must be {}, not {}'.format(
+                    {compat.unicode_, SpacyLang, types.FunctionType}, type(lang)))
+        # textacy metadata could already be assigned to spacy doc; grab it
+        # if it's there and user hasn't supplied *new* metadata to overwrite it
+        metadata = metadata or content.user_data.get('textacy', {}).get('metadata') or {}
+        self.spacy_doc.user_data['textacy'] = {
+            'lang': langstr,
+            'metadata': metadata,
+            }
 
     def __repr__(self):
         snippet = self.text[:50].replace('\n', ' ')
