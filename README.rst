@@ -123,12 +123,12 @@ Usage Example
 .. code-block:: pycon
 
     >>> import textacy
-    >>> import textacy.datasets
 
 Efficiently stream documents from disk and into a processed corpus:
 
 .. code-block:: pycon
 
+    >>> import textacy.datasets
     >>> cw = textacy.datasets.CapitolWords()
     >>> cw.download()
     >>> records = cw.records(speaker_name={'Hillary Clinton', 'Barack Obama'})
@@ -263,6 +263,7 @@ Extract various elements of interest from parsed documents:
      (I, am, grateful to have had Senator Schumer as my partner and my ally),
      (I, am, very excited about what can happen in the next 4 years),
      (I, been, a New Yorker, but I know I always will be one)]
+    >>> import textacy.keyterms
     >>> textacy.keyterms.textrank(doc, n_keyterms=10)
     [('day', 0.01608508275877894),
      ('people', 0.015079868730811194),
