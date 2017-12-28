@@ -149,7 +149,10 @@ def read_csv(filepath, encoding=None, dialect='excel', delimiter=','):
     """
     with open_sesame(filepath, mode='rt', encoding=encoding, newline='') as f:
         if dialect == 'infer':
-            dialect = compat.csv.Sniffer().sniff(f.read(1024))
+            sniffer = compat.csv.Sniffer()
+            # add pipes to the list of preferred delimiters, and put spaces last
+            sniffer.preferred = [',', '\t', '|', ';', ':', ' ']
+            dialect = sniffer.sniff(f.read(1024))
             f.seek(0)
         for row in compat.csv.reader(f, dialect=dialect, delimiter=delimiter):
             yield row
