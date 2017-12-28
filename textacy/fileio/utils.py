@@ -9,7 +9,10 @@ import re
 try:  # Py3
     import lzma
 except ImportError:  # Py2
-    pass
+    try:
+        from backports import lzma
+    except ImportError:  # Py2 without backport installed
+        pass
 
 from cytoolz import itertoolz
 
@@ -69,10 +72,12 @@ def open_sesame(filepath, mode='rt',
         elif ext == '.bz2':
             f = bz2.BZ2File(filepath, mode=mode_)
         elif ext == '.xz':
-            if compat.is_python2 is True:
-                msg = "lzma compression isn't enabled for Python 2; try gzip or bz2"
-                raise ValueError(msg)
-            f = lzma.LZMAFile(filepath, mode=mode_)
+            try:
+                f = lzma.LZMAFile(filepath, mode=mode_)
+            except NameError:
+                raise ValueError(
+                    "lzma compression isn\'t included in Python 2's stdlib; "
+                    "try gzip or bz2, or install `backports.lzma`")
         # handle reading/writing compressed files in text mode
         if 't' in mode:
             if compat.is_python2 is True:
