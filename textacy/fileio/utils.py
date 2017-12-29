@@ -6,6 +6,7 @@ import io
 import itertools
 import os
 import re
+import zipfile
 try:  # Py3
     import lzma
 except ImportError:  # Py2
@@ -18,79 +19,145 @@ from cytoolz import itertoolz
 
 from .. import compat
 
+_ext_to_compression = {
+    '.bz2': 'bz2',
+    '.gz': 'gzip',
+    '.xz': 'xz',
+    '.zip': 'zip',
+}
+
 
 def open_sesame(filepath, mode='rt',
-                encoding=None, auto_make_dirs=False,
-                errors=None, newline=None):
+                encoding=None, errors=None, newline=None,
+                compression='infer', auto_make_dirs=False):
     """
-    Open file ``filepath``. Compression (if any) is inferred from the file
-    extension ('.gz', '.bz2', or '.xz') and handled automatically; '~', '.',
-    and/or '..' in paths are automatically expanded; if writing to a directory
-    that doesn't exist, all intermediate directories can be created
-    automatically, as needed.
+    Open file ``filepath``. Automatically handle file compression, relative
+    paths and symlinks, and missing intermediate directory creation, as needed.
 
-    `open_sesame` may be used as a drop-in replacement for the built-in `open`.
+    ``open_sesame`` may be used as a drop-in replacement for :func:`io.open`.
 
     Args:
-        filepath (str): path on disk (absolute or relative) of the file to open
-        mode (str): optional string specifying the mode in which ``filepath``
-            is opened
-        encoding (str): optional name of the encoding used to decode or encode
-            ``filepath``; only applicable in text mode
-        errors (str): optional string specifying how encoding/decoding errors
-            are handled; only applicable in text mode
-        newline (str): optional string specifying how universal newlines mode
-            works; only applicable in text mode
-        auto_make_dirs (bool): if True, automatically create (sub)directories if
-            not already present in order to write `filepath`
+        filepath (str): Path on disk (absolute or relative) of the file to open.
+        mode (str): The mode in which ``filepath`` is opened.
+        encoding (str): Name of the encoding used to decode or encode ``filepath``.
+            Only applicable in text mode.
+        errors (str): String specifying how encoding/decoding errors are handled.
+            Only applicable in text mode.
+        newline (str): String specifying how universal newlines mode works.
+            Only applicable in text mode.
+        compression (str): Type of compression, if any, with which ``filepath``
+            is read from or written to disk. If None, no compression is used;
+            if 'infer', compression is inferrred from the extension on ``filepath``.
+        auto_make_dirs (bool): If True, automatically create (sub)directories if
+            not already present in order to write ``filepath``.
 
     Returns:
         file object
+
+    Raises:
+        TypeError: if ``filepath`` is not a string
+        ValueError: if ``encoding`` is specified but ``mode`` is binary
+        OSError: if ``filepath`` doesn't exist but ``mode`` is read
     """
-    # sanity check args
+    # check args
     if not isinstance(filepath, compat.string_types):
         raise TypeError('filepath must be a string, not {}'.format(type(filepath)))
     if encoding and 't' not in mode:
         raise ValueError('encoding only applicable for text mode')
 
-    # process filepath and create dirs
+    # normalize filepath and make dirs, as needed
     filepath = os.path.realpath(os.path.expanduser(filepath))
     if auto_make_dirs is True:
         make_dirs(filepath, mode)
-    elif 'r' in mode and not os.path.exists(filepath):
+    elif mode.startswith('r') and not os.path.exists(filepath):
         raise OSError('file "{}" does not exist'.format(filepath))
 
-    # infer compression from filepath extension
-    # and get file handle accordingly
-    _, ext = os.path.splitext(filepath)
-    ext = ext.lower()
-    if ext in ('.gz', '.bz2', '.xz'):
-        # strip bytes/text from mode; 'b' is default, and we'll handle 't' below
+    compression = _get_compression(filepath, compression)
+
+    f = _get_file_handle(
+        filepath, mode, compression=compression,
+        encoding=encoding, errors=errors, newline=newline)
+
+    return f
+
+
+def _get_compression(filepath, compression):
+    """
+    Get the compression method for ``filepath``, depending on its file extension
+    and the value of ``compression``. Also validate the given values.
+    """
+    # user has specified "no compression"
+    if compression is None:
+        return None
+    # user wants us to infer compression from filepath
+    elif compression == 'infer':
+        _, ext = os.path.splitext(filepath)
+        try:
+            return _ext_to_compression[ext.lower()]
+        except KeyError:
+            return None
+    # user has specified compression; validate it
+    elif compression in _ext_to_compression.values():
+        return compression
+    else:
+        raise ValueError(
+            'compression="{}" is invalid; '
+            'valid values are {}.'.format(
+                compression, [None, 'infer'] + sorted(_ext_to_compression.values()))
+        )
+
+
+def _get_file_handle(filepath, mode, compression=None,
+                     encoding=None, errors=None, newline=None):
+    """
+    Get a file handle for the given ``filepath`` and ``mode``, plus optional kwargs.
+    """
+    if compression:
+
         mode_ = mode.replace('b', '').replace('t', '')
-        if ext == '.gz':
+
+        if compression == 'gzip':
             f = gzip.GzipFile(filepath, mode=mode_)
-        elif ext == '.bz2':
+        elif compression == 'bz2':
             f = bz2.BZ2File(filepath, mode=mode_)
-        elif ext == '.xz':
+        elif compression == 'xz':
             try:
                 f = lzma.LZMAFile(filepath, mode=mode_)
             except NameError:
                 raise ValueError(
                     "lzma compression isn\'t included in Python 2's stdlib; "
                     "try gzip or bz2, or install `backports.lzma`")
-        # handle reading/writing compressed files in text mode
+        elif compression == 'zip':
+            zip_file = zipfile.ZipFile(filepath, mode=mode_)
+            zip_names = zip_file.namelist()
+            if len(zip_names) == 1:
+                f = zip_file.open(zip_names[0])
+            elif len(zip_names) == 0:
+                raise ValueError(
+                    'no files found in zip file "{}"'.format(filepath))
+            else:
+                raise ValueError(
+                    '{} files found in zip file "{}", '
+                    'but only one file is allowed.'.format(len(zip_names), filepath))
+        else:
+            raise ValueError(
+                'compression="{}" is invalid; '
+                'valid values are {}.'.format(
+                    compression, [None, 'infer'] + sorted(_ext_to_compression.values()))
+            )
+
         if 't' in mode:
             if compat.is_python2 is True:
-                msg = 'Python 2 can\'t read/write compressed files in "{}" mode'.format(mode)
-                raise ValueError(msg)
+                raise ValueError(
+                    'Python 2 can\'t open compressed files in "{}" mode'.format(mode))
             else:
                 f = io.TextIOWrapper(
                     f, encoding=encoding, errors=errors, newline=newline)
 
-    # no compression, so file is opened as usual
+    # no compression, file is opened as usual
     else:
-        f = io.open(filepath, mode=mode,
-                    encoding=encoding, errors=errors, newline=newline)
+        f = io.open(
+            filepath, mode=mode, encoding=encoding, errors=errors, newline=newline)
 
     return f
 
