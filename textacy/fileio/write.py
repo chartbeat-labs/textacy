@@ -12,7 +12,7 @@ from spacy.tokens.doc import Doc as SpacyDoc
 from tqdm import tqdm
 
 from .. import compat
-from .utils import make_dirs, open_sesame
+from .utils import _make_dirs, open_sesame
 
 
 def write_file(content, filepath, mode='wt', encoding=None,
@@ -187,7 +187,7 @@ def write_sparse_matrix(matrix, filepath, compressed=True):
     """
     if not isinstance(matrix, (sp.csc_matrix, sp.csr_matrix)):
         raise TypeError('input matrix must be a scipy sparse csr or csc matrix')
-    make_dirs(filepath, 'w')
+    _make_dirs(filepath, 'w')
     if compressed is False:
         np.savez(filepath,
                  data=matrix.data, indices=matrix.indices,
@@ -211,7 +211,7 @@ def write_streaming_download_file(url, filepath, mode='wt', encoding=None,
     """
     decode_unicode = True if 't' in mode else False
     if auto_make_dirs is True:
-        make_dirs(filepath, mode)
+        _make_dirs(filepath, mode)
     # always close the connection
     with closing(requests.get(url, stream=True)) as r:
         # set fallback encoding if unable to infer from headers
