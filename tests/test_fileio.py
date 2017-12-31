@@ -61,9 +61,9 @@ def test_read_write_file_bytes(tmpdir):
         if compat.is_python2 is True and ext == '.xz':
             with pytest.raises(ValueError):
                 fileio.open_sesame(
-                    filename, mode='wb', encoding='utf-8', auto_make_dirs=True)
+                    filename, mode='wb', encoding='utf-8', make_dirs=True)
         else:
-            fileio.write_file(expected, filename, mode='wb', auto_make_dirs=True)
+            fileio.write_file(expected, filename, mode='wb', make_dirs=True)
             observed = fileio.read_file(filename, mode='rb')
             assert observed == expected
 
@@ -75,9 +75,9 @@ def test_read_write_file_unicode(tmpdir):
         if compat.is_python2 is True and ext != '.txt':
             with pytest.raises(ValueError):
                 fileio.open_sesame(
-                    filename, mode='wt', encoding='utf-8', auto_make_dirs=True)
+                    filename, mode='wt', encoding='utf-8', make_dirs=True)
         else:
-            fileio.write_file(expected, filename, mode='wt', auto_make_dirs=True)
+            fileio.write_file(expected, filename, mode='wt', make_dirs=True)
             observed = fileio.read_file(filename, mode='rt')
             assert observed == expected
 
@@ -89,9 +89,9 @@ def test_read_write_file_lines_bytes(tmpdir, spacy_doc):
         if compat.is_python2 is True and ext == '.xz':
             with pytest.raises(ValueError):
                 fileio.open_sesame(
-                    filename, mode='wb', encoding='utf-8', auto_make_dirs=True)
+                    filename, mode='wb', encoding='utf-8', make_dirs=True)
         else:
-            fileio.write_file_lines(expected, filename, mode='wb', auto_make_dirs=True)
+            fileio.write_file_lines(expected, filename, mode='wb', make_dirs=True)
             observed = [line.strip() for line
                         in fileio.read_file_lines(filename, mode='rb')]
             assert observed == expected
@@ -104,9 +104,9 @@ def test_read_write_file_lines_unicode(tmpdir, spacy_doc):
         if compat.is_python2 is True and ext != '.txt':
             with pytest.raises(ValueError):
                 fileio.open_sesame(
-                    filename, mode='wt', encoding=None, auto_make_dirs=True)
+                    filename, mode='wt', encoding=None, make_dirs=True)
         else:
-            fileio.write_file_lines(expected, filename, mode='wt', auto_make_dirs=True)
+            fileio.write_file_lines(expected, filename, mode='wt', make_dirs=True)
             observed = [line.strip() for line
                         in fileio.read_file_lines(filename, mode='rt')]
             assert observed == expected
@@ -121,14 +121,14 @@ def test_read_write_json_bytes(tmpdir, spacy_doc):
             if ext == '.json.xz':
                 with pytest.raises(ValueError):
                     fileio.open_sesame(
-                        filename, mode='wb', encoding='utf-8', auto_make_dirs=True)
+                        filename, mode='wb', encoding='utf-8', make_dirs=True)
             else:
-                fileio.write_json(expected, filename, mode='wb', auto_make_dirs=True)
+                fileio.write_json(expected, filename, mode='wb', make_dirs=True)
                 observed = list(fileio.read_json(filename, mode='rb', prefix=''))[0]
                 assert observed == expected
         else:
             with pytest.raises(TypeError):
-                fileio.write_json(expected, filename, 'wb', auto_make_dirs=True)
+                fileio.write_json(expected, filename, 'wb', make_dirs=True)
 
 
 def test_read_write_json_unicode(tmpdir, spacy_doc):
@@ -139,9 +139,9 @@ def test_read_write_json_unicode(tmpdir, spacy_doc):
         if compat.is_python2 is True and ext != '.json':
             with pytest.raises(ValueError):
                 fileio.open_sesame(
-                    filename, mode='wt', encoding=None, auto_make_dirs=True)
+                    filename, mode='wt', encoding=None, make_dirs=True)
         else:
-            fileio.write_json(expected, filename, mode='wt', auto_make_dirs=True)
+            fileio.write_json(expected, filename, mode='wt', make_dirs=True)
             observed = list(fileio.read_json(filename, mode='rt', prefix=''))[0]
             assert observed == expected
 
@@ -152,7 +152,7 @@ def test_read_write_json_prefix(tmpdir, spacy_doc):
     for prefix in ('idx', 'sent'):
         expected = [item[prefix] for item in to_write]
         filename = str(tmpdir.join('test_read_write_json_prefix.json'))
-        fileio.write_json(to_write, filename, auto_make_dirs=True)
+        fileio.write_json(to_write, filename, make_dirs=True)
         observed = list(fileio.read_json(filename, prefix='item.' + prefix))
         assert observed == expected
 
@@ -166,10 +166,10 @@ def test_read_write_json_lines_bytes(tmpdir, spacy_doc):
             if ext == '.json.xz':
                 with pytest.raises(ValueError):
                     fileio.open_sesame(
-                        filename, mode='wb', encoding='utf-8', auto_make_dirs=True)
+                        filename, mode='wb', encoding='utf-8', make_dirs=True)
             else:
                 fileio.write_json_lines(expected, filename, mode='wb',
-                                        auto_make_dirs=True)
+                                        make_dirs=True)
                 observed = list(fileio.read_json_lines(filename, mode='rb'))
                 assert observed == expected
         else:
@@ -185,10 +185,10 @@ def test_read_write_json_lines_unicode(tmpdir, spacy_doc):
         if compat.is_python2 is True and ext != '.json':
             with pytest.raises(ValueError):
                 fileio.open_sesame(
-                    filename, mode='wt', encoding=None, auto_make_dirs=True)
+                    filename, mode='wt', encoding=None, make_dirs=True)
         else:
             fileio.write_json_lines(expected, filename, mode='wt',
-                                    auto_make_dirs=True)
+                                    make_dirs=True)
             observed = list(fileio.read_json_lines(filename, mode='rt'))
             assert observed == expected
 
@@ -201,9 +201,9 @@ def test_read_write_csv_compressed(tmpdir):
         if compat.is_python2 is True and ext != '.csv':
             with pytest.raises(ValueError):
                 fileio.open_sesame(
-                    filename, mode='wt', encoding=None, auto_make_dirs=True)
+                    filename, mode='wt', encoding=None, make_dirs=True)
         else:
-            fileio.write_csv(expected, filename, auto_make_dirs=True)
+            fileio.write_csv(expected, filename, make_dirs=True)
             observed = list(fileio.read_csv(filename))
             assert observed == expected
 
@@ -214,7 +214,7 @@ def test_read_write_csv_delimiters(tmpdir):
     for delimiter in (',', '\t', '|', ':'):
         filename = str(tmpdir.join('test_read_write_csv.csv'))
         fileio.write_csv(
-            expected, filename, delimiter=delimiter, auto_make_dirs=True)
+            expected, filename, delimiter=delimiter, make_dirs=True)
         observed = list(fileio.read_csv(filename, delimiter=delimiter))
         assert observed == expected
 
@@ -224,7 +224,7 @@ def test_read_write_csv_dialect(tmpdir):
                 ["here's some more text: boom!", 'escándalo', '1.0']]
     filename = str(tmpdir.join('test_read_write_csv.csv'))
     fileio.write_csv(
-        expected, filename, dialect='excel', auto_make_dirs=True)
+        expected, filename, dialect='excel', make_dirs=True)
     observed = list(fileio.read_csv(filename, dialect='infer'))
     assert observed == expected
 
@@ -236,7 +236,7 @@ def test_read_write_spacy_docs(tmpdir, spacy_doc):
         if compat.is_python2 is True and ext == '.pkl.xz':
             with pytest.raises(ValueError):
                 fileio.open_sesame(
-                    filename, mode='wb', encoding=None, auto_make_dirs=True)
+                    filename, mode='wb', encoding=None, make_dirs=True)
         else:
             fileio.write_spacy_docs(spacy_doc, filename, True)
             observed = [

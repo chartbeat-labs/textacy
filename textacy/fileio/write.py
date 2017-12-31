@@ -16,7 +16,7 @@ from .utils import _make_dirs, open_sesame
 
 
 def write_file(content, filepath, mode='wt', encoding=None,
-               auto_make_dirs=False):
+               make_dirs=False):
     """
     Write ``content`` to disk at ``filepath``. Files with appropriate extensions
     are compressed with gzip or bz2 automatically. Any intermediate folders
@@ -26,12 +26,12 @@ def write_file(content, filepath, mode='wt', encoding=None,
         :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
     """
     with open_sesame(filepath, mode=mode, encoding=encoding,
-                     auto_make_dirs=auto_make_dirs) as f:
+                     make_dirs=make_dirs) as f:
         f.write(content)
 
 
 def write_file_lines(lines, filepath, mode='wt', encoding=None,
-                     auto_make_dirs=False):
+                     make_dirs=False):
     """
     Write the content in ``lines`` to disk at ``filepath``, line by line. Files
     with appropriate extensions are compressed with gzip or bz2 automatically.
@@ -39,13 +39,13 @@ def write_file_lines(lines, filepath, mode='wt', encoding=None,
     """
     newline = '\n' if 't' in mode else compat.unicode_to_bytes('\n')
     with open_sesame(filepath, mode=mode, encoding=encoding,
-                     auto_make_dirs=auto_make_dirs) as f:
+                     make_dirs=make_dirs) as f:
         for line in lines:
             f.write(line + newline)
 
 
 def write_json(json_object, filepath, mode='wt', encoding=None,
-               auto_make_dirs=False, ensure_ascii=False,
+               make_dirs=False, ensure_ascii=False,
                indent=None, separators=(',', ':'), sort_keys=False):
     """
     Write JSON object all at once to disk at ``filepath``.
@@ -62,7 +62,7 @@ def write_json(json_object, filepath, mode='wt', encoding=None,
 
         mode (str)
         encoding (str)
-        auto_make_dirs (bool)
+        make_dirs (bool)
         indent (int or str)
         ensure_ascii (bool)
         separators (tuple[str])
@@ -72,13 +72,13 @@ def write_json(json_object, filepath, mode='wt', encoding=None,
         https://docs.python.org/3/library/json.html#json.dump
     """
     with open_sesame(filepath, mode=mode, encoding=encoding,
-                     auto_make_dirs=auto_make_dirs) as f:
+                     make_dirs=make_dirs) as f:
         f.write(json.dumps(json_object, indent=indent, ensure_ascii=ensure_ascii,
                            separators=separators, sort_keys=sort_keys))
 
 
 def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
-                     auto_make_dirs=False, ensure_ascii=False,
+                     make_dirs=False, ensure_ascii=False,
                      separators=(',', ':'), sort_keys=False):
     """
     Iterate over a stream of JSON objects, writing each to a separate line in
@@ -94,7 +94,7 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
 
         mode (str)
         encoding (str)
-        auto_make_dirs (bool)
+        make_dirs (bool)
         ensure_ascii (bool)
         separators (tuple[str])
         sort_keys (bool)
@@ -104,7 +104,7 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
     """
     newline = '\n' if 't' in mode else compat.unicode_to_bytes('\n')
     with open_sesame(filepath, mode=mode, encoding=encoding,
-                     auto_make_dirs=auto_make_dirs) as f:
+                     make_dirs=make_dirs) as f:
         for json_object in json_objects:
             f.write(json.dumps(json_object,
                                ensure_ascii=ensure_ascii,
@@ -112,7 +112,7 @@ def write_json_lines(json_objects, filepath, mode='wt', encoding=None,
                                sort_keys=sort_keys) + newline)
 
 
-def write_csv(rows, filepath, encoding=None, auto_make_dirs=False,
+def write_csv(rows, filepath, encoding=None, make_dirs=False,
               dialect='excel', delimiter=',', ):
     """
     Iterate over a sequence of rows, where each row is an iterable of strings
@@ -129,7 +129,7 @@ def write_csv(rows, filepath, encoding=None, auto_make_dirs=False,
 
         filepath (str): /path/to/file on disk where rows will be written
         encoding (str)
-        auto_make_dirs (bool)
+        make_dirs (bool)
         dialect (str): a grouping of formatting parameters that determine how
             the tabular data is parsed when reading/writing
         delimiter (str): 1-character string used to separate fields in a row
@@ -148,7 +148,7 @@ def write_csv(rows, filepath, encoding=None, auto_make_dirs=False,
         csv_writer.writerows(rows)
 
 
-def write_spacy_docs(spacy_docs, filepath, auto_make_dirs=False):
+def write_spacy_docs(spacy_docs, filepath, make_dirs=False):
     """
     Serialize a sequence of ``spacy.Doc`` s to disk at ``filepath`` using pickle.
 
@@ -156,7 +156,7 @@ def write_spacy_docs(spacy_docs, filepath, auto_make_dirs=False):
         spacy_docs (``spacy.Doc`` or iterable(``spacy.Doc``)): a single spacy doc
             or a sequence of spacy docs to serialize to disk at ``filepath``
         filepath (str): /path/to/file on disk to which spacy docs will be streamed
-        auto_make_dirs (bool)
+        make_dirs (bool)
 
     Note:
         The docs are pickled together, as a list, so they are all loaded
@@ -164,7 +164,7 @@ def write_spacy_docs(spacy_docs, filepath, auto_make_dirs=False):
     """
     if isinstance(spacy_docs, SpacyDoc):
         spacy_docs = [spacy_docs]
-    with open_sesame(filepath, mode='wb', auto_make_dirs=auto_make_dirs) as f:
+    with open_sesame(filepath, mode='wb', make_dirs=make_dirs) as f:
         compat.pickle.dump(list(spacy_docs), f, protocol=-1)
 
 
@@ -199,7 +199,7 @@ def write_sparse_matrix(matrix, filepath, compressed=True):
 
 
 def write_streaming_download_file(url, filepath, mode='wt', encoding=None,
-                                  auto_make_dirs=False, chunk_size=1024):
+                                  make_dirs=False, chunk_size=1024):
     """
     Download content from ``url`` in a stream; write successive chunks of size
     ``chunk_size`` bytes to disk at ``filepath``. Files with appropriate extensions
@@ -210,7 +210,7 @@ def write_streaming_download_file(url, filepath, mode='wt', encoding=None,
         :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
     """
     decode_unicode = True if 't' in mode else False
-    if auto_make_dirs is True:
+    if make_dirs is True:
         _make_dirs(filepath, mode)
     # always close the connection
     with closing(requests.get(url, stream=True)) as r:
