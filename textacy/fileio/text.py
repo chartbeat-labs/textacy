@@ -31,14 +31,25 @@ def read_text(fname, mode='rt', encoding=None, lines=False):
                 yield line
 
 
-def write_text(content, fname, mode='wt', encoding=None,
+def write_text(data, fname, mode='wt', encoding=None,
                make_dirs=False, lines=False):
     """
-    Write text ``content`` to disk at ``fname``, either all at once
+    Write text ``data`` to disk at ``fname``, either all at once
     or streaming line-by-line.
 
     Args:
-        content (str or Iterable[str])
+        data (str or Iterable[str]): If ``lines`` is False, a single string to
+            write to disk; for example::
+
+                "isnt rick and morty that thing you get when you die and your body gets all stiff"
+
+            If ``lines`` is True, an iterable of strings to write to disk, one
+            item per line; for example::
+
+                ["isnt rick and morty that thing you get when you die and your body gets all stiff",
+                 "You're thinking of rigor mortis. Rick and morty is when you get trolled into watching \"never gonna give you up\"",
+                 "That's rickrolling. Rick and morty is a type of pasta"]
+
         fname (str): Path to file on disk to which data will be written.
         mode (str): Mode with which ``fname`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
@@ -51,8 +62,8 @@ def write_text(content, fname, mode='wt', encoding=None,
     _validate_write_mode(mode)
     with open_sesame(fname, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
         if lines is False:
-            f.write(content)
+            f.write(data)
         else:
             newline = '\n' if 't' in mode else b'\n'
-            for line in content:
+            for line in data:
                 f.write(line + newline)
