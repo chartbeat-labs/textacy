@@ -29,7 +29,7 @@ _ext_to_compression = {
 
 def open_sesame(filepath, mode='rt',
                 encoding=None, errors=None, newline=None,
-                compression='infer', auto_make_dirs=False):
+                compression='infer', make_dirs=False):
     """
     Open file ``filepath``. Automatically handle file compression, relative
     paths and symlinks, and missing intermediate directory creation, as needed.
@@ -48,7 +48,7 @@ def open_sesame(filepath, mode='rt',
         compression (str): Type of compression, if any, with which ``filepath``
             is read from or written to disk. If None, no compression is used;
             if 'infer', compression is inferrred from the extension on ``filepath``.
-        auto_make_dirs (bool): If True, automatically create (sub)directories if
+        make_dirs (bool): If True, automatically create (sub)directories if
             not already present in order to write ``filepath``.
 
     Returns:
@@ -67,8 +67,8 @@ def open_sesame(filepath, mode='rt',
 
     # normalize filepath and make dirs, as needed
     filepath = os.path.realpath(os.path.expanduser(filepath))
-    if auto_make_dirs is True:
-        make_dirs(filepath, mode)
+    if make_dirs is True:
+        _make_dirs(filepath, mode)
     elif mode.startswith('r') and not os.path.exists(filepath):
         raise OSError('file "{}" does not exist'.format(filepath))
 
@@ -162,7 +162,7 @@ def _get_file_handle(filepath, mode, compression=None,
     return f
 
 
-def make_dirs(filepath, mode):
+def _make_dirs(filepath, mode):
     """
     If writing ``filepath`` to a directory that doesn't exist, all intermediate
     directories will be created as needed.
