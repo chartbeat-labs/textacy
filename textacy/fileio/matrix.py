@@ -1,0 +1,72 @@
+from __future__ import absolute_import, print_function, unicode_literals
+
+import numpy as np
+import scipy.sparse as sp
+
+from .utils import open_sesame
+
+
+def read_sparse_matrix(fname, kind='csc'):
+    """
+    Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
+    at ``fname``, and return an instantiated sparse matrix.
+
+    Args:
+        fname (str): Path to file on disk from which data will be read.
+        kind ({'csc', 'csr'}): Kind of sparse matrix to instantiate.
+
+    Returns:
+        :class:`scipy.sparse.csc_matrix` or :class:`scipy.sparse.csr_matrix`:
+        An instantiated sparse matrix, depending on the value of ``kind``.
+
+    See Also:
+        https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.io.html#numpy-binary-files-npy-npz
+    """
+    npz_file = np.load(fname)
+    if kind == 'csc':
+        return sp.csc_matrix(
+            (npz_file['data'], npz_file['indices'], npz_file['indptr']),
+            shape=npz_file['shape'])
+    elif kind == 'csr':
+        return sp.csr_matrix(
+            (npz_file['data'], npz_file['indices'], npz_file['indptr']),
+            shape=npz_file['shape'])
+    else:
+        raise ValueError(
+            'kind="{}" is invalid; valid values are {}'.format(kind, ['csc', 'csr']))
+
+
+def write_sparse_matrix(data, fname, compressed=True, make_dirs=False):
+    """
+    Write sparse matrix ``data`` to disk at ``fname``, optionally compressed,
+    into a single ``.npz`` file.
+
+    Args:
+        data (:class:`scipy.sparse.csc_matrix` or :class:`scipy.sparse.csr_matrix`)
+        fname (str): Path to file on disk to which data will be written.
+            If ``fname`` does not end in ``.npz``, that extension is
+            automatically appended to the name.
+        compressed (bool): If True, save arrays into a single file in compressed
+            numpy binary format.
+        make_dirs (bool): If True, automatically create (sub)directories if
+            not already present in order to write ``fname``.
+
+    See Also:
+        https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.io.html#numpy-binary-files-npy-npz
+    """
+    if not isinstance(data, (sp.csc_matrix, sp.csr_matrix)):
+        raise TypeError(
+            '`data` must be a scipy sparse csr or csc matrix, '
+            'not "{}"'.format(type(data)))
+    if make_dirs is True:
+        _make_dirs(fname, 'w')
+    if compressed is True:
+        np.savez_compressed(
+            fname,
+            data=data.data, indices=data.indices,
+            indptr=data.indptr, shape=data.shape)
+    else:
+        np.savez(
+            fname,
+            data=data.data, indices=data.indices,
+            indptr=data.indptr, shape=data.shape)
