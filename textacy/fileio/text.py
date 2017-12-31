@@ -5,15 +5,15 @@ from .utils import open_sesame, _validate_read_mode, _validate_write_mode
 
 def read_text(fname, mode='rt', encoding=None, lines=False):
     """
-    Read the contents of a text file from ``fname``, either all at once
-    or streaming line by line.
+    Read the contents of a text file at ``fname``, either all at once
+    or streaming line-by-line.
 
     Args:
         fname (str): Path to file on disk from which data will be read.
         mode (str): Mode with which ``fname`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
             in ``fname``. Only applicable in text mode.
-        lines (bool): If False, all data is read at once; otherwise, data is
+        lines (bool): If False, all data is read in at once; otherwise, data is
             read in one line at a time.
 
     Yields:
@@ -35,7 +35,7 @@ def write_text(content, fname, mode='wt', encoding=None,
                make_dirs=False, lines=False):
     """
     Write text ``content`` to disk at ``fname``, either all at once
-    or streaming line by line.
+    or streaming line-by-line.
 
     Args:
         content (str or Iterable[str])

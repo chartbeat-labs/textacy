@@ -1,5 +1,6 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
+import datetime
 import functools
 import json
 
@@ -114,10 +115,21 @@ def write_json(content, fname, mode='wt', encoding=None,
     with open_sesame(fname, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
         if lines is False:
             f.write(json.dumps(content, indent=indent, ensure_ascii=ensure_ascii,
-                               separators=separators, sort_keys=sort_keys))
+                               separators=separators, sort_keys=sort_keys,
+                               cls=ExtendedJSONEncoder))
         else:
             newline = '\n' if 't' in mode else b'\n'
             for item in content:
                 f.write(json.dumps(item, indent=indent, ensure_ascii=ensure_ascii,
-                                   separators=separators, sort_keys=sort_keys) +
+                                   separators=separators, sort_keys=sort_keys,
+                                   cls=ExtendedJSONEncoder) +
                         newline)
+
+
+class ExtendedJSONEncoder(json.JSONEncoder):
+
+    def default(self, obj):
+        if isinstance(obj, (datetime.datetime, datetime.date)):
+            return obj.isoformat()
+        else:
+            return super(ExtendedJSONEncoder, self).default(ob)
