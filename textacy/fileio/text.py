@@ -1,6 +1,6 @@
 from __future__ import absolute_import, print_function, unicode_literals
 
-from .utils import open_sesame
+from .utils import open_sesame, _validate_read_mode, _validate_write_mode
 
 
 def read_text(fname, mode='rt', encoding=None, lines=False):
@@ -22,9 +22,7 @@ def read_text(fname, mode='rt', encoding=None, lines=False):
         If ``lines`` is False, wrap this output in :func:`next()` to conveniently
         access the full text.
     """
-    if 'w' in mode or 'a' in mode:
-        raise ValueError(
-            'mode="{}" is invalid; file must be opened in read mode'.format(mode))
+    _validate_read_mode(mode)
     with open_sesame(fname, mode=mode, encoding=encoding) as f:
         if lines is False:
             yield f.read()
@@ -50,9 +48,7 @@ def write_text(content, fname, mode='wt', encoding=None,
         lines (bool): If False, all data is written at once; otherwise, data is
             written to disk one line at a time.
     """
-    if 'r' in mode:
-        raise ValueError(
-            'mode="{}" is invalid; file must be opened in write mode'.format(mode))
+    _validate_write_mode(mode)
     with open_sesame(fname, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
         if lines is False:
             f.write(content)

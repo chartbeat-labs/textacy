@@ -172,6 +172,18 @@ def _make_dirs(filepath, mode):
         os.makedirs(head)
 
 
+def _validate_read_mode(mode):
+    if 'w' in mode or 'a' in mode:
+        raise ValueError(
+            'mode="{}" is invalid; file must be opened in read mode'.format(mode))
+
+
+def _validate_write_mode(mode):
+    if 'r' in mode:
+        raise ValueError(
+            'mode="{}" is invalid; file must be opened in write mode'.format(mode))
+
+
 def coerce_content_type(content, file_mode):
     """
     If the `content` to be written to file and the `file_mode` used to open it
