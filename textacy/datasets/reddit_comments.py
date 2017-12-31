@@ -145,7 +145,7 @@ class RedditComments(Dataset):
                 url, filename)
             fileio.write_streaming_download_file(
                 url, filename, mode='wb', encoding=None,
-                auto_make_dirs=True, chunk_size=1024)
+                make_dirs=True, chunk_size=1024)
 
     def _parse_score_range(self, score_range):
         """Flexibly parse score range args."""

@@ -595,7 +595,7 @@ class SupremeCourt(Dataset):
             'Downloading data from %s and writing it to %s', url, fname)
         fileio.write_streaming_download_file(
             url, fname, mode='wb', encoding=None,
-            auto_make_dirs=True, chunk_size=1024)
+            make_dirs=True, chunk_size=1024)
 
     def texts(self, opinion_author=None, issue_area=None, decision_direction=None,
               date_range=None, min_len=None, limit=-1):
