@@ -12,12 +12,14 @@ from .utils import _make_dirs
 def read_http_stream(url, lines=False,
                      decode_unicode=False, chunk_size=1024, auth=None):
     """
-    Read data from ``url`` in a stream.
+    Read data from ``url`` in a stream, either all at once or line-by-line.
 
     Args:
         url (str): URL to which a GET request is made for data.
-        lines (bool)
-        decode_unicode (bool)
+        lines (bool): If False, yield all of the data at once; otherwise, yield
+            data line-by-line.
+        decode_unicode (bool): If True, yield data as unicode, where the encoding
+            is taken from the HTTP response headers; otherwise, yield bytes.
         chunk_size (int): Number of bytes read into memory per chunk. Because
             decoding may occur, this is not necessarily the length of each chunk.
         auth (Tuple[str, str]): (username, password) pair for simple HTTP
@@ -28,10 +30,6 @@ def read_http_stream(url, lines=False,
         which is bytes if ``decode_unicode`` is False or unicode otherwise.
         If ``lines`` is False, yields the full response content, either as bytes
         or unicode.
-
-    Todo:
-        Figure out if this is useful.
-        Confirm that this is correct. :)
     """
     # always close the connection
     with closing(requests.get(url, stream=True, auth=auth)) as r:
