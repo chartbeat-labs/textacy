@@ -6,6 +6,7 @@ import io
 import itertools
 import os
 import re
+import warnings
 import zipfile
 try:  # Py3
     import lzma
@@ -197,48 +198,61 @@ def coerce_content_type(content, file_mode):
     return content
 
 
-def split_record_fields(items, content_field, itemwise=False):
+def split_records(items, content_field, itemwise=False):
     """
-    Split records' content (text) field from associated metadata fields, but
-    keep them paired together for convenient loading into a ``textacy.Doc <textacy.doc.Doc>``
-    (with ``itemwise = True``) or ``textacy.Corpus <textacy.corpus.Corpus>``
-    (with ``itemwise = False``). Output format depends on the form of the input
-    items (dicts vs. lists) and the value for ``itemwise``.
+    Split records' content (text) from associated metadata, but keep them paired
+    together for convenient loading into a :class:`textacy.Doc <textacy.doc.Doc>`
+    (with ``itemwise=True``) or :class:`textacy.Corpus <textacy.corpus.Corpus>`
+    (with ``itemwise=False``).
 
     Args:
-        items (Iterable[dict] or Iterable[list]): an iterable of dicts, e.g. as
-            read from disk by :func:`read_json_lines() <textacy.fileio.read.read_json_lines>`,
-            or an iterable of lists, e.g. as read from disk by :func:`read_csv() <textacy.fileio.read.read_csv>`
-        content_field (str or int): if str, key in each dict item whose value is
+        items (Iterable[dict] or Iterable[list]): An iterable of dicts, e.g. as
+            read from disk by :func:`read_json(lines=True) <textacy.fileio.json.read_json>`,
+            or an iterable of lists, e.g. as read from disk by
+            :func:`read_csv() <textacy.fileio.csv.read_csv>`.
+        content_field (str or int): If str, key in each dict item whose value is
             the item's content (text); if int, index of the value in each list
-            item corresponding to the item's content (text)
-        itemwise (bool): if True, content + metadata are paired item-wise
+            item corresponding to the item's content (text).
+        itemwise (bool): If True, content + metadata are paired item-wise
             as an iterable of (content, metadata) 2-tuples; if False, content +
             metadata are paired by position in two parallel iterables in the form of
-            a (iterable(content), iterable(metadata)) 2-tuple
+            a (iterable(content), iterable(metadata)) 2-tuple.
 
     Returns:
-        generator(Tuple[str, dict]):
-            if ``itemwise`` is True and ``items`` is an iterable of dicts;
-            the first element in each tuple is the item's content,
-            the second element is its metadata as a dictionary
-        generator(Tuple[str, list]):
-            if ``itemwise`` is True and ``items`` is an iterable of lists;
-            the first element in each tuple is the item's content,
-            the second element is its metadata as a list
-        Tuple[Iterable[str], Iterable[dict]]:
-            if ``itemwise`` is False and ``items`` is an iterable of dicts;
-            the first element of the tuple is an iterable
-            of items' contents, the second is an iterable of their metadata dicts
-        Tuple[Iterable[str], Iterable[list]]:
-            if ``itemwise`` is False and ``items`` is an iterable of lists;
-            the first element of the tuple is an iterable
-            of items' contents, the second is an iterable of their metadata lists
+        Generator(Tuple[str, dict]): If ``itemwise`` is True and ``items`` is Iterable[dict];
+        the first element in each tuple is the item's content,
+        the second element is its metadata as a dictionary.
+
+        Generator(Tuple[str, list]): If ``itemwise`` is True and ``items`` is Iterable[list];
+        the first element in each tuple is the item's content,
+        the second element is its metadata as a list.
+
+        Tuple[Iterable[str], Iterable[dict]]: If ``itemwise`` is False and
+        ``items`` is Iterable[dict];
+        the first element of the tuple is an iterable of items' contents,
+        the second is an iterable of their metadata dicts.
+
+        Tuple[Iterable[str], Iterable[list]]: If ``itemwise`` is False and
+        ``items`` is Iterable[list];
+        the first element of the tuple is an iterable of items' contents,
+        the second is an iterable of their metadata lists.
     """
     if itemwise is True:
         return ((item.pop(content_field), item) for item in items)
     else:
         return unzip(((item.pop(content_field), item) for item in items))
+
+
+def split_record_fields(items, content_field, itemwise=False):
+    """
+    See Also:
+        :func:`split_records()`
+    """
+    warnings.warn(
+        '`split_record_fields()` has been renamed `split_records()`, '
+        'and this function is just a temporary alias for it.',
+        DeprecationWarning)
+    return split_records(items, content_field, itemwise=False)
 
 
 def unzip(seq):
@@ -266,16 +280,18 @@ def get_filenames(dirname, match_regex=None, ignore_regex=None,
     crawling all subdirectories.
 
     Args:
-        dirname (str): /path/to/dir on disk where files to read are saved
-        match_regex (str): include files whose names match this regex pattern
-        ignore_regex (str): include files whose names do *not* match this regex pattern
-        extension (str): if files only of a certain type are wanted,
-            specify the file extension (e.g. ".txt")
-        ignore_invisible (bool): if True, ignore invisible files, i.e.
-            those that begin with a period
-        recursive (bool): if True, iterate recursively through all files
-            in subdirectories; otherwise, only return files directly under
-            ``dirname``
+        dirname (str): Path to directory on disk where files are stored.
+        match_regex (str): Regular expression pattern. Only files whose names
+            match this pattern are included.
+        ignore_regex (str): Regular expression pattern. Only files whose names
+            *do not* match this pattern are included.
+        extension (str): File extension, e.g. ".txt" or ".json". Only files
+            whose extensions match are included.
+        ignore_invisible (bool): If True, ignore invisible files, i.e.
+            those that begin with a period.; otherwise, include them.
+        recursive (bool): If True, iterate recursively through subdirectories
+            in search of files to include; otherwise, only return files located
+            directly under ``dirname``.
 
     Yields:
         str: Next file's name, including the full path on disk.
