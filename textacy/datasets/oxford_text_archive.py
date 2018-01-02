@@ -21,17 +21,17 @@ is reproduced exactly here.
 """
 from __future__ import unicode_literals
 
-import io
 import logging
 import os
 import re
 import zipfile
+from io import StringIO
 
 import requests
 
 from .. import compat
 from .. import data_dir
-from .. import fileio
+from .. import io
 from .. import preprocess
 from .base import Dataset
 
@@ -81,7 +81,7 @@ class OxfordTextArchive(Dataset):
 
     Stream literary works into a :class:`textacy.Corpus`::
 
-        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+        >>> text_stream, metadata_stream = textacy.io.split_records(
         ...     ota.records(limit=10), 'text')
         >>> c = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
         >>> c
@@ -140,7 +140,7 @@ class OxfordTextArchive(Dataset):
             return
         LOGGER.info(
             'Downloading data from %s and writing it to %s', url, fname)
-        fileio.write_streaming_download_file(
+        io.write_http_stream(
             url, fname, mode='wb', encoding=None,
             make_dirs=True, chunk_size=1024)
         self._metadata = self._load_and_parse_metadata()
@@ -165,7 +165,7 @@ class OxfordTextArchive(Dataset):
 
         metadata = {}
         with zipfile.ZipFile(self._filename, mode='r') as f:
-            subf = io.StringIO(f.read('ota-master/metadata.tsv').decode('utf-8'))
+            subf = StringIO(f.read('ota-master/metadata.tsv').decode('utf-8'))
             for row in compat.csv.DictReader(subf, delimiter='\t'):
                 # only include English-language works (99.9% of all works)
                 if not row['Language'].startswith('English'):

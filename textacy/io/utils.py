@@ -207,9 +207,9 @@ def split_records(items, content_field, itemwise=False):
 
     Args:
         items (Iterable[dict] or Iterable[list]): An iterable of dicts, e.g. as
-            read from disk by :func:`read_json(lines=True) <textacy.fileio.json.read_json>`,
+            read from disk by :func:`read_json(lines=True) <textacy.io.json.read_json>`,
             or an iterable of lists, e.g. as read from disk by
-            :func:`read_csv() <textacy.fileio.csv.read_csv>`.
+            :func:`read_csv() <textacy.io.csv.read_csv>`.
         content_field (str or int): If str, key in each dict item whose value is
             the item's content (text); if int, index of the value in each list
             item corresponding to the item's content (text).

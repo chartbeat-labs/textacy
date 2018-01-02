@@ -23,7 +23,7 @@ def write_file(content, filepath, mode='wt', encoding=None,
     not found on disk may automatically be created.
 
     See Also:
-        :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
+        :func:`open_sesame() <textacy.io.utils.open_sesame>`
     """
     with open_sesame(filepath, mode=mode, encoding=encoding,
                      make_dirs=make_dirs) as f:
@@ -207,7 +207,7 @@ def write_streaming_download_file(url, filepath, mode='wt', encoding=None,
     not found on disk may automatically be created.
 
     See Also:
-        :func:`open_sesame() <textacy.fileio.utils.open_sesame>`
+        :func:`open_sesame() <textacy.io.utils.open_sesame>`
     """
     decode_unicode = True if 't' in mode else False
     if make_dirs is True:

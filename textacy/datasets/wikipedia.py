@@ -32,7 +32,7 @@ except ImportError:
 
 from .. import compat
 from .. import data_dir
-from .. import fileio
+from .. import io
 from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -187,7 +187,7 @@ class Wikipedia(Dataset):
             return
         LOGGER.info(
             'Downloading data from %s and writing it to %s', url, fname)
-        fileio.write_streaming_download_file(
+        io.write_http_stream(
             url, fname, mode='wb', encoding=None,
             make_dirs=True, chunk_size=1024)
 
@@ -204,10 +204,10 @@ class Wikipedia(Dataset):
 
         if compat.is_python2 is False:
             events = ('end',)
-            f = fileio.open_sesame(self.filename, mode='rt', encoding="UTF-8")
+            f = io.open_sesame(self.filename, mode='rt', encoding="UTF-8")
         else:  # Python 2 can't open bzip in text mode :(
             events = (b'end',)
-            f = fileio.open_sesame(self.filename, mode='rb')
+            f = io.open_sesame(self.filename, mode='rb')
         with f:
 
             elems = (elem for _, elem in iterparse(f, events=events))

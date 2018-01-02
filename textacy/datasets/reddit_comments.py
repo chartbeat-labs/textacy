@@ -21,7 +21,6 @@ For more details, refer to https://archive.org/details/2015_reddit_comments_corp
 """
 from __future__ import unicode_literals
 
-import io
 import logging
 import os
 import re
@@ -31,7 +30,7 @@ import requests
 
 from .. import compat
 from .. import data_dir
-from .. import fileio
+from .. import io
 from .. import preprocess
 from .base import Dataset
 
@@ -110,7 +109,7 @@ class RedditComments(Dataset):
             the ``data_dir`` directory, sorted chronologically.
         """
         if os.path.exists(self.data_dir):
-            return tuple(sorted(fileio.get_filenames(self.data_dir, extension='.bz2', recursive=True)))
+            return tuple(sorted(io.get_filenames(self.data_dir, extension='.bz2', recursive=True)))
         else:
             LOGGER.warning('%s data directory does not exist', self.data_dir)
             return tuple()
@@ -143,7 +142,7 @@ class RedditComments(Dataset):
             LOGGER.info(
                 'Downloading data from %s and writing it to %s',
                 url, filename)
-            fileio.write_streaming_download_file(
+            io.write_http_stream(
                 url, filename, mode='wb', encoding=None,
                 make_dirs=True, chunk_size=1024)
 
@@ -287,7 +286,7 @@ class RedditComments(Dataset):
 
         n = 0
         for filename in filenames:
-            for line in fileio.read_json_lines(filename, mode='rb'):
+            for line in io.read_json(filename, mode='rb', lines=True):
 
                 if subreddit and line['subreddit'] not in subreddit:
                     continue

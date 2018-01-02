@@ -9,7 +9,7 @@ from .about import __version__
 data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
 
 # subpackages
-# from textacy import fileio
+# from textacy import io
 # from textacy import tm
 # from textacy import viz
 # top-level modules
