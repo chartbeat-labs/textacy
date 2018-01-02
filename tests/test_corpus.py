@@ -7,7 +7,7 @@ from textacy import Corpus
 from textacy import Doc
 from textacy import cache
 from textacy import compat
-from textacy import fileio
+from textacy import io
 from textacy.datasets.capitol_words import CapitolWords
 
 DATASET = CapitolWords()
@@ -19,7 +19,7 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture(scope='module')
 def corpus(request):
-    texts, metadatas = fileio.split_record_fields(
+    texts, metadatas = io.split_records(
         DATASET.records(limit=3), 'text')
     corpus = Corpus('en', texts=texts, metadatas=metadatas)
     return corpus
@@ -44,7 +44,7 @@ def test_corpus_init_texts():
 
 def test_corpus_init_texts_and_metadatas():
     limit = 3
-    texts, metadatas = fileio.split_record_fields(
+    texts, metadatas = io.split_records(
         DATASET.records(limit=limit), 'text')
     texts = list(texts)
     metadatas = list(metadatas)
@@ -58,7 +58,7 @@ def test_corpus_init_texts_and_metadatas():
 
 def test_corpus_init_docs():
     limit = 3
-    texts, metadatas = fileio.split_record_fields(
+    texts, metadatas = io.split_records(
         DATASET.records(limit=limit), 'text')
     docs = [Doc(text, lang='en', metadata=metadata)
             for text, metadata in zip(texts, metadatas)]

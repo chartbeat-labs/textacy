@@ -5,7 +5,7 @@ from .utils import open_sesame
 
 
 def read_csv(fname, encoding=None,
-             fieldnames='infer', dialect='infer', delimiter=','):
+             fieldnames=None, dialect='excel', delimiter=','):
     """
     Read the contents of a CSV file at ``fname``, streaming line-by-line,
     where each line is a list of strings and/or floats whose values
@@ -46,17 +46,25 @@ def read_csv(fname, encoding=None,
             sniffer = compat.csv.Sniffer()
             # add pipes to the list of preferred delimiters, and put spaces last
             sniffer.preferred = [',', '\t', '|', ';', ':', ' ']
-            sample = f.read(1024)
+            sample = ''.join(f.readline() for _ in range(5))  # f.read(1024)
             if dialect == 'infer':
                 dialect = sniffer.sniff(sample)
             if fieldnames == 'infer':
                 has_header = sniffer.has_header(sample)
-                fieldnames = None
             f.seek(0)
-        if fieldnames or has_header is True:
+        if has_header is True:
+            csv_reader = compat.csv.DictReader(
+                f, fieldnames=None, dialect=dialect, delimiter=delimiter,
+                quoting=compat.csv.QUOTE_NONNUMERIC)
+        elif fieldnames:
             csv_reader = compat.csv.DictReader(
                 f, fieldnames=fieldnames, dialect=dialect, delimiter=delimiter,
                 quoting=compat.csv.QUOTE_NONNUMERIC)
+            first_row = next(csv_reader)
+            # is the first row a header with same values as fieldnames?
+            # if not, we should yield the row as usual
+            if not all(key == value for key, value in first_row.items()):
+                yield first_row
         else:
             csv_reader = compat.csv.reader(
                 f, dialect=dialect, delimiter=delimiter,
@@ -66,7 +74,7 @@ def read_csv(fname, encoding=None,
 
 
 def write_csv(data, fname, encoding=None, make_dirs=False,
-              fieldnames=None, dialect='excel', delimiter=',', ):
+              fieldnames=None, dialect='excel', delimiter=','):
     """
     Write rows of ``data`` to disk at ``fname``, where each row is an iterable
     or a dictionary of strings and/or numbers, written to one line with values
