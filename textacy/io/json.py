@@ -1,3 +1,10 @@
+"""
+JSON
+----
+
+Functions for reading from and writing to disk records in JSON format,
+as one record per file or one record per *line* in a file.
+"""
 from __future__ import absolute_import, print_function, unicode_literals
 
 import datetime

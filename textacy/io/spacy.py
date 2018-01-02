@@ -1,8 +1,12 @@
 """
+Spacy
+-----
+
+Functions for reading from and writing to disk spacy documents in pickle format.
+
 Todo:
     Figure out a better / more efficient way to handle reading/writing of
-    spacy docs. This situation is tolerable and currently unavoidable, but
-    it's not *good*.
+    spacy docs. The current solution is tolerable, but it's *not good*.
 """
 from __future__ import absolute_import, print_function, unicode_literals
 

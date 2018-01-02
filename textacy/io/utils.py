@@ -1,3 +1,9 @@
+"""
+Utils
+-----
+
+Functions to help read and write data to disk in a variety of formats.
+"""
 from __future__ import absolute_import, print_function, unicode_literals
 
 import bz2
@@ -245,8 +251,8 @@ def split_records(items, content_field, itemwise=False):
 
 def split_record_fields(items, content_field, itemwise=False):
     """
-    See Also:
-        :func:`split_records()`
+    This functionality has been moved to :func:`split_records()`, and this is just
+    a temporary alias for that other function. You should use it instead of this.
     """
     warnings.warn(
         '`split_record_fields()` has been renamed `split_records()`, '

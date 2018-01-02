@@ -1,3 +1,10 @@
+"""
+HTTP
+----
+
+Functions for reading data from URLs via streaming HTTP requests and either
+reading it into memory or writing it directly to disk.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import io
@@ -24,6 +31,8 @@ def read_http_stream(url, lines=False,
             decoding may occur, this is not necessarily the length of each chunk.
         auth (Tuple[str, str]): (username, password) pair for simple HTTP
             authentication required (if at all) to access the data at ``url``.
+
+            .. seealso:: http://docs.python-requests.org/en/master/user/authentication/
 
     Yields:
         str or bytes: If ``lines`` is True, the next line in the response data,
@@ -72,6 +81,8 @@ def write_http_stream(url, fname, mode='wt', encoding=None, make_dirs=False,
             decoding may occur, this is not necessarily the length of each chunk.
         auth (Tuple[str, str]): (username, password) pair for simple HTTP
             authentication required (if at all) to access the data at ``url``.
+
+            .. seealso:: http://docs.python-requests.org/en/master/user/authentication/
     """
     decode_unicode = True if 't' in mode else False
     if make_dirs is True:

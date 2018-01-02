@@ -1,3 +1,11 @@
+"""
+CSV
+---
+
+Functions for reading from and writing to disk records in CSV format, where
+CSVs may be delimited not only by commas (the default) but tabs, pipes, and
+other valid one-char delimiters.
+"""
 from __future__ import absolute_import, print_function, unicode_literals
 
 from .. import compat

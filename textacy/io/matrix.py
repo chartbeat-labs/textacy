@@ -1,3 +1,10 @@
+"""
+Matrices
+--------
+
+Functions for reading from and writing to disk CSC and CSR sparse matrices
+in numpy binary format.
+"""
 from __future__ import absolute_import, print_function, unicode_literals
 
 import numpy as np
