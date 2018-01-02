@@ -19,7 +19,7 @@ from spacy.util import get_lang_class
 
 from . import cache
 from . import compat
-from . import fileio
+from . import io
 from .doc import Doc
 
 LOGGER = logging.getLogger(__name__)
@@ -39,7 +39,7 @@ class Corpus(object):
 
         >>> cw = textacy.datasets.CapitolWords()
         >>> records = cw.docs(limit=50)
-        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+        >>> text_stream, metadata_stream = textacy.io.split_records(
         ...     records, 'text')
         >>> corpus = textacy.Corpus(
         ...     'en', texts=text_stream, metadatas=metadata_stream)
@@ -64,7 +64,7 @@ class Corpus(object):
     Add and remove documents, with automatic updating of corpus statistics::
 
         >>> records = cw.docs(congress=114, limit=25)
-        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+        >>> text_stream, metadata_stream = textacy.io.split_records(
         ...     records, 'text')
         >>> corpus.add_texts(text_stream, metadatas=metadata_stream, n_threads=4)
         >>> print(corpus)
@@ -205,7 +205,7 @@ class Corpus(object):
         # HACK: add spacy language metadata to first doc's user_data
         # so we can re-instantiate the same language upon Corpus.load()
         self[0].spacy_doc.user_data['textacy']['spacy_lang_meta'] = self.spacy_lang.meta
-        fileio.write_spacy_docs((doc.spacy_doc for doc in self), filepath)
+        io.write_spacy_docs((doc.spacy_doc for doc in self), filepath)
 
     @classmethod
     def load(cls, filepath):
@@ -224,7 +224,7 @@ class Corpus(object):
         See Also:
             :meth:`Corpus.save()`
         """
-        spacy_docs = fileio.read_spacy_docs(filepath)
+        spacy_docs = io.read_spacy_docs(filepath)
         # HACK: pop spacy language metadata from first doc's user_data
         # so we can (more or less...) re-instantiate the same language pipeline
         first_spacy_doc, spacy_docs = itertoolz.peek(spacy_docs)
@@ -273,7 +273,7 @@ class Corpus(object):
             batch_size (int): Number of texts to process at a time.
 
         See Also:
-            - :func:`fileio.split_record_fields()`
+            - :func:`io.split_records()`
             - https://spacy.io/api/language#pipe
         """
         spacy_docs = self.spacy_lang.pipe(

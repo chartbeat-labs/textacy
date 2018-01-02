@@ -61,16 +61,28 @@ Representations
 .. automodule:: textacy.vsm
     :members:
 
-File IO
--------
+IO
+--
 
-.. automodule:: textacy.fileio.read
+.. automodule:: textacy.io.utils
     :members:
 
-.. automodule:: textacy.fileio.write
+.. automodule:: textacy.io.text
     :members:
 
-.. automodule:: textacy.fileio.utils
+.. automodule:: textacy.io.json
+    :members:
+
+.. automodule:: textacy.io.csv
+    :members:
+
+.. automodule:: textacy.io.matrix
+    :members:
+
+.. automodule:: textacy.io.spacy
+    :members:
+
+.. automodule:: textacy.io.http
     :members:
 
 Visualization

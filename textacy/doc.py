@@ -20,7 +20,7 @@ from . import cache
 from . import compat
 from . import constants
 from . import extract
-from . import fileio
+from . import io
 from . import network
 from . import spacy_utils
 from . import text_utils
@@ -226,7 +226,7 @@ class Doc(object):
         See Also:
             :meth:`Doc.load()`
         """
-        fileio.write_spacy_docs(self.spacy_doc, filepath)
+        io.write_spacy_docs(self.spacy_doc, filepath)
 
     @classmethod
     def load(cls, filepath):
@@ -243,7 +243,7 @@ class Doc(object):
         See Also:
             :meth:`Doc.save()`
         """
-        spacy_doc = list(fileio.read_spacy_docs(filepath))[0]
+        spacy_doc = list(io.read_spacy_docs(filepath))[0]
         return cls(spacy_doc,
                    lang=spacy_doc.user_data['textacy']['lang'],
                    metadata=spacy_doc.user_data['textacy']['metadata'])

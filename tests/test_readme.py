@@ -9,7 +9,7 @@ from spacy.tokens.span import Span as SpacySpan
 
 import textacy.datasets
 from textacy import Doc, Corpus, Vectorizer, TextStats, TopicModel, preprocess_text
-from textacy import cache, compat, constants, extract, fileio, keyterms, text_utils
+from textacy import cache, compat, constants, extract, io, keyterms, text_utils
 
 DATASET = textacy.datasets.CapitolWords()
 
@@ -33,7 +33,7 @@ def doc(text):
 def corpus():
     spacy_lang = cache.load_spacy('en')
     records = DATASET.records(speaker_name={'Bernie Sanders'}, limit=10)
-    text_stream, metadata_stream = fileio.split_record_fields(
+    text_stream, metadata_stream = io.split_records(
         records, 'text')
     corpus = Corpus(spacy_lang, texts=text_stream, metadatas=metadata_stream)
     return corpus

@@ -50,7 +50,6 @@ may be incorrectly matched to metadata. (Sorry.)
 """
 from __future__ import unicode_literals
 
-import io
 import logging
 import os
 
@@ -58,7 +57,7 @@ import requests
 
 from .. import compat
 from .. import data_dir
-from .. import fileio
+from .. import io
 from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -111,7 +110,7 @@ class SupremeCourt(Dataset):
 
     Stream decisions into a :class:`textacy.Corpus`::
 
-        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+        >>> text_stream, metadata_stream = textacy.io.split_records(
         ...     sc.records(limit=100), 'text')
         >>> c = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
         >>> c
@@ -593,9 +592,9 @@ class SupremeCourt(Dataset):
             return
         LOGGER.info(
             'Downloading data from %s and writing it to %s', url, fname)
-        fileio.write_streaming_download_file(
+        io.write_http_stream(
             url, fname, mode='wb', encoding=None,
-            auto_make_dirs=True, chunk_size=1024)
+            make_dirs=True, chunk_size=1024)
 
     def texts(self, opinion_author=None, issue_area=None, decision_direction=None,
               date_range=None, min_len=None, limit=-1):
@@ -709,7 +708,7 @@ class SupremeCourt(Dataset):
 
         n = 0
         mode = 'rb' if compat.is_python2 else 'rt'
-        for line in fileio.read_json_lines(self.filename, mode=mode):
+        for line in io.read_json(self.filename, mode=mode, lines=True):
             if opinion_author and line['maj_opinion_author'] not in opinion_author:
                 continue
             if issue_area and line['issue_area'] not in issue_area:

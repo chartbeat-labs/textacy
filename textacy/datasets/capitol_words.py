@@ -33,7 +33,7 @@ import requests
 
 from .. import compat
 from .. import data_dir
-from .. import fileio
+from .. import io
 from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ class CapitolWords(Dataset):
 
     Stream speeches into a :class:`textacy.Corpus`::
 
-        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+        >>> text_stream, metadata_stream = textacy.io.split_records(
         ...     cw.records(limit=100), 'text')
         >>> c = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
         >>> c
@@ -159,9 +159,9 @@ class CapitolWords(Dataset):
             return
         LOGGER.info(
             'Downloading data from %s and writing it to %s', url, fname)
-        fileio.write_streaming_download_file(
+        io.write_http_stream(
             url, fname, mode='wb', encoding=None,
-            auto_make_dirs=True, chunk_size=1024)
+            make_dirs=True, chunk_size=1024)
 
     def texts(self, speaker_name=None, speaker_party=None, chamber=None,
               congress=None, date_range=None, min_len=None, limit=-1):
@@ -280,7 +280,7 @@ class CapitolWords(Dataset):
 
         n = 0
         mode = 'rb' if compat.is_python2 else 'rt'  # TODO: check this
-        for line in fileio.read_json_lines(self.filename, mode=mode):
+        for line in io.read_json(self.filename, mode=mode, lines=True):
 
             if speaker_name and line['speaker_name'] not in speaker_name:
                 continue
