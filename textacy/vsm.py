@@ -394,7 +394,7 @@ class GroupVectorizer(object):
     Stream a corpus with metadata from disk::
 
         >>> cw = textacy.datasets.CapitolWords()
-        >>> text_stream, metadata_stream = textacy.fileio.split_record_fields(
+        >>> text_stream, metadata_stream = textacy.io.split_records(
         ...     cw.records(limit=1000), 'text', itemwise=False)
         >>> corpus = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
         >>> corpus
@@ -402,7 +402,7 @@ class GroupVectorizer(object):
 
     Tokenize and vectorize the first 600 documents of this corpus::
 
-        >>> terms_lists, groups = textacy.filio.utils.unzip(
+        >>> terms_lists, groups = textacy.io.unzip(
         ...     (doc.to_terms_list(ngrams=False, named_entities=True, as_strings=True),
         ...      doc.metadata['speaker_name'])
         ...     for doc in corpus[:600])
@@ -418,7 +418,7 @@ class GroupVectorizer(object):
     Tokenize and vectorize the remaining 400 documents of the corpus, using only
     the groups, terms, and weights learned in the previous step:
 
-        >>> terms_lists, groups = textacy.filio.utils.unzip(
+        >>> terms_lists, groups = textacy.io.unzip(
         ...     (doc.to_terms_list(ngrams=False, named_entities=True, as_strings=True),
         ...      doc.metadata['speaker_name'])
         ...     for doc in corpus[600:])
