@@ -60,6 +60,23 @@ class Vectorizer(object):
         >>> vectorizer.terms_list[:5]  # NOTE: that empty string shouldn't be there :/
         ['speaker', '', 'republican', 'house', 'american']
 
+    If known in advance, limit the terms included in vectorized outputs
+    to a particular set of values::
+
+        >>> tokenized_docs = (
+        ...     doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+        ...     for doc in corpus[:600])
+        >>> vectorizer = Vectorizer(
+        ...     weighting='tfidf', normalize=True, smooth_idf=True,
+        ...     min_df=3, max_df=0.95,
+        ...     vocabulary_terms=['president', 'bill', 'unanimous', 'distinguished', 'american'])
+        >>> doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
+        >>> doc_term_matrix
+        <600x5 sparse matrix of type '<class 'numpy.float64'>'
+	            with 844 stored elements in Compressed Sparse Row format>
+        >>> vectorizer.terms_list
+        ['american', 'bill', 'distinguished', 'president', 'unanimous']
+
     Args:
         weighting ({'tf', 'tfidf', 'binary'}): Weighting to assign to terms in
             the doc-term matrix. If 'tf', matrix values (i, j) correspond to the
@@ -250,14 +267,11 @@ class Vectorizer(object):
         # count terms and build up a vocabulary
         doc_term_matrix, self.vocabulary_terms = self._count_terms(
             tokenized_docs, self._fixed_terms)
-
         # filter terms by doc freq or info content, as specified in init
         doc_term_matrix, self.vocabulary_terms = self._filter_terms(
             doc_term_matrix, self.vocabulary_terms)
-
         # re-weight values in doc-term matrix, as specified in init
         doc_term_matrix = self._reweight_values(doc_term_matrix)
-
         return doc_term_matrix
 
     def transform(self, tokenized_docs):
@@ -412,12 +426,10 @@ class Vectorizer(object):
                 doc_term_matrix = apply_idf_weighting(
                     doc_term_matrix,
                     smooth_idf=self.smooth_idf)
-
         if self.normalize is True:
             doc_term_matrix = normalize_mat(
                 doc_term_matrix,
                 norm='l2', axis=1, copy=False)
-
         return doc_term_matrix
 
 
@@ -474,6 +486,27 @@ class GroupVectorizer(Vectorizer):
         ['georgia', 'dole', 'virtually', 'worker', 'financial']
         >>> vectorizer.grps_list
         ['Bernie Sanders', 'Lindsey Graham', 'Rick Santorum', 'Joseph Biden', 'John Kasich']
+
+    If known in advance, limit the terms and/or groups included in vectorized outputs
+    to a particular set of values::
+
+        >>> tokenized_docs, groups = textacy.io.unzip(
+        ...     (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True),
+        ...      doc.metadata['speaker_name'])
+        ...     for doc in corpus[:600])
+        >>> vectorizer = GroupVectorizer(
+        ...     weighting='tfidf', normalize=True, smooth_idf=True,
+        ...     min_df=3, max_df=0.95,
+        ...     vocabulary_terms=['legislation', 'federal government', 'house', 'constitutional'],
+        ...     vocabulary_grps=['Bernie Sanders', 'Lindsey Graham', 'Rick Santorum'])
+        >>> grp_term_matrix = vectorizer.fit_transform(tokenized_docs, groups)
+        >>> grp_term_matrix
+        <3x4 sparse matrix of type '<class 'numpy.float64'>'
+	            with 12 stored elements in Compressed Sparse Row format>
+        >>> vectorizer.terms_list
+        ['constitutional', 'federal government', 'house', 'legislation']
+        >>> vectorizer.grps_list
+        ['Bernie Sanders', 'Lindsey Graham', 'Rick Santorum']
 
     Args:
         weighting ({'tf', 'tfidf', 'binary'}): Weighting to assign to terms in
@@ -629,14 +662,11 @@ class GroupVectorizer(Vectorizer):
         # count terms and build up a vocabulary
         grp_term_matrix, self.vocabulary_terms, self.vocabulary_grps = self._count_terms(
             tokenized_docs, grps, self._fixed_terms, self._fixed_grps)
-
         # filter terms by group freq or info content, as specified in init
         grp_term_matrix, self.vocabulary_terms = self._filter_terms(
             grp_term_matrix, self.vocabulary_terms)
-
         # re-weight values in group-term matrix, as specified in init
         grp_term_matrix = self._reweight_values(grp_term_matrix)
-
         return grp_term_matrix
 
     def transform(self, tokenized_docs, grps):
