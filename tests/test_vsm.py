@@ -33,19 +33,19 @@ def vectorizer_and_dtm():
 def lamb_and_child_idxs(vectorizer_and_dtm):
     vectorizer, _ = vectorizer_and_dtm
     idx_lamb = [
-        id_ for term, id_ in vectorizer.vocabulary.items()
+        id_ for term, id_ in vectorizer.vocabulary_terms.items()
         if term == 'lamb'][0]
     idx_child = [
-        id_ for term, id_ in vectorizer.vocabulary.items()
+        id_ for term, id_ in vectorizer.vocabulary_terms.items()
         if term == 'child'][0]
     return idx_lamb, idx_child
 
 
 def test_vectorizer_feature_names(vectorizer_and_dtm):
     vectorizer, _ = vectorizer_and_dtm
-    assert isinstance(vectorizer.feature_names, list)
-    assert isinstance(vectorizer.feature_names[0], compat.unicode_)
-    assert len(vectorizer.feature_names) == len(vectorizer.vocabulary)
+    assert isinstance(vectorizer.terms_list, list)
+    assert isinstance(vectorizer.terms_list[0], compat.unicode_)
+    assert len(vectorizer.terms_list) == len(vectorizer.vocabulary_terms)
 
 
 def test_vectorizer_bad_init_params():
@@ -54,7 +54,7 @@ def test_vectorizer_bad_init_params():
         {'max_df': -1},
         {'max_n_terms': -1},
         {'min_ic': -1.0},
-        {'vocabulary': 'foo bar bat baz'},
+        {'vocabulary_terms': 'foo bar bat baz'},
         )
     for bad_init_param in bad_init_params:
         with pytest.raises(ValueError):
@@ -129,16 +129,16 @@ def test_get_information_content(vectorizer_and_dtm, lamb_and_child_idxs):
 def test_filter_terms_by_df_identity(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
     dtm, vocab = vsm.filter_terms_by_df(
-        doc_term_matrix, vectorizer.vocabulary,
+        doc_term_matrix, vectorizer.vocabulary_terms,
         max_df=1.0, min_df=1, max_n_terms=None)
     assert dtm.shape == doc_term_matrix.shape
-    assert vocab == vectorizer.vocabulary
+    assert vocab == vectorizer.vocabulary_terms
 
 
 def test_filter_terms_by_df_max_n_terms(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
     dtm, vocab = vsm.filter_terms_by_df(
-        doc_term_matrix, vectorizer.vocabulary,
+        doc_term_matrix, vectorizer.vocabulary_terms,
         max_df=1.0, min_df=1, max_n_terms=2)
     assert dtm.shape == (8, 2)
     assert sorted(vocab.keys()) == ['lamb', 'mary']
@@ -147,7 +147,7 @@ def test_filter_terms_by_df_max_n_terms(vectorizer_and_dtm):
 def test_filter_terms_by_df_min_df(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
     dtm, vocab = vsm.filter_terms_by_df(
-        doc_term_matrix, vectorizer.vocabulary,
+        doc_term_matrix, vectorizer.vocabulary_terms,
         max_df=1.0, min_df=2, max_n_terms=None)
     assert dtm.shape == (8, 7)
     assert sorted(vocab.keys()) == ['-PRON-', 'child', 'lamb', 'love', 'mary', 'school', 'teacher']
@@ -156,23 +156,23 @@ def test_filter_terms_by_df_min_df(vectorizer_and_dtm):
 def test_filter_terms_by_df_exception(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
     with pytest.raises(ValueError):
-        _ = vsm.filter_terms_by_df(doc_term_matrix, vectorizer.vocabulary,
+        _ = vsm.filter_terms_by_df(doc_term_matrix, vectorizer.vocabulary_terms,
                                    max_df=1.0, min_df=6, max_n_terms=None)
 
 
 def test_filter_terms_by_ic_identity(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
     dtm, vocab = vsm.filter_terms_by_ic(
-        doc_term_matrix, vectorizer.vocabulary,
+        doc_term_matrix, vectorizer.vocabulary_terms,
         min_ic=0.0, max_n_terms=None)
     assert dtm.shape == doc_term_matrix.shape
-    assert vocab == vectorizer.vocabulary
+    assert vocab == vectorizer.vocabulary_terms
 
 
 def test_filter_terms_by_ic_max_n_terms(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
     dtm, vocab = vsm.filter_terms_by_ic(
-        doc_term_matrix, vectorizer.vocabulary,
+        doc_term_matrix, vectorizer.vocabulary_terms,
         min_ic=0.0, max_n_terms=3)
     assert dtm.shape == (8, 3)
     assert len(vocab) == 3
