@@ -123,11 +123,11 @@ class Vectorizer(object):
                  vocabulary_terms=None):
         # sanity check numeric arguments
         if min_df < 0 or max_df < 0:
-            raise ValueError('``min_df`` and ``max_df`` must be positive integers or None')
+            raise ValueError('`min_df` and `max_df` must be positive numbers or None')
         if min_ic < 0.0 or min_ic > 1.0:
-            raise ValueError('``min_ic`` must be a float in the interval [0.0, 1.0]')
+            raise ValueError('`min_ic` must be a float in the interval [0.0, 1.0]')
         if max_n_terms and max_n_terms < 0:
-            raise ValueError('``max_n_terms`` must be a positive integer or None')
+            raise ValueError('`max_n_terms` must be a positive integer or None')
         self.weighting = weighting
         self.normalize = normalize
         self.sublinear_tf = sublinear_tf
