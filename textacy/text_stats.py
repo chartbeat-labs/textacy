@@ -85,13 +85,13 @@ class TextStats(object):
 
     def __init__(self, doc):
         if isinstance(doc, SpacyDoc):
-            lang = doc.vocab.lang
+            self.lang = doc.vocab.lang
             self.n_sents = sum(1 for _ in doc.sents)
         else:
-            lang = doc.lang
+            self.lang = doc.lang
             self.n_sents = doc.n_sents
         # get objs for basic count computations
-        hyphenator = cache.load_hyphenator(lang=lang)
+        hyphenator = cache.load_hyphenator(lang=self.lang)
         words = tuple(extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False))
         syllables_per_word = tuple(len(hyphenator.positions(word.lower_)) + 1 for word in words)
         chars_per_word = tuple(len(word) for word in words)
@@ -110,7 +110,9 @@ class TextStats(object):
 
     @property
     def flesch_readability_ease(self):
-        return flesch_readability_ease(self.n_syllables, self.n_words, self.n_sents)
+        return flesch_readability_ease(
+            self.n_syllables, self.n_words, self.n_sents,
+            lang=self.lang)
 
     @property
     def smog_index(self):
@@ -175,9 +177,39 @@ def flesch_kincaid_grade_level(n_syllables, n_words, n_sents):
     return (11.8 * n_syllables / n_words) + (0.39 * n_words / n_sents) - 15.59
 
 
-def flesch_readability_ease(n_syllables, n_words, n_sents):
-    """https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease"""
-    return (-84.6 * n_syllables / n_words) - (1.015 * n_words / n_sents) + 206.835
+def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
+    """
+    Constants in the Flesch Reading Ease formula are language-dependent;
+    if ``lang`` is null, the English-language formula is used.
+
+    References:
+        English: https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease
+        German: https://de.wikipedia.org/wiki/Lesbarkeitsindex#Flesch-Reading-Ease
+        Spanish: ?
+        French: ?
+        Italian: https://it.wikipedia.org/wiki/Formula_di_Flesch
+        Dutch: ?
+        Russian: https://ru.wikipedia.org/wiki/%D0%98%D0%BD%D0%B4%D0%B5%D0%BA%D1%81_%D1%83%D0%B4%D0%BE%D0%B1%D0%BE%D1%87%D0%B8%D1%82%D0%B0%D0%B5%D0%BC%D0%BE%D1%81%D1%82%D0%B8
+    """
+    if lang is None or lang == 'en':
+        return 206.835 - (1.015 * n_words / n_sents) - (84.6 * n_syllables / n_words)
+    elif lang == 'de':
+        return 180.0 - (n_words / n_sents) - (58.5 * n_syllables / n_words)
+    elif lang == 'es':
+        return 206.84 - (1.02 * n_words / n_sents) - (60.0 * n_syllables / n_words)
+    elif lang == 'fr':
+        return 207.0 - (1.015 * n_words / n_sents) - (73.6 * n_syllables / n_words)
+    elif lang == 'it':
+        return 217.0 - (1.3 * n_words / n_sents) - (60.0 * n_syllables / n_words)
+    elif lang == 'nl':
+        return 206.84 - (0.93 * n_words / n_sents) - (77.0 * n_syllables / n_words)
+    elif lang == 'ru':
+        return 206.835 - (1.3 * n_words / n_sents) - (60.1 * n_syllables / n_words)
+    else:
+        langs = ['en', 'de', 'es', 'fr', 'it', 'nl', 'ru']
+        raise ValueError(
+            'Flesch Reading Ease is only implemented for these languages: {}. '
+            'Passing `lang=None` falls back to "en" (English)'.format(langs))
 
 
 def smog_index(n_polysyllable_words, n_sents):
