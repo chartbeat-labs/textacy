@@ -176,7 +176,7 @@ def flesch_kincaid_grade_level(n_syllables, n_words, n_sents):
     """
     Readability score used widely in education, whose value estimates the U.S.
     grade level / number of years of education required to understand a text.
-    Higher values => more difficult text.
+    Higher value => more difficult text.
 
     References:
         https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch.E2.80.93Kincaid_grade_level
@@ -187,7 +187,7 @@ def flesch_kincaid_grade_level(n_syllables, n_words, n_sents):
 def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
     """
     Readability score usually in the range [0, 100], related (inversely) to
-    :func:`flesch_kincaid_grade_level`. Higher values => easier text.
+    :func:`flesch_kincaid_grade_level()`. Higher value => easier text.
 
     Note:
         Constant weights in this formula are language-dependent;
@@ -228,7 +228,7 @@ def smog_index(n_polysyllable_words, n_sents):
     Readability score commonly used in healthcare, whose value estimates the
     number of years of education required to understand a text, similar to
     :func:`flesch_kincaid_grade_level()` and intended as a substitute for
-    :func:`gunning_fog_index`. Higher scores => more difficult text.
+    :func:`gunning_fog_index()`. Higher value => more difficult text.
 
     References:
         https://en.wikipedia.org/wiki/SMOG
@@ -242,7 +242,7 @@ def gunning_fog_index(n_words, n_polysyllable_words, n_sents):
     """
     Readability score whose value estimates the number of years of education
     required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
-    and :func:`gunning_fog_index`. Higher scores => more difficult text.
+    and :func:`smog_index()`. Higher value => more difficult text.
 
     References:
         https://en.wikipedia.org/wiki/Gunning_fog_index
@@ -251,24 +251,51 @@ def gunning_fog_index(n_words, n_polysyllable_words, n_sents):
 
 
 def coleman_liau_index(n_chars, n_words, n_sents):
-    """https://en.wikipedia.org/wiki/Coleman%E2%80%93Liau_index"""
+    """
+    Readability score whose value estimates the number of years of education
+    required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
+    and :func:`smog_index()`, but using characters instead of syllables.
+    Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Coleman%E2%80%93Liau_index"""
     return (5.879851 * n_chars / n_words) - (29.587280 * n_sents / n_words) - 15.800804
 
 
 def automated_readability_index(n_chars, n_words, n_sents):
-    """https://en.wikipedia.org/wiki/Automated_readability_index"""
+    """
+    Readability score whose value estimates the U.S. grade level required to
+    understand a text, most similarly to :func:`flesch_kincaid_grade_level()`,
+    but using characters instead of syllables like :func:`coleman_liau_index()`.
+    Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Automated_readability_index
+    """
     return (4.71 * n_chars / n_words) + (0.5 * n_words / n_sents) - 21.43
 
 
 def lix(n_words, n_long_words, n_sents):
-    """https://en.wikipedia.org/wiki/LIX"""
+    """
+    Readability score commonly used in Sweden, whose value estimates the
+    difficulty of reading a foreign text. Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/LIX
+    """
     return (n_words / n_sents) + (100 * n_long_words / n_words)
 
 
 def wiener_sachtextformel(n_words, n_polysyllable_words, n_monosyllable_words,
                           n_long_words, n_sents,
                           variant=1):
-    """https://de.wikipedia.org/wiki/Lesbarkeitsindex#Wiener_Sachtextformel"""
+    """
+    Readability score for German-language texts, whose value estimates the grade
+    level required to understand a text. Higher value => more difficult text.
+
+    References:
+        https://de.wikipedia.org/wiki/Lesbarkeitsindex#Wiener_Sachtextformel
+    """
     ms = 100 * n_polysyllable_words / n_words
     sl = n_words / n_sents
     iw = 100 * n_long_words / n_words
@@ -286,5 +313,12 @@ def wiener_sachtextformel(n_words, n_polysyllable_words, n_monosyllable_words,
 
 
 def gulpease_index(n_chars, n_words, n_sents):
-    """https://it.wikipedia.org/wiki/Indice_Gulpease"""
+    """
+    Readability score for Italian-language texts, whose value is in the range
+    [0, 100] similar to :func:`flesch_readability_ease()`. Higher value =>
+    easier text.
+
+    References:
+        https://it.wikipedia.org/wiki/Indice_Gulpease
+    """
     return (300 * n_sents / n_words) - (10 * n_chars / n_words) + 89
