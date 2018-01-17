@@ -19,7 +19,7 @@ class TextStats(object):
     Compute a variety of basic counts and readability statistics for a given
     text document. For example::
 
-        >>> text = list(textacy.datasets.CapitolWords().texts(limit=1))[0]
+        >>> text = next(textacy.datasets.CapitolWords().texts(limit=1))
         >>> doc = textacy.Doc(text)
         >>> ts = TextStats(doc)
         >>> ts.n_words
@@ -62,15 +62,15 @@ class TextStats(object):
         n_polysyllable_words (int): Number of words in ``doc`` with 3 or more syllables.
             Note: Since this excludes words with exactly 2 syllables, it's likely
             that ``n_monosyllable_words + n_polysyllable_words != n_words``.
-        flesch_kincaid_grade_level (float): https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch.E2.80.93Kincaid_grade_level
-        flesch_readability_ease (float): https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease
-        smog_index (float): https://en.wikipedia.org/wiki/SMOG
-        gunning_fog_index (float): https://en.wikipedia.org/wiki/Gunning_fog_index
-        coleman_liau_index (float): https://en.wikipedia.org/wiki/Coleman%E2%80%93Liau_index
-        automated_readability_index (float): https://en.wikipedia.org/wiki/Automated_readability_index
-        lix (float): https://en.wikipedia.org/wiki/LIX
-        gulpease_index (float): https://it.wikipedia.org/wiki/Indice_Gulpease
-        wiener_sachtextformel (float): https://de.wikipedia.org/wiki/Lesbarkeitsindex#Wiener_Sachtextformel
+        flesch_kincaid_grade_level (float): see :func:`flesch_kincaid_grade_level()`
+        flesch_readability_ease (float): see :func:`flesch_readability_ease()`
+        smog_index (float): see :func:`smog_index()`
+        gunning_fog_index (float): see :func:`gunning_fog_index()`
+        coleman_liau_index (float): see :func:`coleman_liau_index()`
+        automated_readability_index (float): see :func:`automated_readability_index()`
+        lix (float): see :func:`lix()`
+        gulpease_index (float): see :func:`gulpease_index()`
+        wiener_sachtextformel (float): see :func:`wiener_sachtextformel()`
             Note: This always returns variant #1.
         basic_counts (Dict[str, int]): Mapping of basic count names to values,
             where basic counts are the attributes listed above between ``n_sents``
@@ -173,14 +173,25 @@ class TextStats(object):
 
 
 def flesch_kincaid_grade_level(n_syllables, n_words, n_sents):
-    """https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch.E2.80.93Kincaid_grade_level"""
+    """
+    Readability score used widely in education, whose value estimates the U.S.
+    grade level / number of years of education required to understand a text.
+    Higher values => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch.E2.80.93Kincaid_grade_level
+    """
     return (11.8 * n_syllables / n_words) + (0.39 * n_words / n_sents) - 15.59
 
 
 def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
     """
-    Constants in the Flesch Reading Ease formula are language-dependent;
-    if ``lang`` is null, the English-language formula is used.
+    Readability score usually in the range [0, 100], related (inversely) to
+    :func:`flesch_kincaid_grade_level`. Higher values => easier text.
+
+    Note:
+        Constant weights in this formula are language-dependent;
+        if ``lang`` is null, the English-language formulation is used.
 
     References:
         English: https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease
@@ -213,14 +224,29 @@ def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
 
 
 def smog_index(n_polysyllable_words, n_sents):
-    """https://en.wikipedia.org/wiki/SMOG"""
+    """
+    Readability score commonly used in healthcare, whose value estimates the
+    number of years of education required to understand a text, similar to
+    :func:`flesch_kincaid_grade_level()` and intended as a substitute for
+    :func:`gunning_fog_index`. Higher scores => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/SMOG
+    """
     if n_sents < 30:
         LOGGER.warning('SMOG score may be unreliable for n_sents < 30')
     return (1.0430 * sqrt(30 * n_polysyllable_words / n_sents)) + 3.1291
 
 
 def gunning_fog_index(n_words, n_polysyllable_words, n_sents):
-    """https://en.wikipedia.org/wiki/Gunning_fog_index"""
+    """
+    Readability score whose value estimates the number of years of education
+    required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
+    and :func:`gunning_fog_index`. Higher scores => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Gunning_fog_index
+    """
     return 0.4 * ((n_words / n_sents) + (100 * n_polysyllable_words / n_words))
 
 
