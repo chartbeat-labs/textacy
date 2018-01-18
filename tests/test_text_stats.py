@@ -60,6 +60,11 @@ def test_flesch_reading_ease(ts):
     assert ts.flesch_reading_ease == pytest.approx(50.707745098039254, rel=1e-2)
 
 
+def test_flesch_readability_ease_warns(ts):
+    with pytest.warns(DeprecationWarning):
+        _ = ts.flesch_readability_ease
+
+
 def test_smog_index(ts):
     assert ts.smog_index == pytest.approx(14.554592549557764, rel=1e-2)
 
@@ -149,3 +154,26 @@ def test_wiener_sachtextformel_variant4(ts):
             ts.n_long_words, ts.n_sents, variant=4) ==
         pytest.approx(9.169619607843138, rel=1e-2)
         )
+
+
+def test_flesch_reading_ease_langs(ts):
+    lang_fres = [
+        (None, 50.707745098039254),
+        ('en', 50.707745098039254),
+        ('de', 65.28186274509805),
+        ('es', 89.30823529411765),
+        ('fr', 68.18156862745099),
+        ('it', 93.12156862745098),
+        ('nl', 64.59823529411764),
+        ('ru', 82.79921568627452),
+        ]
+    for lang, fre in lang_fres:
+        assert (
+            text_stats.flesch_reading_ease(
+                ts.n_syllables, ts.n_words, ts.n_sents, lang=lang) ==
+            pytest.approx(fre, rel=1e-2)
+            )
+
+def test_flesch_reading_ease_bad_lang(ts):
+    with pytest.raises(ValueError):
+        _ = text_stats.flesch_reading_ease(1, 1, 1, lang='foo')

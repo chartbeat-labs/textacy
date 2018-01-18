@@ -118,7 +118,9 @@ class TextStats(object):
     @property
     def flesch_readability_ease(self):
         """For backwards compatibility. Deprecated."""
-        return self.flesch_reading_ease
+        return flesch_readability_ease(
+            self.n_syllables, self.n_words, self.n_sents,
+            lang=self.lang)
 
     @property
     def smog_index(self):
