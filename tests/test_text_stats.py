@@ -56,8 +56,13 @@ def test_flesch_kincaid_grade_level(ts):
     assert ts.flesch_kincaid_grade_level == pytest.approx(11.817647058823532, rel=1e-2)
 
 
-def test_flesch_readability_ease(ts):
-    assert ts.flesch_readability_ease == pytest.approx(50.707745098039254, rel=1e-2)
+def test_flesch_reading_ease(ts):
+    assert ts.flesch_reading_ease == pytest.approx(50.707745098039254, rel=1e-2)
+
+
+def test_flesch_readability_ease_warns(ts):
+    with pytest.warns(DeprecationWarning):
+        _ = ts.flesch_readability_ease
 
 
 def test_smog_index(ts):
@@ -102,7 +107,7 @@ def test_readability_stats(ts):
     assert isinstance(ts.basic_counts, dict)
     readability_stats = ts.readability_stats
     readability_stats_keys = (
-        'flesch_kincaid_grade_level', 'flesch_readability_ease', 'smog_index',
+        'flesch_kincaid_grade_level', 'flesch_reading_ease', 'smog_index',
         'gunning_fog_index', 'coleman_liau_index', 'automated_readability_index',
         'lix', 'gulpease_index', 'wiener_sachtextformel')
     for key in readability_stats_keys:
@@ -149,3 +154,26 @@ def test_wiener_sachtextformel_variant4(ts):
             ts.n_long_words, ts.n_sents, variant=4) ==
         pytest.approx(9.169619607843138, rel=1e-2)
         )
+
+
+def test_flesch_reading_ease_langs(ts):
+    lang_fres = [
+        (None, 50.707745098039254),
+        ('en', 50.707745098039254),
+        ('de', 65.28186274509805),
+        ('es', 89.30823529411765),
+        ('fr', 68.18156862745099),
+        ('it', 93.12156862745098),
+        ('nl', 64.59823529411764),
+        ('ru', 82.79921568627452),
+        ]
+    for lang, fre in lang_fres:
+        assert (
+            text_stats.flesch_reading_ease(
+                ts.n_syllables, ts.n_words, ts.n_sents, lang=lang) ==
+            pytest.approx(fre, rel=1e-2)
+            )
+
+def test_flesch_reading_ease_bad_lang(ts):
+    with pytest.raises(ValueError):
+        _ = text_stats.flesch_reading_ease(1, 1, 1, lang='foo')

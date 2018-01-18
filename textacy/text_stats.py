@@ -10,6 +10,7 @@ from spacy.tokens import Doc as SpacyDoc
 
 from . import cache
 from . import extract
+from . import utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -19,7 +20,7 @@ class TextStats(object):
     Compute a variety of basic counts and readability statistics for a given
     text document. For example::
 
-        >>> text = list(textacy.datasets.CapitolWords().texts(limit=1))[0]
+        >>> text = next(textacy.datasets.CapitolWords().texts(limit=1))
         >>> doc = textacy.Doc(text)
         >>> ts = TextStats(doc)
         >>> ts.n_words
@@ -39,7 +40,7 @@ class TextStats(object):
         {'automated_readability_index': 13.626495098039214,
          'coleman_liau_index': 12.509300816176474,
          'flesch_kincaid_grade_level': 11.817647058823532,
-         'flesch_readability_ease': 50.707745098039254,
+         'flesch_reading_ease': 50.707745098039254,
          'gulpease_index': 51.86764705882353,
          'gunning_fog_index': 16.12549019607843,
          'lix': 54.28431372549019,
@@ -62,15 +63,15 @@ class TextStats(object):
         n_polysyllable_words (int): Number of words in ``doc`` with 3 or more syllables.
             Note: Since this excludes words with exactly 2 syllables, it's likely
             that ``n_monosyllable_words + n_polysyllable_words != n_words``.
-        flesch_kincaid_grade_level (float): https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch.E2.80.93Kincaid_grade_level
-        flesch_readability_ease (float): https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease
-        smog_index (float): https://en.wikipedia.org/wiki/SMOG
-        gunning_fog_index (float): https://en.wikipedia.org/wiki/Gunning_fog_index
-        coleman_liau_index (float): https://en.wikipedia.org/wiki/Coleman%E2%80%93Liau_index
-        automated_readability_index (float): https://en.wikipedia.org/wiki/Automated_readability_index
-        lix (float): https://en.wikipedia.org/wiki/LIX
-        gulpease_index (float): https://it.wikipedia.org/wiki/Indice_Gulpease
-        wiener_sachtextformel (float): https://de.wikipedia.org/wiki/Lesbarkeitsindex#Wiener_Sachtextformel
+        flesch_kincaid_grade_level (float): see :func:`flesch_kincaid_grade_level()`
+        flesch_reading_ease (float): see :func:`flesch_reading_ease()`
+        smog_index (float): see :func:`smog_index()`
+        gunning_fog_index (float): see :func:`gunning_fog_index()`
+        coleman_liau_index (float): see :func:`coleman_liau_index()`
+        automated_readability_index (float): see :func:`automated_readability_index()`
+        lix (float): see :func:`lix()`
+        gulpease_index (float): see :func:`gulpease_index()`
+        wiener_sachtextformel (float): see :func:`wiener_sachtextformel()`
             Note: This always returns variant #1.
         basic_counts (Dict[str, int]): Mapping of basic count names to values,
             where basic counts are the attributes listed above between ``n_sents``
@@ -85,13 +86,13 @@ class TextStats(object):
 
     def __init__(self, doc):
         if isinstance(doc, SpacyDoc):
-            lang = doc.vocab.lang
+            self.lang = doc.vocab.lang
             self.n_sents = sum(1 for _ in doc.sents)
         else:
-            lang = doc.lang
+            self.lang = doc.lang
             self.n_sents = doc.n_sents
         # get objs for basic count computations
-        hyphenator = cache.load_hyphenator(lang=lang)
+        hyphenator = cache.load_hyphenator(lang=self.lang)
         words = tuple(extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False))
         syllables_per_word = tuple(len(hyphenator.positions(word.lower_)) + 1 for word in words)
         chars_per_word = tuple(len(word) for word in words)
@@ -109,8 +110,17 @@ class TextStats(object):
         return flesch_kincaid_grade_level(self.n_syllables, self.n_words, self.n_sents)
 
     @property
+    def flesch_reading_ease(self):
+        return flesch_reading_ease(
+            self.n_syllables, self.n_words, self.n_sents,
+            lang=self.lang)
+
+    @property
     def flesch_readability_ease(self):
-        return flesch_readability_ease(self.n_syllables, self.n_words, self.n_sents)
+        """For backwards compatibility. Deprecated."""
+        return flesch_readability_ease(
+            self.n_syllables, self.n_words, self.n_sents,
+            lang=self.lang)
 
     @property
     def smog_index(self):
@@ -160,7 +170,7 @@ class TextStats(object):
             LOGGER.warning("readability stats can't be computed because doc has 0 words")
             return None
         return {'flesch_kincaid_grade_level': self.flesch_kincaid_grade_level,
-                'flesch_readability_ease': self.flesch_readability_ease,
+                'flesch_reading_ease': self.flesch_reading_ease,
                 'smog_index': self.smog_index,
                 'gunning_fog_index': self.gunning_fog_index,
                 'coleman_liau_index': self.coleman_liau_index,
@@ -171,46 +181,142 @@ class TextStats(object):
 
 
 def flesch_kincaid_grade_level(n_syllables, n_words, n_sents):
-    """https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch.E2.80.93Kincaid_grade_level"""
+    """
+    Readability score used widely in education, whose value estimates the U.S.
+    grade level / number of years of education required to understand a text.
+    Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch.E2.80.93Kincaid_grade_level
+    """
     return (11.8 * n_syllables / n_words) + (0.39 * n_words / n_sents) - 15.59
 
 
-def flesch_readability_ease(n_syllables, n_words, n_sents):
-    """https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease"""
-    return (-84.6 * n_syllables / n_words) - (1.015 * n_words / n_sents) + 206.835
+def flesch_reading_ease(n_syllables, n_words, n_sents, lang=None):
+    """
+    Readability score usually in the range [0, 100], related (inversely) to
+    :func:`flesch_kincaid_grade_level()`. Higher value => easier text.
+
+    Note:
+        Constant weights in this formula are language-dependent;
+        if ``lang`` is null, the English-language formulation is used.
+
+    References:
+        English: https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease
+        German: https://de.wikipedia.org/wiki/Lesbarkeitsindex#Flesch-Reading-Ease
+        Spanish: ?
+        French: ?
+        Italian: https://it.wikipedia.org/wiki/Formula_di_Flesch
+        Dutch: ?
+        Russian: https://ru.wikipedia.org/wiki/%D0%98%D0%BD%D0%B4%D0%B5%D0%BA%D1%81_%D1%83%D0%B4%D0%BE%D0%B1%D0%BE%D1%87%D0%B8%D1%82%D0%B0%D0%B5%D0%BC%D0%BE%D1%81%D1%82%D0%B8
+    """
+    if lang is None or lang == 'en':
+        return 206.835 - (1.015 * n_words / n_sents) - (84.6 * n_syllables / n_words)
+    elif lang == 'de':
+        return 180.0 - (n_words / n_sents) - (58.5 * n_syllables / n_words)
+    elif lang == 'es':
+        return 206.84 - (1.02 * n_words / n_sents) - (60.0 * n_syllables / n_words)
+    elif lang == 'fr':
+        return 207.0 - (1.015 * n_words / n_sents) - (73.6 * n_syllables / n_words)
+    elif lang == 'it':
+        return 217.0 - (1.3 * n_words / n_sents) - (60.0 * n_syllables / n_words)
+    elif lang == 'nl':
+        return 206.84 - (0.93 * n_words / n_sents) - (77.0 * n_syllables / n_words)
+    elif lang == 'ru':
+        return 206.835 - (1.3 * n_words / n_sents) - (60.1 * n_syllables / n_words)
+    else:
+        langs = ['en', 'de', 'es', 'fr', 'it', 'nl', 'ru']
+        raise ValueError(
+            'Flesch Reading Ease is only implemented for these languages: {}. '
+            'Passing `lang=None` falls back to "en" (English)'.format(langs))
+
+
+def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
+    """
+    Alias for :func:`flesch_reading_ease()`, for backwards compatibility.
+
+    Deprecated!
+    """
+    utils.deprecated(
+        '`flesch_readability_ease()` is an alias for `flesch_reading_ease()` '
+        'for backwards compatibility; it will be removed in a future version.',
+        action='once')
+    flesch_reading_ease(n_syllables, n_words, n_sents, lang=lang)
 
 
 def smog_index(n_polysyllable_words, n_sents):
-    """https://en.wikipedia.org/wiki/SMOG"""
+    """
+    Readability score commonly used in healthcare, whose value estimates the
+    number of years of education required to understand a text, similar to
+    :func:`flesch_kincaid_grade_level()` and intended as a substitute for
+    :func:`gunning_fog_index()`. Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/SMOG
+    """
     if n_sents < 30:
         LOGGER.warning('SMOG score may be unreliable for n_sents < 30')
     return (1.0430 * sqrt(30 * n_polysyllable_words / n_sents)) + 3.1291
 
 
 def gunning_fog_index(n_words, n_polysyllable_words, n_sents):
-    """https://en.wikipedia.org/wiki/Gunning_fog_index"""
+    """
+    Readability score whose value estimates the number of years of education
+    required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
+    and :func:`smog_index()`. Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Gunning_fog_index
+    """
     return 0.4 * ((n_words / n_sents) + (100 * n_polysyllable_words / n_words))
 
 
 def coleman_liau_index(n_chars, n_words, n_sents):
-    """https://en.wikipedia.org/wiki/Coleman%E2%80%93Liau_index"""
+    """
+    Readability score whose value estimates the number of years of education
+    required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
+    and :func:`smog_index()`, but using characters instead of syllables.
+    Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Coleman%E2%80%93Liau_index"""
     return (5.879851 * n_chars / n_words) - (29.587280 * n_sents / n_words) - 15.800804
 
 
 def automated_readability_index(n_chars, n_words, n_sents):
-    """https://en.wikipedia.org/wiki/Automated_readability_index"""
+    """
+    Readability score whose value estimates the U.S. grade level required to
+    understand a text, most similarly to :func:`flesch_kincaid_grade_level()`,
+    but using characters instead of syllables like :func:`coleman_liau_index()`.
+    Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Automated_readability_index
+    """
     return (4.71 * n_chars / n_words) + (0.5 * n_words / n_sents) - 21.43
 
 
 def lix(n_words, n_long_words, n_sents):
-    """https://en.wikipedia.org/wiki/LIX"""
+    """
+    Readability score commonly used in Sweden, whose value estimates the
+    difficulty of reading a foreign text. Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/LIX
+    """
     return (n_words / n_sents) + (100 * n_long_words / n_words)
 
 
 def wiener_sachtextformel(n_words, n_polysyllable_words, n_monosyllable_words,
                           n_long_words, n_sents,
                           variant=1):
-    """https://de.wikipedia.org/wiki/Lesbarkeitsindex#Wiener_Sachtextformel"""
+    """
+    Readability score for German-language texts, whose value estimates the grade
+    level required to understand a text. Higher value => more difficult text.
+
+    References:
+        https://de.wikipedia.org/wiki/Lesbarkeitsindex#Wiener_Sachtextformel
+    """
     ms = 100 * n_polysyllable_words / n_words
     sl = n_words / n_sents
     iw = 100 * n_long_words / n_words
@@ -228,5 +334,12 @@ def wiener_sachtextformel(n_words, n_polysyllable_words, n_monosyllable_words,
 
 
 def gulpease_index(n_chars, n_words, n_sents):
-    """https://it.wikipedia.org/wiki/Indice_Gulpease"""
+    """
+    Readability score for Italian-language texts, whose value is in the range
+    [0, 100] similar to :func:`flesch_reading_ease()`. Higher value =>
+    easier text.
+
+    References:
+        https://it.wikipedia.org/wiki/Indice_Gulpease
+    """
     return (300 * n_sents / n_words) - (10 * n_chars / n_words) + 89
