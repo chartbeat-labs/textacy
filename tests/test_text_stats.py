@@ -56,8 +56,8 @@ def test_flesch_kincaid_grade_level(ts):
     assert ts.flesch_kincaid_grade_level == pytest.approx(11.817647058823532, rel=1e-2)
 
 
-def test_flesch_readability_ease(ts):
-    assert ts.flesch_readability_ease == pytest.approx(50.707745098039254, rel=1e-2)
+def test_flesch_reading_ease(ts):
+    assert ts.flesch_reading_ease == pytest.approx(50.707745098039254, rel=1e-2)
 
 
 def test_smog_index(ts):
@@ -102,7 +102,7 @@ def test_readability_stats(ts):
     assert isinstance(ts.basic_counts, dict)
     readability_stats = ts.readability_stats
     readability_stats_keys = (
-        'flesch_kincaid_grade_level', 'flesch_readability_ease', 'smog_index',
+        'flesch_kincaid_grade_level', 'flesch_reading_ease', 'smog_index',
         'gunning_fog_index', 'coleman_liau_index', 'automated_readability_index',
         'lix', 'gulpease_index', 'wiener_sachtextformel')
     for key in readability_stats_keys:

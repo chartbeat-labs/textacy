@@ -10,6 +10,7 @@ from spacy.tokens import Doc as SpacyDoc
 
 from . import cache
 from . import extract
+from . import utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class TextStats(object):
         {'automated_readability_index': 13.626495098039214,
          'coleman_liau_index': 12.509300816176474,
          'flesch_kincaid_grade_level': 11.817647058823532,
-         'flesch_readability_ease': 50.707745098039254,
+         'flesch_reading_ease': 50.707745098039254,
          'gulpease_index': 51.86764705882353,
          'gunning_fog_index': 16.12549019607843,
          'lix': 54.28431372549019,
@@ -63,7 +64,7 @@ class TextStats(object):
             Note: Since this excludes words with exactly 2 syllables, it's likely
             that ``n_monosyllable_words + n_polysyllable_words != n_words``.
         flesch_kincaid_grade_level (float): see :func:`flesch_kincaid_grade_level()`
-        flesch_readability_ease (float): see :func:`flesch_readability_ease()`
+        flesch_reading_ease (float): see :func:`flesch_reading_ease()`
         smog_index (float): see :func:`smog_index()`
         gunning_fog_index (float): see :func:`gunning_fog_index()`
         coleman_liau_index (float): see :func:`coleman_liau_index()`
@@ -109,10 +110,15 @@ class TextStats(object):
         return flesch_kincaid_grade_level(self.n_syllables, self.n_words, self.n_sents)
 
     @property
-    def flesch_readability_ease(self):
-        return flesch_readability_ease(
+    def flesch_reading_ease(self):
+        return flesch_reading_ease(
             self.n_syllables, self.n_words, self.n_sents,
             lang=self.lang)
+
+    @property
+    def flesch_readability_ease(self):
+        """For backwards compatibility. Deprecated."""
+        return self.flesch_reading_ease
 
     @property
     def smog_index(self):
@@ -162,7 +168,7 @@ class TextStats(object):
             LOGGER.warning("readability stats can't be computed because doc has 0 words")
             return None
         return {'flesch_kincaid_grade_level': self.flesch_kincaid_grade_level,
-                'flesch_readability_ease': self.flesch_readability_ease,
+                'flesch_reading_ease': self.flesch_reading_ease,
                 'smog_index': self.smog_index,
                 'gunning_fog_index': self.gunning_fog_index,
                 'coleman_liau_index': self.coleman_liau_index,
@@ -184,7 +190,7 @@ def flesch_kincaid_grade_level(n_syllables, n_words, n_sents):
     return (11.8 * n_syllables / n_words) + (0.39 * n_words / n_sents) - 15.59
 
 
-def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
+def flesch_reading_ease(n_syllables, n_words, n_sents, lang=None):
     """
     Readability score usually in the range [0, 100], related (inversely) to
     :func:`flesch_kincaid_grade_level()`. Higher value => easier text.
@@ -221,6 +227,19 @@ def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
         raise ValueError(
             'Flesch Reading Ease is only implemented for these languages: {}. '
             'Passing `lang=None` falls back to "en" (English)'.format(langs))
+
+
+def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
+    """
+    Alias for :func:`flesch_reading_ease()`, for backwards compatibility.
+
+    Deprecated!
+    """
+    utils.deprecated(
+        '`flesch_readability_ease()` is an alias for `flesch_reading_ease()` '
+        'for backwards compatibility; it will be removed in a future version.',
+        action='once')
+    flesch_reading_ease(n_syllables, n_words, n_sents, lang=lang)
 
 
 def smog_index(n_polysyllable_words, n_sents):
@@ -315,7 +334,7 @@ def wiener_sachtextformel(n_words, n_polysyllable_words, n_monosyllable_words,
 def gulpease_index(n_chars, n_words, n_sents):
     """
     Readability score for Italian-language texts, whose value is in the range
-    [0, 100] similar to :func:`flesch_readability_ease()`. Higher value =>
+    [0, 100] similar to :func:`flesch_reading_ease()`. Higher value =>
     easier text.
 
     References:
