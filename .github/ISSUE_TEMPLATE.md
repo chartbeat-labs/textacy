@@ -21,7 +21,10 @@
 <!--- Providing context helps us come up with a solution that is most useful in the real world -->
 
 ## Your Environment
-<!--- Include relevant details about the environment in which you experienced the bug. For convenience, just copy-paste the output of `textacy.compat.get_config()`-->
-* `textacy` and `spacy` versions:
-* Python version:
-* Operating system and version:
+<!--- Include relevant details about the environment in which you experienced the bug. For convenience, you can just copy-paste the output of `textacy.utils.print_markdown(textacy.utils.get_config())`-->
+
+- operating system:
+- python version:
+- `spacy` version:
+- installed `spacy` models:
+- `textacy` version:
