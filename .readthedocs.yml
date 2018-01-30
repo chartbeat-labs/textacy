@@ -1,0 +1,10 @@
+formats:
+    - htmlzip
+    - pdf
+
+build:
+    - image: latest
+
+python:
+    version: 3.5
+    setup_py_install: true
