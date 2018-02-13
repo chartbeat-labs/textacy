@@ -8,7 +8,6 @@ import logging
 
 import networkx as nx
 from cytoolz import itertoolz
-from sklearn.feature_extraction.text import CountVectorizer, TfidfVectorizer
 from spacy.tokens.span import Span as SpacySpan
 from spacy.tokens.token import Token as SpacyToken
 
