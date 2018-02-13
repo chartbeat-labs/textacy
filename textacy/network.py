@@ -23,27 +23,32 @@ def terms_to_semantic_network(terms,
                               window_width=10,
                               edge_weighting='cooc_freq'):
     """
-    Convert an ordered list of non-overlapping terms into a semantic network,
-    where each term is represented by a node with edges linking it to other terms
-    that co-occur within ``window_width`` terms of itself.
+    Transform an ordered list of non-overlapping terms into a semantic network,
+    where each term is represented by a node with weighted edges linking it to
+    other terms that co-occur within ``window_width`` terms of itself.
 
     Args:
         terms (List[str] or List[``spacy.Token``])
-        normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
+        normalize (str or Callable): If 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if false-y, use the form of terms as they appear
-            in doc; if a callable, must accept a ``spacy.Token`` and return a
-            str, e.g. :func:`textacy.spacy_utils.normalized_str()`;
-            only applicable if ``terms`` is a List[``spacy.Token``]
-        window_width (int, optional): size of sliding window over `terms` that
-            determines which are said to co-occur; if = 2, only adjacent terms
-            will have edges in network
-        edge_weighting (str {'cooc_freq', 'binary'}, optional): if 'binary',
-            all co-occurring terms will have network edges with weight = 1;
-            if 'cooc_freq', edges will have a weight equal to the number of times
-            that the connected nodes co-occur in a sliding window
+            in ``terms``; if a callable, must accept a ``spacy.Token`` and return
+            a str, e.g. :func:`textacy.spacy_utils.normalized_str()`.
+
+            .. note:: This is applied to the elements of ``terms`` *only* if
+               it's a list of ``spacy.Token``.
+
+        window_width (int): Size of sliding window over ``terms`` that determines
+            which are said to co-occur. If 2, only immediately adjacent terms
+            have edges in the returned network.
+        edge_weighting ({'cooc_freq', 'binary'}): If 'cooc_freq', the nodes for
+            all co-occurring terms are connected by edges with weight equal to
+            the number of times they co-occurred within a sliding window;
+            if 'binary', all such edges have weight = 1.
 
     Returns:
-        ``networkx.Graph``: Nodes are terms, edges are for co-occurrences of terms.
+        ``networkx.Graph``: Nodes in this network correspond to individual terms;
+        those that co-occur are connected by edges with weights determined
+        by ``edge_weighting``.
 
     Notes:
         - Be sure to filter out stopwords, punctuation, certain parts of speech, etc.
@@ -55,16 +60,20 @@ def terms_to_semantic_network(terms,
           :func:`normalized_str() <textacy.spacy_utils.normalized_str>`
     """
     if window_width < 2:
-        raise ValueError('Window width must be >= 2')
+        raise ValueError(
+            '`window_width` = {} is invalid; value must be >= 2'.format(window_width))
     if not terms:
-        raise ValueError('`terms` list is empty; it must contain 1 or more terms')
+        raise ValueError(
+            '`terms` = {} is invalid; it must contain at least 1 term '
+            'in the form of a string or spacy token'.format(terms))
 
     # if len(terms) < window_width, cytoolz throws a StopIteration error
     # which we don't want
     if len(terms) < window_width:
-        LOGGER.warning(
-            'input terms list is smaller than window width (%s < %s)',
-            len(terms), window_width)
+        LOGGER.info(
+            '`terms` has fewer items (%s) than the specified `window_width` (%s); '
+            'setting window width to %s',
+            len(terms), window_width, len(terms))
         window_width = len(terms)
 
     if isinstance(terms[0], compat.unicode_):
@@ -83,8 +92,8 @@ def terms_to_semantic_network(terms,
             windows = ((normalize(tok) for tok in window)
                        for window in itertoolz.sliding_window(window_width, terms))
     else:
-        msg = 'Input terms must be strings or spacy Tokens, not {}.'.format(type(terms[0]))
-        raise TypeError(msg)
+        raise TypeError(
+            'items in `terms` must be strings or spacy tokens, not {}'.format(type(terms[0])))
 
     graph = nx.Graph()
 
@@ -94,9 +103,9 @@ def terms_to_semantic_network(terms,
             for w1, w2 in itertools.combinations(sorted(window), 2):
                 cooc_mat[w1][w2] += 1
         graph.add_edges_from(
-            (w1, w2, {'weight': cooc_mat[w1][w2]})
-            for w1, w2s in cooc_mat.items() for w2 in w2s)
-
+            (w1, w2, {'weight': weight})
+            for w1, w2s in cooc_mat.items()
+            for w2, weight in w2s.items())
     elif edge_weighting == 'binary':
         graph.add_edges_from(
             w1_w2 for window in windows
