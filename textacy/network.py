@@ -14,6 +14,7 @@ from spacy.tokens.token import Token as SpacyToken
 
 from . import compat
 from . import extract
+from . import vsm
 
 LOGGER = logging.getLogger(__name__)
 
@@ -118,26 +119,30 @@ def sents_to_semantic_network(sents,
                               normalize='lemma',
                               edge_weighting='cosine'):
     """
-    Convert a list of sentences into a semantic network, where each sentence is
+    Transform a list of sentences into a semantic network, where each sentence is
     represented by a node with edges linking it to other sentences weighted by
     the (cosine or jaccard) similarity of their constituent words.
 
     Args:
         sents (List[str] or List[``spacy.Span``])
-        normalize (str or callable): if 'lemma', lemmatize words in sents;
+        normalize (str or Callable): If 'lemma', lemmatize words in sents;
             if 'lower', lowercase word in sents; if false-y, use the form of words
             as they appear in sents; if a callable, must accept a ``spacy.Token``
-            and return a str, e.g. :func:`textacy.spacy_utils.normalized_str()`;
-            only applicable if ``sents`` is a List[``spacy.Span``]
-        edge_weighting (str {'cosine', 'jaccard'}, optional): similarity metric
-            to use for weighting edges between sentences; if 'cosine', use the
-            cosine similarity between sentences represented as tf-idf word vectors;
+            and return a str, e.g. :func:`textacy.spacy_utils.normalized_str()`.
+
+            .. note:: This is applied to the elements of ``sents`` *only* if
+               it's a list of ``spacy.Span``.
+
+        edge_weighting ({'cosine', 'jaccard'}): Similarity metric to use for
+            weighting edges between sentences. If 'cosine', use the cosine
+            similarity between sentences represented as tf-idf word vectors;
             if 'jaccard', use the set intersection divided by the set union of
-            all words in a given sentence pair
+            all words in a given sentence pair.
 
     Returns:
-        ``networkx.Graph``: nodes are the integer indexes of the sentences
-        in the input ``sents`` list, *not* the actual text of the sentences!
+        ``networkx.Graph``: Nodes are the integer indexes of the sentences
+        in ``sents``, *not* the actual text of the sentences! Edges connect
+        every node, with weights determined by ``edge_weighting``.
 
     Notes:
         - If passing sentences as strings, be sure to filter out stopwords, punctuation,
@@ -145,35 +150,31 @@ def sents_to_semantic_network(sents,
         - Consider normalizing the strings so that like terms are counted together
           (see :func:`normalized_str() <textacy.spacy_utils.normalized_str>`)
     """
-    n_sents = len(sents)
     if isinstance(sents[0], compat.unicode_):
         pass
     elif isinstance(sents[0], SpacySpan):
         if normalize == 'lemma':
-            sents = [
-                ' '.join(tok.lemma_ for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
-                for sent in sents]
+            sents = ((tok.lemma_ for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
+                     for sent in sents)
         elif normalize == 'lower':
-            sents = [
-                ' '.join(tok.lower_ for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
-                for sent in sents]
+            sents = ((tok.lower_ for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
+                     for sent in sents)
         elif not normalize:
-            sents = [
-                ' '.join(tok.text for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
-                for sent in sents]
+            sents = ((tok.text for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
+                     for sent in sents)
         else:
-            sents = [
-                ' '.join(normalize(tok) for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
-                for sent in sents]
+            sents = ((normalize(tok) for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
+                     for sent in sents)
     else:
-        msg = 'Input sents must be strings or spacy Spans, not {}.'.format(type(sents[0]))
-        raise TypeError(msg)
+        raise TypeError(
+            'items in `sents` must be strings or spacy tokens, not {}'.format(type(sents[0])))
 
     if edge_weighting == 'cosine':
-        term_sent_matrix = TfidfVectorizer().fit_transform(sents)
+        term_sent_matrix = vsm.Vectorizer(weighting='tfidf').fit_transform(sents)
     elif edge_weighting == 'jaccard':
-        term_sent_matrix = CountVectorizer(binary=True).fit_transform(sents)
-    weights = (term_sent_matrix * term_sent_matrix.T).A.tolist()
+        term_sent_matrix = vsm.Vectorizer(weighting='binary').fit_transform(sents)
+    weights = (term_sent_matrix * term_sent_matrix.T).A
+    n_sents = len(weights)
 
     graph = nx.Graph()
     graph.add_edges_from(
