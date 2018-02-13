@@ -132,7 +132,7 @@ def ngrams(doc, n,
         raise ValueError('n must be greater than or equal to 1')
 
     ngrams_ = (doc[i: i + n]
-               for i in range(len(doc) - n + 1))
+               for i in compat.range_(len(doc) - n + 1))
     ngrams_ = (ngram for ngram in ngrams_
                if not any(w.is_space for w in ngram))
     if filter_stops is True:
@@ -490,8 +490,8 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
         n = len(Y)
         b = np.zeros((m, n), dtype=int)
         c = np.zeros((m, n), dtype=int)
-        for i in range(0, m):
-            for j in range(0, n):
+        for i in compat.range_(0, m):
+            for j in compat.range_(0, n):
                 if X[i] == Y[j]:
                     c[i, j] = c[i - 1, j - 1] + 1
                     b[i, j] = 1
@@ -504,8 +504,8 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
     def parse_lcs_matrix(b, start_i, start_j, lcs_length, stack, vectors):
         m = b.shape[0]
         n = b.shape[1]
-        for i in range(start_i, m):
-            for j in range(start_j, n):
+        for i in compat.range_(start_i, m):
+            for j in compat.range_(start_j, n):
                 if b[i, j] == 1:
                     s = (i, j)
                     stack.append(s)
@@ -527,7 +527,7 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
         vv['distance'] = len(v) - last
         vv['stop_count'] = 0
         vv['misses'] = 0
-        for i in range(first, last + 1):
+        for i in compat.range_(first, last + 1):
             if v[i] >= 0 and types[i] == 's':
                 vv['stop_count'] += 1
             elif v[i] is None and types[i] not in ['s', 'h']:
@@ -574,7 +574,7 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
         elif '-' in tok_text and not tok_text.startswith('-'):
             tok_split = [t[0] for t in tok_text.split('-') if t]
             def_leads.extend(tok_split)
-            def_types.extend('H' if i == 0 else 'h' for i in range(len(tok_split)))
+            def_types.extend('H' if i == 0 else 'h' for i in compat.range_(len(tok_split)))
         else:
             def_leads.append(tok_text[0])
             def_types.append('w')

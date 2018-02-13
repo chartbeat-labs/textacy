@@ -165,7 +165,7 @@ class Vectorizer(object):
                     raise ValueError(
                         'Term ids in `vocabulary` must be unique, but {} ids'
                         'were assigned to more than one term.'.format(n_dupe_term_ids))
-                for i in range(len(vocabulary)):
+                for i in compat.range_(len(vocabulary)):
                     if i not in ids:
                         raise ValueError(
                             'Term ids in `vocabulary` must be compact, i.e. '
@@ -774,7 +774,7 @@ class GroupVectorizer(Vectorizer):
 
             data.extend(term_counter.values())
             cols.extend(term_counter.keys())
-            rows.extend(grp_idx for _ in range(len(term_counter)))
+            rows.extend(grp_idx for _ in compat.range_(len(term_counter)))
 
         # do we still want defaultdict behaviour?
         if fixed_vocab_terms is False:

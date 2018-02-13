@@ -13,6 +13,8 @@ if is_python2:
     from itertools import izip as zip_
     from urlparse import urljoin
 
+    range_ = xrange
+
     bytes_ = str
     unicode_ = unicode
     string_types = (str, unicode)
@@ -30,6 +32,8 @@ else:
     import pickle
     from builtins import zip as zip_
     from urllib.parse import urljoin
+
+    range_ = range
 
     bytes_ = bytes
     unicode_ = str

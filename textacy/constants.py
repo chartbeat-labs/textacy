@@ -37,7 +37,7 @@ POS_REGEX_PATTERNS = {
     }
 
 PUNCT_TRANSLATE_UNICODE = dict.fromkeys(
-    i for i in range(sys.maxunicode)
+    i for i in compat.range_(sys.maxunicode)
     if unicodedata.category(compat.chr_(i)).startswith('P'))
 PUNCT_TRANSLATE_BYTES = ''.join(
     compat.chr_(i) for i in PUNCT_TRANSLATE_UNICODE.keys()

@@ -170,5 +170,5 @@ def load_depechemood(data_dir=None, weighting='normfreq'):
         raise
     LOGGER.debug('Loading DepecheMood lexicon from %s', fname)
     cols = rows[0]
-    return {row[0]: {cols[i]: float(row[i]) for i in range(1, 9)}
+    return {row[0]: {cols[i]: float(row[i]) for i in compat.range_(1, 9)}
             for row in rows[1:]}

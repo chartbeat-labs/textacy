@@ -175,7 +175,7 @@ class Corpus(object):
             self._remove_one_doc_by_index(idx_or_slice)
         elif isinstance(idx_or_slice, slice):
             start, end, step = idx_or_slice.indices(self.n_docs)
-            indexes = range(start, end, step)
+            indexes = compat.range_(start, end, step)
             self._remove_many_docs_by_index(indexes)
         else:
             msg = 'value must be {}, not "{}"'.format(

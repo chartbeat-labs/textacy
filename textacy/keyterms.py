@@ -17,6 +17,7 @@ import networkx as nx
 import numpy as np
 from cytoolz import itertoolz
 
+from . import compat
 from . import extract
 from . import network
 from . import similarity
@@ -141,7 +142,7 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
 
     # iterate over windows
     log_ = math.log  # localize this, for performance
-    for start_ind in range(n_toks):
+    for start_ind in compat.range_(n_toks):
         end_ind = start_ind + window_width
         window_terms = (term for term in terms
                         if start_ind <= term[1] <= end_ind)
@@ -592,7 +593,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
         s = set(vertices)
         # s.update(vertices)
         # for each step
-        for _ in range(l):
+        for _ in compat.range_(l):
             # for each node
             next_vertices = []
             for vertex in vertices:
@@ -617,7 +618,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
     sum_contrib = 0.0
     results = {}
     # greedily select to maximize exprel metric
-    for _ in range(k):
+    for _ in compat.range_(k):
         if not contrib:  # TODO: check that .items(): not needed
             break
         # find word with highest l-step expanded relevance score

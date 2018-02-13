@@ -178,6 +178,7 @@ def sents_to_semantic_network(sents,
     graph = nx.Graph()
     graph.add_edges_from(
         (i, j, {'weight': weights[i][j]})
-        for i in range(n_sents) for j in range(i + 1, n_sents))
+        for i in compat.range_(n_sents)
+        for j in compat.range_(i + 1, n_sents))
 
     return graph

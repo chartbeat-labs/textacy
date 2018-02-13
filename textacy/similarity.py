@@ -62,14 +62,14 @@ def word_movers(doc1, doc2, metric='cosine'):
         word_idxs[word.orth]
         for word in extract.words(doc1)
         if word.has_vector)
-    vec1 = np.array([vec1[word_idx] for word_idx in range(len(word_idxs))]).astype(np.double)
+    vec1 = np.array([vec1[word_idx] for word_idx in compat.range_(len(word_idxs))]).astype(np.double)
     vec1 /= vec1.sum()  # normalize word counts
 
     vec2 = collections.Counter(
         word_idxs[word.orth]
         for word in extract.words(doc2)
         if word.has_vector)
-    vec2 = np.array([vec2[word_idx] for word_idx in range(len(word_idxs))]).astype(np.double)
+    vec2 = np.array([vec2[word_idx] for word_idx in compat.range_(len(word_idxs))]).astype(np.double)
     vec2 /= vec2.sum()  # normalize word counts
 
     return 1.0 - emd(vec1, vec2, distance_mat)
