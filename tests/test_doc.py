@@ -142,3 +142,21 @@ def test_doc_save_and_load(tmpdir, doc):
     assert len(new_doc) == len(doc)
     assert new_doc.lang == doc.lang
     assert new_doc.metadata == doc.metadata
+
+
+def test_to_semantic_network_words(doc):
+    graph = doc.to_semantic_network(nodes='words', edge_weighting='cooc_freq')
+    assert all(isinstance(node, compat.unicode_) for node in graph.nodes)
+    assert all(isinstance(d['weight'], int) for n1, n2, d in graph.edges(data=True))
+    graph = doc.to_semantic_network(nodes='words', edge_weighting='binary')
+    assert all(isinstance(node, compat.unicode_) for node in graph.nodes)
+    assert all(d == {} for n1, n2, d in graph.edges(data=True))
+
+
+def test_to_semantic_network_sents(doc):
+    graph = doc.to_semantic_network(nodes='sents', edge_weighting='cosine')
+    assert all(isinstance(node, int) for node in graph.nodes)
+    assert all(isinstance(d['weight'], float) for n1, n2, d in graph.edges(data=True))
+    graph = doc.to_semantic_network(nodes='sents', edge_weighting='jaccard')
+    assert all(isinstance(node, int) for node in graph.nodes)
+    assert all(isinstance(d['weight'], int) for n1, n2, d in graph.edges(data=True))

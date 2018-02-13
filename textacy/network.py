@@ -172,7 +172,7 @@ def sents_to_semantic_network(sents,
         term_sent_matrix = vsm.Vectorizer(weighting='tfidf').fit_transform(sents)
     elif edge_weighting == 'jaccard':
         term_sent_matrix = vsm.Vectorizer(weighting='binary').fit_transform(sents)
-    weights = (term_sent_matrix * term_sent_matrix.T).A
+    weights = (term_sent_matrix * term_sent_matrix.T).A.tolist()
     n_sents = len(weights)
 
     graph = nx.Graph()
