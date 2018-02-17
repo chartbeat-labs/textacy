@@ -167,6 +167,17 @@ def test_get_term_freqs_normalized(vectorizer_and_dtm, lamb_and_child_idxs):
     assert term_freqs[idx_child] == pytest.approx(0.06250, abs=1e-3)
 
 
+def test_get_term_freqs_sublinear(vectorizer_and_dtm, lamb_and_child_idxs):
+    _, doc_term_matrix = vectorizer_and_dtm
+    idx_lamb, idx_child = lamb_and_child_idxs
+    term_freqs = vsm.get_term_freqs(doc_term_matrix, normalized=False, sublinear=True)
+    assert len(term_freqs) == doc_term_matrix.shape[1]
+    assert term_freqs.max() == pytest.approx(2.60943, abs=1e-3)
+    assert term_freqs.min() == pytest.approx(1.0, abs=1e-3)
+    assert term_freqs[idx_lamb] == pytest.approx(2.60943, abs=1e-3)
+    assert term_freqs[idx_child] == pytest.approx(1.69314, abs=1e-3)
+
+
 def test_get_term_freqs_exception():
     with pytest.raises(ValueError):
         _ = vsm.get_term_freqs(coo_matrix((1, 1)).tocsr())
