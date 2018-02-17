@@ -818,7 +818,7 @@ def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
     return doc_term_matrix.dot(sp.diags(idfs, 0))
 
 
-def get_term_freqs(doc_term_matrix, normalized=True):
+def get_term_freqs(doc_term_matrix, normalized=True, sublinear=False):
     """
     Compute absolute or relative term frequencies for all terms in a
     document-term matrix.
@@ -832,6 +832,8 @@ def get_term_freqs(doc_term_matrix, normalized=True):
         normalized (bool): if True, return normalized term frequencies, i.e.
             term counts divided by the total number of terms; if False, return
             absolute term counts
+        sublinear (bool): If True, apply sub-linear term-frequency scaling,
+            i.e. tf => log(tf) + 1.
 
     Returns:
         :class:`numpy.ndarray <numpy.ndarray>`: array of absolute or relative term
@@ -842,9 +844,11 @@ def get_term_freqs(doc_term_matrix, normalized=True):
         ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries
     """
     if doc_term_matrix.nnz == 0:
-        raise ValueError('term-document matrix must have at least 1 non-zero entry')
+        raise ValueError('document-term matrix must have at least 1 non-zero entry')
     _, n_terms = doc_term_matrix.shape
     tfs = np.asarray(doc_term_matrix.sum(axis=0)).ravel()
+    if sublinear is True:
+        tfs = np.log(tfs) + 1
     if normalized is True:
         return tfs / n_terms
     else:
