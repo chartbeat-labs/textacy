@@ -340,35 +340,33 @@ class Vectorizer(object):
         else:
             vocabulary = self.vocabulary_terms
 
-        data = array(str('i'))
         indices = array(str('i'))
         indptr = array(str('i'), [0])
         for terms in tokenized_docs:
-            term_counter = collections.defaultdict(int)
             for term in terms:
                 try:
-                    term_idx = vocabulary[term]
-                    term_counter[term_idx] += 1
+                    indices.append(vocabulary[term])
                 except KeyError:
                     # ignore out-of-vocabulary terms when _fixed_terms=True
                     continue
-
-            data.extend(term_counter.values())
-            indices.extend(term_counter.keys())
             indptr.append(len(indices))
 
         if fixed_vocab is False:
             # we no longer want defaultdict behaviour
             vocabulary = dict(vocabulary)
 
-        data = np.frombuffer(data, dtype=np.intc)
         indices = np.frombuffer(indices, dtype=np.intc)
         indptr = np.frombuffer(indptr, dtype=np.intc)
+        data = np.ones(len(indices))
 
         doc_term_matrix = sp.csr_matrix(
             (data, indices, indptr),
             shape=(len(indptr) - 1, len(vocabulary)),
             dtype=np.int32)
+
+        # consolidate duplicate matrix entires by adding them together, in-place
+        doc_term_matrix.sum_duplicates()
+
         doc_term_matrix.sort_indices()
 
         return doc_term_matrix, vocabulary
@@ -967,7 +965,7 @@ def filter_terms_by_df(doc_term_matrix, term_to_id,
         mask &= dfs >= min_doc_count
     if max_n_terms is not None and mask.sum() > max_n_terms:
         tfs = get_term_freqs(doc_term_matrix, normalized=False)
-        top_mask_inds = (tfs[mask]).argsort()[::-1][:max_n_terms]
+        top_mask_inds = (-tfs[mask]).argsort()[:max_n_terms]
         new_mask = np.zeros(n_terms, dtype=bool)
         new_mask[np.where(mask)[0][top_mask_inds]] = True
         mask = new_mask
@@ -1029,7 +1027,7 @@ def filter_terms_by_ic(doc_term_matrix, term_to_id,
     if min_ic > 0.0:
         mask &= ics >= min_ic
     if max_n_terms is not None and mask.sum() > max_n_terms:
-        top_mask_inds = (ics[mask]).argsort()[::-1][:max_n_terms]
+        top_mask_inds = (-ics[mask]).argsort()[:max_n_terms]
         new_mask = np.zeros(n_terms, dtype=bool)
         new_mask[np.where(mask)[0][top_mask_inds]] = True
         mask = new_mask
