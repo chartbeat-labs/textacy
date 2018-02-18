@@ -171,7 +171,7 @@ def test_get_term_freqs_normalized(vectorizer_and_dtm, lamb_and_child_idxs):
 def test_get_term_freqs_sublinear(vectorizer_and_dtm, lamb_and_child_idxs):
     _, doc_term_matrix = vectorizer_and_dtm
     idx_lamb, idx_child = lamb_and_child_idxs
-    term_freqs = vsm.get_term_freqs(doc_term_matrix, normalized=False, sublinear=True)
+    term_freqs = vsm.get_term_freqs(doc_term_matrix, normalized=False, scale='log')
     assert len(term_freqs) == doc_term_matrix.shape[1]
     assert term_freqs.max() == pytest.approx(2.60943, abs=1e-3)
     assert term_freqs.min() == pytest.approx(1.0, abs=1e-3)
@@ -226,7 +226,7 @@ def test_get_doc_lengths_scale(vectorizer_and_dtm):
     dls_log = vsm.get_doc_lengths(doc_term_matrix, scale='log')
     assert len(dls) == len(dls_sqrt) == len(dls_log) == doc_term_matrix.shape[0]
     assert (dls_sqrt == np.sqrt(dls)).all()
-    assert (dls_log == np.log(dls)).all()
+    assert (dls_log == np.log(dls) + 1.0).all()
 
 
 def test_get_doc_lengths_exception(vectorizer_and_dtm):

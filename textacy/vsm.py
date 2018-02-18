@@ -818,37 +818,38 @@ def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
     return doc_term_matrix.dot(sp.diags(idfs, 0))
 
 
-def get_term_freqs(doc_term_matrix, normalized=True, sublinear=False):
+def get_term_freqs(doc_term_matrix, scale=None, normalized=True):
     """
     Compute absolute or relative term frequencies for all terms in a
-    document-term matrix.
+    document-term matrix, with optional sub-linear scaling.
 
     Args:
-        doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
-            M X N matrix, where M is the # of docs and N is the # of unique terms
-
-            Note: Weighting on the terms DOES matter! Only absolute term counts
-            (rather than normalized term frequencies) should be used here
-        normalized (bool): if True, return normalized term frequencies, i.e.
-            term counts divided by the total number of terms; if False, return
-            absolute term counts
-        sublinear (bool): If True, apply sub-linear term-frequency scaling,
-            i.e. tf => log(tf) + 1.
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N sparse matrix,
+            where M is the # of docs, N is the # of unique terms. Values are
+            the *absolute* counts of term n per doc m.
+        scale ({'sqrt', 'log'} or None): Scaling applied to absolute term counts.
+            If 'sqrt', tf => sqrt(tf); if 'log', tf => log(tf) + 1.
+            If None, term counts are returned as-is.
+        normalized (bool): If True, return normalized term frequencies, i.e.
+            term counts divided by the total number of terms; otherwise, return
+            absolute term counts.
 
     Returns:
-        :class:`numpy.ndarray <numpy.ndarray>`: array of absolute or relative term
-        frequencies, with length equal to the # of unique terms, i.e. # of
-        columns in ``doc_term_matrix``
+        :class:`numpy.ndarray <numpy.ndarray>`: Array of absolute or relative term
+        frequencies, with length equal to the # of unique terms (# of columns)
+        in ``doc_term_matrix``.
 
     Raises:
         ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries
     """
     if doc_term_matrix.nnz == 0:
-        raise ValueError('document-term matrix must have at least 1 non-zero entry')
+        raise ValueError('`doc_term_matrix` must have at least 1 non-zero entry')
     _, n_terms = doc_term_matrix.shape
     tfs = np.asarray(doc_term_matrix.sum(axis=0)).ravel()
-    if sublinear is True:
-        tfs = np.log(tfs) + 1
+    if scale == 'sqrt':
+        tfs = np.sqrt(tfs)
+    elif scale == 'log':
+        tfs = np.log(tfs) + 1.0
     if normalized is True:
         return tfs / n_terms
     else:
@@ -914,7 +915,7 @@ def get_doc_lengths(doc_term_matrix, scale=None):
     elif scale == 'sqrt':
         return np.sqrt(dls)
     elif scale == 'log':
-        return np.log(dls)
+        return np.log(dls) + 1.0
     else:
         raise ValueError('`scale` = {} invalid; must be None, "sqrt", or "log"')
 
