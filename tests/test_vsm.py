@@ -2,6 +2,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import pytest
+import numpy as np
 from scipy.sparse import coo_matrix
 
 from textacy import Corpus
@@ -208,6 +209,30 @@ def test_get_doc_freqs_normalized(vectorizer_and_dtm, lamb_and_child_idxs):
 def test_get_doc_freqs_exception():
     with pytest.raises(ValueError):
         _ = vsm.get_doc_freqs(coo_matrix((1, 1)).tocsr())
+
+
+def test_get_doc_lengths(tokenized_docs, vectorizer_and_dtm):
+    _, doc_term_matrix = vectorizer_and_dtm
+    dls = vsm.get_doc_lengths(doc_term_matrix, scale=None)
+    assert len(dls) == doc_term_matrix.shape[0]
+    for dl, td in zip(dls, tokenized_docs):
+        assert dl == len(td)
+
+
+def test_get_doc_lengths_scale(vectorizer_and_dtm):
+    _, doc_term_matrix = vectorizer_and_dtm
+    dls = vsm.get_doc_lengths(doc_term_matrix, scale=None)
+    dls_sqrt = vsm.get_doc_lengths(doc_term_matrix, scale='sqrt')
+    dls_log = vsm.get_doc_lengths(doc_term_matrix, scale='log')
+    assert len(dls) == len(dls_sqrt) == len(dls_log) == doc_term_matrix.shape[0]
+    assert (dls_sqrt == np.sqrt(dls)).all()
+    assert (dls_log == np.log(dls)).all()
+
+
+def test_get_doc_lengths_exception(vectorizer_and_dtm):
+    _, doc_term_matrix = vectorizer_and_dtm
+    with pytest.raises(ValueError):
+        _ = vsm.get_doc_lengths(doc_term_matrix, scale='foo')
 
 
 def test_get_information_content(vectorizer_and_dtm, lamb_and_child_idxs):

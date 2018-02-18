@@ -858,7 +858,7 @@ def get_term_freqs(doc_term_matrix, normalized=True, sublinear=False):
 def get_doc_freqs(doc_term_matrix, normalized=True):
     """
     Compute absolute or relative document frequencies for all terms in a
-    term-document matrix.
+    document-term matrix.
 
     Args:
         doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
@@ -888,9 +888,40 @@ def get_doc_freqs(doc_term_matrix, normalized=True):
         return dfs
 
 
+def get_doc_lengths(doc_term_matrix, scale=None):
+    """
+    Compute the lengths (i.e. number of terms) for all documents in a
+    document-term matrix.
+
+    Args:
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N sparse matrix,
+            where M is the # of docs, N is the # of unique terms, and values are
+            the absolute counts of term n per doc m.
+        scale (str): Scaling applied to document lengths. If 'sqrt' or 'log',
+            the square-root or natural-log of document lengths are returned.
+            If None, document lengths are returned as-is.
+
+    Returns:
+        :class:`numpy.ndarray`: Array of document lengths, with length equal to
+            the # of documents (i.e. # of rows) in ``doc_term_matrix``.
+
+    Raises:
+        ValueError: if ``scale`` isn't one of {None, "sqrt", "log"}.
+    """
+    dls = np.asarray(doc_term_matrix.sum(axis=1)).ravel()
+    if scale is None:
+        return dls
+    elif scale == 'sqrt':
+        return np.sqrt(dls)
+    elif scale == 'log':
+        return np.log(dls)
+    else:
+        raise ValueError('`scale` = {} invalid; must be None, "sqrt", or "log"')
+
+
 def get_information_content(doc_term_matrix):
     """
-    Compute information content for all terms in a term-document matrix. IC is a
+    Compute information content for all terms in a document-term matrix. IC is a
     float in [0.0, 1.0], defined as ``-df * log2(df) - (1 - df) * log2(1 - df)``,
     where df is a term's normalized document frequency.
 
