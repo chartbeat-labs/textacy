@@ -809,12 +809,7 @@ def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
         of shape (# docs, # unique terms), where value (i, j) is the tfidf
         weight of term j in doc i
     """
-    dfs = get_doc_freqs(doc_term_matrix, normalized=False)
-    n_docs, _ = doc_term_matrix.shape
-    if smooth_idf is True:
-        n_docs += 1
-        dfs += 1
-    idfs = np.log(n_docs / dfs) + 1.0
+    idfs = get_inverse_doc_freqs(doc_term_matrix, smooth=smooth_idf)
     return doc_term_matrix.dot(sp.diags(idfs, 0))
 
 
@@ -887,6 +882,30 @@ def get_doc_freqs(doc_term_matrix, normalized=True):
         return dfs / n_docs
     else:
         return dfs
+
+
+def get_inverse_doc_freqs(doc_term_matrix, smooth=True):
+    """
+    Compute inverse document frequencies for all terms in a document-term matrix,
+    optionally smoothing the values, where idf = log(n_docs / dfs) + 1.0 .
+
+    Args:
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N sparse matrix,
+            where M is the # of docs and N is the # of unique terms.
+            The particular weighting of matrix values doesn't matter.
+        smooth (bool): If True, add 1 to all document frequencies, equivalent
+            to adding a single document to the corpus containing every unique term.
+
+    Returns:
+        :class:`numpy.ndarray`: Array of inverse document frequencies, with length
+        equal to the # of unique terms (# of columns) in ``doc_term_matrix``.
+    """
+    dfs = get_doc_freqs(doc_term_matrix, normalized=False)
+    n_docs, _ = doc_term_matrix.shape
+    if smooth is True:
+        n_docs += 1
+        dfs += 1
+    return np.log(n_docs / dfs) + 1.0
 
 
 def get_doc_lengths(doc_term_matrix, scale=None):
