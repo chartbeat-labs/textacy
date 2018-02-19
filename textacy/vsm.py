@@ -264,14 +264,21 @@ class Vectorizer(object):
             :class:`scipy.sparse.csr_matrix`: The transformed document-term matrix.
             Rows correspond to documents and columns correspond to terms.
         """
-        # count terms and build up a vocabulary
+        # count terms and, if not provided on init, build up a vocabulary
         doc_term_matrix, self.vocabulary_terms = self._count_terms(
             tokenized_docs, self._fixed_terms)
-        # filter terms by doc freq or info content, as specified in init
-        doc_term_matrix, self.vocabulary_terms = self._filter_terms(
-            doc_term_matrix, self.vocabulary_terms)
+
+        if self._fixed_terms is False:
+            # filter terms by doc freq or info content, as specified in init
+            doc_term_matrix, self.vocabulary_terms = self._filter_terms(
+                doc_term_matrix, self.vocabulary_terms)
+            # sort features alphabetically
+            doc_term_matrix = self._sort_terms(
+                doc_term_matrix, self.vocabulary_terms)
+
         # re-weight values in doc-term matrix, as specified in init
         doc_term_matrix = self._reweight_values(doc_term_matrix)
+
         return doc_term_matrix
 
     def transform(self, tokenized_docs):
@@ -312,8 +319,8 @@ class Vectorizer(object):
 
     def _count_terms(self, tokenized_docs, fixed_vocab):
         """
-        Count terms and build up a vocabulary based on the terms found in
-        ``tokenized_docs``.
+        Count terms found in ``tokenized_docs`` and, if ``fixed_vocab`` is False,
+        build up a vocabulary based on those terms.
 
         Args:
             tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
@@ -359,14 +366,15 @@ class Vectorizer(object):
         indptr = np.frombuffer(indptr, dtype=np.intc)
         data = np.ones(len(indices))
 
+        # build the matrix, then consolidate duplicate entries
+        # by adding them together, in-place
         doc_term_matrix = sp.csr_matrix(
             (data, indices, indptr),
             shape=(len(indptr) - 1, len(vocabulary)),
             dtype=np.int32)
-
-        # consolidate duplicate matrix entires by adding them together, in-place
         doc_term_matrix.sum_duplicates()
 
+        # pretty sure this is a good thing to do... o_O
         doc_term_matrix.sort_indices()
 
         return doc_term_matrix, vocabulary
@@ -386,18 +394,35 @@ class Vectorizer(object):
         Returns:
             :class:`scipy.sparse.csr_matrix`, Dict[str, int]
         """
-        if self._fixed_terms:
-            return doc_term_matrix, vocabulary
-        else:
-            if self.max_df != 1.0 or self.min_df != 1 or self.max_n_terms is not None:
-                doc_term_matrix, vocabulary = filter_terms_by_df(
-                    doc_term_matrix, vocabulary,
-                    max_df=self.max_df, min_df=self.min_df, max_n_terms=self.max_n_terms)
-            if self.min_ic != 0.0:
-                doc_term_matrix, vocabulary = filter_terms_by_ic(
-                    doc_term_matrix, vocabulary,
-                    min_ic=self.min_ic, max_n_terms=self.max_n_terms)
-            return doc_term_matrix, vocabulary
+        if self.max_df != 1.0 or self.min_df != 1 or self.max_n_terms is not None:
+            doc_term_matrix, vocabulary = filter_terms_by_df(
+                doc_term_matrix, vocabulary,
+                max_df=self.max_df, min_df=self.min_df, max_n_terms=self.max_n_terms)
+        if self.min_ic != 0.0:
+            doc_term_matrix, vocabulary = filter_terms_by_ic(
+                doc_term_matrix, vocabulary,
+                min_ic=self.min_ic, max_n_terms=self.max_n_terms)
+        return doc_term_matrix, vocabulary
+
+    def _sort_terms(self, doc_term_matrix, vocabulary):
+        """
+        Sort terms in ``vocabulary`` alphabetically, modifying the vocabulary
+        in-place, and returning a correspondingly reordered ``doc_term_matrix``.
+
+        Args:
+            doc_term_matrix (:class:`sp.sparse.csr_matrix`)
+            vocabulary (Dict[str, int])
+
+        Returns:
+            :class:`scipy.sparse.csr_matrix`
+        """
+        sorted_terms = sorted(vocabulary.items())
+        new_idx_array = np.empty(len(sorted_terms), dtype=np.int32)
+        for new_idx, (term, old_idx) in enumerate(sorted_terms):
+            new_idx_array[new_idx] = old_idx
+            vocabulary[term] = new_idx
+        # use fancy indexing to reorder columns
+        return doc_term_matrix[:, new_idx_array]
 
     def _reweight_values(self, doc_term_matrix):
         """
