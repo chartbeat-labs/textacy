@@ -813,7 +813,7 @@ def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
     return doc_term_matrix.dot(sp.diags(idfs, 0))
 
 
-def get_term_freqs(doc_term_matrix, scale=None, normalized=True):
+def get_term_freqs(doc_term_matrix, scale=None, normalize=True):
     """
     Compute absolute or relative term frequencies for all terms in a
     document-term matrix, with optional sub-linear scaling.
@@ -825,7 +825,7 @@ def get_term_freqs(doc_term_matrix, scale=None, normalized=True):
         scale ({'sqrt', 'log'} or None): Scaling applied to absolute term counts.
             If 'sqrt', tf => sqrt(tf); if 'log', tf => log(tf) + 1.
             If None, term counts are returned as-is.
-        normalized (bool): If True, return normalized term frequencies, i.e.
+        normalize (bool): If True, return normalized term frequencies, i.e.
             term counts divided by the total number of terms; otherwise, return
             absolute term counts.
 
@@ -845,13 +845,13 @@ def get_term_freqs(doc_term_matrix, scale=None, normalized=True):
         tfs = np.sqrt(tfs)
     elif scale == 'log':
         tfs = np.log(tfs) + 1.0
-    if normalized is True:
+    if normalize is True:
         return tfs / n_terms
     else:
         return tfs
 
 
-def get_doc_freqs(doc_term_matrix, normalized=True):
+def get_doc_freqs(doc_term_matrix, normalize=True):
     """
     Compute absolute or relative document frequencies for all terms in a
     document-term matrix.
@@ -862,7 +862,7 @@ def get_doc_freqs(doc_term_matrix, normalized=True):
 
             Note: Weighting on the terms doesn't matter! Could be 'tf' or 'tfidf'
             or 'binary' weighting, a term's doc freq will be the same
-        normalized (bool): if True, return normalized doc frequencies, i.e.
+        normalize (bool): if True, return normalized doc frequencies, i.e.
             doc counts divided by the total number of docs; if False, return
             absolute doc counts
 
@@ -875,10 +875,10 @@ def get_doc_freqs(doc_term_matrix, normalized=True):
         ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries
     """
     if doc_term_matrix.nnz == 0:
-        raise ValueError('term-document matrix must have at least 1 non-zero entry')
+        raise ValueError('`doc_term_matrix` must have at least 1 non-zero entry')
     n_docs, n_terms = doc_term_matrix.shape
     dfs = np.bincount(doc_term_matrix.indices, minlength=n_terms)
-    if normalized is True:
+    if normalize is True:
         return dfs / n_docs
     else:
         return dfs
@@ -900,7 +900,7 @@ def get_inverse_doc_freqs(doc_term_matrix, smooth=True):
         :class:`numpy.ndarray`: Array of inverse document frequencies, with length
         equal to the # of unique terms (# of columns) in ``doc_term_matrix``.
     """
-    dfs = get_doc_freqs(doc_term_matrix, normalized=False)
+    dfs = get_doc_freqs(doc_term_matrix, normalize=False)
     n_docs, _ = doc_term_matrix.shape
     if smooth is True:
         n_docs += 1
@@ -960,7 +960,7 @@ def get_information_content(doc_term_matrix):
     Raises:
         ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries
     """
-    dfs = get_doc_freqs(doc_term_matrix, normalized=True)
+    dfs = get_doc_freqs(doc_term_matrix, normalize=True)
     ics = -dfs * np.log2(dfs) - (1 - dfs) * np.log2(1 - dfs)
     ics[np.isnan(ics)] = 0.0  # NaN values not permitted!
     return ics
@@ -1012,14 +1012,14 @@ def filter_terms_by_df(doc_term_matrix, term_to_id,
         raise ValueError('max_df corresponds to fewer documents than min_df')
 
     # calculate a mask based on document frequencies
-    dfs = get_doc_freqs(doc_term_matrix, normalized=False)
+    dfs = get_doc_freqs(doc_term_matrix, normalize=False)
     mask = np.ones(n_terms, dtype=bool)
     if max_doc_count < n_docs:
         mask &= dfs <= max_doc_count
     if min_doc_count > 1:
         mask &= dfs >= min_doc_count
     if max_n_terms is not None and mask.sum() > max_n_terms:
-        tfs = get_term_freqs(doc_term_matrix, normalized=False)
+        tfs = get_term_freqs(doc_term_matrix, normalize=False)
         top_mask_inds = (-tfs[mask]).argsort()[:max_n_terms]
         new_mask = np.zeros(n_terms, dtype=bool)
         new_mask[np.where(mask)[0][top_mask_inds]] = True
