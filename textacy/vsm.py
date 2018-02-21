@@ -17,6 +17,10 @@ from sklearn.preprocessing import normalize as normalize_mat
 from . import compat
 
 
+BM25_K1 = 1.6  # value typically bounded in [1.2, 2.0]
+BM25_B = 0.75
+
+
 class Vectorizer(object):
     """
     Transform one or more tokenized documents into a document-term matrix of
@@ -83,12 +87,18 @@ class Vectorizer(object):
             number of occurrences of term j in doc i; if 'tfidf', term frequencies
             (tf) are multiplied by their corresponding inverse document frequencies
             (idf); if 'binary', all non-zero values are set equal to 1.
-        normalize (bool): If True, normalize term frequencies by the
-            L2 norms of the vectors.
-        sublinear_tf (bool): If True, apply sub-linear term-frequency scaling,
-            i.e. tf => 1 + log(tf).
-        smooth_idf (bool): If True, add 1 to all document frequencies, equivalent
-            to adding a single document to the corpus containing every unique term.
+        tf_scale ({'sqrt', 'log'} or None)
+        idf_type ({'standard', 'smooth', 'bm25'}): Type of IDF formulation to use.
+            If 'standard', idfs => log(n_docs / dfs) + 1.0;
+            if 'smooth', idfs => log(n_docs + 1 / dfs + 1) + 1.0, i.e. 1 is added
+            to all document frequencies, equivalent to adding a single document
+            to the corpus containing every unique term;
+            if 'bm25', idfs => log((n_docs - dfs + 0.5) / (dfs + 0.5)), which is
+            a form commonly used in BM25 ranking that allows for extremely common
+            terms to have negative idf weights.
+        doc_length_norm ({'sqrt', 'log'} or None)
+        norm ({'l1', 'l2'} or None): If not None, normalize term frequencies by the
+            L1 or L2 norms of the vectors; otherwise, don't apply normalization.
         vocabulary_terms (Dict[str, int] or Iterable[str]): Mapping of unique term
             string to unique term id, or an iterable of term strings that gets
             converted into a suitable mapping. Note that, if specified, vectorized
@@ -118,7 +128,8 @@ class Vectorizer(object):
     """
 
     def __init__(self,
-                 weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
+                 weighting='tf', tf_scale=None, idf_type='smooth',
+                 doc_length_norm=None, norm=None,
                  min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None,
                  vocabulary_terms=None):
         # sanity check numeric arguments
@@ -129,15 +140,18 @@ class Vectorizer(object):
         if max_n_terms and max_n_terms < 0:
             raise ValueError('`max_n_terms` must be a positive integer or None')
         self.weighting = weighting
-        self.normalize = normalize
-        self.sublinear_tf = sublinear_tf
-        self.smooth_idf = smooth_idf
+        self.tf_scale = tf_scale
+        self.idf_type = idf_type
+        self.doc_length_norm = doc_length_norm
+        self.norm = norm
         self.min_df = min_df
         self.max_df = max_df
         self.min_ic = min_ic
         self.max_n_terms = max_n_terms
         self.vocabulary_terms, self._fixed_terms = self._validate_vocabulary(vocabulary_terms)
         self.id_to_term_ = {}
+        self._idf_diag = None
+        self._avg_doc_length = None
 
     def _validate_vocabulary(self, vocabulary):
         """
@@ -222,8 +236,9 @@ class Vectorizer(object):
 
     def fit(self, tokenized_docs):
         """
-        Count terms and build up a vocabulary based on the terms found in the
-        input ``tokenized_docs``.
+        Count terms in ``tokenized_docs`` and, if not already provided, build up
+        a vocabulary based those terms. Fit and store global weights (IDFs)
+        and, if needed for term weighting, the average document length.
 
         Args:
             tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
@@ -239,15 +254,16 @@ class Vectorizer(object):
         Returns:
             :class:`Vectorizer`: The instance that has just been fit.
         """
-        _ = self.fit_transform(tokenized_docs)
+        _ = self._fit(tokenized_docs)
         return self
 
     def fit_transform(self, tokenized_docs):
         """
-        Count terms and build up a vocabulary based on the terms found in the
-        input ``tokenized_docs``, then transform ``tokenized_docs`` into a
-        document-term matrix with values weighted according to the parameters
-        specified in :class:`Vectorizer` initialization.
+        Count terms in ``tokenized_docs`` and, if not already provided, build up
+        a vocabulary based those terms. Fit and store global weights (IDFs)
+        and, if needed for term weighting, the average document length.
+        Transform ``tokenized_docs`` into a document-term matrix with values
+        weighted according to the parameters in :class:`Vectorizer` initialization.
 
         Args:
             tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
@@ -264,29 +280,17 @@ class Vectorizer(object):
             :class:`scipy.sparse.csr_matrix`: The transformed document-term matrix.
             Rows correspond to documents and columns correspond to terms.
         """
-        # count terms and, if not provided on init, build up a vocabulary
-        doc_term_matrix, self.vocabulary_terms = self._count_terms(
-            tokenized_docs, self._fixed_terms)
-
-        if self._fixed_terms is False:
-            # filter terms by doc freq or info content, as specified in init
-            doc_term_matrix, self.vocabulary_terms = self._filter_terms(
-                doc_term_matrix, self.vocabulary_terms)
-            # sort features alphabetically
-            doc_term_matrix = self._sort_terms(
-                doc_term_matrix, self.vocabulary_terms)
-
+        # count terms and fit global weights
+        doc_term_matrix = self._fit(tokenized_docs)
         # re-weight values in doc-term matrix, as specified in init
         doc_term_matrix = self._reweight_values(doc_term_matrix)
-
         return doc_term_matrix
 
     def transform(self, tokenized_docs):
         """
-        Transform ``tokenized_docs`` into a document-term matrix, with columns
-        determined from calling :meth:`Vectorizer.fit()` or from providing a fixed
-        vocabulary when initializing :class:`Vectorizer`, and values weighted
-        according to the parameters specified in class initialization.
+        Transform ``tokenized_docs`` into a document-term matrix with values
+        weighted according to the parameters in :class:`Vectorizer` initialization
+        and the global weights computed by calling :meth:`Vectorizer.fit()`.
 
         Args:
             tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
@@ -313,9 +317,54 @@ class Vectorizer(object):
             all uppercased: The output doc-term-matrix will be empty.
         """
         self._check_vocabulary()
-        doc_term_matrix, _ = self._count_terms(
-            tokenized_docs, True)
+        doc_term_matrix, _ = self._count_terms(tokenized_docs, True)
         return self._reweight_values(doc_term_matrix)
+
+    def _fit(self, tokenized_docs):
+        """
+        Count terms and, if :attr:`Vectorizer.fixed_terms` is False, build up
+        a vocabulary based on the terms found in ``tokenized_docs``. Transform
+        ``tokenized_docs`` into a document-term matrix with absolute tf weights.
+        Store global weights (IDFs) and, if :attr:`Vectorizer.doc_length_norm`
+        is not None, the average doc length.
+
+        Args:
+            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
+                documents, where each is a sequence of (str) terms.
+
+        Returns:
+            :class:`scipy.sparse.csr_matrix`
+        """
+        # count terms and, if not provided on init, build up a vocabulary
+        doc_term_matrix, vocabulary_terms = self._count_terms(
+            tokenized_docs, self._fixed_terms)
+
+        if self._fixed_terms is False:
+            # filter terms by doc freq or info content, as specified in init
+            doc_term_matrix, vocabulary_terms = self._filter_terms(
+                doc_term_matrix, vocabulary_terms)
+            # sort features alphabetically (vocabulary_terms modified in-place)
+            doc_term_matrix = self._sort_terms(
+                doc_term_matrix, vocabulary_terms)
+            # *now* vocabulary_terms are known and fixed
+            self.vocabulary_terms = vocabulary_terms
+            self._fixed_terms = True
+
+        n_docs, n_terms = doc_term_matrix.shape
+
+        if self.weighting in ('tfidf', 'bm25'):
+            # store the global weights as a diagonal sparse matrix of idfs
+            idfs = get_inverse_doc_freqs(doc_term_matrix, type_=self.idf_type)
+            self._idf_diag = sp.diags(
+                idfs, diags=0, m=n_terms, n=n_terms, format='csr')
+
+        if self.weighting == 'bm25' and self.doc_length_norm is not None:
+            # store the avg document length, used in bm25 weighting to normalize
+            # term weights by the length of the containing documents
+            self._avg_doc_length = get_doc_lengths(
+                doc_term_matrix, scale=self.doc_length_norm).mean()
+
+        return doc_term_matrix
 
     def _count_terms(self, tokenized_docs, fixed_vocab):
         """
@@ -438,21 +487,30 @@ class Vectorizer(object):
         Returns:
             :class:`scipy.sparse.csr_matrix`: Re-weighted doc-term matrix.
         """
+        # re-weight the local components (term freqs)
         if self.weighting == 'binary':
             doc_term_matrix.data.fill(1)
-        else:
-            if self.sublinear_tf is True:
-                doc_term_matrix = doc_term_matrix.astype(np.float64)
-                _ = np.log(doc_term_matrix.data, doc_term_matrix.data)
-                doc_term_matrix.data += 1
-            if self.weighting == 'tfidf':
-                doc_term_matrix = apply_idf_weighting(
-                    doc_term_matrix,
-                    smooth_idf=self.smooth_idf)
-        if self.normalize is True:
+        elif weighting == 'bm25':
+            pass  # TODO: implement this burtonnnn
+        elif self.tf_scale == 'sqrt':
+            _ = np.sqrt(doc_term_matrix.data, doc_term_matrix.data)
+        elif self.tf_scale == 'log':
+            _ = np.log(doc_term_matrix.data, doc_term_matrix.data)
+            doc_term_matrix.data += 1.0
+
+        # apply the global component (idfs), column-wise
+        if self._idf_diag:
+            doc_term_matrix = doc_term_matrix * self._idf_diag
+
+        # apply normalizations, row-wise
+        if self.doc_length_norm:
+            dls = get_doc_lengths(doc_term_matrix, scale='sqrt')
+            dl_diag = sp.spdiags(dls, diags=0, m=n_docs, n=n_docs, format='csr')
+            doc_term_matrix = dl_diag * doc_term_matrix
+        if self.norm is not None:
             doc_term_matrix = normalize_mat(
-                doc_term_matrix,
-                norm='l2', axis=1, copy=False)
+                doc_term_matrix, norm=self.norm, axis=1, copy=False)
+
         return doc_term_matrix
 
 
@@ -909,7 +967,7 @@ def get_doc_freqs(doc_term_matrix, normalize=True):
         return dfs
 
 
-def get_inverse_doc_freqs(doc_term_matrix, smooth=True):
+def get_inverse_doc_freqs(doc_term_matrix, type_='smooth'):
     """
     Compute inverse document frequencies for all terms in a document-term matrix,
     optionally smoothing the values, where idf = log(n_docs / dfs) + 1.0 .
@@ -918,8 +976,14 @@ def get_inverse_doc_freqs(doc_term_matrix, smooth=True):
         doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N sparse matrix,
             where M is the # of docs and N is the # of unique terms.
             The particular weighting of matrix values doesn't matter.
-        smooth (bool): If True, add 1 to all document frequencies, equivalent
-            to adding a single document to the corpus containing every unique term.
+        type_ ({'standard', 'smooth', 'bm25'}): Type of IDF formulation to use.
+            If 'standard', idfs => log(n_docs / dfs) + 1.0;
+            if 'smooth', idfs => log(n_docs + 1 / dfs + 1) + 1.0, i.e. 1 is added
+            to all document frequencies, equivalent to adding a single document
+            to the corpus containing every unique term;
+            if 'bm25', idfs => log((n_docs - dfs + 0.5) / (dfs + 0.5)), which is
+            a form commonly used in BM25 ranking that allows for extremely common
+            terms to have negative idf weights.
 
     Returns:
         :class:`numpy.ndarray`: Array of inverse document frequencies, with length
@@ -927,10 +991,18 @@ def get_inverse_doc_freqs(doc_term_matrix, smooth=True):
     """
     dfs = get_doc_freqs(doc_term_matrix, normalize=False)
     n_docs, _ = doc_term_matrix.shape
-    if smooth is True:
+    if type_ == 'standard':
+        return np.log(n_docs / dfs) + 1.0
+    elif type_ == 'smooth':
         n_docs += 1
         dfs += 1
-    return np.log(n_docs / dfs) + 1.0
+        return np.log(n_docs / dfs) + 1.0
+    elif type_ == 'bm25':
+        idfs = np.log((n_docs - dfs + 0.5) / (dfs + 0.5))
+    else:
+        raise ValueError(
+            'type_ = "{}" is invalid; value must be one of {}'.format(
+                type_, {'standard', 'smooth', 'bm25'}))
 
 
 def get_doc_lengths(doc_term_matrix, scale=None):
