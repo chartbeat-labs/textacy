@@ -696,12 +696,13 @@ class GroupVectorizer(Vectorizer):
     """
 
     def __init__(self,
-                 weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
+                 weighting='tf', tf_scale=None, idf_type='smooth',
+                 dl_norm=None, dl_scale=None, norm=None,
                  min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None,
                  vocabulary_terms=None, vocabulary_grps=None):
         super(GroupVectorizer, self).__init__(
-            weighting=weighting,
-            normalize=normalize, sublinear_tf=sublinear_tf, smooth_idf=smooth_idf,
+            weighting=weighting, tf_scale=tf_scale, idf_type=idf_type,
+            dl_norm=dl_norm, dl_scale=dl_scale, norm=norm,
             min_df=min_df, max_df=max_df, min_ic=min_ic, max_n_terms=max_n_terms,
             vocabulary_terms=vocabulary_terms)
         # now do the same thing for grps as was done for terms
@@ -841,6 +842,59 @@ class GroupVectorizer(Vectorizer):
             tokenized_docs, grps, True, True)
         return self._reweight_values(grp_term_matrix)
 
+    def _fit(self, tokenized_docs, grps):
+        """
+        Count terms and, if :attr:`Vectorizer.fixed_terms` is False, build up
+        a vocabulary based on the terms found in ``tokenized_docs``. Transform
+        ``tokenized_docs`` into a document-term matrix with absolute tf weights.
+        Store global weights (IDFs) and, if :attr:`Vectorizer.doc_length_norm`
+        is not None, the average doc length.
+
+        Args:
+            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
+                documents, where each is a sequence of (str) terms.
+
+        Returns:
+            :class:`scipy.sparse.csr_matrix`
+        """
+        # count terms and, if not provided on init, build up a vocabulary
+        grp_term_matrix, vocabulary_terms, vocabulary_grps = self._count_terms(
+            tokenized_docs, grps, self._fixed_terms, self._fixed_grps)
+
+        if self._fixed_terms is False:
+            # filter terms by doc freq or info content, as specified in init
+            doc_term_matrix, vocabulary_terms = self._filter_terms(
+                doc_term_matrix, vocabulary_terms)
+            # sort features alphabetically (vocabulary_terms modified in-place)
+            doc_term_matrix = self._sort_terms(
+                doc_term_matrix, vocabulary_terms)
+            # *now* vocabulary_terms are known and fixed
+            self.vocabulary_terms = vocabulary_terms
+            self._fixed_terms = True
+        if self._fixed_grps is False:
+            # sort groups alphabetically (vocabulary_grps modified in-place)
+            grp_term_matrix = self._sort_grps(
+                grp_term_matrix, vocabulary_grps)
+            # *now* vocabulary_terms are known and fixed
+            self.vocabulary_grps = vocabulary_grps
+            self._fixed_grps = True
+
+        n_grps, n_terms = doc_term_matrix.shape
+
+        if self.weighting in ('tfidf', 'bm25'):
+            # store the global weights as a diagonal sparse matrix of idfs
+            idfs = get_inverse_doc_freqs(grp_term_matrix, type_=self.idf_type)
+            self._idf_diag = sp.spdiags(
+                idfs, diags=0, m=n_terms, n=n_terms, format='csr')
+
+        if self.weighting == 'bm25' and self.dl_norm is not False:
+            # store the avg document length, used in bm25 weighting to normalize
+            # term weights by the length of the containing documents
+            self._avg_doc_length = get_doc_lengths(
+                grp_term_matrix, scale=self.dl_scale).mean()
+
+        return grp_term_matrix
+
     def _count_terms(self, tokenized_docs, grps, fixed_vocab_terms, fixed_vocab_grps):
         """
         Count terms and build up a vocabulary based on the terms found in the
@@ -869,6 +923,8 @@ class GroupVectorizer(Vectorizer):
 
         Returns:
             :class:`scipy.sparse.csr_matrix`, Dict[str, int], Dict[str, int]
+
+        TODO: can we adapt the optimization from Vectorizer into this case?
         """
         if fixed_vocab_terms is False:
             # add a new value when a new term is seen
@@ -925,6 +981,29 @@ class GroupVectorizer(Vectorizer):
         grp_term_matrix.sort_indices()
 
         return grp_term_matrix, vocabulary_terms, vocabulary_grps
+
+    def _sort_grps(self, grp_term_matrix, vocabulary):
+        """
+        Sort terms in ``vocabulary`` alphabetically, modifying the vocabulary
+        in-place, and returning a correspondingly reordered ``grp_term_matrix``.
+
+        Args:
+            grp_term_matrix (:class:`sp.sparse.csr_matrix`)
+            vocabulary (Dict[str, int])
+
+        Returns:
+            :class:`scipy.sparse.csr_matrix`
+
+        TODO: Consolidate this with existing :attr:`Vectorizer._sort_terms`,
+        just add an ``axis`` arg or something with 0/1 values.
+        """
+        sorted_terms = sorted(vocabulary.items())
+        new_idx_array = np.empty(len(sorted_terms), dtype=np.int32)
+        for new_idx, (term, old_idx) in enumerate(sorted_terms):
+            new_idx_array[new_idx] = old_idx
+            vocabulary[term] = new_idx
+        # use fancy indexing to reorder columns
+        return grp_term_matrix[new_idx_array, :]
 
 
 def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
