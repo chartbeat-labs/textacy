@@ -82,23 +82,58 @@ class Vectorizer(object):
         ['american', 'bill', 'distinguished', 'president', 'unanimous']
 
     Args:
-        weighting ({'tf', 'tfidf', 'binary'}): Weighting to assign to terms in
-            the doc-term matrix. If 'tf', matrix values (i, j) correspond to the
-            number of occurrences of term j in doc i; if 'tfidf', term frequencies
-            (tf) are multiplied by their corresponding inverse document frequencies
-            (idf); if 'binary', all non-zero values are set equal to 1.
-        tf_scale ({'sqrt', 'log'} or None)
-        idf_type ({'standard', 'smooth', 'bm25'}): Type of IDF formulation to use.
-            If 'standard', idfs => log(n_docs / dfs) + 1.0;
-            if 'smooth', idfs => log(n_docs + 1 / dfs + 1) + 1.0, i.e. 1 is added
-            to all document frequencies, equivalent to adding a single document
-            to the corpus containing every unique term;
-            if 'bm25', idfs => log((n_docs - dfs + 0.5) / (dfs + 0.5)), which is
-            a form commonly used in BM25 ranking that allows for extremely common
-            terms to have negative idf weights.
-        doc_length_norm ({'sqrt', 'log'} or None)
-        norm ({'l1', 'l2'} or None): If not None, normalize term frequencies by the
-            L1 or L2 norms of the vectors; otherwise, don't apply normalization.
+        weighting ({'tf', 'tfidf', 'bm25', 'binary'}): Overall weighting scheme
+            used to assign values in a doc-term matrix. Note that certain aspects
+            of these schemes may be modified or extended, depending on other args.
+
+            - 'tf': Value (i, j) corresponds to the number of occurrences of
+              term j in doc i, commonly referred to as its term frequency (tf).
+              Terms appearing many times in a given doc receive a higher weight.
+            - 'tfidf': Doc-specific, *local* term frequencies are multiplied by
+              their corpus-wide, *global* inverse document frequencies (idfs).
+              Terms appearing in many docs have a higher document frequency (df),
+              a smaller idf, and thus a lower weight.
+            - 'bm25': This scheme includes a local tf component that increases
+              asymptotically, so higher tfs have diminishing effects on the overall
+              weight; a global idf component that can go *negative* for terms
+              that appear in a sufficiently high fraction of docs; as well as
+              a row-wise normalization that accounts for doc length, such that
+              terms in shorter docs hit the tf asymptote sooner than those in
+              longer docs.
+            - 'binary': All non-zero tfs are set equal to 1. That's it.
+
+        tf_scale ({'sqrt', 'log'} or None): Scaling applied to term frequencies.
+
+            - 'sqrt': tf => sqrt(tf)
+            - 'log': tf => log(tf) + 1
+            - None: term frequencies are left as-is
+
+        idf_type ({'standard', 'smooth', 'bm25'}): Type of inverse document
+            frequency (idf) formulation to use.
+
+            - 'standard': idf = log(n_docs / df) + 1.0
+            - 'smooth': idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
+              to all document frequencies, as if a single document containing
+              every unique term was added to the corpus.
+            - 'bm25': idf = log((n_docs - df + 0.5) / (df + 0.5)), which is
+              a form commonly used in information retrieval that allows for
+              very common terms to receive negative weights.
+
+        dl_norm (bool or None): If True, normalize weights by doc length,
+            i.e. divide by the total number of in-vocabulary terms appearing
+            in a given doc; if False, don't normalize weights by doc length.
+            If None, this normalization is applied in accordance with the standard
+            form of the weighting scheme specified in ``weighting``. In effect,
+            it's only applied (by default) for 'bm25'.
+        dl_scale ({'sqrt', 'log'} or None): Scaling applied to doc lengths.
+
+            - 'sqrt': dl => sqrt(dl)
+            - 'log': dl => log(dl)
+            - None: doc lengths are left as-is
+
+        norm ({'l1', 'l2'} or None): If 'l1' or 'l2', normalize weights by the
+            L1 or L2 norms, respectively, of row-wise vectors; otherwise,
+            don't normalize the weights.
         vocabulary_terms (Dict[str, int] or Iterable[str]): Mapping of unique term
             string to unique term id, or an iterable of term strings that gets
             converted into a suitable mapping. Note that, if specified, vectorized
@@ -129,7 +164,7 @@ class Vectorizer(object):
 
     def __init__(self,
                  weighting='tf', tf_scale=None, idf_type='smooth',
-                 doc_length_norm=None, norm=None,
+                 dl_norm=None, dl_scale=None, norm=None,
                  min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None,
                  vocabulary_terms=None):
         # sanity check numeric arguments
@@ -142,7 +177,8 @@ class Vectorizer(object):
         self.weighting = weighting
         self.tf_scale = tf_scale
         self.idf_type = idf_type
-        self.doc_length_norm = doc_length_norm
+        self.dl_norm = dl_norm
+        self.dl_scale = dl_scale
         self.norm = norm
         self.min_df = min_df
         self.max_df = max_df
@@ -355,14 +391,14 @@ class Vectorizer(object):
         if self.weighting in ('tfidf', 'bm25'):
             # store the global weights as a diagonal sparse matrix of idfs
             idfs = get_inverse_doc_freqs(doc_term_matrix, type_=self.idf_type)
-            self._idf_diag = sp.diags(
+            self._idf_diag = sp.spdiags(
                 idfs, diags=0, m=n_terms, n=n_terms, format='csr')
 
-        if self.weighting == 'bm25' and self.doc_length_norm is not None:
+        if self.weighting == 'bm25' and self.dl_norm is not False:
             # store the avg document length, used in bm25 weighting to normalize
             # term weights by the length of the containing documents
             self._avg_doc_length = get_doc_lengths(
-                doc_term_matrix, scale=self.doc_length_norm).mean()
+                doc_term_matrix, scale=self.dl_scale).mean()
 
         return doc_term_matrix
 
@@ -490,22 +526,37 @@ class Vectorizer(object):
         # re-weight the local components (term freqs)
         if self.weighting == 'binary':
             doc_term_matrix.data.fill(1)
-        elif weighting == 'bm25':
-            pass  # TODO: implement this burtonnnn
-        elif self.tf_scale == 'sqrt':
-            _ = np.sqrt(doc_term_matrix.data, doc_term_matrix.data)
-        elif self.tf_scale == 'log':
-            _ = np.log(doc_term_matrix.data, doc_term_matrix.data)
-            doc_term_matrix.data += 1.0
+        elif self.weighting == 'bm25':
+            if self.dl_norm is False:
+                doc_term_matrix.data = (
+                    doc_term_matrix.data * (BM25_K1 + 1.0) /
+                    (BM25_K1 + doc_term_matrix.data)
+                )
+            else:
+                dls = vsm.get_doc_lengths(doc_term_matrix, scale=self.dl_scale)
+                length_norm = (1 - BM25_B) + (BM25_B * (dls / self.avg_doc_length))
+                doc_term_matrix = doc_term_matrix.tocoo(copy=False)
+                doc_term_matrix.data = (
+                    doc_term_matrix.data * (BM25_K1 + 1.0) /
+                    (doc_term_matrix.data + (BM25_K1 * length_norm[doc_term_matrix.row]))
+                )
+                doc_term_matrix = doc_term_matrix.tocsr(copy=False)
+        else:  # tf or tfidf
+            if self.tf_scale == 'sqrt':
+                _ = np.sqrt(doc_term_matrix.data, doc_term_matrix.data)
+            elif self.tf_scale == 'log':
+                _ = np.log(doc_term_matrix.data, doc_term_matrix.data)
+                doc_term_matrix.data += 1.0
 
         # apply the global component (idfs), column-wise
-        if self._idf_diag:
+        if self.weighting in ('tfidf', 'bm25'):
             doc_term_matrix = doc_term_matrix * self._idf_diag
 
         # apply normalizations, row-wise
-        if self.doc_length_norm:
-            dls = get_doc_lengths(doc_term_matrix, scale='sqrt')
-            dl_diag = sp.spdiags(dls, diags=0, m=n_docs, n=n_docs, format='csr')
+        if self.weighting != 'bm25' and self.dl_norm is True:
+            # we've already handled doc-length normalization in bm25
+            dls = get_doc_lengths(doc_term_matrix, scale=self.dl_scale)
+            dl_diag = sp.spdiags(1.0 / dls, diags=0, m=n_docs, n=n_docs, format='csr')
             doc_term_matrix = dl_diag * doc_term_matrix
         if self.norm is not None:
             doc_term_matrix = normalize_mat(
@@ -924,10 +975,16 @@ def get_term_freqs(doc_term_matrix, scale=None, normalize=True):
         raise ValueError('`doc_term_matrix` must have at least 1 non-zero entry')
     _, n_terms = doc_term_matrix.shape
     tfs = np.asarray(doc_term_matrix.sum(axis=0)).ravel()
-    if scale == 'sqrt':
+    if scale is None:
+        pass
+    elif scale == 'sqrt':
         tfs = np.sqrt(tfs)
     elif scale == 'log':
         tfs = np.log(tfs) + 1.0
+    else:
+        raise ValueError(
+            'scale = {} is invalid; value must be one of {}'.format(
+                scale, {None, 'sqrt', 'log'}))
     if normalize is True:
         return tfs / n_terms
     else:
@@ -1001,7 +1058,7 @@ def get_inverse_doc_freqs(doc_term_matrix, type_='smooth'):
         idfs = np.log((n_docs - dfs + 0.5) / (dfs + 0.5))
     else:
         raise ValueError(
-            'type_ = "{}" is invalid; value must be one of {}'.format(
+            'type_ = {} is invalid; value must be one of {}'.format(
                 type_, {'standard', 'smooth', 'bm25'}))
 
 
@@ -1033,7 +1090,9 @@ def get_doc_lengths(doc_term_matrix, scale=None):
     elif scale == 'log':
         return np.log(dls) + 1.0
     else:
-        raise ValueError('`scale` = {} invalid; must be None, "sqrt", or "log"')
+        raise ValueError(
+            '`scale` = {} invalid; must be one of {}'.format(
+                scale, {None, 'sqrt', 'log'}))
 
 
 def get_information_content(doc_term_matrix):
