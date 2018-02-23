@@ -75,6 +75,7 @@ def test_vectorizer_terms_list(vectorizer_and_dtm):
     assert isinstance(vectorizer.terms_list[0], compat.unicode_)
     assert len(vectorizer.terms_list) == len(vectorizer.vocabulary_terms)
     assert len(vectorizer.terms_list) == dtm.shape[1]
+    assert vectorizer.terms_list == sorted(vectorizer.terms_list)
 
 
 def test_grp_vectorizer_id_to_grp(grp_vectorizer_and_gtm):
@@ -92,8 +93,10 @@ def test_grp_vectorizer_terms_and_grp_list(grp_vectorizer_and_gtm):
     assert isinstance(grp_vectorizer.terms_list[0], compat.unicode_)
     assert len(grp_vectorizer.terms_list) == len(grp_vectorizer.vocabulary_terms)
     assert len(grp_vectorizer.terms_list) == gtm.shape[1]
+    assert grp_vectorizer.terms_list == sorted(grp_vectorizer.terms_list)
     assert len(grp_vectorizer.grps_list) == len(grp_vectorizer.vocabulary_grps)
     assert len(grp_vectorizer.grps_list) == gtm.shape[0]
+    assert grp_vectorizer.grps_list == sorted(grp_vectorizer.grps_list)
 
 
 def test_vectorizer_fixed_vocab(tokenized_docs):

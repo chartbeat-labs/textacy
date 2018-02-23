@@ -379,8 +379,8 @@ class Vectorizer(object):
             doc_term_matrix, vocabulary_terms = self._filter_terms(
                 doc_term_matrix, vocabulary_terms)
             # sort features alphabetically (vocabulary_terms modified in-place)
-            doc_term_matrix = self._sort_terms(
-                doc_term_matrix, vocabulary_terms)
+            doc_term_matrix = self._sort_vocab_and_matrix(
+                doc_term_matrix, vocabulary_terms, axis='columns')
             # *now* vocabulary_terms are known and fixed
             self.vocabulary_terms = vocabulary_terms
             self._fixed_terms = True
@@ -488,25 +488,33 @@ class Vectorizer(object):
                 min_ic=self.min_ic, max_n_terms=self.max_n_terms)
         return doc_term_matrix, vocabulary
 
-    def _sort_terms(self, doc_term_matrix, vocabulary):
+    def _sort_vocab_and_matrix(self, matrix, vocabulary, axis):
         """
         Sort terms in ``vocabulary`` alphabetically, modifying the vocabulary
-        in-place, and returning a correspondingly reordered ``doc_term_matrix``.
+        in-place, and returning a correspondingly reordered ``matrix`` along
+        its rows or columns, depending on ``axis``.
 
         Args:
-            doc_term_matrix (:class:`sp.sparse.csr_matrix`)
+            matrix (:class:`sp.sparse.csr_matrix`)
             vocabulary (Dict[str, int])
+            axis ({'rows', 'columns'} or {0, 1})
 
         Returns:
             :class:`scipy.sparse.csr_matrix`
         """
-        sorted_terms = sorted(vocabulary.items())
-        new_idx_array = np.empty(len(sorted_terms), dtype=np.int32)
-        for new_idx, (term, old_idx) in enumerate(sorted_terms):
+        sorted_vocab = sorted(vocabulary.items())
+        new_idx_array = np.empty(len(sorted_vocab), dtype=np.int32)
+        for new_idx, (term, old_idx) in enumerate(sorted_vocab):
             new_idx_array[new_idx] = old_idx
             vocabulary[term] = new_idx
-        # use fancy indexing to reorder columns
-        return doc_term_matrix[:, new_idx_array]
+        # use fancy indexing to reorder rows or columns
+        if axis == 'rows' or axis == 0:
+            return matrix[new_idx_array, :]
+        elif axis == 'columns' or axis == 1:
+            return matrix[:, new_idx_array]
+        else:
+            raise ValueError('`axis` = {} is invalid; must be one of {}'.format(
+                axis, {'rows', 'columns', 0, 1}))
 
     def _reweight_values(self, doc_term_matrix):
         """
@@ -861,15 +869,15 @@ class GroupVectorizer(Vectorizer):
             grp_term_matrix, vocabulary_terms = self._filter_terms(
                 grp_term_matrix, vocabulary_terms)
             # sort features alphabetically (vocabulary_terms modified in-place)
-            grp_term_matrix = self._sort_terms(
-                grp_term_matrix, vocabulary_terms)
+            grp_term_matrix = self._sort_vocab_and_matrix(
+                grp_term_matrix, vocabulary_terms, axis='columns')
             # *now* vocabulary_terms are known and fixed
             self.vocabulary_terms = vocabulary_terms
             self._fixed_terms = True
         if self._fixed_grps is False:
             # sort groups alphabetically (vocabulary_grps modified in-place)
-            grp_term_matrix = self._sort_grps(
-                grp_term_matrix, vocabulary_grps)
+            grp_term_matrix = self._sort_vocab_and_matrix(
+                grp_term_matrix, vocabulary_grps, axis='rows')
             # *now* vocabulary_grps are known and fixed
             self.vocabulary_grps = vocabulary_grps
             self._fixed_grps = True
@@ -976,29 +984,6 @@ class GroupVectorizer(Vectorizer):
         grp_term_matrix.sort_indices()
 
         return grp_term_matrix, vocabulary_terms, vocabulary_grps
-
-    def _sort_grps(self, grp_term_matrix, vocabulary):
-        """
-        Sort terms in ``vocabulary`` alphabetically, modifying the vocabulary
-        in-place, and returning a correspondingly reordered ``grp_term_matrix``.
-
-        Args:
-            grp_term_matrix (:class:`sp.sparse.csr_matrix`)
-            vocabulary (Dict[str, int])
-
-        Returns:
-            :class:`scipy.sparse.csr_matrix`
-
-        TODO: Consolidate this with existing :attr:`Vectorizer._sort_terms`,
-        just add an ``axis`` arg or something with 0/1 values.
-        """
-        sorted_terms = sorted(vocabulary.items())
-        new_idx_array = np.empty(len(sorted_terms), dtype=np.int32)
-        for new_idx, (term, old_idx) in enumerate(sorted_terms):
-            new_idx_array[new_idx] = old_idx
-            vocabulary[term] = new_idx
-        # use fancy indexing to reorder columns
-        return grp_term_matrix[new_idx_array, :]
 
 
 def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
