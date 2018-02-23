@@ -34,7 +34,7 @@ def groups():
 @pytest.fixture(scope='module')
 def vectorizer_and_dtm(tokenized_docs):
     vectorizer = vsm.Vectorizer(
-        weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
+        weighting='tf', norm=None, tf_scale=None, idf_type='smooth',
         min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
     doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
     return vectorizer, doc_term_matrix
@@ -43,7 +43,7 @@ def vectorizer_and_dtm(tokenized_docs):
 @pytest.fixture(scope='module')
 def grp_vectorizer_and_gtm(tokenized_docs, groups):
     grp_vectorizer = vsm.GroupVectorizer(
-        weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
+        weighting='tf', norm=None, tf_scale=None, idf_type='smooth',
         min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
     grp_term_matrix = grp_vectorizer.fit_transform(tokenized_docs, groups)
     return grp_vectorizer, grp_term_matrix
