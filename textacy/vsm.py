@@ -365,8 +365,7 @@ class Vectorizer(object):
         is not None, the average doc length.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
-                documents, where each is a sequence of (str) terms.
+            tokenized_docs (Iterable[Iterable[str]])
 
         Returns:
             :class:`scipy.sparse.csr_matrix`
@@ -762,7 +761,7 @@ class GroupVectorizer(Vectorizer):
         Returns:
             :class:`GroupVectorizer`: The instance that has just been fit.
         """
-        _ = self.fit_transform(tokenized_docs, grps)
+        _ = self._fit(tokenized_docs, grps)
         return self
 
     def fit_transform(self, tokenized_docs, grps):
@@ -792,12 +791,8 @@ class GroupVectorizer(Vectorizer):
             :class:`scipy.sparse.csr_matrix`: The transformed group-term matrix.
             Rows correspond to groups and columns correspond to terms.
         """
-        # count terms and build up a vocabulary
-        grp_term_matrix, self.vocabulary_terms, self.vocabulary_grps = self._count_terms(
-            tokenized_docs, grps, self._fixed_terms, self._fixed_grps)
-        # filter terms by group freq or info content, as specified in init
-        grp_term_matrix, self.vocabulary_terms = self._filter_terms(
-            grp_term_matrix, self.vocabulary_terms)
+        # count terms and fit global weights
+        grp_term_matrix = self._fit(tokenized_docs, grps)
         # re-weight values in group-term matrix, as specified in init
         grp_term_matrix = self._reweight_values(grp_term_matrix)
         return grp_term_matrix
@@ -851,8 +846,8 @@ class GroupVectorizer(Vectorizer):
         is not None, the average doc length.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
-                documents, where each is a sequence of (str) terms.
+            tokenized_docs (Iterable[Iterable[str]])
+            grps (Iterable[str])
 
         Returns:
             :class:`scipy.sparse.csr_matrix`
@@ -875,7 +870,7 @@ class GroupVectorizer(Vectorizer):
             # sort groups alphabetically (vocabulary_grps modified in-place)
             grp_term_matrix = self._sort_grps(
                 grp_term_matrix, vocabulary_grps)
-            # *now* vocabulary_terms are known and fixed
+            # *now* vocabulary_grps are known and fixed
             self.vocabulary_grps = vocabulary_grps
             self._fixed_grps = True
 
