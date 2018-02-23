@@ -858,11 +858,11 @@ class GroupVectorizer(Vectorizer):
 
         if self._fixed_terms is False:
             # filter terms by doc freq or info content, as specified in init
-            doc_term_matrix, vocabulary_terms = self._filter_terms(
-                doc_term_matrix, vocabulary_terms)
+            grp_term_matrix, vocabulary_terms = self._filter_terms(
+                grp_term_matrix, vocabulary_terms)
             # sort features alphabetically (vocabulary_terms modified in-place)
-            doc_term_matrix = self._sort_terms(
-                doc_term_matrix, vocabulary_terms)
+            grp_term_matrix = self._sort_terms(
+                grp_term_matrix, vocabulary_terms)
             # *now* vocabulary_terms are known and fixed
             self.vocabulary_terms = vocabulary_terms
             self._fixed_terms = True
@@ -874,7 +874,7 @@ class GroupVectorizer(Vectorizer):
             self.vocabulary_grps = vocabulary_grps
             self._fixed_grps = True
 
-        n_grps, n_terms = doc_term_matrix.shape
+        n_grps, n_terms = grp_term_matrix.shape
 
         if self.weighting in ('tfidf', 'bm25'):
             # store the global weights as a diagonal sparse matrix of idfs
