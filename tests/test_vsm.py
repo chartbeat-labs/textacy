@@ -34,7 +34,7 @@ def groups():
 @pytest.fixture(scope='module')
 def vectorizer_and_dtm(tokenized_docs):
     vectorizer = vsm.Vectorizer(
-        weighting='tf', norm=None, tf_scale=None, idf_type='smooth',
+        tf_type='linear', idf_type='smooth', norm=None,
         min_df=1, max_df=1.0, max_n_terms=None)
     doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
     return vectorizer, doc_term_matrix
@@ -43,7 +43,7 @@ def vectorizer_and_dtm(tokenized_docs):
 @pytest.fixture(scope='module')
 def grp_vectorizer_and_gtm(tokenized_docs, groups):
     grp_vectorizer = vsm.GroupVectorizer(
-        weighting='tf', norm=None, tf_scale=None, idf_type='smooth',
+        tf_type='linear', idf_type='smooth', norm=None,
         min_df=1, max_df=1.0, max_n_terms=None)
     grp_term_matrix = grp_vectorizer.fit_transform(tokenized_docs, groups)
     return grp_vectorizer, grp_term_matrix
@@ -63,19 +63,19 @@ def lamb_and_child_idxs(vectorizer_and_dtm):
 
 def test_vectorizer_weighting_combinations(tokenized_docs):
     init_params = [
-        dict(weighting='tf'),
-        dict(weighting='tf', tf_scale='sqrt'),
-        dict(weighting='tf', tf_scale='sqrt', dl_norm=True),
-        dict(weighting='tf', tf_scale='sqrt', dl_norm=True, dl_scale='sqrt'),
-        dict(weighting='tfidf'),
-        dict(weighting='tfidf', idf_type='bm25'),
-        dict(weighting='tfidf', idf_type='standard', norm='l1'),
-        dict(weighting='tfidf', idf_type='standard', dl_norm=True),
-        dict(weighting='tfidf', idf_type='standard', dl_norm=True, dl_scale='log'),
-        dict(weighting='bm25'),
-        dict(weighting='bm25', dl_norm=False),
-        dict(weighting='bm25', idf_type='bm25'),
-        dict(weighting='bm25', norm='l2'),
+        dict(tf_type='linear'),
+        dict(tf_type='sqrt'),
+        dict(tf_type='sqrt', apply_dl=True),
+        dict(tf_type='sqrt', apply_dl=True, dl_type='sqrt'),
+        dict(tf_type='linear', apply_idf=True),
+        dict(tf_type='linear', apply_idf=True, idf_type='bm25'),
+        dict(tf_type='linear', apply_idf=True, idf_type='standard', norm='l1'),
+        dict(tf_type='linear', apply_idf=True, idf_type='standard', apply_dl=True),
+        dict(tf_type='linear', apply_idf=True, idf_type='smooth', apply_dl=True, dl_type='log'),
+        dict(tf_type='bm25', apply_idf=True, idf_type='bm25'),
+        dict(tf_type='bm25', apply_idf=True, apply_dl=False),
+        dict(tf_type='bm25', apply_idf=True, idf_type='bm25'),
+        dict(tf_type='bm25', apply_idf=True, idf_type='smooth', norm='l2'),
     ]
     for ip in init_params:
         vectorizer = vsm.Vectorizer(**ip)
@@ -171,7 +171,7 @@ def test_grp_vectorizer_bad_transform(tokenized_docs, groups):
 def test_get_term_freqs(vectorizer_and_dtm, lamb_and_child_idxs):
     _, doc_term_matrix = vectorizer_and_dtm
     idx_lamb, idx_child = lamb_and_child_idxs
-    term_freqs = vsm.get_term_freqs(doc_term_matrix, normalize=False)
+    term_freqs = vsm.get_term_freqs(doc_term_matrix, type_='linear')
     assert len(term_freqs) == doc_term_matrix.shape[1]
     assert term_freqs.min() == 1
     assert term_freqs.max() == 5
@@ -179,21 +179,22 @@ def test_get_term_freqs(vectorizer_and_dtm, lamb_and_child_idxs):
     assert term_freqs[idx_child] == 2
 
 
-def test_get_term_freqs_normalize(vectorizer_and_dtm, lamb_and_child_idxs):
-    _, doc_term_matrix = vectorizer_and_dtm
-    idx_lamb, idx_child = lamb_and_child_idxs
-    term_freqs = vsm.get_term_freqs(doc_term_matrix, normalize=True)
-    assert len(term_freqs) == doc_term_matrix.shape[1]
-    assert term_freqs.max() == pytest.approx(0.15625, abs=1e-3)
-    assert term_freqs.min() == pytest.approx(0.03125, abs=1e-3)
-    assert term_freqs[idx_lamb] == pytest.approx(0.15625, abs=1e-3)
-    assert term_freqs[idx_child] == pytest.approx(0.06250, abs=1e-3)
+# def test_get_term_freqs_normalize(vectorizer_and_dtm, lamb_and_child_idxs):
+#     _, doc_term_matrix = vectorizer_and_dtm
+#     idx_lamb, idx_child = lamb_and_child_idxs
+#     term_freqs = vsm.get_term_freqs(doc_term_matrix, normalize=True)
+#     assert len(term_freqs) == doc_term_matrix.shape[1]
+#     assert term_freqs.max() == pytest.approx(0.15625, abs=1e-3)
+#     assert term_freqs.min() == pytest.approx(0.03125, abs=1e-3)
+#     assert term_freqs[idx_lamb] == pytest.approx(0.15625, abs=1e-3)
+#     assert term_freqs[idx_child] == pytest.approx(0.06250, abs=1e-3)
 
 
+# TODO: Also check type_='sqrt'
 def test_get_term_freqs_sublinear(vectorizer_and_dtm, lamb_and_child_idxs):
     _, doc_term_matrix = vectorizer_and_dtm
     idx_lamb, idx_child = lamb_and_child_idxs
-    term_freqs = vsm.get_term_freqs(doc_term_matrix, normalize=False, scale='log')
+    term_freqs = vsm.get_term_freqs(doc_term_matrix, type_='log')
     assert len(term_freqs) == doc_term_matrix.shape[1]
     assert term_freqs.max() == pytest.approx(2.60943, abs=1e-3)
     assert term_freqs.min() == pytest.approx(1.0, abs=1e-3)
@@ -209,7 +210,7 @@ def test_get_term_freqs_exception():
 def test_get_doc_freqs(vectorizer_and_dtm, lamb_and_child_idxs):
     _, doc_term_matrix = vectorizer_and_dtm
     idx_lamb, idx_child = lamb_and_child_idxs
-    doc_freqs = vsm.get_doc_freqs(doc_term_matrix, normalize=False)
+    doc_freqs = vsm.get_doc_freqs(doc_term_matrix)
     assert len(doc_freqs) == doc_term_matrix.shape[1]
     assert doc_freqs.max() == 5
     assert doc_freqs.min() == 1
@@ -217,15 +218,15 @@ def test_get_doc_freqs(vectorizer_and_dtm, lamb_and_child_idxs):
     assert doc_freqs[idx_child] == 2
 
 
-def test_get_doc_freqs_normalize(vectorizer_and_dtm, lamb_and_child_idxs):
-    _, doc_term_matrix = vectorizer_and_dtm
-    idx_lamb, idx_child = lamb_and_child_idxs
-    doc_freqs = vsm.get_doc_freqs(doc_term_matrix, normalize=True)
-    assert len(doc_freqs) == doc_term_matrix.shape[1]
-    assert doc_freqs.max() == pytest.approx(0.625, rel=1e-3)
-    assert doc_freqs.min() == pytest.approx(0.125, rel=1e-3)
-    assert doc_freqs[idx_lamb] == pytest.approx(0.625, rel=1e-3)
-    assert doc_freqs[idx_child] == pytest.approx(0.250, rel=1e-3)
+# def test_get_doc_freqs_normalize(vectorizer_and_dtm, lamb_and_child_idxs):
+#     _, doc_term_matrix = vectorizer_and_dtm
+#     idx_lamb, idx_child = lamb_and_child_idxs
+#     doc_freqs = vsm.get_doc_freqs(doc_term_matrix, normalize=True)
+#     assert len(doc_freqs) == doc_term_matrix.shape[1]
+#     assert doc_freqs.max() == pytest.approx(0.625, rel=1e-3)
+#     assert doc_freqs.min() == pytest.approx(0.125, rel=1e-3)
+#     assert doc_freqs[idx_lamb] == pytest.approx(0.625, rel=1e-3)
+#     assert doc_freqs[idx_child] == pytest.approx(0.250, rel=1e-3)
 
 
 def test_get_doc_freqs_exception():
@@ -235,17 +236,17 @@ def test_get_doc_freqs_exception():
 
 def test_get_doc_lengths(tokenized_docs, vectorizer_and_dtm):
     _, doc_term_matrix = vectorizer_and_dtm
-    dls = vsm.get_doc_lengths(doc_term_matrix, scale=None)
+    dls = vsm.get_doc_lengths(doc_term_matrix, type_='linear')
     assert len(dls) == doc_term_matrix.shape[0]
     for dl, td in zip(dls, tokenized_docs):
         assert dl == len(td)
 
 
-def test_get_doc_lengths_scale(vectorizer_and_dtm):
+def test_get_doc_lengths_type(vectorizer_and_dtm):
     _, doc_term_matrix = vectorizer_and_dtm
-    dls = vsm.get_doc_lengths(doc_term_matrix, scale=None)
-    dls_sqrt = vsm.get_doc_lengths(doc_term_matrix, scale='sqrt')
-    dls_log = vsm.get_doc_lengths(doc_term_matrix, scale='log')
+    dls = vsm.get_doc_lengths(doc_term_matrix, type_='linear')
+    dls_sqrt = vsm.get_doc_lengths(doc_term_matrix, type_='sqrt')
+    dls_log = vsm.get_doc_lengths(doc_term_matrix, type_='log')
     assert len(dls) == len(dls_sqrt) == len(dls_log) == doc_term_matrix.shape[0]
     assert (dls_sqrt == np.sqrt(dls)).all()
     assert (dls_log == np.log(dls) + 1.0).all()
@@ -254,7 +255,7 @@ def test_get_doc_lengths_scale(vectorizer_and_dtm):
 def test_get_doc_lengths_exception(vectorizer_and_dtm):
     _, doc_term_matrix = vectorizer_and_dtm
     with pytest.raises(ValueError):
-        _ = vsm.get_doc_lengths(doc_term_matrix, scale='foo')
+        _ = vsm.get_doc_lengths(doc_term_matrix, type_='foo')
 
 
 def test_get_information_content(vectorizer_and_dtm, lamb_and_child_idxs):
