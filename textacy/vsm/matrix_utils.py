@@ -9,81 +9,64 @@ import numpy as np
 import scipy.sparse as sp
 
 
-def get_term_freqs(doc_term_matrix, scale=None, normalize=True):
+def get_term_freqs(doc_term_matrix, type_='linear'):
     """
-    Compute absolute or relative term frequencies for all terms in a
-    document-term matrix, with optional sub-linear scaling.
+    Compute frequencies for all terms in a document-term matrix, with optional
+    sub-linear scaling.
 
     Args:
-        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N sparse matrix,
-            where M is the # of docs, N is the # of unique terms. Values are
-            the *absolute* counts of term n per doc m.
-        scale ({'sqrt', 'log'} or None): Scaling applied to absolute term counts.
-            If 'sqrt', tf => sqrt(tf); if 'log', tf => log(tf) + 1.
-            If None, term counts are returned as-is.
-        normalize (bool): If True, return normalized term frequencies, i.e.
-            term counts divided by the total number of terms; otherwise, return
-            absolute term counts.
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M x N sparse matrix,
+            where M is the # of docs and N is the # of unique terms. Values must be
+            the linear, un-scaled counts of term n per doc m.
+        type_ ({'linear', 'sqrt', 'log'}): Scaling applied to absolute term counts.
+            If 'linear', term counts are left as-is, since the sums are already
+            linear; if 'sqrt', tf => sqrt(tf); if 'log', tf => log(tf) + 1.
 
     Returns:
-        :class:`numpy.ndarray <numpy.ndarray>`: Array of absolute or relative term
-        frequencies, with length equal to the # of unique terms (# of columns)
-        in ``doc_term_matrix``.
+        :class:`numpy.ndarray`: Array of term frequencies, with length equal to
+        the # of unique terms (# of columns) in ``doc_term_matrix``.
 
     Raises:
-        ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries
+        ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries, or
+            if ``type_`` isn't one of {"linear", "sqrt", "log"}.
+    """
+    if doc_term_matrix.nnz == 0:
+        raise ValueError('`doc_term_matrix` must have at least 1 non-zero entry')
+    tfs = np.asarray(doc_term_matrix.sum(axis=0)).ravel()
+    if type_ == 'linear':
+        return tfs  # tfs is already linear
+    elif type_ == 'sqrt':
+        return np.sqrt(tfs)
+    elif type_ == 'log':
+        return np.log(tfs) + 1.0
+    else:
+        raise ValueError(
+            'type_ = {} is invalid; value must be one of {}'.format(
+                type_, {'linear', 'sqrt', 'log'}))
+
+
+def get_doc_freqs(doc_term_matrix):
+    """
+    Compute document frequencies for all terms in a document-term matrix.
+
+    Args:
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M x N sparse matrix,
+            where M is the # of docs and N is the # of unique terms.
+
+            .. note:: Weighting on the terms doesn't matter! Could be binary or
+               tf or tfidf, a term's doc freq will be the same.
+
+    Returns:
+        :class:`numpy.ndarray`: Array of document frequencies, with length equal to
+        the # of unique terms (# of columns) in ``doc_term_matrix``.
+
+    Raises:
+        ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries.
     """
     if doc_term_matrix.nnz == 0:
         raise ValueError('`doc_term_matrix` must have at least 1 non-zero entry')
     _, n_terms = doc_term_matrix.shape
-    tfs = np.asarray(doc_term_matrix.sum(axis=0)).ravel()
-    if scale is None:
-        pass
-    elif scale == 'sqrt':
-        tfs = np.sqrt(tfs)
-    elif scale == 'log':
-        tfs = np.log(tfs) + 1.0
-    else:
-        raise ValueError(
-            'scale = {} is invalid; value must be one of {}'.format(
-                scale, {None, 'sqrt', 'log'}))
-    if normalize is True:
-        return tfs / n_terms
-    else:
-        return tfs
-
-
-def get_doc_freqs(doc_term_matrix, normalize=True):
-    """
-    Compute absolute or relative document frequencies for all terms in a
-    document-term matrix.
-
-    Args:
-        doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
-            M X N matrix, where M is the # of docs and N is the # of unique terms
-
-            Note: Weighting on the terms doesn't matter! Could be 'tf' or 'tfidf'
-            or 'binary' weighting, a term's doc freq will be the same
-        normalize (bool): if True, return normalized doc frequencies, i.e.
-            doc counts divided by the total number of docs; if False, return
-            absolute doc counts
-
-    Returns:
-        :class:`numpy.ndarray`: array of absolute or relative document
-        frequencies, with length equal to the # of unique terms, i.e. # of
-        columns in ``doc_term_matrix``
-
-    Raises:
-        ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries
-    """
-    if doc_term_matrix.nnz == 0:
-        raise ValueError('`doc_term_matrix` must have at least 1 non-zero entry')
-    n_docs, n_terms = doc_term_matrix.shape
-    dfs = np.bincount(doc_term_matrix.indices, minlength=n_terms)
-    if normalize is True:
-        return dfs / n_docs
-    else:
-        return dfs
+    return np.bincount(doc_term_matrix.indices, minlength=n_terms)
 
 
 def get_inverse_doc_freqs(doc_term_matrix, type_='smooth'):
@@ -92,7 +75,7 @@ def get_inverse_doc_freqs(doc_term_matrix, type_='smooth'):
     optionally smoothing the values, where idf = log(n_docs / dfs) + 1.0 .
 
     Args:
-        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N sparse matrix,
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M x N sparse matrix,
             where M is the # of docs and N is the # of unique terms.
             The particular weighting of matrix values doesn't matter.
         type_ ({'standard', 'smooth', 'bm25'}): Type of IDF formulation to use.
@@ -107,8 +90,11 @@ def get_inverse_doc_freqs(doc_term_matrix, type_='smooth'):
     Returns:
         :class:`numpy.ndarray`: Array of inverse document frequencies, with length
         equal to the # of unique terms (# of columns) in ``doc_term_matrix``.
+
+    Raises:
+        ValueError: if ``type_`` isn't one of {"standard", "smooth", "bm25"}.
     """
-    dfs = get_doc_freqs(doc_term_matrix, normalize=False)
+    dfs = get_doc_freqs(doc_term_matrix)
     n_docs, _ = doc_term_matrix.shape
     if type_ == 'standard':
         return np.log(n_docs / dfs) + 1.0
@@ -124,37 +110,37 @@ def get_inverse_doc_freqs(doc_term_matrix, type_='smooth'):
                 type_, {'standard', 'smooth', 'bm25'}))
 
 
-def get_doc_lengths(doc_term_matrix, scale=None):
+def get_doc_lengths(doc_term_matrix, type_='linear'):
     """
     Compute the lengths (i.e. number of terms) for all documents in a
     document-term matrix.
 
     Args:
-        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N sparse matrix,
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M x N sparse matrix,
             where M is the # of docs, N is the # of unique terms, and values are
             the absolute counts of term n per doc m.
-        scale (str): Scaling applied to document lengths. If 'sqrt' or 'log',
-            the square-root or natural-log of document lengths are returned.
-            If None, document lengths are returned as-is.
+        type_ ({'linear', 'sqrt', 'log'}): Scaling applied to absolute doc lengths.
+            If 'linear', lengths are left as-is, since the sums are already
+            linear; if 'sqrt', dl => sqrt(dl); if 'log', dl => log(dl) + 1.
 
     Returns:
         :class:`numpy.ndarray`: Array of document lengths, with length equal to
-            the # of documents (i.e. # of rows) in ``doc_term_matrix``.
+        the # of documents (# of rows) in ``doc_term_matrix``.
 
     Raises:
-        ValueError: if ``scale`` isn't one of {None, "sqrt", "log"}.
+        ValueError: if ``type_`` isn't one of {"linear", "sqrt", "log"}.
     """
     dls = np.asarray(doc_term_matrix.sum(axis=1)).ravel()
-    if scale is None:
-        return dls
-    elif scale == 'sqrt':
+    if type_ == 'linear':
+        return dls  # dls is already linear
+    elif type_ == 'sqrt':
         return np.sqrt(dls)
-    elif scale == 'log':
+    elif type_ == 'log':
         return np.log(dls) + 1.0
     else:
         raise ValueError(
-            '`scale` = {} invalid; must be one of {}'.format(
-                scale, {None, 'sqrt', 'log'}))
+            '`type_` = {} invalid; must be one of {}'.format(
+                type_, {'linear', 'sqrt', 'log'}))
 
 
 def get_information_content(doc_term_matrix):
@@ -164,19 +150,18 @@ def get_information_content(doc_term_matrix):
     where df is a term's normalized document frequency.
 
     Args:
-        doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
-            M X N matrix, where M is the # of docs and N is the # of unique terms
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M x N sparse matrix,
+            where M is the # of docs and N is the # of unique terms.
 
-            Note: Weighting on the terms doesn't matter! Could be 'tf' or 'tfidf'
-            or 'binary' weighting, a term's information content will be the same
+            .. note:: Weighting on the terms doesn't matter! Could be binary or
+               tf or tfidf, a term's information content will be the same.
 
     Returns:
-        :class:`numpy.ndarray`: array of term information content values,
-        with length equal to the # of unique terms, i.e. # of
-        columns in ``doc_term_matrix``
+        :class:`numpy.ndarray`: Array of term information content values, with
+        length equal to the # of unique terms (# of columns) in ``doc_term_matrix``.
 
     Raises:
-        ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries
+        ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries.
     """
     dfs = get_doc_freqs(doc_term_matrix, normalize=True)
     ics = -dfs * np.log2(dfs) - (1 - dfs) * np.log2(1 - dfs)
@@ -184,23 +169,22 @@ def get_information_content(doc_term_matrix):
     return ics
 
 
-def apply_idf_weighting(doc_term_matrix, smooth_idf=True):
+def apply_idf_weighting(doc_term_matrix, idf_type='smooth'):
     """
     Apply inverse document frequency (idf) weighting to a term-frequency (tf)
     weighted document-term matrix, optionally smoothing idf values.
 
     Args:
         doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
-            M X N matrix, where M is the # of docs and N is the # of unique terms
+            M x N matrix, where M is the # of docs and N is the # of unique terms
         smooth_idf (bool): if True, add 1 to all document frequencies, equivalent
             to adding a single document to the corpus containing every unique term
 
     Returns:
-        :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
-        of shape (# docs, # unique terms), where value (i, j) is the tfidf
-        weight of term j in doc i
+        :class:`scipy.sparse.csr_matrix`: Sparse matrix of shape (# docs, # unique terms),
+        where value (i, j) is the tfidf weight of term j in doc i
     """
-    idfs = get_inverse_doc_freqs(doc_term_matrix, smooth=smooth_idf)
+    idfs = get_inverse_doc_freqs(doc_term_matrix, idf_type=idf_type)
     return doc_term_matrix.dot(sp.diags(idfs, 0))
 
 
@@ -228,15 +212,14 @@ def filter_terms_by_df(doc_term_matrix, term_to_id,
             the top `max_n_terms`
 
     Returns:
-        :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
-        of shape (# docs, # unique *filtered* terms), where value (i, j) is the
-        weight of term j in doc i
+        :class:`scipy.sparse.csr_matrix`: Sparse matrix of shape (# docs, # unique filtered terms),
+        where value (i, j) is the weight of term j in doc i.
 
-        dict: id to term mapping, where keys are unique *filtered* integers as
-        term ids and values are corresponding strings
+        Dict[str, int]: Term to id mapping, where keys are unique *filtered* terms
+        as strings and values are their corresponding integer ids.
 
     Raises:
-        ValueError: if ``max_df`` or ``min_df`` or ``max_n_terms`` < 0
+        ValueError: if ``max_df`` or ``min_df`` or ``max_n_terms`` < 0.
     """
     if max_df == 1.0 and min_df == 1 and max_n_terms is None:
         return doc_term_matrix, term_to_id
@@ -271,8 +254,9 @@ def filter_terms_by_df(doc_term_matrix, term_to_id,
 
     kept_indices = np.where(mask)[0]
     if len(kept_indices) == 0:
-        msg = 'After filtering, no terms remain; try a lower `min_df` or higher `max_df`'
-        raise ValueError(msg)
+        raise ValueError(
+            'After filtering, no terms remain; '
+            'try a lower `min_df` or higher `max_df`')
 
     return (doc_term_matrix[:, kept_indices], term_to_id)
 
@@ -295,15 +279,14 @@ def filter_terms_by_ic(doc_term_matrix, term_to_id,
             the top ``max_n_terms``
 
     Returns:
-        :class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix>`: sparse matrix
-        of shape (# docs, # unique *filtered* terms), where value (i, j) is the
-        weight of term j in doc i
+        :class:`scipy.sparse.csr_matrix`: Sparse matrix of shape (# docs, # unique filtered terms),
+        where value (i, j) is the weight of term j in doc i.
 
-        dict: id to term mapping, where keys are unique *filtered* integers as
-        term ids and values are corresponding strings
+        Dict[str, int]: Term to id mapping, where keys are unique *filtered* terms
+        as strings and values are their corresponding integer ids.
 
     Raises:
-        ValueError: if ``min_ic`` not in [0.0, 1.0] or ``max_n_terms`` < 0
+        ValueError: if ``min_ic`` not in [0.0, 1.0] or ``max_n_terms`` < 0.
     """
     if min_ic == 0.0 and max_n_terms is None:
         return doc_term_matrix, term_to_id
