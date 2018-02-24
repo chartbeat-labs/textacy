@@ -164,6 +164,9 @@ def get_information_content(doc_term_matrix):
         ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries.
     """
     dfs = get_doc_freqs(doc_term_matrix)
+    # normalize doc freqs by total number of docs
+    # TODO: is this *really* what we want to do?
+    dfs = dfs / doc_term_matrix.shape[0]
     ics = -dfs * np.log2(dfs) - (1 - dfs) * np.log2(1 - dfs)
     ics[np.isnan(ics)] = 0.0  # NaN values not permitted!
     return ics
