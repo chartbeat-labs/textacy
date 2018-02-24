@@ -6,6 +6,9 @@ included terms and flexible weighting schemes for their values.
 A second option aggregates terms in tokenized documents by provided group labels,
 resulting in a "group-term-matrix" of shape (# unique groups, # unique terms),
 with filtering and weighting functionality as described above.
+
+See the :class:`Vectorizer` and :class:`GlobalVectorizer` docstrings for usage
+examples and explanations of the various weighting schemes.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -28,8 +31,7 @@ BM25_B = 0.75
 class Vectorizer(object):
     """
     Transform one or more tokenized documents into a sparse document-term matrix
-    of shape (# docs, # unique terms), with tf-, tf-idf, bm25, or binary-weighted
-    values.
+    of shape (# docs, # unique terms), with flexibly weighted and normalized values.
 
     Stream a corpus with metadata from disk::
 
@@ -46,7 +48,7 @@ class Vectorizer(object):
         ...     doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
         ...     for doc in corpus[:600])
         >>> vectorizer = Vectorizer(
-        ...     weighting='tfidf', norm='l2', idf_type='smooth',
+        ...     apply_idf=True, norm='l2',
         ...     min_df=3, max_df=0.95)
         >>> doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
         >>> doc_term_matrix
@@ -70,7 +72,7 @@ class Vectorizer(object):
         ['', '$', '$ 1 million', '$ 1.2 billion', '$ 10 billion']
 
     (Btw: That empty string shouldn't be there. Somehow, spaCy is labeling it as
-    a named entity...?)
+    a GPE named entity...?)
 
     If known in advance, limit the terms included in vectorized outputs
     to a particular set of values::
@@ -79,7 +81,7 @@ class Vectorizer(object):
         ...     doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
         ...     for doc in corpus[:600])
         >>> vectorizer = Vectorizer(
-        ...     weighting='tfidf', norm='l2', idf_type='smooth',
+        ...     apply_idf=True, idf_type='smooth', norm='l2',
         ...     min_df=3, max_df=0.95,
         ...     vocabulary_terms=['president', 'bill', 'unanimous', 'distinguished', 'american'])
         >>> doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
@@ -89,12 +91,12 @@ class Vectorizer(object):
         >>> vectorizer.terms_list
         ['american', 'bill', 'distinguished', 'president', 'unanimous']
 
-    Specify different weighting schemes to determine values in the matrix, and
-    add or customize components as needed::
+    Specify different weighting schemes to determine values in the matrix,
+    adding or customizing individual components, as desired::
 
         >>> money_idx = vectorizer.vocabulary_terms['$']
         >>> doc_term_matrix = Vectorizer(
-        ...     weighting='tf', norm=None, min_df=3, max_df=0.95
+        ...     tf_type='linear', norm=None, min_df=3, max_df=0.95
         ...     ).fit_transform(tokenized_docs)
         >>> print(doc_term_matrix[0:7, money_idx].toarray())
         [[0]
@@ -105,7 +107,7 @@ class Vectorizer(object):
          [0]
          [2]]
         >>> doc_term_matrix = Vectorizer(
-        ...     weighting='tf', tf_scale='sqrt', dl_norm=True, dl_scale='sqrt', norm=None, min_df=3, max_df=0.95
+        ...     tf_type='sqrt', apply_dl=True, dl_type='sqrt', norm=None, min_df=3, max_df=0.95
         ...     ).fit_transform(tokenized_docs)
         >>> print(doc_term_matrix[0:7, money_idx].toarray())
         [[0.        ]
@@ -116,7 +118,7 @@ class Vectorizer(object):
          [0.        ]
          [0.11396058]]
         >>> doc_term_matrix = Vectorizer(
-        ...     weighting='bm25', idf_type='smooth', norm=None, min_df=3, max_df=0.95
+        ...     tf_type='bm25', apply_idf=True, idf_type='smooth', norm=None, min_df=3, max_df=0.95
         ...     ).fit_transform(tokenized_docs)
         >>> print(doc_term_matrix[0:7, money_idx].toarray())
         [[0.        ]
@@ -127,45 +129,59 @@ class Vectorizer(object):
          [0.        ]
          [4.83933924]]
 
-    In general, term weights may consist of a local component (e.g. term frequency),
-    a global component (e.g. inverse document frequency), and a normalization
-    component (e.g. document length). Modifications to individual components are
-    possible: they may be scaled differently (e.g. tf vs. sqrt(tf)), or have
-    different behaviors (e.g. "standard" idf vs bm25's version of idf). Yes,
-    there are *lots* of possible weightings, and some may be better for particular
-    use cases than others. When in doubt, though, just go with something standard.
+    In general, weights may consist of a local component (term frequency),
+    a global component (inverse document frequency), and a normalization
+    component (document length). Individual components may be modified:
+    they may have different scaling (e.g. tf vs. sqrt(tf)) or different behaviors
+    (e.g. "standard" idf vs bm25's version). There are *many* possible weightings,
+    and some may be better for particular use cases than others. When in doubt,
+    though, just go with something standard.
+
+    - "tf": Weights are simply the absolute per-document term frequencies (tfs),
+      i.e. value (i, j) in an output doc-term matrix corresponds to the number
+      of occurrences of term j in doc i. Terms appearing many times in a given
+      doc receive higher weights than less common terms.
+      Params: ``tf_type='linear', apply_idf=False, apply_dl=False``
+    - "tfidf": Doc-specific, *local* tfs are multiplied by their corpus-wide,
+      *global* inverse document frequencies (idfs). Terms appearing in many docs
+      have higher document frequencies (dfs), correspondingly smaller idfs, and
+      in turn, lower weights.
+      Params: ``tf_type='linear', apply_idf=True, idf_type='smooth', apply_dl=False``
+    - "bm25": This scheme includes a local tf component that increases asymptotically,
+      so higher tfs have diminishing effects on the overall weight; a global idf
+      component that can go *negative* for terms that appear in a sufficiently
+      high proportion of docs; as well as a row-wise normalization that accounts for
+      document length, such that terms in shorter docs hit the tf asymptote sooner
+      than those in longer docs.
+      Params: ``tf_type='bm25', apply_idf=True, idf_type='bm25', apply_dl=True``
+    - "binary": This weighting scheme simply replaces all non-zero tfs with 1,
+      indicating the presence or absence of a term in a particular doc. That's it.
+      Params: ``tf_type='binary', apply_idf=False, apply_dl=False``
+
+    Slightly altered versions of these "standard" weighting schemes are common,
+    and may have better behavior in general use cases:
+
+    - "lucene-style tfidf": Adds a doc-length normalization to the usual local
+      and global components.
+      Params: ``tf_type='linear', apply_idf=True, idf_type='smooth', apply_dl=True, dl_type='sqrt'``
+    - "lucene-style bm25": Uses a smoothed idf instead of the classic bm25 variant
+      to prevent weights on terms from going negative.
+      Params: ``tf_type='bm25', apply_idf=True, idf_type='smooth', apply_dl=True, dl_type='linear'``
 
     Args:
-        weighting ({'tf', 'tfidf', 'bm25', 'binary'}): Overall weighting scheme
-            used to assign values in a doc-term matrix. Note that certain aspects
-            of these schemes may be modified or extended, depending on other args.
-
-            - 'tf': Value (i, j) corresponds to the number of occurrences of
-              term j in doc i, commonly referred to as its term frequency (tf).
-              Terms appearing many times in a given doc receive a higher weight.
-            - 'tfidf': Doc-specific, *local* term frequencies are multiplied by
-              their corpus-wide, *global* inverse document frequencies (idfs).
-              Terms appearing in many docs have a higher document frequency (df),
-              a smaller idf, and thus a lower weight.
-            - 'bm25': This scheme includes a local tf component that increases
-              asymptotically, so higher tfs have diminishing effects on the overall
-              weight; a global idf component that can go *negative* for terms
-              that appear in a sufficiently high fraction of docs; as well as
-              a row-wise normalization that accounts for doc length, such that
-              terms in shorter docs hit the tf asymptote sooner than those in
-              longer docs.
-            - 'binary': All non-zero tfs are set equal to 1. That's it.
-
-        tf_type ({'linear', 'sqrt', 'log', 'binary'}): Scaling applied to term frequencies (tf).
+        tf_type ({'linear', 'sqrt', 'log', 'binary'}): Type of term frequency (tf)
+            to use for weights' local component:
 
             - 'linear': tf (tfs are already linear, so left as-is)
             - 'sqrt': tf => sqrt(tf)
             - 'log': tf => log(tf) + 1
             - 'binary': tf => 1
 
-        apply_idf (bool)
+        apply_idf (bool): If True, apply global idfs to local term weights, i.e.
+            divide per-doc term frequencies by the total number of documents
+            in which they appear (well, the log of that number); otherwise, don't.
         idf_type ({'standard', 'smooth', 'bm25'}): Type of inverse document
-            frequency (idf) formulation to use.
+            frequency (idf) to use for weights' global component:
 
             - 'standard': idf = log(n_docs / df) + 1.0
             - 'smooth': idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
@@ -175,18 +191,18 @@ class Vectorizer(object):
               a form commonly used in information retrieval that allows for
               very common terms to receive negative weights.
 
-        apply_dl (bool): If True, normalize weights by doc length,
+        apply_dl (bool): If True, normalize local(+global) weights by doc length,
             i.e. divide by the total number of in-vocabulary terms appearing
-            in a given doc; if False, don't normalize weights by doc length.
-        dl_type ({'linear', 'sqrt', 'log'}): Scaling applied to doc lengths (dl).
+            in a given doc; otherwise, don't.
+        dl_type ({'linear', 'sqrt', 'log'}): Type of document-length scaling
+            to use for weights' normalization component:
 
-            - 'linear': dl
+            - 'linear': dl (dls are already linear, so left as-is)
             - 'sqrt': dl => sqrt(dl)
             - 'log': dl => log(dl)
 
         norm ({'l1', 'l2'} or None): If 'l1' or 'l2', normalize weights by the
-            L1 or L2 norms, respectively, of row-wise vectors; otherwise,
-            don't normalize the weights.
+            L1 or L2 norms, respectively, of row-wise vectors; otherwise, don't.
         vocabulary_terms (Dict[str, int] or Iterable[str]): Mapping of unique term
             string to unique term id, or an iterable of term strings that gets
             converted into a suitable mapping. Note that, if specified, vectorized
@@ -641,7 +657,7 @@ class GroupVectorizer(Vectorizer):
         ...      doc.metadata['speaker_name'])
         ...     for doc in corpus[:600])
         >>> vectorizer = GroupVectorizer(
-        ...     weighting='tfidf', norm='l2', idf_type='smooth',
+        ...     apply_idf=True, idf_type='smooth', norm='l2',
         ...     min_df=3, max_df=0.95)
         >>> grp_term_matrix = vectorizer.fit_transform(tokenized_docs, groups)
         >>> grp_term_matrix
@@ -676,7 +692,7 @@ class GroupVectorizer(Vectorizer):
         ...      doc.metadata['speaker_name'])
         ...     for doc in corpus[:600])
         >>> vectorizer = GroupVectorizer(
-        ...     weighting='tfidf', norm='l2', idf_type='smooth',
+        ...     apply_idf=True, idf_type='smooth', norm='l2',
         ...     min_df=3, max_df=0.95,
         ...     vocabulary_terms=['legislation', 'federal government', 'house', 'constitutional'],
         ...     vocabulary_grps=['Bernie Sanders', 'Lindsey Graham', 'Rick Santorum'])
@@ -689,35 +705,23 @@ class GroupVectorizer(Vectorizer):
         >>> vectorizer.grps_list
         ['Bernie Sanders', 'Lindsey Graham', 'Rick Santorum']
 
+    For a discussion of the various weighting schemes that can be applied, check
+    out the :class:`Vectorizer` docstring.
+
     Args:
-        weighting ({'tf', 'tfidf', 'bm25', 'binary'}): Overall weighting scheme
-            used to assign values in a doc-term matrix. Note that certain aspects
-            of these schemes may be modified or extended, depending on other args.
+        tf_type ({'linear', 'sqrt', 'log', 'binary'}): Type of term frequency (tf)
+            to use for weights' local component:
 
-            - 'tf': Value (i, j) corresponds to the number of occurrences of
-              term j in doc i, commonly referred to as its term frequency (tf).
-              Terms appearing many times in a given doc receive a higher weight.
-            - 'tfidf': Doc-specific, *local* term frequencies are multiplied by
-              their corpus-wide, *global* inverse document frequencies (idfs).
-              Terms appearing in many docs have a higher document frequency (df),
-              a smaller idf, and thus a lower weight.
-            - 'bm25': This scheme includes a local tf component that increases
-              asymptotically, so higher tfs have diminishing effects on the overall
-              weight; a global idf component that can go *negative* for terms
-              that appear in a sufficiently high fraction of docs; as well as
-              a row-wise normalization that accounts for doc length, such that
-              terms in shorter docs hit the tf asymptote sooner than those in
-              longer docs.
-            - 'binary': All non-zero tfs are set equal to 1. That's it.
-
-        tf_scale ({'sqrt', 'log'} or None): Scaling applied to term frequencies.
-
+            - 'linear': tf (tfs are already linear, so left as-is)
             - 'sqrt': tf => sqrt(tf)
             - 'log': tf => log(tf) + 1
-            - None: term frequencies are left as-is
+            - 'binary': tf => 1
 
+        apply_idf (bool): If True, apply global idfs to local term weights, i.e.
+            divide per-doc term frequencies by the total number of documents
+            in which they appear (well, the log of that number); otherwise, don't.
         idf_type ({'standard', 'smooth', 'bm25'}): Type of inverse document
-            frequency (idf) formulation to use.
+            frequency (idf) to use for weights' global component:
 
             - 'standard': idf = log(n_docs / df) + 1.0
             - 'smooth': idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
@@ -727,21 +731,18 @@ class GroupVectorizer(Vectorizer):
               a form commonly used in information retrieval that allows for
               very common terms to receive negative weights.
 
-        dl_norm (bool or None): If True, normalize weights by doc length,
+        apply_dl (bool): If True, normalize local(+global) weights by doc length,
             i.e. divide by the total number of in-vocabulary terms appearing
-            in a given doc; if False, don't normalize weights by doc length.
-            If None, this normalization is applied in accordance with the standard
-            form of the weighting scheme specified in ``weighting``. In effect,
-            it's only applied (by default) for 'bm25'.
-        dl_scale ({'sqrt', 'log'} or None): Scaling applied to doc lengths.
+            in a given doc; otherwise, don't.
+        dl_type ({'linear', 'sqrt', 'log'}): Type of document-length scaling
+            to use for weights' normalization component:
 
+            - 'linear': dl (dls are already linear, so left as-is)
             - 'sqrt': dl => sqrt(dl)
             - 'log': dl => log(dl)
-            - None: doc lengths are left as-is
 
         norm ({'l1', 'l2'} or None): If 'l1' or 'l2', normalize weights by the
-            L1 or L2 norms, respectively, of row-wise vectors; otherwise,
-            don't normalize the weights.
+            L1 or L2 norms, respectively, of row-wise vectors; otherwise, don't.
         vocabulary_terms (Dict[str, int] or Iterable[str]): Mapping of unique term
             string to unique term id, or an iterable of term strings that gets
             converted into a suitable mapping. Note that, if specified, vectorized
