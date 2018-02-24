@@ -156,12 +156,14 @@ class Vectorizer(object):
               longer docs.
             - 'binary': All non-zero tfs are set equal to 1. That's it.
 
-        tf_scale ({'sqrt', 'log'} or None): Scaling applied to term frequencies.
+        tf_type ({'linear', 'sqrt', 'log', 'binary'}): Scaling applied to term frequencies (tf).
 
+            - 'linear': tf (tfs are already linear, so left as-is)
             - 'sqrt': tf => sqrt(tf)
             - 'log': tf => log(tf) + 1
-            - None: term frequencies are left as-is
+            - 'binary': tf => 1
 
+        apply_idf (bool)
         idf_type ({'standard', 'smooth', 'bm25'}): Type of inverse document
             frequency (idf) formulation to use.
 
@@ -173,17 +175,14 @@ class Vectorizer(object):
               a form commonly used in information retrieval that allows for
               very common terms to receive negative weights.
 
-        dl_norm (bool or None): If True, normalize weights by doc length,
+        apply_dl (bool): If True, normalize weights by doc length,
             i.e. divide by the total number of in-vocabulary terms appearing
             in a given doc; if False, don't normalize weights by doc length.
-            If None, this normalization is applied in accordance with the standard
-            form of the weighting scheme specified in ``weighting``. In effect,
-            it's only applied (by default) for 'bm25'.
-        dl_scale ({'sqrt', 'log'} or None): Scaling applied to doc lengths.
+        dl_type ({'linear', 'sqrt', 'log'}): Scaling applied to doc lengths (dl).
 
+            - 'linear': dl
             - 'sqrt': dl => sqrt(dl)
             - 'log': dl => log(dl)
-            - None: doc lengths are left as-is
 
         norm ({'l1', 'l2'} or None): If 'l1' or 'l2', normalize weights by the
             L1 or L2 norms, respectively, of row-wise vectors; otherwise,
@@ -214,9 +213,10 @@ class Vectorizer(object):
             vectorized outputs.
     """
 
-    def __init__(self,
-                 weighting='tf', tf_scale=None, idf_type='smooth',
-                 dl_norm=None, dl_scale=None, norm=None,
+    def __init__(self, tf_type='linear',
+                 apply_idf=False, idf_type='smooth',
+                 apply_dl=False, dl_type='sqrt',
+                 norm=None,
                  min_df=1, max_df=1.0, max_n_terms=None,
                  vocabulary_terms=None):
         # sanity check numeric arguments
@@ -224,11 +224,11 @@ class Vectorizer(object):
             raise ValueError('`min_df` and `max_df` must be positive numbers or None')
         if max_n_terms and max_n_terms < 0:
             raise ValueError('`max_n_terms` must be a positive integer or None')
-        self.weighting = weighting
-        self.tf_scale = tf_scale
+        self.tf_type = tf_type
+        self.apply_idf = apply_idf
         self.idf_type = idf_type
-        self.dl_norm = dl_norm
-        self.dl_scale = dl_scale
+        self.apply_dl = apply_dl
+        self.dl_type = dl_type
         self.norm = norm
         self.min_df = min_df
         self.max_df = max_df
@@ -443,19 +443,17 @@ class Vectorizer(object):
 
         n_docs, n_terms = doc_term_matrix.shape
 
-        if self.weighting in ('tfidf', 'bm25'):
+        if self.apply_idf is True:
             # store the global weights as a diagonal sparse matrix of idfs
             idfs = get_inverse_doc_freqs(doc_term_matrix, type_=self.idf_type)
-            print('idfs:', idfs)
-            print('idfs.dtype:', idfs.dtype)
             self._idf_diag = sp.spdiags(
                 idfs, diags=0, m=n_terms, n=n_terms, format='csr')
 
-        if self.weighting == 'bm25' and self.dl_norm is not False:
+        if self.tf_type == 'bm25' and self.apply_dl is True:
             # store the avg document length, used in bm25 weighting to normalize
             # term weights by the length of the containing documents
             self._avg_doc_length = get_doc_lengths(
-                doc_term_matrix, scale=self.dl_scale).mean()
+                doc_term_matrix, type_=self.dl_type).mean()
 
         return doc_term_matrix
 
@@ -571,16 +569,16 @@ class Vectorizer(object):
             :class:`scipy.sparse.csr_matrix`
         """
         # re-weight the local components (term freqs)
-        if self.weighting == 'binary':
+        if self.tf_type == 'binary':
             doc_term_matrix.data.fill(1)
-        elif self.weighting == 'bm25':
-            if self.dl_norm is False:
+        elif self.tf_type == 'bm25':
+            if self.apply_dl is False:
                 doc_term_matrix.data = (
                     doc_term_matrix.data * (BM25_K1 + 1.0) /
                     (BM25_K1 + doc_term_matrix.data)
                 )
             else:
-                dls = get_doc_lengths(doc_term_matrix, scale=self.dl_scale)
+                dls = get_doc_lengths(doc_term_matrix, type_=self.dl_type)
                 length_norm = (1 - BM25_B) + (BM25_B * (dls / self._avg_doc_length))
                 doc_term_matrix = doc_term_matrix.tocoo(copy=False)
                 doc_term_matrix.data = (
@@ -588,22 +586,24 @@ class Vectorizer(object):
                     (doc_term_matrix.data + (BM25_K1 * length_norm[doc_term_matrix.row]))
                 )
                 doc_term_matrix = doc_term_matrix.tocsr(copy=False)
-        else:  # tf or tfidf
-            if self.tf_scale == 'sqrt':
-                _ = np.sqrt(doc_term_matrix.data, doc_term_matrix.data, casting='unsafe')
-            elif self.tf_scale == 'log':
-                _ = np.log(doc_term_matrix.data, doc_term_matrix.data, casting='unsafe')
-                doc_term_matrix.data += 1.0
+        elif self.tf_type == 'sqrt':
+            _ = np.sqrt(doc_term_matrix.data, doc_term_matrix.data, casting='unsafe')
+        elif self.tf_type == 'log':
+            _ = np.log(doc_term_matrix.data, doc_term_matrix.data, casting='unsafe')
+            doc_term_matrix.data += 1.0
+        else:
+            # this should never raise, i'm just being a worrywart
+            raise ValueError('`tf_type` = {} is invalid'.format(self.tf_type))
 
         # apply the global component (idfs), column-wise
-        if self.weighting in ('tfidf', 'bm25'):
+        if self.apply_idf is True:
             doc_term_matrix = doc_term_matrix * self._idf_diag
 
         # apply normalizations, row-wise
-        if self.weighting != 'bm25' and self.dl_norm is True:
-            # we've already handled doc-length normalization in bm25
+        # unless we've already handled it for bm25-style tf
+        if self.apply_dl is True and self.tf_type != 'bm25':
             n_docs, _ = doc_term_matrix.shape
-            dls = get_doc_lengths(doc_term_matrix, scale=self.dl_scale)
+            dls = get_doc_lengths(doc_term_matrix, type_=self.dl_type)
             dl_diag = sp.spdiags(1.0 / dls, diags=0, m=n_docs, n=n_docs, format='csr')
             doc_term_matrix = dl_diag * doc_term_matrix
         if self.norm is not None:
@@ -783,14 +783,15 @@ class GroupVectorizer(Vectorizer):
         :class:`Vectorizer`
     """
 
-    def __init__(self,
-                 weighting='tf', tf_scale=None, idf_type='smooth',
-                 dl_norm=None, dl_scale=None, norm=None,
+    def __init__(self, tf_type='linear',
+                 apply_idf=False, idf_type='smooth',
+                 apply_dl=False, dl_type='linear',
+                 norm=None,
                  min_df=1, max_df=1.0, max_n_terms=None,
                  vocabulary_terms=None, vocabulary_grps=None):
         super(GroupVectorizer, self).__init__(
-            weighting=weighting, tf_scale=tf_scale, idf_type=idf_type,
-            dl_norm=dl_norm, dl_scale=dl_scale, norm=norm,
+            tf_type=tf_type, apply_idf=apply_idf, idf_type=idf_type,
+            apply_dl=apply_dl, dl_type=dl_type, norm=norm,
             min_df=min_df, max_df=max_df, max_n_terms=max_n_terms,
             vocabulary_terms=vocabulary_terms)
         # now do the same thing for grps as was done for terms
@@ -968,17 +969,17 @@ class GroupVectorizer(Vectorizer):
 
         n_grps, n_terms = grp_term_matrix.shape
 
-        if self.weighting in ('tfidf', 'bm25'):
+        if self.apply_idf is True:
             # store the global weights as a diagonal sparse matrix of idfs
             idfs = get_inverse_doc_freqs(grp_term_matrix, type_=self.idf_type)
             self._idf_diag = sp.spdiags(
                 idfs, diags=0, m=n_terms, n=n_terms, format='csr')
 
-        if self.weighting == 'bm25' and self.dl_norm is not False:
+        if self.tf_type == 'bm25' and self.apply_dl is True:
             # store the avg document length, used in bm25 weighting to normalize
             # term weights by the length of the containing documents
             self._avg_doc_length = get_doc_lengths(
-                grp_term_matrix, scale=self.dl_scale).mean()
+                doc_term_matrix, type_=self.dl_type).mean()
 
         return grp_term_matrix
 
@@ -998,8 +999,7 @@ class GroupVectorizer(Vectorizer):
             Dict[str, int]
             Dict[str, int]
         """
-        # TODO: can we adapt the optimization from `Vectorizer._count_terms()`
-        # into this case?
+        # TODO: can we adapt the optimization from `Vectorizer._count_terms()` here?
         if fixed_vocab_terms is False:
             # add a new value when a new term is seen
             vocabulary_terms = collections.defaultdict()
