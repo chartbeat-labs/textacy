@@ -641,15 +641,15 @@ class GroupVectorizer(Vectorizer):
         ...      doc.metadata['speaker_name'])
         ...     for doc in corpus[:600])
         >>> vectorizer = GroupVectorizer(
-        ...     weighting='tfidf', normalize=True, smooth_idf=True,
+        ...     weighting='tfidf', norm='l2', idf_type='smooth',
         ...     min_df=3, max_df=0.95)
         >>> grp_term_matrix = vectorizer.fit_transform(tokenized_docs, groups)
         >>> grp_term_matrix
         <5x1793 sparse matrix of type '<class 'numpy.float64'>'
-        	    with 6075 stored elements in Compressed Sparse Row format>
+                with 6075 stored elements in Compressed Sparse Row format>
 
     Tokenize and vectorize the remaining 400 documents of the corpus, using only
-    the groups, terms, and weights learned in the previous step:
+    the groups, terms, and weights learned in the previous step::
 
         >>> tokenized_docs, groups = textacy.io.unzip(
         ...     (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True),
@@ -658,14 +658,15 @@ class GroupVectorizer(Vectorizer):
         >>> grp_term_matrix = vectorizer.transform(tokenized_docs, groups)
         >>> grp_term_matrix
         <5x1793 sparse matrix of type '<class 'numpy.float64'>'
-        	    with 4440 stored elements in Compressed Sparse Row format>
+                with 4440 stored elements in Compressed Sparse Row format>
 
-    Inspect the terms associated with columns and groups associated with rows:
+    Inspect the terms associated with columns and groups associated with rows;
+    they're sorted alphabetically::
 
         >>> vectorizer.terms_list[:5]
-        ['georgia', 'dole', 'virtually', 'worker', 'financial']
+        ['$ 1 million', '$ 160 million', '$ 7 billion', '0', '1 minute']
         >>> vectorizer.grps_list
-        ['Bernie Sanders', 'Lindsey Graham', 'Rick Santorum', 'Joseph Biden', 'John Kasich']
+        ['Bernie Sanders', 'John Kasich', 'Joseph Biden', 'Lindsey Graham', 'Rick Santorum']
 
     If known in advance, limit the terms and/or groups included in vectorized outputs
     to a particular set of values::
@@ -675,31 +676,72 @@ class GroupVectorizer(Vectorizer):
         ...      doc.metadata['speaker_name'])
         ...     for doc in corpus[:600])
         >>> vectorizer = GroupVectorizer(
-        ...     weighting='tfidf', normalize=True, smooth_idf=True,
+        ...     weighting='tfidf', norm='l2', idf_type='smooth',
         ...     min_df=3, max_df=0.95,
         ...     vocabulary_terms=['legislation', 'federal government', 'house', 'constitutional'],
         ...     vocabulary_grps=['Bernie Sanders', 'Lindsey Graham', 'Rick Santorum'])
         >>> grp_term_matrix = vectorizer.fit_transform(tokenized_docs, groups)
         >>> grp_term_matrix
         <3x4 sparse matrix of type '<class 'numpy.float64'>'
-	            with 12 stored elements in Compressed Sparse Row format>
+                with 12 stored elements in Compressed Sparse Row format>
         >>> vectorizer.terms_list
         ['constitutional', 'federal government', 'house', 'legislation']
         >>> vectorizer.grps_list
         ['Bernie Sanders', 'Lindsey Graham', 'Rick Santorum']
 
     Args:
-        weighting ({'tf', 'tfidf', 'binary'}): Weighting to assign to terms in
-            the doc-term matrix. If 'tf', matrix values (i, j) correspond to the
-            number of occurrences of term j in doc i; if 'tfidf', term frequencies
-            (tf) are multiplied by their corresponding inverse document frequencies
-            (idf); if 'binary', all non-zero values are set equal to 1.
-        normalize (bool): If True, normalize term frequencies by the
-            L2 norms of the vectors.
-        sublinear_tf (bool): If True, apply sub-linear term-frequency scaling,
-            i.e. tf => 1 + log(tf).
-        smooth_idf (bool): If True, add 1 to all document frequencies, equivalent
-            to adding a single document to the corpus containing every unique term.
+        weighting ({'tf', 'tfidf', 'bm25', 'binary'}): Overall weighting scheme
+            used to assign values in a doc-term matrix. Note that certain aspects
+            of these schemes may be modified or extended, depending on other args.
+
+            - 'tf': Value (i, j) corresponds to the number of occurrences of
+              term j in doc i, commonly referred to as its term frequency (tf).
+              Terms appearing many times in a given doc receive a higher weight.
+            - 'tfidf': Doc-specific, *local* term frequencies are multiplied by
+              their corpus-wide, *global* inverse document frequencies (idfs).
+              Terms appearing in many docs have a higher document frequency (df),
+              a smaller idf, and thus a lower weight.
+            - 'bm25': This scheme includes a local tf component that increases
+              asymptotically, so higher tfs have diminishing effects on the overall
+              weight; a global idf component that can go *negative* for terms
+              that appear in a sufficiently high fraction of docs; as well as
+              a row-wise normalization that accounts for doc length, such that
+              terms in shorter docs hit the tf asymptote sooner than those in
+              longer docs.
+            - 'binary': All non-zero tfs are set equal to 1. That's it.
+
+        tf_scale ({'sqrt', 'log'} or None): Scaling applied to term frequencies.
+
+            - 'sqrt': tf => sqrt(tf)
+            - 'log': tf => log(tf) + 1
+            - None: term frequencies are left as-is
+
+        idf_type ({'standard', 'smooth', 'bm25'}): Type of inverse document
+            frequency (idf) formulation to use.
+
+            - 'standard': idf = log(n_docs / df) + 1.0
+            - 'smooth': idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
+              to all document frequencies, as if a single document containing
+              every unique term was added to the corpus.
+            - 'bm25': idf = log((n_docs - df + 0.5) / (df + 0.5)), which is
+              a form commonly used in information retrieval that allows for
+              very common terms to receive negative weights.
+
+        dl_norm (bool or None): If True, normalize weights by doc length,
+            i.e. divide by the total number of in-vocabulary terms appearing
+            in a given doc; if False, don't normalize weights by doc length.
+            If None, this normalization is applied in accordance with the standard
+            form of the weighting scheme specified in ``weighting``. In effect,
+            it's only applied (by default) for 'bm25'.
+        dl_scale ({'sqrt', 'log'} or None): Scaling applied to doc lengths.
+
+            - 'sqrt': dl => sqrt(dl)
+            - 'log': dl => log(dl)
+            - None: doc lengths are left as-is
+
+        norm ({'l1', 'l2'} or None): If 'l1' or 'l2', normalize weights by the
+            L1 or L2 norms, respectively, of row-wise vectors; otherwise,
+            don't normalize the weights.
         vocabulary_terms (Dict[str, int] or Iterable[str]): Mapping of unique term
             string to unique term id, or an iterable of term strings that gets
             converted into a suitable mapping. Note that, if specified, vectorized
@@ -709,15 +751,15 @@ class GroupVectorizer(Vectorizer):
             converted into a suitable mapping. Note that, if specified, vectorized
             outputs will include *only* these groups as rows.
         min_df (float or int): If float, value is the fractional proportion of
-            the total number of documents (groups), which must be in [0.0, 1.0].
-            If int, value is the absolute number. Filter terms whose document (group)
-            frequency is less than ``min_df``.
+            the total number of documents, which must be in [0.0, 1.0]. If int,
+            value is the absolute number. Filter terms whose document frequency
+            is less than ``min_df``.
         max_df (float or int): If float, value is the fractional proportion of
-            the total number of documents (groups), which must be in [0.0, 1.0].
-            If int, value is the absolute number. Filter terms whose document (group)
-            frequency is greater than ``max_df``.
-        max_n_terms (int): Only include terms whose document (group) frequency
-            is within the top ``max_n_terms``.
+            the total number of documents, which must be in [0.0, 1.0]. If int,
+            value is the absolute number. Filter terms whose document frequency
+            is greater than ``max_df``.
+        max_n_terms (int): Only include terms whose document frequency is within
+            the top ``max_n_terms``.
 
     Attributes:
         vocabulary_terms (Dict[str, int]): Mapping of unique term string to unique
@@ -787,8 +829,10 @@ class GroupVectorizer(Vectorizer):
 
     def fit(self, tokenized_docs, grps):
         """
-        Count terms and build up a vocabulary based on the terms found in the
-        input ``tokenized_docs``. Also build a vocabulary for the groups in ``grps``.
+        Count terms in ``tokenized_docs`` and, if not already provided, build up
+        a vocabulary based those terms; do the same for the groups in ``grps``.
+        Fit and store global weights (IDFs) and, if needed for term weighting,
+        the average document length.
 
         Args:
             tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
@@ -813,10 +857,11 @@ class GroupVectorizer(Vectorizer):
 
     def fit_transform(self, tokenized_docs, grps):
         """
-        Count terms and build up a vocabulary based on the terms found in the
-        input ``tokenized_docs``. Also build a vocabulary for the groups in ``grps``.
-        Then transform ``tokenized_docs`` into a group-term matrix with values
-        weighted according to the parameters specified in
+        Count terms in ``tokenized_docs`` and, if not already provided, build up
+        a vocabulary based those terms; do the same for the groups in ``grps``.
+        Fit and store global weights (IDFs) and, if needed for term weighting,
+        the average document length. Transform ``tokenized_docs`` into a
+        group-term matrix with values weighted according to the parameters in
         :class:`GroupVectorizer` initialization.
 
         Args:
@@ -846,10 +891,10 @@ class GroupVectorizer(Vectorizer):
 
     def transform(self, tokenized_docs, grps):
         """
-        Transform ``tokenized_docs`` into a group-term matrix, with columns
-        determined from calling :meth:`GroupVectorizer.fit()` or from providing
-        a fixed vocabulary when initializing :class:`GroupVectorizer`, and values
-        weighted according to the parameters specified in class initialization.
+        Transform ``tokenized_docs`` and ``grps`` into a group-term matrix with
+        values weighted according to the parameters in :class:`GroupVectorizer`
+        initialization and the global weights computed by calling
+        :meth:`GroupVectorizer.fit()`.
 
         Args:
             tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
@@ -943,31 +988,18 @@ class GroupVectorizer(Vectorizer):
         ``tokenized_docs`` and the groups found in ``grps``.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
-                documents, where each is a sequence of (str) terms. For example::
-
-                    >>> ([tok.lemma_ for tok in spacy_doc]
-                    ...  for spacy_doc in spacy_docs)
-                    >>> ((ne.text for ne in extract.named_entities(doc))
-                    ...  for doc in corpus)
-                    >>> (doc.to_terms_list(as_strings=True)
-                    ...  for doc in docs)
-
-            grps (Iterable[str]): Sequence of group names by which the terms in
-                ``tokenized_docs`` are aggregated, where the first item in ``grps``
-                corresponds to the first item in ``tokenized_docs``, and so on.
-            fixed_vocab_terms (bool): If False, a new vocabulary is built from terms
-                in ``tokenized_docs``; if True, only terms already found in the
-                :attr:`GroupVectorizer.vocabulary_terms` are counted.
-            fixed_vocab_grps (bool): If False, a new vocabulary is built from groups
-                in ``grps``; if True, only groups already found in the
-                :attr:`GroupVectorizer.vocabulary_grps` are counted.
+            tokenized_docs (Iterable[Iterable[str]])
+            grps (Iterable[str])
+            fixed_vocab_terms (bool)
+            fixed_vocab_grps (bool)
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`, Dict[str, int], Dict[str, int]
-
-        TODO: can we adapt the optimization from Vectorizer into this case?
+            :class:`scipy.sparse.csr_matrix`
+            Dict[str, int]
+            Dict[str, int]
         """
+        # TODO: can we adapt the optimization from `Vectorizer._count_terms()`
+        # into this case?
         if fixed_vocab_terms is False:
             # add a new value when a new term is seen
             vocabulary_terms = collections.defaultdict()
