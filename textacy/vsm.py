@@ -1,7 +1,11 @@
 """
-Represent a collection of spacy-processed texts as a document-term matrix of shape
-(# docs, # unique terms), with a variety of filtering, normalization, and term
-weighting schemes for the values.
+Transform a collection of tokenized documents into a document-term matrix
+of shape (# docs, # unique terms), with various ways to filter or limit
+included terms and flexible weighting schemes for their values.
+
+A second option aggregates terms in tokenized documents by provided group labels,
+resulting in a "group-term-matrix" of shape (# unique groups, # unique terms),
+with filtering and weighting functionality as described above.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -23,8 +27,9 @@ BM25_B = 0.75
 
 class Vectorizer(object):
     """
-    Transform one or more tokenized documents into a document-term matrix of
-    shape (# docs, # unique terms), with tf-, tf-idf, or binary-weighted values.
+    Transform one or more tokenized documents into a sparse document-term matrix
+    of shape (# docs, # unique terms), with tf-, tf-idf, bm25, or binary-weighted
+    values.
 
     Stream a corpus with metadata from disk::
 
@@ -40,16 +45,16 @@ class Vectorizer(object):
         >>> tokenized_docs = (
         ...     doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
         ...     for doc in corpus[:600])
-        >>> vectorizer = Vectorizer(
-        ...     weighting='tfidf', normalize=True, smooth_idf=True,
+        >>> vectorizer = textacy.vsm.Vectorizer(
+        ...     weighting='tfidf', norm='l2', idf_type='smooth',
         ...     min_df=3, max_df=0.95)
         >>> doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
         >>> doc_term_matrix
         <600x4346 sparse matrix of type '<class 'numpy.float64'>'
-        	    with 69673 stored elements in Compressed Sparse Row format>
+                with 69673 stored elements in Compressed Sparse Row format>
 
     Tokenize and vectorize the remaining 400 documents of the corpus, using only
-    the groups, terms, and weights learned in the previous step:
+    the groups, terms, and weights learned in the previous step::
 
         >>> tokenized_docs = (
         ...     doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
@@ -57,12 +62,15 @@ class Vectorizer(object):
         >>> doc_term_matrix = vectorizer.transform(tokenized_docs)
         >>> doc_term_matrix
         <400x4346 sparse matrix of type '<class 'numpy.float64'>'
-        	    with 38756 stored elements in Compressed Sparse Row format>
+                with 38756 stored elements in Compressed Sparse Row format>
 
-    Inspect the terms associated with columns:
+    Inspect the terms associated with columns; they're sorted alphabetically::
 
-        >>> vectorizer.terms_list[:5]  # NOTE: that empty string shouldn't be there :/
-        ['speaker', '', 'republican', 'house', 'american']
+        >>> vectorizer.terms_list[:5]
+        ['', '$', '$ 1 million', '$ 1.2 billion', '$ 10 billion']
+
+    (Btw: That empty string shouldn't be there. Somehow, spaCy is labeling it as
+    a named entity...?)
 
     If known in advance, limit the terms included in vectorized outputs
     to a particular set of values::
@@ -71,15 +79,61 @@ class Vectorizer(object):
         ...     doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
         ...     for doc in corpus[:600])
         >>> vectorizer = Vectorizer(
-        ...     weighting='tfidf', normalize=True, smooth_idf=True,
+        ...     weighting='tfidf', norm='l2', idf_type='smooth',
         ...     min_df=3, max_df=0.95,
         ...     vocabulary_terms=['president', 'bill', 'unanimous', 'distinguished', 'american'])
         >>> doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
         >>> doc_term_matrix
         <600x5 sparse matrix of type '<class 'numpy.float64'>'
-	            with 844 stored elements in Compressed Sparse Row format>
+                with 844 stored elements in Compressed Sparse Row format>
         >>> vectorizer.terms_list
         ['american', 'bill', 'distinguished', 'president', 'unanimous']
+
+    Specify different weighting schemes to determine values in the matrix, and
+    add or customize components as needed::
+
+        >>> money_idx = vectorizer.vocabulary_terms['$']
+        >>> doc_term_matrix = textacy.vsm.Vectorizer(
+        ...     weighting='tf', norm=None, min_df=3, max_df=0.95
+        ...     ).fit_transform(tokenized_docs)
+        >>> print(doc_term_matrix[0:7, money_idx].toarray())
+        [[0]
+         [0]
+         [1]
+         [4]
+         [0]
+         [0]
+         [2]]
+        >>> doc_term_matrix = textacy.vsm.Vectorizer(
+        ...     weighting='tf', tf_scale='sqrt', dl_norm=True, dl_scale='sqrt', norm=None, min_df=3, max_df=0.95
+        ...     ).fit_transform(tokenized_docs)
+        >>> print(doc_term_matrix[0:7, money_idx].toarray())
+        [[0.        ]
+         [0.        ]
+         [0.10101525]
+         [0.26037782]
+         [0.        ]
+         [0.        ]
+         [0.11396058]]
+        >>> doc_term_matrix = textacy.vsm.Vectorizer(
+        ...     weighting='bm25', idf_type='smooth', norm=None, min_df=3, max_df=0.95
+        ...     ).fit_transform(tokenized_docs)
+        >>> print(doc_term_matrix[0:7, money_idx].toarray())
+        [[0.        ]
+         [0.        ]
+         [3.28353965]
+         [5.82763722]
+         [0.        ]
+         [0.        ]
+         [4.83933924]]
+
+    In general, term weights may consist of a local component (e.g. term frequency),
+    a global component (e.g. inverse document frequency), and a normalization
+    component (e.g. document length). Modifications to individual components are
+    possible: they may be scaled differently (e.g. tf vs. sqrt(tf)), or have
+    different behaviors (e.g. "standard" idf vs bm25's version of idf). Yes,
+    there are *lots* of possible weightings, and some may be better for particular
+    use cases than others. When in doubt, though, just go with something standard.
 
     Args:
         weighting ({'tf', 'tfidf', 'bm25', 'binary'}): Overall weighting scheme
@@ -531,8 +585,8 @@ class Vectorizer(object):
                     (BM25_K1 + doc_term_matrix.data)
                 )
             else:
-                dls = vsm.get_doc_lengths(doc_term_matrix, scale=self.dl_scale)
-                length_norm = (1 - BM25_B) + (BM25_B * (dls / self.avg_doc_length))
+                dls = get_doc_lengths(doc_term_matrix, scale=self.dl_scale)
+                length_norm = (1 - BM25_B) + (BM25_B * (dls / self._avg_doc_length))
                 doc_term_matrix = doc_term_matrix.tocoo(copy=False)
                 doc_term_matrix.data = (
                     doc_term_matrix.data * (BM25_K1 + 1.0) /
@@ -541,9 +595,9 @@ class Vectorizer(object):
                 doc_term_matrix = doc_term_matrix.tocsr(copy=False)
         else:  # tf or tfidf
             if self.tf_scale == 'sqrt':
-                _ = np.sqrt(doc_term_matrix.data, doc_term_matrix.data)
+                _ = np.sqrt(doc_term_matrix.data, doc_term_matrix.data, casting='unsafe')
             elif self.tf_scale == 'log':
-                _ = np.log(doc_term_matrix.data, doc_term_matrix.data)
+                _ = np.log(doc_term_matrix.data, doc_term_matrix.data, casting='unsafe')
                 doc_term_matrix.data += 1.0
 
         # apply the global component (idfs), column-wise
@@ -553,6 +607,7 @@ class Vectorizer(object):
         # apply normalizations, row-wise
         if self.weighting != 'bm25' and self.dl_norm is True:
             # we've already handled doc-length normalization in bm25
+            n_docs, _ = doc_term_matrix.shape
             dls = get_doc_lengths(doc_term_matrix, scale=self.dl_scale)
             dl_diag = sp.spdiags(1.0 / dls, diags=0, m=n_docs, n=n_docs, format='csr')
             doc_term_matrix = dl_diag * doc_term_matrix
