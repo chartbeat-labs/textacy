@@ -179,27 +179,19 @@ def test_get_term_freqs(vectorizer_and_dtm, lamb_and_child_idxs):
     assert term_freqs[idx_child] == 2
 
 
-# def test_get_term_freqs_normalize(vectorizer_and_dtm, lamb_and_child_idxs):
-#     _, doc_term_matrix = vectorizer_and_dtm
-#     idx_lamb, idx_child = lamb_and_child_idxs
-#     term_freqs = vsm.get_term_freqs(doc_term_matrix, normalize=True)
-#     assert len(term_freqs) == doc_term_matrix.shape[1]
-#     assert term_freqs.max() == pytest.approx(0.15625, abs=1e-3)
-#     assert term_freqs.min() == pytest.approx(0.03125, abs=1e-3)
-#     assert term_freqs[idx_lamb] == pytest.approx(0.15625, abs=1e-3)
-#     assert term_freqs[idx_child] == pytest.approx(0.06250, abs=1e-3)
-
-
-# TODO: Also check type_='sqrt'
 def test_get_term_freqs_sublinear(vectorizer_and_dtm, lamb_and_child_idxs):
     _, doc_term_matrix = vectorizer_and_dtm
     idx_lamb, idx_child = lamb_and_child_idxs
-    term_freqs = vsm.get_term_freqs(doc_term_matrix, type_='log')
-    assert len(term_freqs) == doc_term_matrix.shape[1]
-    assert term_freqs.max() == pytest.approx(2.60943, abs=1e-3)
-    assert term_freqs.min() == pytest.approx(1.0, abs=1e-3)
-    assert term_freqs[idx_lamb] == pytest.approx(2.60943, abs=1e-3)
-    assert term_freqs[idx_child] == pytest.approx(1.69314, abs=1e-3)
+    tfs = vsm.get_term_freqs(doc_term_matrix, type_='linear')
+    tfs_sqrt = vsm.get_term_freqs(doc_term_matrix, type_='sqrt')
+    tfs_log = vsm.get_term_freqs(doc_term_matrix, type_='log')
+    assert len(tfs) == len(tfs_sqrt) == len(tfs_log) == doc_term_matrix.shape[1]
+    assert tfs_log.max() == pytest.approx(2.60943, abs=1e-3)
+    assert tfs_log.min() == pytest.approx(1.0, abs=1e-3)
+    assert tfs_log[idx_lamb] == pytest.approx(2.60943, abs=1e-3)
+    assert tfs_log[idx_child] == pytest.approx(1.69314, abs=1e-3)
+    assert (tfs_sqrt == np.sqrt(tfs)).all()
+    assert (tfs_log == np.log(tfs) + 1.0).all()
 
 
 def test_get_term_freqs_exception():
@@ -216,17 +208,6 @@ def test_get_doc_freqs(vectorizer_and_dtm, lamb_and_child_idxs):
     assert doc_freqs.min() == 1
     assert doc_freqs[idx_lamb] == 5
     assert doc_freqs[idx_child] == 2
-
-
-# def test_get_doc_freqs_normalize(vectorizer_and_dtm, lamb_and_child_idxs):
-#     _, doc_term_matrix = vectorizer_and_dtm
-#     idx_lamb, idx_child = lamb_and_child_idxs
-#     doc_freqs = vsm.get_doc_freqs(doc_term_matrix, normalize=True)
-#     assert len(doc_freqs) == doc_term_matrix.shape[1]
-#     assert doc_freqs.max() == pytest.approx(0.625, rel=1e-3)
-#     assert doc_freqs.min() == pytest.approx(0.125, rel=1e-3)
-#     assert doc_freqs[idx_lamb] == pytest.approx(0.625, rel=1e-3)
-#     assert doc_freqs[idx_child] == pytest.approx(0.250, rel=1e-3)
 
 
 def test_get_doc_freqs_exception():
