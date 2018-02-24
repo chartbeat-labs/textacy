@@ -169,9 +169,12 @@ def sents_to_semantic_network(sents,
             'items in `sents` must be strings or spacy tokens, not {}'.format(type(sents[0])))
 
     if edge_weighting == 'cosine':
-        term_sent_matrix = vsm.Vectorizer(weighting='tfidf').fit_transform(sents)
+        term_sent_matrix = vsm.Vectorizer(
+            tf_type='linear', apply_idf=True, idf_type='smooth'
+            ).fit_transform(sents)
     elif edge_weighting == 'jaccard':
-        term_sent_matrix = vsm.Vectorizer(weighting='binary').fit_transform(sents)
+        term_sent_matrix = vsm.Vectorizer(
+            tf_type='binary', apply_idf=False).fit_transform(sents)
     weights = (term_sent_matrix * term_sent_matrix.T).A.tolist()
     n_sents = len(weights)
 

@@ -163,7 +163,7 @@ def get_information_content(doc_term_matrix):
     Raises:
         ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries.
     """
-    dfs = get_doc_freqs(doc_term_matrix, normalize=True)
+    dfs = get_doc_freqs(doc_term_matrix)
     ics = -dfs * np.log2(dfs) - (1 - dfs) * np.log2(1 - dfs)
     ics[np.isnan(ics)] = 0.0  # NaN values not permitted!
     return ics
@@ -233,14 +233,14 @@ def filter_terms_by_df(doc_term_matrix, term_to_id,
         raise ValueError('max_df corresponds to fewer documents than min_df')
 
     # calculate a mask based on document frequencies
-    dfs = get_doc_freqs(doc_term_matrix, normalize=False)
+    dfs = get_doc_freqs(doc_term_matrix)
     mask = np.ones(n_terms, dtype=bool)
     if max_doc_count < n_docs:
         mask &= dfs <= max_doc_count
     if min_doc_count > 1:
         mask &= dfs >= min_doc_count
     if max_n_terms is not None and mask.sum() > max_n_terms:
-        tfs = get_term_freqs(doc_term_matrix, normalize=False)
+        tfs = get_term_freqs(doc_term_matrix, type_='linear')
         top_mask_inds = (-tfs[mask]).argsort()[:max_n_terms]
         new_mask = np.zeros(n_terms, dtype=bool)
         new_mask[np.where(mask)[0][top_mask_inds]] = True

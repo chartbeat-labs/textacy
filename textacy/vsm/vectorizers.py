@@ -607,6 +607,8 @@ class Vectorizer(object):
         elif self.tf_type == 'log':
             _ = np.log(doc_term_matrix.data, doc_term_matrix.data, casting='unsafe')
             doc_term_matrix.data += 1.0
+        elif self.tf_type == 'linear':
+            pass  # tfs are already linear
         else:
             # this should never raise, i'm just being a worrywart
             raise ValueError('`tf_type` = {} is invalid'.format(self.tf_type))
