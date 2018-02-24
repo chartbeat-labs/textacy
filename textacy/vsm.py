@@ -45,7 +45,7 @@ class Vectorizer(object):
         >>> tokenized_docs = (
         ...     doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
         ...     for doc in corpus[:600])
-        >>> vectorizer = textacy.vsm.Vectorizer(
+        >>> vectorizer = Vectorizer(
         ...     weighting='tfidf', norm='l2', idf_type='smooth',
         ...     min_df=3, max_df=0.95)
         >>> doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
@@ -93,7 +93,7 @@ class Vectorizer(object):
     add or customize components as needed::
 
         >>> money_idx = vectorizer.vocabulary_terms['$']
-        >>> doc_term_matrix = textacy.vsm.Vectorizer(
+        >>> doc_term_matrix = Vectorizer(
         ...     weighting='tf', norm=None, min_df=3, max_df=0.95
         ...     ).fit_transform(tokenized_docs)
         >>> print(doc_term_matrix[0:7, money_idx].toarray())
@@ -104,7 +104,7 @@ class Vectorizer(object):
          [0]
          [0]
          [2]]
-        >>> doc_term_matrix = textacy.vsm.Vectorizer(
+        >>> doc_term_matrix = Vectorizer(
         ...     weighting='tf', tf_scale='sqrt', dl_norm=True, dl_scale='sqrt', norm=None, min_df=3, max_df=0.95
         ...     ).fit_transform(tokenized_docs)
         >>> print(doc_term_matrix[0:7, money_idx].toarray())
@@ -115,7 +115,7 @@ class Vectorizer(object):
          [0.        ]
          [0.        ]
          [0.11396058]]
-        >>> doc_term_matrix = textacy.vsm.Vectorizer(
+        >>> doc_term_matrix = Vectorizer(
         ...     weighting='bm25', idf_type='smooth', norm=None, min_df=3, max_df=0.95
         ...     ).fit_transform(tokenized_docs)
         >>> print(doc_term_matrix[0:7, money_idx].toarray())
@@ -244,6 +244,13 @@ class Vectorizer(object):
         are unique and compact (i.e. without any gaps between 0 and the number
         of terms in ``vocabulary``. If it's a sequence, sort terms then assign
         integer ids in ascending order.
+
+        Args:
+            vocabulary_terms (Dict[str, int] or Iterable[str])
+
+        Returns:
+            Dict[str, int]
+            bool
         """
         if vocabulary is not None:
             if not isinstance(vocabulary, collections.Mapping):
@@ -458,22 +465,12 @@ class Vectorizer(object):
         build up a vocabulary based on those terms.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
-                documents, where each is a sequence of (str) terms. For example::
-
-                    >>> ([tok.lemma_ for tok in spacy_doc]
-                    ...  for spacy_doc in spacy_docs)
-                    >>> ((ne.text for ne in extract.named_entities(doc))
-                    ...  for doc in corpus)
-                    >>> (doc.to_terms_list(as_strings=True)
-                    ...  for doc in docs)
-
-            fixed_vocab (bool): If False, a new vocabulary is built from terms
-                in ``tokenized_docs``; if True, only terms already found in
-                :attr:`Vectorizer.vocabulary_terms` are counted.
+            tokenized_docs (Iterable[Iterable[str]])
+            fixed_vocab (bool)
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`, Dict[str, int]
+            :class:`scipy.sparse.csr_matrix`
+            Dict[str, int]
         """
         if fixed_vocab is False:
             # add a new value when a new term is seen
@@ -520,14 +517,12 @@ class Vectorizer(object):
         content, as specified in :class:`Vectorizer` initialization.
 
         Args:
-            doc_term_matrix (:class:`sp.sparse.csr_matrix`): Sparse matrix of
-                shape (# docs, # unique terms), where value (i, j) is the weight
-                of term j in doc i.
-            vocabulary (Dict[str, int]): Mapping of term strings to their unique
-                integer ids, e.g. ``{"hello": 0, "world": 1}``.
+            doc_term_matrix (:class:`sp.sparse.csr_matrix`)
+            vocabulary (Dict[str, int])
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`, Dict[str, int]
+            :class:`scipy.sparse.csr_matrix`
+            Dict[str, int]
         """
         if self.max_df != 1.0 or self.min_df != 1 or self.max_n_terms is not None:
             doc_term_matrix, vocabulary = filter_terms_by_df(
@@ -570,12 +565,10 @@ class Vectorizer(object):
         sublinear term-frequency, document-normalized weights.
 
         Args:
-            doc_term_matrix (:class:`sp.sparse.csr_matrix`): Sparse matrix of
-                shape (# docs, # unique terms), where value (i, j) is the weight
-                of term j in doc i.
+            doc_term_matrix (:class:`sp.sparse.csr_matrix`)
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`: Re-weighted doc-term matrix.
+            :class:`scipy.sparse.csr_matrix`
         """
         # re-weight the local components (term freqs)
         if self.weighting == 'binary':
