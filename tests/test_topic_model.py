@@ -28,7 +28,7 @@ def term_lists():
 def vectorizer():
     vectorizer_ = Vectorizer(
         weighting='tf', norm=None, tf_scale=None, idf_type='smooth',
-        min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
+        min_df=1, max_df=1.0, max_n_terms=None)
     return vectorizer_
 
 

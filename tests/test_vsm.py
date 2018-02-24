@@ -35,7 +35,7 @@ def groups():
 def vectorizer_and_dtm(tokenized_docs):
     vectorizer = vsm.Vectorizer(
         weighting='tf', norm=None, tf_scale=None, idf_type='smooth',
-        min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
+        min_df=1, max_df=1.0, max_n_terms=None)
     doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
     return vectorizer, doc_term_matrix
 
@@ -44,7 +44,7 @@ def vectorizer_and_dtm(tokenized_docs):
 def grp_vectorizer_and_gtm(tokenized_docs, groups):
     grp_vectorizer = vsm.GroupVectorizer(
         weighting='tf', norm=None, tf_scale=None, idf_type='smooth',
-        min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
+        min_df=1, max_df=1.0, max_n_terms=None)
     grp_term_matrix = grp_vectorizer.fit_transform(tokenized_docs, groups)
     return grp_vectorizer, grp_term_matrix
 
@@ -128,8 +128,6 @@ def test_vectorizer_bad_init_params():
         {'min_df': -1},
         {'max_df': -1},
         {'max_n_terms': -1},
-        {'min_ic': -1.0},
-        {'min_ic': 1.1},
         {'vocabulary_terms': 'foo bar bat baz'},
         )
     for bad_init_param in bad_init_params:
@@ -281,21 +279,3 @@ def test_filter_terms_by_df_exception(vectorizer_and_dtm):
     with pytest.raises(ValueError):
         _ = vsm.filter_terms_by_df(doc_term_matrix, vectorizer.vocabulary_terms,
                                    max_df=1.0, min_df=6, max_n_terms=None)
-
-
-def test_filter_terms_by_ic_identity(vectorizer_and_dtm):
-    vectorizer, doc_term_matrix = vectorizer_and_dtm
-    dtm, vocab = vsm.filter_terms_by_ic(
-        doc_term_matrix, vectorizer.vocabulary_terms,
-        min_ic=0.0, max_n_terms=None)
-    assert dtm.shape == doc_term_matrix.shape
-    assert vocab == vectorizer.vocabulary_terms
-
-
-def test_filter_terms_by_ic_max_n_terms(vectorizer_and_dtm):
-    vectorizer, doc_term_matrix = vectorizer_and_dtm
-    dtm, vocab = vsm.filter_terms_by_ic(
-        doc_term_matrix, vectorizer.vocabulary_terms,
-        min_ic=0.0, max_n_terms=3)
-    assert dtm.shape == (8, 3)
-    assert len(vocab) == 3

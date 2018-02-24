@@ -146,8 +146,6 @@ class Vectorizer(object):
             the total number of documents, which must be in [0.0, 1.0]. If int,
             value is the absolute number. Filter terms whose document frequency
             is greater than ``max_df``.
-        min_ic (float): Filter terms whose information content is less than
-            ``min_ic``; value must be in [0.0, 1.0].
         max_n_terms (int): Only include terms whose document frequency is within
             the top ``max_n_terms``.
 
@@ -165,13 +163,11 @@ class Vectorizer(object):
     def __init__(self,
                  weighting='tf', tf_scale=None, idf_type='smooth',
                  dl_norm=None, dl_scale=None, norm=None,
-                 min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None,
+                 min_df=1, max_df=1.0, max_n_terms=None,
                  vocabulary_terms=None):
         # sanity check numeric arguments
         if min_df < 0 or max_df < 0:
             raise ValueError('`min_df` and `max_df` must be positive numbers or None')
-        if min_ic < 0.0 or min_ic > 1.0:
-            raise ValueError('`min_ic` must be a float in the interval [0.0, 1.0]')
         if max_n_terms and max_n_terms < 0:
             raise ValueError('`max_n_terms` must be a positive integer or None')
         self.weighting = weighting
@@ -182,7 +178,6 @@ class Vectorizer(object):
         self.norm = norm
         self.min_df = min_df
         self.max_df = max_df
-        self.min_ic = min_ic
         self.max_n_terms = max_n_terms
         self.vocabulary_terms, self._fixed_terms = self._validate_vocabulary(vocabulary_terms)
         self.id_to_term_ = {}
@@ -482,10 +477,6 @@ class Vectorizer(object):
             doc_term_matrix, vocabulary = filter_terms_by_df(
                 doc_term_matrix, vocabulary,
                 max_df=self.max_df, min_df=self.min_df, max_n_terms=self.max_n_terms)
-        if self.min_ic != 0.0:
-            doc_term_matrix, vocabulary = filter_terms_by_ic(
-                doc_term_matrix, vocabulary,
-                min_ic=self.min_ic, max_n_terms=self.max_n_terms)
         return doc_term_matrix, vocabulary
 
     def _sort_vocab_and_matrix(self, matrix, vocabulary, axis):
@@ -675,8 +666,6 @@ class GroupVectorizer(Vectorizer):
             the total number of documents (groups), which must be in [0.0, 1.0].
             If int, value is the absolute number. Filter terms whose document (group)
             frequency is greater than ``max_df``.
-        min_ic (float): Filter terms whose information content is less than
-            ``min_ic``; value must be in [0.0, 1.0].
         max_n_terms (int): Only include terms whose document (group) frequency
             is within the top ``max_n_terms``.
 
@@ -705,12 +694,12 @@ class GroupVectorizer(Vectorizer):
     def __init__(self,
                  weighting='tf', tf_scale=None, idf_type='smooth',
                  dl_norm=None, dl_scale=None, norm=None,
-                 min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None,
+                 min_df=1, max_df=1.0, max_n_terms=None,
                  vocabulary_terms=None, vocabulary_grps=None):
         super(GroupVectorizer, self).__init__(
             weighting=weighting, tf_scale=tf_scale, idf_type=idf_type,
             dl_norm=dl_norm, dl_scale=dl_scale, norm=norm,
-            min_df=min_df, max_df=max_df, min_ic=min_ic, max_n_terms=max_n_terms,
+            min_df=min_df, max_df=max_df, max_n_terms=max_n_terms,
             vocabulary_terms=vocabulary_terms)
         # now do the same thing for grps as was done for terms
         self.vocabulary_grps, self._fixed_grps = self._validate_vocabulary(vocabulary_grps)
