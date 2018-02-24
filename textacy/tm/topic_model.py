@@ -24,7 +24,7 @@ class TopicModel(object):
     See :class:`textacy.vsm.Vectorizer` for details. In short::
 
         >>> vectorizer = Vectorizer(
-        ...     weighting='tfidf', norm='l2', idf_type='smooth',
+        ...     tf_type='linear', apply_idf=True, idf_type='smooth', norm='l2',
         ...     min_df=3, max_df=0.95, max_n_terms=100000)
         >>> doc_term_matrix = vectorizer.fit_transform(terms_list)
 
