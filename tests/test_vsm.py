@@ -61,6 +61,27 @@ def lamb_and_child_idxs(vectorizer_and_dtm):
     return idx_lamb, idx_child
 
 
+def test_vectorizer_weighting_combinations(tokenized_docs):
+    init_params = [
+        dict(weighting='tf'),
+        dict(weighting='tf', tf_scale='sqrt'),
+        dict(weighting='tf', tf_scale='sqrt', dl_norm=True),
+        dict(weighting='tf', tf_scale='sqrt', dl_norm=True, dl_scale='sqrt'),
+        dict(weighting='tfidf'),
+        dict(weighting='tfidf', idf_type='bm25'),
+        dict(weighting='tfidf', idf_type='standard', norm='l1'),
+        dict(weighting='tfidf', idf_type='standard', dl_norm=True),
+        dict(weighting='tfidf', idf_type='standard', dl_norm=True, dl_scale='log'),
+        dict(weighting='bm25'),
+        dict(weighting='bm25', dl_norm=False),
+        dict(weighting='bm25', idf_type='bm25'),
+        dict(weighting='bm25', norm='l2'),
+    ]
+    for ip in init_params:
+        vectorizer = vsm.Vectorizer(**ip)
+        doc_term_matrix = vectorizer.fit(tokenized_docs)
+
+
 def test_vectorizer_id_to_term(vectorizer_and_dtm):
     vectorizer, _ = vectorizer_and_dtm
     assert isinstance(vectorizer.id_to_term, dict)

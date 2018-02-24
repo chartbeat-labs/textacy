@@ -439,6 +439,8 @@ class Vectorizer(object):
         if self.weighting in ('tfidf', 'bm25'):
             # store the global weights as a diagonal sparse matrix of idfs
             idfs = get_inverse_doc_freqs(doc_term_matrix, type_=self.idf_type)
+            print('idfs:', idfs)
+            print('idfs.dtype:', idfs.dtype)
             self._idf_diag = sp.spdiags(
                 idfs, diags=0, m=n_terms, n=n_terms, format='csr')
 
@@ -1158,7 +1160,7 @@ def get_inverse_doc_freqs(doc_term_matrix, type_='smooth'):
         dfs += 1
         return np.log(n_docs / dfs) + 1.0
     elif type_ == 'bm25':
-        idfs = np.log((n_docs - dfs + 0.5) / (dfs + 0.5))
+        return np.log((n_docs - dfs + 0.5) / (dfs + 0.5))
     else:
         raise ValueError(
             'type_ = {} is invalid; value must be one of {}'.format(
