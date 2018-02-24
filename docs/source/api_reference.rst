@@ -46,8 +46,14 @@ Information Extraction
 .. automodule:: textacy.keyterms
     :members:
 
-Topic Modeling
---------------
+Vectorization & Topic Modeling
+------------------------------
+
+.. automodule:: textacy.vsm.vectorizers
+    :members:
+
+.. automodule:: textacy.vsm.matrix_utils
+    :members:
 
 .. automodule:: textacy.tm.topic_model
     :members:
@@ -56,9 +62,6 @@ Representations
 ---------------
 
 .. automodule:: textacy.network
-    :members:
-
-.. automodule:: textacy.vsm
     :members:
 
 IO

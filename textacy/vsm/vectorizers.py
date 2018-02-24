@@ -1,4 +1,7 @@
 """
+Vectorizers
+-----------
+
 Transform a collection of tokenized documents into a document-term matrix
 of shape (# docs, # unique terms), with various ways to filter or limit
 included terms and flexible weighting schemes for their values.
@@ -7,7 +10,7 @@ A second option aggregates terms in tokenized documents by provided group labels
 resulting in a "group-term-matrix" of shape (# unique groups, # unique terms),
 with filtering and weighting functionality as described above.
 
-See the :class:`Vectorizer` and :class:`GlobalVectorizer` docstrings for usage
+See the :class:`Vectorizer` and :class:`GroupVectorizer` docstrings for usage
 examples and explanations of the various weighting schemes.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -72,7 +75,7 @@ class Vectorizer(object):
         ['', '$', '$ 1 million', '$ 1.2 billion', '$ 10 billion']
 
     (Btw: That empty string shouldn't be there. Somehow, spaCy is labeling it as
-    a GPE named entity...?)
+    a named entity...)
 
     If known in advance, limit the terms included in vectorized outputs
     to a particular set of values::
@@ -178,8 +181,8 @@ class Vectorizer(object):
             - 'binary': tf => 1
 
         apply_idf (bool): If True, apply global idfs to local term weights, i.e.
-            divide per-doc term frequencies by the total number of documents
-            in which they appear (well, the log of that number); otherwise, don't.
+            divide per-doc term frequencies by the (log of the) total number
+            of documents in which they appear; otherwise, don't.
         idf_type ({'standard', 'smooth', 'bm25'}): Type of inverse document
             frequency (idf) to use for weights' global component:
 

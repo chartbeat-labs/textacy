@@ -1,4 +1,9 @@
-"""Convenient and consolidated topic-modeling, built on ``scikit-learn``."""
+"""
+Topic Models
+------------
+
+Convenient and consolidated topic-modeling, built on ``scikit-learn``.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
@@ -178,7 +183,7 @@ class TopicModel(object):
                 i.e. topic weights on each document sum to 1
 
         Returns:
-            ``numpy.ndarray``: Document-topic matrix with shape (n_docs, n_topics).
+            :class:`numpy.ndarray`: Document-topic matrix with shape (n_docs, n_topics).
         """
         doc_topic_matrix = self.transform(doc_term_matrix)
         if normalize is True:
@@ -235,9 +240,8 @@ class TopicModel(object):
         Get the top ``top_n`` docs by weight per topic in ``doc_topic_matrix``.
 
         Args:
-            doc_topic_matrix (``numpy.ndarray``): document-topic matrix with shape
-                (n_docs, n_topics), the result of calling
-                :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
+            doc_topic_matrix (:class:`numpy.ndarray`): document-topic matrix with shape
+                (n_docs, n_topics), the result of calling :meth:`TopicModel.get_doc_topic_matrix()`
             topics (int or Sequence[int]): topic(s) for which to return top docs;
                 if -1, all topics' docs are returned
             top_n (int): number of top docs to return per topic
@@ -276,9 +280,8 @@ class TopicModel(object):
         Get the top ``top_n`` topics by weight per doc for ``docs`` in ``doc_topic_matrix``.
 
         Args:
-            doc_topic_matrix (``numpy.ndarray``): document-topic matrix with shape
-                (n_docs, n_topics), the result of calling
-                :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
+            doc_topic_matrix (:class:`numpy.ndarray`): document-topic matrix with shape
+                (n_docs, n_topics), the result of calling :meth:`TopicModel.get_doc_topic_matrix()`
             docs (int or Sequence[int]): docs for which to return top topics;
                 if -1, all docs' top topics are returned
             top_n (int): number of top topics to return per doc
@@ -319,12 +322,11 @@ class TopicModel(object):
         or not. I suppose either way makes sense... o_O
 
         Args:
-            doc_topic_matrix (``numpy.ndarray``): document-topic matrix with shape
-                (n_docs, n_topics), the result of calling
-                :func:`get_doc_topic_matrix() <textacy.topic_modeling.get_doc_topic_matrix>`
+            doc_topic_matrix (:class:`numpy.ndarray`): document-topic matrix with shape
+                (n_docs, n_topics), the result of calling :meth:`TopicModel.get_doc_topic_matrix()`
 
         Returns:
-            ``numpy.ndarray``: the ith element is the ith topic's overall weight
+            :class:`numpy.ndarray`: the ith element is the ith topic's overall weight
         """
         return doc_topic_matrix.sum(axis=0) / doc_topic_matrix.sum(axis=0).sum()
 
@@ -343,7 +345,7 @@ class TopicModel(object):
         to promote comparison of terms both within and across topics.
 
         Args:
-            doc_term_matrix (``np.ndarray``-like or sparse matrix): corpus
+            doc_term_matrix (:class:`numpy.ndarray` or sparse matrix): corpus
                 represented as a document-term matrix with shape (n_docs, n_terms);
                 may have tf- or tfidf-weighting
             id2term (List[str] or dict): object that returns the term string corresponding

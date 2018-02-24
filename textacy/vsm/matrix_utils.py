@@ -1,4 +1,7 @@
 """
+Sparse Matrix Utils
+-------------------
+
 Functions for computing corpus-wide term- or document-based values, like
 term frequency, document frequency, and document length, and filtering terms
 from a matrix by their document frequency.
@@ -178,8 +181,8 @@ def apply_idf_weighting(doc_term_matrix, idf_type='smooth'):
     weighted document-term matrix, optionally smoothing idf values.
 
     Args:
-        doc_term_matrix (:class:`scipy.sparse.csr_matrix <scipy.sparse.csr_matrix`):
-            M x N matrix, where M is the # of docs and N is the # of unique terms
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M x N sparse matrix,
+            where M is the # of docs and N is the # of unique terms.
         smooth_idf (bool): if True, add 1 to all document frequencies, equivalent
             to adding a single document to the corpus containing every unique term
 
@@ -202,7 +205,7 @@ def filter_terms_by_df(doc_term_matrix, term_to_id,
         doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N matrix, where
             M is the # of docs and N is the # of unique terms.
         term_to_id (Dict[str, int]): Mapping of term string to unique term id,
-            e.g. :attr:`Vectorizer.vocabulary`.
+            e.g. :attr:`Vectorizer.vocabulary_terms`.
         min_df (float or int): if float, value is the fractional proportion of
             the total number of documents and must be in [0.0, 1.0]; if int,
             value is the absolute number; filter terms whose document frequency
@@ -272,10 +275,10 @@ def filter_terms_by_ic(doc_term_matrix, term_to_id,
     Borrows heavily from the ``sklearn.feature_extraction.text`` module.
 
     Args:
-        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N matrix, where
-            M is the # of docs and N is the # of unique terms.
+        doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M X N sparse matrix,
+            where M is the # of docs and N is the # of unique terms.
         term_to_id (Dict[str, int]): Mapping of term string to unique term id,
-            e.g. :attr:`Vectorizer.vocabulary`.
+            e.g. :attr:`Vectorizer.vocabulary_terms`.
         min_ic (float): filter terms whose information content is less than this
             value; must be in [0.0, 1.0]
         max_n_terms (int): only include terms whose information content is within
