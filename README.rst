@@ -142,7 +142,7 @@ Represent corpus as a document-term matrix, with flexible weighting and filterin
 .. code-block:: pycon
 
     >>> vectorizer = textacy.Vectorizer(
-    ...     weighting='tfidf', normalize=True, smooth_idf=True,
+    ...     weighting='tfidf', norm='l2', idf_type='smooth',
     ...     min_df=2, max_df=0.95)
     >>> doc_term_matrix = vectorizer.fit_transform(
     ...     (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
