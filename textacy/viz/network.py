@@ -40,7 +40,7 @@ def draw_semantic_network(graph, node_weights=None, spread=3.0,
     directed layout.
 
     Args:
-        graph (:class:`networkx.Graph <networkx.Graph>`):
+        graph (``networkx.Graph``):
         node_weights (dict): mapping of node: weight, used to size node labels
             (and, optionally, node circles) according to their weight
         spread (float): number that drives the spread of the network; higher
@@ -60,7 +60,7 @@ def draw_semantic_network(graph, node_weights=None, spread=3.0,
         save (str): give the full /path/to/fname on disk to save figure (optional)
 
     Returns:
-        ``matplotlib.axes.Axes.axis``: Axis on which network plot is drawn.
+        :obj:`matplotlib.axes.Axes.axis`: Axis on which network plot is drawn.
 
     Note:
         This function requires `matplotlib <https://matplotlib.org/>`_.

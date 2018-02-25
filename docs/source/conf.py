@@ -81,6 +81,8 @@ language = None
 
 intersphinx_mapping = {'python': ('https://docs.python.org/3.6', None),
                        'numpy': ('https://docs.scipy.org/doc/numpy/', None),
+                       'scipy': ('http://docs.scipy.org/doc/scipy/reference', None),
+                       'matplotlib': ('http://matplotlib.org', None),
                        }
 
 # There are two options for replacing |today|: either, you set today to some

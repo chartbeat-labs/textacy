@@ -102,7 +102,8 @@ class Corpus(object):
             attributes. See https://spacy.io/docs/usage/models#available for
             available spacy models.
         texts (Iterable[str]): Stream of documents as (unicode) text, to be
-            processed by spaCy and added to the corpus as :class:`textacy.Doc <textacy.Doc>` s.
+            processed by spaCy and added to the corpus as
+            :class:`Doc <textacy.doc.Doc>` s.
         docs (Iterable[:class:`Doc <textacy.doc.Doc>`] or Iterable[``spacy.Doc``]):
             Stream of documents already-processed by spaCy alone or via textacy.
         metadatas (Iterable[dict]): Stream of dictionaries of relevant doc
@@ -273,7 +274,7 @@ class Corpus(object):
             batch_size (int): Number of texts to process at a time.
 
         See Also:
-            - :func:`io.split_records()`
+            - :func:`io.split_records() <textacy.io.utils.split_records>`
             - https://spacy.io/api/language#pipe
         """
         spacy_docs = self.spacy_lang.pipe(
@@ -527,7 +528,7 @@ class Corpus(object):
             on the value of ``weighting``).
 
         See Also:
-            :func:`vsm.get_doc_freqs() <textacy.vsm.get_doc_freqs>`
+            :func:`vsm.get_doc_freqs() <textacy.vsm.matrix_utils.get_doc_freqs>`
         """
         word_doc_counts = collections.Counter()
         for doc in self:
