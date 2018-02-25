@@ -48,7 +48,7 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
     n_topics = 10
     top_n = 10
     vectorizer = Vectorizer(
-        weighting='tfidf', normalize=True, smooth_idf=True,
+        tf_type='linear', apply_idf=True, idf_type='smooth', norm=None,
         min_df=2, max_df=0.95)
     doc_term_matrix = vectorizer.fit_transform(
         (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)

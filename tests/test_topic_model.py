@@ -27,8 +27,8 @@ def term_lists():
 @pytest.fixture(scope='module')
 def vectorizer():
     vectorizer_ = Vectorizer(
-        weighting='tf', normalize=False, sublinear_tf=False, smooth_idf=True,
-        min_df=1, max_df=1.0, min_ic=0.0, max_n_terms=None)
+        tf_type='linear', apply_idf=True, idf_type='smooth', norm=None,
+        min_df=1, max_df=1.0, max_n_terms=None)
     return vectorizer_
 
 
