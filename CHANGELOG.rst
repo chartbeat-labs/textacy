@@ -1,6 +1,95 @@
 Changelog
 =========
 
+0.6.0 (in development)
+----------------------
+
+Changes:
+
+- **Rename, refactor, and extend I/O functionality** (PR #151)
+
+  - Related read/write functions were moved from ``read.py`` and ``write.py`` into
+    format-specific modules, and similar functions were consolidated into one
+    with the addition of an arg. For example, ``write.write_json()`` and
+    ``write.write_json_lines()`` => ``json.write_json(lines=True|False)``.
+  - Useful functionality was added to a few readers/writers. For example,
+    ``write_json()`` now automatically handles python dates/datetimes, writing
+    them to disk as ISO-formatted strings rather than raising a TypeError
+    ("datetime is not JSON serializable", ugh). CSVs can now be written to /
+    read from disk when each row is a dict rather than a list. Reading/writing
+    HTTP streams now allows for basic authentication.
+  - Several things were renamed to improve clarity and consistency from a user's
+    perspective, most notably the subpackage name: ``fileio`` => ``io``. Others:
+    ``read_file()`` and ``write_file()`` => ``read_text()`` and ``write_text()``;
+    ``split_record_fields()`` => ``split_records()``, although I kept an alias
+    to the old function for folks; ``auto_make_dirs`` boolean kwarg => ``make_dirs``.
+  - ``io.open_sesame()`` now handles zip files (provided they contain only 1 file)
+    as it already does for gzip, bz2, and lzma files. On a related note, Python 2
+    users can now open lzma (``.xz``) files if they've installed ``backports.lzma``.
+
+- **Improve, refactor, and extend vector space model functionality** (PRs #156 and #167)
+
+  - BM25 term weighting and document-length normalization were implemented, and
+    and users can now flexibly add and customize individual components of an
+    overall weighting scheme (local scaling + global scaling + doc-wise normalization).
+    For API sanity, several additions and changes to the ``Vectorizer`` init
+    params were required --- sorry bout it!
+  - Given all the new weighting possibilities, a ``Vectorizer.weighting`` attribute
+    was added for curious users, to give a mathematical representation of how
+    values in a doc-term matrix are being calculated. Here's a simple and a
+    not-so-simple case:
+
+    .. code-block:: pycon
+
+       >>> Vectorizer(apply_idf=True, idf_type='smooth').weighting
+       'tf * log((n_docs + 1) / (df + 1)) + 1'
+       >>> Vectorizer(tf_type='bm25', apply_idf=True, idf_type='smooth', apply_dl=True).weighting
+       '(tf * (k + 1)) / (tf + k * (1 - b + b * (length / avg(lengths))) * log((n_docs - df + 0.5) / (df + 0.5))'
+
+  - Terms are now sorted alphabetically after fitting, so you'll have a consistent
+    and interpretable ordering in your vocabulary and doc-term-matrix.
+  - A ``GroupVectorizer`` class was added, as a child of ``Vectorizer`` and
+    an extension of typical document-term matrix vectorization, in which each
+    row vector corresponds to the weighted terms co-occurring in a single document.
+    This allows for customized grouping, such as by a shared author or publication year,
+    that may span multiple documents, without forcing users to merge /concatenate
+    those documents themselves.
+  - Lastly, the ``vsm.py`` module was refactored into a ``vsm`` subpackage with
+    two modules. Imports should stay the same, but the code structure is now
+    more amenable to future additions.
+
+- **Miscellaneous additions and improvements**
+
+  - Flesch Reading Ease in the ``textstats`` module is now multi-lingual! Language-
+    specific formulations for German, Spanish, French, Italian, Dutch, and Russian
+    were added, in addition to (the default) English. (PR #158, prompted by Issue #155)
+  - Runtime performance, as well as docs and error messages, of functions for
+    generating semantic networks from lists of terms or sentences were improved. (PR #163)
+  - Labels on named entities from which determiners have been dropped are now
+    preserved. There's still a minor gotcha, but it's explained in the docs.
+  - The size of ``textacy``'s data cache can now be set via an environment
+    variable, ``TEXTACY_MAX_CACHE_SIZE``, in case the default 2GB cache doesn't
+    meet your needs.
+  - Docstrings were improved in many ways, large and small, throughout the code.
+    May they guide you even more effectively than before!
+  - The package version is now set from a single source. This isn't for you so
+    much as me, but it does prevent confusing version mismatches b/w code, pypi,
+    and docs.
+  - All tests have been converted from ``unittest`` to ``pytest`` style. They
+    run faster, they're more informative in failure, and they're easier to extend.
+
+Bugfixes:
+
+- Fixed an issue where existing metadata associated with a spacy Doc was being
+  overwritten with an empty dict when using it to initialize a textacy Doc.
+  Users can still overwrite existing metadata, but only if they pass in new data.
+- Added a missing import to the README's usage example. (#149)
+- The intersphinx mapping to ``numpy`` got fixed (and items for ``scipy`` and
+  ``matplotlib`` were added, too). Taking advantage of that, a bunch of broken
+  object links scattered throughout the docs got fixed.
+- Fixed broken formatting of old entries in the changelog, for your reading pleasure.
+
+
 0.5.0 (2017-12-04)
 ------------------
 
