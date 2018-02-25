@@ -132,6 +132,13 @@ class Vectorizer(object):
          [0.        ]
          [4.83933924]]
 
+    If you're not sure what's going on mathematically, :attr:`Vectorizer.weighting`
+    gives the formula being used to calculate weights, based on the parameters
+    set when initializing the vectorizer::
+
+        >>> vectorizer.weighting
+        '(tf * (k + 1)) / (k + tf) * log((n_docs + 1) / (df + 1)) + 1'
+
     In general, weights may consist of a local component (term frequency),
     a global component (inverse document frequency), and a normalization
     component (document length). Individual components may be modified:
@@ -189,7 +196,7 @@ class Vectorizer(object):
             - 'standard': idf = log(n_docs / df) + 1.0
             - 'smooth': idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
               to all document frequencies, as if a single document containing
-              every unique term was added to the corpus.
+              every unique term was added to the corpus. This prevents zero divisions!
             - 'bm25': idf = log((n_docs - df + 0.5) / (df + 0.5)), which is
               a form commonly used in information retrieval that allows for
               very common terms to receive negative weights.
@@ -632,6 +639,36 @@ class Vectorizer(object):
                 doc_term_matrix, norm=self.norm, axis=1, copy=False)
 
         return doc_term_matrix
+
+    @property
+    def weighting(self):
+        """
+        str: A mathematical representation of the overall weighting scheme
+        used to determine values in the vectorized matrix, depending on the
+        params used to initialize the :class:`Vectorizer`.
+        """
+        w = []
+        tf_types = {
+            'binary': '1', 'linear': 'tf', 'sqrt': 'sqrt(tf)', 'log': 'log(tf)',
+            'bm25': {
+                True: '(tf * (k + 1)) / (tf + k * (1 - b + b * (length / avg(lengths)))',
+                False: '(tf * (k + 1)) / (tf + k)'}
+        }
+        idf_types = {
+            'standard': 'log(n_docs / df) + 1',
+            'smooth': 'log((n_docs + 1) / (df + 1)) + 1',
+            'bm25': 'log((n_docs - df + 0.5) / (df + 0.5))'}
+        dl_types = {
+            'linear': '1/length', 'sqrt': '1/sqrt(length)', 'log': '1/log(length) + 1'}
+        if self.tf_type == 'bm25':
+            w.append(tf_types[self.tf_type][self.apply_dl])
+        else:
+            w.append(tf_types[self.tf_type])
+        if self.apply_idf:
+            w.append(idf_types[self.idf_type])
+        if self.apply_dl and self.tf_type != 'bm25':
+            w.append(dl_types[self.dl_type])
+        return ' * '.join(w)
 
 
 class GroupVectorizer(Vectorizer):

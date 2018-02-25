@@ -80,6 +80,7 @@ def test_vectorizer_weighting_combinations(tokenized_docs):
     for ip in init_params:
         vectorizer = vsm.Vectorizer(**ip)
         doc_term_matrix = vectorizer.fit(tokenized_docs)
+        vectorizer.weighting
 
 
 def test_vectorizer_id_to_term(vectorizer_and_dtm):
