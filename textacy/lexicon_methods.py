@@ -1,6 +1,11 @@
 """
+Lexicon Methods
+---------------
+
 Collection of lexicon-based methods for characterizing texts by sentiment,
 emotional valence, etc.
+
+This module is a bit of an orphan right now...
 """
 from __future__ import unicode_literals
 

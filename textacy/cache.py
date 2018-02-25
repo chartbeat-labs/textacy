@@ -1,5 +1,9 @@
 """
-Functions to load and cache language data and other NLP resources.
+Cache
+-----
+
+Functions to load and cache language data and other NLP resources. Loading data
+from disk can be slow; let's just do it once and forget about it. :)
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 

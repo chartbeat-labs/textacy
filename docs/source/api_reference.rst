@@ -58,12 +58,6 @@ Vectorization & Topic Modeling
 .. automodule:: textacy.tm.topic_model
     :members:
 
-Representations
----------------
-
-.. automodule:: textacy.network
-    :members:
-
 IO
 --
 
@@ -111,6 +105,9 @@ Utilities
 
 Other Stuff!
 ------------
+
+.. automodule:: textacy.network
+    :members:
 
 .. automodule:: textacy.similarity
     :members:

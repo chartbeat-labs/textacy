@@ -1,6 +1,10 @@
 """
+Semantic Networks
+-----------------
+
 Represent documents as semantic networks, where nodes are individual terms or
-whole sentences.
+whole sentences and edges are weighted by the strength of their co-occurrence or
+similarity, respectively.
 """
 import collections
 import itertools

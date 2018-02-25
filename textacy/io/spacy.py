@@ -1,5 +1,5 @@
 """
-Spacy
+spaCy
 -----
 
 Functions for reading from and writing to disk spacy documents in pickle format.

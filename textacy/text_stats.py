@@ -1,5 +1,8 @@
 """
-Calculations of basic counts and readability statistics for text documents.
+Text Statistics
+---------------
+
+Compute a variety of basic counts and readability statistics for documents.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -18,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 class TextStats(object):
     """
     Compute a variety of basic counts and readability statistics for a given
-    text document. For example::
+    document. For example::
 
         >>> text = next(textacy.datasets.CapitolWords().texts(limit=1))
         >>> doc = textacy.Doc(text)

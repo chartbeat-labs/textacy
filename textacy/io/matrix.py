@@ -1,6 +1,6 @@
 """
-Matrices
---------
+Matrix
+------
 
 Functions for reading from and writing to disk CSC and CSR sparse matrices
 in numpy binary format.

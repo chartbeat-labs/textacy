@@ -1,5 +1,9 @@
 """
-Collection of semantic similarity metrics.
+Similarity
+----------
+
+Collection of various semantic similarity metrics between docs, sequences of tokens,
+and individual tokens, where tokens may either be spaCy objects or strings.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
