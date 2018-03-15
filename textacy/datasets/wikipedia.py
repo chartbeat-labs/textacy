@@ -88,7 +88,7 @@ re_dots = re.compile(r'\.{4,}')
 re_brackets = re.compile(r'\[\s?\]|\(\s?\)')
 
 re_comments = re.compile('<!--.*?-->', flags=re.UNICODE | re.DOTALL)
-re_categories = re.compile(r'\[\[(Category|Catégorie|Kategorie):[^\]\[]*\]\]', flags=re.UNICODE)
+re_categories = re.compile(r'\[\[(%s)[^\]\[]*\]\]' % '|'.join(MAPPING_CAT.values()), flags=re.UNICODE)
 re_link_trails = re.compile(r'\w+', flags=re.UNICODE)
 re_ext_link = re.compile(r'(?<!\[)\[([^\[\]]*?)\]')
 re_table_formatting = re.compile('\n\s*(({\|)|(\|-+)|(\|})).*?(?=\n)', flags=re.UNICODE)
