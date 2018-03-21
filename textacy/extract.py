@@ -760,11 +760,11 @@ def direct_quotations(doc):
         doc = doc.spacy_doc
     else:
         doc_lang = doc.vocab.lang
-    if doc.lang != 'en':
+    if doc_lang != 'en':
         raise NotImplementedError('sorry, English-language texts only :(')
     quote_end_punct = {',', '.', '?', '!'}
     quote_indexes = set(itertoolz.concat(
-        (m.start(), m.end() - 1) for m in re.finditer(r"(\".*?\")|(''.*?'')|(``.*?'')", doc.string)))
+        (m.start(), m.end() - 1) for m in re.finditer(r"(\".*?\")|(''.*?'')|(``.*?'')", doc.text)))
     quote_positions = list(itertoolz.partition(
         2, sorted(tok.i for tok in doc if tok.idx in quote_indexes)))
     sents = list(doc.sents)
