@@ -73,6 +73,14 @@ def test_corpus_init_docs():
         assert corpus[i].metadata == {'foo': 'bar'}
 
 
+def test_corpus_init_no_parser():
+    spacy_lang = cache.load_spacy('en', disable=('parser',))
+    corpus = Corpus(
+        spacy_lang,
+        docs=(spacy_lang('This is a sentence in a doc.'),))
+    assert corpus.n_sents is None and len(corpus) == 1
+
+
 # methods tests
 
 def test_corpus_save_and_load(tmpdir, corpus):

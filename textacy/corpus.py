@@ -14,6 +14,7 @@ import os
 import numpy as np
 from cytoolz import itertoolz
 from spacy.language import Language as SpacyLang
+from spacy.pipeline import DependencyParser
 from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.util import get_lang_class
 
@@ -143,7 +144,12 @@ class Corpus(object):
         self.docs = []
         self.n_docs = 0
         self.n_tokens = 0
-        self.n_sents = 0 if self.spacy_lang.parser else None
+        # sentence segmentation requires parse; if not available, skip it
+        if (self.spacy_lang.has_pipe('parser') or
+                any(isinstance(pipe[1], DependencyParser) for pipe in self.spacy_lang.pipeline)):
+            self.n_sents = 0
+        else:
+            self.n_sents = None
 
         if texts and docs:
             msg = 'Corpus may be initialized with either `texts` or `docs`, but not both.'
@@ -248,7 +254,8 @@ class Corpus(object):
         self.n_docs += 1
         self.n_tokens += doc.n_tokens
         # sentence segmentation requires parse; if not available, skip it
-        if self.spacy_lang.parser:
+        if (self.spacy_lang.has_pipe('parser') or
+                any(isinstance(pipe[1], DependencyParser) for pipe in self.spacy_lang.pipeline)):
             self.n_sents += doc.n_sents
 
     def add_texts(self, texts, metadatas=None,
