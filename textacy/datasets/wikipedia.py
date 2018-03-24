@@ -45,6 +45,12 @@ DATA_DIR = os.path.join(data_dir, NAME)
 
 DOWNLOAD_ROOT = 'https://dumps.wikimedia.org/'
 
+MAPPING_CAT = {
+    'en': 'Category:',
+    'fr': 'Catégorie:',
+    'de': 'Kategorie:'
+}
+
 # nowiki tags: take contents verbatim
 re_nowiki = re.compile(r'<nowiki>(.*?)</nowiki>', flags=re.UNICODE)
 
@@ -82,7 +88,8 @@ re_dots = re.compile(r'\.{4,}')
 re_brackets = re.compile(r'\[\s?\]|\(\s?\)')
 
 re_comments = re.compile('<!--.*?-->', flags=re.UNICODE | re.DOTALL)
-re_categories = re.compile(r'\[\[Category:[^\]\[]*\]\]', flags=re.UNICODE)
+
+re_categories = re.compile(r'\[\[({})[^\]\[]*\]\]'.format('|').join(MAPPING_CAT.values()), flags=re.UNICODE)
 re_link_trails = re.compile(r'\w+', flags=re.UNICODE)
 re_ext_link = re.compile(r'(?<!\[)\[([^\[\]]*?)\]')
 re_table_formatting = re.compile('\n\s*(({\|)|(\|-+)|(\|})).*?(?=\n)', flags=re.UNICODE)
@@ -250,10 +257,10 @@ class Wikipedia(Dataset):
         wikilinks = [unicode_(wc.title) for wc in wikicode.ifilter_wikilinks()]
         parsed_content['categories'] = [
             wc for wc in wikilinks
-            if wc.startswith('Category:')]
+            if wc.startswith(MAPPING_CAT[self.lang])]
         parsed_content['wiki_links'] = [
             wc for wc in wikilinks
-            if not wc.startswith('Category:') and
+            if not wc.startswith(MAPPING_CAT[self.lang]) and
             not wc.startswith('File:') and
             not wc.startswith('Image:')]
         parsed_content['ext_links'] = [
