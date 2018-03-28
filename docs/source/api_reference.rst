@@ -13,6 +13,8 @@ Corpus
 .. automodule:: textacy.corpus
     :members:
 
+.. _ref-api-datasets:
+
 Datasets
 --------
 
