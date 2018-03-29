@@ -1,9 +1,80 @@
-Usage Example
-=============
+Basic Usage
+===========
+
+First things first: Import the package. Most functionality is available from
+this top-level import, but we'll see that some features require their own imports.
 
 .. code-block:: pycon
 
     >>> import textacy
+
+Let's start with a single text document:
+
+.. code-block:: pycon
+
+    >>> text = (
+    ...     'Since the so-called "statistical revolution" in the late 1980s and mid 1990s, '
+    ...     'much Natural Language Processing research has relied heavily on machine learning. '
+    ...     'Formerly, many language-processing tasks typically involved the direct hand coding '
+    ...     'of rules, which is not in general robust to natural language variation. '
+    ...     'The machine-learning paradigm calls instead for using statistical inference '
+    ...     'to automatically learn such rules through the analysis of large corpora '
+    ...     'of typical real-world examples.')
+
+**Note:** In almost all cases, ``textacy`` (as well as ``spacy``) expects to be
+working with unicode text data. Throughout the code, this is indicated as ``str``
+to be consistent with Python 3's default string type; users of Python 2, however,
+must be mindful to use ``unicode``, and convert from the default (bytes) string
+type as needed.
+
+Before (or *in lieu of*) processing this text with spaCy, we can do a few things.
+First, let's look for keywords-in-context, as a quick way to assess, by eye,
+how a particular word or phrase is used in a body of text:
+
+.. code-block:: pycon
+
+    >>> textacy.text_utils.KWIC(text, 'language', window_width=35)
+     1980s and mid 1990s, much Natural  Language  Processing research has relied hea
+    n machine learning. Formerly, many  language -processing tasks typically involve
+    s not in general robust to natural  language  variation. The machine-learning pa
+
+Sometimes, "raw" text is messy and must be cleaned up before analysis; other
+times, an analysis simply benefits from well-standardized text. In either case,
+the ``textacy.preprocessing`` module contains a number of functions to remove
+URLs, punctuation, accents, HTML cruft, etc. as well as normalize whitespace.
+For example:
+
+.. code-block:: pycon
+
+    >>> textacy.preprocess_text(text, lowercase=True, no_punct=True)
+    'since the so called statistical revolution in the late 1980s and mid 1990s much natural language processing research has relied heavily on machine learning formerly many language processing tasks typically involved the direct hand coding of rules which is not in general robust to natural language variation the machine learning paradigm calls instead for using statistical inference to automatically learn such rules through the analysis of large corpora of typical real world examples'
+
+Usually, though, we want to work with text that's been processed by spaCy:
+tokenized, part-of-speech tagged, parsed, and so on. Since spaCy's pipelines
+are language-dependent, we have to load a particular pipeline to match the text;
+when working with texts from multiple languages, this can be a pain. Fortunately,
+``textacy`` includes automatic language detection to apply the right pipeline
+to the text, and it caches the loaded language data to minimize wait time and
+hassle. Making a ``Doc`` from text is easy:
+
+.. code-block:: pycon
+
+    >>> doc = textacy.Doc(text)
+    >>> doc
+    Doc(85 tokens; "Since the so-called "statistical revolution" in...")
+
+Under the hood, the text has been identified as English, and the default English-
+language ("en") pipeline has been loaded, cached, and applied to it. If you need
+to customize the pipeline, you can still easily load and cache it, then specify
+it yourself when initializing the doc:
+
+.. code-block:: pycon
+
+    >>> en = textacy.load_spacy('en_core_web_sm', disable=('parser',))
+    >>> textacy.Doc(text, lang=en)
+    Doc(85 tokens; "Since the so-called "statistical revolution" in...")
+
+TODO: Continue updating here.
 
 Efficiently stream documents from disk and into a processed corpus:
 
@@ -204,8 +275,3 @@ weighting and inclusion criteria:
      ('new yorkers', 3),
      ('chuck', 3),
      ('lot of fun', 2)]
-
-**Note:** In almost all cases, ``textacy`` expects to be working with unicode text.
-Docstrings indicate this as ``str``, which is clear and correct for Python 3 but
-not Python 2. In the latter case, users should cast ``str`` bytes to ``unicode``,
-as needed.

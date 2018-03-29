@@ -13,12 +13,9 @@ or ``conda``:
 
     $ conda install -c conda-forge textacy
 
-**Note:** If you use ``pip``, some dependencies have been made optional, because
-they can be difficult to install or are only needed in certain uses cases.
-For example, to use visualization functions, you'll need ``matplotlib`` installed;
-you can do so via ``pip install textacy[viz]``. For automatic language detection,
-you'll need ``cld2-cffi`` installed; do ``pip install textacy[lang]``. To install
-all optional dependencies:
+**Note:** Some dependencies have been made optional, because they can be difficult
+to install or are only needed in certain uses cases. See the next section for details.
+To install all optional dependencies:
 
 .. code-block:: console
 
@@ -40,7 +37,11 @@ number of other Python packages. Most of these are typical components in the
 PyData stack, but a few are more niche, and a couple have been known to cause
 trouble during the installation process.
 
-TODO: Add details to this sub-section. :)
+For example, to use visualization functions, you'll need ``matplotlib`` installed;
+you can do so via ``pip install textacy[viz]``. For automatic language detection,
+you'll need ``cld2-cffi`` installed; do ``pip install textacy[lang]``.
+
+...
 
 
 Downloading Data
