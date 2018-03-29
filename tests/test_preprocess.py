@@ -44,13 +44,13 @@ def test_replace_numbers():
 
 def test_remove_punct():
     text = "I can't. No, I won't! It's a matter of \"principle\"; of -- what's the word? -- conscience."
-    proc_text = "I cant No I wont Its a matter of principle of  whats the word  conscience"
+    proc_text = "I can t  No  I won t  It s a matter of  principle   of    what s the word     conscience "
     assert preprocess.remove_punct(text) == proc_text
 
 
 def test_remove_punct_marks():
     text = "I can't. No, I won't! It's a matter of \"principle\"; of -- what's the word? -- conscience."
-    proc_text = "I cant. No, I wont! Its a matter of principle; of  whats the word?  conscience."
+    proc_text = "I can t. No, I won t! It s a matter of  principle ; of   what s the word?   conscience."
     assert preprocess.remove_punct(text, marks="-'\"") == proc_text
 
 

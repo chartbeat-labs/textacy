@@ -13,7 +13,6 @@ import unicodedata
 from ftfy import fix_text
 from unidecode import unidecode
 
-from . import compat
 from . import constants
 
 
@@ -125,7 +124,7 @@ def replace_currency_symbols(text, replace_with=None):
 def remove_punct(text, marks=None):
     """
     Remove punctuation from ``text`` by replacing all instances of ``marks``
-    with an empty string.
+    with whitespace.
 
     Args:
         text (str): raw text
@@ -138,16 +137,13 @@ def remove_punct(text, marks=None):
 
     Note:
         When ``marks=None``, Python's built-in :meth:`str.translate()` is
-        used to remove punctuation; otherwise,, a regular expression is used
+        used to remove punctuation; otherwise, a regular expression is used
         instead. The former's performance is about 5-10x faster.
     """
     if marks:
-        return re.sub('[{}]+'.format(re.escape(marks)), '', text, flags=re.UNICODE)
+        return re.sub('[{}]+'.format(re.escape(marks)), ' ', text, flags=re.UNICODE)
     else:
-        if isinstance(text, compat.unicode_):
-            return text.translate(constants.PUNCT_TRANSLATE_UNICODE)
-        else:
-            return text.translate(None, constants.PUNCT_TRANSLATE_BYTES)
+        return text.translate(constants.PUNCT_TRANSLATE_UNICODE)
 
 
 def remove_accents(text, method='unicode'):
