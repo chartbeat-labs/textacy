@@ -6,7 +6,7 @@
    :caption: Getting Started
 
    getting_started/installation
-   getting_started/usage_example
+   getting_started/quickstart
 
 
 .. toctree::

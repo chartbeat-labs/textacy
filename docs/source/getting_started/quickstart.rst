@@ -1,5 +1,5 @@
-Basic Usage
-===========
+Quickstart
+==========
 
 First things first: Import the package. Most functionality is available from
 this top-level import, but we'll see that some features require their own imports.
