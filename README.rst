@@ -1,12 +1,11 @@
-========================================
-textacy: higher-level NLP built on spaCy
-========================================
+textacy: NLP, before and after spaCy
+====================================
 
-``textacy`` is a Python library for performing higher-level natural language
-processing (NLP) tasks, built on the high-performance spaCy_ library. With the
+``textacy`` is a Python library for performing a variety of natural language
+processing (NLP) tasks, built on the high-performance ``spacy`` library. With the
 fundamentals --- tokenization, part-of-speech tagging, dependency parsing, etc. ---
-offloaded to another library, ``textacy`` focuses on tasks facilitated by the
-ready availability of tokenized, POS-tagged, and parsed text.
+delegated to another library, ``textacy`` focuses on the tasks that come before
+and follow after.
 
 .. image:: https://img.shields.io/travis/chartbeat-labs/textacy/master.svg?style=flat-square
     :target: https://travis-ci.org/chartbeat-labs/textacy
@@ -27,314 +26,40 @@ ready availability of tokenized, POS-tagged, and parsed text.
 Features
 --------
 
-- Stream text, json, csv, and spaCy binary data to and from disk
-- Clean and normalize raw text, *before* analyzing it
-- Explore a variety of included datasets, with both text data and metadata from
-  Congressional speeches to historical literature to Reddit comments
-- Access and filter basic linguistic elements, such as words and ngrams, noun
-  chunks and sentences
-- Extract named entities, acronyms and their definitions, direct quotations,
-  key terms, and more from documents
+- Provide a convenient entry point and interface to one or many documents, with
+  the core processing delegated to spaCy
+- Stream text, json, csv, spaCy binary, and other data to and from disk
+- Download and explore a variety of included datasets with both text content and
+  metadata, from Congressional speeches to historical literature to Reddit comments
+- Clean and normalize raw text, before analyzing it
+- Access and filter basic linguistic elements, such as words, ngrams, and noun
+  chunks; extract named entities, acronyms and their definitions, and key terms
+- Flexibly tokenize and vectorize documents and corpora, then train, interpret,
+  and visualize topic models using LSA, LDA, or NMF methods
 - Compare strings, sets, and documents by a variety of similarity metrics
-- Transform documents and corpora into vectorized and semantic network representations
-- Train, interpret, visualize, and save ``sklearn``-style topic models using
-  LSA, LDA, or NMF methods
-- Identify a text's language, display key words in context (KWIC), true-case words,
-  and navigate a parse tree
+- Calculate common text statistics, including Flesch-Kincaid Grade Level,
+  SMOG Index, and multilingual Flesch Reading Ease
 
-... and more!
+... *and more!*
 
 
-Project Links
--------------
+Links
+-----
 
-- `textacy @ PyPi <https://pypi.python.org/pypi/textacy>`_
+- `textacy @ PyPi <https://pypi.org/project/textacy/>`_
 - `textacy @ GitHub <https://github.com/chartbeat-labs/textacy>`_
 - `textacy @ ReadTheDocs <http://textacy.readthedocs.io/en/latest/>`_
 
-**Note:** ReadTheDocs builds are currently failing, so those docs are currently
-out-of-date. As a temporary workaround, I've built v0.5.0's documentation and
-published it via GitHub Pages: https://chartbeat-labs.github.io/textacy.
+**Note:** ReadTheDocs builds have been failing for months, so those docs are
+currently out-of-date. *Very sorry*. As a (temporary?) workaround, docs for the
+latest version (v0.6.0) have been published via GitHub Pages:
 
-
-Installation
-------------
-
-The simple way to install ``textacy`` is via ``pip``:
-
-.. code-block:: console
-
-    $ pip install textacy
-
-or ``conda``:
-
-.. code-block:: console
-
-    $ conda install -c conda-forge textacy
-
-**Note:** If you use ``pip``, some dependencies have been made optional, because
-they can be difficult to install and/or are only needed in certain uses cases.
-To use visualization functions, you'll need ``matplotlib`` installed; you can do
-so via ``pip install textacy[viz]``. For automatic language detection, you'll
-need ``cld2-cffi`` installed; do ``pip install textacy[lang]``. To install all
-optional dependencies:
-
-.. code-block:: console
-
-    $ pip install textacy[all]
-
-Otherwise, you can download and unzip the source ``tar.gz`` from  PyPi_,
-then install manually:
-
-.. code-block:: console
-
-    $ python setup.py install
-
-
-Downloading Data
-~~~~~~~~~~~~~~~~
-
-For most uses of ``textacy``, language-specific model data in ``spacy`` is
-required. Follow the directions `here <https://spacy.io/docs/usage/models>`_
-to download the necessary files. Currently available language models are listed
-`here <https://spacy.io/usage/models#section-available>`_.
-
-``textacy`` features convenient access to several datasets comprised of thousands
-of text + metadata records. Data can be downloaded via the ``.download()`` method
-on corresponding dataset classes, *or* directly from the command line.
-For example:
-
-.. code-block:: console
-
-    $ python -m textacy download capitol_words
-
-will download and save a compressed json file with ~11k speeches given by the
-main protagonists of the 2016 U.S. Presidential election (that had previously
-served in the U.S. Congress). For more details, do
-
-.. code-block:: console
-
-    $ python -m textacy --help
-
-
-Usage Example
--------------
-
-.. code-block:: pycon
-
-    >>> import textacy
-
-Efficiently stream documents from disk and into a processed corpus:
-
-.. code-block:: pycon
-
-    >>> import textacy.datasets
-    >>> cw = textacy.datasets.CapitolWords()
-    >>> cw.download()
-    >>> records = cw.records(speaker_name={'Hillary Clinton', 'Barack Obama'})
-    >>> text_stream, metadata_stream = textacy.io.split_records(records, 'text')
-    >>> corpus = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
-    >>> corpus
-    Corpus(1241 docs; 857058 tokens)
-
-Represent corpus as a document-term matrix, with flexible weighting and filtering:
-
-.. code-block:: pycon
-
-    >>> vectorizer = textacy.Vectorizer(
-    ...     tf_type='linear', apply_idf=True, idf_type='smooth', norm='l2',
-    ...     min_df=2, max_df=0.95)
-    >>> doc_term_matrix = vectorizer.fit_transform(
-    ...     (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
-    ...      for doc in corpus))
-    >>> print(repr(doc_term_matrix))
-    <1241x11708 sparse matrix of type '<class 'numpy.float64'>'
-        with 215182 stored elements in Compressed Sparse Row format>
-
-Train and interpret a topic model:
-
-.. code-block:: pycon
-
-    >>> model = textacy.TopicModel('nmf', n_topics=10)
-    >>> model.fit(doc_term_matrix)
-    >>> doc_topic_matrix = model.transform(doc_term_matrix)
-    >>> doc_topic_matrix.shape
-    (1241, 10)
-    >>> for topic_idx, top_terms in model.top_topic_terms(vectorizer.id_to_term, top_n=10):
-    ...     print('topic', topic_idx, ':', '   '.join(top_terms))
-    topic 0 : new   people   's   american   senate   need   iraq   york   americans   work
-    topic 1 : rescind   quorum   order   consent   unanimous   ask   president   mr.   madam   aside
-    topic 2 : dispense   reading   amendment   unanimous   consent   ask   president   mr.   pending   aside
-    topic 3 : health   care   child   mental   quality   patient   medical   program   information   family
-    topic 4 : student   school   education   college   child   teacher   high   program   loan   year
-    topic 5 : senators   desiring   chamber   vote   4,600   amtrak   rail   airline   litigation   expedited
-    topic 6 : senate   thursday   wednesday   session   unanimous   consent   authorize   p.m.   committee   ask
-    topic 7 : medicare   drug   senior   medicaid   prescription   benefit   plan   cut   cost   fda
-    topic 8 : flu   vaccine   avian   pandemic   roberts   influenza   seasonal   outbreak   health   cdc
-    topic 9 : virginia   west virginia   west   senator   yield   question   thank   objection   inquiry   massachusetts
-
-Basic indexing as well as flexible selection of documents in a corpus:
-
-.. code-block:: pycon
-
-    >>> obama_docs = list(corpus.get(
-    ...     lambda doc: doc.metadata['speaker_name'] == 'Barack Obama'))
-    >>> len(obama_docs)
-    411
-    >>> doc = corpus[-1]
-    >>> doc
-    Doc(2999 tokens; "In the Federalist Papers, we often hear the ref...")
-
-Preprocess plain text, or highlight particular terms in it:
-
-.. code-block:: pycon
-
-    >>> textacy.preprocess_text(doc.text, lowercase=True, no_punct=True)[:70]
-    'in the federalist papers we often hear the reference to the senates ro'
-    >>> textacy.text_utils.keyword_in_context(doc.text, 'America', window_width=35)
-    g on this tiny piece of Senate and  America n history. Some 10 years ago, I ask
-    o do the hard work in New York and  America , who get up every day and do the v
-    say: You know, you never can count  America  out. Whenever the chips are down,
-     what we know will give our fellow  America ns a better shot at the kind of fut
-    aith in this body and in my fellow  America ns. I remain an optimist, that Amer
-    ricans. I remain an optimist, that  America 's best days are still ahead of us.
-
-Extract various elements of interest from parsed documents:
-
-.. code-block:: pycon
-
-    >>> list(textacy.extract.ngrams(
-    ...     doc, 2, filter_stops=True, filter_punct=True, filter_nums=False))[:15]
-    [Federalist Papers,
-     Senate's,
-     's role,
-     violent passions,
-     pernicious resolutions,
-     everlasting credit,
-     common ground,
-     8 years,
-     tiny piece,
-     American history,
-     10 years,
-     years ago,
-     New York,
-     fellow New,
-     New Yorkers]
-    >>> list(textacy.extract.ngrams(
-    ...     doc, 3, filter_stops=True, filter_punct=True, min_freq=2))
-    [fellow New Yorkers,
-     World Trade Center,
-     Senator from New,
-     World Trade Center,
-     Senator from New,
-     lot of fun,
-     fellow New Yorkers,
-     lot of fun]
-    >>> list(textacy.extract.named_entities(
-    ...     doc, drop_determiners=True, exclude_types='numeric'))[:10]
-    [Senate,
-     Senate,
-     American,
-     New York,
-     New Yorkers,
-     Senate,
-     Barbara Mikulski,
-     Senate,
-     Pennsylvania Avenue,
-     Senate]
-    >>> pattern = textacy.constants.POS_REGEX_PATTERNS['en']['NP']
-    >>> pattern
-    <DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN>|<PROPN> <PART>?)+
-    >>> list(textacy.extract.pos_regex_matches(doc, pattern))[:10]
-    [the Federalist Papers,
-     the reference,
-     the Senate's role,
-     the consequences,
-     sudden and violent passions,
-     intemperate and pernicious resolutions,
-     the everlasting credit,
-     wisdom,
-     our Founders,
-     an effort]
-    >>> list(textacy.extract.semistructured_statements(doc, 'I', cue='be'))
-    [(I, was, on the other end of Pennsylvania Avenue),
-     (I, was, , a very new Senator, and my city and my State had been devastated),
-     (I, am, grateful to have had Senator Schumer as my partner and my ally),
-     (I, am, very excited about what can happen in the next 4 years),
-     (I, been, a New Yorker, but I know I always will be one)]
-    >>> import textacy.keyterms
-    >>> textacy.keyterms.textrank(doc, n_keyterms=10)
-    [('day', 0.01608508275877894),
-     ('people', 0.015079868730811194),
-     ('year', 0.012330783590843065),
-     ('way', 0.011732786337383587),
-     ('colleague', 0.010794482493897155),
-     ('new', 0.0104941198408241),
-     ('time', 0.010016582029543003),
-     ('work', 0.0096498231660789),
-     ('lot', 0.008960478625039818),
-     ('great', 0.008552318032915361)]
-
-Compute basic counts and readability statistics for a given text:
-
-.. code-block:: pycon
-
-    >>> ts = textacy.TextStats(doc)
-    >>> ts.n_unique_words
-    1107
-    >>> ts.basic_counts
-    {'n_chars': 11498,
-     'n_long_words': 512,
-     'n_monosyllable_words': 1785,
-     'n_polysyllable_words': 222,
-     'n_sents': 99,
-     'n_syllables': 3525,
-     'n_unique_words': 1107,
-     'n_words': 2516}
-    >>> ts.flesch_kincaid_grade_level
-    10.853709110179697
-    >>> ts.readability_stats
-    {'automated_readability_index': 12.801546064781363,
-     'coleman_liau_index': 9.905629258346586,
-     'flesch_kincaid_grade_level': 10.853709110179697,
-     'flesch_readability_ease': 62.51222198133965,
-     'gulpease_index': 55.10492845786963,
-     'gunning_fog_index': 13.69506833036245,
-     'lix': 45.76390294037353,
-     'smog_index': 11.683781121521076,
-     'wiener_sachtextformel': 5.401029023140788}
-
-Count terms individually, and represent documents as a bag-of-terms with flexible
-weighting and inclusion criteria:
-
-.. code-block:: pycon
-
-    >>> doc.count('America')
-    3
-    >>> bot = doc.to_bag_of_terms(ngrams={2, 3}, as_strings=True)
-    >>> sorted(bot.items(), key=lambda x: x[1], reverse=True)[:10]
-    [('new york', 18),
-     ('senate', 8),
-     ('first', 6),
-     ('state', 4),
-     ('9/11', 3),
-     ('look forward', 3),
-     ('america', 3),
-     ('new yorkers', 3),
-     ('chuck', 3),
-     ('lot of fun', 2)]
-
-**Note:** In almost all cases, ``textacy`` expects to be working with unicode text.
-Docstrings indicate this as ``str``, which is clear and correct for Python 3 but
-not Python 2. In the latter case, users should cast ``str`` bytes to ``unicode``,
-as needed.
+https://chartbeat-labs.github.io/textacy
 
 
 Maintainer
 ----------
 
-- Burton DeWilde (<burton@chartbeat.net>)
+Howdy, y'all. 👋
 
-
-.. _spaCy: https://spacy.io/
-.. _PyPi: https://pypi.python.org/pypi/textacy
+- Burton DeWilde (<burton@chartbeat.com>)

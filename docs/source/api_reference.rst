@@ -1,3 +1,5 @@
+.. _ref-api-reference:
+
 API Reference
 =============
 
@@ -12,6 +14,8 @@ Corpus
 
 .. automodule:: textacy.corpus
     :members:
+
+.. _ref-api-datasets:
 
 Datasets
 --------
