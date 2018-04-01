@@ -83,8 +83,6 @@ specify it yourself when initializing the doc:
 Oftentimes, text data comes paired with metadata, such as a title, author, or
 publication date. ``textacy`` makes it easy to keep these together:
 
-Efficiently stream documents from disk and into a processed corpus:
-
 .. code-block:: pycon
 
     >>> metadata = {
@@ -98,7 +96,7 @@ Efficiently stream documents from disk and into a processed corpus:
 
 For some use cases, a ``textacy.Doc`` can be treated like a convenient wrapper
 around an underlying ``spacy.Doc``; if you need them, the key spaCy objects
-used to process the text are readily accessible as attributes: ``Doc.spacy_doc``,
+associated with the text are readily accessible as attributes: ``Doc.spacy_doc``,
 ``Doc.spacy_vocab``, and ``Doc.spacy_stringstore``. When possible, functions accept
 either a ``textacy.Doc`` or a ``spacy.Doc`` as input. Check the docstrings
 if you're not sure!
@@ -107,7 +105,7 @@ Analyze a Doc
 -------------
 
 There are many ways to understand the content of a ``Doc``. For starters, let's
-extract various elements of interest from parsed documents:
+extract various elements of interest:
 
 .. code-block:: pycon
 
@@ -157,11 +155,11 @@ extract various elements of interest from parsed documents:
      large corpora,
      typical real-world examples]
 
-We can also identify the key terms in a document by various algorithms:
+We can also identify key terms in a document by a number of algorithms:
 
 .. code-block:: pycon
 
-    >>> import textacy.keyterms  # note the import!
+    >>> import textacy.keyterms  # note the import
     >>> textacy.keyterms.textrank(doc, normalize='lemma', n_keyterms=10)
     [('language', 0.06469840439566026),
      ('rule', 0.05652651341294322),
@@ -253,7 +251,7 @@ Let's start with a single text file, where each line is a new text document::
     ...
 
 In this case, the texts are tweets from my sporadic presence on Twitter ---
-a fine example of small, boring data. Now, let's stream it from disk so we
+a fine example of small (and boring) data. Let's stream it from disk so we
 can analyze it in ``textacy``:
 
 .. code-block:: pycon
@@ -307,6 +305,8 @@ by the same spacy language pipeline. Let's continue with the Capitol Words datas
 and make a corpus from text and metadata streams (**Note:** This may take a
 few minutes):
 
+.. code-block:: pycon
+
     >>> corpus = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
     >>> corpus
     Corpus(1241 docs; 857058 tokens)
@@ -322,7 +322,7 @@ processed ``Doc`` s instead of raw texts.
     ...     texts=cw.texts(speaker_party='R', chamber='House', limit=100))
     Corpus(100 docs; 31410 tokens)
 
-You can use basic indexing as well as flexible boolean indexing to select
+You can use basic indexing as well as flexible boolean queries to select
 documents in a corpus:
 
 .. code-block:: pycon
