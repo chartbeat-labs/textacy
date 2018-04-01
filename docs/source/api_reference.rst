@@ -1,3 +1,5 @@
+.. _ref-api-reference:
+
 API Reference
 =============
 
