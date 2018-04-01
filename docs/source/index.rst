@@ -2,17 +2,11 @@
 .. include:: ../../README.rst
 
 .. toctree::
-   :maxdepth: 1
-   :caption: Getting Started
-
-   getting_started/installation
-   getting_started/quickstart
-
-
-.. toctree::
    :maxdepth: 2
    :caption: Contents
 
+   getting_started/installation
+   getting_started/quickstart
    api_reference
    changelog
    license
