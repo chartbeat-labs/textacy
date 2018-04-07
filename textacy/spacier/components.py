@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 
+from spacy.attrs import intify_attrs
 from spacy.tokens import Doc as SpacyDoc
 
 from .. import compat
@@ -97,3 +98,35 @@ class TextStatsComponent(object):
                     attr)
                 raise
         return doc
+
+
+def merge_entities(doc):
+    """
+    Merge named entities into single tokens in ``doc``, *in-place*. Can be used
+    as a stand-alone function, or as part of a spaCy language pipeline::
+
+        >>> spacy_lang = textacy.load_spacy('en')
+        >>> spacy_lang.add_pipe(merge_entities, after='ner')
+
+    Args:
+        doc (``SpacyDoc`)
+
+    Returns:
+        ``SpacyDoc``: Input ``doc`` with merged entities.
+    """
+    ents = [(ent.start_char, ent.end_char, ent.label)
+            for ent in doc.ents]
+    # TODO: depends on outcome of https://github.com/explosion/spaCy/issues/2193
+    # try:  # retokenizer was added to spacy in v2.0.11
+    #     with doc.retokenize() as retokenizer:
+    #         string_store = doc.vocab.strings
+    #         for start, end, _, _, label in ents:
+    #             retokenizer.merge(
+    #                 doc[start: end],
+    #                 attrs=intify_attrs({'ent_type': label}, string_store))
+    # except AttributeError:
+    #     for start, end, tag, dep, label in spans:
+    #         doc.merge(start, end, tag=tag, dep=dep, ent_type=label)
+    for start, end, label in ents:
+        doc.merge(start, end, ent_type=label)
+    return doc
