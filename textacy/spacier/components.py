@@ -23,7 +23,8 @@ class TextStatsComponent(object):
     one, some, or all text stats for a parsed doc and sets the values
     as custom attributes on a :obj:`SpacyDoc`.
 
-    Add the component to a pipeline, *after* the parser::
+    Add the component to a pipeline, *after* the parser (as well as any
+    subsequent components that modify the tokens/sentences of the doc)::
 
         >>> en = spacy.load('en')
         >>> text_stats_component = TextStatsComponent()
@@ -43,7 +44,7 @@ class TextStatsComponent(object):
 
         >>> en = spacy.load('en')
         >>> text_stats_component = TextStatsComponent(attrs='n_words')
-        >>> en.add_pipe(text_stats_component, after='parser')
+        >>> en.add_pipe(text_stats_component, last=True)
         >>> doc = en(u"This is a test test someverylongword.")
         >>> doc._.n_words
         6
@@ -107,6 +108,9 @@ def merge_entities(doc):
 
         >>> spacy_lang = textacy.load_spacy('en')
         >>> spacy_lang.add_pipe(merge_entities, after='ner')
+        >>> doc = spacy_lang('The entity in this sentence is Burton DeWilde.')
+        >>> doc[-2]
+        Burton DeWilde
 
     Args:
         doc (``SpacyDoc`)
@@ -114,19 +118,16 @@ def merge_entities(doc):
     Returns:
         ``SpacyDoc``: Input ``doc`` with merged entities.
     """
-    ents = [(ent.start_char, ent.end_char, ent.label)
-            for ent in doc.ents]
-    # TODO: depends on outcome of https://github.com/explosion/spaCy/issues/2193
-    # try:  # retokenizer was added to spacy in v2.0.11
-    #     with doc.retokenize() as retokenizer:
-    #         string_store = doc.vocab.strings
-    #         for start, end, _, _, label in ents:
-    #             retokenizer.merge(
-    #                 doc[start: end],
-    #                 attrs=intify_attrs({'ent_type': label}, string_store))
-    # except AttributeError:
-    #     for start, end, tag, dep, label in spans:
-    #         doc.merge(start, end, tag=tag, dep=dep, ent_type=label)
-    for start, end, label in ents:
-        doc.merge(start, end, ent_type=label)
+    try:  # retokenizer was added to spacy in v2.0.11
+        with doc.retokenize() as retokenizer:
+            string_store = doc.vocab.strings
+            for ent in doc.ents:
+                retokenizer.merge(
+                    doc[ent.start: ent.end],
+                    attrs=intify_attrs({'ent_type': ent.label}, string_store))
+    except AttributeError:
+        ents = [(ent.start_char, ent.end_char, ent.label)
+                for ent in doc.ents]
+        for start_char, end_char, label in ents:
+            doc.merge(start_char, end_char, ent_type=label)
     return doc
