@@ -1,4 +1,7 @@
 """
+Components
+----------
+
 Custom components to add to a spaCy language pipeline.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
@@ -51,6 +54,11 @@ class TextStatsComponent(object):
             to compute and set on a :obj:`Doc`. If Iterable[str], multiple
             text stats. If None, *all* text stats are computed and set as extensions.
 
+    Attributes:
+        name (str): Default name of this component in a spaCy language pipeline,
+            used to get and modify the component via various ``spacy.Language``
+            methods, e.g. https://spacy.io/api/language#get_pipe.
+
     See Also:
         :class:`textacy.text_stats.TextStats`
     """
@@ -73,11 +81,19 @@ class TextStatsComponent(object):
         else:
             self.attrs = tuple(attrs)
         for attr in self.attrs:
-            SpacyDoc.set_extension(attr, default=None)
+            SpacyDoc.set_extension(attr, default=None, force=True)
             LOGGER.debug('"%s" custom attribute added to `spacy.tokens.Doc`')
 
     def __call__(self, doc):
         ts = text_stats.TextStats(doc)
         for attr in self.attrs:
-            doc._.set(attr, getattr(ts, attr))
+            try:
+                doc._.set(attr, getattr(ts, attr))
+            except AttributeError:
+                LOGGER.exception(
+                    "`TextStats` class doesn't have '%s' attribute, so it can't "
+                    "be set on this `SpacyDoc`. Check the attrs used to initialize "
+                    "the `TextStatsComponent` in this pipeline for errors.",
+                    attr)
+                raise
         return doc
