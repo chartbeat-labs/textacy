@@ -3,7 +3,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 
+from . import utils
+
 LOGGER = logging.getLogger(__name__)
+
+utils.deprecated(
+    "The `spacy_pipelines` module is deprecated and will be removed in v0.7.0."
+    "Use the `textacy.spacier` subpackage instead.",
+    action='once')
 
 
 def _merge_entities(doc):
