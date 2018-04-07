@@ -98,17 +98,17 @@ Visualization
 Utilities
 ---------
 
+.. automodule:: textacy.cache
+    :members:
+
 .. automodule:: textacy.text_utils
     :members:
 
 .. automodule:: textacy.spacy_utils
     :members:
 
-.. automodule:: textacy.math_utils
-    :members:
-
-Other Stuff!
-------------
+Miscellany
+----------
 
 .. automodule:: textacy.network
     :members:
@@ -119,8 +119,11 @@ Other Stuff!
 .. automodule:: textacy.text_stats
     :members:
 
-.. automodule:: textacy.cache
+.. automodule:: textacy.lexicon_methods
     :members:
 
-.. automodule:: textacy.lexicon_methods
+Spacier
+-------
+
+.. automodule:: textacy.spacier.components
     :members:

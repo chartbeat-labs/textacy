@@ -113,7 +113,7 @@ def merge_entities(doc):
         Burton DeWilde
 
     Args:
-        doc (``SpacyDoc`)
+        doc (``SpacyDoc``)
 
     Returns:
         ``SpacyDoc``: Input ``doc`` with merged entities.
