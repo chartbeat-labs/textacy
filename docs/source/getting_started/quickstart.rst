@@ -235,7 +235,7 @@ and term inclusion criteria:
      ('late', 1),
      ('1980', 1)]
 
-Working with *many* texts
+Working with *Many* Texts
 -------------------------
 
 Many NLP tasks require datasets comprised of a large number of texts, which
