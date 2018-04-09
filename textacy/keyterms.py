@@ -370,21 +370,20 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
     bool_array_grp2 = np.invert(bool_array_grp1)
 
     vectorizer = vsm.Vectorizer(
-        weighting='tf', normalize=False,
-        sublinear_tf=False, smooth_idf=True,
-        min_df=3, max_df=0.95, min_ic=0.0, max_n_terms=max_n_terms)
+        tf_type='linear', norm=None, idf_type='smooth',
+        min_df=3, max_df=0.95, max_n_terms=max_n_terms)
     dtm = vectorizer.fit_transform(terms_lists)
     id2term = vectorizer.id_to_term
 
     # get doc freqs for all terms in grp1 documents
     dtm_grp1 = dtm[bool_array_grp1, :]
     n_docs_grp1 = dtm_grp1.shape[0]
-    doc_freqs_grp1 = vsm.get_doc_freqs(dtm_grp1, normalized=False)
+    doc_freqs_grp1 = vsm.get_doc_freqs(dtm_grp1)
 
     # get doc freqs for all terms in grp2 documents
     dtm_grp2 = dtm[bool_array_grp2, :]
     n_docs_grp2 = dtm_grp2.shape[0]
-    doc_freqs_grp2 = vsm.get_doc_freqs(dtm_grp2, normalized=False)
+    doc_freqs_grp2 = vsm.get_doc_freqs(dtm_grp2)
 
     # get terms that occur in a larger fraction of grp1 docs than grp2 docs
     term_ids_grp1 = np.where(doc_freqs_grp1 / n_docs_grp1 > doc_freqs_grp2 / n_docs_grp2)[0]
