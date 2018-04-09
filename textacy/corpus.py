@@ -288,13 +288,17 @@ class Corpus(object):
         spacy_docs = self.spacy_lang.pipe(
             texts, n_threads=n_threads, batch_size=batch_size)
         if metadatas:
-            for spacy_doc, metadata in compat.zip_(spacy_docs, metadatas):
+            for i, (spacy_doc, metadata) in enumerate(compat.zip_(spacy_docs, metadatas)):
                 self._add_textacy_doc(
                     Doc(spacy_doc, lang=self.spacy_lang, metadata=metadata))
+                if i % batch_size == 0:
+                    LOGGER.info('adding texts to %s...', self)
         else:
-            for spacy_doc in spacy_docs:
+            for i, spacy_doc in enumerate(spacy_docs):
                 self._add_textacy_doc(
                     Doc(spacy_doc, lang=self.spacy_lang, metadata=None))
+                if i % batch_size == 0:
+                    LOGGER.info('adding texts to %s...', self)
 
     def add_text(self, text, metadata=None):
         """
