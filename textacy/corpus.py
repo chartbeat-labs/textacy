@@ -257,6 +257,7 @@ class Corpus(object):
         if (self.spacy_lang.has_pipe('parser') or
                 any(isinstance(pipe[1], DependencyParser) for pipe in self.spacy_lang.pipeline)):
             self.n_sents += doc.n_sents
+        LOGGER.debug('added %s to Corpus[%s]', doc, doc.corpus_index)
 
     def add_texts(self, texts, metadatas=None,
                   n_threads=_DEFAULT_N_THREADS, batch_size=1000):
