@@ -1,6 +1,48 @@
 Changelog
 =========
 
+0.6.1 (2018-04-12)
+------------------
+
+Changes:
+
+- **Add a new ``spacier`` sub-package for spaCy-oriented functionality** (#168, #187)
+
+  - Thus far, this includes a ``components`` module with two custom spaCy
+    pipeline components: one to compute text stats on parsed documents, and
+    another to merge named entities into single tokens in an efficient manner.
+    More to come!
+  - Similar functionality in the top-level ``spacy_pipelines`` module has been
+    deprecated; it will be removed in v0.7.0.
+
+- Update the readme, usage, and API reference docs to be clearer and (I hope)
+  more useful. (#186)
+- Removing punctuation from a text via the ``preprocessing`` module now replaces
+  punctuation marks with a single space rather than an empty string. This gives
+  better behavior in many situations; for example, "won't" => "won t" rather than
+  "wont", the latter of which is a valid word with a different meaning.
+- Categories are now correctly extracted from non-English language Wikipedia
+  datasets, starting with French and German and extendable to others. (#175)
+- Log progress when adding documents to a corpus. At the debug level, every
+  doc's addition is logged; at the info level, only one message per batch
+  of documents is logged. (#183)
+
+Bugfixes:
+
+- Fix two breaking typos in ``extract.direct_quotations()``. (issue #177)
+- Prevent crashes when adding non-parsed documents to a ``Corpus``. (#180)
+- Fix bugs in ``keyterms.most_discriminating_terms()`` that used ``vsm``
+  functionality as it was *before* the changes in v0.6.0. (#189)
+- Fix a breaking typo in ``vsm.matrix_utils.apply_idf_weighting()``, and rename
+  the problematic kwarg for consistency with related functions. (#190)
+
+Contributors:
+
+Big thanks to @sammous, @dixiekong (nice name!), and @SandyRogers for the pull
+requests, and many more for pointing out various bugs and the rougher edges /
+unsupported use cases of this package.
+
+
 0.6.0 (2018-02-25)
 ------------------
 
