@@ -251,6 +251,13 @@ def test_get_information_content(vectorizer_and_dtm, lamb_and_child_idxs):
     assert ics[idx_child] == pytest.approx(0.81127, rel=1e-3)
 
 
+def test_apply_idf_weighting(vectorizer_and_dtm):
+    _, doc_term_matrix = vectorizer_and_dtm
+    for type_ in ('standard', 'smooth', 'bm25'):
+        reweighted_matrix = vsm.apply_idf_weighting(doc_term_matrix, type_=type_)
+        assert reweighted_matrix.shape == doc_term_matrix.shape
+
+
 def test_filter_terms_by_df_identity(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
     dtm, vocab = vsm.filter_terms_by_df(

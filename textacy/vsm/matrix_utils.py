@@ -75,7 +75,7 @@ def get_doc_freqs(doc_term_matrix):
 def get_inverse_doc_freqs(doc_term_matrix, type_='smooth'):
     """
     Compute inverse document frequencies for all terms in a document-term matrix,
-    optionally smoothing the values, where idf = log(n_docs / dfs) + 1.0 .
+    using one of several IDF formulations.
 
     Args:
         doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M x N sparse matrix,
@@ -175,22 +175,24 @@ def get_information_content(doc_term_matrix):
     return ics
 
 
-def apply_idf_weighting(doc_term_matrix, idf_type='smooth'):
+def apply_idf_weighting(doc_term_matrix, type_='smooth'):
     """
     Apply inverse document frequency (idf) weighting to a term-frequency (tf)
-    weighted document-term matrix, optionally smoothing idf values.
+    weighted document-term matrix, using one of several IDF formulations.
 
     Args:
         doc_term_matrix (:class:`scipy.sparse.csr_matrix`): M x N sparse matrix,
             where M is the # of docs and N is the # of unique terms.
-        smooth_idf (bool): if True, add 1 to all document frequencies, equivalent
-            to adding a single document to the corpus containing every unique term
+        type_ ({'standard', 'smooth', 'bm25'}): Type of IDF formulation to use.
 
     Returns:
-        :class:`scipy.sparse.csr_matrix`: Sparse matrix of shape (# docs, # unique terms),
-        where value (i, j) is the tfidf weight of term j in doc i
+        :class:`scipy.sparse.csr_matrix`: Sparse matrix of shape M x N,
+        where value (i, j) is the tfidf weight of term j in doc i.
+
+    See Also:
+        :func:`get_inverse_doc_freqs()`
     """
-    idfs = get_inverse_doc_freqs(doc_term_matrix, idf_type=idf_type)
+    idfs = get_inverse_doc_freqs(doc_term_matrix, type_=type_)
     return doc_term_matrix.dot(sp.diags(idfs, 0))
 
 
