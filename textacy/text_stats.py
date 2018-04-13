@@ -244,7 +244,7 @@ def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
         '`flesch_readability_ease()` is an alias for `flesch_reading_ease()` '
         'for backwards compatibility; it will be removed in a future version.',
         action='once')
-    flesch_reading_ease(n_syllables, n_words, n_sents, lang=lang)
+    return flesch_reading_ease(n_syllables, n_words, n_sents, lang=lang)
 
 
 def smog_index(n_polysyllable_words, n_sents):
