@@ -46,15 +46,15 @@ Features
 Links
 -----
 
-- `textacy @ PyPi <https://pypi.org/project/textacy/>`_
-- `textacy @ GitHub <https://github.com/chartbeat-labs/textacy>`_
-- `textacy @ ReadTheDocs <http://textacy.readthedocs.io/en/latest/>`_
+- PyPi project: https://pypi.org/project/textacy
+- Source code: https://github.com/chartbeat-labs/textacy
+- Documentation: https://chartbeat-labs.github.io/textacy
 
-**Note:** ReadTheDocs builds have been failing for months, so those docs are
-currently out-of-date. *Very sorry*. As a (temporary?) workaround, docs for the
-latest version (v0.6.0) have been published via GitHub Pages:
-
-https://chartbeat-labs.github.io/textacy
+**Note:** Docs used to be hosted on ReadTheDocs, but the builds stopped working
+many months ago, and now those docs are out-of-date. This is unfortunate, especially
+since ReadTheDocs allows for multiple versions while GitHub Pages does not.
+I'll keep trying on ReadTheDocs; if the build issues ever get resolved, I'll
+switch the docs back.
 
 
 Maintainer
