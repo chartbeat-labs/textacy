@@ -25,9 +25,9 @@ install:
 script:
   - set -e
   - if [[ $BUILD_DOCS = true ]]; then
-      cd docs
-      make html
-      cd ..
-      doctr deploy . --built-docs docs/build/html/
+      cd docs;
+      make html;
+      cd ..;
+      doctr deploy . --built-docs docs/build/html/;
     fi
   - "python -m pytest -v"
