@@ -1,1 +1,1 @@
-from .components import TextStatsComponent
+from .components import TextStatsComponent, merge_entities

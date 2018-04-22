@@ -127,3 +127,6 @@ Spacier
 
 .. automodule:: textacy.spacier.components
     :members:
+
+.. automodule:: textacy.spacier.utils
+    :members:
