@@ -2,12 +2,14 @@
 spaCy Utils
 -----------
 
-WIP
+Helper functions for working with / extending spaCy's core functionality.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import numpy as np
 from spacy import attrs
 from spacy.language import Language as SpacyLang
+from spacy.tokens.doc import Doc as SpacyDoc
 
 from .. import cache
 from .. import compat
@@ -63,7 +65,7 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
         i += chunk_size
     # now, initialize the doc from words and spaces
     # then load attribute values from the concatenated np array
-    doc = spacy.tokens.Doc(spacy_lang.vocab, words=words, spaces=spaces)
+    doc = SpacyDoc(spacy_lang.vocab, words=words, spaces=spaces)
     doc = doc.from_array(cols, np.concatenate(np_arrays, axis=0))
 
     return doc
