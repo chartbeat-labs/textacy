@@ -11,6 +11,7 @@ import logging
 from spacy.attrs import intify_attrs
 from spacy.tokens import Doc as SpacyDoc
 
+from . import utils as spacier_utils
 from .. import compat
 from .. import text_stats
 
@@ -108,26 +109,15 @@ def merge_entities(doc):
 
         >>> spacy_lang = textacy.load_spacy('en')
         >>> spacy_lang.add_pipe(merge_entities, after='ner')
-        >>> doc = spacy_lang('The entity in this sentence is Burton DeWilde.')
-        >>> doc[-2]
+        >>> doc = spacy_lang('Burton DeWilde is an entity in this sentence.')
+        >>> doc[0]
         Burton DeWilde
 
     Args:
         doc (``SpacyDoc``)
 
     Returns:
-        ``SpacyDoc``: Input ``doc`` with merged entities.
+        ``SpacyDoc``: Input ``doc`` with entities merged.
     """
-    try:  # retokenizer was added to spacy in v2.0.11
-        with doc.retokenize() as retokenizer:
-            string_store = doc.vocab.strings
-            for ent in doc.ents:
-                retokenizer.merge(
-                    doc[ent.start: ent.end],
-                    attrs=intify_attrs({'ent_type': ent.label}, string_store))
-    except AttributeError:
-        ents = [(ent.start_char, ent.end_char, ent.label)
-                for ent in doc.ents]
-        for start_char, end_char, label in ents:
-            doc.merge(start_char, end_char, ent_type=label)
+    spacier_utils.merge_spans(doc.ents, doc)
     return doc

@@ -54,13 +54,14 @@ def test_attrs_on_doc(spacy_lang, spacy_doc):
 
 
 def test_merge_entities(spacy_lang):
-    doc1 = spacy_lang('Matthew Honnibal and Ines Montani do great work spaCy.')
+    doc1 = spacy_lang('Matthew Honnibal and Ines Montani do great work on spaCy.')
     # (temporarily) add this other component to the pipeline
     spacy_lang.add_pipe(spacier.components.merge_entities, after='ner')
-    doc2 = spacy_lang('Matthew Honnibal and Ines Montani do great work spaCy.')
+    doc2 = spacy_lang('Matthew Honnibal and Ines Montani do great work on spaCy.')
     # check the key behaviors we'd expect
     assert spacy_lang.has_pipe('merge_entities') is True
     assert len(doc1) > len(doc2)
     assert any(tok.text == 'Matthew Honnibal' for tok in doc2)
+    assert any(tok.text == 'Ines Montani' for tok in doc2)
     # now remove this component, since we don't want it elsewhere
     spacy_lang.remove_pipe('merge_entities')
