@@ -5,7 +5,7 @@ import os
 import pytest
 
 from textacy import cache
-from textacy import spacier
+from textacy.spacier import components
 
 TEXT = (
     'The year was 2081, and everybody was finally equal. '
@@ -16,7 +16,7 @@ TEXT = (
 @pytest.fixture(scope='module')
 def spacy_lang():
     spacy_lang = cache.load_spacy('en')
-    text_stats_component = spacier.components.TextStatsComponent()
+    text_stats_component = components.TextStatsComponent()
     spacy_lang.add_pipe(text_stats_component, after='parser')
 
     yield spacy_lang
@@ -42,7 +42,7 @@ def test_component_attrs():
         ['flesch_kincaid_grade_level', 'flesch_reading_ease'],
     ]
     for attrs in attrs_args:
-        text_stats_component = spacier.components.TextStatsComponent(attrs=attrs)
+        text_stats_component = components.TextStatsComponent(attrs=attrs)
         assert isinstance(text_stats_component.attrs, tuple) is True
 
 
@@ -56,7 +56,7 @@ def test_attrs_on_doc(spacy_lang, spacy_doc):
 def test_merge_entities(spacy_lang):
     doc1 = spacy_lang('Matthew Honnibal and Ines Montani do great work on spaCy.')
     # (temporarily) add this other component to the pipeline
-    spacy_lang.add_pipe(spacier.components.merge_entities, after='ner')
+    spacy_lang.add_pipe(components.merge_entities, after='ner')
     doc2 = spacy_lang('Matthew Honnibal and Ines Montani do great work on spaCy.')
     # check the key behaviors we'd expect
     assert spacy_lang.has_pipe('merge_entities') is True
