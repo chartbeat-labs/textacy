@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
 Functions to extract various elements of interest from documents already parsed
-by `spaCy <http://spacy.io/>`_, such as n-grams, named entities, subject-verb-object
-triples, and acronyms.
+by spaCy, such as n-grams, named entities, subject-verb-object triples, and
+acronyms.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -39,20 +39,20 @@ def words(doc,
             IS NOT included in this param
         exclude_pos (str or Set[str]): remove words whose part-of-speech tag
             IS in the specified tags
-        min_freq (int): remove words that occur in `doc` fewer than
-            `min_freq` times
+        min_freq (int): remove words that occur in ``doc`` fewer than
+            ``min_freq`` times
 
     Yields:
         ``spacy.Token``: the next token from ``doc`` passing specified filters
         in order of appearance in the document
 
     Raises:
-        TypeError: if `include_pos` or `exclude_pos` is not a str, a set of str,
+        TypeError: if ``include_pos`` or ``exclude_pos`` is not a str, a set of str,
             or a falsy value
 
     Note:
-        Filtering by part-of-speech tag uses the universal POS tag set,
-        http://universaldependencies.org/u/pos/.
+        Filtering by part-of-speech tag uses the universal POS tag set; for details,
+        check spaCy's docs: https://spacy.io/api/annotation#pos-tagging
     """
     words_ = (w for w in doc if not w.is_space)
     if filter_stops is True:
@@ -121,7 +121,7 @@ def ngrams(doc, n,
 
     Raises:
         ValueError: if ``n`` < 1
-        TypeError: if `include_pos` or `exclude_pos` is not a str, a set of str,
+        TypeError: if ``include_pos`` or ``exclude_pos`` is not a str, a set of str,
             or a falsy value
 
     Note:
@@ -204,15 +204,15 @@ def named_entities(doc,
                big deal, but watch out if you're counting on determiner-less
                entities associated with the doc downstream.
 
-        min_freq (int): remove named entities that occur in `doc` fewer
-            than `min_freq` times
+        min_freq (int): remove named entities that occur in ``doc`` fewer
+            than ``min_freq`` times
 
     Yields:
         ``spacy.Span``: the next named entity from ``doc`` passing all specified
         filters in order of appearance in the document
 
     Raises:
-        TypeError: if `include_types` or `exclude_types` is not a str, a set of
+        TypeError: if ``include_types`` or ``exclude_types`` is not a str, a set of
             str, or a falsy value
     """
     if hasattr(doc, 'spacy_doc'):
@@ -268,8 +268,8 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
         doc (``textacy.Doc`` or ``spacy.Doc``)
         drop_determiners (bool): remove leading determiners (e.g. "the")
             from phrases (e.g. "the quick brown fox" => "quick brown fox")
-        min_freq (int): remove chunks that occur in `doc` fewer than
-            `min_freq` times
+        min_freq (int): remove chunks that occur in ``doc`` fewer than
+            ``min_freq`` times
 
     Yields:
         ``spacy.Span``: the next noun chunk from ``doc`` in order of appearance
@@ -630,7 +630,7 @@ def semistructured_statements(doc, entity, cue='be', ignore_entity_case=True,
         doc (``textacy.Doc`` or ``spacy.Doc``)
         entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
             "global warming", "Python")
-        cue (str): verb lemma with which `entity` is associated
+        cue (str): verb lemma with which ``entity`` is associated
             (e.g. "talk about", "have", "write")
         ignore_entity_case (bool): if True, entity matching is case-independent
         min_n_words (int): min number of tokens allowed in a matching fragment
