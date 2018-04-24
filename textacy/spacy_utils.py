@@ -15,8 +15,14 @@ from spacy.tokens.span import Span as SpacySpan
 
 from . import constants
 from . import text_utils
+from . import utils
 
 LOGGER = logging.getLogger(__name__)
+
+utils.deprecated(
+    "The `spacy_utils` module is deprecated and will be removed in v0.7.0."
+    "Use the `textacy.spacier` subpackage instead.",
+    action="once")
 
 
 def is_plural_noun(token):
