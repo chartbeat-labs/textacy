@@ -36,7 +36,7 @@ def terms_to_semantic_network(terms,
         normalize (str or Callable): If 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if false-y, use the form of terms as they appear
             in ``terms``; if a callable, must accept a ``spacy.Token`` and return
-            a str, e.g. :func:`textacy.spacy_utils.normalized_str()`.
+            a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
 
             .. note:: This is applied to the elements of ``terms`` *only* if
                it's a list of ``spacy.Token``.
@@ -61,7 +61,7 @@ def terms_to_semantic_network(terms,
           into single strings or spacy.Tokens beforehand
         - If terms are already strings, be sure to have normalized them so that
           like terms are counted together; for example, by applying
-          :func:`normalized_str() <textacy.spacy_utils.normalized_str>`
+          :func:`textacy.spacier.utils.get_normalized_text()`
     """
     if window_width < 2:
         raise ValueError(
@@ -131,7 +131,7 @@ def sents_to_semantic_network(sents,
         normalize (str or Callable): If 'lemma', lemmatize words in sents;
             if 'lower', lowercase word in sents; if false-y, use the form of words
             as they appear in sents; if a callable, must accept a ``spacy.Token``
-            and return a str, e.g. :func:`textacy.spacy_utils.normalized_str()`.
+            and return a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
 
             .. note:: This is applied to the elements of ``sents`` *only* if
                it's a list of ``spacy.Span``.
@@ -151,7 +151,7 @@ def sents_to_semantic_network(sents,
         - If passing sentences as strings, be sure to filter out stopwords, punctuation,
           certain parts of speech, etc. beforehand
         - Consider normalizing the strings so that like terms are counted together
-          (see :func:`normalized_str() <textacy.spacy_utils.normalized_str>`)
+          (see :func:`textacy.spacier.utils.get_normalized_text()`)
     """
     if isinstance(sents[0], compat.unicode_):
         pass

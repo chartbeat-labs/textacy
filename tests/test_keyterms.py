@@ -8,7 +8,8 @@ from __future__ import absolute_import, unicode_literals
 
 import pytest
 
-from textacy import cache, keyterms, preprocess_text, spacy_utils
+from textacy import cache, keyterms, preprocess_text
+from textacy.spacier import utils as spacy_utils
 
 
 @pytest.fixture(scope='module')
@@ -111,7 +112,7 @@ def test_sgrank_norm_normalized_str(spacy_doc):
         'President George H. W. Bush', 'George Polk Award']
     observed = [
         term for term, _
-        in keyterms.sgrank(spacy_doc, normalize=spacy_utils.normalized_str, n_keyterms=5)]
+        in keyterms.sgrank(spacy_doc, normalize=spacy_utils.get_normalized_text, n_keyterms=5)]
     assert len(expected) == len(observed)
     # can't do this owing to randomness of results
     # for e, o in zip(expected, observed):
@@ -181,7 +182,7 @@ def test_textrank_norm_normalized_str(spacy_doc):
     expected = ['Friedman', 'Beirut', 'New', 'Award', 'foreign']
     observed = [
         term for term, _
-        in keyterms.textrank(spacy_doc, normalize=spacy_utils.normalized_str, n_keyterms=5)]
+        in keyterms.textrank(spacy_doc, normalize=spacy_utils.get_normalized_text, n_keyterms=5)]
     assert len(expected) == len(observed)
     # can't do this owing to randomness of results
     # for e, o in zip(expected, observed):
@@ -246,7 +247,7 @@ def test_singlegrank_norm_normalized_str(spacy_doc):
         'Pulitzer Prize', 'foreign reporting']
     observed = [
         term for term, _
-        in keyterms.singlerank(spacy_doc, normalize=spacy_utils.normalized_str, n_keyterms=5)]
+        in keyterms.singlerank(spacy_doc, normalize=spacy_utils.get_normalized_text, n_keyterms=5)]
     assert len(expected) == len(observed)
     # can't do this owing to randomness of results
     # for e, o in zip(expected, observed):
@@ -259,7 +260,7 @@ def test_most_discriminating_terms(spacy_doc):
     In February 2002, Friedman met Saudi Crown Prince Abdullah and encouraged him to make a comprehensive attempt to end the Arab-Israeli conflict by normalizing Arab relations with Israel in exchange for the return of refugees alongside an end to the Israel territorial occupations. Abdullah proposed the Arab Peace Initiative at the Beirut Summit that March, which Friedman has since strongly supported.
     Friedman received the 2004 Overseas Press Club Award for lifetime achievement and was named to the Order of the British Empire by Queen Elizabeth II.
     In May 2011, The New York Times reported that President Barack Obama "has sounded out" Friedman concerning Middle East issues."""
-    
+
     text2 = """In 1954, Bucksbaum and his brother Martin borrowed $1.2 million and built the first shopping center in Cedar Rapids, Iowa, anchored by a fourth family grocery store.
     They expanded into enclosed malls which mirrored the continued movement to the suburbs seen in the 1960s.
     By 1964, their company - then named General Management - owned five malls anchored by the Younkers department store.
@@ -276,6 +277,6 @@ def test_most_discriminating_terms(spacy_doc):
 
     expected = (['Friedman', 'Times'], ['General', 'malls'])
     observed = keyterms.most_discriminating_terms(doc1 + doc2, [True] * len(doc1) + [False] * len(doc2), top_n_terms=2)
-    
+
     print(observed)
     assert expected == observed

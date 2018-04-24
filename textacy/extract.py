@@ -18,8 +18,8 @@ from spacy.tokens.span import Span as SpacySpan
 
 from . import compat
 from . import constants
-from . import spacy_utils
 from . import text_utils
+from .spacier import utils as spacy_utils
 
 
 def words(doc,

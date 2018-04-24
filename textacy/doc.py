@@ -22,8 +22,8 @@ from . import constants
 from . import extract
 from . import io
 from . import network
-from . import spacy_utils
 from . import text_utils
+from .spacier import utils as spacy_utils
 
 
 class Doc(object):
@@ -390,7 +390,7 @@ class Doc(object):
             normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
                 lowercase terms; if false-y, use the form of terms as they appear
                 in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
-                and return a str, e.g. :func:`textacy.spacy_utils.normalized_str()`
+                and return a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`
             as_strings (bool): if True, terms are returned as strings; if False
                 (default), terms are returned as their unique integer ids
             kwargs:
@@ -591,7 +591,7 @@ class Doc(object):
             normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
                 lowercase terms; if false-y, use the form of terms as they appear
                 in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
-                and return a str, e.g. :func:`textacy.spacy_utils.normalized_str()`
+                and return a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`
             weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
                 terms. If 'count' (default), weights are the absolute number of
                 occurrences (count) of term in doc. If 'binary', all counts are
@@ -649,7 +649,7 @@ class Doc(object):
                 lowercase terms; if false-y, use the form of terms as they appear
                 in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
                 (if ``nodes`` = 'words' or 'sents', respectively) and return a
-                str, e.g. :func:`textacy.spacy_utils.normalized_str()`
+                str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`
             edge_weighting (str): type of weighting to apply to edges
                 between nodes; if ``nodes == 'words'``, options are {'cooc_freq', 'binary'},
                 if ``nodes == 'sents'``, options are {'cosine', 'jaccard'}; if
