@@ -125,8 +125,8 @@ def ngrams(doc, n,
             or a falsy value
 
     Note:
-        Filtering by part-of-speech tag uses the universal POS tag set,
-        http://universaldependencies.org/u/pos/.
+        Filtering by part-of-speech tag uses the universal POS tag set; for details,
+        check spaCy's docs: https://spacy.io/api/annotation#pos-tagging
     """
     if n < 1:
         raise ValueError('n must be greater than or equal to 1')
