@@ -568,6 +568,9 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
     alpha = float(alpha)
 
     nodes_list = list(dict(graph.nodes()))
+    if len(nodes_list) == 0:
+        LOGGER.warning('``graph`` is empty!')
+        return {}
 
     # ranks: array of PageRank values, summing up to 1
     ranks = nx.pagerank_scipy(graph, alpha=0.85, max_iter=100, tol=1e-08, weight='weight')
