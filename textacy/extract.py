@@ -215,36 +215,22 @@ def named_entities(doc,
         TypeError: if ``include_types`` or ``exclude_types`` is not a str, a set of
             str, or a falsy value
     """
-    if hasattr(doc, 'spacy_doc'):
+    if hasattr(doc, "spacy_doc"):
         nes = doc.spacy_doc.ents
     else:
         nes = doc.ents
+    include_types = _parse_ne_types(include_types, "include")
+    exclude_types = _parse_ne_types(exclude_types, "exclude")
     if include_types:
         if isinstance(include_types, compat.unicode_):
-            include_types = include_types.upper()
-            if include_types == 'NUMERIC':
-                include_types = constants.NUMERIC_NE_TYPES  # we now go to next if block
-            else:
-                nes = (ne for ne in nes if ne.label_ == include_types)
-        if isinstance(include_types, (set, frozenset, list, tuple)):
-            include_types = {type_.upper() for type_ in include_types}
+            nes = (ne for ne in nes if ne.label_ == include_types)
+        elif isinstance(include_types, (set, frozenset, list, tuple)):
             nes = (ne for ne in nes if ne.label_ in include_types)
-        else:
-            msg = 'invalid `include_types` type: "{}"'.format(type(include_types))
-            raise TypeError(msg)
     if exclude_types:
         if isinstance(exclude_types, compat.unicode_):
-            exclude_types = exclude_types.upper()
-            if exclude_types == 'NUMERIC':
-                exclude_types = constants.NUMERIC_NE_TYPES  # we now go to next if block
-            else:
-                nes = (ne for ne in nes if ne.label_ != exclude_types)
-        if isinstance(exclude_types, (set, frozenset, list, tuple)):
-            exclude_types = {type_.upper() for type_ in exclude_types}
+            nes = (ne for ne in nes if ne.label_ != exclude_types)
+        elif isinstance(exclude_types, (set, frozenset, list, tuple)):
             nes = (ne for ne in nes if ne.label_ not in exclude_types)
-        else:
-            msg = 'invalid `exclude_types` type: "{}"'.format(type(exclude_types))
-            raise TypeError(msg)
     if drop_determiners is True:
         nes = (
             ne if ne[0].pos != DET else SpacySpan(ne.doc, ne.start + 1, ne.end, label=ne.label, vector=ne.vector)
@@ -252,11 +238,35 @@ def named_entities(doc,
     if min_freq > 1:
         nes = list(nes)
         freqs = itertoolz.frequencies(ne.lower_ for ne in nes)
-        nes = (ne for ne in nes
-               if freqs[ne.lower_] >= min_freq)
+        nes = (ne for ne in nes if freqs[ne.lower_] >= min_freq)
 
     for ne in nes:
         yield ne
+
+
+def _parse_ne_types(ne_types, which):
+    if not ne_types:
+        return None
+    elif isinstance(ne_types, compat.unicode_):
+        ne_types = ne_types.upper()
+        # replace the shorthand numeric case by its corresponding constant
+        if ne_types == "NUMERIC":
+            return constants.NUMERIC_NE_TYPES
+        else:
+            return ne_types
+    elif isinstance(ne_types, (set, frozenset, list, tuple)):
+        ne_types = {ne_type.upper() for ne_type in ne_types}
+        # again, replace the shorthand numeric case by its corresponding constant
+        # and include it in the set in case other types are specified
+        if any(ne_type == "NUMERIC" for ne_type in ne_types):
+            return ne_types.union(constants.NUMERIC_NE_TYPES)
+        else:
+            return ne_types
+    else:
+        allowed_types = (None, compat.unicode_, set, frozenset, list, tuple)
+        raise TypeError(
+            "{}_types = {} is {}, which is not one of the allowed types: {}".format(
+                which, ne_types, type(ne_types), allowed_types))
 
 
 def noun_chunks(doc, drop_determiners=True, min_freq=1):

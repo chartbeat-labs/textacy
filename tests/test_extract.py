@@ -107,13 +107,44 @@ def test_named_entities(spacy_doc):
     assert all(ent[0].ent_type for ent in result)
 
 
-def test_named_entities_good(spacy_doc):
-    include_types = {'PERSON', 'GPE'}
-    result = [
-        ent for ent in extract.named_entities(spacy_doc,
-                                              include_types=include_types,
-                                              drop_determiners=False)]
-    assert all(ent.label_ in include_types for ent in result)
+def test_named_entities_include_types(spacy_doc):
+    ne_types = ["PERSON", "GPE"]
+    for include_types in ne_types:
+        ents = extract.named_entities(spacy_doc, include_types=include_types)
+        assert all(ent.label_ == include_types for ent in ents)
+    ne_types = [{"PERSON", "GPE"}, ("DATE", "ORG"), ["LOC"]]
+    for include_types in ne_types:
+        ents = extract.named_entities(spacy_doc, include_types=include_types)
+        assert all(ent.label_ in include_types for ent in ents)
+    # special numeric cases!
+    ne_types = ["NUMERIC", ("NUMERIC",), {"PERSON", "NUMERIC"}]
+    for include_types in ne_types:
+        include_types_parsed = extract._parse_ne_types(include_types, "include")
+        ents = extract.named_entities(spacy_doc, include_types=include_types)
+        assert all(ent.label_ in include_types_parsed for ent in ents)
+
+
+def test_named_entities_exclude_types(spacy_doc):
+    ne_types = ["PERSON", "GPE"]
+    for exclude_types in ne_types:
+        ents = extract.named_entities(spacy_doc, exclude_types=exclude_types)
+        assert all(ent.label_ != exclude_types for ent in ents)
+    ne_types = [{"PERSON", "GPE"}, ("DATE", "ORG"), ["LOC"]]
+    for exclude_types in ne_types:
+        ents = extract.named_entities(spacy_doc, exclude_types=exclude_types)
+        assert all(ent.label_ not in exclude_types for ent in ents)
+    # special numeric cases!
+    ne_types = ["NUMERIC", ("NUMERIC",), {"PERSON", "NUMERIC"}]
+    for exclude_types in ne_types:
+        exclude_types_parsed = extract._parse_ne_types(exclude_types, "exclude")
+        ents = extract.named_entities(spacy_doc, exclude_types=exclude_types)
+        assert all(ent.label_ not in exclude_types_parsed for ent in ents)
+
+
+def test_parse_ne_types_bad_type():
+    for bad_type in [1, 3.1415, True]:
+        with pytest.raises(TypeError):
+            _ = extract._parse_ne_types(bad_type, "foo")
 
 
 def test_named_entities_min_freq(spacy_doc):
