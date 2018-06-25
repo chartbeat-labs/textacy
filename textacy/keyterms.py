@@ -567,7 +567,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
     """
     alpha = float(alpha)
 
-    nodes_list = list(dict(graph.nodes()))
+    nodes_list = [node for node in graph]
     if len(nodes_list) == 0:
         LOGGER.warning('``graph`` is empty!')
         return {}
@@ -575,8 +575,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
     # ranks: array of PageRank values, summing up to 1
     ranks = nx.pagerank_scipy(graph, alpha=0.85, max_iter=100, tol=1e-08, weight='weight')
     sorted_ranks = sorted(ranks.items(), key=operator.itemgetter(1), reverse=True)
-
-    avg_degree = sum(deg for _, deg in graph.degree()) / len(nodes_list)
+    avg_degree = sum(dict(graph.degree()).values()) / len(nodes_list)
     # relaxation parameter, k' in the paper
     k_prime = int(k * avg_degree * c)
 
@@ -675,9 +674,13 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
         LOGGER.warning('``graph`` is empty!')
         return {}
 
+    # specify the order of nodes to use in creating the matrix
+    # and then later recovering the values from the order index
+    nodes_list = [node for node in graph]
+
     # create adjacency matrix, i.e.
     # n x n matrix where entry W_ij is the weight of the edge from V_i to V_j
-    W = nx.to_numpy_matrix(graph, weight='weight').A
+    W = nx.to_numpy_matrix(graph, nodelist=nodes_list, weight='weight').A
     n = W.shape[1]
 
     # create flat prior personalization vector if none given
@@ -717,7 +720,6 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
                      key=operator.itemgetter(1), reverse=True)
 
     # replace node number by node value
-    nodes_list = list(dict(graph.nodes()))
     divranks = {nodes_list[result[0]]: result[1] for result in results}
 
     return divranks

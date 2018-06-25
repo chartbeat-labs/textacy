@@ -253,6 +253,15 @@ def test_singlegrank_norm_normalized_str(spacy_doc):
     # for e, o in zip(expected, observed):
     #     asert e == o
 
+
+def test_key_terms_from_semantic_network(spacy_doc):
+    # let's just make sure that these run without exception
+    _ = keyterms.key_terms_from_semantic_network(
+        spacy_doc, ranking_algo='divrank')
+    _ = keyterms.key_terms_from_semantic_network(
+        spacy_doc, ranking_algo='bestcoverage')
+
+
 def test_most_discriminating_terms(spacy_doc):
     text1 = """Friedman joined the London bureau of United Press International after completing his master's degree. He was dispatched a year later to Beirut, where he lived from June 1979 to May 1981 while covering the Lebanon Civil War. He was hired by The New York Times as a reporter in 1981 and re-dispatched to Beirut at the start of the 1982 Israeli invasion of Lebanon. His coverage of the war, particularly the Sabra and Shatila massacre, won him the Pulitzer Prize for International Reporting (shared with Loren Jenkins of The Washington Post). Alongside David K. Shipler he also won the George Polk Award for foreign reporting.
     In June 1984, Friedman was transferred to Jerusalem, where he served as the New York Times Jerusalem Bureau Chief until February 1988. That year he received a second Pulitzer Prize for International Reporting, which cited his coverage of the First Palestinian Intifada. He wrote a book, From Beirut to Jerusalem, describing his experiences in the Middle East, which won the 1989 U.S. National Book Award for Nonfiction.
