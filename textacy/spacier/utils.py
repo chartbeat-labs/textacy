@@ -52,7 +52,7 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
         components accumulated chunk by chunk.
     """
     if isinstance(lang, compat.unicode_):
-        spacy_lang = cache.load_spacy(lang)
+        lang = cache.load_spacy(lang)
     elif not isinstance(lang, SpacyLang):
         raise TypeError(
             '`lang` must be {}, not {}'.format({compat.unicode_, SpacyLang}, type(lang)))
@@ -65,14 +65,14 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
     i = 0
     # iterate over text chunks and accumulate components needed to make a doc
     while i < text_len:
-        chunk_doc = spacy_lang(text[i: i + chunk_size])
+        chunk_doc = lang(text[i: i + chunk_size])
         words.extend(tok.text for tok in chunk_doc)
         spaces.extend(bool(tok.whitespace_) for tok in chunk_doc)
         np_arrays.append(chunk_doc.to_array(cols))
         i += chunk_size
     # now, initialize the doc from words and spaces
     # then load attribute values from the concatenated np array
-    doc = SpacyDoc(spacy_lang.vocab, words=words, spaces=spaces)
+    doc = SpacyDoc(lang.vocab, words=words, spaces=spaces)
     doc = doc.from_array(cols, np.concatenate(np_arrays, axis=0))
 
     return doc

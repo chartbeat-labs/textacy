@@ -1,6 +1,7 @@
 from __future__ import absolute_import, unicode_literals
 
 import pytest
+from spacy.tokens.doc import Doc as SpacyDoc
 
 from textacy import cache
 from textacy.spacier import utils
@@ -70,3 +71,11 @@ def test_get_objects_of_verb(spacy_doc):
     ]
     for obs, exp in zip(observed, expected):
         assert obs == exp
+
+
+def test_make_doc_from_text_chunks():
+    text = "Burton forgot to add tests for this function."
+    for lang in ("en", cache.load_spacy("en")):
+        spacy_doc = utils.make_doc_from_text_chunks(text, lang)
+        assert isinstance(spacy_doc, SpacyDoc)
+        assert spacy_doc.text == text
