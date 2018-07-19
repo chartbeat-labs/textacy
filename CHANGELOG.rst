@@ -7,12 +7,14 @@ Changelog
 Changes:
 
 - Add a ``spacier.util`` module, and add / reorganize relevant functionality
+
   - move (most) ``spacy_util`` functions here, and add a deprecation warning to
     the ``spacy_util`` module
   - rename ``normalized_str()`` => ``get_normalized_text()``, for consistency and clarity
   - add a function to split long texts up into chunks but combine them into
     a single ``Doc``. This is a workaround for a current limitation of spaCy's
     neural models, whose RAM usage scales with the length of input text.
+
 - Add experimental support for reading and writing spaCy docs in binary format,
   where multiple docs are contained in a single file. This functionality was
   supported by spaCy v1, but is not in spaCy v2; I've implemented a workaround
