@@ -1,6 +1,38 @@
 Changelog
 =========
 
+0.6.2
+-----
+
+Changes:
+
+- Add a ``spacier.util`` module, and add / reorganize relevant functionality
+  - move (most) ``spacy_util`` functions here, and add a deprecation warning to
+    the ``spacy_util`` module
+  - rename ``normalized_str()`` => ``get_normalized_text()``, for consistency and clarity
+  - add a function to split long texts up into chunks but combine them into
+    a single ``Doc``. This is a workaround for a current limitation of spaCy's
+    neural models, whose RAM usage scales with the length of input text.
+- Add experimental support for reading and writing spaCy docs in binary format,
+  where multiple docs are contained in a single file. This functionality was
+  supported by spaCy v1, but is not in spaCy v2; I've implemented a workaround
+  that should work well in most situations, but YMMV.
+- Package documentation is now "officially" hosted on GitHub pages. The docs
+  are automatically built on and deployed from Travis via ``doctr``, so they
+  stay up-to-date with the master branch on GitHub. Maybe someday I'll get
+  ReadTheDocs to successfully build ``textacy`` once again...
+- Minor improvements/updates to documentation
+
+Bugfixes:
+
+- Add missing return statement in deprecated ``text_stats.flesch_readability_ease()``
+  function (Issue #191)
+- Catch an empty graph error in bestcoverage-style keyterm ranking (Issue #196)
+- Fix mishandling when specifying a single named entity type to in/exclude in
+  ``extract.named_entities`` (Issue #202)
+- Make ``networkx`` usage in keyterms module compatible with v1.11+ (Issue #199)
+
+
 0.6.1 (2018-04-11)
 ------------------
 
