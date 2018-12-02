@@ -1022,7 +1022,7 @@ class GroupVectorizer(Vectorizer):
             # store the avg document length, used in bm25 weighting to normalize
             # term weights by the length of the containing documents
             self._avg_doc_length = get_doc_lengths(
-                doc_term_matrix, type_=self.dl_type).mean()
+                grp_term_matrix, type_=self.dl_type).mean()
 
         return grp_term_matrix
 

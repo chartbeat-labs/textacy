@@ -50,6 +50,15 @@ def grp_vectorizer_and_gtm(tokenized_docs, groups):
 
 
 @pytest.fixture(scope='module')
+def grp_vectorizer_and_gtm_2(tokenized_docs, groups):
+    grp_vectorizer = vsm.GroupVectorizer(
+        tf_type='bm25', idf_type='smooth', norm=None, apply_dl=True,
+        min_df=1, max_df=1.0, max_n_terms=None)
+    grp_term_matrix = grp_vectorizer.fit_transform(tokenized_docs, groups)
+    return grp_vectorizer, grp_term_matrix
+
+
+@pytest.fixture(scope='module')
 def lamb_and_child_idxs(vectorizer_and_dtm):
     vectorizer, _ = vectorizer_and_dtm
     idx_lamb = [
@@ -119,6 +128,10 @@ def test_grp_vectorizer_terms_and_grp_list(grp_vectorizer_and_gtm):
     assert len(grp_vectorizer.grps_list) == len(grp_vectorizer.vocabulary_grps)
     assert len(grp_vectorizer.grps_list) == gtm.shape[0]
     assert grp_vectorizer.grps_list == sorted(grp_vectorizer.grps_list)
+
+
+def test_grp_vectorizer_2_fits(grp_vectorizer_and_gtm_2):
+    grp_vectorizer, _ = grp_vectorizer_and_gtm_2
 
 
 def test_vectorizer_fixed_vocab(tokenized_docs):
