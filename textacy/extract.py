@@ -219,6 +219,9 @@ def named_entities(doc,
         nes = doc.spacy_doc.ents
     else:
         nes = doc.ents
+    # HACK: spacy's models have been erroneously tagging whitespace as entities
+    # https://github.com/explosion/spaCy/commit/1e6725e9b734862e61081a916baf440697b9971e
+    nes = (ne for ne in nes if not ne.text.isspace())
     include_types = _parse_ne_types(include_types, "include")
     exclude_types = _parse_ne_types(exclude_types, "exclude")
     if include_types:
