@@ -300,7 +300,7 @@ implemented in ``textacy`` to help users get up and running, faster:
 Make a Corpus
 -------------
 
-A ``texacy.Corpus`` is an ordered collection of ``textacy.Doc`` s, all processed
+A ``textacy.Corpus`` is an ordered collection of ``textacy.Doc`` s, all processed
 by the same spacy language pipeline. Let's continue with the Capitol Words dataset
 and make a corpus from text and metadata streams (**Note:** This may take a
 few minutes):
