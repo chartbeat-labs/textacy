@@ -22,6 +22,7 @@ from __future__ import unicode_literals
 import logging
 import os
 import re
+import sys
 from xml.etree.cElementTree import iterparse
 
 import ftfy
@@ -49,6 +50,13 @@ MAPPING_CAT = {
     'en': 'Category:',
     'fr': 'Catégorie:',
     'de': 'Kategorie:'
+}
+
+PROJECTS = {
+    'wiki': 'wiki',
+    'wikipedia': 'wiki',
+    'wikinews': 'wikinews',
+    'news': 'wikinews'
 }
 
 # nowiki tags: take contents verbatim
@@ -156,13 +164,19 @@ class Wikipedia(Dataset):
             Wikipedia database dump, found under the ``data_dir`` directory.
     """
 
-    def __init__(self, data_dir=DATA_DIR, lang='en', version='latest'):
+    def __init__(self, data_dir=DATA_DIR, lang='en', version='latest', project='wiki'):
         super(Wikipedia, self).__init__(
             name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
         self.lang = lang
         self.version = version
-        self.filestub = '{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2'.format(
-            version=self.version, lang=self.lang)
+        proj = PROJECTS.get(project, None)
+        if proj is None:
+            raise AttributeError('Invalid wikimedia project: {project}'.format(
+                project=project
+            ))
+        self.project = proj
+        self.filestub = '{lang}{project}/{version}/{lang}{project}-{version}-pages-articles.xml.bz2'.format(
+            version=self.version, lang=self.lang, project=self.project)
         self._filename = os.path.join(data_dir, self.filestub)
 
     @property
@@ -373,7 +387,6 @@ class Wikipedia(Dataset):
 
         n_pages = 0
         for page_id, title, content in self:
-
             page = self._parse_content(content, parser, fast)
             if len(page['text']) < min_len:
                 continue
