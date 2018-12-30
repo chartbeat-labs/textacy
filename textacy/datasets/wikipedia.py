@@ -164,6 +164,7 @@ class Wikipedia(Dataset):
         self.filestub = '{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2'.format(
             version=self.version, lang=self.lang)
         self._filename = os.path.join(data_dir, self.filestub)
+        self._extract_namespace = '0'
 
     @property
     def filename(self):
@@ -237,7 +238,7 @@ class Wikipedia(Dataset):
                     page_id = elem.find(page_id_path).text
                     title = elem.find(title_path).text
                     ns = elem.find(ns_path).text
-                    if ns != '0':
+                    if ns != self._extract_namespace:
                         content = ''
                     else:
                         content = elem.find(text_path).text
@@ -311,7 +312,7 @@ class Wikipedia(Dataset):
 
         return parsed_content
 
-    def texts(self, min_len=100, limit=-1):
+    def texts(self, min_len=100, limit=-1, namespace='0'):
         """
         Iterate over pages (text-only) in a Wikipedia database dump, optionally
         filtering by text length.
@@ -329,6 +330,7 @@ class Wikipedia(Dataset):
             Page and section titles appear immediately before the text content
             that they label, separated by an empty line.
         """
+        self._extract_namespace = namespace
         n_pages = 0
         for _, title, content in self:
             text = strip_markup(content)
@@ -341,7 +343,7 @@ class Wikipedia(Dataset):
             if n_pages == limit:
                 break
 
-    def records(self, min_len=100, limit=-1, fast=False):
+    def records(self, min_len=100, limit=-1, fast=False, namespace='0'):
         """
         Iterate over pages (parsed text and metadata) in a Wikipedia database dump,
         optionally filtering by text length.
@@ -361,6 +363,7 @@ class Wikipedia(Dataset):
         Note:
             This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_.
         """
+        self._extract_namespace = namespace
         try:
             mwparserfromhell
         except NameError:
