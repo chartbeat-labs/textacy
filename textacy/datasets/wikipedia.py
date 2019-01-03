@@ -22,7 +22,6 @@ from __future__ import unicode_literals
 import logging
 import os
 import re
-import sys
 from xml.etree.cElementTree import iterparse
 
 import ftfy
