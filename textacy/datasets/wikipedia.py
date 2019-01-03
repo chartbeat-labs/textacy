@@ -322,13 +322,16 @@ class Wikipedia(Dataset):
                 for it to be returned; too-short pages are skipped.
             limit (int): Maximum number of pages (passing ``min_len``) to yield;
                 if -1, all pages in the db dump are iterated over.
-
+            namespace (str): Allows one to specify a namespace other than '0'
+                (the default) to extract text from
         Yields:
             str: Full text of next page in the Wikipedia database dump.
 
-        Note:
+        Notes:
             Page and section titles appear immediately before the text content
             that they label, separated by an empty line.
+
+            Namespace values can be discoverd via ``bzcat dumpfile.xml.bz2 | head`` 
         """
         self._extract_namespace = namespace
         n_pages = 0
@@ -356,12 +359,15 @@ class Wikipedia(Dataset):
             fast (bool): If True, text is extracted using a faster method but
                 which gives lower quality results. Otherwise, a slower but better
                 method is used to extract article text.
-
+            namespace (str): Allows one to extract records from a namspace other
+                 than '0' (the default)
         Yields:
             dict: Parsed text and metadata of next page in the Wikipedia database dump.
 
-        Note:
+        Notes:
             This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_.
+
+            Namespace values can be discovered via ``bzcat dump_file.xml.bz2 | head``
         """
         self._extract_namespace = namespace
         try:
