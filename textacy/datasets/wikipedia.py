@@ -153,7 +153,9 @@ class Wikipedia(Dataset):
             most recently available version or a date formatted as "YYYYMMDD".
             Dumps are produced intermittently; check for available versions at
             https://meta.wikimedia.org/wiki/Data_dumps.
-
+        project (str): Name or alias of wikimedia data dump you wish to work
+           with.  Currently 'wiki' (default) and 'wikinews' are supported with
+           respective aliases 'wikipedia' and 'news'.
     Attributes:
         lang (str): Standard two-letter language code used in instantiation.
         version (str): Database dump version used in instantiation.
@@ -161,6 +163,8 @@ class Wikipedia(Dataset):
             lang- and version-specific database dump.
         filename (str): Full path on disk for the lang- and version-specific
             Wikipedia database dump, found under the ``data_dir`` directory.
+        project (str): the canonical name for the wikimedia project which is
+            used as a component of ``filestub``.
     """
 
     def __init__(self, data_dir=DATA_DIR, lang='en', version='latest', project='wiki'):
@@ -170,7 +174,8 @@ class Wikipedia(Dataset):
         self.version = version
         proj = PROJECTS.get(project, None)
         if proj is None:
-            raise AttributeError('Invalid wikimedia project: {project}'.format(
+            raise AttributeError(
+                'Invalid or unsupported wikimedia project: {project}'.format(
                 project=project
             ))
         self.project = proj
