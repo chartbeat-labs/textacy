@@ -29,6 +29,7 @@ try:
     import mwparserfromhell
 except ImportError:
     pass
+import requests
 
 from .. import compat
 from .. import data_dir
@@ -51,12 +52,13 @@ MAPPING_CAT = {
     'de': 'Kategorie:'
 }
 
+# project name -> canonical wikimedia dump project name
 PROJECTS = {
-    'wiki': 'wiki',
     'wikipedia': 'wiki',
     'wikinews': 'wikinews',
-    'news': 'wikinews'
 }
+# useful for error messages
+PROJECTS_INV = {v: k for k, v in PROJECTS.items()}
 
 # nowiki tags: take contents verbatim
 re_nowiki = re.compile(r'<nowiki>(.*?)</nowiki>', flags=re.UNICODE)
@@ -145,7 +147,7 @@ class Wikipedia(Dataset):
     Args:
         data_dir (str): Path to directory on disk under which database dump
             files are stored. Each file is expected as
-            ``{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2``
+            ``{lang}{project}/{version}/{lang}{project}-{version}-pages-articles.xml.bz2``
             immediately under this directory.
         lang (str): Standard two-letter language code, e.g. "en" => "English",
             "de" => "German". https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes
@@ -153,9 +155,9 @@ class Wikipedia(Dataset):
             most recently available version or a date formatted as "YYYYMMDD".
             Dumps are produced intermittently; check for available versions at
             https://meta.wikimedia.org/wiki/Data_dumps.
-        project (str): Name or alias of wikimedia data dump you wish to work
-           with.  Currently 'wiki' (default) and 'wikinews' are supported with
-           respective aliases 'wikipedia' and 'news'.
+        project (str): Name of wikimedia project. Currently, only 'wikipedia'
+            (default) and 'wikinews' are supported.
+
     Attributes:
         lang (str): Standard two-letter language code used in instantiation.
         version (str): Database dump version used in instantiation.
@@ -167,18 +169,17 @@ class Wikipedia(Dataset):
             used as a component of ``filestub``.
     """
 
-    def __init__(self, data_dir=DATA_DIR, lang='en', version='latest', project='wiki'):
+    def __init__(self, data_dir=DATA_DIR, lang='en', version='latest', project='wikipedia'):
         super(Wikipedia, self).__init__(
             name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
         self.lang = lang
         self.version = version
-        proj = PROJECTS.get(project, None)
-        if proj is None:
-            raise AttributeError(
+        if project not in PROJECTS:
+            raise ValueError(
                 'Invalid or unsupported wikimedia project: {project}'.format(
                 project=project
             ))
-        self.project = proj
+        self.project = PROJECTS[project]
         self.filestub = '{lang}{project}/{version}/{lang}{project}-{version}-pages-articles.xml.bz2'.format(
             version=self.version, lang=self.lang, project=self.project)
         self._filename = os.path.join(data_dir, self.filestub)
@@ -194,6 +195,27 @@ class Wikipedia(Dataset):
             return self._filename
         else:
             return None
+
+    def _verify_dump_file_url(self, dumpfile_url):
+        res = requests.head(dumpfile_url)
+        if res.status_code != 200:
+            # invalid dump file url. check that {lang}{project} exists
+            lang_project_url = compat.urljoin(
+                DOWNLOAD_ROOT,
+                "{lang}{project}/".format(lang=self.lang, project=self.project)
+            )
+            res2 = requests.head(lang_project_url)
+            if res2.status_code != 200:
+                raise ValueError(
+                    "'{lang}' variant of '{project}' does not exist".format(
+                        lang=self.lang, project=PROJECTS_INV[self.project]
+                    )
+                )
+            else:
+                # lang/project exists, just bad dumpfile url
+                raise requests.HTTPError(
+                    "404: Not Found. {url}".format(url=dumpfile_url)
+                )
 
     def download(self, force=False):
         """
@@ -212,6 +234,7 @@ class Wikipedia(Dataset):
             return
         LOGGER.info(
             'Downloading data from %s and writing it to %s', url, fname)
+        self._verify_dump_file_url(url)
         io.write_http_stream(
             url, fname, mode='wb', encoding=None,
             make_dirs=True, chunk_size=1024)
