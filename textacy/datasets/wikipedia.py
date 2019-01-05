@@ -146,6 +146,8 @@ class Wikipedia(Dataset):
             most recently available version or a date formatted as "YYYYMMDD".
             Dumps are produced intermittently; check for available versions at
             https://meta.wikimedia.org/wiki/Data_dumps.
+        namespace (str): Allows one to specify a namespace other than '0'
+            (the default) to extract content from
 
     Attributes:
         lang (str): Standard two-letter language code used in instantiation.
@@ -154,9 +156,12 @@ class Wikipedia(Dataset):
             lang- and version-specific database dump.
         filename (str): Full path on disk for the lang- and version-specific
             Wikipedia database dump, found under the ``data_dir`` directory.
+
+    Notes:
+        Namespace values can be discovered via ``bzcat dumpfile.xml.bz2 | head``
     """
 
-    def __init__(self, data_dir=DATA_DIR, lang='en', version='latest'):
+    def __init__(self, data_dir=DATA_DIR, lang='en', version='latest', namespace='0'):
         super(Wikipedia, self).__init__(
             name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
         self.lang = lang
@@ -164,7 +169,7 @@ class Wikipedia(Dataset):
         self.filestub = '{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2'.format(
             version=self.version, lang=self.lang)
         self._filename = os.path.join(data_dir, self.filestub)
-        self._extract_namespace = '0'
+        self._namespace = namespace
 
     @property
     def filename(self):
@@ -238,7 +243,7 @@ class Wikipedia(Dataset):
                     page_id = elem.find(page_id_path).text
                     title = elem.find(title_path).text
                     ns = elem.find(ns_path).text
-                    if ns != self._extract_namespace:
+                    if ns != self._namespace:
                         content = ''
                     else:
                         content = elem.find(text_path).text
@@ -312,7 +317,7 @@ class Wikipedia(Dataset):
 
         return parsed_content
 
-    def texts(self, min_len=100, limit=-1, namespace='0'):
+    def texts(self, min_len=100, limit=-1):
         """
         Iterate over pages (text-only) in a Wikipedia database dump, optionally
         filtering by text length.
@@ -322,18 +327,13 @@ class Wikipedia(Dataset):
                 for it to be returned; too-short pages are skipped.
             limit (int): Maximum number of pages (passing ``min_len``) to yield;
                 if -1, all pages in the db dump are iterated over.
-            namespace (str): Allows one to specify a namespace other than '0'
-                (the default) to extract text from
         Yields:
             str: Full text of next page in the Wikipedia database dump.
 
         Notes:
             Page and section titles appear immediately before the text content
             that they label, separated by an empty line.
-
-            Namespace values can be discoverd via ``bzcat dumpfile.xml.bz2 | head`` 
         """
-        self._extract_namespace = namespace
         n_pages = 0
         for _, title, content in self:
             text = strip_markup(content)
@@ -346,7 +346,7 @@ class Wikipedia(Dataset):
             if n_pages == limit:
                 break
 
-    def records(self, min_len=100, limit=-1, fast=False, namespace='0'):
+    def records(self, min_len=100, limit=-1, fast=False):
         """
         Iterate over pages (parsed text and metadata) in a Wikipedia database dump,
         optionally filtering by text length.
@@ -359,17 +359,12 @@ class Wikipedia(Dataset):
             fast (bool): If True, text is extracted using a faster method but
                 which gives lower quality results. Otherwise, a slower but better
                 method is used to extract article text.
-            namespace (str): Allows one to extract records from a namspace other
-                 than '0' (the default)
         Yields:
             dict: Parsed text and metadata of next page in the Wikipedia database dump.
 
         Notes:
             This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_.
-
-            Namespace values can be discovered via ``bzcat dump_file.xml.bz2 | head``
         """
-        self._extract_namespace = namespace
         try:
             mwparserfromhell
         except NameError:
