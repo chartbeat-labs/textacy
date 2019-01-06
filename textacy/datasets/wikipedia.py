@@ -146,6 +146,8 @@ class Wikipedia(Dataset):
             most recently available version or a date formatted as "YYYYMMDD".
             Dumps are produced intermittently; check for available versions at
             https://meta.wikimedia.org/wiki/Data_dumps.
+        namespace (str): Allows one to specify a namespace other than '0'
+            (the default) to extract content from
 
     Attributes:
         lang (str): Standard two-letter language code used in instantiation.
@@ -154,9 +156,12 @@ class Wikipedia(Dataset):
             lang- and version-specific database dump.
         filename (str): Full path on disk for the lang- and version-specific
             Wikipedia database dump, found under the ``data_dir`` directory.
+
+    Notes:
+        Namespace values can be discovered via ``bzcat dumpfile.xml.bz2 | head``
     """
 
-    def __init__(self, data_dir=DATA_DIR, lang='en', version='latest'):
+    def __init__(self, data_dir=DATA_DIR, lang='en', version='latest', namespace='0'):
         super(Wikipedia, self).__init__(
             name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
         self.lang = lang
@@ -164,6 +169,7 @@ class Wikipedia(Dataset):
         self.filestub = '{lang}wiki/{version}/{lang}wiki-{version}-pages-articles.xml.bz2'.format(
             version=self.version, lang=self.lang)
         self._filename = os.path.join(data_dir, self.filestub)
+        self._namespace = namespace
 
     @property
     def filename(self):
@@ -237,7 +243,7 @@ class Wikipedia(Dataset):
                     page_id = elem.find(page_id_path).text
                     title = elem.find(title_path).text
                     ns = elem.find(ns_path).text
-                    if ns != '0':
+                    if ns != self._namespace:
                         content = ''
                     else:
                         content = elem.find(text_path).text
@@ -321,11 +327,10 @@ class Wikipedia(Dataset):
                 for it to be returned; too-short pages are skipped.
             limit (int): Maximum number of pages (passing ``min_len``) to yield;
                 if -1, all pages in the db dump are iterated over.
-
         Yields:
             str: Full text of next page in the Wikipedia database dump.
 
-        Note:
+        Notes:
             Page and section titles appear immediately before the text content
             that they label, separated by an empty line.
         """
@@ -354,11 +359,10 @@ class Wikipedia(Dataset):
             fast (bool): If True, text is extracted using a faster method but
                 which gives lower quality results. Otherwise, a slower but better
                 method is used to extract article text.
-
         Yields:
             dict: Parsed text and metadata of next page in the Wikipedia database dump.
 
-        Note:
+        Notes:
             This function requires `mwparserfromhell <mwparserfromhell.readthedocs.org>`_.
         """
         try:
