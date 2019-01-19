@@ -297,7 +297,7 @@ class Wikipedia(Dataset):
                     yield page_id, title, content
                     elem.clear()
 
-    def _parse_content(self, content, parser, fast):
+    def _parse_content(self, content, parser, fast, keep_section_headings):
         unicode_ = compat.unicode_  # for performance
         wikicode = parser.parse(content)
 
@@ -338,7 +338,7 @@ class Wikipedia(Dataset):
             texts = []
             # strip out references, tables, and file/image links
             # then concatenate the stripped text of each section
-            for i, section in enumerate(wikicode.get_sections(flat=True, include_lead=True, include_headings=True)):
+            for i, section in enumerate(wikicode.get_sections(flat=True, include_lead=True, include_headings=keep_section_headings)):
                 for obj in section.ifilter_wikilinks(matches=is_bad_wikilink, recursive=True):
                     try:
                         section.remove(obj)
@@ -389,7 +389,7 @@ class Wikipedia(Dataset):
             if n_pages == limit:
                 break
 
-    def records(self, min_len=100, limit=-1, fast=False):
+    def records(self, min_len=100, limit=-1, fast=False, keep_section_headings=True):
         """
         Iterate over pages (parsed text and metadata) in a Wikipedia database dump,
         optionally filtering by text length.
@@ -402,6 +402,8 @@ class Wikipedia(Dataset):
             fast (bool): If True, text is extracted using a faster method but
                 which gives lower quality results. Otherwise, a slower but better
                 method is used to extract article text.
+            keep_section_headings (bool): Whether to include section headings and
+                the page title as part of the page's text. Default: True
         Yields:
             dict: Parsed text and metadata of next page in the Wikipedia database dump.
 
@@ -420,12 +422,13 @@ class Wikipedia(Dataset):
 
         n_pages = 0
         for page_id, title, content in self:
-            page = self._parse_content(content, parser, fast)
+            page = self._parse_content(content, parser, fast, keep_section_headings)
             if len(page['text']) < min_len:
                 continue
             page['title'] = title
             page['page_id'] = page_id
-            page['text'] = title + '\n\n' + page['text']
+            if keep_section_headings:
+                page['text'] = title + '\n\n' + page['text']
 
             yield page
 
