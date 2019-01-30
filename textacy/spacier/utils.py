@@ -96,7 +96,7 @@ def merge_spans(spans, doc):
     except AttributeError:
         spans = [(span.start_char, span.end_char, span.label)
                  for span in spans]
-        for start_char, end_char, label in ents:
+        for start_char, end_char, label in spans:
             doc.merge(start_char, end_char, ent_type=label)
 
 
