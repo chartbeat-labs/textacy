@@ -302,14 +302,19 @@ class Wikipedia(Dataset):
         wikicode = parser.parse(content)
 
         parsed_content = {}
+        cat_link = MAPPING_CAT[self.lang]
+        # catch category links errantly marked up in lowercase
+        lc_cat_link = cat_link.lower()
 
         wikilinks = [unicode_(wc.title) for wc in wikicode.ifilter_wikilinks()]
-        parsed_content['categories'] = [
+        categories = [
             wc for wc in wikilinks
-            if wc.startswith(MAPPING_CAT[self.lang])]
+            if wc.startswith(cat_link) or wc.startswith(lc_cat_link)
+        ]
+        parsed_content['categories'] = categories
         parsed_content['wiki_links'] = [
             wc for wc in wikilinks
-            if not wc.startswith(MAPPING_CAT[self.lang]) and
+            if wc not in categories and
             not wc.startswith('File:') and
             not wc.startswith('Image:')]
         parsed_content['ext_links'] = [
