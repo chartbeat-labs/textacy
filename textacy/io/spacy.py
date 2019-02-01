@@ -81,33 +81,36 @@ def read_spacy_docs(fname, format="pickle", lang=None):
                 # vexing for user data. As a best guess, we *know* that within
                 # keys, we must have tuples. In values we just have to hope
                 # users don't mind getting a list instead of a tuple.
-                if "user_data_keys" in msg:
-                    user_data_keys = msgpack.loads(msg["user_data_keys"], use_list=False)
-                    user_data_values = msgpack.loads(msg["user_data_values"])
+                user_data_keys_bytes = compat.unicode_to_bytes("user_data_keys")
+                if user_data_keys_bytes in msg:
+                    user_data_keys = msgpack.loads(msg[user_data_keys_bytes], use_list=False)
+                    user_data_values = msgpack.loads(msg[user_data_keys_bytes])
                     user_data = {
                         key: value
                         for key, value in compat.zip_(user_data_keys, user_data_values)}
                 else:
                     user_data = None
 
-                text = msg["text"]
-                attrs = msg["array_body"]
+                text = msg[compat.unicode_to_bytes("text")]
+                attrs = msg[compat.unicode_to_bytes("array_body")]
                 words = []
                 spaces = []
                 start = 0
                 for i in compat.range_(attrs.shape[0]):
                     end = start + int(attrs[i, 0])
                     has_space = int(attrs[i, 1])
-                    words.append(text[start: end])
+                    words.append(compat.bytes_to_unicode(text[start: end]))
                     spaces.append(bool(has_space))
                     start = end + has_space
 
                 spacy_doc = SpacyDoc(vocab, words=words, spaces=spaces, user_data=user_data)
-                spacy_doc = spacy_doc.from_array(msg["array_head"][2:], attrs[:, 2:])
-                if "sentiment" in msg:
-                    spacy_doc.sentiment = msg["sentiment"]
-                if "tensor" in msg:
-                    spacy_doc.tensor = msg["tensor"]
+                spacy_doc = spacy_doc.from_array(msg[compat.unicode_to_bytes("array_head")][2:], attrs[:, 2:])
+                sentiment_bytes = compat.unicode_to_bytes("sentiment")
+                if sentiment_bytes in msg:
+                    spacy_doc.sentiment = msg[sentiment_bytes]
+                tensor_bytes = compat.unicode_to_bytes("tensor")
+                if tensor_bytes in msg:
+                    spacy_doc.tensor = msg[tensor_bytes]
                 yield spacy_doc
     else:
         raise ValueError(
