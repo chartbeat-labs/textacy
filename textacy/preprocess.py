@@ -11,7 +11,6 @@ import re
 import unicodedata
 
 from ftfy import fix_text
-from unidecode import unidecode
 
 from . import constants
 
@@ -36,18 +35,6 @@ def fix_bad_unicode(text, normalization='NFC'):
         str
     """
     return fix_text(text, normalization=normalization)
-
-
-def transliterate_unicode(text):
-    """
-    Try to represent unicode data in ascii characters similar to what a human
-    with a US keyboard would choose.
-
-    Works great for languages of Western origin, worse the farther the language
-    gets from Latin-based alphabets. It's based on hand-tuned character mappings
-    that also contain ascii approximations for symbols and non-Latin alphabets.
-    """
-    return unidecode(text)
 
 
 def normalize_whitespace(text):
@@ -175,7 +162,7 @@ def remove_accents(text, method='unicode'):
         raise ValueError(msg)
 
 
-def preprocess_text(text, fix_unicode=False, lowercase=False, transliterate=False,
+def preprocess_text(text, fix_unicode=False, lowercase=False,
                     no_urls=False, no_emails=False, no_phone_numbers=False,
                     no_numbers=False, no_currency_symbols=False, no_punct=False,
                     no_contractions=False, no_accents=False):
@@ -188,8 +175,6 @@ def preprocess_text(text, fix_unicode=False, lowercase=False, transliterate=Fals
         fix_unicode (bool): if True, fix "broken" unicode such as
             mojibake and garbled HTML entities
         lowercase (bool): if True, all text is lower-cased
-        transliterate (bool): if True, convert non-ascii characters
-            into their closest ascii equivalents
         no_urls (bool): if True, replace all URL strings with '*URL*'
         no_emails (bool): if True, replace all email strings with '*EMAIL*'
         no_phone_numbers (bool): if True, replace all phone number strings
@@ -203,8 +188,7 @@ def preprocess_text(text, fix_unicode=False, lowercase=False, transliterate=Fals
         no_contractions (bool): if True, replace *English* contractions
             with their unshortened forms
         no_accents (bool): if True, replace all accented characters
-            with unaccented versions; NB: if `transliterate` is True, this option
-            is redundant
+            with unaccented versions
 
     Returns:
         str: input ``text`` processed according to function args
@@ -215,8 +199,6 @@ def preprocess_text(text, fix_unicode=False, lowercase=False, transliterate=Fals
     """
     if fix_unicode is True:
         text = fix_bad_unicode(text, normalization='NFC')
-    if transliterate is True:
-        text = transliterate_unicode(text)
     if no_urls is True:
         text = replace_urls(text)
     if no_emails is True:

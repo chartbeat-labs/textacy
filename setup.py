@@ -21,7 +21,6 @@ INSTALL_REQUIRES = [
     'scikit-learn>=0.17.0',
     'spacy>=2.0.0',
     'tqdm>=4.11.1',
-    'unidecode>=0.04.19',
     ]
 EXTRAS_REQUIRE = {
     'viz': ['matplotlib>=1.5.0'],
