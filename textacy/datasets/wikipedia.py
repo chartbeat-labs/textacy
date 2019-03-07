@@ -49,7 +49,8 @@ DOWNLOAD_ROOT = 'https://dumps.wikimedia.org/'
 MAPPING_CAT = {
     'en': 'Category:',
     'fr': 'Catégorie:',
-    'de': 'Kategorie:'
+    'de': 'Kategorie:',
+    'cs': 'Kategorie:'
 }
 
 # project name -> canonical wikimedia dump project name
