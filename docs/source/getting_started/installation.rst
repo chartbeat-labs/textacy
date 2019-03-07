@@ -1,3 +1,5 @@
+.. _installation:
+
 Installation
 ============
 
@@ -28,6 +30,7 @@ and unzip the source ``tar.gz`` from  PyPi, then install manually:
 
     $ python setup.py install
 
+.. _installation_dependencies:
 
 Dependencies
 ------------
@@ -43,6 +46,7 @@ you'll need ``cld2-cffi`` installed; do ``pip install textacy[lang]``.
 
 ...
 
+.. _installation_downloading-data:
 
 Downloading Data
 ----------------
@@ -52,6 +56,11 @@ required. Fortunately, ``spacy`` makes the process of getting this data easy and
 flexible; just follow `the instructions in its docs <https://spacy.io/docs/usage/models>`_,
 which also includes a list of `currently-supported languages and their models
 <https://spacy.io/usage/models#section-available>`_.
+
+Note: If you install specific versions of a given language's model data
+(e.g. "en_core_web_sm" instead of just "en"), you'll probably want to create
+a shortcut link to the standard two-letter form of the language so that it will
+work as expected with textacy's automatic language detection.
 
 ``textacy`` itself features convenient access to several datasets comprised of
 thousands of text + metadata records. Data can be downloaded via the ``.download()``

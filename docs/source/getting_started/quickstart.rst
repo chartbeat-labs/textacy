@@ -235,8 +235,8 @@ and term inclusion criteria:
      ('late', 1),
      ('1980', 1)]
 
-Working with *Many* Texts
--------------------------
+Working with Many Texts
+-----------------------
 
 Many NLP tasks require datasets comprised of a large number of texts, which
 are often stored on disk in one or multiple files. ``textacy`` makes it easy
@@ -391,8 +391,57 @@ From a doc-term matrix, you can then train and interpret a topic model:
     topic 8 : session   authorize   unanimous   consent   senate   p.m.   a.m.   september   committee   hearing
     topic 9 : security   homeland   funding   9/11   commission   risk   department   threat   emergency   police
 
-And we're just getting started! For now, though, I encourage you to pick a dataset
+And that's just getting started! For now, though, I encourage you to pick a dataset
 --- either your own or one already included in ``textacy`` --- and start exploring
 the data. *Most* functionality is well-documented via in-code docstrings; to see
 that information all together in nicely-formatted HTML, be sure to check out
 the :ref:`ref-api-reference`.
+
+Working with Many Languages
+---------------------------
+
+Since a ``Corpus`` uses the same spacy language pipeline to process all input texts,
+it only works in a *monolingual* context. In some cases, though, your collection
+of texts may contain more than one language; for example, if I occasionally tweeted
+in Spanish (sí, ¡se habla español!), the ``burton-tweets.txt`` dataset couldn't
+be fed in its entirety into a single ``Corpus``. This is irritating, I know, but
+there are some workarounds.
+
+If you haven't already, download spacy models for the languages you want to analyze —
+see :ref:`installation_downloading-data` for details. Then, if your use case
+doesn't require ``Corpus`` functionality, you can iterate over the texts and
+only analyze those for which models are available:
+
+.. code-block:: pycon
+
+    >>> for text in texts:
+    ...     try:
+    ...         doc = textacy.Doc(text)
+    ...     except IOError:
+    ...         continue
+    ...     # do stuff...
+
+When the ``lang`` param is unspecified, textacy tries to auto-detect the text's
+language and load the corresponding model; if that model is unavailable, spacy
+will raise an ``IOError``. This try/except also handles the case where
+language detection fails and returns, say, "un" for "unknown".
+
+If you do need a ``Corpus``, you can split the input texts by language into
+distinct collections, then instantiate monolingual corpora on those collections.
+For example:
+
+.. code-block:: pycon
+
+    >>> en_corpus = textacy.Corpus(
+    ...     "en", texts=(
+    ...         text for text in texts
+    ...         if textacy.text_utils.detect_language(text) == "en")
+    ... )
+    >>> es_corpus = textacy.Corpus(
+    ...     "es", texts=(
+    ...         text for text in texts
+    ...         if textacy.text_utils.detect_language(text) == "es")
+    ... )
+
+Both of these options are less convenient than we'd like, but hopefully they
+get the job done.
