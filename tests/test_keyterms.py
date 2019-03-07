@@ -32,6 +32,12 @@ def spacy_doc():
     return spacy_doc
 
 
+@pytest.fixture(scope='module')
+def empty_spacy_doc():
+    spacy_lang = cache.load_spacy("en")
+    return spacy_lang("")
+
+
 def test_sgrank(spacy_doc):
     expected = [
         'new york times', 'york times jerusalem bureau chief', 'friedman',
@@ -260,6 +266,12 @@ def test_key_terms_from_semantic_network(spacy_doc):
         spacy_doc, ranking_algo='divrank')
     _ = keyterms.key_terms_from_semantic_network(
         spacy_doc, ranking_algo='bestcoverage')
+
+
+def test_key_terms_from_semantic_network_empty(empty_spacy_doc):
+    key_terms = keyterms.key_terms_from_semantic_network(empty_spacy_doc)
+    assert isinstance(key_terms, list) is True
+    assert len(key_terms) == 0
 
 
 def test_most_discriminating_terms(spacy_doc):

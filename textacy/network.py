@@ -67,9 +67,8 @@ def terms_to_semantic_network(terms,
         raise ValueError(
             '`window_width` = {} is invalid; value must be >= 2'.format(window_width))
     if not terms:
-        raise ValueError(
-            '`terms` = {} is invalid; it must contain at least 1 term '
-            'in the form of a string or spacy token'.format(terms))
+        LOGGER.warning("input `terms` is empty, so output graph is also empty")
+        return nx.Graph()
 
     # if len(terms) < window_width, cytoolz throws a StopIteration error
     # which we don't want
