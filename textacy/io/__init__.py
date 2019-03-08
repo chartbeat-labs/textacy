@@ -1,5 +1,11 @@
-from .utils import (coerce_content_type, get_filenames, open_sesame,
-                    split_records, split_record_fields, unzip)
+from .utils import (
+    coerce_content_type,
+    get_filenames,
+    open_sesame,
+    split_records,
+    split_record_fields,
+    unzip,
+)
 from .csv import read_csv, write_csv
 from .http import read_http_stream, write_http_stream
 from .json import read_json, read_json_mash, write_json

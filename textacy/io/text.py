@@ -10,7 +10,7 @@ from __future__ import absolute_import, print_function, unicode_literals
 from .utils import open_sesame, _validate_read_mode, _validate_write_mode
 
 
-def read_text(fname, mode='rt', encoding=None, lines=False):
+def read_text(fname, mode="rt", encoding=None, lines=False):
     """
     Read the contents of a text file at ``fname``, either all at once
     or streaming line-by-line.
@@ -38,8 +38,7 @@ def read_text(fname, mode='rt', encoding=None, lines=False):
                 yield line
 
 
-def write_text(data, fname, mode='wt', encoding=None,
-               make_dirs=False, lines=False):
+def write_text(data, fname, mode="wt", encoding=None, make_dirs=False, lines=False):
     """
     Write text ``data`` to disk at ``fname``, either all at once
     or streaming line-by-line.
@@ -71,6 +70,6 @@ def write_text(data, fname, mode='wt', encoding=None,
         if lines is False:
             f.write(data)
         else:
-            newline = '\n' if 't' in mode else b'\n'
+            newline = "\n" if "t" in mode else b"\n"
             for line in data:
                 f.write(line + newline)

@@ -14,6 +14,7 @@ import os
 import re
 import warnings
 import zipfile
+
 try:  # Py3
     import lzma
 except ImportError:  # Py2
@@ -26,17 +27,18 @@ from cytoolz import itertoolz
 
 from .. import compat
 
-_ext_to_compression = {
-    '.bz2': 'bz2',
-    '.gz': 'gzip',
-    '.xz': 'xz',
-    '.zip': 'zip',
-}
+_ext_to_compression = {".bz2": "bz2", ".gz": "gzip", ".xz": "xz", ".zip": "zip"}
 
 
-def open_sesame(filepath, mode='rt',
-                encoding=None, errors=None, newline=None,
-                compression='infer', make_dirs=False):
+def open_sesame(
+    filepath,
+    mode="rt",
+    encoding=None,
+    errors=None,
+    newline=None,
+    compression="infer",
+    make_dirs=False,
+):
     """
     Open file ``filepath``. Automatically handle file compression, relative
     paths and symlinks, and missing intermediate directory creation, as needed.
@@ -68,22 +70,27 @@ def open_sesame(filepath, mode='rt',
     """
     # check args
     if not isinstance(filepath, compat.string_types):
-        raise TypeError('filepath must be a string, not {}'.format(type(filepath)))
-    if encoding and 't' not in mode:
-        raise ValueError('encoding only applicable for text mode')
+        raise TypeError("filepath must be a string, not {}".format(type(filepath)))
+    if encoding and "t" not in mode:
+        raise ValueError("encoding only applicable for text mode")
 
     # normalize filepath and make dirs, as needed
     filepath = os.path.realpath(os.path.expanduser(filepath))
     if make_dirs is True:
         _make_dirs(filepath, mode)
-    elif mode.startswith('r') and not os.path.exists(filepath):
+    elif mode.startswith("r") and not os.path.exists(filepath):
         raise OSError('file "{}" does not exist'.format(filepath))
 
     compression = _get_compression(filepath, compression)
 
     f = _get_file_handle(
-        filepath, mode, compression=compression,
-        encoding=encoding, errors=errors, newline=newline)
+        filepath,
+        mode,
+        compression=compression,
+        encoding=encoding,
+        errors=errors,
+        newline=newline,
+    )
 
     return f
 
@@ -97,7 +104,7 @@ def _get_compression(filepath, compression):
     if compression is None:
         return None
     # user wants us to infer compression from filepath
-    elif compression == 'infer':
+    elif compression == "infer":
         _, ext = os.path.splitext(filepath)
         try:
             return _ext_to_compression[ext.lower()]
@@ -109,62 +116,69 @@ def _get_compression(filepath, compression):
     else:
         raise ValueError(
             'compression="{}" is invalid; '
-            'valid values are {}.'.format(
-                compression, [None, 'infer'] + sorted(_ext_to_compression.values()))
+            "valid values are {}.".format(
+                compression, [None, "infer"] + sorted(_ext_to_compression.values())
+            )
         )
 
 
-def _get_file_handle(filepath, mode, compression=None,
-                     encoding=None, errors=None, newline=None):
+def _get_file_handle(
+    filepath, mode, compression=None, encoding=None, errors=None, newline=None
+):
     """
     Get a file handle for the given ``filepath`` and ``mode``, plus optional kwargs.
     """
     if compression:
 
-        mode_ = mode.replace('b', '').replace('t', '')
+        mode_ = mode.replace("b", "").replace("t", "")
 
-        if compression == 'gzip':
+        if compression == "gzip":
             f = gzip.GzipFile(filepath, mode=mode_)
-        elif compression == 'bz2':
+        elif compression == "bz2":
             f = bz2.BZ2File(filepath, mode=mode_)
-        elif compression == 'xz':
+        elif compression == "xz":
             try:
                 f = lzma.LZMAFile(filepath, mode=mode_)
             except NameError:
                 raise ValueError(
-                    "lzma compression isn\'t included in Python 2's stdlib; "
-                    "try gzip or bz2, or install `backports.lzma`")
-        elif compression == 'zip':
+                    "lzma compression isn't included in Python 2's stdlib; "
+                    "try gzip or bz2, or install `backports.lzma`"
+                )
+        elif compression == "zip":
             zip_file = zipfile.ZipFile(filepath, mode=mode_)
             zip_names = zip_file.namelist()
             if len(zip_names) == 1:
                 f = zip_file.open(zip_names[0])
             elif len(zip_names) == 0:
-                raise ValueError(
-                    'no files found in zip file "{}"'.format(filepath))
+                raise ValueError('no files found in zip file "{}"'.format(filepath))
             else:
                 raise ValueError(
                     '{} files found in zip file "{}", '
-                    'but only one file is allowed.'.format(len(zip_names), filepath))
+                    "but only one file is allowed.".format(len(zip_names), filepath)
+                )
         else:
             raise ValueError(
                 'compression="{}" is invalid; '
-                'valid values are {}.'.format(
-                    compression, [None, 'infer'] + sorted(_ext_to_compression.values()))
+                "valid values are {}.".format(
+                    compression, [None, "infer"] + sorted(_ext_to_compression.values())
+                )
             )
 
-        if 't' in mode:
+        if "t" in mode:
             if compat.is_python2 is True:
                 raise ValueError(
-                    'Python 2 can\'t open compressed files in "{}" mode'.format(mode))
+                    'Python 2 can\'t open compressed files in "{}" mode'.format(mode)
+                )
             else:
                 f = io.TextIOWrapper(
-                    f, encoding=encoding, errors=errors, newline=newline)
+                    f, encoding=encoding, errors=errors, newline=newline
+                )
 
     # no compression, file is opened as usual
     else:
         f = io.open(
-            filepath, mode=mode, encoding=encoding, errors=errors, newline=newline)
+            filepath, mode=mode, encoding=encoding, errors=errors, newline=newline
+        )
 
     return f
 
@@ -175,20 +189,22 @@ def _make_dirs(filepath, mode):
     directories will be created as needed.
     """
     head, _ = os.path.split(filepath)
-    if 'w' in mode and head and not os.path.exists(head):
+    if "w" in mode and head and not os.path.exists(head):
         os.makedirs(head)
 
 
 def _validate_read_mode(mode):
-    if 'w' in mode or 'a' in mode:
+    if "w" in mode or "a" in mode:
         raise ValueError(
-            'mode="{}" is invalid; file must be opened in read mode'.format(mode))
+            'mode="{}" is invalid; file must be opened in read mode'.format(mode)
+        )
 
 
 def _validate_write_mode(mode):
-    if 'r' in mode:
+    if "r" in mode:
         raise ValueError(
-            'mode="{}" is invalid; file must be opened in write mode'.format(mode))
+            'mode="{}" is invalid; file must be opened in write mode'.format(mode)
+        )
 
 
 def coerce_content_type(content, file_mode):
@@ -197,9 +213,9 @@ def coerce_content_type(content, file_mode):
     are incompatible (either bytes with text mode or unicode with bytes mode),
     try to coerce the content type so it can be written.
     """
-    if 't' in file_mode and isinstance(content, compat.bytes_):
+    if "t" in file_mode and isinstance(content, compat.bytes_):
         return compat.bytes_to_unicode(content)
-    elif 'b' in file_mode and isinstance(content, compat.unicode_):
+    elif "b" in file_mode and isinstance(content, compat.unicode_):
         return compat.unicode_to_bytes(content)
     return content
 
@@ -255,9 +271,10 @@ def split_record_fields(items, content_field, itemwise=False):
     a temporary alias for that other function. You should use it instead of this.
     """
     warnings.warn(
-        '`split_record_fields()` has been renamed `split_records()`, '
-        'and this function is just a temporary alias for it.',
-        DeprecationWarning)
+        "`split_record_fields()` has been renamed `split_records()`, "
+        "and this function is just a temporary alias for it.",
+        DeprecationWarning,
+    )
     return split_records(items, content_field, itemwise=False)
 
 
@@ -278,8 +295,14 @@ def unzip(seq):
     return tuple(itertools.starmap(itertoolz.pluck, enumerate(seqs)))
 
 
-def get_filenames(dirname, match_regex=None, ignore_regex=None,
-                  extension=None, ignore_invisible=True, recursive=False):
+def get_filenames(
+    dirname,
+    match_regex=None,
+    ignore_regex=None,
+    extension=None,
+    ignore_invisible=True,
+    recursive=False,
+):
     """
     Yield full paths of files on disk under directory ``dirname``, optionally
     filtering for or against particular patterns or file extensions and
@@ -311,7 +334,7 @@ def get_filenames(dirname, match_regex=None, ignore_regex=None,
     ignore_regex = re.compile(ignore_regex) if ignore_regex else None
 
     def is_good_file(filename, filepath):
-        if ignore_invisible and filename.startswith('.'):
+        if ignore_invisible and filename.startswith("."):
             return False
         if match_regex and not match_regex.search(filename):
             return False
@@ -325,10 +348,10 @@ def get_filenames(dirname, match_regex=None, ignore_regex=None,
 
     if recursive is True:
         for dirpath, _, filenames in os.walk(dirname):
-            if ignore_invisible and dirpath.startswith('.'):
+            if ignore_invisible and dirpath.startswith("."):
                 continue
             for filename in filenames:
-                if filename.startswith('.'):
+                if filename.startswith("."):
                     continue
                 if is_good_file(filename, dirpath):
                     yield os.path.join(dirpath, filename)

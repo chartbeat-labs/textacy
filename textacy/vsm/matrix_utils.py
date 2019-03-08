@@ -12,7 +12,7 @@ import numpy as np
 import scipy.sparse as sp
 
 
-def get_term_freqs(doc_term_matrix, type_='linear'):
+def get_term_freqs(doc_term_matrix, type_="linear"):
     """
     Compute frequencies for all terms in a document-term matrix, with optional
     sub-linear scaling.
@@ -34,18 +34,20 @@ def get_term_freqs(doc_term_matrix, type_='linear'):
             if ``type_`` isn't one of {"linear", "sqrt", "log"}.
     """
     if doc_term_matrix.nnz == 0:
-        raise ValueError('`doc_term_matrix` must have at least 1 non-zero entry')
+        raise ValueError("`doc_term_matrix` must have at least 1 non-zero entry")
     tfs = np.asarray(doc_term_matrix.sum(axis=0)).ravel()
-    if type_ == 'linear':
+    if type_ == "linear":
         return tfs  # tfs is already linear
-    elif type_ == 'sqrt':
+    elif type_ == "sqrt":
         return np.sqrt(tfs)
-    elif type_ == 'log':
+    elif type_ == "log":
         return np.log(tfs) + 1.0
     else:
         raise ValueError(
-            'type_ = {} is invalid; value must be one of {}'.format(
-                type_, {'linear', 'sqrt', 'log'}))
+            "type_ = {} is invalid; value must be one of {}".format(
+                type_, {"linear", "sqrt", "log"}
+            )
+        )
 
 
 def get_doc_freqs(doc_term_matrix):
@@ -67,12 +69,12 @@ def get_doc_freqs(doc_term_matrix):
         ValueError: if ``doc_term_matrix`` doesn't have any non-zero entries.
     """
     if doc_term_matrix.nnz == 0:
-        raise ValueError('`doc_term_matrix` must have at least 1 non-zero entry')
+        raise ValueError("`doc_term_matrix` must have at least 1 non-zero entry")
     _, n_terms = doc_term_matrix.shape
     return np.bincount(doc_term_matrix.indices, minlength=n_terms)
 
 
-def get_inverse_doc_freqs(doc_term_matrix, type_='smooth'):
+def get_inverse_doc_freqs(doc_term_matrix, type_="smooth"):
     """
     Compute inverse document frequencies for all terms in a document-term matrix,
     using one of several IDF formulations.
@@ -99,21 +101,23 @@ def get_inverse_doc_freqs(doc_term_matrix, type_='smooth'):
     """
     dfs = get_doc_freqs(doc_term_matrix)
     n_docs, _ = doc_term_matrix.shape
-    if type_ == 'standard':
+    if type_ == "standard":
         return np.log(n_docs / dfs) + 1.0
-    elif type_ == 'smooth':
+    elif type_ == "smooth":
         n_docs += 1
         dfs += 1
         return np.log(n_docs / dfs) + 1.0
-    elif type_ == 'bm25':
+    elif type_ == "bm25":
         return np.log((n_docs - dfs + 0.5) / (dfs + 0.5))
     else:
         raise ValueError(
-            'type_ = {} is invalid; value must be one of {}'.format(
-                type_, {'standard', 'smooth', 'bm25'}))
+            "type_ = {} is invalid; value must be one of {}".format(
+                type_, {"standard", "smooth", "bm25"}
+            )
+        )
 
 
-def get_doc_lengths(doc_term_matrix, type_='linear'):
+def get_doc_lengths(doc_term_matrix, type_="linear"):
     """
     Compute the lengths (i.e. number of terms) for all documents in a
     document-term matrix.
@@ -134,16 +138,18 @@ def get_doc_lengths(doc_term_matrix, type_='linear'):
         ValueError: if ``type_`` isn't one of {"linear", "sqrt", "log"}.
     """
     dls = np.asarray(doc_term_matrix.sum(axis=1)).ravel()
-    if type_ == 'linear':
+    if type_ == "linear":
         return dls  # dls is already linear
-    elif type_ == 'sqrt':
+    elif type_ == "sqrt":
         return np.sqrt(dls)
-    elif type_ == 'log':
+    elif type_ == "log":
         return np.log(dls) + 1.0
     else:
         raise ValueError(
-            '`type_` = {} invalid; must be one of {}'.format(
-                type_, {'linear', 'sqrt', 'log'}))
+            "`type_` = {} invalid; must be one of {}".format(
+                type_, {"linear", "sqrt", "log"}
+            )
+        )
 
 
 def get_information_content(doc_term_matrix):
@@ -175,7 +181,7 @@ def get_information_content(doc_term_matrix):
     return ics
 
 
-def apply_idf_weighting(doc_term_matrix, type_='smooth'):
+def apply_idf_weighting(doc_term_matrix, type_="smooth"):
     """
     Apply inverse document frequency (idf) weighting to a term-frequency (tf)
     weighted document-term matrix, using one of several IDF formulations.
@@ -196,8 +202,9 @@ def apply_idf_weighting(doc_term_matrix, type_='smooth'):
     return doc_term_matrix.dot(sp.diags(idfs, 0))
 
 
-def filter_terms_by_df(doc_term_matrix, term_to_id,
-                       max_df=1.0, min_df=1, max_n_terms=None):
+def filter_terms_by_df(
+    doc_term_matrix, term_to_id, max_df=1.0, min_df=1, max_n_terms=None
+):
     """
     Filter out terms that are too common and/or too rare (by document frequency),
     and compactify the top ``max_n_terms`` in the ``id_to_term`` mapping accordingly.
@@ -232,13 +239,13 @@ def filter_terms_by_df(doc_term_matrix, term_to_id,
     if max_df == 1.0 and min_df == 1 and max_n_terms is None:
         return doc_term_matrix, term_to_id
     if max_df < 0 or min_df < 0 or (max_n_terms is not None and max_n_terms < 0):
-        raise ValueError('max_df, min_df, and max_n_terms may not be negative')
+        raise ValueError("max_df, min_df, and max_n_terms may not be negative")
 
     n_docs, n_terms = doc_term_matrix.shape
     max_doc_count = max_df if isinstance(max_df, int) else int(max_df * n_docs)
     min_doc_count = min_df if isinstance(min_df, int) else int(min_df * n_docs)
     if max_doc_count < min_doc_count:
-        raise ValueError('max_df corresponds to fewer documents than min_df')
+        raise ValueError("max_df corresponds to fewer documents than min_df")
 
     # calculate a mask based on document frequencies
     dfs = get_doc_freqs(doc_term_matrix)
@@ -248,7 +255,7 @@ def filter_terms_by_df(doc_term_matrix, term_to_id,
     if min_doc_count > 1:
         mask &= dfs >= min_doc_count
     if max_n_terms is not None and mask.sum() > max_n_terms:
-        tfs = get_term_freqs(doc_term_matrix, type_='linear')
+        tfs = get_term_freqs(doc_term_matrix, type_="linear")
         top_mask_inds = (-tfs[mask]).argsort()[:max_n_terms]
         new_mask = np.zeros(n_terms, dtype=bool)
         new_mask[np.where(mask)[0][top_mask_inds]] = True
@@ -256,21 +263,23 @@ def filter_terms_by_df(doc_term_matrix, term_to_id,
 
     # map old term indices to new ones
     new_indices = np.cumsum(mask) - 1
-    term_to_id = {term: new_indices[old_index]
-                  for term, old_index in term_to_id.items()
-                  if mask[old_index]}
+    term_to_id = {
+        term: new_indices[old_index]
+        for term, old_index in term_to_id.items()
+        if mask[old_index]
+    }
 
     kept_indices = np.where(mask)[0]
     if len(kept_indices) == 0:
         raise ValueError(
-            'After filtering, no terms remain; '
-            'try a lower `min_df` or higher `max_df`')
+            "After filtering, no terms remain; "
+            "try a lower `min_df` or higher `max_df`"
+        )
 
     return (doc_term_matrix[:, kept_indices], term_to_id)
 
 
-def filter_terms_by_ic(doc_term_matrix, term_to_id,
-                       min_ic=0.0, max_n_terms=None):
+def filter_terms_by_ic(doc_term_matrix, term_to_id, min_ic=0.0, max_n_terms=None):
     """
     Filter out terms that are too common and/or too rare (by information content),
     and compactify the top ``max_n_terms`` in the ``id_to_term`` mapping accordingly.
@@ -299,9 +308,9 @@ def filter_terms_by_ic(doc_term_matrix, term_to_id,
     if min_ic == 0.0 and max_n_terms is None:
         return doc_term_matrix, term_to_id
     if min_ic < 0.0 or min_ic > 1.0:
-        raise ValueError('min_ic must be a float in [0.0, 1.0]')
+        raise ValueError("min_ic must be a float in [0.0, 1.0]")
     if max_n_terms is not None and max_n_terms < 0:
-        raise ValueError('max_n_terms may not be negative')
+        raise ValueError("max_n_terms may not be negative")
 
     _, n_terms = doc_term_matrix.shape
 
@@ -318,12 +327,14 @@ def filter_terms_by_ic(doc_term_matrix, term_to_id,
 
     # map old term indices to new ones
     new_indices = np.cumsum(mask) - 1
-    term_to_id = {term: new_indices[old_index]
-                  for term, old_index in term_to_id.items()
-                  if mask[old_index]}
+    term_to_id = {
+        term: new_indices[old_index]
+        for term, old_index in term_to_id.items()
+        if mask[old_index]
+    }
 
     kept_indices = np.where(mask)[0]
     if len(kept_indices) == 0:
-        raise ValueError('After filtering, no terms remain; try a lower `min_ic`')
+        raise ValueError("After filtering, no terms remain; try a lower `min_ic`")
 
     return (doc_term_matrix[:, kept_indices], term_to_id)

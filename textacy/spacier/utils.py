@@ -55,7 +55,8 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
         lang = cache.load_spacy(lang)
     elif not isinstance(lang, SpacyLang):
         raise TypeError(
-            '`lang` must be {}, not {}'.format({compat.unicode_, SpacyLang}, type(lang)))
+            "`lang` must be {}, not {}".format({compat.unicode_, SpacyLang}, type(lang))
+        )
 
     words = []
     spaces = []
@@ -65,7 +66,7 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
     i = 0
     # iterate over text chunks and accumulate components needed to make a doc
     while i < text_len:
-        chunk_doc = lang(text[i: i + chunk_size])
+        chunk_doc = lang(text[i : i + chunk_size])
         words.extend(tok.text for tok in chunk_doc)
         spaces.extend(bool(tok.whitespace_) for tok in chunk_doc)
         np_arrays.append(chunk_doc.to_array(cols))
@@ -91,11 +92,11 @@ def merge_spans(spans, doc):
             string_store = doc.vocab.strings
             for span in spans:
                 retokenizer.merge(
-                    doc[span.start: span.end],
-                    attrs=attrs.intify_attrs({'ent_type': span.label}, string_store))
+                    doc[span.start : span.end],
+                    attrs=attrs.intify_attrs({"ent_type": span.label}, string_store),
+                )
     except AttributeError:
-        spans = [(span.start_char, span.end_char, span.label)
-                 for span in spans]
+        spans = [(span.start_char, span.end_char, span.label) for span in spans]
         for start_char, end_char, label in spans:
             doc.merge(start_char, end_char, ent_type=label)
 
@@ -114,7 +115,9 @@ def preserve_case(token):
         ValueError: If parent document has not been POS-tagged.
     """
     if token.doc.is_tagged is False:
-        raise ValueError('parent doc of token "{}" has not been POS-tagged'.format(token))
+        raise ValueError(
+            'parent doc of token "{}" has not been POS-tagged'.format(token)
+        )
     if token.pos == PROPN or text_utils.is_acronym(token.text):
         return True
     else:
@@ -134,19 +137,25 @@ def get_normalized_text(span_or_token):
         str
     """
     if isinstance(span_or_token, SpacyToken):
-        return span_or_token.text if preserve_case(span_or_token) else span_or_token.lemma_
+        return (
+            span_or_token.text if preserve_case(span_or_token) else span_or_token.lemma_
+        )
     elif isinstance(span_or_token, SpacySpan):
-        return ' '.join(token.text if preserve_case(token) else token.lemma_
-                        for token in span_or_token)
+        return " ".join(
+            token.text if preserve_case(token) else token.lemma_
+            for token in span_or_token
+        )
     else:
         raise TypeError(
-            'input must be a spaCy Token or Span, not "{}"'.format(type(span_or_token)))
+            'input must be a spaCy Token or Span, not "{}"'.format(type(span_or_token))
+        )
 
 
 def get_main_verbs_of_sent(sent):
     """Return the main (non-auxiliary) verbs in a sentence."""
-    return [tok for tok in sent
-            if tok.pos == VERB and tok.dep_ not in constants.AUX_DEPS]
+    return [
+        tok for tok in sent if tok.pos == VERB and tok.dep_ not in constants.AUX_DEPS
+    ]
 
 
 def get_subjects_of_verb(verb):
@@ -164,7 +173,7 @@ def get_objects_of_verb(verb):
     """
     objs = [tok for tok in verb.rights if tok.dep_ in constants.OBJ_DEPS]
     # get open clausal complements (xcomp)
-    objs.extend(tok for tok in verb.rights if tok.dep_ == 'xcomp')
+    objs.extend(tok for tok in verb.rights if tok.dep_ == "xcomp")
     # get additional conjunct objects
     objs.extend(tok for obj in objs for tok in _get_conjuncts(obj))
     return objs
@@ -175,7 +184,7 @@ def _get_conjuncts(tok):
     Return conjunct dependents of the leftmost conjunct in a coordinated phrase,
     e.g. "Burton, [Dan], and [Josh] ...".
     """
-    return [right for right in tok.rights if right.dep_ == 'conj']
+    return [right for right in tok.rights if right.dep_ == "conj"]
 
 
 def get_span_for_compound_noun(noun):
@@ -183,8 +192,12 @@ def get_span_for_compound_noun(noun):
     Return document indexes spanning all (adjacent) tokens
     in a compound noun.
     """
-    min_i = noun.i - sum(1 for _ in itertools.takewhile(lambda x: x.dep_ == 'compound',
-                                                        reversed(list(noun.lefts))))
+    min_i = noun.i - sum(
+        1
+        for _ in itertools.takewhile(
+            lambda x: x.dep_ == "compound", reversed(list(noun.lefts))
+        )
+    )
     return (min_i, noun.i)
 
 
@@ -193,8 +206,16 @@ def get_span_for_verb_auxiliaries(verb):
     Return document indexes spanning all (adjacent) tokens
     around a verb that are auxiliary verbs or negations.
     """
-    min_i = verb.i - sum(1 for _ in itertools.takewhile(lambda x: x.dep_ in constants.AUX_DEPS,
-                                                        reversed(list(verb.lefts))))
-    max_i = verb.i + sum(1 for _ in itertools.takewhile(lambda x: x.dep_ in constants.AUX_DEPS,
-                                                        verb.rights))
+    min_i = verb.i - sum(
+        1
+        for _ in itertools.takewhile(
+            lambda x: x.dep_ in constants.AUX_DEPS, reversed(list(verb.lefts))
+        )
+    )
+    max_i = verb.i + sum(
+        1
+        for _ in itertools.takewhile(
+            lambda x: x.dep_ in constants.AUX_DEPS, verb.rights
+        )
+    )
     return (min_i, max_i)

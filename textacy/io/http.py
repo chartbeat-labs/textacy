@@ -16,8 +16,9 @@ from tqdm import tqdm
 from .utils import _make_dirs
 
 
-def read_http_stream(url, lines=False,
-                     decode_unicode=False, chunk_size=1024, auth=None):
+def read_http_stream(
+    url, lines=False, decode_unicode=False, chunk_size=1024, auth=None
+):
     """
     Read data from ``url`` in a stream, either all at once or line-by-line.
 
@@ -44,22 +45,22 @@ def read_http_stream(url, lines=False,
     with closing(requests.get(url, stream=True, auth=auth)) as r:
         # set fallback encoding if unable to infer from headers
         if r.encoding is None:
-            r.encoding = 'utf-8'
+            r.encoding = "utf-8"
         if lines is False:
             if decode_unicode is True:
                 yield r.text
             else:
                 yield r.content
         else:
-            lines = r.iter_lines(
-                chunk_size=chunk_size, decode_unicode=decode_unicode)
+            lines = r.iter_lines(chunk_size=chunk_size, decode_unicode=decode_unicode)
             for line in lines:
                 if line:
                     yield line
 
 
-def write_http_stream(url, fname, mode='wt', encoding=None, make_dirs=False,
-                      chunk_size=1024, auth=None):
+def write_http_stream(
+    url, fname, mode="wt", encoding=None, make_dirs=False, chunk_size=1024, auth=None
+):
     """
     Download data from ``url`` in a stream, and write successive chunks
     to disk at ``fname``.
@@ -84,20 +85,21 @@ def write_http_stream(url, fname, mode='wt', encoding=None, make_dirs=False,
 
             .. seealso:: http://docs.python-requests.org/en/master/user/authentication/
     """
-    decode_unicode = True if 't' in mode else False
+    decode_unicode = True if "t" in mode else False
     if make_dirs is True:
         _make_dirs(fname, mode)
     # always close the connection
     with closing(requests.get(url, stream=True, auth=auth)) as r:
         # set fallback encoding if unable to infer from headers
         if r.encoding is None:
-            r.encoding = 'utf-8'
+            r.encoding = "utf-8"
         with io.open(fname, mode=mode, encoding=encoding) as f:
             pbar = tqdm(
-                unit='B', unit_scale=True,
-                total=int(r.headers.get('content-length', 0)))
+                unit="B", unit_scale=True, total=int(r.headers.get("content-length", 0))
+            )
             chunks = r.iter_content(
-                chunk_size=chunk_size, decode_unicode=decode_unicode)
+                chunk_size=chunk_size, decode_unicode=decode_unicode
+            )
             for chunk in chunks:
                 # needed (?) to filter out "keep-alive" new chunks
                 if chunk:

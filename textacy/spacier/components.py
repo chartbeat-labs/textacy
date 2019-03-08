@@ -66,18 +66,28 @@ class TextStatsComponent(object):
         :class:`textacy.text_stats.TextStats`
     """
 
-    name = 'textacy_text_stats'
+    name = "textacy_text_stats"
 
     def __init__(self, attrs=None):
         if attrs is None:
             self.attrs = (
-                'n_sents', 'n_words', 'n_chars', 'n_syllables',
-                'n_unique_words', 'n_long_words',
-                'n_monosyllable_words', 'n_polysyllable_words',
-                'flesch_kincaid_grade_level', 'flesch_reading_ease',
-                'smog_index', 'gunning_fog_index', 'coleman_liau_index',
-                'automated_readability_index', 'lix', 'gulpease_index',
-                'wiener_sachtextformel',
+                "n_sents",
+                "n_words",
+                "n_chars",
+                "n_syllables",
+                "n_unique_words",
+                "n_long_words",
+                "n_monosyllable_words",
+                "n_polysyllable_words",
+                "flesch_kincaid_grade_level",
+                "flesch_reading_ease",
+                "smog_index",
+                "gunning_fog_index",
+                "coleman_liau_index",
+                "automated_readability_index",
+                "lix",
+                "gulpease_index",
+                "wiener_sachtextformel",
             )
         elif isinstance(attrs, compat.string_types):
             self.attrs = (attrs,)
@@ -97,7 +107,8 @@ class TextStatsComponent(object):
                     "`TextStats` class doesn't have '%s' attribute, so it can't "
                     "be set on this `SpacyDoc`. Check the attrs used to initialize "
                     "the `TextStatsComponent` in this pipeline for errors.",
-                    attr)
+                    attr,
+                )
                 raise
         return doc
 

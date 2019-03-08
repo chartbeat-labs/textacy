@@ -239,17 +239,24 @@ class Vectorizer(object):
             vectorized outputs.
     """
 
-    def __init__(self, tf_type='linear',
-                 apply_idf=False, idf_type='smooth',
-                 apply_dl=False, dl_type='sqrt',
-                 norm=None,
-                 min_df=1, max_df=1.0, max_n_terms=None,
-                 vocabulary_terms=None):
+    def __init__(
+        self,
+        tf_type="linear",
+        apply_idf=False,
+        idf_type="smooth",
+        apply_dl=False,
+        dl_type="sqrt",
+        norm=None,
+        min_df=1,
+        max_df=1.0,
+        max_n_terms=None,
+        vocabulary_terms=None,
+    ):
         # sanity check numeric arguments
         if min_df < 0 or max_df < 0:
-            raise ValueError('`min_df` and `max_df` must be positive numbers or None')
+            raise ValueError("`min_df` and `max_df` must be positive numbers or None")
         if max_n_terms and max_n_terms < 0:
-            raise ValueError('`max_n_terms` must be a positive integer or None')
+            raise ValueError("`max_n_terms` must be a positive integer or None")
         self.tf_type = tf_type
         self.apply_idf = apply_idf
         self.idf_type = idf_type
@@ -259,7 +266,9 @@ class Vectorizer(object):
         self.min_df = min_df
         self.max_df = max_df
         self.max_n_terms = max_n_terms
-        self.vocabulary_terms, self._fixed_terms = self._validate_vocabulary(vocabulary_terms)
+        self.vocabulary_terms, self._fixed_terms = self._validate_vocabulary(
+            vocabulary_terms
+        )
         self.id_to_term_ = {}
         self._idf_diag = None
         self._avg_doc_length = None
@@ -285,26 +294,31 @@ class Vectorizer(object):
                     if vocab.setdefault(term, i) != i:
                         raise ValueError(
                             'Terms in `vocabulary` must be unique, but "{}" '
-                            'was found more than once.'.format(term))
+                            "was found more than once.".format(term)
+                        )
                 vocabulary = vocab
             else:
                 ids = set(vocabulary.values())
                 if len(ids) != len(vocabulary):
                     counts = collections.Counter(vocabulary.values())
                     n_dupe_term_ids = sum(
-                        1 for term_id, term_id_count in counts.items()
-                        if term_id_count > 1)
+                        1
+                        for term_id, term_id_count in counts.items()
+                        if term_id_count > 1
+                    )
                     raise ValueError(
-                        'Term ids in `vocabulary` must be unique, but {} ids'
-                        'were assigned to more than one term.'.format(n_dupe_term_ids))
+                        "Term ids in `vocabulary` must be unique, but {} ids"
+                        "were assigned to more than one term.".format(n_dupe_term_ids)
+                    )
                 for i in compat.range_(len(vocabulary)):
                     if i not in ids:
                         raise ValueError(
-                            'Term ids in `vocabulary` must be compact, i.e. '
-                            'not have any gaps, but term id {} is missing from '
-                            'a vocabulary of {} terms'.format(i, len(vocabulary)))
+                            "Term ids in `vocabulary` must be compact, i.e. "
+                            "not have any gaps, but term id {} is missing from "
+                            "a vocabulary of {} terms".format(i, len(vocabulary))
+                        )
             if not vocabulary:
-                raise ValueError('`vocabulary` must not be empty.')
+                raise ValueError("`vocabulary` must not be empty.")
             is_fixed = True
         else:
             is_fixed = False
@@ -316,10 +330,9 @@ class Vectorizer(object):
         if not, raise a ValueError.
         """
         if not isinstance(self.vocabulary_terms, collections.Mapping):
-            raise ValueError(
-                'vocabulary hasn\'t been built; call `Vectorizer.fit()`')
+            raise ValueError("vocabulary hasn't been built; call `Vectorizer.fit()`")
         if len(self.vocabulary_terms) == 0:
-            raise ValueError('vocabulary is empty')
+            raise ValueError("vocabulary is empty")
 
     @property
     def id_to_term(self):
@@ -331,7 +344,8 @@ class Vectorizer(object):
         """
         if len(self.id_to_term_) != self.vocabulary_terms:
             self.id_to_term_ = {
-                term_id: term_str for term_str, term_id in self.vocabulary_terms.items()}
+                term_id: term_str for term_str, term_id in self.vocabulary_terms.items()
+            }
         return self.id_to_term_
 
     # TODO: Do we *want* to allow setting to this property?
@@ -349,8 +363,12 @@ class Vectorizer(object):
         output doc-term-matrix, ``doc_term_matrix[:, 0]``.
         """
         self._check_vocabulary()
-        return [term_str for term_str, _
-                in sorted(self.vocabulary_terms.items(), key=operator.itemgetter(1))]
+        return [
+            term_str
+            for term_str, _ in sorted(
+                self.vocabulary_terms.items(), key=operator.itemgetter(1)
+            )
+        ]
 
     def fit(self, tokenized_docs):
         """
@@ -454,15 +472,18 @@ class Vectorizer(object):
         """
         # count terms and, if not provided on init, build up a vocabulary
         doc_term_matrix, vocabulary_terms = self._count_terms(
-            tokenized_docs, self._fixed_terms)
+            tokenized_docs, self._fixed_terms
+        )
 
         if self._fixed_terms is False:
             # filter terms by doc freq or info content, as specified in init
             doc_term_matrix, vocabulary_terms = self._filter_terms(
-                doc_term_matrix, vocabulary_terms)
+                doc_term_matrix, vocabulary_terms
+            )
             # sort features alphabetically (vocabulary_terms modified in-place)
             doc_term_matrix = self._sort_vocab_and_matrix(
-                doc_term_matrix, vocabulary_terms, axis='columns')
+                doc_term_matrix, vocabulary_terms, axis="columns"
+            )
             # *now* vocabulary_terms are known and fixed
             self.vocabulary_terms = vocabulary_terms
             self._fixed_terms = True
@@ -473,13 +494,15 @@ class Vectorizer(object):
             # store the global weights as a diagonal sparse matrix of idfs
             idfs = get_inverse_doc_freqs(doc_term_matrix, type_=self.idf_type)
             self._idf_diag = sp.spdiags(
-                idfs, diags=0, m=n_terms, n=n_terms, format='csr')
+                idfs, diags=0, m=n_terms, n=n_terms, format="csr"
+            )
 
-        if self.tf_type == 'bm25' and self.apply_dl is True:
+        if self.tf_type == "bm25" and self.apply_dl is True:
             # store the avg document length, used in bm25 weighting to normalize
             # term weights by the length of the containing documents
             self._avg_doc_length = get_doc_lengths(
-                doc_term_matrix, type_=self.dl_type).mean()
+                doc_term_matrix, type_=self.dl_type
+            ).mean()
 
         return doc_term_matrix
 
@@ -503,8 +526,8 @@ class Vectorizer(object):
         else:
             vocabulary = self.vocabulary_terms
 
-        indices = array(str('i'))
-        indptr = array(str('i'), [0])
+        indices = array(str("i"))
+        indptr = array(str("i"), [0])
         for terms in tokenized_docs:
             for term in terms:
                 try:
@@ -527,7 +550,8 @@ class Vectorizer(object):
         doc_term_matrix = sp.csr_matrix(
             (data, indices, indptr),
             shape=(len(indptr) - 1, len(vocabulary)),
-            dtype=np.int32)
+            dtype=np.int32,
+        )
         doc_term_matrix.sum_duplicates()
 
         # pretty sure this is a good thing to do... o_O
@@ -550,8 +574,12 @@ class Vectorizer(object):
         """
         if self.max_df != 1.0 or self.min_df != 1 or self.max_n_terms is not None:
             doc_term_matrix, vocabulary = filter_terms_by_df(
-                doc_term_matrix, vocabulary,
-                max_df=self.max_df, min_df=self.min_df, max_n_terms=self.max_n_terms)
+                doc_term_matrix,
+                vocabulary,
+                max_df=self.max_df,
+                min_df=self.min_df,
+                max_n_terms=self.max_n_terms,
+            )
         return doc_term_matrix, vocabulary
 
     def _sort_vocab_and_matrix(self, matrix, vocabulary, axis):
@@ -574,13 +602,16 @@ class Vectorizer(object):
             new_idx_array[new_idx] = old_idx
             vocabulary[term] = new_idx
         # use fancy indexing to reorder rows or columns
-        if axis == 'rows' or axis == 0:
+        if axis == "rows" or axis == 0:
             return matrix[new_idx_array, :]
-        elif axis == 'columns' or axis == 1:
+        elif axis == "columns" or axis == 1:
             return matrix[:, new_idx_array]
         else:
-            raise ValueError('`axis` = {} is invalid; must be one of {}'.format(
-                axis, {'rows', 'columns', 0, 1}))
+            raise ValueError(
+                "`axis` = {} is invalid; must be one of {}".format(
+                    axis, {"rows", "columns", 0, 1}
+                )
+            )
 
     def _reweight_values(self, doc_term_matrix):
         """
@@ -595,33 +626,38 @@ class Vectorizer(object):
             :class:`scipy.sparse.csr_matrix`
         """
         # re-weight the local components (term freqs)
-        if self.tf_type == 'binary':
+        if self.tf_type == "binary":
             doc_term_matrix.data.fill(1)
-        elif self.tf_type == 'bm25':
+        elif self.tf_type == "bm25":
             if self.apply_dl is False:
                 doc_term_matrix.data = (
-                    doc_term_matrix.data * (BM25_K1 + 1.0) /
-                    (BM25_K1 + doc_term_matrix.data)
+                    doc_term_matrix.data
+                    * (BM25_K1 + 1.0)
+                    / (BM25_K1 + doc_term_matrix.data)
                 )
             else:
                 dls = get_doc_lengths(doc_term_matrix, type_=self.dl_type)
                 length_norm = (1 - BM25_B) + (BM25_B * (dls / self._avg_doc_length))
                 doc_term_matrix = doc_term_matrix.tocoo(copy=False)
                 doc_term_matrix.data = (
-                    doc_term_matrix.data * (BM25_K1 + 1.0) /
-                    (doc_term_matrix.data + (BM25_K1 * length_norm[doc_term_matrix.row]))
+                    doc_term_matrix.data
+                    * (BM25_K1 + 1.0)
+                    / (
+                        doc_term_matrix.data
+                        + (BM25_K1 * length_norm[doc_term_matrix.row])
+                    )
                 )
                 doc_term_matrix = doc_term_matrix.tocsr(copy=False)
-        elif self.tf_type == 'sqrt':
-            _ = np.sqrt(doc_term_matrix.data, doc_term_matrix.data, casting='unsafe')
-        elif self.tf_type == 'log':
-            _ = np.log(doc_term_matrix.data, doc_term_matrix.data, casting='unsafe')
+        elif self.tf_type == "sqrt":
+            _ = np.sqrt(doc_term_matrix.data, doc_term_matrix.data, casting="unsafe")
+        elif self.tf_type == "log":
+            _ = np.log(doc_term_matrix.data, doc_term_matrix.data, casting="unsafe")
             doc_term_matrix.data += 1.0
-        elif self.tf_type == 'linear':
+        elif self.tf_type == "linear":
             pass  # tfs are already linear
         else:
             # this should never raise, i'm just being a worrywart
-            raise ValueError('`tf_type` = {} is invalid'.format(self.tf_type))
+            raise ValueError("`tf_type` = {} is invalid".format(self.tf_type))
 
         # apply the global component (idfs), column-wise
         if self.apply_idf is True:
@@ -629,14 +665,15 @@ class Vectorizer(object):
 
         # apply normalizations, row-wise
         # unless we've already handled it for bm25-style tf
-        if self.apply_dl is True and self.tf_type != 'bm25':
+        if self.apply_dl is True and self.tf_type != "bm25":
             n_docs, _ = doc_term_matrix.shape
             dls = get_doc_lengths(doc_term_matrix, type_=self.dl_type)
-            dl_diag = sp.spdiags(1.0 / dls, diags=0, m=n_docs, n=n_docs, format='csr')
+            dl_diag = sp.spdiags(1.0 / dls, diags=0, m=n_docs, n=n_docs, format="csr")
             doc_term_matrix = dl_diag * doc_term_matrix
         if self.norm is not None:
             doc_term_matrix = normalize_mat(
-                doc_term_matrix, norm=self.norm, axis=1, copy=False)
+                doc_term_matrix, norm=self.norm, axis=1, copy=False
+            )
 
         return doc_term_matrix
 
@@ -649,26 +686,34 @@ class Vectorizer(object):
         """
         w = []
         tf_types = {
-            'binary': '1', 'linear': 'tf', 'sqrt': 'sqrt(tf)', 'log': 'log(tf)',
-            'bm25': {
-                True: '(tf * (k + 1)) / (tf + k * (1 - b + b * (length / avg(lengths)))',
-                False: '(tf * (k + 1)) / (tf + k)'}
+            "binary": "1",
+            "linear": "tf",
+            "sqrt": "sqrt(tf)",
+            "log": "log(tf)",
+            "bm25": {
+                True: "(tf * (k + 1)) / (tf + k * (1 - b + b * (length / avg(lengths)))",
+                False: "(tf * (k + 1)) / (tf + k)",
+            },
         }
         idf_types = {
-            'standard': 'log(n_docs / df) + 1',
-            'smooth': 'log((n_docs + 1) / (df + 1)) + 1',
-            'bm25': 'log((n_docs - df + 0.5) / (df + 0.5))'}
+            "standard": "log(n_docs / df) + 1",
+            "smooth": "log((n_docs + 1) / (df + 1)) + 1",
+            "bm25": "log((n_docs - df + 0.5) / (df + 0.5))",
+        }
         dl_types = {
-            'linear': '1/length', 'sqrt': '1/sqrt(length)', 'log': '1/log(length) + 1'}
-        if self.tf_type == 'bm25':
+            "linear": "1/length",
+            "sqrt": "1/sqrt(length)",
+            "log": "1/log(length) + 1",
+        }
+        if self.tf_type == "bm25":
             w.append(tf_types[self.tf_type][self.apply_dl])
         else:
             w.append(tf_types[self.tf_type])
         if self.apply_idf:
             w.append(idf_types[self.idf_type])
-        if self.apply_dl and self.tf_type != 'bm25':
+        if self.apply_dl and self.tf_type != "bm25":
             w.append(dl_types[self.dl_type])
-        return ' * '.join(w)
+        return " * ".join(w)
 
 
 class GroupVectorizer(Vectorizer):
@@ -826,19 +871,36 @@ class GroupVectorizer(Vectorizer):
         :class:`Vectorizer`
     """
 
-    def __init__(self, tf_type='linear',
-                 apply_idf=False, idf_type='smooth',
-                 apply_dl=False, dl_type='linear',
-                 norm=None,
-                 min_df=1, max_df=1.0, max_n_terms=None,
-                 vocabulary_terms=None, vocabulary_grps=None):
+    def __init__(
+        self,
+        tf_type="linear",
+        apply_idf=False,
+        idf_type="smooth",
+        apply_dl=False,
+        dl_type="linear",
+        norm=None,
+        min_df=1,
+        max_df=1.0,
+        max_n_terms=None,
+        vocabulary_terms=None,
+        vocabulary_grps=None,
+    ):
         super(GroupVectorizer, self).__init__(
-            tf_type=tf_type, apply_idf=apply_idf, idf_type=idf_type,
-            apply_dl=apply_dl, dl_type=dl_type, norm=norm,
-            min_df=min_df, max_df=max_df, max_n_terms=max_n_terms,
-            vocabulary_terms=vocabulary_terms)
+            tf_type=tf_type,
+            apply_idf=apply_idf,
+            idf_type=idf_type,
+            apply_dl=apply_dl,
+            dl_type=dl_type,
+            norm=norm,
+            min_df=min_df,
+            max_df=max_df,
+            max_n_terms=max_n_terms,
+            vocabulary_terms=vocabulary_terms,
+        )
         # now do the same thing for grps as was done for terms
-        self.vocabulary_grps, self._fixed_grps = self._validate_vocabulary(vocabulary_grps)
+        self.vocabulary_grps, self._fixed_grps = self._validate_vocabulary(
+            vocabulary_grps
+        )
         self.id_to_grp_ = {}
 
     @property
@@ -851,7 +913,8 @@ class GroupVectorizer(Vectorizer):
         """
         if len(self.id_to_grp_) != self.vocabulary_grps:
             self.id_to_grp_ = {
-                grp_id: grp_str for grp_str, grp_id in self.vocabulary_grps.items()}
+                grp_id: grp_str for grp_str, grp_id in self.vocabulary_grps.items()
+            }
         return self.id_to_grp_
 
     # @id_to_grp.setter
@@ -868,8 +931,12 @@ class GroupVectorizer(Vectorizer):
         output group-term-matrix, ``grp_term_matrix[0, :]``.
         """
         self._check_vocabulary()
-        return [grp_str for grp_str, _
-                in sorted(self.vocabulary_grps.items(), key=operator.itemgetter(1))]
+        return [
+            grp_str
+            for grp_str, _ in sorted(
+                self.vocabulary_grps.items(), key=operator.itemgetter(1)
+            )
+        ]
 
     def fit(self, tokenized_docs, grps):
         """
@@ -969,8 +1036,7 @@ class GroupVectorizer(Vectorizer):
             all uppercased: The output group-term-matrix will be empty.
         """
         self._check_vocabulary()
-        grp_term_matrix, _, _ = self._count_terms(
-            tokenized_docs, grps, True, True)
+        grp_term_matrix, _, _ = self._count_terms(tokenized_docs, grps, True, True)
         return self._reweight_values(grp_term_matrix)
 
     def _fit(self, tokenized_docs, grps):
@@ -990,22 +1056,26 @@ class GroupVectorizer(Vectorizer):
         """
         # count terms and, if not provided on init, build up a vocabulary
         grp_term_matrix, vocabulary_terms, vocabulary_grps = self._count_terms(
-            tokenized_docs, grps, self._fixed_terms, self._fixed_grps)
+            tokenized_docs, grps, self._fixed_terms, self._fixed_grps
+        )
 
         if self._fixed_terms is False:
             # filter terms by doc freq or info content, as specified in init
             grp_term_matrix, vocabulary_terms = self._filter_terms(
-                grp_term_matrix, vocabulary_terms)
+                grp_term_matrix, vocabulary_terms
+            )
             # sort features alphabetically (vocabulary_terms modified in-place)
             grp_term_matrix = self._sort_vocab_and_matrix(
-                grp_term_matrix, vocabulary_terms, axis='columns')
+                grp_term_matrix, vocabulary_terms, axis="columns"
+            )
             # *now* vocabulary_terms are known and fixed
             self.vocabulary_terms = vocabulary_terms
             self._fixed_terms = True
         if self._fixed_grps is False:
             # sort groups alphabetically (vocabulary_grps modified in-place)
             grp_term_matrix = self._sort_vocab_and_matrix(
-                grp_term_matrix, vocabulary_grps, axis='rows')
+                grp_term_matrix, vocabulary_grps, axis="rows"
+            )
             # *now* vocabulary_grps are known and fixed
             self.vocabulary_grps = vocabulary_grps
             self._fixed_grps = True
@@ -1016,13 +1086,15 @@ class GroupVectorizer(Vectorizer):
             # store the global weights as a diagonal sparse matrix of idfs
             idfs = get_inverse_doc_freqs(grp_term_matrix, type_=self.idf_type)
             self._idf_diag = sp.spdiags(
-                idfs, diags=0, m=n_terms, n=n_terms, format='csr')
+                idfs, diags=0, m=n_terms, n=n_terms, format="csr"
+            )
 
-        if self.tf_type == 'bm25' and self.apply_dl is True:
+        if self.tf_type == "bm25" and self.apply_dl is True:
             # store the avg document length, used in bm25 weighting to normalize
             # term weights by the length of the containing documents
             self._avg_doc_length = get_doc_lengths(
-                grp_term_matrix, type_=self.dl_type).mean()
+                grp_term_matrix, type_=self.dl_type
+            ).mean()
 
         return grp_term_matrix
 
@@ -1057,9 +1129,9 @@ class GroupVectorizer(Vectorizer):
         else:
             vocabulary_grps = self.vocabulary_grps
 
-        data = array(str('i'))
-        cols = array(str('i'))
-        rows = array(str('i'))
+        data = array(str("i"))
+        cols = array(str("i"))
+        rows = array(str("i"))
         for grp, terms in compat.zip_(grps, tokenized_docs):
 
             try:
@@ -1094,7 +1166,8 @@ class GroupVectorizer(Vectorizer):
         grp_term_matrix = sp.csr_matrix(
             (data, (rows, cols)),
             shape=(len(vocabulary_grps), len(vocabulary_terms)),
-            dtype=np.int32)
+            dtype=np.int32,
+        )
         grp_term_matrix.sort_indices()
 
         return grp_term_matrix, vocabulary_terms, vocabulary_grps

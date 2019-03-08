@@ -12,8 +12,7 @@ from .. import compat
 from .utils import open_sesame
 
 
-def read_csv(fname, encoding=None,
-             fieldnames=None, dialect='excel', delimiter=','):
+def read_csv(fname, encoding=None, fieldnames=None, dialect="excel", delimiter=","):
     """
     Read the contents of a CSV file at ``fname``, streaming line-by-line,
     where each line is a list of strings and/or floats whose values
@@ -49,25 +48,33 @@ def read_csv(fname, encoding=None,
         https://docs.python.org/3/library/csv.html#csv.reader
     """
     has_header = False
-    with open_sesame(fname, mode='rt', encoding=encoding, newline='') as f:
-        if dialect == 'infer' or fieldnames == 'infer':
+    with open_sesame(fname, mode="rt", encoding=encoding, newline="") as f:
+        if dialect == "infer" or fieldnames == "infer":
             sniffer = compat.csv.Sniffer()
             # add pipes to the list of preferred delimiters, and put spaces last
-            sniffer.preferred = [',', '\t', '|', ';', ':', ' ']
-            sample = ''.join(f.readline() for _ in range(5))  # f.read(1024)
-            if dialect == 'infer':
+            sniffer.preferred = [",", "\t", "|", ";", ":", " "]
+            sample = "".join(f.readline() for _ in range(5))  # f.read(1024)
+            if dialect == "infer":
                 dialect = sniffer.sniff(sample)
-            if fieldnames == 'infer':
+            if fieldnames == "infer":
                 has_header = sniffer.has_header(sample)
             f.seek(0)
         if has_header is True:
             csv_reader = compat.csv.DictReader(
-                f, fieldnames=None, dialect=dialect, delimiter=delimiter,
-                quoting=compat.csv.QUOTE_NONNUMERIC)
+                f,
+                fieldnames=None,
+                dialect=dialect,
+                delimiter=delimiter,
+                quoting=compat.csv.QUOTE_NONNUMERIC,
+            )
         elif fieldnames:
             csv_reader = compat.csv.DictReader(
-                f, fieldnames=fieldnames, dialect=dialect, delimiter=delimiter,
-                quoting=compat.csv.QUOTE_NONNUMERIC)
+                f,
+                fieldnames=fieldnames,
+                dialect=dialect,
+                delimiter=delimiter,
+                quoting=compat.csv.QUOTE_NONNUMERIC,
+            )
             first_row = next(csv_reader)
             # is the first row a header with same values as fieldnames?
             # if not, we should yield the row as usual
@@ -75,14 +82,24 @@ def read_csv(fname, encoding=None,
                 yield first_row
         else:
             csv_reader = compat.csv.reader(
-                f, dialect=dialect, delimiter=delimiter,
-                quoting=compat.csv.QUOTE_NONNUMERIC)
+                f,
+                dialect=dialect,
+                delimiter=delimiter,
+                quoting=compat.csv.QUOTE_NONNUMERIC,
+            )
         for row in csv_reader:
             yield row
 
 
-def write_csv(data, fname, encoding=None, make_dirs=False,
-              fieldnames=None, dialect='excel', delimiter=','):
+def write_csv(
+    data,
+    fname,
+    encoding=None,
+    make_dirs=False,
+    fieldnames=None,
+    dialect="excel",
+    delimiter=",",
+):
     """
     Write rows of ``data`` to disk at ``fname``, where each row is an iterable
     or a dictionary of strings and/or numbers, written to one line with values
@@ -122,14 +139,23 @@ def write_csv(data, fname, encoding=None, make_dirs=False,
     See Also:
         https://docs.python.org/3/library/csv.html#csv.writer
     """
-    with open_sesame(fname, mode='wt', newline='', encoding=encoding, make_dirs=make_dirs) as f:
+    with open_sesame(
+        fname, mode="wt", newline="", encoding=encoding, make_dirs=make_dirs
+    ) as f:
         if fieldnames:
             csv_writer = compat.csv.DictWriter(
-                f, fieldnames, dialect=dialect, delimiter=delimiter,
-                quoting=compat.csv.QUOTE_NONNUMERIC)
+                f,
+                fieldnames,
+                dialect=dialect,
+                delimiter=delimiter,
+                quoting=compat.csv.QUOTE_NONNUMERIC,
+            )
             csv_writer.writeheader()
         else:
             csv_writer = compat.csv.writer(
-                f, dialect=dialect, delimiter=delimiter,
-                quoting=compat.csv.QUOTE_NONNUMERIC)
+                f,
+                dialect=dialect,
+                delimiter=delimiter,
+                quoting=compat.csv.QUOTE_NONNUMERIC,
+            )
         csv_writer.writerows(data)

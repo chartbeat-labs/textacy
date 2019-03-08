@@ -13,7 +13,7 @@ import scipy.sparse as sp
 from .utils import open_sesame
 
 
-def read_sparse_matrix(fname, kind='csc'):
+def read_sparse_matrix(fname, kind="csc"):
     """
     Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
     at ``fname``, and return an instantiated sparse matrix.
@@ -30,17 +30,20 @@ def read_sparse_matrix(fname, kind='csc'):
         https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.io.html#numpy-binary-files-npy-npz
     """
     npz_file = np.load(fname)
-    if kind == 'csc':
+    if kind == "csc":
         return sp.csc_matrix(
-            (npz_file['data'], npz_file['indices'], npz_file['indptr']),
-            shape=npz_file['shape'])
-    elif kind == 'csr':
+            (npz_file["data"], npz_file["indices"], npz_file["indptr"]),
+            shape=npz_file["shape"],
+        )
+    elif kind == "csr":
         return sp.csr_matrix(
-            (npz_file['data'], npz_file['indices'], npz_file['indptr']),
-            shape=npz_file['shape'])
+            (npz_file["data"], npz_file["indices"], npz_file["indptr"]),
+            shape=npz_file["shape"],
+        )
     else:
         raise ValueError(
-            'kind="{}" is invalid; valid values are {}'.format(kind, ['csc', 'csr']))
+            'kind="{}" is invalid; valid values are {}'.format(kind, ["csc", "csr"])
+        )
 
 
 def write_sparse_matrix(data, fname, compressed=True, make_dirs=False):
@@ -63,17 +66,24 @@ def write_sparse_matrix(data, fname, compressed=True, make_dirs=False):
     """
     if not isinstance(data, (sp.csc_matrix, sp.csr_matrix)):
         raise TypeError(
-            '`data` must be a scipy sparse csr or csc matrix, '
-            'not "{}"'.format(type(data)))
+            "`data` must be a scipy sparse csr or csc matrix, "
+            'not "{}"'.format(type(data))
+        )
     if make_dirs is True:
-        _make_dirs(fname, 'w')
+        _make_dirs(fname, "w")
     if compressed is True:
         np.savez_compressed(
             fname,
-            data=data.data, indices=data.indices,
-            indptr=data.indptr, shape=data.shape)
+            data=data.data,
+            indices=data.indices,
+            indptr=data.indptr,
+            shape=data.shape,
+        )
     else:
         np.savez(
             fname,
-            data=data.data, indices=data.indices,
-            indptr=data.indptr, shape=data.shape)
+            data=data.data,
+            indices=data.indices,
+            indptr=data.indptr,
+            shape=data.shape,
+        )

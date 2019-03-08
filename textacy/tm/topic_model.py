@@ -102,6 +102,7 @@ class TopicModel(object):
         - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.LatentDirichletAllocation.html
         - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
     """
+
     def __init__(self, model, n_topics=10, **kwargs):
         if isinstance(model, (NMF, LatentDirichletAllocation, TruncatedSVD)):
             self.model = model
@@ -109,46 +110,49 @@ class TopicModel(object):
             self.init_model(model, n_topics=n_topics, **kwargs)
 
     def init_model(self, model, n_topics=10, **kwargs):
-        if model == 'nmf':
+        if model == "nmf":
             self.model = NMF(
                 n_components=n_topics,
-                alpha=kwargs.get('alpha', 0.1),
-                l1_ratio=kwargs.get('l1_ratio', 0.5),
-                max_iter=kwargs.get('max_iter', 200),
-                random_state=kwargs.get('random_state', 1),
-                shuffle=kwargs.get('shuffle', False))
-        elif model == 'lda':
+                alpha=kwargs.get("alpha", 0.1),
+                l1_ratio=kwargs.get("l1_ratio", 0.5),
+                max_iter=kwargs.get("max_iter", 200),
+                random_state=kwargs.get("random_state", 1),
+                shuffle=kwargs.get("shuffle", False),
+            )
+        elif model == "lda":
             self.model = LatentDirichletAllocation(
                 n_topics=n_topics,
-                max_iter=kwargs.get('max_iter', 10),
-                random_state=kwargs.get('random_state', 1),
-                learning_method=kwargs.get('learning_method', 'online'),
-                learning_offset=kwargs.get('learning_offset', 10.0),
-                batch_size=kwargs.get('batch_size', 128),
-                n_jobs=kwargs.get('n_jobs', 1))
-        elif model == 'lsa':
+                max_iter=kwargs.get("max_iter", 10),
+                random_state=kwargs.get("random_state", 1),
+                learning_method=kwargs.get("learning_method", "online"),
+                learning_offset=kwargs.get("learning_offset", 10.0),
+                batch_size=kwargs.get("batch_size", 128),
+                n_jobs=kwargs.get("n_jobs", 1),
+            )
+        elif model == "lsa":
             self.model = TruncatedSVD(
                 n_components=n_topics,
-                algorithm=kwargs.get('algorithm', 'randomized'),
-                n_iter=kwargs.get('n_iter', 5),
-                random_state=kwargs.get('random_state', 1))
+                algorithm=kwargs.get("algorithm", "randomized"),
+                n_iter=kwargs.get("n_iter", 5),
+                random_state=kwargs.get("random_state", 1),
+            )
         else:
-            msg = 'model "{}" invalid; must be {}'.format(
-                model, {'nmf', 'lda', 'lsa'})
+            msg = 'model "{}" invalid; must be {}'.format(model, {"nmf", "lda", "lsa"})
             raise ValueError(msg)
 
     def __repr__(self):
-        return 'TopicModel(n_topics={}, model={})'.format(
-            self.n_topics, str(self.model).split('(', 1)[0])
+        return "TopicModel(n_topics={}, model={})".format(
+            self.n_topics, str(self.model).split("(", 1)[0]
+        )
 
     def save(self, filename):
         _ = joblib.dump(self.model, filename, compress=3)
-        LOGGER.info('%s model saved to %s', self.model, filename)
+        LOGGER.info("%s model saved to %s", self.model, filename)
 
     @classmethod
     def load(cls, filename):
         model = joblib.load(filename)
-        n_topics = model.n_topics if hasattr(model, 'n_topics') else model.n_components
+        n_topics = model.n_topics if hasattr(model, "n_topics") else model.n_components
         return cls(model, n_topics=n_topics)
 
     def fit(self, doc_term_matrix):
@@ -158,7 +162,7 @@ class TopicModel(object):
         if isinstance(self.model, LatentDirichletAllocation):
             self.model.partial_fit(doc_term_matrix)
         else:
-            raise TypeError('only LatentDirichletAllocation models have partial_fit')
+            raise TypeError("only LatentDirichletAllocation models have partial_fit")
 
     def transform(self, doc_term_matrix):
         return self.model.transform(doc_term_matrix)
@@ -228,14 +232,20 @@ class TopicModel(object):
         for topic_idx in topics:
             topic = self.model.components_[topic_idx]
             if weights is False:
-                yield (topic_idx,
-                       tuple(id2term[i] for i in np.argsort(topic)[:-top_n - 1:-1]))
+                yield (
+                    topic_idx,
+                    tuple(id2term[i] for i in np.argsort(topic)[: -top_n - 1 : -1]),
+                )
             else:
-                yield (topic_idx,
-                       tuple((id2term[i], topic[i]) for i in np.argsort(topic)[:-top_n - 1:-1]))
+                yield (
+                    topic_idx,
+                    tuple(
+                        (id2term[i], topic[i])
+                        for i in np.argsort(topic)[: -top_n - 1 : -1]
+                    ),
+                )
 
-    def top_topic_docs(self, doc_topic_matrix,
-                       topics=-1, top_n=10, weights=False):
+    def top_topic_docs(self, doc_topic_matrix, topics=-1, top_n=10, weights=False):
         """
         Get the top ``top_n`` docs by weight per topic in ``doc_topic_matrix``.
 
@@ -267,13 +277,17 @@ class TopicModel(object):
             topics = (topics,)
 
         for topic_idx in topics:
-            top_doc_idxs = np.argsort(doc_topic_matrix[:, topic_idx])[:-top_n - 1:-1]
+            top_doc_idxs = np.argsort(doc_topic_matrix[:, topic_idx])[: -top_n - 1 : -1]
             if weights is False:
-                yield (topic_idx,
-                       tuple(doc_idx for doc_idx in top_doc_idxs))
+                yield (topic_idx, tuple(doc_idx for doc_idx in top_doc_idxs))
             else:
-                yield (topic_idx,
-                       tuple((doc_idx, doc_topic_matrix[doc_idx, topic_idx]) for doc_idx in top_doc_idxs))
+                yield (
+                    topic_idx,
+                    tuple(
+                        (doc_idx, doc_topic_matrix[doc_idx, topic_idx])
+                        for doc_idx in top_doc_idxs
+                    ),
+                )
 
     def top_doc_topics(self, doc_topic_matrix, docs=-1, top_n=3, weights=False):
         """
@@ -307,13 +321,17 @@ class TopicModel(object):
             docs = (docs,)
 
         for doc_idx in docs:
-            top_topic_idxs = np.argsort(doc_topic_matrix[doc_idx, :])[:-top_n - 1:-1]
+            top_topic_idxs = np.argsort(doc_topic_matrix[doc_idx, :])[: -top_n - 1 : -1]
             if weights is False:
-                yield (doc_idx,
-                       tuple(topic_idx for topic_idx in top_topic_idxs))
+                yield (doc_idx, tuple(topic_idx for topic_idx in top_topic_idxs))
             else:
-                yield (doc_idx,
-                       tuple((topic_idx, doc_topic_matrix[doc_idx, topic_idx]) for topic_idx in top_topic_idxs))
+                yield (
+                    doc_idx,
+                    tuple(
+                        (topic_idx, doc_topic_matrix[doc_idx, topic_idx])
+                        for topic_idx in top_topic_idxs
+                    ),
+                )
 
     def topic_weights(self, doc_topic_matrix):
         """
@@ -336,10 +354,18 @@ class TopicModel(object):
     # def get_model_coherence(self):
     #     raise NotImplementedError()
 
-    def termite_plot(self, doc_term_matrix, id2term,
-                     topics=-1, sort_topics_by='index', highlight_topics=None,
-                     n_terms=25, rank_terms_by='topic_weight', sort_terms_by='seriation',
-                     save=False):
+    def termite_plot(
+        self,
+        doc_term_matrix,
+        id2term,
+        topics=-1,
+        sort_topics_by="index",
+        highlight_topics=None,
+        n_terms=25,
+        rank_terms_by="topic_weight",
+        sort_terms_by="seriation",
+        save=False,
+    ):
         """
         Make a "termite" plot for assessing topic models using a tabular layout
         to promote comparison of terms both within and across topics.
@@ -391,7 +417,7 @@ class TopicModel(object):
             if isinstance(highlight_topics, int):
                 highlight_topics = (highlight_topics,)
             elif len(highlight_topics) > 6:
-                raise ValueError('no more than 6 topics may be highlighted at once')
+                raise ValueError("no more than 6 topics may be highlighted at once")
 
         # get topics indices
         if topics == -1:
@@ -402,49 +428,71 @@ class TopicModel(object):
             topic_inds = tuple(topics)
 
         # get topic indices in sorted order
-        if sort_topics_by == 'index':
+        if sort_topics_by == "index":
             topic_inds = sorted(topic_inds)
-        elif sort_topics_by == 'weight':
-            topic_inds = tuple(topic_ind for topic_ind
-                               in np.argsort(self.topic_weights(self.transform(doc_term_matrix)))[::-1]
-                               if topic_ind in topic_inds)
+        elif sort_topics_by == "weight":
+            topic_inds = tuple(
+                topic_ind
+                for topic_ind in np.argsort(
+                    self.topic_weights(self.transform(doc_term_matrix))
+                )[::-1]
+                if topic_ind in topic_inds
+            )
         else:
-            msg = 'invalid sort_topics_by value; must be in {}'.format(
-                {'index', 'weight'})
+            msg = "invalid sort_topics_by value; must be in {}".format(
+                {"index", "weight"}
+            )
             raise ValueError(msg)
 
         # get column index of any topics to highlight in termite plot
         if highlight_topics is not None:
-            highlight_cols = tuple(i for i in compat.range_(len(topic_inds))
-                                   if topic_inds[i] in highlight_topics)
+            highlight_cols = tuple(
+                i
+                for i in compat.range_(len(topic_inds))
+                if topic_inds[i] in highlight_topics
+            )
         else:
             highlight_cols = None
 
         # get top term indices
-        if rank_terms_by == 'corpus_weight':
-            term_inds = np.argsort(np.ravel(doc_term_matrix.sum(axis=0)))[:-n_terms - 1:-1]
-        elif rank_terms_by == 'topic_weight':
-            term_inds = np.argsort(self.model.components_.sum(axis=0))[:-n_terms - 1:-1]
+        if rank_terms_by == "corpus_weight":
+            term_inds = np.argsort(np.ravel(doc_term_matrix.sum(axis=0)))[
+                : -n_terms - 1 : -1
+            ]
+        elif rank_terms_by == "topic_weight":
+            term_inds = np.argsort(self.model.components_.sum(axis=0))[
+                : -n_terms - 1 : -1
+            ]
         else:
-            msg = 'invalid rank_terms_by value; must be in {}'.format(
-                {'corpus_weight', 'topic_weight'})
+            msg = "invalid rank_terms_by value; must be in {}".format(
+                {"corpus_weight", "topic_weight"}
+            )
             raise ValueError(msg)
 
         # get top term indices in sorted order
-        if sort_terms_by == 'weight':
+        if sort_terms_by == "weight":
             pass
-        elif sort_terms_by == 'index':
+        elif sort_terms_by == "index":
             term_inds = sorted(term_inds)
-        elif sort_terms_by == 'alphabetical':
+        elif sort_terms_by == "alphabetical":
             term_inds = sorted(term_inds, key=lambda x: id2term[x])
-        elif sort_terms_by == 'seriation':
+        elif sort_terms_by == "seriation":
             topic_term_weights_mat = np.array(
-                np.array([self.model.components_[topic_ind][term_inds]
-                          for topic_ind in topic_inds])).T
+                np.array(
+                    [
+                        self.model.components_[topic_ind][term_inds]
+                        for topic_ind in topic_inds
+                    ]
+                )
+            ).T
             # calculate similarity matrix
-            topic_term_weights_sim = np.dot(topic_term_weights_mat, topic_term_weights_mat.T)
+            topic_term_weights_sim = np.dot(
+                topic_term_weights_mat, topic_term_weights_mat.T
+            )
             # substract minimum of sim mat in order to keep sim mat nonnegative
-            topic_term_weights_sim = topic_term_weights_sim - topic_term_weights_sim.min()
+            topic_term_weights_sim = (
+                topic_term_weights_sim - topic_term_weights_sim.min()
+            )
             # compute Laplacian matrice and its 2nd eigenvector
             L = np.diag(sum(topic_term_weights_sim, 1)) - topic_term_weights_sim
             D, V = np.linalg.eigh(L)
@@ -454,18 +502,24 @@ class TopicModel(object):
             # get permutation corresponding to sorting the 2nd eigenvector
             term_inds = [term_inds[i] for i in np.argsort(fiedler)]
         else:
-            msg = 'invalid sort_terms_by value; must be in {}'.format(
-                {'weight', 'index', 'alphabetical', 'seriation'})
+            msg = "invalid sort_terms_by value; must be in {}".format(
+                {"weight", "index", "alphabetical", "seriation"}
+            )
             raise ValueError(msg)
 
         # get topic and term labels
-        topic_labels = tuple('topic {}'.format(topic_ind) for topic_ind in topic_inds)
+        topic_labels = tuple("topic {}".format(topic_ind) for topic_ind in topic_inds)
         term_labels = tuple(id2term[term_ind] for term_ind in term_inds)
 
         # get topic-term weights to size dots
-        term_topic_weights = np.array([self.model.components_[topic_ind][term_inds]
-                                      for topic_ind in topic_inds]).T
+        term_topic_weights = np.array(
+            [self.model.components_[topic_ind][term_inds] for topic_ind in topic_inds]
+        ).T
 
         return viz.draw_termite_plot(
-            term_topic_weights, topic_labels, term_labels,
-            highlight_cols=highlight_cols, save=save)
+            term_topic_weights,
+            topic_labels,
+            term_labels,
+            highlight_cols=highlight_cols,
+            save=save,
+        )

@@ -52,7 +52,7 @@ def read_spacy_docs(fname, format="pickle", lang=None):
             provided when ``format="binary"``
     """
     if format == "pickle":
-        with open_sesame(fname, mode='rb') as f:
+        with open_sesame(fname, mode="rb") as f:
             for spacy_doc in compat.pickle.load(f):
                 yield spacy_doc
     elif format == "binary":
@@ -61,15 +61,17 @@ def read_spacy_docs(fname, format="pickle", lang=None):
                 "When format='binary', a `spacy.Language` (and its associated "
                 "`spacy.Vocab`) is required to deserialize the binary data; "
                 "and these should be the same as were used when processing "
-                "the original docs!")
+                "the original docs!"
+            )
         elif isinstance(lang, SpacyLang):
             vocab = lang.vocab
         elif isinstance(lang, compat.unicode_):
             vocab = cache.load_spacy(lang).vocab
         else:
             raise ValueError(
-                "lang = '{}' is invalid; must be a str or `spacy.Language`")
-        with open_sesame(fname, mode='rb') as f:
+                "lang = '{}' is invalid; must be a str or `spacy.Language`"
+            )
+        with open_sesame(fname, mode="rb") as f:
             unpacker = msgpack.Unpacker(f)
             for msg in unpacker:
 
@@ -82,11 +84,14 @@ def read_spacy_docs(fname, format="pickle", lang=None):
                 # keys, we must have tuples. In values we just have to hope
                 # users don't mind getting a list instead of a tuple.
                 if "user_data_keys" in msg:
-                    user_data_keys = msgpack.loads(msg["user_data_keys"], use_list=False)
+                    user_data_keys = msgpack.loads(
+                        msg["user_data_keys"], use_list=False
+                    )
                     user_data_values = msgpack.loads(msg["user_data_values"])
                     user_data = {
                         key: value
-                        for key, value in compat.zip_(user_data_keys, user_data_values)}
+                        for key, value in compat.zip_(user_data_keys, user_data_values)
+                    }
                 else:
                     user_data = None
 
@@ -98,11 +103,13 @@ def read_spacy_docs(fname, format="pickle", lang=None):
                 for i in compat.range_(attrs.shape[0]):
                     end = start + int(attrs[i, 0])
                     has_space = int(attrs[i, 1])
-                    words.append(text[start: end])
+                    words.append(text[start:end])
                     spaces.append(bool(has_space))
                     start = end + has_space
 
-                spacy_doc = SpacyDoc(vocab, words=words, spaces=spaces, user_data=user_data)
+                spacy_doc = SpacyDoc(
+                    vocab, words=words, spaces=spaces, user_data=user_data
+                )
                 spacy_doc = spacy_doc.from_array(msg["array_head"][2:], attrs[:, 2:])
                 if "sentiment" in msg:
                     spacy_doc.sentiment = msg["sentiment"]
@@ -112,11 +119,14 @@ def read_spacy_docs(fname, format="pickle", lang=None):
     else:
         raise ValueError(
             "format = '{}' is invalid; value must be one of {}".format(
-                format, {"pickle", "binary"}))
+                format, {"pickle", "binary"}
+            )
+        )
 
 
-def write_spacy_docs(data, fname, make_dirs=False,
-                     format="pickle", include_tensor=False):
+def write_spacy_docs(
+    data, fname, make_dirs=False, format="pickle", include_tensor=False
+):
     """
     Write one or more ``spacy.Doc`` s to disk at ``fname`` in either pickle or
     binary format.
@@ -166,4 +176,6 @@ def write_spacy_docs(data, fname, make_dirs=False,
     else:
         raise ValueError(
             "format = '{}' is invalid; value must be one of {}".format(
-                format, {"pickle", "binary"}))
+                format, {"pickle", "binary"}
+            )
+        )

@@ -17,7 +17,7 @@ from .. import compat
 from .utils import open_sesame, _validate_read_mode, _validate_write_mode
 
 
-def read_json(fname, mode='rt', encoding=None, lines=False):
+def read_json(fname, mode="rt", encoding=None, lines=False):
     """
     Read the contents of a JSON file at ``fname``, either all at once
     or streaming item-by-item.
@@ -44,7 +44,8 @@ def read_json(fname, mode='rt', encoding=None, lines=False):
     _validate_read_mode(mode)
     if not isinstance(lines, (compat.unicode_, bytes, bool)):
         raise ValueError(
-            'lines="{}" is invalid; must be a string or boolean value'.format(lines))
+            'lines="{}" is invalid; must be a string or boolean value'.format(lines)
+        )
     with open_sesame(fname, mode=mode, encoding=encoding) as f:
         if not lines:
             yield json.load(f)
@@ -56,7 +57,7 @@ def read_json(fname, mode='rt', encoding=None, lines=False):
                 yield item
 
 
-def read_json_mash(fname, mode='rt', encoding=None, buffer_size=2048):
+def read_json_mash(fname, mode="rt", encoding=None, buffer_size=2048):
     """
     Read the contents of a JSON file at ``fname`` one item at a time,
     where all of the items have been mashed together, end-to-end, on a single line.
@@ -79,8 +80,8 @@ def read_json_mash(fname, mode='rt', encoding=None, buffer_size=2048):
     _validate_read_mode(mode)
     json_decoder = json.JSONDecoder()
     with open_sesame(fname, mode=mode, encoding=encoding) as f:
-        buffer_ = ''
-        for chunk in iter(functools.partial(f.read, buffer_size), ''):
+        buffer_ = ""
+        for chunk in iter(functools.partial(f.read, buffer_size), ""):
             buffer_ += chunk
             while buffer_:
                 try:
@@ -92,9 +93,18 @@ def read_json_mash(fname, mode='rt', encoding=None, buffer_size=2048):
                     break
 
 
-def write_json(data, fname, mode='wt', encoding=None,
-               make_dirs=False, lines=False,
-               ensure_ascii=False, separators=(',', ':'), sort_keys=False, indent=None):
+def write_json(
+    data,
+    fname,
+    mode="wt",
+    encoding=None,
+    make_dirs=False,
+    lines=False,
+    ensure_ascii=False,
+    separators=(",", ":"),
+    sort_keys=False,
+    indent=None,
+):
     """
     Write JSON ``data`` to disk at ``fname``, either all at once
     or streaming item-by-item.
@@ -138,16 +148,30 @@ def write_json(data, fname, mode='wt', encoding=None,
     _validate_write_mode(mode)
     with open_sesame(fname, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
         if lines is False:
-            f.write(json.dumps(data, indent=indent, ensure_ascii=ensure_ascii,
-                               separators=separators, sort_keys=sort_keys,
-                               cls=ExtendedJSONEncoder))
+            f.write(
+                json.dumps(
+                    data,
+                    indent=indent,
+                    ensure_ascii=ensure_ascii,
+                    separators=separators,
+                    sort_keys=sort_keys,
+                    cls=ExtendedJSONEncoder,
+                )
+            )
         else:
-            newline = '\n' if 't' in mode else b'\n'
+            newline = "\n" if "t" in mode else b"\n"
             for item in data:
-                f.write(json.dumps(item, indent=indent, ensure_ascii=ensure_ascii,
-                                   separators=separators, sort_keys=sort_keys,
-                                   cls=ExtendedJSONEncoder) +
-                        newline)
+                f.write(
+                    json.dumps(
+                        item,
+                        indent=indent,
+                        ensure_ascii=ensure_ascii,
+                        separators=separators,
+                        sort_keys=sort_keys,
+                        cls=ExtendedJSONEncoder,
+                    )
+                    + newline
+                )
 
 
 class ExtendedJSONEncoder(json.JSONEncoder):
