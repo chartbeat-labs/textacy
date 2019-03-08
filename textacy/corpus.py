@@ -130,6 +130,7 @@ class Corpus(object):
         spacy_vocab (``spacy.Vocab``): https://spacy.io/docs#vocab
         spacy_stringstore (``spacy.StringStore``): https://spacy.io/docs#stringstore
     """
+
     def __init__(self, lang, texts=None, docs=None, metadatas=None):
         if isinstance(lang, compat.unicode_):
             self.spacy_lang = cache.load_spacy(lang)
@@ -137,7 +138,10 @@ class Corpus(object):
             self.spacy_lang = lang
         else:
             raise TypeError(
-                '`lang` must be {}, not {}'.format({compat.unicode_, SpacyLang}, type(lang)))
+                "`lang` must be {}, not {}".format(
+                    {compat.unicode_, SpacyLang}, type(lang)
+                )
+            )
         self.lang = self.spacy_lang.lang
         self.spacy_vocab = self.spacy_lang.vocab
         self.spacy_stringstore = self.spacy_vocab.strings
@@ -145,14 +149,17 @@ class Corpus(object):
         self.n_docs = 0
         self.n_tokens = 0
         # sentence segmentation requires parse; if not available, skip it
-        if (self.spacy_lang.has_pipe('parser') or
-                any(isinstance(pipe[1], DependencyParser) for pipe in self.spacy_lang.pipeline)):
+        if self.spacy_lang.has_pipe("parser") or any(
+            isinstance(pipe[1], DependencyParser) for pipe in self.spacy_lang.pipeline
+        ):
             self.n_sents = 0
         else:
             self.n_sents = None
 
         if texts and docs:
-            msg = 'Corpus may be initialized with either `texts` or `docs`, but not both.'
+            msg = (
+                "Corpus may be initialized with either `texts` or `docs`, but not both."
+            )
             raise ValueError(msg)
         if texts:
             self.add_texts(texts, metadatas=metadatas)
@@ -165,7 +172,7 @@ class Corpus(object):
                     self.add_doc(doc)
 
     def __repr__(self):
-        return 'Corpus({} docs; {} tokens)'.format(self.n_docs, self.n_tokens)
+        return "Corpus({} docs; {} tokens)".format(self.n_docs, self.n_tokens)
 
     def __len__(self):
         return self.n_docs
@@ -185,8 +192,7 @@ class Corpus(object):
             indexes = compat.range_(start, end, step)
             self._remove_many_docs_by_index(indexes)
         else:
-            msg = 'value must be {}, not "{}"'.format(
-                {int, slice}, type(idx_or_slice))
+            msg = 'value must be {}, not "{}"'.format({int, slice}, type(idx_or_slice))
             raise ValueError(msg)
 
     @property
@@ -211,7 +217,7 @@ class Corpus(object):
         """
         # HACK: add spacy language metadata to first doc's user_data
         # so we can re-instantiate the same language upon Corpus.load()
-        self[0].spacy_doc.user_data['textacy']['spacy_lang_meta'] = self.spacy_lang.meta
+        self[0].spacy_doc.user_data["textacy"]["spacy_lang_meta"] = self.spacy_lang.meta
         io.write_spacy_docs((doc.spacy_doc for doc in self), filepath)
 
     @classmethod
@@ -235,12 +241,13 @@ class Corpus(object):
         # HACK: pop spacy language metadata from first doc's user_data
         # so we can (more or less...) re-instantiate the same language pipeline
         first_spacy_doc, spacy_docs = itertoolz.peek(spacy_docs)
-        spacy_lang_meta = first_spacy_doc.user_data['textacy'].pop('spacy_lang_meta')
+        spacy_lang_meta = first_spacy_doc.user_data["textacy"].pop("spacy_lang_meta")
         # manually instantiate the spacy language pipeline and
         # hope that the spacy folks either make this easier or don't touch it
-        spacy_lang = get_lang_class(spacy_lang_meta['lang'])(
-            vocab=first_spacy_doc.vocab, meta=spacy_lang_meta)
-        for name in spacy_lang_meta['pipeline']:
+        spacy_lang = get_lang_class(spacy_lang_meta["lang"])(
+            vocab=first_spacy_doc.vocab, meta=spacy_lang_meta
+        )
+        for name in spacy_lang_meta["pipeline"]:
             spacy_lang.add_pipe(spacy_lang.create_pipe(name))
         return cls(spacy_lang, docs=spacy_docs)
 
@@ -254,13 +261,15 @@ class Corpus(object):
         self.n_docs += 1
         self.n_tokens += doc.n_tokens
         # sentence segmentation requires parse; if not available, skip it
-        if (self.spacy_lang.has_pipe('parser') or
-                any(isinstance(pipe[1], DependencyParser) for pipe in self.spacy_lang.pipeline)):
+        if self.spacy_lang.has_pipe("parser") or any(
+            isinstance(pipe[1], DependencyParser) for pipe in self.spacy_lang.pipeline
+        ):
             self.n_sents += doc.n_sents
-        LOGGER.debug('added %s to Corpus[%s]', doc, doc.corpus_index)
+        LOGGER.debug("added %s to Corpus[%s]", doc, doc.corpus_index)
 
-    def add_texts(self, texts, metadatas=None,
-                  n_threads=_DEFAULT_N_THREADS, batch_size=1000):
+    def add_texts(
+        self, texts, metadatas=None, n_threads=_DEFAULT_N_THREADS, batch_size=1000
+    ):
         """
         Process a stream of texts (and a corresponding stream of metadata dicts,
         optionally) in parallel with spaCy; add as :class:`Doc <textacy.doc.Doc>` s
@@ -286,19 +295,24 @@ class Corpus(object):
             - https://spacy.io/api/language#pipe
         """
         spacy_docs = self.spacy_lang.pipe(
-            texts, n_threads=n_threads, batch_size=batch_size)
+            texts, n_threads=n_threads, batch_size=batch_size
+        )
         if metadatas:
-            for i, (spacy_doc, metadata) in enumerate(compat.zip_(spacy_docs, metadatas)):
+            for i, (spacy_doc, metadata) in enumerate(
+                compat.zip_(spacy_docs, metadatas)
+            ):
                 self._add_textacy_doc(
-                    Doc(spacy_doc, lang=self.spacy_lang, metadata=metadata))
+                    Doc(spacy_doc, lang=self.spacy_lang, metadata=metadata)
+                )
                 if i % batch_size == 0:
-                    LOGGER.info('adding texts to %s...', self)
+                    LOGGER.info("adding texts to %s...", self)
         else:
             for i, spacy_doc in enumerate(spacy_docs):
                 self._add_textacy_doc(
-                    Doc(spacy_doc, lang=self.spacy_lang, metadata=None))
+                    Doc(spacy_doc, lang=self.spacy_lang, metadata=None)
+                )
                 if i % batch_size == 0:
-                    LOGGER.info('adding texts to %s...', self)
+                    LOGGER.info("adding texts to %s...", self)
 
     def add_text(self, text, metadata=None):
         """
@@ -329,26 +343,26 @@ class Corpus(object):
         """
         if isinstance(doc, Doc):
             if doc.spacy_vocab is not self.spacy_vocab:
-                msg = 'Doc.spacy_vocab {} != Corpus.spacy_vocab {}'.format(
-                    doc.spacy_vocab, self.spacy_vocab)
+                msg = "Doc.spacy_vocab {} != Corpus.spacy_vocab {}".format(
+                    doc.spacy_vocab, self.spacy_vocab
+                )
                 raise ValueError(msg)
-            if hasattr(doc, 'corpus_index'):
+            if hasattr(doc, "corpus_index"):
                 doc = copy.deepcopy(doc)
-                LOGGER.warning('Doc already associated with a Corpus; adding anyway...')
+                LOGGER.warning("Doc already associated with a Corpus; adding anyway...")
             if metadata is not None:
                 doc.metadata = metadata
             self._add_textacy_doc(doc)
         elif isinstance(doc, SpacyDoc):
             if doc.vocab is not self.spacy_vocab:
-                msg = 'SpacyDoc.vocab {} != Corpus.spacy_vocab {}'.format(
-                    doc.vocab, self.spacy_vocab)
+                msg = "SpacyDoc.vocab {} != Corpus.spacy_vocab {}".format(
+                    doc.vocab, self.spacy_vocab
+                )
                 raise ValueError(msg)
-            metadata = metadata or doc.user_data.get('textacy', {}).get('metadata')
-            self._add_textacy_doc(
-                Doc(doc, lang=self.spacy_lang, metadata=metadata))
+            metadata = metadata or doc.user_data.get("textacy", {}).get("metadata")
+            self._add_textacy_doc(Doc(doc, lang=self.spacy_lang, metadata=metadata))
         else:
-            msg = '`doc` must be {}, not "{}"'.format(
-                {Doc, SpacyDoc}, type(doc))
+            msg = '`doc` must be {}, not "{}"'.format({Doc, SpacyDoc}, type(doc))
             raise ValueError(msg)
 
     #################
@@ -466,7 +480,7 @@ class Corpus(object):
                     break
         self._remove_many_docs_by_index(matched_indexes)
 
-    def word_freqs(self, normalize='lemma', weighting='count', as_strings=False):
+    def word_freqs(self, normalize="lemma", weighting="count", as_strings=False):
         """
         Map the set of unique words in :class:`Corpus` to their counts as absolute,
         relative, or binary frequencies of occurence. This is akin to
@@ -497,20 +511,25 @@ class Corpus(object):
         """
         word_counts = collections.Counter()
         for doc in self:
-            word_counts.update(doc.to_bag_of_words(
-                normalize=normalize, weighting='count', as_strings=as_strings))
-        if weighting == 'count':
+            word_counts.update(
+                doc.to_bag_of_words(
+                    normalize=normalize, weighting="count", as_strings=as_strings
+                )
+            )
+        if weighting == "count":
             word_counts = dict(word_counts)
-        if weighting == 'freq':
+        if weighting == "freq":
             n_tokens = self.n_tokens
-            word_counts = {word: weight / n_tokens
-                           for word, weight in word_counts.items()}
-        elif weighting == 'binary':
+            word_counts = {
+                word: weight / n_tokens for word, weight in word_counts.items()
+            }
+        elif weighting == "binary":
             word_counts = {word: 1 for word in word_counts.keys()}
         return word_counts
 
-    def word_doc_freqs(self, normalize='lemma', weighting='count',
-                       smooth_idf=True, as_strings=False):
+    def word_doc_freqs(
+        self, normalize="lemma", weighting="count", smooth_idf=True, as_strings=False
+    ):
         """
         Map the set of unique words in :class:`Corpus` to their *document* counts
         as absolute, relative, inverse, or binary frequencies of occurence.
@@ -544,22 +563,30 @@ class Corpus(object):
         """
         word_doc_counts = collections.Counter()
         for doc in self:
-            word_doc_counts.update(doc.to_bag_of_words(
-                normalize=normalize, weighting='binary', as_strings=as_strings))
-        if weighting == 'count':
+            word_doc_counts.update(
+                doc.to_bag_of_words(
+                    normalize=normalize, weighting="binary", as_strings=as_strings
+                )
+            )
+        if weighting == "count":
             word_doc_counts = dict(word_doc_counts)
-        elif weighting == 'freq':
+        elif weighting == "freq":
             n_docs = self.n_docs
-            word_doc_counts = {word: count / n_docs
-                               for word, count in word_doc_counts.items()}
-        elif weighting == 'idf':
+            word_doc_counts = {
+                word: count / n_docs for word, count in word_doc_counts.items()
+            }
+        elif weighting == "idf":
             n_docs = self.n_docs
             if smooth_idf is True:
-                word_doc_counts = {word: math.log(1 + n_docs / count)
-                                   for word, count in word_doc_counts.items()}
+                word_doc_counts = {
+                    word: math.log(1 + n_docs / count)
+                    for word, count in word_doc_counts.items()
+                }
             else:
-                word_doc_counts = {word: math.log(n_docs / count)
-                                   for word, count in word_doc_counts.items()}
-        elif weighting == 'binary':
+                word_doc_counts = {
+                    word: math.log(n_docs / count)
+                    for word, count in word_doc_counts.items()
+                }
+        elif weighting == "binary":
             word_doc_counts = {word: 1 for word in word_doc_counts.keys()}
         return word_doc_counts

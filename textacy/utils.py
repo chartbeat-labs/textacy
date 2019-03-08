@@ -6,7 +6,7 @@ import warnings
 from . import compat
 
 
-def deprecated(message, action='always'):
+def deprecated(message, action="always"):
     """
     Show a deprecation warning, optionally filtered.
 
@@ -32,15 +32,17 @@ def get_config():
     from .about import __version__ as textacy_version
 
     return {
-        'platform': sys.platform,
-        'python': sys.version,
-        'spacy': spacy_version,
-        'spacy_models': [
-            d.parts[-1] for d in get_data_path().iterdir()
-            if (d.is_dir() or d.is_symlink()) and
-            d.parts[-1] not in {'__cache__', '__pycache__'}],
-        'textacy': textacy_version,
-        }
+        "platform": sys.platform,
+        "python": sys.version,
+        "spacy": spacy_version,
+        "spacy_models": [
+            d.parts[-1]
+            for d in get_data_path().iterdir()
+            if (d.is_dir() or d.is_symlink())
+            and d.parts[-1] not in {"__cache__", "__pycache__"}
+        ],
+        "textacy": textacy_version,
+    }
 
 
 def print_markdown(items):
@@ -54,7 +56,9 @@ def print_markdown(items):
     if isinstance(items, dict):
         items = list(items.items())
     md_items = (
-        '- **{}:** {}'.format(compat.unicode_(k).replace('\n', ' '),
-                              compat.unicode_(v).replace('\n', ' '))
-        for k, v in items)
-    print('{}'.format('\n'.join(md_items)))
+        "- **{}:** {}".format(
+            compat.unicode_(k).replace("\n", " "), compat.unicode_(v).replace("\n", " ")
+        )
+        for k, v in items
+    )
+    print("{}".format("\n".join(md_items)))

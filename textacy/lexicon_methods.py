@@ -26,7 +26,7 @@ LOGGER = logging.getLogger(__name__)
 # TODO: Do something smarter for averaging emotional valences?
 
 
-def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting='normfreq'):
+def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting="normfreq"):
     """
     Get average emotional valence over all words for the following emotions --
     AFRAID, AMUSED, ANGRY, ANNOYED, DONT_CARE, HAPPY, INSPIRED, SAD -- using
@@ -55,12 +55,12 @@ def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting='norm
         :func:`cache.load_depechemood() <textacy.cache.load_depechemood>`
     """
     dm = cache.load_depechemood(data_dir=dm_data_dir, weighting=dm_weighting)
-    pos_to_letter = {NOUN: 'n', ADJ: 'a', ADV: 'r', VERB: 'v'}
+    pos_to_letter = {NOUN: "n", ADJ: "a", ADV: "r", VERB: "v"}
     emo_matches = collections.defaultdict(int)
     emo_scores = collections.defaultdict(float)
     for word in words:
         if word.pos in pos_to_letter:
-            lemma_pos = word.lemma_ + '#' + pos_to_letter[word.pos]
+            lemma_pos = word.lemma_ + "#" + pos_to_letter[word.pos]
             try:
                 for emo, score in dm[lemma_pos].items():
                     if score > threshold:
@@ -85,26 +85,30 @@ def download_depechemood(data_dir=None, force=False):
             on disk under ``data_dir``.
     """
     if data_dir is None:
-        data_dir = os.path.join(DEFAULT_DATA_DIR, 'depechemood')
-    if os.path.exists(os.path.join(data_dir, 'DepecheMood_V1.0')) and force is False:
+        data_dir = os.path.join(DEFAULT_DATA_DIR, "depechemood")
+    if os.path.exists(os.path.join(data_dir, "DepecheMood_V1.0")) and force is False:
         LOGGER.warning(
-            'DepecheMood data already exists in %s; skipping download...',
-            data_dir)
+            "DepecheMood data already exists in %s; skipping download...", data_dir
+        )
         return
-    url = 'https://github.com/marcoguerini/DepecheMood/releases/download/v1.0/DepecheMood_V1.0.zip'
+    url = "https://github.com/marcoguerini/DepecheMood/releases/download/v1.0/DepecheMood_V1.0.zip"
     try:
         response = requests.get(url)
     except requests.exceptions.RequestException:
         LOGGER.exception(
-            'Unable to download DepecheMood from %s; URL status code = %s',
-            url, response.status_code)
+            "Unable to download DepecheMood from %s; URL status code = %s",
+            url,
+            response.status_code,
+        )
         raise
     with zipfile.ZipFile(io.BytesIO(response.content)) as f:
-        members = ['DepecheMood_V1.0/DepecheMood_freq.txt',
-                   'DepecheMood_V1.0/DepecheMood_normfreq.txt',
-                   'DepecheMood_V1.0/DepecheMood_tfidf.txt',
-                   'DepecheMood_V1.0/README.txt']
+        members = [
+            "DepecheMood_V1.0/DepecheMood_freq.txt",
+            "DepecheMood_V1.0/DepecheMood_normfreq.txt",
+            "DepecheMood_V1.0/DepecheMood_tfidf.txt",
+            "DepecheMood_V1.0/README.txt",
+        ]
         f.extractall(data_dir, members=members)
     LOGGER.info(
-        'Downloaded DepecheMood (4MB) from %s and wrote it to %s',
-        url, data_dir)
+        "Downloaded DepecheMood (4MB) from %s and wrote it to %s", url, data_dir
+    )

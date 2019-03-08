@@ -38,11 +38,13 @@ from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
 
-NAME = 'capitol_words'
-DESCRIPTION = ('Collection of ~11k speeches in the Congressional Record given by '
-               'notable U.S. politicians between Jan 1996 and Jun 2016.')
-SITE_URL = 'http://sunlightlabs.github.io/Capitol-Words/'  # TODO: change to propublica?
-DOWNLOAD_ROOT = 'https://github.com/bdewilde/textacy-data/releases/download/'
+NAME = "capitol_words"
+DESCRIPTION = (
+    "Collection of ~11k speeches in the Congressional Record given by "
+    "notable U.S. politicians between Jan 1996 and Jun 2016."
+)
+SITE_URL = "http://sunlightlabs.github.io/Capitol-Words/"  # TODO: change to propublica?
+DOWNLOAD_ROOT = "https://github.com/bdewilde/textacy-data/releases/download/"
 DATA_DIR = os.path.join(data_dir, NAME)
 
 
@@ -110,22 +112,35 @@ class CapitolWords(Dataset):
             speeches were given, e.g. 114.
     """
 
-    min_date = '1996-01-01'
-    max_date = '2016-06-30'
+    min_date = "1996-01-01"
+    max_date = "2016-06-30"
     speaker_names = {
-        'Barack Obama', 'Bernie Sanders', 'Hillary Clinton', 'Jim Webb',
-        'Joe Biden', 'John Kasich', 'Joseph Biden', 'Lincoln Chafee',
-        'Lindsey Graham', 'Marco Rubio', 'Mike Pence', 'Rand Paul',
-        'Rick Santorum', 'Ted Cruz'}
-    speaker_parties = {'D', 'I', 'R'}
-    chambers = {'Extensions', 'House', 'Senate'}
+        "Barack Obama",
+        "Bernie Sanders",
+        "Hillary Clinton",
+        "Jim Webb",
+        "Joe Biden",
+        "John Kasich",
+        "Joseph Biden",
+        "Lincoln Chafee",
+        "Lindsey Graham",
+        "Marco Rubio",
+        "Mike Pence",
+        "Rand Paul",
+        "Rick Santorum",
+        "Ted Cruz",
+    }
+    speaker_parties = {"D", "I", "R"}
+    chambers = {"Extensions", "House", "Senate"}
     congresses = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
 
     def __init__(self, data_dir=DATA_DIR):
         super(CapitolWords, self).__init__(
-            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
-        self.filestub = 'capitol-words-py{py_version}.json.gz'.format(
-            py_version=2 if compat.is_python2 else 3)
+            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir
+        )
+        self.filestub = "capitol-words-py{py_version}.json.gz".format(
+            py_version=2 if compat.is_python2 else 3
+        )
         self._filename = os.path.join(data_dir, self.filestub)
 
     @property
@@ -148,23 +163,29 @@ class CapitolWords(Dataset):
             force (bool): If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
-        release_tag = 'capitol_words_py{py_version}_v{data_version}'.format(
-            py_version=2 if compat.is_python2 else 3,
-            data_version=1.0)
-        url = compat.urljoin(DOWNLOAD_ROOT, release_tag + '/' + self.filestub)
+        release_tag = "capitol_words_py{py_version}_v{data_version}".format(
+            py_version=2 if compat.is_python2 else 3, data_version=1.0
+        )
+        url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self.filestub)
         fname = self._filename
         if os.path.isfile(fname) and force is False:
-            LOGGER.warning(
-                'File %s already exists; skipping download...', fname)
+            LOGGER.warning("File %s already exists; skipping download...", fname)
             return
-        LOGGER.info(
-            'Downloading data from %s and writing it to %s', url, fname)
+        LOGGER.info("Downloading data from %s and writing it to %s", url, fname)
         io.write_http_stream(
-            url, fname, mode='wb', encoding=None,
-            make_dirs=True, chunk_size=1024)
+            url, fname, mode="wb", encoding=None, make_dirs=True, chunk_size=1024
+        )
 
-    def texts(self, speaker_name=None, speaker_party=None, chamber=None,
-              congress=None, date_range=None, min_len=None, limit=-1):
+    def texts(
+        self,
+        speaker_name=None,
+        speaker_party=None,
+        chamber=None,
+        congress=None,
+        date_range=None,
+        min_len=None,
+        limit=-1,
+    ):
         """
         Iterate over speeches (text-only) in this dataset, optionally filtering
         by a variety of metadata and/or text length, in chronological order.
@@ -195,14 +216,28 @@ class CapitolWords(Dataset):
             ValueError: If any filtering options are invalid.
         """
         texts = self._iterate(
-            True, speaker_name=speaker_name, speaker_party=speaker_party,
-            chamber=chamber, congress=congress, date_range=date_range,
-            min_len=min_len, limit=limit)
+            True,
+            speaker_name=speaker_name,
+            speaker_party=speaker_party,
+            chamber=chamber,
+            congress=congress,
+            date_range=date_range,
+            min_len=min_len,
+            limit=limit,
+        )
         for text in texts:
             yield text
 
-    def records(self, speaker_name=None, speaker_party=None, chamber=None,
-                congress=None, date_range=None, min_len=None, limit=-1):
+    def records(
+        self,
+        speaker_name=None,
+        speaker_party=None,
+        chamber=None,
+        congress=None,
+        date_range=None,
+        min_len=None,
+        limit=-1,
+    ):
         """
         Iterate over speeches (text and metadata) in this dataset, optionally
         filtering by a variety of metadata and/or text length, in chronological order.
@@ -233,70 +268,90 @@ class CapitolWords(Dataset):
             ValueError: If any filtering options are invalid.
         """
         records = self._iterate(
-            False, speaker_name, speaker_party, chamber, congress, date_range,
-            min_len, limit)
+            False,
+            speaker_name,
+            speaker_party,
+            chamber,
+            congress,
+            date_range,
+            min_len,
+            limit,
+        )
         for record in records:
             yield record
 
-    def _iterate(self, text_only, speaker_name, speaker_party, chamber, congress,
-                 date_range, min_len, limit):
+    def _iterate(
+        self,
+        text_only,
+        speaker_name,
+        speaker_party,
+        chamber,
+        congress,
+        date_range,
+        min_len,
+        limit,
+    ):
         """
         Low-level method to iterate over the records in this dataset. Used by
         :meth:`CapitolWords.texts()` and :meth:`CapitolWords.records()`.
         """
         if not self.filename:
-            raise IOError('{} file not found'.format(self._filename))
+            raise IOError("{} file not found".format(self._filename))
 
         if speaker_name:
             if isinstance(speaker_name, compat.string_types):
                 speaker_name = {speaker_name}
             if not all(item in self.speaker_names for item in speaker_name):
                 raise ValueError(
-                    'all values in `speaker_name` must be valid; '
-                    'see :attr:`CapitolWords.speaker_names`')
+                    "all values in `speaker_name` must be valid; "
+                    "see :attr:`CapitolWords.speaker_names`"
+                )
         if speaker_party:
             if isinstance(speaker_party, compat.string_types):
                 speaker_party = {speaker_party}
             if not all(item in self.speaker_parties for item in speaker_party):
                 raise ValueError(
-                    'all values in `speaker_party` must be valid; '
-                    'see :attr:`CapitolWords.speaker_parties`')
+                    "all values in `speaker_party` must be valid; "
+                    "see :attr:`CapitolWords.speaker_parties`"
+                )
         if chamber:
             if isinstance(chamber, compat.string_types):
                 chamber = {chamber}
             if not all(item in self.chambers for item in chamber):
                 raise ValueError(
-                    'all values in `chamber` must be valid; '
-                    'see :attr:`CapitolWords.chambers`')
+                    "all values in `chamber` must be valid; "
+                    "see :attr:`CapitolWords.chambers`"
+                )
         if congress:
             if isinstance(congress, int):
                 congress = {congress}
             if not all(item in self.congresses for item in congress):
                 raise ValueError(
-                    'all values in `congress` must be valid; '
-                    'see :attr:`CapitolWords.congresses`')
+                    "all values in `congress` must be valid; "
+                    "see :attr:`CapitolWords.congresses`"
+                )
         if date_range:
             date_range = self._parse_date_range(date_range)
 
         n = 0
-        mode = 'rb' if compat.is_python2 else 'rt'  # TODO: check this
+        mode = "rb" if compat.is_python2 else "rt"  # TODO: check this
         for line in io.read_json(self.filename, mode=mode, lines=True):
 
-            if speaker_name and line['speaker_name'] not in speaker_name:
+            if speaker_name and line["speaker_name"] not in speaker_name:
                 continue
-            if speaker_party and line['speaker_party'] not in speaker_party:
+            if speaker_party and line["speaker_party"] not in speaker_party:
                 continue
-            if chamber and line['chamber'] not in chamber:
+            if chamber and line["chamber"] not in chamber:
                 continue
-            if congress and line['congress'] not in congress:
+            if congress and line["congress"] not in congress:
                 continue
-            if date_range and not date_range[0] <= line['date'] <= date_range[1]:
+            if date_range and not date_range[0] <= line["date"] <= date_range[1]:
                 continue
-            if min_len and len(line['text']) < min_len:
+            if min_len and len(line["text"]) < min_len:
                 continue
 
             if text_only is True:
-                yield line['text']
+                yield line["text"]
             else:
                 yield line
 

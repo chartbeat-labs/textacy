@@ -8,8 +8,15 @@ from spacy import attrs
 from spacy import strings
 
 
-def docs_to_gensim(spacy_docs, spacy_vocab, lemmatize=True, lowercase=False,
-                   filter_stops=True, filter_punct=True, filter_nums=False):
+def docs_to_gensim(
+    spacy_docs,
+    spacy_vocab,
+    lemmatize=True,
+    lowercase=False,
+    filter_stops=True,
+    filter_punct=True,
+    filter_nums=False,
+):
     """
     Convert a sequence of ``spacy.Doc`` s into a gensim-friendly corpus and a
     string that can be loaded into a :class:`gensim.corpora.Dictionary`.
@@ -33,16 +40,22 @@ def docs_to_gensim(spacy_docs, spacy_vocab, lemmatize=True, lowercase=False,
         List[List[Tuple[int, int]]]: list of documents as bags-of-words, where
         each doc is a list of (integer word ID, word count) 2-tuples
     """
-    count_by = (attrs.LEMMA if lemmatize is True else
-                attrs.LOWER if lowercase is True else
-                attrs.ORTH)
+    count_by = (
+        attrs.LEMMA
+        if lemmatize is True
+        else attrs.LOWER
+        if lowercase is True
+        else attrs.ORTH
+    )
     gcorpus = []
     stringstore = strings.StringStore()
     doc_freqs = collections.Counter()
 
     for spacy_doc in spacy_docs:
-        bow = ((spacy_vocab[tok_id], count)
-               for tok_id, count in spacy_doc.count_by(count_by).items())
+        bow = (
+            (spacy_vocab[tok_id], count)
+            for tok_id, count in spacy_doc.count_by(count_by).items()
+        )
         bow = ((lex, count) for lex, count in bow if not lex.is_space)
         if filter_stops is True:
             bow = ((lex, count) for lex, count in bow if not lex.is_stop)
@@ -50,15 +63,18 @@ def docs_to_gensim(spacy_docs, spacy_vocab, lemmatize=True, lowercase=False,
             bow = ((lex, count) for lex, count in bow if not lex.is_punct)
         if filter_nums is True:
             bow = ((lex, count) for lex, count in bow if not lex.like_num)
-        bow = sorted(((stringstore[lex.orth_], count) for lex, count in bow),
-                     key=operator.itemgetter(0))
+        bow = sorted(
+            ((stringstore[lex.orth_], count) for lex, count in bow),
+            key=operator.itemgetter(0),
+        )
 
         doc_freqs.update(tok_id for tok_id, _ in bow)
         gcorpus.append(bow)
 
-    gdict_str = '\n'.join(
-        '{}\t{}\t{}'.format(i, s, doc_freqs[i])
-        for i, s in sorted(enumerate(stringstore), key=operator.itemgetter(1)))
+    gdict_str = "\n".join(
+        "{}\t{}\t{}".format(i, s, doc_freqs[i])
+        for i, s in sorted(enumerate(stringstore), key=operator.itemgetter(1))
+    )
 
     return (gdict_str, gcorpus)
 
@@ -78,17 +94,17 @@ def doc_to_conll(doc):
         ValueError: if ``doc`` is not parsed
     """
     if doc.is_parsed is False:
-        raise ValueError('spaCy doc must be parsed')
+        raise ValueError("spaCy doc must be parsed")
     rows = []
     for j, sent in enumerate(doc.sents):
         sent_i = sent.start
         sent_id = j + 1
-        rows.append('# sent_id {}'.format(sent_id))
+        rows.append("# sent_id {}".format(sent_id))
         for i, tok in enumerate(sent):
             # HACK...
             if tok.is_space:
-                form = ' '
-                lemma = ' '
+                form = " "
+                lemma = " "
             else:
                 form = tok.orth_
                 lemma = tok.lemma_
@@ -96,8 +112,22 @@ def doc_to_conll(doc):
             head = tok.head.i - sent_i + 1
             if head == tok_id:
                 head = 0
-            misc = 'SpaceAfter=No' if not tok.whitespace_ else '_'
-            rows.append('\t'.join([str(tok_id), form, lemma, tok.pos_, tok.tag_,
-                                   '_', str(head), tok.dep_.lower(), '_', misc]))
-        rows.append('')  # sentences must be separated by a single newline
-    return '\n'.join(rows)
+            misc = "SpaceAfter=No" if not tok.whitespace_ else "_"
+            rows.append(
+                "\t".join(
+                    [
+                        str(tok_id),
+                        form,
+                        lemma,
+                        tok.pos_,
+                        tok.tag_,
+                        "_",
+                        str(head),
+                        tok.dep_.lower(),
+                        "_",
+                        misc,
+                    ]
+                )
+            )
+        rows.append("")  # sentences must be separated by a single newline
+    return "\n".join(rows)

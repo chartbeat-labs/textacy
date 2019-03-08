@@ -26,8 +26,14 @@ from . import vsm
 LOGGER = logging.getLogger(__name__)
 
 
-def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
-           n_keyterms=10, idf=None):
+def sgrank(
+    doc,
+    ngrams=(1, 2, 3, 4, 5, 6),
+    normalize="lemma",
+    window_width=1500,
+    n_keyterms=10,
+    idf=None,
+):
     """
     Extract key terms from a document using the [SGRank]_ algorithm.
 
@@ -68,10 +74,12 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
     n_toks = len(doc)
     if isinstance(n_keyterms, float):
         if not 0.0 < n_keyterms <= 1.0:
-            raise ValueError('`n_keyterms` must be an int, or a float between 0.0 and 1.0')
+            raise ValueError(
+                "`n_keyterms` must be an int, or a float between 0.0 and 1.0"
+            )
         n_keyterms = int(round(n_toks * n_keyterms))
     if window_width < 2:
-        raise ValueError('`window_width` must be >= 2')
+        raise ValueError("`window_width` must be >= 2")
     window_width = min(n_toks, window_width)
     min_term_freq = min(n_toks // 1000, 4)
     if isinstance(ngrams, int):
@@ -81,17 +89,25 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
     # if inverse doc freqs available, include nouns, adjectives, and verbs;
     # otherwise, just include nouns and adjectives
     # (without IDF downweighting, verbs dominate the results in a bad way)
-    include_pos = {'NOUN', 'PROPN', 'ADJ', 'VERB'} if idf else {'NOUN', 'PROPN', 'ADJ'}
+    include_pos = {"NOUN", "PROPN", "ADJ", "VERB"} if idf else {"NOUN", "PROPN", "ADJ"}
     terms = itertoolz.concat(
-        extract.ngrams(doc, n, filter_stops=True, filter_punct=True, filter_nums=False,
-                       include_pos=include_pos, min_freq=min_term_freq)
-        for n in ngrams)
+        extract.ngrams(
+            doc,
+            n,
+            filter_stops=True,
+            filter_punct=True,
+            filter_nums=False,
+            include_pos=include_pos,
+            min_freq=min_term_freq,
+        )
+        for n in ngrams
+    )
 
     # get normalized term strings, as desired
     # paired with positional index in document and length in a 3-tuple
-    if normalize == 'lemma':
+    if normalize == "lemma":
         terms = [(term.lemma_, term.start, len(term)) for term in terms]
-    elif normalize == 'lower':
+    elif normalize == "lower":
         terms = [(term.lower_, term.start, len(term)) for term in terms]
     elif not normalize:
         terms = [(term.text, term.start, len(term)) for term in terms]
@@ -103,11 +119,15 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
     term_text_counts = collections.Counter(term[0] for term in terms)
     if idf:
         mod_tfidfs = {
-            term: count * idf.get(term, 1) if ' ' not in term else count
-            for term, count in term_text_counts.items()}
+            term: count * idf.get(term, 1) if " " not in term else count
+            for term, count in term_text_counts.items()
+        }
         terms_set = {
-            term for term, _
-            in sorted(mod_tfidfs.items(), key=operator.itemgetter(1), reverse=True)[:n_prefilter_kts]}
+            term
+            for term, _ in sorted(
+                mod_tfidfs.items(), key=operator.itemgetter(1), reverse=True
+            )[:n_prefilter_kts]
+        }
     else:
         terms_set = {term for term, _ in term_text_counts.most_common(n_prefilter_kts)}
     terms = [term for term in terms if term[0] in terms_set]
@@ -127,8 +147,11 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
         # TODO: assess how best to scale term len
         term_len = math.sqrt(term[2])  # term[2]
         term_count = term_text_counts[term_text]
-        subsum_count = sum(term_text_counts[t2] for t2 in terms_set
-                           if t2 != term_text and term_text in t2)
+        subsum_count = sum(
+            term_text_counts[t2]
+            for t2 in terms_set
+            if t2 != term_text and term_text in t2
+        )
         term_freq_factor = term_count - subsum_count
         if idf and term[2] == 1:
             term_freq_factor *= idf.get(term_text, 1)
@@ -144,12 +167,13 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
     log_ = math.log  # localize this, for performance
     for start_ind in compat.range_(n_toks):
         end_ind = start_ind + window_width
-        window_terms = (term for term in terms
-                        if start_ind <= term[1] <= end_ind)
+        window_terms = (term for term in terms if start_ind <= term[1] <= end_ind)
         # get all token combinations within window
         for t1, t2 in itertools.combinations(window_terms, 2):
             n_coocs[t1[0]][t2[0]] += 1
-            sum_logdists[t1[0]][t2[0]] += log_(window_width / max(abs(t1[1] - t2[1]), 1))
+            sum_logdists[t1[0]][t2[0]] += log_(
+                window_width / max(abs(t1[1] - t2[1]), 1)
+            )
         if end_ind > n_toks:
             break
 
@@ -157,23 +181,31 @@ def sgrank(doc, ngrams=(1, 2, 3, 4, 5, 6), normalize='lemma', window_width=1500,
     edge_weights = collections.defaultdict(lambda: collections.defaultdict(float))
     for t1, t2s in sum_logdists.items():
         for t2 in t2s:
-            edge_weights[t1][t2] = ((1.0 + sum_logdists[t1][t2]) / n_coocs[t1][t2]) * term_weights[t1] * term_weights[t2]
+            edge_weights[t1][t2] = (
+                ((1.0 + sum_logdists[t1][t2]) / n_coocs[t1][t2])
+                * term_weights[t1]
+                * term_weights[t2]
+            )
     # normalize edge weights by sum of outgoing edge weights per term (node)
     norm_edge_weights = []
     for t1, t2s in edge_weights.items():
         sum_edge_weights = sum(t2s.values())
-        norm_edge_weights.extend((t1, t2, {'weight': weight / sum_edge_weights})
-                                 for t2, weight in t2s.items())
+        norm_edge_weights.extend(
+            (t1, t2, {"weight": weight / sum_edge_weights})
+            for t2, weight in t2s.items()
+        )
 
     # build the weighted directed graph from edges, rank nodes by pagerank
     graph = nx.DiGraph()
     graph.add_edges_from(norm_edge_weights)
     term_ranks = nx.pagerank_scipy(graph)
 
-    return sorted(term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True)[:n_keyterms]
+    return sorted(term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True)[
+        :n_keyterms
+    ]
 
 
-def textrank(doc, normalize='lemma', n_keyterms=10):
+def textrank(doc, normalize="lemma", n_keyterms=10):
     """
     Convenience function for calling :func:`key_terms_from_semantic_network <textacy.keyterms.key_terms_from_semantic_network>`
     with the parameter values used in the [TextRank]_ algorithm.
@@ -196,11 +228,17 @@ def textrank(doc, normalize='lemma', n_keyterms=10):
            order into texts. Association for Computational Linguistics.
     """
     return key_terms_from_semantic_network(
-        doc, normalize=normalize, window_width=2, edge_weighting='binary',
-        ranking_algo='pagerank', join_key_words=False, n_keyterms=n_keyterms)
+        doc,
+        normalize=normalize,
+        window_width=2,
+        edge_weighting="binary",
+        ranking_algo="pagerank",
+        join_key_words=False,
+        n_keyterms=n_keyterms,
+    )
 
 
-def singlerank(doc, normalize='lemma', n_keyterms=10):
+def singlerank(doc, normalize="lemma", n_keyterms=10):
     """
     Convenience function for calling :func:`key_terms_from_semantic_network <textacy.keyterms.key_terms_from_semantic_network>`
     with the parameter values used in the [SingleRank]_ algorithm.
@@ -225,14 +263,26 @@ def singlerank(doc, normalize='lemma', n_keyterms=10):
            Posters (pp. 365-373). Association for Computational Linguistics.
     """
     return key_terms_from_semantic_network(
-        doc, normalize=normalize, window_width=10, edge_weighting='cooc_freq',
-        ranking_algo='pagerank', join_key_words=True, n_keyterms=n_keyterms)
+        doc,
+        normalize=normalize,
+        window_width=10,
+        edge_weighting="cooc_freq",
+        ranking_algo="pagerank",
+        join_key_words=True,
+        n_keyterms=n_keyterms,
+    )
 
 
-def key_terms_from_semantic_network(doc, normalize='lemma',
-                                    window_width=2, edge_weighting='binary',
-                                    ranking_algo='pagerank', join_key_words=False,
-                                    n_keyterms=10, **kwargs):
+def key_terms_from_semantic_network(
+    doc,
+    normalize="lemma",
+    window_width=2,
+    edge_weighting="binary",
+    ranking_algo="pagerank",
+    join_key_words=False,
+    n_keyterms=10,
+    **kwargs
+):
     """
     Extract key terms from a document by ranking nodes in a semantic network of
     terms, connected by edges and weights specified by parameters.
@@ -271,52 +321,80 @@ def key_terms_from_semantic_network(doc, normalize='lemma',
     """
     if isinstance(n_keyterms, float):
         if not 0.0 < n_keyterms <= 1.0:
-            raise ValueError('`n_keyterms` must be an int, or a float between 0.0 and 1.0')
+            raise ValueError(
+                "`n_keyterms` must be an int, or a float between 0.0 and 1.0"
+            )
         n_keyterms = int(round(len(doc) * n_keyterms))
 
-    include_pos = {'NOUN', 'PROPN', 'ADJ'}
-    if normalize == 'lemma':
+    include_pos = {"NOUN", "PROPN", "ADJ"}
+    if normalize == "lemma":
         word_list = [word.lemma_ for word in doc]
-        good_word_list = [word.lemma_ for word in doc
-                          if not word.is_stop and not word.is_punct and word.pos_ in include_pos]
-    elif normalize == 'lower':
+        good_word_list = [
+            word.lemma_
+            for word in doc
+            if not word.is_stop and not word.is_punct and word.pos_ in include_pos
+        ]
+    elif normalize == "lower":
         word_list = [word.lower_ for word in doc]
-        good_word_list = [word.lower_ for word in doc
-                          if not word.is_stop and not word.is_punct and word.pos_ in include_pos]
+        good_word_list = [
+            word.lower_
+            for word in doc
+            if not word.is_stop and not word.is_punct and word.pos_ in include_pos
+        ]
     elif not normalize:
         word_list = [word.text for word in doc]
-        good_word_list = [word.text for word in doc
-                          if not word.is_stop and not word.is_punct and word.pos_ in include_pos]
+        good_word_list = [
+            word.text
+            for word in doc
+            if not word.is_stop and not word.is_punct and word.pos_ in include_pos
+        ]
     else:
         word_list = [normalize(word) for word in doc]
-        good_word_list = [normalize(word) for word in doc
-                          if not word.is_stop and not word.is_punct and word.pos_ in include_pos]
+        good_word_list = [
+            normalize(word)
+            for word in doc
+            if not word.is_stop and not word.is_punct and word.pos_ in include_pos
+        ]
 
     # HACK: omit empty strings, which happen as a bug in spacy as of v1.5
     # and may well happen with ``normalize`` as a callable
     # an empty string should never be considered a keyterm
     good_word_list = [word for word in good_word_list if word]
     graph = network.terms_to_semantic_network(
-        good_word_list, window_width=window_width, edge_weighting=edge_weighting)
+        good_word_list, window_width=window_width, edge_weighting=edge_weighting
+    )
 
     # rank nodes by algorithm, and sort in descending order
-    if ranking_algo == 'pagerank':
-        word_ranks = nx.pagerank_scipy(graph, weight='weight')
-    elif ranking_algo == 'divrank':
+    if ranking_algo == "pagerank":
+        word_ranks = nx.pagerank_scipy(graph, weight="weight")
+    elif ranking_algo == "divrank":
         word_ranks = rank_nodes_by_divrank(
-            graph, r=None, lambda_=kwargs.get('lambda_', 0.5), alpha=kwargs.get('alpha', 0.5))
-    elif ranking_algo == 'bestcoverage':
+            graph,
+            r=None,
+            lambda_=kwargs.get("lambda_", 0.5),
+            alpha=kwargs.get("alpha", 0.5),
+        )
+    elif ranking_algo == "bestcoverage":
         word_ranks = rank_nodes_by_bestcoverage(
-            graph, k=n_keyterms, c=kwargs.get('c', 1), alpha=kwargs.get('alpha', 1.0))
+            graph, k=n_keyterms, c=kwargs.get("c", 1), alpha=kwargs.get("alpha", 1.0)
+        )
 
     # bail out here if all we wanted was key *words* and not *terms*
     if join_key_words is False:
-        return [(word, score) for word, score in
-                sorted(word_ranks.items(), key=operator.itemgetter(1), reverse=True)[:n_keyterms]]
+        return [
+            (word, score)
+            for word, score in sorted(
+                word_ranks.items(), key=operator.itemgetter(1), reverse=True
+            )[:n_keyterms]
+        ]
 
     top_n = int(0.25 * len(word_ranks))
-    top_word_ranks = {word: rank for word, rank in
-                      sorted(word_ranks.items(), key=operator.itemgetter(1), reverse=True)[:top_n]}
+    top_word_ranks = {
+        word: rank
+        for word, rank in sorted(
+            word_ranks.items(), key=operator.itemgetter(1), reverse=True
+        )[:top_n]
+    }
 
     # join consecutive key words into key terms
     seen_joined_key_terms = set()
@@ -324,17 +402,20 @@ def key_terms_from_semantic_network(doc, normalize='lemma',
     for key, group in itertools.groupby(word_list, lambda word: word in top_word_ranks):
         if key is True:
             words = list(group)
-            term = ' '.join(words)
+            term = " ".join(words)
             if term in seen_joined_key_terms:
                 continue
             seen_joined_key_terms.add(term)
             joined_key_terms.append((term, sum(word_ranks[word] for word in words)))
 
-    return sorted(joined_key_terms, key=operator.itemgetter(1, 0), reverse=True)[:n_keyterms]
+    return sorted(joined_key_terms, key=operator.itemgetter(1, 0), reverse=True)[
+        :n_keyterms
+    ]
 
 
-def most_discriminating_terms(terms_lists, bool_array_grp1,
-                              max_n_terms=1000, top_n_terms=25):
+def most_discriminating_terms(
+    terms_lists, bool_array_grp1, max_n_terms=1000, top_n_terms=25
+):
     """
     Given a collection of documents assigned to 1 of 2 exclusive groups, get the
     `top_n_terms` most discriminating terms for group1-and-not-group2 and
@@ -370,8 +451,13 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
     bool_array_grp2 = np.invert(bool_array_grp1)
 
     vectorizer = vsm.Vectorizer(
-        tf_type='linear', norm=None, idf_type='smooth',
-        min_df=3, max_df=0.95, max_n_terms=max_n_terms)
+        tf_type="linear",
+        norm=None,
+        idf_type="smooth",
+        min_df=3,
+        max_df=0.95,
+        max_n_terms=max_n_terms,
+    )
     dtm = vectorizer.fit_transform(terms_lists)
     id2term = vectorizer.id_to_term
 
@@ -386,10 +472,14 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
     doc_freqs_grp2 = vsm.get_doc_freqs(dtm_grp2)
 
     # get terms that occur in a larger fraction of grp1 docs than grp2 docs
-    term_ids_grp1 = np.where(doc_freqs_grp1 / n_docs_grp1 > doc_freqs_grp2 / n_docs_grp2)[0]
+    term_ids_grp1 = np.where(
+        doc_freqs_grp1 / n_docs_grp1 > doc_freqs_grp2 / n_docs_grp2
+    )[0]
 
     # get terms that occur in a larger fraction of grp2 docs than grp1 docs
-    term_ids_grp2 = np.where(doc_freqs_grp1 / n_docs_grp1 < doc_freqs_grp2 / n_docs_grp2)[0]
+    term_ids_grp2 = np.where(
+        doc_freqs_grp1 / n_docs_grp1 < doc_freqs_grp2 / n_docs_grp2
+    )[0]
 
     # get grp1 terms doc freqs in and not-in grp1 and grp2 docs, plus marginal totals
     grp1_terms_grp1_df = doc_freqs_grp1[term_ids_grp1]
@@ -410,29 +500,97 @@ def most_discriminating_terms(terms_lists, bool_array_grp1,
     # get grp1 terms likelihoods, then sort for most discriminating grp1-not-grp2 terms
     grp1_terms_likelihoods = {}
     for idx, term_id in enumerate(term_ids_grp1):
-        term1 = Decimal(math.factorial(grp1_terms_grp1_df[idx] + alpha_grp1 - 1)) * Decimal(math.factorial(grp1_terms_grp2_df[idx] + alpha_grp2 - 1)) / Decimal(math.factorial(grp1_terms_grp1_df[idx] + grp1_terms_grp2_df[idx] + alpha_grp1 + alpha_grp2 - 1))
-        term2 = Decimal(math.factorial(n_docs_grp1 - grp1_terms_grp1_df[idx] + alpha_grp1 - 1)) * Decimal(math.factorial(n_docs_grp2 - grp1_terms_grp2_df[idx] + alpha_grp2 - 1)) / Decimal((math.factorial(n_docs_grp1 + n_docs_grp2 - grp1_terms_grp1_df[idx] - grp1_terms_grp2_df[idx] + alpha_grp1 + alpha_grp2 - 1)))
+        term1 = (
+            Decimal(math.factorial(grp1_terms_grp1_df[idx] + alpha_grp1 - 1))
+            * Decimal(math.factorial(grp1_terms_grp2_df[idx] + alpha_grp2 - 1))
+            / Decimal(
+                math.factorial(
+                    grp1_terms_grp1_df[idx]
+                    + grp1_terms_grp2_df[idx]
+                    + alpha_grp1
+                    + alpha_grp2
+                    - 1
+                )
+            )
+        )
+        term2 = (
+            Decimal(
+                math.factorial(n_docs_grp1 - grp1_terms_grp1_df[idx] + alpha_grp1 - 1)
+            )
+            * Decimal(
+                math.factorial(n_docs_grp2 - grp1_terms_grp2_df[idx] + alpha_grp2 - 1)
+            )
+            / Decimal(
+                (
+                    math.factorial(
+                        n_docs_grp1
+                        + n_docs_grp2
+                        - grp1_terms_grp1_df[idx]
+                        - grp1_terms_grp2_df[idx]
+                        + alpha_grp1
+                        + alpha_grp2
+                        - 1
+                    )
+                )
+            )
+        )
         grp1_terms_likelihoods[id2term[term_id]] = term1 * term2
-    top_grp1_terms = [term for term, likelihood
-                      in sorted(grp1_terms_likelihoods.items(),
-                                key=operator.itemgetter(1), reverse=True)[:top_n_terms]]
+    top_grp1_terms = [
+        term
+        for term, likelihood in sorted(
+            grp1_terms_likelihoods.items(), key=operator.itemgetter(1), reverse=True
+        )[:top_n_terms]
+    ]
 
     # get grp2 terms likelihoods, then sort for most discriminating grp2-not-grp1 terms
     grp2_terms_likelihoods = {}
     for idx, term_id in enumerate(term_ids_grp2):
-        term1 = Decimal(math.factorial(grp2_terms_grp2_df[idx] + alpha_grp2 - 1)) * Decimal(math.factorial(grp2_terms_grp1_df[idx] + alpha_grp1 - 1)) / Decimal(math.factorial(grp2_terms_grp2_df[idx] + grp2_terms_grp1_df[idx] + alpha_grp2 + alpha_grp1 - 1))
-        term2 = Decimal(math.factorial(n_docs_grp2 - grp2_terms_grp2_df[idx] + alpha_grp2 - 1)) * Decimal(math.factorial(n_docs_grp1 - grp2_terms_grp1_df[idx] + alpha_grp1 - 1)) / Decimal((math.factorial(n_docs_grp2 + n_docs_grp1 - grp2_terms_grp2_df[idx] - grp2_terms_grp1_df[idx] + alpha_grp2 + alpha_grp1 - 1)))
+        term1 = (
+            Decimal(math.factorial(grp2_terms_grp2_df[idx] + alpha_grp2 - 1))
+            * Decimal(math.factorial(grp2_terms_grp1_df[idx] + alpha_grp1 - 1))
+            / Decimal(
+                math.factorial(
+                    grp2_terms_grp2_df[idx]
+                    + grp2_terms_grp1_df[idx]
+                    + alpha_grp2
+                    + alpha_grp1
+                    - 1
+                )
+            )
+        )
+        term2 = (
+            Decimal(
+                math.factorial(n_docs_grp2 - grp2_terms_grp2_df[idx] + alpha_grp2 - 1)
+            )
+            * Decimal(
+                math.factorial(n_docs_grp1 - grp2_terms_grp1_df[idx] + alpha_grp1 - 1)
+            )
+            / Decimal(
+                (
+                    math.factorial(
+                        n_docs_grp2
+                        + n_docs_grp1
+                        - grp2_terms_grp2_df[idx]
+                        - grp2_terms_grp1_df[idx]
+                        + alpha_grp2
+                        + alpha_grp1
+                        - 1
+                    )
+                )
+            )
+        )
         grp2_terms_likelihoods[id2term[term_id]] = term1 * term2
-    top_grp2_terms = [term for term, likelihood
-                      in sorted(grp2_terms_likelihoods.items(),
-                                key=operator.itemgetter(1), reverse=True)[:top_n_terms]]
+    top_grp2_terms = [
+        term
+        for term, likelihood in sorted(
+            grp2_terms_likelihoods.items(), key=operator.itemgetter(1), reverse=True
+        )[:top_n_terms]
+    ]
 
     return (top_grp1_terms, top_grp2_terms)
 
 
-def aggregate_term_variants(terms,
-                            acro_defs=None,
-                            fuzzy_dedupe=True):
+def aggregate_term_variants(terms, acro_defs=None, fuzzy_dedupe=True):
     """
     Take a set of unique terms and aggregate terms that are symbolic, lexical,
     and ordering variants of each other, as well as acronyms and fuzzy string matches.
@@ -466,13 +624,13 @@ def aggregate_term_variants(terms,
         seen_terms.add(term)
 
         # symbolic variations
-        if '-' in term:
-            variant = term.replace('-', ' ').strip()
+        if "-" in term:
+            variant = term.replace("-", " ").strip()
             if variant in terms.difference(seen_terms):
                 variants.add(variant)
                 seen_terms.add(variant)
-        if '/' in term:
-            variant = term.replace('/', ' ').strip()
+        if "/" in term:
+            variant = term.replace("/", " ").strip()
             if variant in terms.difference(seen_terms):
                 variants.add(variant)
                 seen_terms.add(variant)
@@ -508,8 +666,8 @@ def aggregate_term_variants(terms,
         # if 3+ -word term differs by one word at the start or the end
         # of a longer phrase, aggregate
         if len(term_words) > 2:
-            term_minus_first_word = ' '.join(term_words[1:])
-            term_minus_last_word = ' '.join(term_words[:-1])
+            term_minus_first_word = " ".join(term_words[1:])
+            term_minus_last_word = " ".join(term_words[:-1])
             if term_minus_first_word in terms.difference(seen_terms):
                 variants.add(term_minus_first_word)
                 seen_terms.add(term_minus_first_word)
@@ -517,16 +675,18 @@ def aggregate_term_variants(terms,
                 variants.add(term_minus_last_word)
                 seen_terms.add(term_minus_last_word)
             # check for "X of Y" <=> "Y X" term variants
-            if ' of ' in term:
-                split_term = term.split(' of ')
-                variant = split_term[1] + ' ' + split_term[0]
+            if " of " in term:
+                split_term = term.split(" of ")
+                variant = split_term[1] + " " + split_term[0]
                 if variant in terms.difference(seen_terms):
                     variants.add(variant)
                     seen_terms.add(variant)
 
         # intense de-duping for sufficiently long terms
         if fuzzy_dedupe is True and len(term) >= 13:
-            for other_term in sorted(terms.difference(seen_terms), key=len, reverse=True):
+            for other_term in sorted(
+                terms.difference(seen_terms), key=len, reverse=True
+            ):
                 if len(other_term) < 13:
                     break
                 tsr = similarity.token_sort_ratio(term, other_term)
@@ -569,11 +729,13 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
 
     nodes_list = [node for node in graph]
     if len(nodes_list) == 0:
-        LOGGER.warning('``graph`` is empty!')
+        LOGGER.warning("``graph`` is empty!")
         return {}
 
     # ranks: array of PageRank values, summing up to 1
-    ranks = nx.pagerank_scipy(graph, alpha=0.85, max_iter=100, tol=1e-08, weight='weight')
+    ranks = nx.pagerank_scipy(
+        graph, alpha=0.85, max_iter=100, tol=1e-08, weight="weight"
+    )
     sorted_ranks = sorted(ranks.items(), key=operator.itemgetter(1), reverse=True)
     avg_degree = sum(dict(graph.degree()).values()) / len(nodes_list)
     # relaxation parameter, k' in the paper
@@ -605,7 +767,9 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
             vertices = set(next_vertices)
         return s
 
-    top_k_exp_vertices = get_l_step_expanded_set([item[0] for item in top_k_sorted_ranks], c)
+    top_k_exp_vertices = get_l_step_expanded_set(
+        [item[0] for item in top_k_sorted_ranks], c
+    )
 
     # compute initial exprel contribution
     taken = collections.defaultdict(bool)
@@ -623,7 +787,9 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
         if not contrib:  # TODO: check that .items(): not needed
             break
         # find word with highest l-step expanded relevance score
-        max_word_score = sorted(contrib.items(), key=operator.itemgetter(1), reverse=True)[0]
+        max_word_score = sorted(
+            contrib.items(), key=operator.itemgetter(1), reverse=True
+        )[0]
         sum_contrib += max_word_score[1]  # contrib[max_word[0]]
         results[max_word_score[0]] = max_word_score[1]
         # find its l-step expanded set
@@ -640,7 +806,8 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
                     contrib[w] -= alpha * ranks[vertex]
                 except KeyError:
                     LOGGER.error(
-                        'Word %s not in contrib dict! We\'re approximating...', w)
+                        "Word %s not in contrib dict! We're approximating...", w
+                    )
             taken[vertex] = True
         contrib[max_word_score[0]] = 0
 
@@ -671,7 +838,7 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
     """
     # check function arguments
     if len(graph) == 0:
-        LOGGER.warning('``graph`` is empty!')
+        LOGGER.warning("``graph`` is empty!")
         return {}
 
     # specify the order of nodes to use in creating the matrix
@@ -680,7 +847,7 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
 
     # create adjacency matrix, i.e.
     # n x n matrix where entry W_ij is the weight of the edge from V_i to V_j
-    W = nx.to_numpy_matrix(graph, nodelist=nodes_list, weight='weight').A
+    W = nx.to_numpy_matrix(graph, nodelist=nodes_list, weight="weight").A
     n = W.shape[1]
 
     # create flat prior personalization vector if none given
@@ -689,7 +856,7 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
 
     # Specify some constants
     max_iter = 1000
-    diff = 1e+10
+    diff = 1e10
     tol = 1e-3
 
     pr = np.array([n * [1 / float(n)]])
@@ -716,8 +883,11 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
         pr = pr_new
 
     # sort nodes by divrank score
-    results = sorted(((i, score) for i, score in enumerate(pr.flatten().tolist())),
-                     key=operator.itemgetter(1), reverse=True)
+    results = sorted(
+        ((i, score) for i, score in enumerate(pr.flatten().tolist())),
+        key=operator.itemgetter(1),
+        reverse=True,
+    )
 
     # replace node number by node value
     divranks = {nodes_list[result[0]]: result[1] for result in results}

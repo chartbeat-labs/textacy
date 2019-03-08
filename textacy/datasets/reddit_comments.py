@@ -36,17 +36,19 @@ from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
 
-NAME = 'reddit_comments'
-DESCRIPTION = ('Collection of ~1.5 billion publicly available Reddit comments '
-               'from October 2007 through May 2015.')
-SITE_URL = 'https://archive.org/details/2015_reddit_comments_corpus'
+NAME = "reddit_comments"
+DESCRIPTION = (
+    "Collection of ~1.5 billion publicly available Reddit comments "
+    "from October 2007 through May 2015."
+)
+SITE_URL = "https://archive.org/details/2015_reddit_comments_corpus"
 DATA_DIR = os.path.join(data_dir, NAME)
 
-DOWNLOAD_ROOT = 'https://archive.org/download/2015_reddit_comments_corpus/reddit_data/'
+DOWNLOAD_ROOT = "https://archive.org/download/2015_reddit_comments_corpus/reddit_data/"
 MIN_SCORE = -2147483647
 MAX_SCORE = 2147483647
 
-REDDIT_LINK_RE = re.compile(r'\[([^]]+)\]\(https?://[^\)]+\)')
+REDDIT_LINK_RE = re.compile(r"\[([^]]+)\]\(https?://[^\)]+\)")
 
 
 class RedditComments(Dataset):
@@ -95,12 +97,13 @@ class RedditComments(Dataset):
             in chronological order.
     """
 
-    min_date = '2007-10-01'
-    max_date = '2015-06-01'
+    min_date = "2007-10-01"
+    max_date = "2015-06-01"
 
     def __init__(self, data_dir=DATA_DIR):
         super(RedditComments, self).__init__(
-            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
+            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir
+        )
 
     @property
     def filenames(self):
@@ -109,9 +112,13 @@ class RedditComments(Dataset):
             the ``data_dir`` directory, sorted chronologically.
         """
         if os.path.exists(self.data_dir):
-            return tuple(sorted(io.get_filenames(self.data_dir, extension='.bz2', recursive=True)))
+            return tuple(
+                sorted(
+                    io.get_filenames(self.data_dir, extension=".bz2", recursive=True)
+                )
+            )
         else:
-            LOGGER.warning('%s data directory does not exist', self.data_dir)
+            LOGGER.warning("%s data directory does not exist", self.data_dir)
             return tuple()
 
     def download(self, date_range=(None, None), force=False):
@@ -135,25 +142,23 @@ class RedditComments(Dataset):
             url = compat.urljoin(DOWNLOAD_ROOT, fstub)
             filename = os.path.join(self.data_dir, fstub)
             if os.path.isfile(filename) and force is False:
-                LOGGER.warning(
-                    'File %s already exists; skipping download...',
-                    filename)
+                LOGGER.warning("File %s already exists; skipping download...", filename)
                 continue
-            LOGGER.info(
-                'Downloading data from %s and writing it to %s',
-                url, filename)
+            LOGGER.info("Downloading data from %s and writing it to %s", url, filename)
             io.write_http_stream(
-                url, filename, mode='wb', encoding=None,
-                make_dirs=True, chunk_size=1024)
+                url, filename, mode="wb", encoding=None, make_dirs=True, chunk_size=1024
+            )
 
     def _parse_score_range(self, score_range):
         """Flexibly parse score range args."""
         if not isinstance(score_range, (list, tuple)):
             raise ValueError(
-                '`score_range` must be a list or tuple, not {}'.format(type(score_range)))
+                "`score_range` must be a list or tuple, not {}".format(
+                    type(score_range)
+                )
+            )
         if len(score_range) != 2:
-            raise ValueError(
-                '`score_range` must have exactly two items: min and max')
+            raise ValueError("`score_range` must have exactly two items: min and max")
         if not score_range[0]:
             score_range = (MIN_SCORE, score_range[1])
         if not score_range[1]:
@@ -170,21 +175,22 @@ class RedditComments(Dataset):
         while yrmo < end:
             # parse current yrmo
             try:
-                dt = datetime.strptime(yrmo, '%Y-%m')
+                dt = datetime.strptime(yrmo, "%Y-%m")
             except ValueError:
-                dt = datetime.strptime(yrmo, '%Y-%m-%d')
-            fstubs.append(dt.strftime('%Y/RC_%Y-%m.bz2'))
+                dt = datetime.strptime(yrmo, "%Y-%m-%d")
+            fstubs.append(dt.strftime("%Y/RC_%Y-%m.bz2"))
             # dead simple iteration to next yrmo
             next_yr = dt.year
             next_mo = dt.month + 1
             if next_mo > 12:
                 next_yr += 1
                 next_mo = 1
-            yrmo = datetime(next_yr, next_mo, 1).strftime('%Y-%m')
+            yrmo = datetime(next_yr, next_mo, 1).strftime("%Y-%m")
         return tuple(fstubs)
 
-    def texts(self, subreddit=None, date_range=None, score_range=None,
-              min_len=0, limit=-1):
+    def texts(
+        self, subreddit=None, date_range=None, score_range=None, min_len=0, limit=-1
+    ):
         """
         Iterate over comments (text-only) in 1 or more files of this dataset,
         optionally filtering by a variety of metadata and/or text length,
@@ -214,13 +220,19 @@ class RedditComments(Dataset):
             passing all filter params.
         """
         texts = self._iterate(
-            True, subreddit=subreddit, date_range=date_range,
-            score_range=score_range, min_len=min_len, limit=limit)
+            True,
+            subreddit=subreddit,
+            date_range=date_range,
+            score_range=score_range,
+            min_len=min_len,
+            limit=limit,
+        )
         for text in texts:
             yield text
 
-    def records(self, subreddit=None, date_range=None, score_range=None,
-                min_len=0, limit=-1):
+    def records(
+        self, subreddit=None, date_range=None, score_range=None, min_len=0, limit=-1
+    ):
         """
         Iterate over comments (including text and metadata) in 1 or more files
         of this dataset, optionally filtering by a variety of metadata and/or
@@ -250,13 +262,17 @@ class RedditComments(Dataset):
             in dataset passing all filter params.
         """
         records = self._iterate(
-            False, subreddit=subreddit, date_range=date_range,
-            score_range=score_range, min_len=min_len, limit=limit)
+            False,
+            subreddit=subreddit,
+            date_range=date_range,
+            score_range=score_range,
+            min_len=min_len,
+            limit=limit,
+        )
         for record in records:
             yield record
 
-    def _iterate(self, text_only, subreddit, date_range, score_range,
-                 min_len, limit):
+    def _iterate(self, text_only, subreddit, date_range, score_range, min_len, limit):
         """
         Low-level method to iterate over the records in this dataset. Used by
         :meth:`RedditComments.texts()` and :meth:`RedditComments.records()`.
@@ -272,37 +288,47 @@ class RedditComments(Dataset):
             date_range = self._parse_date_range(date_range)
             needed_filenames = {
                 os.path.join(self.data_dir, fstub)
-                for fstub in self._generate_filestubs(date_range)}
+                for fstub in self._generate_filestubs(date_range)
+            }
             filenames = tuple(
-                fname for fname in self.filenames
-                if fname in needed_filenames)
+                fname for fname in self.filenames if fname in needed_filenames
+            )
         else:
             filenames = self.filenames
 
         if not filenames:
             raise IOError(
-                'No files found at {} corresponding to date range {}'.format(
-                    self.data_dir, date_range))
+                "No files found at {} corresponding to date range {}".format(
+                    self.data_dir, date_range
+                )
+            )
 
         n = 0
         for filename in filenames:
-            for line in io.read_json(filename, mode='rb', lines=True):
+            for line in io.read_json(filename, mode="rb", lines=True):
 
-                if subreddit and line['subreddit'] not in subreddit:
+                if subreddit and line["subreddit"] not in subreddit:
                     continue
-                if score_range and not score_range[0] <= line['score'] < score_range[1]:
+                if score_range and not score_range[0] <= line["score"] < score_range[1]:
                     continue
-                line['created_utc'] = self._convert_timestamp(line.get('created_utc', ''))
-                if date_range and not date_range[0] <= line['created_utc'] < date_range[1]:
+                line["created_utc"] = self._convert_timestamp(
+                    line.get("created_utc", "")
+                )
+                if (
+                    date_range
+                    and not date_range[0] <= line["created_utc"] < date_range[1]
+                ):
                     continue
-                line['body'] = self._clean_content(line['body'])
-                if min_len and len(line['body']) < min_len:
+                line["body"] = self._clean_content(line["body"])
+                if min_len and len(line["body"]) < min_len:
                     continue
 
                 if text_only is True:
-                    yield line['body']
+                    yield line["body"]
                 else:
-                    line['retrieved_on'] = self._convert_timestamp(line.get('retrieved_on', ''))
+                    line["retrieved_on"] = self._convert_timestamp(
+                        line.get("retrieved_on", "")
+                    )
                     yield line
 
                 n += 1
@@ -314,16 +340,18 @@ class RedditComments(Dataset):
 
     def _convert_timestamp(self, timestamp):
         try:
-            return datetime.utcfromtimestamp(int(timestamp)).strftime('%Y-%m-%dT%H:%M:%S')
+            return datetime.utcfromtimestamp(int(timestamp)).strftime(
+                "%Y-%m-%dT%H:%M:%S"
+            )
         except (ValueError, TypeError):
-            return ''
+            return ""
 
     def _clean_content(self, content):
         # strip out link markup, e.g. [foo](http://foo.com)
-        content = REDDIT_LINK_RE.sub(r'\1', content)
+        content = REDDIT_LINK_RE.sub(r"\1", content)
         # clean up basic HTML cruft
-        content = content.replace('&gt;', '>').replace('&lt;', '<')
+        content = content.replace("&gt;", ">").replace("&lt;", "<")
         # strip out text markup, e.g. * for bold text
-        content = content.replace('`', '').replace('*', '').replace('~', '')
+        content = content.replace("`", "").replace("*", "").replace("~", "")
         # normalize whitespace
         return preprocess.normalize_whitespace(content)

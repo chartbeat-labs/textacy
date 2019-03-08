@@ -13,10 +13,12 @@ import warnings
 
 import numpy as np
 from cytoolz import itertoolz
-from Levenshtein import (distance as _levenshtein,
-                         hamming as _hamming,
-                         jaro_winkler as _jaro_winkler,
-                         ratio as _ratio)
+from Levenshtein import (
+    distance as _levenshtein,
+    hamming as _hamming,
+    jaro_winkler as _jaro_winkler,
+    ratio as _ratio,
+)
 from pyemd import emd
 from sklearn.metrics import pairwise_distances
 
@@ -25,10 +27,10 @@ from . import extract
 from .doc import Doc
 
 
-NONWORDCHARS_REGEX = re.compile(r'\W+', flags=re.IGNORECASE | re.UNICODE)
+NONWORDCHARS_REGEX = re.compile(r"\W+", flags=re.IGNORECASE | re.UNICODE)
 
 
-def word_movers(doc1, doc2, metric='cosine'):
+def word_movers(doc1, doc2, metric="cosine"):
     """
     Measure the semantic similarity between two documents using Word Movers
     Distance.
@@ -59,21 +61,25 @@ def word_movers(doc1, doc2, metric='cosine'):
         if word.has_vector and word_idxs.setdefault(word.orth, n) == n:
             word_vecs.append(word.vector)
             n += 1
-    distance_mat = pairwise_distances(np.array(word_vecs), metric=metric).astype(np.double)
+    distance_mat = pairwise_distances(np.array(word_vecs), metric=metric).astype(
+        np.double
+    )
     distance_mat /= distance_mat.max()
 
     vec1 = collections.Counter(
-        word_idxs[word.orth]
-        for word in extract.words(doc1)
-        if word.has_vector)
-    vec1 = np.array([vec1[word_idx] for word_idx in compat.range_(len(word_idxs))]).astype(np.double)
+        word_idxs[word.orth] for word in extract.words(doc1) if word.has_vector
+    )
+    vec1 = np.array(
+        [vec1[word_idx] for word_idx in compat.range_(len(word_idxs))]
+    ).astype(np.double)
     vec1 /= vec1.sum()  # normalize word counts
 
     vec2 = collections.Counter(
-        word_idxs[word.orth]
-        for word in extract.words(doc2)
-        if word.has_vector)
-    vec2 = np.array([vec2[word_idx] for word_idx in compat.range_(len(word_idxs))]).astype(np.double)
+        word_idxs[word.orth] for word in extract.words(doc2) if word.has_vector
+    )
+    vec2 = np.array(
+        [vec2[word_idx] for word_idx in compat.range_(len(word_idxs))]
+    ).astype(np.double)
     vec2 /= vec2.sum()  # normalize word counts
 
     return 1.0 - emd(vec1, vec2, distance_mat)
@@ -124,16 +130,19 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
     """
     if isinstance(match_threshold, int) and 1 <= match_threshold <= 100:
         warnings.warn(
-            '`match_threshold` should be a float in [0.0, 1.0]; '
-            'it was automatically converted from the provided int in [0, 100]')
+            "`match_threshold` should be a float in [0.0, 1.0]; "
+            "it was automatically converted from the provided int in [0, 100]"
+        )
         match_threshold /= 100
     set1 = set(obj1)
     set2 = set(obj2)
     intersection = len(set1 & set2)
     union = len(set1 | set2)
-    if (fuzzy_match is True and
-            not isinstance(obj1, compat.string_types) and
-            not isinstance(obj2, compat.string_types)):
+    if (
+        fuzzy_match is True
+        and not isinstance(obj1, compat.string_types)
+        and not isinstance(obj2, compat.string_types)
+    ):
         for item1 in set1.difference(set2):
             if max(token_sort_ratio(item1, item2) for item2 in set2) >= match_threshold:
                 intersection += 1
@@ -141,7 +150,7 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
             if max(token_sort_ratio(item2, item1) for item1 in set1) >= match_threshold:
                 intersection += 1
     elif fuzzy_match is True:
-        raise ValueError('fuzzy matching not possible with str inputs')
+        raise ValueError("fuzzy matching not possible with str inputs")
 
     return intersection / union
 
@@ -253,7 +262,7 @@ def _force_unicode(s):
 
 def _process_and_sort(s):
     """Return a processed string with tokens sorted then re-joined."""
-    return ' '.join(sorted(_process(s).split()))
+    return " ".join(sorted(_process(s).split()))
 
 
 def _process(s):
@@ -262,5 +271,5 @@ def _process(s):
     and force everything to lower-case.
     """
     if not s:
-        return ''
-    return NONWORDCHARS_REGEX.sub(' ', s).lower().strip()
+        return ""
+    return NONWORDCHARS_REGEX.sub(" ", s).lower().strip()

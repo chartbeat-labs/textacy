@@ -10,7 +10,8 @@ LOGGER = logging.getLogger(__name__)
 utils.deprecated(
     "The `spacy_pipelines` module is deprecated and will be removed in v0.7.0."
     "Use the `textacy.spacier` subpackage instead.",
-    action='once')
+    action="once",
+)
 
 
 def _merge_entities(doc):

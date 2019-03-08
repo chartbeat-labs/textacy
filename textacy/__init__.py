@@ -6,7 +6,7 @@ import os
 from .about import __version__
 
 
-data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'data')
+data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 # subpackages
 # from textacy import io
@@ -29,6 +29,6 @@ from textacy.text_stats import TextStats
 from textacy.tm import TopicModel
 from textacy.vsm import Vectorizer
 
-logger = logging.getLogger('textacy')
+logger = logging.getLogger("textacy")
 if len(logger.handlers) == 0:  # ensure reload() doesn't add another handler
     logger.addHandler(logging.NullHandler())

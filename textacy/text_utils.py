@@ -37,18 +37,20 @@ def detect_language(text):
         cld2_detect
     except NameError:
         raise ImportError(
-            '`cld2-cffi` must be installed to use textacy\'s automatic language detection; '
-            'you may do so via `pip install cld2-cffi` or `pip install textacy[lang]`.'
-            )
+            "`cld2-cffi` must be installed to use textacy's automatic language detection; "
+            "you may do so via `pip install cld2-cffi` or `pip install textacy[lang]`."
+        )
 
     if compat.is_python2:
-        is_reliable, _, best_guesses = cld2_detect(compat.unicode_to_bytes(text), bestEffort=True)
+        is_reliable, _, best_guesses = cld2_detect(
+            compat.unicode_to_bytes(text), bestEffort=True
+        )
     else:
         is_reliable, _, best_guesses = cld2_detect(text, bestEffort=True)
     if is_reliable is False:
         LOGGER.warning(
-            'Text language detected with low confidence; best guesses: %s',
-            best_guesses)
+            "Text language detected with low confidence; best guesses: %s", best_guesses
+        )
     return best_guesses[0][1]
 
 
@@ -72,7 +74,7 @@ def is_acronym(token, exclude=None):
     if not token:
         return False
     # don't allow spaces
-    if ' ' in token:
+    if " " in token:
         return False
     # 2-character acronyms can't have lower-case letters
     if len(token) == 2 and not token.isupper():
@@ -81,8 +83,9 @@ def is_acronym(token, exclude=None):
     if token.isdigit():
         return False
     # acronyms must have at least one upper-case letter or start/end with a digit
-    if (not any(char.isupper() for char in token) and
-            not (token[0].isdigit() or token[-1].isdigit())):
+    if not any(char.isupper() for char in token) and not (
+        token[0].isdigit() or token[-1].isdigit()
+    ):
         return False
     # acronyms must have between 2 and 10 alphanumeric characters
     if not 2 <= sum(1 for char in token if char.isalnum()) <= 10:
@@ -93,8 +96,9 @@ def is_acronym(token, exclude=None):
     return True
 
 
-def keyword_in_context(text, keyword, ignore_case=True,
-                       window_width=50, print_only=True):
+def keyword_in_context(
+    text, keyword, ignore_case=True, window_width=50, print_only=True
+):
     """
     Search for ``keyword`` in ``text`` via regular expression, return or print strings
     spanning ``window_width`` characters before and after each occurrence of keyword.
@@ -119,16 +123,23 @@ def keyword_in_context(text, keyword, ignore_case=True,
     flags = re.IGNORECASE if ignore_case is True else 0
     if print_only is True:
         for match in re.finditer(keyword, text, flags=flags):
-            line = '{pre} {kw} {post}'.format(
-                pre=text[max(0, match.start() - window_width): match.start()].rjust(window_width),
+            line = "{pre} {kw} {post}".format(
+                pre=text[max(0, match.start() - window_width) : match.start()].rjust(
+                    window_width
+                ),
                 kw=match.group(),
-                post=text[match.end(): match.end() + window_width].ljust(window_width))
+                post=text[match.end() : match.end() + window_width].ljust(window_width),
+            )
             print(line)
     else:
-        return ((text[max(0, match.start() - window_width): match.start()],
-                 match.group(),
-                 text[match.end(): match.end() + window_width])
-                for match in re.finditer(keyword, text, flags=flags))
+        return (
+            (
+                text[max(0, match.start() - window_width) : match.start()],
+                match.group(),
+                text[match.end() : match.end() + window_width],
+            )
+            for match in re.finditer(keyword, text, flags=flags)
+        )
 
 
 KWIC = keyword_in_context
@@ -153,26 +164,33 @@ def clean_terms(terms):
         into a form that changes or obscures the original meaning of the term.
     """
     # get rid of leading/trailing junk characters
-    terms = (constants.LEAD_TAIL_CRUFT_TERM_RE.sub('', term)
-             for term in terms)
-    terms = (constants.LEAD_HYPHEN_TERM_RE.sub(r'\1', term)
-             for term in terms)
+    terms = (constants.LEAD_TAIL_CRUFT_TERM_RE.sub("", term) for term in terms)
+    terms = (constants.LEAD_HYPHEN_TERM_RE.sub(r"\1", term) for term in terms)
     # handle dangling/backwards parens, don't allow '(' or ')' to appear without the other
-    terms = ('' if term.count(')') != term.count('(') or term.find(')') < term.find('(')
-             else term if '(' not in term
-             else constants.DANGLING_PARENS_TERM_RE.sub(r'\1\2\3', term)
-             for term in terms)
+    terms = (
+        ""
+        if term.count(")") != term.count("(") or term.find(")") < term.find("(")
+        else term
+        if "(" not in term
+        else constants.DANGLING_PARENS_TERM_RE.sub(r"\1\2\3", term)
+        for term in terms
+    )
     # handle oddly separated hyphenated words
-    terms = (term if '-' not in term
-             else constants.NEG_DIGIT_TERM_RE.sub(r'\1\2', constants.WEIRD_HYPHEN_SPACE_TERM_RE.sub(r'\1', term))
-             for term in terms)
+    terms = (
+        term
+        if "-" not in term
+        else constants.NEG_DIGIT_TERM_RE.sub(
+            r"\1\2", constants.WEIRD_HYPHEN_SPACE_TERM_RE.sub(r"\1", term)
+        )
+        for term in terms
+    )
     # handle oddly separated apostrophe'd words
-    terms = (constants.WEIRD_APOSTR_SPACE_TERM_RE.sub(r'\1\2', term)
-             if "'" in term else term
-             for term in terms)
+    terms = (
+        constants.WEIRD_APOSTR_SPACE_TERM_RE.sub(r"\1\2", term) if "'" in term else term
+        for term in terms
+    )
     # normalize whitespace
-    terms = (constants.NONBREAKING_SPACE_REGEX.sub(' ', term).strip()
-             for term in terms)
+    terms = (constants.NONBREAKING_SPACE_REGEX.sub(" ", term).strip() for term in terms)
     for term in terms:
-        if re.search(r'\w', term):
+        if re.search(r"\w", term):
             yield term

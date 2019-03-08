@@ -40,24 +40,24 @@ def _get_size(obj, seen=None):
     # Important mark as seen *before* entering recursion to gracefully handle
     # self-referential objects
     seen.add(obj_id)
-    if hasattr(obj, '__dict__'):
+    if hasattr(obj, "__dict__"):
         for cls in obj.__class__.__mro__:
-            if '__dict__' in cls.__dict__:
-                d = cls.__dict__['__dict__']
+            if "__dict__" in cls.__dict__:
+                d = cls.__dict__["__dict__"]
                 if inspect.isgetsetdescriptor(d) or inspect.ismemberdescriptor(d):
                     size += _get_size(obj.__dict__, seen)
                 break
     if isinstance(obj, dict):
         size += sum((_get_size(v, seen) for v in obj.values()))
         size += sum((_get_size(k, seen) for k in obj.keys()))
-    elif hasattr(obj, '__iter__') and not isinstance(obj, (str, bytes, bytearray)):
+    elif hasattr(obj, "__iter__") and not isinstance(obj, (str, bytes, bytearray)):
         size += sum((_get_size(i, seen) for i in obj))
     return size
 
 
 LRU_CACHE = LRUCache(
-    os.environ.get('TEXTACY_MAX_CACHE_SIZE', 2147483648),
-    getsizeof=_get_size)
+    os.environ.get("TEXTACY_MAX_CACHE_SIZE", 2147483648), getsizeof=_get_size
+)
 """:class:`cachetools.LRUCache`: Least Recently Used (LRU) cache for loaded data.
 
 The max cache size may be set by the `TEXTACY_MAX_CACHE_SIZE` environment variable,
@@ -71,7 +71,7 @@ def clear():
     LRU_CACHE.clear()
 
 
-@cached(LRU_CACHE, key=functools.partial(hashkey, 'spacy'))
+@cached(LRU_CACHE, key=functools.partial(hashkey, "spacy"))
 def load_spacy(name, disable=None):
     """
     Load a spaCy pipeline (model weights as binary data, ordered sequence of
@@ -99,7 +99,7 @@ def load_spacy(name, disable=None):
     return spacy.load(name, disable=disable)
 
 
-@cached(LRU_CACHE, key=functools.partial(hashkey, 'hyphenator'))
+@cached(LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
 def load_hyphenator(lang):
     """
     Load an object that hyphenates words at valid points, as used in LaTex typesetting.
@@ -118,12 +118,13 @@ def load_hyphenator(lang):
         not all syllable divisions are valid hyphenation points. But it's decent.
     """
     import pyphen
+
     LOGGER.debug('Loading "%s" language hyphenator', lang)
     return pyphen.Pyphen(lang=lang)
 
 
-@cached(LRU_CACHE, key=functools.partial(hashkey, 'depechemood'))
-def load_depechemood(data_dir=None, weighting='normfreq'):
+@cached(LRU_CACHE, key=functools.partial(hashkey, "depechemood"))
+def load_depechemood(data_dir=None, weighting="normfreq"):
     """
     Load DepecheMood lexicon text file from disk, munge into nested dictionary
     for convenient lookup by lemma#POS. NB: English only!
@@ -154,25 +155,31 @@ def load_depechemood(data_dir=None, weighting='normfreq'):
         :func:`download_depechemood <textacy.lexicon_methods.download_depechemood>`
     """
     if data_dir is None:
-        data_dir = os.path.join(DEFAULT_DATA_DIR, 'depechemood', 'DepecheMood_V1.0')
+        data_dir = os.path.join(DEFAULT_DATA_DIR, "depechemood", "DepecheMood_V1.0")
     fname = os.path.join(
-        data_dir, 'DepecheMood_{weighting}.txt'.format(weighting=weighting))
-    delimiter = compat.bytes_('\t') if compat.is_python2 else '\t'  # HACK: Py2's csv module fail
+        data_dir, "DepecheMood_{weighting}.txt".format(weighting=weighting)
+    )
+    delimiter = (
+        compat.bytes_("\t") if compat.is_python2 else "\t"
+    )  # HACK: Py2's csv module fail
     try:
-        with io.open(fname, mode='rt') as csvfile:
+        with io.open(fname, mode="rt") as csvfile:
             csvreader = csv.reader(csvfile, delimiter=delimiter)
             rows = list(csvreader)
     except (OSError, IOError):
         LOGGER.exception(
-            'Unable to load DepecheMood from %s.'
-            '\n\nHave you downloaded the data? If not, you can use the '
-            '`textacy.lexicon_methods.download_depechemood()` function.'
-            '\n\nIf so, have you given the correct `data_dir`? The directory '
-            'should have a `DepecheMood_V1.0` subdirectory, within which are '
-            'three text files and a README.',
-            data_dir)
+            "Unable to load DepecheMood from %s."
+            "\n\nHave you downloaded the data? If not, you can use the "
+            "`textacy.lexicon_methods.download_depechemood()` function."
+            "\n\nIf so, have you given the correct `data_dir`? The directory "
+            "should have a `DepecheMood_V1.0` subdirectory, within which are "
+            "three text files and a README.",
+            data_dir,
+        )
         raise
-    LOGGER.debug('Loading DepecheMood lexicon from %s', fname)
+    LOGGER.debug("Loading DepecheMood lexicon from %s", fname)
     cols = rows[0]
-    return {row[0]: {cols[i]: float(row[i]) for i in compat.range_(1, 9)}
-            for row in rows[1:]}
+    return {
+        row[0]: {cols[i]: float(row[i]) for i in compat.range_(1, 9)}
+        for row in rows[1:]
+    }

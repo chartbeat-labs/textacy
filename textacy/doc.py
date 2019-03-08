@@ -109,6 +109,7 @@ class Doc(object):
         spacy_vocab (``spacy.Vocab``): https://spacy.io/api/vocab
         spacy_stringstore (``spacy.StringStore``): https://spacy.io/api/stringstore
     """
+
     def __init__(self, content, metadata=None, lang=text_utils.detect_language):
         if isinstance(content, compat.unicode_):
             self._init_from_text(content, metadata, lang)
@@ -117,7 +118,9 @@ class Doc(object):
         else:
             raise ValueError(
                 '`Doc` must be initialized with {} content, not "{}"'.format(
-                    {compat.unicode_, SpacyDoc}, type(content)))
+                    {compat.unicode_, SpacyDoc}, type(content)
+                )
+            )
 
         self._counted_ngrams = set()
         self._counts = collections.Counter()
@@ -136,15 +139,17 @@ class Doc(object):
             spacy_lang = cache.load_spacy(langstr)
         else:
             raise TypeError(
-                '`lang` must be {}, not {}'.format(
-                    {compat.unicode_, SpacyLang, types.FunctionType}, type(lang)))
+                "`lang` must be {}, not {}".format(
+                    {compat.unicode_, SpacyLang, types.FunctionType}, type(lang)
+                )
+            )
         self.spacy_vocab = spacy_lang.vocab
         self.spacy_stringstore = self.spacy_vocab.strings
         self.spacy_doc = spacy_lang(content)
-        self.spacy_doc.user_data['textacy'] = {
-            'lang': langstr,
-            'metadata': metadata or {},
-            }
+        self.spacy_doc.user_data["textacy"] = {
+            "lang": langstr,
+            "metadata": metadata or {},
+        }
 
     def _init_from_spacy_doc(self, content, metadata, lang):
         """Doc instantiated from an already-parsed spacy.Doc. Ensure agreement
@@ -160,32 +165,34 @@ class Doc(object):
         if isinstance(lang, SpacyLang):
             if self.spacy_vocab is not lang.vocab:
                 raise ValueError(
-                    '`spacy.Vocab` used to parse `content` must be the same '
-                    'as the one associated with the `lang` param')
+                    "`spacy.Vocab` used to parse `content` must be the same "
+                    "as the one associated with the `lang` param"
+                )
         elif isinstance(lang, compat.unicode_):
             # a `lang` as str could be a specific spacy model name,
             # e.g. "en_core_web_sm", while `langstr` would only be "en"
             if not lang.startswith(langstr):
                 raise ValueError(
-                    'lang of spacy model used to parse `content` ({}) '
-                    'must be the same as the `lang` param ({})'.format(
-                        lang, langstr))
+                    "lang of spacy model used to parse `content` ({}) "
+                    "must be the same as the `lang` param ({})".format(lang, langstr)
+                )
         elif callable(lang) is False:
             raise TypeError(
-                '`lang` must be {}, not {}'.format(
-                    {compat.unicode_, SpacyLang, types.FunctionType}, type(lang)))
+                "`lang` must be {}, not {}".format(
+                    {compat.unicode_, SpacyLang, types.FunctionType}, type(lang)
+                )
+            )
         # textacy metadata could already be assigned to spacy doc; grab it
         # if it's there and user hasn't supplied *new* metadata to overwrite it
-        metadata = metadata or content.user_data.get('textacy', {}).get('metadata') or {}
-        self.spacy_doc.user_data['textacy'] = {
-            'lang': langstr,
-            'metadata': metadata,
-            }
+        metadata = (
+            metadata or content.user_data.get("textacy", {}).get("metadata") or {}
+        )
+        self.spacy_doc.user_data["textacy"] = {"lang": langstr, "metadata": metadata}
 
     def __repr__(self):
-        snippet = self.text[:50].replace('\n', ' ')
+        snippet = self.text[:50].replace("\n", " ")
         if len(snippet) == 50:
-            snippet = snippet[:47] + '...'
+            snippet = snippet[:47] + "..."
         return 'Doc({} tokens; "{}")'.format(len(self.spacy_doc), snippet)
 
     def __len__(self):
@@ -201,16 +208,16 @@ class Doc(object):
     @property
     def metadata(self):
         """:class:`Doc` metadata, stored in ``SpacyDoc.user_data``."""
-        return self.spacy_doc.user_data['textacy']['metadata']
+        return self.spacy_doc.user_data["textacy"]["metadata"]
 
     @metadata.setter
     def metadata(self, value):
-        self.spacy_doc.user_data['textacy']['metadata'] = value
+        self.spacy_doc.user_data["textacy"]["metadata"] = value
 
     @property
     def lang(self):
         """:class:`Doc` language, stored in ``SpacyDoc.user_data``."""
-        return self.spacy_doc.user_data['textacy']['lang']
+        return self.spacy_doc.user_data["textacy"]["lang"]
 
     ##########
     # FILEIO #
@@ -244,9 +251,11 @@ class Doc(object):
             :meth:`Doc.save()`
         """
         spacy_doc = list(io.read_spacy_docs(filepath))[0]
-        return cls(spacy_doc,
-                   lang=spacy_doc.user_data['textacy']['lang'],
-                   metadata=spacy_doc.user_data['textacy']['metadata'])
+        return cls(
+            spacy_doc,
+            lang=spacy_doc.user_data["textacy"]["lang"],
+            metadata=spacy_doc.user_data["textacy"]["metadata"],
+        )
 
     ####################
     # BASIC COMPONENTS #
@@ -317,11 +326,11 @@ class Doc(object):
         if isinstance(term, compat.unicode_):
             term_text = term
             term_id = self.spacy_stringstore.add(term_text)
-            term_len = term_text.count(' ') + 1
+            term_len = term_text.count(" ") + 1
         elif isinstance(term, int):
             term_id = term
             term_text = self.spacy_stringstore[term_id]
-            term_len = term_text.count(' ') + 1
+            term_len = term_text.count(" ") + 1
         elif isinstance(term, SpacyToken):
             term_text = term.text
             term_id = self.spacy_stringstore.add(term_text)
@@ -335,17 +344,21 @@ class Doc(object):
             if term_len == 1:
                 self._counts += collections.Counter(
                     word.orth
-                    for word in extract.words(self,
-                                              filter_stops=False,
-                                              filter_punct=False,
-                                              filter_nums=False))
+                    for word in extract.words(
+                        self, filter_stops=False, filter_punct=False, filter_nums=False
+                    )
+                )
             else:
                 self._counts += collections.Counter(
                     self.spacy_stringstore.add(ngram.text)
-                    for ngram in extract.ngrams(self, term_len,
-                                                filter_stops=False,
-                                                filter_punct=False,
-                                                filter_nums=False))
+                    for ngram in extract.ngrams(
+                        self,
+                        term_len,
+                        filter_stops=False,
+                        filter_punct=False,
+                        filter_nums=False,
+                    )
+                )
             self._counted_ngrams.add(term_len)
         return self._counts[term_id]
 
@@ -360,20 +373,27 @@ class Doc(object):
     @property
     def tokenized_text(self):
         """Return text as an ordered, nested list of tokens per sentence."""
-        return [[token.text for token in sent]
-                for sent in self.spacy_doc.sents]
+        return [[token.text for token in sent] for sent in self.spacy_doc.sents]
 
     @property
     def pos_tagged_text(self):
         """Return text as an ordered, nested list of (token, POS) pairs per sentence."""
-        return [[(token.text, token.pos_) for token in sent]
-                for sent in self.spacy_doc.sents]
+        return [
+            [(token.text, token.pos_) for token in sent]
+            for sent in self.spacy_doc.sents
+        ]
 
     #################
     # TRANSFORM DOC #
 
-    def to_terms_list(self, ngrams=(1, 2, 3), named_entities=True,
-                      normalize='lemma', as_strings=False, **kwargs):
+    def to_terms_list(
+        self,
+        ngrams=(1, 2, 3),
+        named_entities=True,
+        normalize="lemma",
+        as_strings=False,
+        **kwargs
+    ):
         """
         Transform :class:`Doc` into a sequence of ngrams and/or named entities, which
         aren't necessarily in order of appearance, where each term appears in
@@ -421,35 +441,45 @@ class Doc(object):
             actual list of terms, call ``list(doc.to_terms_list())``.
         """
         if not named_entities and not ngrams:
-            raise ValueError('either `named_entities` or `ngrams` must be included')
+            raise ValueError("either `named_entities` or `ngrams` must be included")
         if ngrams and isinstance(ngrams, int):
             ngrams = (ngrams,)
         if named_entities is True:
             ne_kwargs = {
-                'include_types': kwargs.get('include_types'),
-                'exclude_types': kwargs.get('exclude_types'),
-                'drop_determiners': kwargs.get('drop_determiners', True),
-                'min_freq': kwargs.get('min_freq', 1)}
+                "include_types": kwargs.get("include_types"),
+                "exclude_types": kwargs.get("exclude_types"),
+                "drop_determiners": kwargs.get("drop_determiners", True),
+                "min_freq": kwargs.get("min_freq", 1),
+            }
             # if numeric ngrams are to be filtered, we should filter numeric entities
-            if ngrams and kwargs.get('filter_nums') is True:
-                if ne_kwargs['exclude_types']:
-                    if isinstance(ne_kwargs['exclude_types'], (set, frozenset, list, tuple)):
-                        ne_kwargs['exclude_types'] = set(ne_kwargs['exclude_types'])
-                        ne_kwargs['exclude_types'].add(constants.NUMERIC_NE_TYPES)
+            if ngrams and kwargs.get("filter_nums") is True:
+                if ne_kwargs["exclude_types"]:
+                    if isinstance(
+                        ne_kwargs["exclude_types"], (set, frozenset, list, tuple)
+                    ):
+                        ne_kwargs["exclude_types"] = set(ne_kwargs["exclude_types"])
+                        ne_kwargs["exclude_types"].add(constants.NUMERIC_NE_TYPES)
                 else:
-                    ne_kwargs['exclude_types'] = constants.NUMERIC_NE_TYPES
+                    ne_kwargs["exclude_types"] = constants.NUMERIC_NE_TYPES
         if ngrams:
             ngram_kwargs = {
-                'filter_stops': kwargs.get('filter_stops', True),
-                'filter_punct': kwargs.get('filter_punct', True),
-                'filter_nums': kwargs.get('filter_nums', False),
-                'include_pos': kwargs.get('include_pos'),
-                'exclude_pos': kwargs.get('exclude_pos'),
-                'min_freq': kwargs.get('min_freq', 1)}
+                "filter_stops": kwargs.get("filter_stops", True),
+                "filter_punct": kwargs.get("filter_punct", True),
+                "filter_nums": kwargs.get("filter_nums", False),
+                "include_pos": kwargs.get("include_pos"),
+                "exclude_pos": kwargs.get("exclude_pos"),
+                "min_freq": kwargs.get("min_freq", 1),
+            }
             # if numeric entities are to be filtered, we should filter numeric ngrams
-            if (named_entities and ne_kwargs['exclude_types'] and
-                    any(ne_type in ne_kwargs['exclude_types'] for ne_type in constants.NUMERIC_NE_TYPES)):
-                ngram_kwargs['filter_nums'] = True
+            if (
+                named_entities
+                and ne_kwargs["exclude_types"]
+                and any(
+                    ne_type in ne_kwargs["exclude_types"]
+                    for ne_type in constants.NUMERIC_NE_TYPES
+                )
+            ):
+                ngram_kwargs["filter_nums"] = True
 
         terms = []
         # special case: ensure that named entities aren't double-counted when
@@ -461,12 +491,20 @@ class Doc(object):
             for n in ngrams:
                 if n == 1:
                     terms.append(
-                        (word for word in extract.words(self, **ngram_kwargs)
-                         if (word.i, word.i + 1) not in ent_idxs))
+                        (
+                            word
+                            for word in extract.words(self, **ngram_kwargs)
+                            if (word.i, word.i + 1) not in ent_idxs
+                        )
+                    )
                 else:
                     terms.append(
-                        (ngram for ngram in extract.ngrams(self, n, **ngram_kwargs)
-                         if (ngram.start, ngram.end) not in ent_idxs))
+                        (
+                            ngram
+                            for ngram in extract.ngrams(self, n, **ngram_kwargs)
+                            if (ngram.start, ngram.end) not in ent_idxs
+                        )
+                    )
         # otherwise, no need to check for overlaps
         else:
             if named_entities is True:
@@ -482,13 +520,13 @@ class Doc(object):
 
         # convert token and span objects into integer ids
         if as_strings is False:
-            if normalize == 'lemma':
+            if normalize == "lemma":
                 for term in terms:
                     try:
                         yield term.lemma
                     except AttributeError:
                         yield self.spacy_stringstore.add(term.lemma_)
-            elif normalize == 'lower':
+            elif normalize == "lower":
                 for term in terms:
                     try:
                         yield term.lower
@@ -506,10 +544,10 @@ class Doc(object):
 
         # convert token and span objects into strings
         else:
-            if normalize == 'lemma':
+            if normalize == "lemma":
                 for term in terms:
                     yield term.lemma_
-            elif normalize == 'lower':
+            elif normalize == "lower":
                 for term in terms:
                     yield term.lower_
             elif not normalize:
@@ -519,7 +557,7 @@ class Doc(object):
                 for term in terms:
                     yield normalize(term)
 
-    def to_bag_of_words(self, normalize='lemma', weighting='count', as_strings=False):
+    def to_bag_of_words(self, normalize="lemma", weighting="count", as_strings=False):
         """
         Transform :class:`Doc` into a bag-of-words: the set of unique words in
         :class:`Doc` mapped to their absolute, relative, or binary frequency of
@@ -545,17 +583,22 @@ class Doc(object):
             of ``as_strings``) to its absolute, relative, or binary frequency
             of occurrence (depending on the value of ``weighting``).
         """
-        if weighting not in {'count', 'freq', 'binary'}:
+        if weighting not in {"count", "freq", "binary"}:
             raise ValueError('weighting "{}" is invalid'.format(weighting))
-        count_by = (attrs.LEMMA if normalize == 'lemma' else
-                    attrs.LOWER if normalize == 'lower' else
-                    attrs.ORTH)
+        count_by = (
+            attrs.LEMMA
+            if normalize == "lemma"
+            else attrs.LOWER
+            if normalize == "lower"
+            else attrs.ORTH
+        )
         word_to_weight = self.spacy_doc.count_by(count_by)
-        if weighting == 'freq':
+        if weighting == "freq":
             n_tokens = self.n_tokens
-            word_to_weight = {id_: weight / n_tokens
-                              for id_, weight in word_to_weight.items()}
-        elif weighting == 'binary':
+            word_to_weight = {
+                id_: weight / n_tokens for id_, weight in word_to_weight.items()
+            }
+        elif weighting == "binary":
             word_to_weight = {word: 1 for word in word_to_weight.keys()}
 
         bow = {}
@@ -573,9 +616,15 @@ class Doc(object):
                 bow[self.spacy_stringstore[id_]] = count
         return bow
 
-    def to_bag_of_terms(self, ngrams=(1, 2, 3), named_entities=True,
-                        normalize='lemma', weighting='count', as_strings=False,
-                        **kwargs):
+    def to_bag_of_terms(
+        self,
+        ngrams=(1, 2, 3),
+        named_entities=True,
+        normalize="lemma",
+        weighting="count",
+        as_strings=False,
+        **kwargs
+    ):
         """
         Transform :class:`Doc` into a bag-of-terms: the set of unique terms in
         :class:`Doc` mapped to their frequency of occurrence, where "terms"
@@ -623,21 +672,30 @@ class Doc(object):
         See Also:
             :meth:`Doc.to_terms_list() <Doc.to_terms_list>`
         """
-        if weighting not in {'count', 'freq', 'binary'}:
+        if weighting not in {"count", "freq", "binary"}:
             raise ValueError('weighting "{}" is invalid'.format(weighting))
         terms_list = self.to_terms_list(
-            ngrams=ngrams, named_entities=named_entities,
-            normalize=normalize, as_strings=as_strings, **kwargs)
+            ngrams=ngrams,
+            named_entities=named_entities,
+            normalize=normalize,
+            as_strings=as_strings,
+            **kwargs
+        )
         bot = itertoolz.frequencies(terms_list)
-        if weighting == 'freq':
+        if weighting == "freq":
             n_tokens = self.n_tokens
             bot = {term: weight / n_tokens for term, weight in bot.items()}
-        elif weighting == 'binary':
+        elif weighting == "binary":
             bot = {term: 1 for term in bot.keys()}
         return bot
 
-    def to_semantic_network(self, nodes='words', normalize='lemma',
-                            edge_weighting='default', window_width=10):
+    def to_semantic_network(
+        self,
+        nodes="words",
+        normalize="lemma",
+        edge_weighting="default",
+        window_width=10,
+    ):
         """
         Transform :class:`Doc` into a semantic network, where nodes are either
         'words' or 'sents' and edges between nodes may be weighted in different ways.
@@ -668,22 +726,23 @@ class Doc(object):
             - :func:`terms_to_semantic_network() <textacy.network.terms_to_semantic_network>`
             - :func:`sents_to_semantic_network() <textacy.network.sents_to_semantic_network>`
         """
-        if nodes == 'words':
-            if edge_weighting == 'default':
-                edge_weighting = 'cooc_freq'
+        if nodes == "words":
+            if edge_weighting == "default":
+                edge_weighting = "cooc_freq"
             return network.terms_to_semantic_network(
                 list(extract.words(self)),
                 normalize=normalize,
                 window_width=window_width,
-                edge_weighting=edge_weighting)
-        elif nodes == 'sents':
-            if edge_weighting == 'default':
-                edge_weighting = 'cosine'
+                edge_weighting=edge_weighting,
+            )
+        elif nodes == "sents":
+            if edge_weighting == "default":
+                edge_weighting = "cosine"
             return network.sents_to_semantic_network(
-                list(self.sents),
-                normalize=normalize,
-                edge_weighting=edge_weighting)
+                list(self.sents), normalize=normalize, edge_weighting=edge_weighting
+            )
         else:
             msg = 'nodes "{}" not valid; must be in {}'.format(
-                nodes, {'words', 'sents'})
+                nodes, {"words", "sents"}
+            )
             raise ValueError(msg)

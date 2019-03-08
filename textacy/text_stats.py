@@ -96,8 +96,12 @@ class TextStats(object):
             self.n_sents = doc.n_sents
         # get objs for basic count computations
         hyphenator = cache.load_hyphenator(lang=self.lang)
-        words = tuple(extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False))
-        syllables_per_word = tuple(len(hyphenator.positions(word.lower_)) + 1 for word in words)
+        words = tuple(
+            extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False)
+        )
+        syllables_per_word = tuple(
+            len(hyphenator.positions(word.lower_)) + 1 for word in words
+        )
         chars_per_word = tuple(len(word) for word in words)
         # compute basic counts needed for most readability stats
         self.n_words = len(words)
@@ -115,15 +119,15 @@ class TextStats(object):
     @property
     def flesch_reading_ease(self):
         return flesch_reading_ease(
-            self.n_syllables, self.n_words, self.n_sents,
-            lang=self.lang)
+            self.n_syllables, self.n_words, self.n_sents, lang=self.lang
+        )
 
     @property
     def flesch_readability_ease(self):
         """For backwards compatibility. Deprecated."""
         return flesch_readability_ease(
-            self.n_syllables, self.n_words, self.n_sents,
-            lang=self.lang)
+            self.n_syllables, self.n_words, self.n_sents, lang=self.lang
+        )
 
     @property
     def smog_index(self):
@@ -152,35 +156,45 @@ class TextStats(object):
     @property
     def wiener_sachtextformel(self):
         return wiener_sachtextformel(
-            self.n_words, self.n_polysyllable_words, self.n_monosyllable_words,
-            self.n_long_words, self.n_sents,
-            variant=1)
+            self.n_words,
+            self.n_polysyllable_words,
+            self.n_monosyllable_words,
+            self.n_long_words,
+            self.n_sents,
+            variant=1,
+        )
 
     @property
     def basic_counts(self):
-        return {'n_sents': self.n_sents,
-                'n_words': self.n_words,
-                'n_chars': self.n_chars,
-                'n_syllables': self.n_syllables,
-                'n_unique_words': self.n_unique_words,
-                'n_long_words': self.n_long_words,
-                'n_monosyllable_words': self.n_monosyllable_words,
-                'n_polysyllable_words': self.n_polysyllable_words}
+        return {
+            "n_sents": self.n_sents,
+            "n_words": self.n_words,
+            "n_chars": self.n_chars,
+            "n_syllables": self.n_syllables,
+            "n_unique_words": self.n_unique_words,
+            "n_long_words": self.n_long_words,
+            "n_monosyllable_words": self.n_monosyllable_words,
+            "n_polysyllable_words": self.n_polysyllable_words,
+        }
 
     @property
     def readability_stats(self):
         if self.n_words == 0:
-            LOGGER.warning("readability stats can't be computed because doc has 0 words")
+            LOGGER.warning(
+                "readability stats can't be computed because doc has 0 words"
+            )
             return None
-        return {'flesch_kincaid_grade_level': self.flesch_kincaid_grade_level,
-                'flesch_reading_ease': self.flesch_reading_ease,
-                'smog_index': self.smog_index,
-                'gunning_fog_index': self.gunning_fog_index,
-                'coleman_liau_index': self.coleman_liau_index,
-                'automated_readability_index': self.automated_readability_index,
-                'lix': self.lix,
-                'gulpease_index': self.gulpease_index,
-                'wiener_sachtextformel': self.wiener_sachtextformel}
+        return {
+            "flesch_kincaid_grade_level": self.flesch_kincaid_grade_level,
+            "flesch_reading_ease": self.flesch_reading_ease,
+            "smog_index": self.smog_index,
+            "gunning_fog_index": self.gunning_fog_index,
+            "coleman_liau_index": self.coleman_liau_index,
+            "automated_readability_index": self.automated_readability_index,
+            "lix": self.lix,
+            "gulpease_index": self.gulpease_index,
+            "wiener_sachtextformel": self.wiener_sachtextformel,
+        }
 
 
 def flesch_kincaid_grade_level(n_syllables, n_words, n_sents):
@@ -213,25 +227,26 @@ def flesch_reading_ease(n_syllables, n_words, n_sents, lang=None):
         Dutch: ?
         Russian: https://ru.wikipedia.org/wiki/%D0%98%D0%BD%D0%B4%D0%B5%D0%BA%D1%81_%D1%83%D0%B4%D0%BE%D0%B1%D0%BE%D1%87%D0%B8%D1%82%D0%B0%D0%B5%D0%BC%D0%BE%D1%81%D1%82%D0%B8
     """
-    if lang is None or lang == 'en':
+    if lang is None or lang == "en":
         return 206.835 - (1.015 * n_words / n_sents) - (84.6 * n_syllables / n_words)
-    elif lang == 'de':
+    elif lang == "de":
         return 180.0 - (n_words / n_sents) - (58.5 * n_syllables / n_words)
-    elif lang == 'es':
+    elif lang == "es":
         return 206.84 - (1.02 * n_words / n_sents) - (60.0 * n_syllables / n_words)
-    elif lang == 'fr':
+    elif lang == "fr":
         return 207.0 - (1.015 * n_words / n_sents) - (73.6 * n_syllables / n_words)
-    elif lang == 'it':
+    elif lang == "it":
         return 217.0 - (1.3 * n_words / n_sents) - (60.0 * n_syllables / n_words)
-    elif lang == 'nl':
+    elif lang == "nl":
         return 206.84 - (0.93 * n_words / n_sents) - (77.0 * n_syllables / n_words)
-    elif lang == 'ru':
+    elif lang == "ru":
         return 206.835 - (1.3 * n_words / n_sents) - (60.1 * n_syllables / n_words)
     else:
-        langs = ['en', 'de', 'es', 'fr', 'it', 'nl', 'ru']
+        langs = ["en", "de", "es", "fr", "it", "nl", "ru"]
         raise ValueError(
-            'Flesch Reading Ease is only implemented for these languages: {}. '
-            'Passing `lang=None` falls back to "en" (English)'.format(langs))
+            "Flesch Reading Ease is only implemented for these languages: {}. "
+            'Passing `lang=None` falls back to "en" (English)'.format(langs)
+        )
 
 
 def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
@@ -241,9 +256,10 @@ def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
     Deprecated!
     """
     utils.deprecated(
-        '`flesch_readability_ease()` is an alias for `flesch_reading_ease()` '
-        'for backwards compatibility; it will be removed in a future version.',
-        action='once')
+        "`flesch_readability_ease()` is an alias for `flesch_reading_ease()` "
+        "for backwards compatibility; it will be removed in a future version.",
+        action="once",
+    )
     return flesch_reading_ease(n_syllables, n_words, n_sents, lang=lang)
 
 
@@ -258,7 +274,7 @@ def smog_index(n_polysyllable_words, n_sents):
         https://en.wikipedia.org/wiki/SMOG
     """
     if n_sents < 30:
-        LOGGER.warning('SMOG score may be unreliable for n_sents < 30')
+        LOGGER.warning("SMOG score may be unreliable for n_sents < 30")
     return (1.0430 * sqrt(30 * n_polysyllable_words / n_sents)) + 3.1291
 
 
@@ -310,9 +326,14 @@ def lix(n_words, n_long_words, n_sents):
     return (n_words / n_sents) + (100 * n_long_words / n_words)
 
 
-def wiener_sachtextformel(n_words, n_polysyllable_words, n_monosyllable_words,
-                          n_long_words, n_sents,
-                          variant=1):
+def wiener_sachtextformel(
+    n_words,
+    n_polysyllable_words,
+    n_monosyllable_words,
+    n_long_words,
+    n_sents,
+    variant=1,
+):
     """
     Readability score for German-language texts, whose value estimates the grade
     level required to understand a text. Higher value => more difficult text.
@@ -333,7 +354,7 @@ def wiener_sachtextformel(n_words, n_polysyllable_words, n_monosyllable_words,
     elif variant == 4:
         return (0.2744 * ms) + (0.2656 * sl) - 1.693
     else:
-        raise ValueError('``variant`` value invalid; must be 1, 2, 3, or 4')
+        raise ValueError("``variant`` value invalid; must be 1, 2, 3, or 4")
 
 
 def gulpease_index(n_chars, n_words, n_sents):

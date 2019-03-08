@@ -37,12 +37,14 @@ from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
 
-NAME = 'oxford_text_archive'
-DESCRIPTION = ('Collection of ~2.7k Creative Commons texts from the Oxford Text '
-               'Archive, containing primarily English-language 16th-20th century '
-               'literature and history.')
-SITE_URL = 'https://ota.ox.ac.uk/'
-DOWNLOAD_ROOT = 'https://github.com/mimno/ota/archive/master.zip'
+NAME = "oxford_text_archive"
+DESCRIPTION = (
+    "Collection of ~2.7k Creative Commons texts from the Oxford Text "
+    "Archive, containing primarily English-language 16th-20th century "
+    "literature and history."
+)
+SITE_URL = "https://ota.ox.ac.uk/"
+DOWNLOAD_ROOT = "https://github.com/mimno/ota/archive/master.zip"
 DATA_DIR = os.path.join(data_dir, NAME)
 
 
@@ -100,13 +102,14 @@ class OxfordTextArchive(Dataset):
             dataset, e.g. "Shakespeare, William".
     """
 
-    min_date = '0018-01-01'
-    max_date = '1990-01-01'
+    min_date = "0018-01-01"
+    max_date = "1990-01-01"
 
     def __init__(self, data_dir=DATA_DIR):
         super(OxfordTextArchive, self).__init__(
-            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
-        self._filename = os.path.join(data_dir, 'ota-master.zip')
+            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir
+        )
+        self._filename = os.path.join(data_dir, "ota-master.zip")
         try:
             self._metadata = self._load_and_parse_metadata()
         except IOError:
@@ -135,14 +138,12 @@ class OxfordTextArchive(Dataset):
         url = DOWNLOAD_ROOT
         fname = self._filename
         if os.path.isfile(fname) and force is False:
-            LOGGER.warning(
-                'File %s already exists; skipping download...', fname)
+            LOGGER.warning("File %s already exists; skipping download...", fname)
             return
-        LOGGER.info(
-            'Downloading data from %s and writing it to %s', url, fname)
+        LOGGER.info("Downloading data from %s and writing it to %s", url, fname)
         io.write_http_stream(
-            url, fname, mode='wb', encoding=None,
-            make_dirs=True, chunk_size=1024)
+            url, fname, mode="wb", encoding=None, make_dirs=True, chunk_size=1024
+        )
         self._metadata = self._load_and_parse_metadata()
 
     def _load_and_parse_metadata(self):
@@ -152,44 +153,47 @@ class OxfordTextArchive(Dataset):
         of the fields, and remove a couple fields that are identical throughout.
         """
         if not self.filename:
-            raise IOError('{} file not found'.format(self._filename))
+            raise IOError("{} file not found".format(self._filename))
 
-        re_extract_year = re.compile(r'(\d{4})')
+        re_extract_year = re.compile(r"(\d{4})")
         re_extract_authors = re.compile(
-            r'(\D+)'
-            r'(?:, '
-            r'(?:[bdf]l?\. )?(?:ca. )?\d{4}(?:\?| or \d{1,2})?(?:-(?:[bdf]l?\. )?(?:ca. )?\d{4}(?:\?| or \d{1,2})?)?|'
-            r'(?:\d{2}th(?:/\d{2}th)? cent\.)'
-            r'\.?)')
-        re_clean_authors = re.compile(r'^[,;. ]+|[,.]+\s*?$')
+            r"(\D+)"
+            r"(?:, "
+            r"(?:[bdf]l?\. )?(?:ca. )?\d{4}(?:\?| or \d{1,2})?(?:-(?:[bdf]l?\. )?(?:ca. )?\d{4}(?:\?| or \d{1,2})?)?|"
+            r"(?:\d{2}th(?:/\d{2}th)? cent\.)"
+            r"\.?)"
+        )
+        re_clean_authors = re.compile(r"^[,;. ]+|[,.]+\s*?$")
 
         metadata = {}
-        with zipfile.ZipFile(self._filename, mode='r') as f:
-            subf = StringIO(f.read('ota-master/metadata.tsv').decode('utf-8'))
-            for row in compat.csv.DictReader(subf, delimiter='\t'):
+        with zipfile.ZipFile(self._filename, mode="r") as f:
+            subf = StringIO(f.read("ota-master/metadata.tsv").decode("utf-8"))
+            for row in compat.csv.DictReader(subf, delimiter="\t"):
                 # only include English-language works (99.9% of all works)
-                if not row['Language'].startswith('English'):
+                if not row["Language"].startswith("English"):
                     continue
                 # clean up years
-                year_match = re_extract_year.search(row['Year'])
+                year_match = re_extract_year.search(row["Year"])
                 if year_match:
-                    row['Year'] = year_match.group()
+                    row["Year"] = year_match.group()
                 else:
-                    row['Year'] = None
+                    row["Year"] = None
                 # extract and clean up authors
-                authors = re_extract_authors.findall(row['Author']) or [row['Author']]
-                row['Author'] = [re_clean_authors.sub('', author) for author in authors]
+                authors = re_extract_authors.findall(row["Author"]) or [row["Author"]]
+                row["Author"] = [re_clean_authors.sub("", author) for author in authors]
                 # get rid of uniform "Language" and "License" fields
-                del row['Language']
-                del row['License']
-                id_ = row.pop('ID')
+                del row["Language"]
+                del row["License"]
+                id_ = row.pop("ID")
                 metadata[id_] = {key.lower(): val for key, val in row.items()}
 
         # set authors attribute
         self.authors = {
-            author for value in metadata.values()
-            for author in value['author']
-            if value.get('author')}
+            author
+            for value in metadata.values()
+            for author in value["author"]
+            if value.get("author")
+        }
 
         return metadata
 
@@ -252,24 +256,25 @@ class OxfordTextArchive(Dataset):
         :meth:`OxfordTextArchive.texts()` and :meth:`OxfordTextArchive.records()`.
         """
         if not self.filename:
-            raise IOError('{} file not found'.format(self._filename))
+            raise IOError("{} file not found".format(self._filename))
 
         if author:
             if isinstance(author, compat.string_types):
                 author = {author}
             if not all(item in self.authors for item in author):
                 raise ValueError(
-                    'all values in `author` must be valid; '
-                    'see :attr:`CapitolWords.authors`')
+                    "all values in `author` must be valid; "
+                    "see :attr:`CapitolWords.authors`"
+                )
         if date_range:
             date_range = self._parse_date_range(date_range)
 
         n = 0
-        with zipfile.ZipFile(self.filename, mode='r') as f:
+        with zipfile.ZipFile(self.filename, mode="r") as f:
             for name in f.namelist():
 
                 # other stuff in zip archive that isn't a text file
-                if not name.startswith('ota-master/text/'):
+                if not name.startswith("ota-master/text/"):
                     continue
                 id_ = os.path.splitext(os.path.split(name)[-1])[0]
                 meta = self._metadata.get(id_)
@@ -278,19 +283,24 @@ class OxfordTextArchive(Dataset):
                     continue
                 # filter by metadata
                 if date_range:
-                    if not meta.get('year') or not date_range[0] <= meta['year'] <= date_range[1]:
+                    if (
+                        not meta.get("year")
+                        or not date_range[0] <= meta["year"] <= date_range[1]
+                    ):
                         continue
                 if author:
-                    if not meta.get('author') or not any(a in author for a in meta['author']):
+                    if not meta.get("author") or not any(
+                        a in author for a in meta["author"]
+                    ):
                         continue
-                text = f.read(name).decode('utf-8')
+                text = f.read(name).decode("utf-8")
                 if min_len and len(text) < min_len:
                     continue
 
                 if text_only is True:
                     yield text
                 else:
-                    meta['text'] = text
+                    meta["text"] = text
                     yield meta
 
                 n += 1

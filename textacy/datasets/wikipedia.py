@@ -25,6 +25,7 @@ import re
 from xml.etree.cElementTree import iterparse
 
 import ftfy
+
 try:
     import mwparserfromhell
 except ImportError:
@@ -38,13 +39,15 @@ from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
 
-NAME = 'wikipedia'
-DESCRIPTION = ('All articles for a given language- and version-specific '
-               'Wikipedia site snapshot.')
-SITE_URL = 'https://meta.wikimedia.org/wiki/Data_dumps'
+NAME = "wikipedia"
+DESCRIPTION = (
+    "All articles for a given language- and version-specific "
+    "Wikipedia site snapshot."
+)
+SITE_URL = "https://meta.wikimedia.org/wiki/Data_dumps"
 DATA_DIR = os.path.join(data_dir, NAME)
 
-DOWNLOAD_ROOT = 'https://dumps.wikimedia.org/'
+DOWNLOAD_ROOT = "https://dumps.wikimedia.org/"
 
 MAPPING_CAT = {
     "cs": "Kategorie:",
@@ -58,37 +61,90 @@ MAPPING_CAT = {
 }
 
 # project name -> canonical wikimedia dump project name
-PROJECTS = {
-    'wikipedia': 'wiki',
-    'wikinews': 'wikinews',
-}
+PROJECTS = {"wikipedia": "wiki", "wikinews": "wikinews"}
 # useful for error messages
 PROJECTS_INV = {v: k for k, v in PROJECTS.items()}
 
 # nowiki tags: take contents verbatim
-re_nowiki = re.compile(r'<nowiki>(.*?)</nowiki>', flags=re.UNICODE)
+re_nowiki = re.compile(r"<nowiki>(.*?)</nowiki>", flags=re.UNICODE)
 
-self_closing_tags = ('br', 'hr', 'nobr', 'ref', 'references')
+self_closing_tags = ("br", "hr", "nobr", "ref", "references")
 re_self_closing_html_tags = re.compile(
-    r'<\s?(%s)\b[^>]*/\s?>' % '|'.join(self_closing_tags),
-    flags=re.IGNORECASE | re.DOTALL)
+    r"<\s?(%s)\b[^>]*/\s?>" % "|".join(self_closing_tags),
+    flags=re.IGNORECASE | re.DOTALL,
+)
 
 ignored_html_tags = (
-    'abbr', 'b', 'big', 'blockquote', 'center', 'cite', 'em', 'font', 'h1', 'h2',
-    'h3', 'h4', 'hiero', 'i', 'kbd', 'p', 'plaintext', 's', 'span', 'strike',
-    'strong', 'tt', 'u', 'var', 'math', 'code')  # are math and code okay here?
+    "abbr",
+    "b",
+    "big",
+    "blockquote",
+    "center",
+    "cite",
+    "em",
+    "font",
+    "h1",
+    "h2",
+    "h3",
+    "h4",
+    "hiero",
+    "i",
+    "kbd",
+    "p",
+    "plaintext",
+    "s",
+    "span",
+    "strike",
+    "strong",
+    "tt",
+    "u",
+    "var",
+    "math",
+    "code",
+)  # are math and code okay here?
 re_ignored_html_tags = re.compile(
-    r'<(%s)\b.*?>(.*?)</\s*\1>' % '|'.join(ignored_html_tags),
-    flags=re.IGNORECASE | re.DOTALL)
+    r"<(%s)\b.*?>(.*?)</\s*\1>" % "|".join(ignored_html_tags),
+    flags=re.IGNORECASE | re.DOTALL,
+)
 
 dropped_elements = (
-    'caption', 'dd', 'dir', 'div', 'dl', 'dt', 'form', 'gallery', 'imagemap', 'img',
-    'indicator', 'input', 'li', 'menu', 'noinclude', 'ol', 'option', 'pre', 'ref',
-    'references', 'select', 'small', 'source', 'sub', 'sup', 'table', 'td',
-    'textarea', 'th', 'timeline', 'tr', 'ul')
+    "caption",
+    "dd",
+    "dir",
+    "div",
+    "dl",
+    "dt",
+    "form",
+    "gallery",
+    "imagemap",
+    "img",
+    "indicator",
+    "input",
+    "li",
+    "menu",
+    "noinclude",
+    "ol",
+    "option",
+    "pre",
+    "ref",
+    "references",
+    "select",
+    "small",
+    "source",
+    "sub",
+    "sup",
+    "table",
+    "td",
+    "textarea",
+    "th",
+    "timeline",
+    "tr",
+    "ul",
+)
 re_dropped_elements = re.compile(
-    r'<\s*(%s)\b[^>/]*>.*?<\s*/\s*\1>' % '|'.join(dropped_elements),
-    flags=re.IGNORECASE | re.DOTALL)
+    r"<\s*(%s)\b[^>/]*>.*?<\s*/\s*\1>" % "|".join(dropped_elements),
+    flags=re.IGNORECASE | re.DOTALL,
+)
 
 # text formatting
 re_italic_quote = re.compile(r"''\"([^\"]*?)\"''")
@@ -96,32 +152,47 @@ re_bold_italic = re.compile(r"'{2,5}(.*?)'{2,5}")
 re_quote_quote = re.compile(r'""([^"]*?)""')
 
 # text normalization
-re_spaces = re.compile(r' {2,}')
-re_linebreaks = re.compile(r'\n{3,}')
-re_dots = re.compile(r'\.{4,}')
-re_brackets = re.compile(r'\[\s?\]|\(\s?\)')
+re_spaces = re.compile(r" {2,}")
+re_linebreaks = re.compile(r"\n{3,}")
+re_dots = re.compile(r"\.{4,}")
+re_brackets = re.compile(r"\[\s?\]|\(\s?\)")
 
-re_comments = re.compile('<!--.*?-->', flags=re.UNICODE | re.DOTALL)
+re_comments = re.compile("<!--.*?-->", flags=re.UNICODE | re.DOTALL)
 
 re_categories = re.compile(
-    r'\[\[({})[^\]\[]*\]\]'.format('|'.join(MAPPING_CAT.values())),
-    flags=re.IGNORECASE | re.UNICODE)
-re_link_trails = re.compile(r'\w+', flags=re.UNICODE)
-re_ext_link = re.compile(r'(?<!\[)\[([^\[\]]*?)\]')
-re_table_formatting = re.compile('\n\s*(({\|)|(\|-+)|(\|})).*?(?=\n)', flags=re.UNICODE)
-re_table_cell_formatting = re.compile('\n\s*(\||\!)(.*?\|)*([^|]*?)', flags=re.UNICODE)
-re_headings = re.compile(r'(={2,6})\s*(.*?)\s*\1')
+    r"\[\[({})[^\]\[]*\]\]".format("|".join(MAPPING_CAT.values())),
+    flags=re.IGNORECASE | re.UNICODE,
+)
+re_link_trails = re.compile(r"\w+", flags=re.UNICODE)
+re_ext_link = re.compile(r"(?<!\[)\[([^\[\]]*?)\]")
+re_table_formatting = re.compile("\n\s*(({\|)|(\|-+)|(\|})).*?(?=\n)", flags=re.UNICODE)
+re_table_cell_formatting = re.compile("\n\s*(\||\!)(.*?\|)*([^|]*?)", flags=re.UNICODE)
+re_headings = re.compile(r"(={2,6})\s*(.*?)\s*\1")
 re_files_images = re.compile(
-    '\n\[\[(?:Image|File)(?:.*?)(\|.*?)*\|(.*?)\]\]',
-    flags=re.IGNORECASE | re.UNICODE)
-re_random_cruft = re.compile(' (,:\.\)\]»)|(\[\(«) ', flags=re.UNICODE)
+    "\n\[\[(?:Image|File)(?:.*?)(\|.*?)*\|(.*?)\]\]", flags=re.IGNORECASE | re.UNICODE
+)
+re_random_cruft = re.compile(" (,:\.\)\]»)|(\[\(«) ", flags=re.UNICODE)
 
 magic_words = (
-    '__NOTOC__', '__FORCETOC__', '__TOC__', '__NEWSECTIONLINK__', '__NONEWSECTIONLINK__',
-    '__NOGALLERY__', '__HIDDENCAT__', '__NOCONTENTCONVERT__', '__NOCC__', '__NOTITLECONVERT__',
-    '__NOTC__', '__START__', '__END__', '__INDEX__', '__NOINDEX__',
-    '__STATICREDIRECT__', '__DISAMBIG__')
-re_magic_words = re.compile('|'.join(magic_words))
+    "__NOTOC__",
+    "__FORCETOC__",
+    "__TOC__",
+    "__NEWSECTIONLINK__",
+    "__NONEWSECTIONLINK__",
+    "__NOGALLERY__",
+    "__HIDDENCAT__",
+    "__NOCONTENTCONVERT__",
+    "__NOCC__",
+    "__NOTITLECONVERT__",
+    "__NOTC__",
+    "__START__",
+    "__END__",
+    "__INDEX__",
+    "__NOINDEX__",
+    "__STATICREDIRECT__",
+    "__DISAMBIG__",
+)
+re_magic_words = re.compile("|".join(magic_words))
 
 
 class Wikipedia(Dataset):
@@ -182,20 +253,27 @@ class Wikipedia(Dataset):
         Namespace values can be discovered via ``bzcat dumpfile.xml.bz2 | head``
     """
 
-
-    def __init__(self, data_dir=DATA_DIR, lang='en', version='latest', project='wikipedia', namespace='0'):
+    def __init__(
+        self,
+        data_dir=DATA_DIR,
+        lang="en",
+        version="latest",
+        project="wikipedia",
+        namespace="0",
+    ):
         super(Wikipedia, self).__init__(
-            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir)
+            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir
+        )
         self.lang = lang
         self.version = version
         if project not in PROJECTS:
             raise ValueError(
-                'Invalid or unsupported wikimedia project: {project}'.format(
-                project=project
-            ))
+                "Invalid or unsupported wikimedia project: {}".format(project)
+            )
         self.project = PROJECTS[project]
-        self.filestub = '{lang}{project}/{version}/{lang}{project}-{version}-pages-articles.xml.bz2'.format(
-            version=self.version, lang=self.lang, project=self.project)
+        self.filestub = "{lang}{project}/{version}/{lang}{project}-{version}-pages-articles.xml.bz2".format(
+            version=self.version, lang=self.lang, project=self.project
+        )
         self._filename = os.path.join(data_dir, self.filestub)
         self._namespace = namespace
 
@@ -217,7 +295,7 @@ class Wikipedia(Dataset):
             # invalid dump file url. check that {lang}{project} exists
             lang_project_url = compat.urljoin(
                 DOWNLOAD_ROOT,
-                "{lang}{project}/".format(lang=self.lang, project=self.project)
+                "{lang}{project}/".format(lang=self.lang, project=self.project),
             )
             res2 = requests.head(lang_project_url)
             if res2.status_code != 200:
@@ -244,15 +322,13 @@ class Wikipedia(Dataset):
         url = compat.urljoin(DOWNLOAD_ROOT, self.filestub)
         fname = self._filename
         if os.path.isfile(fname) and force is False:
-            LOGGER.warning(
-                'File %s already exists; skipping download...', fname)
+            LOGGER.warning("File %s already exists; skipping download...", fname)
             return
-        LOGGER.info(
-            'Downloading data from %s and writing it to %s', url, fname)
+        LOGGER.info("Downloading data from %s and writing it to %s", url, fname)
         self._verify_dump_file_url(url)
         io.write_http_stream(
-            url, fname, mode='wb', encoding=None,
-            make_dirs=True, chunk_size=1024)
+            url, fname, mode="wb", encoding=None, make_dirs=True, chunk_size=1024
+        )
 
     def __iter__(self):
         """
@@ -263,30 +339,33 @@ class Wikipedia(Dataset):
             Tuple[str, str, str]: Page id, title, content with wikimedia markup.
         """
         if not self.filename:
-            raise IOError('{} file not found'.format(self._filename))
+            raise IOError("{} file not found".format(self._filename))
 
         if compat.is_python2 is False:
-            events = ('end',)
-            f = io.open_sesame(self.filename, mode='rt', encoding="UTF-8")
+            events = ("end",)
+            f = io.open_sesame(self.filename, mode="rt", encoding="UTF-8")
         else:  # Python 2 can't open bzip in text mode :(
-            events = (b'end',)
-            f = io.open_sesame(self.filename, mode='rb')
+            events = (b"end",)
+            f = io.open_sesame(self.filename, mode="rb")
         with f:
 
             elems = (elem for _, elem in iterparse(f, events=events))
 
             elem = next(elems)
-            match = re.match('^{(.*?)}', elem.tag)
-            namespace = match.group(1) if match else ''
-            if not namespace.startswith('http://www.mediawiki.org/xml/export-'):
+            match = re.match("^{(.*?)}", elem.tag)
+            namespace = match.group(1) if match else ""
+            if not namespace.startswith("http://www.mediawiki.org/xml/export-"):
                 raise ValueError(
-                    'namespace "{}" not a valid MediaWiki dump namespace'.format(namespace))
+                    'namespace "{}" not a valid MediaWiki dump namespace'.format(
+                        namespace
+                    )
+                )
 
-            page_tag = '{%s}page' % namespace
-            ns_path = './{%s}ns' % namespace
-            page_id_path = './{%s}id' % namespace
-            title_path = './{%s}title' % namespace
-            text_path = './{%s}revision/{%s}text' % (namespace, namespace)
+            page_tag = "{%s}page" % namespace
+            ns_path = "./{%s}ns" % namespace
+            page_id_path = "./{%s}id" % namespace
+            title_path = "./{%s}title" % namespace
+            text_path = "./{%s}revision/{%s}text" % (namespace, namespace)
 
             for elem in elems:
                 if elem.tag == page_tag:
@@ -294,13 +373,13 @@ class Wikipedia(Dataset):
                     title = elem.find(title_path).text
                     ns = elem.find(ns_path).text
                     if ns != self._namespace:
-                        content = ''
+                        content = ""
                     else:
                         content = elem.find(text_path).text
                     if content is None:
-                        content = ''
+                        content = ""
                     elif not isinstance(content, compat.unicode_):
-                        content = compat.bytes_to_unicode(content, errors='ignore')
+                        content = compat.bytes_to_unicode(content, errors="ignore")
                     yield page_id, title, content
                     elem.clear()
 
@@ -315,28 +394,39 @@ class Wikipedia(Dataset):
 
         wikilinks = [unicode_(wc.title) for wc in wikicode.ifilter_wikilinks()]
         categories = [
-            wc for wc in wikilinks
+            wc
+            for wc in wikilinks
             if wc.startswith(cat_link) or wc.startswith(lc_cat_link)
         ]
-        parsed_content['categories'] = categories
-        parsed_content['wiki_links'] = [
-            wc for wc in wikilinks
-            if wc not in categories and
-            not wc.startswith('File:') and
-            not wc.startswith('Image:')]
-        parsed_content['ext_links'] = [
-            unicode_(wc.url) for wc in wikicode.ifilter_external_links()]
+        parsed_content["categories"] = categories
+        parsed_content["wiki_links"] = [
+            wc
+            for wc in wikilinks
+            if wc not in categories
+            and not wc.startswith("File:")
+            and not wc.startswith("Image:")
+        ]
+        parsed_content["ext_links"] = [
+            unicode_(wc.url) for wc in wikicode.ifilter_external_links()
+        ]
 
         # worse quality, but significantly faster
         # just strip the markup from unicode, as is done for `.texts()`
         if fast is True:
-            parsed_content['text'] = strip_markup(unicode_(wikicode))
+            parsed_content["text"] = strip_markup(unicode_(wikicode))
         else:
             re_image_wl = re.compile(
-                '^(?:File|Image|Media):', flags=re.IGNORECASE | re.UNICODE)
+                "^(?:File|Image|Media):", flags=re.IGNORECASE | re.UNICODE
+            )
             bad_template_names = {
-                'reflist', 'notelist', 'notelist-ua', 'notelist-lr', 'notelist-ur', 'notelist-lg'}
-            bad_tags = {'ref', 'table'}
+                "reflist",
+                "notelist",
+                "notelist-ua",
+                "notelist-lr",
+                "notelist-ur",
+                "notelist-lg",
+            }
+            bad_tags = {"ref", "table"}
 
             def is_bad_wikilink(obj):
                 return bool(re_image_wl.match(unicode_(obj.title)))
@@ -350,13 +440,21 @@ class Wikipedia(Dataset):
             texts = []
             # strip out references, tables, and file/image links
             # then concatenate the stripped text of each section
-            for i, section in enumerate(wikicode.get_sections(flat=True, include_lead=True, include_headings=include_headings)):
-                for obj in section.ifilter_wikilinks(matches=is_bad_wikilink, recursive=True):
+            for i, section in enumerate(
+                wikicode.get_sections(
+                    flat=True, include_lead=True, include_headings=include_headings
+                )
+            ):
+                for obj in section.ifilter_wikilinks(
+                    matches=is_bad_wikilink, recursive=True
+                ):
                     try:
                         section.remove(obj)
                     except Exception:
                         continue
-                for obj in section.ifilter_templates(matches=is_bad_template, recursive=True):
+                for obj in section.ifilter_templates(
+                    matches=is_bad_template, recursive=True
+                ):
                     try:
                         section.remove(obj)
                     except Exception:
@@ -368,7 +466,7 @@ class Wikipedia(Dataset):
                         continue
                 texts.append(section.strip_code().strip())
 
-            parsed_content['text'] = '\n\n'.join(texts)
+            parsed_content["text"] = "\n\n".join(texts)
 
         return parsed_content
 
@@ -395,7 +493,7 @@ class Wikipedia(Dataset):
             if len(text) < min_len:
                 continue
 
-            yield title + '\n\n' + text
+            yield title + "\n\n" + text
 
             n_pages += 1
             if n_pages == limit:
@@ -426,21 +524,22 @@ class Wikipedia(Dataset):
             mwparserfromhell
         except NameError:
             raise ImportError(
-                '`mwparserfromhell` is not installed, so :meth:`Wikipedia.records()` '
-                'won\'t work; install it via `$ pip install mwparserfromhell`.'
-                '\nFor details, see http://pythonhosted.org/mwparserfromhell/.')
+                "`mwparserfromhell` is not installed, so :meth:`Wikipedia.records()` "
+                "won't work; install it via `$ pip install mwparserfromhell`."
+                "\nFor details, see http://pythonhosted.org/mwparserfromhell/."
+            )
 
         parser = mwparserfromhell.parser.Parser()
 
         n_pages = 0
         for page_id, title, content in self:
             page = self._parse_content(content, parser, fast, include_headings)
-            if len(page['text']) < min_len:
+            if len(page["text"]) < min_len:
                 continue
-            page['title'] = title
-            page['page_id'] = page_id
+            page["title"] = title
+            page["page_id"] = page_id
             if include_headings:
-                page['text'] = title + '\n\n' + page['text']
+                page["text"] = title + "\n\n" + page["text"]
 
             yield page
 
@@ -461,53 +560,55 @@ def strip_markup(wikitext):
         str
     """
     if not wikitext:
-        return ''
+        return ""
 
     # remove templates
     text = _remove_templates(wikitext)
 
     # remove irrelevant spans
-    text = re_comments.sub('', text)
-    text = re_ignored_html_tags.sub(r'\2', text)
-    text = re_self_closing_html_tags.sub('', text)
-    text = re_dropped_elements.sub('', text)
-    text = re_categories.sub('', text)
-    text = re_files_images.sub('', text)  # TODO: keep file/image captions?
+    text = re_comments.sub("", text)
+    text = re_ignored_html_tags.sub(r"\2", text)
+    text = re_self_closing_html_tags.sub("", text)
+    text = re_dropped_elements.sub("", text)
+    text = re_categories.sub("", text)
+    text = re_files_images.sub("", text)  # TODO: keep file/image captions?
 
     # replace external links with just labels or just URLs
     text = _replace_external_links(text)
 
     # drop magic words behavioral switches
-    text = re_magic_words.sub('', text)
+    text = re_magic_words.sub("", text)
 
     # replace internal links with just their labels
     text = _replace_internal_links(text)
     # text = _replace_internal_links(text)  # TODO: is this needed?
 
     # remove table markup
-    text = text.replace('||', '\n|').replace('!!', '\n!')  # put each cell on a separate line
-    text = re_table_formatting.sub('\n', text)  # remove formatting lines
-    text = re_table_cell_formatting.sub('\n\\3', text)  # leave only cell content
+    text = text.replace("||", "\n|").replace(
+        "!!", "\n!"
+    )  # put each cell on a separate line
+    text = re_table_formatting.sub("\n", text)  # remove formatting lines
+    text = re_table_cell_formatting.sub("\n\\3", text)  # leave only cell content
 
     # strip out text formatting
     text = re_italic_quote.sub(r'"\1"', text)
-    text = re_bold_italic.sub(r'\1', text)
+    text = re_bold_italic.sub(r"\1", text)
     text = re_quote_quote.sub(r'"\1"', text)
 
     # unescape html entities
     text = ftfy.fixes.unescape_html(text)
 
     # final cleanup
-    text = re_headings.sub(r'\n\n\2\n\n', text)
-    text = re_dots.sub('...', text)
-    text = re_brackets.sub(r'', text)
-    text = text.replace('[[', '').replace(']]', '')
-    text = text.replace('<<', '«').replace('>>', '»')
-    text = re_random_cruft.sub(r'\1', text)
-    text = re.sub(r'\n\W+?\n', r'\n', text, flags=re.UNICODE)
-    text = text.replace(',,', ',').replace(',.', '.')
-    text = re_spaces.sub(' ', text)
-    text = re_linebreaks.sub(r'\n\n', text)
+    text = re_headings.sub(r"\n\n\2\n\n", text)
+    text = re_dots.sub("...", text)
+    text = re_brackets.sub(r"", text)
+    text = text.replace("[[", "").replace("]]", "")
+    text = text.replace("<<", "«").replace(">>", "»")
+    text = re_random_cruft.sub(r"\1", text)
+    text = re.sub(r"\n\W+?\n", r"\n", text, flags=re.UNICODE)
+    text = text.replace(",,", ",").replace(",.", ".")
+    text = re_spaces.sub(" ", text)
+    text = re_linebreaks.sub(r"\n\n", text)
 
     return text.strip()
 
@@ -522,10 +623,10 @@ def _remove_templates(wikitext):
     """
     pieces = []
     cur_idx = 0
-    for s, e in _get_delimited_spans(wikitext, open_delim='{{', close_delim='}}'):
-        pieces.append(wikitext[cur_idx: s])
+    for s, e in _get_delimited_spans(wikitext, open_delim="{{", close_delim="}}"):
+        pieces.append(wikitext[cur_idx:s])
         cur_idx = e
-    return ''.join(pieces)
+    return "".join(pieces)
     # below is gensim's solution; it's slow...
     # n_openings = 0
     # n_closings = 0
@@ -555,7 +656,7 @@ def _remove_templates(wikitext):
     #     for opening_idx, closing_idx in zip(opening_idxs + [None], [-1] + closing_idxs))
 
 
-def _get_delimited_spans(wikitext, open_delim='[[', close_delim=']]'):
+def _get_delimited_spans(wikitext, open_delim="[[", close_delim="]]"):
     """
     Args:
         wikitext (str)
@@ -569,7 +670,8 @@ def _get_delimited_spans(wikitext, open_delim='[[', close_delim=']]'):
     open_pattern = re.escape(open_delim)
     re_open = re.compile(open_pattern, flags=re.UNICODE)
     re_open_or_close = re.compile(
-        open_pattern + '|' + re.escape(close_delim), flags=re.UNICODE)
+        open_pattern + "|" + re.escape(close_delim), flags=re.UNICODE
+    )
 
     openings = []
     cur_idx = 0
@@ -609,28 +711,28 @@ def _replace_internal_links(wikitext):
     """
     pieces = []
     cur_idx = 0
-    for s, e in _get_delimited_spans(wikitext, '[[', ']]'):
+    for s, e in _get_delimited_spans(wikitext, "[[", "]]"):
         link_trail = re_link_trails.match(wikitext, pos=e)
         if link_trail is not None:
             end = link_trail.end()
             link_trail = link_trail.group()
         else:
             end = e
-            link_trail = ''
-        span_content = wikitext[s + 2: e - 2]
-        pipe_idx = span_content.find('|')
+            link_trail = ""
+        span_content = wikitext[s + 2 : e - 2]
+        pipe_idx = span_content.find("|")
         if pipe_idx < 0:
             label = span_content
         else:
-            last_pipe_idx = span_content[pipe_idx - 1:].rfind('|')
-            label = span_content[pipe_idx + last_pipe_idx:].strip()
-        pieces.append(wikitext[cur_idx: s])
+            last_pipe_idx = span_content[pipe_idx - 1 :].rfind("|")
+            label = span_content[pipe_idx + last_pipe_idx :].strip()
+        pieces.append(wikitext[cur_idx:s])
         pieces.append(label)
         cur_idx = end
     # add leftovers
     pieces.append(wikitext[cur_idx:])
 
-    return ''.join(pieces)
+    return "".join(pieces)
 
 
 def _replace_external_links(wikitext):
@@ -645,12 +747,12 @@ def _replace_external_links(wikitext):
     cur_idx = 0
     for match in re_ext_link.finditer(wikitext):
         content = match.group(1)
-        space_idx = content.find(' ')
-        label = content[space_idx + 1:] if space_idx > 0 else content
-        pieces.append(wikitext[cur_idx: match.start()])
+        space_idx = content.find(" ")
+        label = content[space_idx + 1 :] if space_idx > 0 else content
+        pieces.append(wikitext[cur_idx : match.start()])
         pieces.append(label)
         cur_idx = match.end()
     # add leftovers
     pieces.append(wikitext[cur_idx:])
 
-    return ''.join(pieces)
+    return "".join(pieces)

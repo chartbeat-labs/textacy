@@ -22,10 +22,9 @@ from . import vsm
 LOGGER = logging.getLogger(__name__)
 
 
-def terms_to_semantic_network(terms,
-                              normalize='lemma',
-                              window_width=10,
-                              edge_weighting='cooc_freq'):
+def terms_to_semantic_network(
+    terms, normalize="lemma", window_width=10, edge_weighting="cooc_freq"
+):
     """
     Transform an ordered list of non-overlapping terms into a semantic network,
     where each term is represented by a node with weighted edges linking it to
@@ -65,7 +64,8 @@ def terms_to_semantic_network(terms,
     """
     if window_width < 2:
         raise ValueError(
-            '`window_width` = {} is invalid; value must be >= 2'.format(window_width))
+            "`window_width` = {} is invalid; value must be >= 2".format(window_width)
+        )
     if not terms:
         LOGGER.warning("input `terms` is empty, so output graph is also empty")
         return nx.Graph()
@@ -74,52 +74,65 @@ def terms_to_semantic_network(terms,
     # which we don't want
     if len(terms) < window_width:
         LOGGER.info(
-            '`terms` has fewer items (%s) than the specified `window_width` (%s); '
-            'setting window width to %s',
-            len(terms), window_width, len(terms))
+            "`terms` has fewer items (%s) than the specified `window_width` (%s); "
+            "setting window width to %s",
+            len(terms),
+            window_width,
+            len(terms),
+        )
         window_width = len(terms)
 
     if isinstance(terms[0], compat.unicode_):
         windows = itertoolz.sliding_window(window_width, terms)
     elif isinstance(terms[0], SpacyToken):
-        if normalize == 'lemma':
-            windows = ((tok.lemma_ for tok in window)
-                       for window in itertoolz.sliding_window(window_width, terms))
-        elif normalize == 'lower':
-            windows = ((tok.lower_ for tok in window)
-                       for window in itertoolz.sliding_window(window_width, terms))
+        if normalize == "lemma":
+            windows = (
+                (tok.lemma_ for tok in window)
+                for window in itertoolz.sliding_window(window_width, terms)
+            )
+        elif normalize == "lower":
+            windows = (
+                (tok.lower_ for tok in window)
+                for window in itertoolz.sliding_window(window_width, terms)
+            )
         elif not normalize:
-            windows = ((tok.text for tok in window)
-                       for window in itertoolz.sliding_window(window_width, terms))
+            windows = (
+                (tok.text for tok in window)
+                for window in itertoolz.sliding_window(window_width, terms)
+            )
         else:
-            windows = ((normalize(tok) for tok in window)
-                       for window in itertoolz.sliding_window(window_width, terms))
+            windows = (
+                (normalize(tok) for tok in window)
+                for window in itertoolz.sliding_window(window_width, terms)
+            )
     else:
         raise TypeError(
-            'items in `terms` must be strings or spacy tokens, not {}'.format(type(terms[0])))
+            "items in `terms` must be strings or spacy tokens, not {}".format(
+                type(terms[0])
+            )
+        )
 
     graph = nx.Graph()
 
-    if edge_weighting == 'cooc_freq':
+    if edge_weighting == "cooc_freq":
         cooc_mat = collections.defaultdict(lambda: collections.defaultdict(int))
         for window in windows:
             for w1, w2 in itertools.combinations(sorted(window), 2):
                 cooc_mat[w1][w2] += 1
         graph.add_edges_from(
-            (w1, w2, {'weight': weight})
+            (w1, w2, {"weight": weight})
             for w1, w2s in cooc_mat.items()
-            for w2, weight in w2s.items())
-    elif edge_weighting == 'binary':
+            for w2, weight in w2s.items()
+        )
+    elif edge_weighting == "binary":
         graph.add_edges_from(
-            w1_w2 for window in windows
-            for w1_w2 in itertools.combinations(window, 2))
+            w1_w2 for window in windows for w1_w2 in itertools.combinations(window, 2)
+        )
 
     return graph
 
 
-def sents_to_semantic_network(sents,
-                              normalize='lemma',
-                              edge_weighting='cosine'):
+def sents_to_semantic_network(sents, normalize="lemma", edge_weighting="cosine"):
     """
     Transform a list of sentences into a semantic network, where each sentence is
     represented by a node with edges linking it to other sentences weighted by
@@ -155,36 +168,69 @@ def sents_to_semantic_network(sents,
     if isinstance(sents[0], compat.unicode_):
         pass
     elif isinstance(sents[0], SpacySpan):
-        if normalize == 'lemma':
-            sents = ((tok.lemma_ for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
-                     for sent in sents)
-        elif normalize == 'lower':
-            sents = ((tok.lower_ for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
-                     for sent in sents)
+        if normalize == "lemma":
+            sents = (
+                (
+                    tok.lemma_
+                    for tok in extract.words(
+                        sent, filter_stops=True, filter_punct=True, filter_nums=False
+                    )
+                )
+                for sent in sents
+            )
+        elif normalize == "lower":
+            sents = (
+                (
+                    tok.lower_
+                    for tok in extract.words(
+                        sent, filter_stops=True, filter_punct=True, filter_nums=False
+                    )
+                )
+                for sent in sents
+            )
         elif not normalize:
-            sents = ((tok.text for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
-                     for sent in sents)
+            sents = (
+                (
+                    tok.text
+                    for tok in extract.words(
+                        sent, filter_stops=True, filter_punct=True, filter_nums=False
+                    )
+                )
+                for sent in sents
+            )
         else:
-            sents = ((normalize(tok) for tok in extract.words(sent, filter_stops=True, filter_punct=True, filter_nums=False))
-                     for sent in sents)
+            sents = (
+                (
+                    normalize(tok)
+                    for tok in extract.words(
+                        sent, filter_stops=True, filter_punct=True, filter_nums=False
+                    )
+                )
+                for sent in sents
+            )
     else:
         raise TypeError(
-            'items in `sents` must be strings or spacy tokens, not {}'.format(type(sents[0])))
+            "items in `sents` must be strings or spacy tokens, not {}".format(
+                type(sents[0])
+            )
+        )
 
-    if edge_weighting == 'cosine':
+    if edge_weighting == "cosine":
         term_sent_matrix = vsm.Vectorizer(
-            tf_type='linear', apply_idf=True, idf_type='smooth'
-            ).fit_transform(sents)
-    elif edge_weighting == 'jaccard':
+            tf_type="linear", apply_idf=True, idf_type="smooth"
+        ).fit_transform(sents)
+    elif edge_weighting == "jaccard":
         term_sent_matrix = vsm.Vectorizer(
-            tf_type='binary', apply_idf=False).fit_transform(sents)
+            tf_type="binary", apply_idf=False
+        ).fit_transform(sents)
     weights = (term_sent_matrix * term_sent_matrix.T).A.tolist()
     n_sents = len(weights)
 
     graph = nx.Graph()
     graph.add_edges_from(
-        (i, j, {'weight': weights[i][j]})
+        (i, j, {"weight": weights[i][j]})
         for i in compat.range_(n_sents)
-        for j in compat.range_(i + 1, n_sents))
+        for j in compat.range_(i + 1, n_sents)
+    )
 
     return graph
