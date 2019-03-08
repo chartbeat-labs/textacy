@@ -47,10 +47,14 @@ DATA_DIR = os.path.join(data_dir, NAME)
 DOWNLOAD_ROOT = 'https://dumps.wikimedia.org/'
 
 MAPPING_CAT = {
-    'en': 'Category:',
-    'fr': 'Catégorie:',
-    'de': 'Kategorie:',
-    'cs': 'Kategorie:'
+    "cs": "Kategorie:",
+    "de": "Kategorie:",
+    "en": "Category:",
+    "es": "Categoría:",
+    "fr": "Catégorie:",
+    "it": "Categoria:",
+    "nl": "Categorie:",
+    "pt": "Categoria:",
 }
 
 # project name -> canonical wikimedia dump project name
