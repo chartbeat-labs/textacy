@@ -16,7 +16,7 @@ If you've found a bug *and* know how to fix it, please submit a pull request wit
 
 ## opening an issue
 
-TODO
+Use an appropriate template (if available) when [creating your issue](https://github.com/chartbeat-labs/textacy/issues/new/choose), and fill it out completely. Be sure to include a clear and descriptive title, and sufficient information for someone else to understand and reproduce the problem. A minimal code sample and/or executable test case demonstrating expected behavior is particularly helpful for diagnosing and resolving bugs. If you need to include a lot of code or a long traceback, you can wrap the content in `<details>` and `</details>` tags to collapse the content, making it easier to read and follow.
 
 ## opening a pull request
 
@@ -24,9 +24,11 @@ TODO
 
 ## conventions
 
-TODO
-
 ### python
+
+- Adhere to [PEP 8 style](https://www.python.org/dev/peps/pep-0008/) as much as is reasonable. In particular, try to keep lines to 90 characters or less; indent levels with four spaces; don't include trailing trailing whitespace, and include vertical whitespace only sparingly; and prefer double-quotes over single-quotes for string literals.
+- Write code that's compatible with both Python 2.7 and Python 3.5+. (For now...) Begin each module with `from __future__ import absolute_import, division, print_function, unicode_literals` to avoid potential differences in behavior between Python versions. Additional logic that deals specifically with 2/3 compatibility should go in `textacy.compat`.
+- When naming objects, strive to be both descriptive *and* brief in a way that reflects usage rather than, say, data type. Function names should be all lowercase, with words separated by underscores, and often including an action verb: `normalize_whitespace()`, `read_csv()`, `get_term_freqs()`, and so on. Objects pulled in directly from `spacy` usually have names prepended by `spacy_`, e.g. `spacy_doc` or `spacy_vocab`.
 
 ### git commits
 
@@ -36,4 +38,10 @@ TODO
 
 ### tests
 
+- `textacy` uses `pytest` for testing; please refer to [their docs](https://docs.pytest.org) for details. Tests live under the top-level `tests/` directory; all tests for a given module of code are found in a like-named file prepended by `test_`, e.g. `test_preprocess.py` contains tests for the functions in `preprocess.py`.
+- The current state and coverage of tests in `textacy` is, shall we say, *mixed*, so any contributions toward adding/improving tests are most welcome! In general, we'd like to have a test confirm expected behavior any time existing functionality changes or new functionality is added.
+
 ### documentation
+
+- `textacy` uses `sphinx` for building documentation; please refer to [their docs](https://www.sphinx-doc.org) for details. Stand-alone doc files live under the top-level `docs/` directory and are written in [reStructured Text](http://docutils.sourceforge.net/docs/user/rst/quickref.html) format.
+- In-code docstrings follow [Google style](https://google.github.io/styleguide/pyguide.html#38-comments-and-docstrings) — see some examples [here](https://www.sphinx-doc.org/en/master/usage/extensions/example_google.html#example-google). Modules should have brief, descriptive docstrings; classes should have top-level docstrings that include usage examples; public functions and methods should have docstrings that cover the basics (a brief summary line and, if applicable, `Args` and `Returns` sections). Docstrings get incorporated into the main docs via `sphinx-autodoc` and the `api_reference.rst` file; add new modules into the API Reference, as needed.
