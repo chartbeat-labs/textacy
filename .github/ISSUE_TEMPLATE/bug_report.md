@@ -1,13 +1,10 @@
 ---
-name: Bug report
-about: Create a report to help us improve
-title: ''
-labels: ''
+name: bug report
+about: You ran into a bug or other unexpected behavior.
+labels: 'bug'
 assignees: ''
 
 ---
-
-<!--- Provide a general summary of the issue in the title above. -->
 
 ### steps to reproduce
 <!--- Provide an unambiguous set of steps to reproduce this bug. Include a minimal code example, if applicable. -->
@@ -16,8 +13,8 @@ assignees: ''
 2. then this
 3. finally, this
 
-### expected behavior
-<!-- Provide a clear and concise description of what you expected to happen, but didn't. -->
+### expected vs. actual behavior
+<!-- Provide a clear and concise description of what you expected to happen, and what actually happened. -->
 
 ### possible solution?
 <!--- Not required, but feel free to suggest a fix and/or reason for the bug. -->
