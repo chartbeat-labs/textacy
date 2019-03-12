@@ -2,25 +2,55 @@
 
 Thanks for your interest in contributing! This project is maintained by [@bdewilde](https://github.com/bdewilde), and he's always glad to have help. Here's a set of guidelines to help get you started.
 
-## have a question?
+## so, you...
+
+### have a question?
 
 First, check around for existing resources. Is your question answered in [the docs](https://chartbeat-labs.github.io/textacy), or has it been answered somewhere else, like [StackOverflow](https://stackoverflow.com/search?q=textacy)? If not, consider your question: Is it of general interest and probably *should* be addressed in the docs? Please submit an issue that explains the question in context and where you see it fitting into the documentation. If, instead, it's a specific question about your code, StackOverflow may be a better forum for finding answers. Tag your post with `textacy` and `python` so that others may find it more easily.
 
-## found a bug?
+### found a bug?
 
-Search [GitHub issues](https://github.com/chartbeat-labs/textacy/issues) to see if it's already been reported. If you find an open issue that seems like the thing you're experiencing, please add a comment there; if you find a relevant closed issue but aren't satisfied with its resolution, open a new issue and link back to it in the body of your message; if you're the first to report this bug, please submit an issue explaining the problem and a minimal code example showing how to reproduce it.
+Search [GitHub issues](https://github.com/chartbeat-labs/textacy/issues) to see if it's already been reported. If you find an open issue that seems like the thing you're experiencing, please add a comment there; if you find a relevant closed issue but aren't satisfied with its resolution, open a new issue and link back to it in the body of your message; if you're the first to report this bug, please submit an issue explaining the problem and a minimal code example showing how to reproduce it. If you've found a bug *and* know how to fix it, please submit a pull request with the necessary changes — and be sure to follow this project's code conventions and link to any related issues, if they exist.
 
-## want to make some changes?
+### want to make some changes?
 
-If you've found a bug *and* know how to fix it, please submit a pull request with the necessary changes — and be sure to link to any related issues, if they exist. If you'd like to suggest new functionality or other enhancements, please open an issue that briefly outlines the motivation for and scope of your proposal, giving the maintainer and other users a chance to weigh in. If there's support for the idea and you'd like to implement it yourself, please follow the code conventions and submit your changes via pull request.
+If you'd like to request new or change existing functionality, first check the [GitHub issues](https://github.com/chartbeat-labs/textacy/issues) to see if it's already come up. If so, feel free to chime in on the existing issue; if not, open a new issue that briefly outlines the motivation for and scope of your proposal, giving the maintainer and other users a chance to weigh in. If there's support for the idea and you'd like to implement it yourself, please follow the code conventions and submit your changes via pull request. Otherwise, please wait patiently for someone to take up the idea and get it incorporated into the project.
 
 ## opening an issue
 
-Use an appropriate template (if available) when [creating your issue](https://github.com/chartbeat-labs/textacy/issues/new/choose), and fill it out completely. Be sure to include a clear and descriptive title, and sufficient information for someone else to understand and reproduce the problem. A minimal code sample and/or executable test case demonstrating expected behavior is particularly helpful for diagnosing and resolving bugs. If you need to include a lot of code or a long traceback, you can wrap the content in `<details>` and `</details>` tags to collapse the content, making it easier to read and follow.
+Use an appropriate template (if available) when [creating your issue](https://github.com/chartbeat-labs/textacy/issues/new/choose), and fill it out completely. Be sure to include a clear and descriptive title, and sufficient information for someone else to understand and reproduce the problem. A minimal code sample and/or executable test case demonstrating expected behavior is particularly helpful for diagnosing and resolving bugs — and don't forget to include details on your dev environment! If you need to include a lot of code or a long traceback, you can wrap the content in `<details>` and `</details>` tags to collapse the content, making it easier to read and follow.
 
-## opening a pull request
+## development workflow
 
-TODO
+1. **Fork the project & clone it locally:** Click the "Fork" button in the header of the [GitHub repository](https://github.com/chartbeat-labs/textacy), creating a copy of `textacy` in your GitHub account. To get a working copy on your local machine, you have to clone your fork. Click the "Clone or Download" button in the right-hand side bar, then append its output to the `git clone` command.
+
+        $ git clone git@github.com:YOUR_USERNAME/textacy.git
+
+1. **Create an upstream remote and sync your local copy:** Connect your local copy to the original "upstream" repository by adding it as a remote.
+
+        $ cd textacy
+        $ git remote add upstream git@github.com:chartbeat-labs/textacy.git
+
+    You should now have two remotes: read/write-able `origin` points to your GitHub fork, and a read-only `upstream` points to the original repo. Be sure to [keep your fork in sync](https://help.github.com/en/articles/syncing-a-fork) with the original, reducing the likelihood of merge conflicts later on.
+
+1. **Create a branch for each piece of work:** Branch off `master` for each bugfix or feature that you're working on. Give your branch a descriptive, meaningful name like `bugfix-for-issue-1234` or `improve-io-performance`, so others know at a glance what you're working on.
+
+        $ git checkout master
+        $ git pull upstream master && git push origin master
+        $ git checkout -b my-descriptive-branch-name
+
+    At this point, you may want to install your version of `textacy`. It's usually best to do this within a dedicated virtual environment; use whichever tool you're most comfortable with, such as `virtualenv`, `pyenv`, or `conda`.
+
+        $ pyenv virtualenv 3.7.0 textacy-my-descriptive-branch-name
+        $ pip install -e .
+
+1. **Implement your changes:** Use your preferred text editor to modify the `textacy` source code. Be sure to keep your changes focused and in scope, and follow the coding conventions described below! Document your code as you write it. Run your changes against any existing tests and add new ones as needed to validate your changes; make sure you don’t accidentally break existing functionality!
+1. **Push commits to your forked repository:** Group changes into atomic git commits, then push them to your `origin` repository. There's no need to wait until all changes are final before pushing — it's always good to have a backup, in case something goes wrong in your local copy.
+
+        $ git push origin my-descriptive-branch-name
+
+1. **Open a new Pull Request in GitHub:** When you're ready to submit your changes to the main repo, navigate to your forked repository on GitHub. Switch to your working branch then click "New pull request"; alternatively, if you recently pushed, you may see a banner at the top of the repo with a "Compare & pull request" button, which you can click on to initiate the same process. Fill out the PR template completely and clearly, confirm that code "diff" is as expected, then submit the PR.
+1. **Respond to any code review feedback:** At this point, @bdewilde will review your work and either request additional changes/clarification or approve your work. There may be some necessary back-and-forth; please do your best to be responsive. If you haven’t gotten a response in a week or so, please politely nudge him in the same thread — thanks in advance for your patience!
 
 ## conventions
 
