@@ -1,9 +1,10 @@
-backports.csv>=1.0.1
+backports.csv>=1.0.1; python_version=='2.7'
 cachetools>=2.0.0
 cld2-cffi>=0.1.4
 cytoolz>=0.8.0
 ftfy>=4.2.0,<5.0.0
 ijson>=2.3
+mwparserfromhell>=0.4.4
 networkx>=1.11
 numpy>=1.9.0,<2.0.0
 pyemd>=0.3.0
@@ -14,4 +15,3 @@ scipy>=0.17.0
 scikit-learn>=0.17.0
 spacy>=2.0.0
 tqdm>=4.11.1
-mwparserfromhell>=0.4.4
