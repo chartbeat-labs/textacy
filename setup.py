@@ -20,7 +20,7 @@ INSTALL_REQUIRES = [
     "requests>=2.10.0",
     "scipy>=0.17.0",
     "scikit-learn>=0.17.0",
-    "spacy>=2.0.0",
+    "spacy>=2.0.0,<2.1.0",
     "tqdm>=4.11.1",
 ]
 EXTRAS_REQUIRE = {"viz": ["matplotlib>=1.5.0"], "lang": ["cld2-cffi>=0.1.4"]}
