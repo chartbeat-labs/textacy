@@ -4,24 +4,61 @@ from __future__ import absolute_import, unicode_literals
 from textacy import text_utils
 
 GOOD_ACRONYMS = [
-    'LGTM', 'U.S.A.', 'PEP8', 'LGBTQQI2S', 'TF-IDF', 'D3', '3D', '3-D',
-    '3D-TV', 'D&D', 'PrEP', 'H2SO4', 'I/O', 'WASPs', 'G-8', 'A-TReC']
+    "LGTM",
+    "U.S.A.",
+    "PEP8",
+    "LGBTQQI2S",
+    "TF-IDF",
+    "D3",
+    "3D",
+    "3-D",
+    "3D-TV",
+    "D&D",
+    "PrEP",
+    "H2SO4",
+    "I/O",
+    "WASPs",
+    "G-8",
+    "A-TReC",
+]
 BAD_ACRONYMS = [
-    'A', 'GHz', '1a', 'D o E', 'Ms', 'Ph.D', '3-Dim.', 'the', 'FooBar', '1', ' ', '']
+    "A",
+    "GHz",
+    "1a",
+    "D o E",
+    "Ms",
+    "Ph.D",
+    "3-Dim.",
+    "the",
+    "FooBar",
+    "1",
+    " ",
+    "",
+]
 
-CRUFTY_TERMS = ['( foo bar )',
-                'foo -bar', '- 123.4',
-                '.-foo bar', '?!foo', 'bar?!',
-                "foo 's bar", "foo 'll bar",
-                '  foo   bar   ', 'foo bar.   ']
-GOOD_TERMS = ['foo (bar)', 'foo?', 'bar!', '-123.4']
-BAD_TERMS = ['(foo bar', 'foo) bar', '?>,!-.', '', 'foo) (bar']
+CRUFTY_TERMS = [
+    "( foo bar )",
+    "foo -bar",
+    "- 123.4",
+    ".-foo bar",
+    "?!foo",
+    "bar?!",
+    "foo 's bar",
+    "foo 'll bar",
+    "  foo   bar   ",
+    "foo bar.   ",
+]
+GOOD_TERMS = ["foo (bar)", "foo?", "bar!", "-123.4"]
+BAD_TERMS = ["(foo bar", "foo) bar", "?>,!-.", "", "foo) (bar"]
 
 LANG_SENTS = [
-    ('en', 'This sentence is in English.'),
-    ('es', 'Esta oración es en Español.'),
-    ('fr', 'Cette phrase est en français.'),
-    ('un', '1'), ('un', ' '), ('un', '')]
+    ("en", "This sentence is in English."),
+    ("es", "Esta oración es en Español."),
+    ("fr", "Cette phrase est en français."),
+    ("un", "1"),
+    ("un", " "),
+    ("un", ""),
+]
 
 TEXT = """
     The hedge fund magnates Daniel S. Loeb, Louis Moore Bacon and Steven A. Cohen have much in common. They have managed billions of dollars in capital, earning vast fortunes. They have invested millions in art — and millions more in political candidates.
@@ -52,7 +89,7 @@ def test_is_acronym_bad():
 
 
 def test_is_acronym_exclude():
-    assert not text_utils.is_acronym('NASA', exclude={'NASA'})
+    assert not text_utils.is_acronym("NASA", exclude={"NASA"})
 
 
 def test_detect_language():
@@ -61,41 +98,59 @@ def test_detect_language():
 
 
 def test_keyword_in_context_keyword():
-    for keyword in ('clinton', 'all'):
-        results = list(text_utils.keyword_in_context(
-            TEXT, keyword, ignore_case=True, window_width=50, print_only=False))
+    for keyword in ("clinton", "all"):
+        results = list(
+            text_utils.keyword_in_context(
+                TEXT, keyword, ignore_case=True, window_width=50, print_only=False
+            )
+        )
         for pre, kw, post in results:
             assert kw.lower() == keyword
 
 
 def test_keyword_in_context_ignore_case():
-    for keyword in ('All', 'all'):
-        results = list(text_utils.keyword_in_context(
-            TEXT, keyword, ignore_case=False, window_width=50, print_only=False))
+    for keyword in ("All", "all"):
+        results = list(
+            text_utils.keyword_in_context(
+                TEXT, keyword, ignore_case=False, window_width=50, print_only=False
+            )
+        )
         for pre, kw, post in results:
             assert kw == keyword
     # also test for a null result, bc of case
-    results = list(text_utils.keyword_in_context(
-            TEXT, 'clinton', ignore_case=False, window_width=50, print_only=False))
+    results = list(
+        text_utils.keyword_in_context(
+            TEXT, "clinton", ignore_case=False, window_width=50, print_only=False
+        )
+    )
     assert results == []
 
 
 def test_keyword_in_context_window_width():
     for window_width in (10, 20):
-        results = list(text_utils.keyword_in_context(
-            TEXT, 'clinton', ignore_case=True, print_only=False,
-            window_width=window_width))
+        results = list(
+            text_utils.keyword_in_context(
+                TEXT,
+                "clinton",
+                ignore_case=True,
+                print_only=False,
+                window_width=window_width,
+            )
+        )
         for pre, kw, post in results:
             assert len(pre) <= window_width
             assert len(post) <= window_width
 
 
 def test_keyword_in_context_unicode():
-    keyword = 'terminó'
-    results = list(text_utils.keyword_in_context(
-        'No llores porque ya se terminó, sonríe porque sucedió.',
-        keyword,
-        print_only=False))
+    keyword = "terminó"
+    results = list(
+        text_utils.keyword_in_context(
+            "No llores porque ya se terminó, sonríe porque sucedió.",
+            keyword,
+            print_only=False,
+        )
+    )
     for pre, kw, post in results:
         assert kw == keyword
 
@@ -112,6 +167,16 @@ def test_clean_terms_bad():
 
 def test_clean_terms_crufty():
     observed = list(text_utils.clean_terms(CRUFTY_TERMS))
-    expected = ['(foo bar)', 'foo-bar', '-123.4', 'foo bar', 'foo', 'bar?!',
-                "foo's bar", "foo'll bar", 'foo bar', 'foo bar.']
+    expected = [
+        "(foo bar)",
+        "foo-bar",
+        "-123.4",
+        "foo bar",
+        "foo",
+        "bar?!",
+        "foo's bar",
+        "foo'll bar",
+        "foo bar",
+        "foo bar.",
+    ]
     assert observed == expected

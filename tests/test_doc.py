@@ -14,64 +14,69 @@ Many different classes of machine learning algorithms have been applied to NLP t
 """
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def doc(request):
-    return Doc(TEXT.strip(), lang='en', metadata={'foo': 'bar!'})
+    return Doc(TEXT.strip(), lang="en", metadata={"foo": "bar!"})
 
 
 # init tests
 
+
 def test_unicode_content():
-    assert isinstance(Doc('This is an English sentence.'), Doc)
+    assert isinstance(Doc("This is an English sentence."), Doc)
 
 
 def test_spacydoc_content():
-    spacy_lang = cache.load_spacy('en')
-    spacy_doc = spacy_lang('This is an English sentence.')
+    spacy_lang = cache.load_spacy("en")
+    spacy_doc = spacy_lang("This is an English sentence.")
     assert isinstance(Doc(spacy_doc), Doc)
 
 
 def test_invalid_content():
     invalid_contents = [
-        b'This is an English sentence in bytes.',
-        {'content': 'This is an English sentence as dict value.'},
+        b"This is an English sentence in bytes.",
+        {"content": "This is an English sentence as dict value."},
         True,
-        ]
+    ]
     for invalid_content in invalid_contents:
         with pytest.raises(ValueError):
             _ = Doc(invalid_content)
 
 
 def test_lang_str():
-    assert isinstance(Doc('This is an English sentence.', lang='en'), Doc)
+    assert isinstance(Doc("This is an English sentence.", lang="en"), Doc)
 
 
 def test_lang_spacylang():
-    spacy_lang = cache.load_spacy('en')
-    assert isinstance(Doc('This is an English sentence.', lang=spacy_lang), Doc)
+    spacy_lang = cache.load_spacy("en")
+    assert isinstance(Doc("This is an English sentence.", lang=spacy_lang), Doc)
 
 
 def test_lang_callable():
     def dumb_detect_language(text):
-        return 'en'
-    assert isinstance(Doc('This is an English sentence.', lang=dumb_detect_language), Doc)
-    assert isinstance(Doc('This is an English sentence.', lang=lambda x: 'en'), Doc)
+        return "en"
+
+    assert isinstance(
+        Doc("This is an English sentence.", lang=dumb_detect_language), Doc
+    )
+    assert isinstance(Doc("This is an English sentence.", lang=lambda x: "en"), Doc)
 
 
 def test_invalid_lang():
-    invalid_langs = [b'en', ['en', 'en_core_web_sm'], True]
+    invalid_langs = [b"en", ["en", "en_core_web_sm"], True]
     for invalid_lang in invalid_langs:
         with pytest.raises(TypeError):
-            _ = Doc('This is an English sentence.', lang=invalid_lang)
+            _ = Doc("This is an English sentence.", lang=invalid_lang)
 
 
 def test_invalid_content_lang_combo():
-    spacy_lang = cache.load_spacy('en')
+    spacy_lang = cache.load_spacy("en")
     with pytest.raises(ValueError):
-        _ = Doc(spacy_lang('Hola, cómo estás mi amigo?'), lang='es')
+        _ = Doc(spacy_lang("Hola, cómo estás mi amigo?"), lang="es")
 
 
 # methods tests
+
 
 def test_n_tokens_and_sents(doc):
     assert doc.n_tokens == 241
@@ -79,9 +84,9 @@ def test_n_tokens_and_sents(doc):
 
 
 def test_term_count(doc):
-    assert doc.count('statistical') == 3
-    assert doc.count('machine learning') == 2
-    assert doc.count('foo') == 0
+    assert doc.count("statistical") == 3
+    assert doc.count("machine learning") == 2
+    assert doc.count("foo") == 0
 
 
 def test_tokenized_text(doc):
@@ -107,7 +112,10 @@ def test_to_terms_list(doc):
     assert len(full_terms_list) == len(full_terms_list_ids)
     assert isinstance(full_terms_list[0], compat.unicode_)
     assert isinstance(full_terms_list_ids[0], compat.int_types)
-    assert full_terms_list[0] != list(doc.to_terms_list(as_strings=True, normalize=False))[0]
+    assert (
+        full_terms_list[0]
+        != list(doc.to_terms_list(as_strings=True, normalize=False))[0]
+    )
     assert len(list(doc.to_terms_list(ngrams=False))) < len(full_terms_list)
     assert len(list(doc.to_terms_list(ngrams=1))) < len(full_terms_list)
     assert len(list(doc.to_terms_list(ngrams=(1, 2)))) < len(full_terms_list)
@@ -115,17 +123,17 @@ def test_to_terms_list(doc):
 
 
 def test_to_bag_of_words(doc):
-    bow = doc.to_bag_of_words(weighting='count')
+    bow = doc.to_bag_of_words(weighting="count")
     assert isinstance(bow, dict)
     assert isinstance(list(bow.keys())[0], compat.int_types)
     assert isinstance(list(bow.values())[0], int)
-    bow = doc.to_bag_of_words(weighting='binary')
+    bow = doc.to_bag_of_words(weighting="binary")
     assert isinstance(bow, dict)
     assert isinstance(list(bow.keys())[0], compat.int_types)
     assert isinstance(list(bow.values())[0], int)
     for value in list(bow.values())[0:10]:
         assert value < 2
-    bow = doc.to_bag_of_words(weighting='freq')
+    bow = doc.to_bag_of_words(weighting="freq")
     assert isinstance(bow, dict)
     assert isinstance(list(bow.keys())[0], compat.int_types)
     assert isinstance(list(bow.values())[0], float)
@@ -135,7 +143,7 @@ def test_to_bag_of_words(doc):
 
 
 def test_doc_save_and_load(tmpdir, doc):
-    filepath = str(tmpdir.join('test_doc_save_and_load.pkl'))
+    filepath = str(tmpdir.join("test_doc_save_and_load.pkl"))
     doc.save(filepath)
     new_doc = Doc.load(filepath)
     assert isinstance(new_doc, Doc)
@@ -145,18 +153,18 @@ def test_doc_save_and_load(tmpdir, doc):
 
 
 def test_to_semantic_network_words(doc):
-    graph = doc.to_semantic_network(nodes='words', edge_weighting='cooc_freq')
+    graph = doc.to_semantic_network(nodes="words", edge_weighting="cooc_freq")
     assert all(isinstance(node, compat.unicode_) for node in graph.nodes)
-    assert all(isinstance(d['weight'], int) for n1, n2, d in graph.edges(data=True))
-    graph = doc.to_semantic_network(nodes='words', edge_weighting='binary')
+    assert all(isinstance(d["weight"], int) for n1, n2, d in graph.edges(data=True))
+    graph = doc.to_semantic_network(nodes="words", edge_weighting="binary")
     assert all(isinstance(node, compat.unicode_) for node in graph.nodes)
     assert all(d == {} for n1, n2, d in graph.edges(data=True))
 
 
 def test_to_semantic_network_sents(doc):
-    graph = doc.to_semantic_network(nodes='sents', edge_weighting='cosine')
+    graph = doc.to_semantic_network(nodes="sents", edge_weighting="cosine")
     assert all(isinstance(node, int) for node in graph.nodes)
-    assert all(isinstance(d['weight'], float) for n1, n2, d in graph.edges(data=True))
-    graph = doc.to_semantic_network(nodes='sents', edge_weighting='jaccard')
+    assert all(isinstance(d["weight"], float) for n1, n2, d in graph.edges(data=True))
+    graph = doc.to_semantic_network(nodes="sents", edge_weighting="jaccard")
     assert all(isinstance(node, int) for node in graph.nodes)
-    assert all(isinstance(d['weight'], int) for n1, n2, d in graph.edges(data=True))
+    assert all(isinstance(d["weight"], int) for n1, n2, d in graph.edges(data=True))

@@ -21,25 +21,25 @@ def test_unpack_contractions():
 def test_replace_urls():
     text = "I learned everything I know from www.stackoverflow.com and http://wikipedia.org/ and Mom."
     proc_text = "I learned everything I know from *URL* and *URL* and Mom."
-    assert preprocess.replace_urls(text, '*URL*') == proc_text
+    assert preprocess.replace_urls(text, "*URL*") == proc_text
 
 
 def test_replace_emails():
     text = "I can be reached at username@example.com through next Friday."
     proc_text = "I can be reached at *EMAIL* through next Friday."
-    assert preprocess.replace_emails(text, '*EMAIL*') == proc_text
+    assert preprocess.replace_emails(text, "*EMAIL*") == proc_text
 
 
 def test_replace_phone_numbers():
     text = "I can be reached at 555-123-4567 through next Friday."
     proc_text = "I can be reached at *PHONE* through next Friday."
-    assert preprocess.replace_phone_numbers(text, '*PHONE*') == proc_text
+    assert preprocess.replace_phone_numbers(text, "*PHONE*") == proc_text
 
 
 def test_replace_numbers():
     text = "I owe $1,000.99 to 123 people for 2 +1 reasons."
     proc_text = "I owe $*NUM* to *NUM* people for *NUM* *NUM* reasons."
-    assert preprocess.replace_numbers(text, '*NUM*') == proc_text
+    assert preprocess.replace_numbers(text, "*NUM*") == proc_text
 
 
 def test_remove_punct():
@@ -56,22 +56,31 @@ def test_remove_punct_marks():
 
 def test_replace_currency_symbols():
     tests = [
-        ('$1.00 equals £0.67 equals €0.91.',
-         'USD1.00 equals GBP0.67 equals EUR0.91.',
-         '*CUR* 1.00 equals *CUR* 0.67 equals *CUR* 0.91.'),
-        ('this zebra costs $100.',
-         'this zebra costs USD100.',
-         'this zebra costs *CUR* 100.'),
-        ]
+        (
+            "$1.00 equals £0.67 equals €0.91.",
+            "USD1.00 equals GBP0.67 equals EUR0.91.",
+            "*CUR* 1.00 equals *CUR* 0.67 equals *CUR* 0.91.",
+        ),
+        (
+            "this zebra costs $100.",
+            "this zebra costs USD100.",
+            "this zebra costs *CUR* 100.",
+        ),
+    ]
     for text, proc_text1, proc_text2 in tests:
-        assert preprocess.replace_currency_symbols(text, replace_with=None) == proc_text1
-        assert preprocess.replace_currency_symbols(text, replace_with='*CUR* ') == proc_text2
+        assert (
+            preprocess.replace_currency_symbols(text, replace_with=None) == proc_text1
+        )
+        assert (
+            preprocess.replace_currency_symbols(text, replace_with="*CUR* ")
+            == proc_text2
+        )
 
 
 def test_remove_accents():
     text = "El niño se asustó -- qué miedo!"
     proc_text = "El nino se asusto -- que miedo!"
-    assert preprocess.remove_accents(text, method='unicode') == proc_text
-    assert preprocess.remove_accents(text, method='ascii') == proc_text
+    assert preprocess.remove_accents(text, method="unicode") == proc_text
+    assert preprocess.remove_accents(text, method="ascii") == proc_text
     with pytest.raises(Exception):
-        _ = preprocess.remove_accents(text, method='foo')
+        _ = preprocess.remove_accents(text, method="foo")
