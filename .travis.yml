@@ -16,11 +16,9 @@ matrix:
 
 # command to install dependencies and data
 install:
-    - "pip install -r requirements.txt"
-    - "pip install pytest"
+    - "pip install -r requirements-dev.txt"
     - if [[ $BUILD_DOCS = true ]]; then
         python setup.py install;
-        pip install -r requirements-docs.txt;
         pip install doctr;
       fi
     - "python -m spacy download en_core_web_sm"
