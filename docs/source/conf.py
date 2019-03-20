@@ -16,7 +16,7 @@
 import sys
 import os
 
-import sphinx_rtd_theme
+# import sphinx_rtd_theme
 
 import textacy
 
