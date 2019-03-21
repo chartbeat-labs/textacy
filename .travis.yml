@@ -36,4 +36,4 @@ script:
       cd ..;
       doctr deploy . --built-docs docs/build/html/;
     fi
-  - "python -m pytest -v"
+  - "python -m pytest -vv"
