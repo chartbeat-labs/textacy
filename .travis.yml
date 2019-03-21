@@ -2,6 +2,7 @@ language: python
 cache: pip
 env:
   global:
+    - WASABI_NO_PRETTY=1
     # Doctr deploy key for chartbeat-labs/textacy
     - secure: "acT68V00S7dbJrRxsDnJooDo8LrKNhRQxpBfD3nnk3245IbvFbCPkpjWhnDJDEDk/wRpxizKJwPijseFZwXepb1ovJXirG7YHpFvlVNTcyR0uFSRUgI4Vy2oTJf1N5Ywbc/xd7lD1pAwcE23Lgaz7A369XUa+imYqJgA6POqAmJaeVzYcw5oiRu/QSl3y68ChAtwyP1LAjbJUyYO2i1R+TR/GKJPy4v6EmaUKll/2eGrOhQBBhjlpEnA3BLKUriPUComke67dIkGhYwyeyIn4Pe8hmK93L6Quhnce91y97ufovbAwFU8yG29gZpxhOuaGFArHPubB9crds9DnGsNXv9BpcCQ6H/ZP0vBw/8BT2d1J1gS9/+NJpur4qOs+PPCVNzvboOXw/4OL/DLf7w0u6hVu2BFLE3Mk2oNZgMm8hMR18j7bgf9XIifqjPe5bycIocYUMvDNYtvWb87oJ3FKGaJ7Mj/U5OqAUGlbGesA58ucmyi7bNsHrTwFKTYTeze+fk4Sn4oVZtOH/90Dtk1/L+bZ5yUYwBFlzdaGJpRKTnGM49wSaJ8sNg/TV6ZIU6L+gC+3H/tLR/oaROmkPmRns+PT3LbWB82W0RCRFT3Gjii8F1MxehGk5ieV+e6KRkXXh+9in3y9ozZhBbCynLKYPrCHH4tDJhfaBORlhOZ2lo="
 matrix:
