@@ -6,16 +6,15 @@ import pytest
 from textacy import text_stats
 from textacy import Doc
 
-TEXT = """
-Mr. Speaker, 480,000 Federal employees are working without pay, a form of involuntary servitude; 280,000 Federal employees are not working, and they will be paid. Virtually all of these workers have mortgages to pay, children to feed, and financial obligations to meet.
-Mr. Speaker, what is happening to these workers is immoral, is wrong, and must be rectified immediately. Newt Gingrich and the Republican leadership must not continue to hold the House and the American people hostage while they push their disastrous 7-year balanced budget plan. The gentleman from Georgia, Mr. Gingrich, and the Republican leadership must join Senator Dole and the entire Senate and pass a continuing resolution now, now to reopen Government.
-Mr. Speaker, that is what the American people want, that is what they need, and that is what this body must do.
-"""
-
 
 @pytest.fixture(scope="module")
 def ts():
-    doc = Doc(TEXT, lang="en")
+    text = """
+    Mr. Speaker, 480,000 Federal employees are working without pay, a form of involuntary servitude; 280,000 Federal employees are not working, and they will be paid. Virtually all of these workers have mortgages to pay, children to feed, and financial obligations to meet.
+    Mr. Speaker, what is happening to these workers is immoral, is wrong, and must be rectified immediately. Newt Gingrich and the Republican leadership must not continue to hold the House and the American people hostage while they push their disastrous 7-year balanced budget plan. The gentleman from Georgia, Mr. Gingrich, and the Republican leadership must join Senator Dole and the entire Senate and pass a continuing resolution now, now to reopen Government.
+    Mr. Speaker, that is what the American people want, that is what they need, and that is what this body must do.
+    """
+    doc = Doc(text.strip(), lang="en")
     ts_ = text_stats.TextStats(doc)
     return ts_
 

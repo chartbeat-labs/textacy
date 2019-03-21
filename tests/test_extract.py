@@ -19,7 +19,7 @@ def spacy_doc():
     For 30 minutes, we discussed the impact of technology trends on education in the Middle East.
     And then an Egyptian education official raised his hand and asked if he could ask me a personal question: "I heard Donald Trump say we need to close mosques in the United States," he said with great sorrow.
     "Is that what we want our kids to learn?"
-    """.strip()
+    """
     spacy_doc = spacy_lang(text.strip())
     return spacy_doc
 

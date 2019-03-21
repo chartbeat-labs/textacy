@@ -6,7 +6,6 @@ import os
 import numpy as np
 import pytest
 from scipy import sparse as sp
-from spacy import attrs
 
 from textacy import cache, compat, io
 
@@ -22,42 +21,6 @@ TESTS_DIR = os.path.split(__file__)[0]
 def spacy_doc():
     spacy_lang = cache.load_spacy("en")
     spacy_doc = spacy_lang(TEXT)
-    cols = [attrs.TAG, attrs.HEAD, attrs.DEP]
-    values = np.array(
-        [
-            [15267657372422890137, 1, 412],
-            [15308085513773655218, 1, 426],
-            [17109001835818727656, 0, 8206900633647566924],
-            [8427216679587749980, 18446744073709551615, 401],
-            [2593208677638477497, 18446744073709551614, 442],
-            [17571114184892886314, 18446744073709551613, 404],
-            [15308085513773655218, 1, 426],
-            [17109001835818727656, 18446744073709551611, 407],
-            [164681854541413346, 18446744073709551615, 397],
-            [10554686591937588953, 18446744073709551614, 395],
-            [12646065887601541794, 18446744073709551613, 442],
-            [13656873538139661788, 1, 426],
-            [17109001835818727656, 0, 8206900633647566924],
-            [164681854541413346, 18446744073709551615, 422],
-            [164681854541413346, 1, 397],
-            [10554686591937588953, 18446744073709551613, 395],
-            [1292078113972184607, 18446744073709551615, 440],
-            [15794550382381185553, 18446744073709551615, 436],
-            [17571114184892886314, 18446744073709551615, 404],
-            [15267657372422890137, 1, 412],
-            [15308085513773655218, 18446744073709551613, 407],
-            [12646065887601541794, 18446744073709551607, 442],
-            [13656873538139661788, 1, 426],
-            [17109001835818727656, 0, 8206900633647566924],
-            [10554686591937588953, 18446744073709551615, 395],
-            [15267657372422890137, 2, 13323405159917154080],
-            [17202369883303991778, 1, 412],
-            [15308085513773655218, 18446744073709551612, 425],
-            [12646065887601541794, 18446744073709551611, 442],
-        ],
-        dtype="uint64",
-    )
-    spacy_doc.from_array(cols, values)
     return spacy_doc
 
 
@@ -260,7 +223,7 @@ def test_read_write_csv_dict(tmpdir):
 
 
 def test_read_write_spacy_docs(tmpdir, spacy_doc):
-    expected = [tok.lemma_ for tok in spacy_doc]
+    expected = [tok.lower_ for tok in spacy_doc]
     for ext in (".pkl", ".pkl.gz", ".pkl.bz2", ".pkl.xz"):
         filename = str(tmpdir.join("test_read_write_spacy_docs" + ext))
         if compat.is_python2 is True and ext == ".pkl.xz":
@@ -269,7 +232,7 @@ def test_read_write_spacy_docs(tmpdir, spacy_doc):
         else:
             io.write_spacy_docs(spacy_doc, filename, True)
             observed = [
-                tok.lemma_ for doc in io.read_spacy_docs(filename) for tok in doc
+                tok.lower_ for doc in io.read_spacy_docs(filename) for tok in doc
             ]
             assert observed == expected
 
