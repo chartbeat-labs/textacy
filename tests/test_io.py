@@ -237,6 +237,35 @@ def test_read_write_spacy_docs(tmpdir, spacy_doc):
             assert observed == expected
 
 
+def test_read_write_spacy_docs_binary(tmpdir, spacy_doc):
+    expected = [tok.lower_ for tok in spacy_doc]
+    filename = str(tmpdir.join("test_read_write_spacy_docs_binary.bin"))
+    io.write_spacy_docs(spacy_doc, filename, True, format="binary")
+    with pytest.raises(ValueError):
+        next(io.read_spacy_docs(filename, format="binary", lang=None))
+    observed = [
+        tok.lower_
+        for doc in io.read_spacy_docs(filename, format="binary", lang="en")
+        for tok in doc
+    ]
+    assert observed == expected
+
+
+def test_read_write_spacy_docs_binary_exclude(tmpdir, spacy_doc):
+    expected = [tok.lower_ for tok in spacy_doc]
+    filename = str(tmpdir.join("test_read_write_spacy_docs_binary_exclude.bin"))
+    io.write_spacy_docs(
+        spacy_doc, filename, True,
+        format="binary", exclude=["sentiment", "user_data"],
+    )
+    observed = [
+        tok.lower_
+        for doc in io.read_spacy_docs(filename, format="binary", lang="en")
+        for tok in doc
+    ]
+    assert observed == expected
+
+
 def test_read_write_sparse_matrix_csr(tmpdir):
     expected = sp.csr_matrix(
         (

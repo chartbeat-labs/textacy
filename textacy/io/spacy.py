@@ -14,6 +14,7 @@ from spacy.tokens.doc import Doc as SpacyDoc
 from .. import cache
 from .. import compat
 from .utils import open_sesame
+from ..utils import deprecated
 
 
 def read_spacy_docs(fname, format="pickle", lang=None):
@@ -125,7 +126,7 @@ def read_spacy_docs(fname, format="pickle", lang=None):
 
 
 def write_spacy_docs(
-    data, fname, make_dirs=False, format="pickle", include_tensor=False
+    data, fname, make_dirs=False, format="pickle", exclude=("tensor",), include_tensor=None
 ):
     """
     Write one or more ``spacy.Doc`` s to disk at ``fname`` in either pickle or
@@ -152,7 +153,12 @@ def write_spacy_docs(
                read from the same file. If spaCy changes, this code could break,
                so use this functionality at your own risk!
 
-        include_tensor (bool): If False, ``spacy.Doc`` tensors are not written
+        exclude (List[str]): String names of serialization fields to exclude;
+            see https://spacy.io/api/doc#serialization-fields for options.
+            By default, excludes tensors in order to reproduce existing behavior
+            of ``include_tensor=False``.
+        include_tensor (bool): DEPRECATED! Use ``exclude`` instead.
+            If False, ``spacy.Doc`` tensors are not written
             to disk; otherwise, they are. Note that this is only applicable when
             ``format="binary"``. Also note that including tensors *significantly*
             increases the file size of serialized docs.
@@ -160,6 +166,17 @@ def write_spacy_docs(
     Raises:
         ValueError: if format is not "pickle" or "binary"
     """
+    if include_tensor is not None:
+        deprecated(
+            "Use `exclude=('tensor',)` instead of `include_tensor=True`, since "
+            "spacy has converged on this standard for usage.",
+            action="once",
+        )
+        if include_tensor is False and "tensor" not in exclude:
+            exclude = ["tensor"] + list(exclude)
+        elif include_tensor is True and "tensor" in exclude:
+            exclude = [field for field in exclude if field != "tensor"]
+
     if isinstance(data, SpacyDoc):
         data = [data]
     if format == "pickle":
@@ -167,12 +184,8 @@ def write_spacy_docs(
             compat.pickle.dump(list(data), f, protocol=-1)
     elif format == "binary":
         with open_sesame(fname, mode="wb", make_dirs=make_dirs) as f:
-            if include_tensor is False:
-                for spacy_doc in data:
-                    f.write(spacy_doc.to_bytes(tensor=False))
-            else:
-                for spacy_doc in data:
-                    f.write(spacy_doc.to_bytes())
+            for spacy_doc in data:
+                f.write(spacy_doc.to_bytes(exclude=exclude))
     else:
         raise ValueError(
             "format = '{}' is invalid; value must be one of {}".format(
