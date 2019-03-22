@@ -21,11 +21,10 @@ from spacy.util import get_lang_class
 from . import cache
 from . import compat
 from . import io
+from . import utils
 from .doc import Doc
 
 LOGGER = logging.getLogger(__name__)
-
-_DEFAULT_N_THREADS = max(multiprocessing.cpu_count() - 1, 1)
 
 
 class Corpus(object):
@@ -67,7 +66,7 @@ class Corpus(object):
         >>> records = cw.docs(congress=114, limit=25)
         >>> text_stream, metadata_stream = textacy.io.split_records(
         ...     records, 'text')
-        >>> corpus.add_texts(text_stream, metadatas=metadata_stream, n_threads=4)
+        >>> corpus.add_texts(text_stream, metadatas=metadata_stream)
         >>> print(corpus)
         Corpus(75 docs; 55869 tokens)
         >>> corpus.remove(lambda doc: doc.metadata['speaker_name'] == 'Rick Santorum')
@@ -122,7 +121,7 @@ class Corpus(object):
             a syntactic parser, upon which sentence segmentation relies, this
             value will be null.
         docs (List[:class:`Doc <textacy.doc.Doc>`]): List of documents in
-            :class:`Corpus`. In 99\% of cases, you should never have to interact
+            :class:`Corpus`. In 99% of cases, you should never have to interact
             directly with this list; instead, index and slice directly on
             :class:`Corpus` or use the flexible :meth:`Corpus.get() <Corpus.get>`
             and :meth:`Corpus.remove() <Corpus.remove>` methods.
@@ -267,9 +266,7 @@ class Corpus(object):
             self.n_sents += doc.n_sents
         LOGGER.debug("added %s to Corpus[%s]", doc, doc.corpus_index)
 
-    def add_texts(
-        self, texts, metadatas=None, n_threads=_DEFAULT_N_THREADS, batch_size=1000
-    ):
+    def add_texts(self, texts, metadatas=None, n_threads=None, batch_size=1000):
         """
         Process a stream of texts (and a corresponding stream of metadata dicts,
         optionally) in parallel with spaCy; add as :class:`Doc <textacy.doc.Doc>` s
@@ -287,16 +284,21 @@ class Corpus(object):
                    the first item in ``texts``, and so on from there.
 
             n_threads (int): Number of threads to use when processing ``texts``
-                in parallel, if available.
+            in parallel, if available. DEPRECATED! This never worked correctly
+                in spacy v2.0, and no longer does in anything in spacy v2.1.
             batch_size (int): Number of texts to process at a time.
 
         See Also:
             - :func:`io.split_records() <textacy.io.utils.split_records>`
             - https://spacy.io/api/language#pipe
         """
-        spacy_docs = self.spacy_lang.pipe(
-            texts, n_threads=n_threads, batch_size=batch_size
-        )
+        if n_threads is not None:
+            utils.deprecated(
+                "The `n_threads` arg never worked correctly in spacy v2.0, and "
+                "doesn't do anything in spacy v2.1, so textacy won't pass it on.",
+                action="once",
+            )
+        spacy_docs = self.spacy_lang.pipe(texts, batch_size=batch_size)
         if metadatas:
             for i, (spacy_doc, metadata) in enumerate(
                 compat.zip_(spacy_docs, metadatas)
