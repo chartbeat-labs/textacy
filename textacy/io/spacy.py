@@ -7,7 +7,7 @@ pickle or binary format. Be warned: Both formats have pros and cons.
 """
 from __future__ import absolute_import, print_function, unicode_literals
 
-import msgpack
+from srsly import msgpack
 from spacy.language import Language as SpacyLang
 from spacy.tokens.doc import Doc as SpacyDoc
 

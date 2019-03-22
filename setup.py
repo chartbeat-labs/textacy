@@ -11,7 +11,6 @@ INSTALL_REQUIRES = [
     "cytoolz>=0.8.0",
     "ftfy>=4.2.0,<5.0.0",
     "ijson>=2.3",
-    "msgpack>=0.5.6",
     "mwparserfromhell>=0.4.4",
     "networkx>=1.11",
     "numpy>=1.9.0,<2.0.0",
@@ -22,6 +21,7 @@ INSTALL_REQUIRES = [
     "scipy>=0.17.0",
     "scikit-learn>=0.17.0",
     "spacy>=2.0.0",
+    "srsly >= 0.0.5",
     "tqdm>=4.11.1",
 ]
 EXTRAS_REQUIRE = {"viz": ["matplotlib>=1.5.0"], "lang": ["cld2-cffi>=0.1.4"]}
