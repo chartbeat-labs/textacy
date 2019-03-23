@@ -1,6 +1,61 @@
 Changelog
 =========
 
+0.6.3 (2019-03-23)
+------------------
+
+New:
+
+- Added a proper contributing guide and code of conduct, as well as separate
+  GitHub issue templates for different user situations. This should help folks
+  contribute to the project more effectively, and make maintaining it a bit easier,
+  too. [Issue #212]
+- Gave the documentation a new look, using a template popularized by ``requests``.
+  Added documentation on dealing with multi-lingual datasets. [Issue #233]
+- Made some minor adjustments to package dependencies, the way they're specified,
+  and the Travis CI setup, making for a faster and better development experience.
+- Confirmed and enabled compatibility with v2.1+ of ``spacy``. :dizzy:
+
+Changed:
+
+- Improved the ``Wikipedia`` dataset class in a variety of ways: it can now read
+  Wikinews db dumps; access records in namespaces other than the usual "0"
+  (such as category pages in namespace "14"); parse and extract category pages
+  in several languages, including in the case of bad wiki markup; and filter out
+  section headings from the accompanying text via an ``include_headings`` kwarg.
+  [PR #219, #220, #223, #224, #231]
+- Removed the ``transliterate_unicode()`` preprocessing function that transliterated
+  non-ascii text into a reasonable ascii approximation, for technical and
+  philosophical reasons. Also removed its GPL-licensed ``unidecode`` dependency,
+  for legal-ish reasons. [Issue #203]
+- Added convention-abiding ``exclude`` argument to the function that writes
+  ``spacy`` docs to disk, to limit which pipeline annotations are serialized.
+  Replaced the existing but non-standard ``include_tensor`` arg.
+- Deprecated the ``n_threads`` argument in ``Corpus.add_texts()``, which had not
+  been working in ``spacy.pipe`` for some time and, as of v2.1, is defunct.
+- Made many tests model- and python-version agnostic and thus less likely to break
+  when ``spacy`` releases new and improved models.
+- Auto-formatted the entire code base using ``black``; the results aren't always
+  more readable, but they are pleasingly consistent.
+
+Fixed:
+
+- Fixed bad behavior of ``key_terms_from_semantic_network()``, where an error
+  would be raised if no suitable key terms could be found; now, an empty list
+  is returned instead. [Issue #211]
+- Fixed variable name typo so ``GroupVectorizer.fit()`` actually works. [Issue #215]
+- Fixed a minor typo in the quick-start docs. [PR #217]
+- Check for and filter out any named entities that are entirely whitespace,
+  seemingly caused by an issue in ``spacy``.
+- Fixed an undefined variable error when merging spans. [Issue #225]
+- Fixed a unicode/bytes issue in experimental function for deserializing ``spacy``
+  docs in "binary" format. [Issue #228, PR #229]
+
+Contributors:
+
+Many thanks to @abevieiramota, @ckot, @Jude188, and @digest0r for their help!
+
+
 0.6.2 (2018-07-19)
 ------------------
 
