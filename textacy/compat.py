@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import sys
 
 is_python2 = int(sys.version[0]) == 2
@@ -15,9 +13,8 @@ if is_python2:
 
     range_ = xrange
 
-    bytes_ = str
     unicode_ = unicode
-    string_types = (str, unicode)
+    string_types = (bytes, unicode)
     int_types = (int, long)
     chr_ = unichr
 
@@ -36,7 +33,6 @@ else:
 
     range_ = range
 
-    bytes_ = bytes
     unicode_ = str
     string_types = (bytes, str)
     int_types = (int,)

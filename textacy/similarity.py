@@ -254,7 +254,7 @@ def _force_unicode(s):
     """Force ``s`` into unicode, or die trying."""
     if isinstance(s, compat.unicode_):
         return s
-    elif isinstance(s, compat.bytes_):
+    elif isinstance(s, bytes):
         return compat.bytes_to_unicode(s)
     else:
         return compat.unicode_(s)

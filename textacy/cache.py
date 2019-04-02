@@ -159,9 +159,8 @@ def load_depechemood(data_dir=None, weighting="normfreq"):
     fname = os.path.join(
         data_dir, "DepecheMood_{weighting}.txt".format(weighting=weighting)
     )
-    delimiter = (
-        compat.bytes_("\t") if compat.is_python2 else "\t"
-    )  # HACK: Py2's csv module fail
+    delimiter = b"\t" if compat.is_python2 else "\t"
+    # HACK: Py2's csv module fail
     try:
         with io.open(fname, mode="rt") as csvfile:
             csvreader = csv.reader(csvfile, delimiter=delimiter)
