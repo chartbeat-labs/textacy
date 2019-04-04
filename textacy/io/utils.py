@@ -165,7 +165,7 @@ def _get_file_handle(
             )
 
         if "t" in mode:
-            if compat.is_python2 is True:
+            if compat.PY2 is True:
                 raise ValueError(
                     'Python 2 can\'t open compressed files in "{}" mode'.format(mode)
                 )
@@ -213,10 +213,10 @@ def coerce_content_type(content, file_mode):
     are incompatible (either bytes with text mode or unicode with bytes mode),
     try to coerce the content type so it can be written.
     """
-    if "t" in file_mode and isinstance(content, bytes):
-        return compat.bytes_to_unicode(content)
-    elif "b" in file_mode and isinstance(content, compat.unicode_):
-        return compat.unicode_to_bytes(content)
+    if "t" in file_mode:
+        return compat.to_unicode(content)
+    elif "b" in file_mode:
+        return compat.to_bytes(content)
     return content
 
 

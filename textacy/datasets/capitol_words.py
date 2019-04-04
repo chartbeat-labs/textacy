@@ -139,7 +139,7 @@ class CapitolWords(Dataset):
             name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir
         )
         self.filestub = "capitol-words-py{py_version}.json.gz".format(
-            py_version=2 if compat.is_python2 else 3
+            py_version=2 if compat.PY2 else 3
         )
         self._filename = os.path.join(data_dir, self.filestub)
 
@@ -164,7 +164,7 @@ class CapitolWords(Dataset):
                 exists on disk under ``data_dir``.
         """
         release_tag = "capitol_words_py{py_version}_v{data_version}".format(
-            py_version=2 if compat.is_python2 else 3, data_version=1.0
+            py_version=2 if compat.PY2 else 3, data_version=1.0
         )
         url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self.filestub)
         fname = self._filename
@@ -334,7 +334,7 @@ class CapitolWords(Dataset):
             date_range = self._parse_date_range(date_range)
 
         n = 0
-        mode = "rb" if compat.is_python2 else "rt"  # TODO: check this
+        mode = "rb" if compat.PY2 else "rt"  # TODO: check this
         for line in io.read_json(self.filename, mode=mode, lines=True):
 
             if speaker_name and line["speaker_name"] not in speaker_name:

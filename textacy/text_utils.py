@@ -41,9 +41,9 @@ def detect_language(text):
             "you may do so via `pip install cld2-cffi` or `pip install textacy[lang]`."
         )
 
-    if compat.is_python2:
+    if compat.PY2:
         is_reliable, _, best_guesses = cld2_detect(
-            compat.unicode_to_bytes(text), bestEffort=True
+            compat.to_bytes(text), bestEffort=True
         )
     else:
         is_reliable, _, best_guesses = cld2_detect(text, bestEffort=True)

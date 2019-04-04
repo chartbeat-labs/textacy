@@ -25,10 +25,10 @@ def spacy_doc():
 
 
 def test_read_write_text_bytes(tmpdir):
-    expected = compat.unicode_to_bytes(TEXT)
+    expected = compat.to_bytes(TEXT)
     for ext in (".txt", ".gz", ".bz2", ".xz"):
         filename = str(tmpdir.join("test_read_write_file_bytes" + ext))
-        if compat.is_python2 is True and ext == ".xz":
+        if compat.PY2 is True and ext == ".xz":
             with pytest.raises(ValueError):
                 io.open_sesame(filename, mode="wb", encoding="utf-8", make_dirs=True)
         else:
@@ -41,7 +41,7 @@ def test_read_write_text_unicode(tmpdir):
     expected = TEXT
     for ext in (".txt", ".gz", ".bz2", ".xz"):
         filename = str(tmpdir.join("test_read_write_file_unicode" + ext))
-        if compat.is_python2 is True and ext != ".txt":
+        if compat.PY2 is True and ext != ".txt":
             with pytest.raises(ValueError):
                 io.open_sesame(filename, mode="wt", encoding="utf-8", make_dirs=True)
         else:
@@ -51,10 +51,10 @@ def test_read_write_text_unicode(tmpdir):
 
 
 def test_read_write_text_lines_bytes(tmpdir, spacy_doc):
-    expected = [compat.unicode_to_bytes(sent.text) for sent in spacy_doc.sents]
+    expected = [compat.to_bytes(sent.text) for sent in spacy_doc.sents]
     for ext in (".txt", ".gz", ".bz2", ".xz"):
         filename = str(tmpdir.join("test_read_write_file_lines_bytes" + ext))
-        if compat.is_python2 is True and ext == ".xz":
+        if compat.PY2 is True and ext == ".xz":
             with pytest.raises(ValueError):
                 io.open_sesame(filename, mode="wb", encoding="utf-8", make_dirs=True)
         else:
@@ -69,7 +69,7 @@ def test_read_write_text_lines_unicode(tmpdir, spacy_doc):
     expected = [sent.text for sent in spacy_doc.sents]
     for ext in (".txt", ".gz", ".bz2", ".xz"):
         filename = str(tmpdir.join("test_read_write_file_lines_unicode" + ext))
-        if compat.is_python2 is True and ext != ".txt":
+        if compat.PY2 is True and ext != ".txt":
             with pytest.raises(ValueError):
                 io.open_sesame(filename, mode="wt", encoding=None, make_dirs=True)
         else:
@@ -84,7 +84,7 @@ def test_read_write_json_bytes(tmpdir, spacy_doc):
     expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
     for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
         filename = str(tmpdir.join("test_read_write_json_bytes" + ext))
-        if compat.is_python2 is True:
+        if compat.PY2 is True:
             if ext == ".json.xz":
                 with pytest.raises(ValueError):
                     io.open_sesame(
@@ -103,7 +103,7 @@ def test_read_write_json_unicode(tmpdir, spacy_doc):
     expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
     for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
         filename = str(tmpdir.join("test_read_write_json_unicode" + ext))
-        if compat.is_python2 is True and ext != ".json":
+        if compat.PY2 is True and ext != ".json":
             with pytest.raises(ValueError):
                 io.open_sesame(filename, mode="wt", encoding=None, make_dirs=True)
         else:
@@ -126,7 +126,7 @@ def test_read_write_json_lines_bytes(tmpdir, spacy_doc):
     expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
     for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
         filename = str(tmpdir.join("test_read_write_json_lines_bytes" + ext))
-        if compat.is_python2 is True:
+        if compat.PY2 is True:
             if ext == ".json.xz":
                 with pytest.raises(ValueError):
                     io.open_sesame(
@@ -152,7 +152,7 @@ def test_read_write_json_lines_unicode(tmpdir, spacy_doc):
     expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
     for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
         filename = str(tmpdir.join("test_read_write_json_lines_unicode" + ext))
-        if compat.is_python2 is True and ext != ".json":
+        if compat.PY2 is True and ext != ".json":
             with pytest.raises(ValueError):
                 io.open_sesame(filename, mode="wt", encoding=None, make_dirs=True)
         else:
@@ -168,7 +168,7 @@ def test_read_write_csv_compressed(tmpdir):
     ]
     for ext in (".csv", ".csv.gz", ".csv.bz2", ".csv.xz"):
         filename = str(tmpdir.join("test_read_write_csv" + ext))
-        if compat.is_python2 is True and ext != ".csv":
+        if compat.PY2 is True and ext != ".csv":
             with pytest.raises(ValueError):
                 io.open_sesame(filename, mode="wt", encoding=None, make_dirs=True)
         else:
@@ -226,7 +226,7 @@ def test_read_write_spacy_docs(tmpdir, spacy_doc):
     expected = [tok.lower_ for tok in spacy_doc]
     for ext in (".pkl", ".pkl.gz", ".pkl.bz2", ".pkl.xz"):
         filename = str(tmpdir.join("test_read_write_spacy_docs" + ext))
-        if compat.is_python2 is True and ext == ".pkl.xz":
+        if compat.PY2 is True and ext == ".pkl.xz":
             with pytest.raises(ValueError):
                 io.open_sesame(filename, mode="wb", encoding=None, make_dirs=True)
         else:

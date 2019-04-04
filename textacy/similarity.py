@@ -243,21 +243,11 @@ def token_sort_ratio(str1, str2):
     """
     if not str1 or not str2:
         return 0
-    str1 = _force_unicode(str1)
-    str2 = _force_unicode(str2)
+    str1 = compat.to_unicode(str1)
+    str2 = compat.to_unicode(str2)
     str1_proc = _process_and_sort(str1)
     str2_proc = _process_and_sort(str2)
     return _ratio(str1_proc, str2_proc)
-
-
-def _force_unicode(s):
-    """Force ``s`` into unicode, or die trying."""
-    if isinstance(s, compat.unicode_):
-        return s
-    elif isinstance(s, bytes):
-        return compat.bytes_to_unicode(s)
-    else:
-        return compat.unicode_(s)
 
 
 def _process_and_sort(s):

@@ -341,7 +341,7 @@ class Wikipedia(Dataset):
         if not self.filename:
             raise IOError("{} file not found".format(self._filename))
 
-        if compat.is_python2 is False:
+        if compat.PY2 is False:
             events = ("end",)
             f = io.open_sesame(self.filename, mode="rt", encoding="UTF-8")
         else:  # Python 2 can't open bzip in text mode :(
@@ -378,8 +378,7 @@ class Wikipedia(Dataset):
                         content = elem.find(text_path).text
                     if content is None:
                         content = ""
-                    elif not isinstance(content, compat.unicode_):
-                        content = compat.bytes_to_unicode(content, errors="ignore")
+                    content = compat.to_unicode(content, errors="ignore")
                     yield page_id, title, content
                     elem.clear()
 
