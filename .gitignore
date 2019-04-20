@@ -14,7 +14,7 @@ docs/build/*
 
 # testing
 .cache
-.coverage
+.coverage*
 .pytest_cache/
 
 # textacy
