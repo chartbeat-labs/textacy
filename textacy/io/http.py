@@ -8,12 +8,15 @@ reading it into memory or writing it directly to disk.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import io
+import logging
 from contextlib import closing
 
 import requests
 from tqdm import tqdm
 
 from .utils import _make_dirs
+
+LOGGER = logging.getLogger(__name__)
 
 
 def read_http_stream(
@@ -88,20 +91,20 @@ def write_http_stream(
     decode_unicode = True if "t" in mode else False
     if make_dirs is True:
         _make_dirs(fname, mode)
-    # always close the connection
+    # use `closing` to ensure connection and progress bar *always* close
     with closing(requests.get(url, stream=True, auth=auth)) as r:
+        LOGGER.info("downloading data from %s ...", url)
         # set fallback encoding if unable to infer from headers
         if r.encoding is None:
             r.encoding = "utf-8"
-        with io.open(fname, mode=mode, encoding=encoding) as f:
-            pbar = tqdm(
-                unit="B", unit_scale=True, total=int(r.headers.get("content-length", 0))
-            )
-            chunks = r.iter_content(
-                chunk_size=chunk_size, decode_unicode=decode_unicode
-            )
-            for chunk in chunks:
-                # needed (?) to filter out "keep-alive" new chunks
-                if chunk:
-                    pbar.update(len(chunk))
-                    f.write(chunk)
+        total = int(r.headers.get("content-length", 0))
+        with closing(tqdm(unit="B", unit_scale=True, total=total)) as pbar:
+            with io.open(fname, mode=mode, encoding=encoding) as f:
+                chunks = r.iter_content(
+                    chunk_size=chunk_size, decode_unicode=decode_unicode
+                )
+                for chunk in chunks:
+                    # needed (?) to filter out "keep-alive" new chunks
+                    if chunk:
+                        pbar.update(len(chunk))
+                        f.write(chunk)
