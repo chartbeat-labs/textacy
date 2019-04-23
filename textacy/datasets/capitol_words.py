@@ -8,7 +8,7 @@ A collection of ~11k (almost all) speeches given by the main protagonists of the
 including Hillary Clinton, Bernie Sanders, Barack Obama, Ted Cruz, and John Kasich --
 from January 1996 through June 2016.
 
-Records include the following fields:
+Records include the following data:
 
     * ``text``: Full text of the Congressperson's remarks.
     * ``title``: Title of the speech, in all caps.
@@ -24,28 +24,28 @@ Records include the following fields:
 This dataset was derived from data provided by the (now defunct) Sunlight
 Foundation's `Capitol Words API <http://sunlightlabs.github.io/Capitol-Words/>`_.
 """
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
+import itertools
 import logging
 import os
 
-import requests
-
 from .. import compat
-from .. import data_dir
-from .. import io
-from .base import Dataset
+from .. import data_dir as DATA_DIR
+from .. import io as tio
+from .dataset import Dataset, _download, _parse_date_range
 
 LOGGER = logging.getLogger(__name__)
 
 NAME = "capitol_words"
-DESCRIPTION = (
-    "Collection of ~11k speeches in the Congressional Record given by "
-    "notable U.S. politicians between Jan 1996 and Jun 2016."
-)
-SITE_URL = "http://sunlightlabs.github.io/Capitol-Words/"  # TODO: change to propublica?
+META = {
+    "site_url": "http://sunlightlabs.github.io/Capitol-Words/",
+    "description": (
+        "Collection of ~11k speeches in the Congressional Record given by "
+        "notable U.S. politicians between Jan 1996 and Jun 2016."
+    ),
+}
 DOWNLOAD_ROOT = "https://github.com/bdewilde/textacy-data/releases/download/"
-DATA_DIR = os.path.join(data_dir, NAME)
 
 
 class CapitolWords(Dataset):
@@ -135,22 +135,20 @@ class CapitolWords(Dataset):
     congresses = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
 
     def __init__(self, data_dir=DATA_DIR):
-        super(CapitolWords, self).__init__(
-            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir
-        )
-        self.filestub = "capitol-words-py{py_version}.json.gz".format(
-            py_version=2 if compat.PY2 else 3
-        )
-        self._filename = os.path.join(data_dir, self.filestub)
+        super(CapitolWords, self).__init__(NAME, meta=META)
+        self._data_dir = os.path.join(data_dir, NAME)
+        self._filename = "capitol-words-py{py_version}.json.gz".format(
+            py_version=2 if compat.PY2 else 3)
+        self._filepath = os.path.join(self._data_dir, self._filename)
 
     @property
-    def filename(self):
+    def filepath(self):
         """
         str: Full path on disk for CapitolWords data as compressed json file.
             ``None`` if file is not found, e.g. has not yet been downloaded.
         """
-        if os.path.isfile(self._filename):
-            return self._filename
+        if os.path.isfile(self._filepath):
+            return self._filepath
         else:
             return None
 
@@ -164,17 +162,85 @@ class CapitolWords(Dataset):
                 exists on disk under ``data_dir``.
         """
         release_tag = "capitol_words_py{py_version}_v{data_version}".format(
-            py_version=2 if compat.PY2 else 3, data_version=1.0
+            py_version=2 if compat.PY2 else 3,
+            data_version=1.0,
         )
-        url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self.filestub)
-        fname = self._filename
-        if os.path.isfile(fname) and force is False:
-            LOGGER.warning("File %s already exists; skipping download...", fname)
-            return
-        LOGGER.info("Downloading data from %s and writing it to %s", url, fname)
-        io.write_http_stream(
-            url, fname, mode="wb", encoding=None, make_dirs=True, chunk_size=1024
+        url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
+        filepath = _download(
+            url,
+            filename=self._filename,
+            dirpath=self._data_dir,
+            force=force,
         )
+
+    def __iter__(self):
+        if not os.path.isfile(self._filepath):
+            raise OSError(
+                "dataset file {} not found;\n"
+                "has the dataset been downloaded yet?".format(self._filepath)
+            )
+        mode = "rb" if compat.PY2 else "rt"  # TODO: check this
+        for record in tio.read_json(self._filepath, mode=mode, lines=True):
+            yield record
+
+    def _get_filters(
+        self,
+        speaker_name,
+        speaker_party,
+        chamber,
+        congress,
+        date_range,
+        min_len,
+    ):
+        filters = []
+
+        def get_filter(filter_vals, vals_type, record_field, class_attr):
+            if filter_vals is not None:
+                if isinstance(filter_vals, vals_type):
+                    filter_vals = {filter_vals}
+                if not all(val in getattr(self, class_attr) for val in filter_vals):
+                    raise ValueError(
+                        "not all values in `{record_field}` are valid; "
+                        "see :attr:`CapitolWords.{class_attr}`".format(
+                            record_field=record_field,
+                            class_attr=class_attr,
+                        )
+                    )
+                return lambda record: record.get(record_field) in filter_vals
+            else:
+                return None
+
+        if min_len is not None:
+            if min_len < 1:
+                raise ValueError("`min_len` must be at least 1")
+            filters.append(
+                lambda record: len(record.get("text", "")) >= min_len
+            )
+        if date_range is not None:
+            date_range = _parse_date_range(date_range, self.min_date, self.max_date)
+            filters.append(
+                lambda record: record.get("year") and date_range[0] <= record["year"] < date_range[1]
+            )
+        candidate_filters = [
+            (speaker_name, compat.string_types, "speaker_name", "speaker_names"),
+            (speaker_party, compat.string_types, "speaker_party", "speaker_parties"),
+            (chamber, compat.string_types, "chamber", "chambers"),
+            (congress, int, "congress", "congresses"),
+        ]
+        for candidate_filter in candidate_filters:
+            filter_ = get_filter(*candidate_filter)
+            if filter_:
+                filters.append(filter_)
+        return filters
+
+    def _filtered_iter(self, filters):
+        if filters:
+            for record in self:
+                if all(filter_(record) for filter_ in filters):
+                    yield record
+        else:
+            for record in self:
+                yield record
 
     def texts(
         self,
@@ -184,21 +250,22 @@ class CapitolWords(Dataset):
         congress=None,
         date_range=None,
         min_len=None,
-        limit=-1,
+        limit=None,
     ):
         """
-        Iterate over speeches (text-only) in this dataset, optionally filtering
-        by a variety of metadata and/or text length, in chronological order.
+        Iterate over speeches in this dataset, optionally filtering by a variety
+        of metadata and/or text length, and yield texts only,
+        in chronological order.
 
         Args:
             speaker_name (str or Set[str]): Filter speeches by the speakers' name;
-                see :attr:`speaker_names <CapitolWords.speaker_names>`.
-            speaker_party (str or Set[str]): Filter speeches by the speakers' party;
-                see :attr:`speaker_parties <CapitolWords.speaker_parties>`.
-            chamber (str or Set[str]): Filter speeches by the chamber in which they
-                were given; see :attr:`chambers <CapitolWords.chambers>`.
+                see :attr:`CapitolWords.speaker_names`.
+            speaker_party (str or Set[str]): Filter speeches by the speakers'
+                party; see :attr:`CapitolWords.speaker_parties`.
+            chamber (str or Set[str]): Filter speeches by the chamber in which
+                they were given; see :attr:`CapitolWords.chambers`.
             congress (int or Set[int]): Filter speeches by the congress in which
-                they were given; see :attr:`congresses <CapitolWords.congresses>`.
+                they were given; see :attr:`CapitolWords.congresses`.
             date_range (List[str] or Tuple[str]): Filter speeches by the date on
                 which they were given. Both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
@@ -206,7 +273,7 @@ class CapitolWords(Dataset):
             min_len (int): Filter speeches by the length (number of characters)
                 of their text content.
             limit (int): Yield no more than ``limit`` speeches that match all
-                specified filters, in chronological order.
+                specified filters.
 
         Yields:
             str: Full text of next (by chronological order) speech in dataset
@@ -215,18 +282,10 @@ class CapitolWords(Dataset):
         Raises:
             ValueError: If any filtering options are invalid.
         """
-        texts = self._iterate(
-            True,
-            speaker_name=speaker_name,
-            speaker_party=speaker_party,
-            chamber=chamber,
-            congress=congress,
-            date_range=date_range,
-            min_len=min_len,
-            limit=limit,
-        )
-        for text in texts:
-            yield text
+        filters = self._get_filters(
+            speaker_name, speaker_party, chamber, congress, date_range, min_len)
+        for record in itertools.islice(self._filtered_iter(filters), limit):
+            yield record["text"]
 
     def records(
         self,
@@ -236,21 +295,22 @@ class CapitolWords(Dataset):
         congress=None,
         date_range=None,
         min_len=None,
-        limit=-1,
+        limit=None,
     ):
         """
-        Iterate over speeches (text and metadata) in this dataset, optionally
-        filtering by a variety of metadata and/or text length, in chronological order.
+        Iterate over speeches in this dataset, optionally filtering by a variety
+        of metadata and/or text length, and yield text + metadata pairs,
+        in chronological order.
 
         Args:
             speaker_name (str or Set[str]): Filter speeches by the speakers' name;
-                see :attr:`speaker_names <CapitolWords.speaker_names>`.
+                see :attr:`CapitolWords.speaker_names`.
             speaker_party (str or Set[str]): Filter speeches by the speakers'
-                party; see :attr:`speaker_parties <CapitolWords.speaker_parties>`.
+                party; see :attr:`CapitolWords.speaker_parties`.
             chamber (str or Set[str]): Filter speeches by the chamber in which
-                they were given; see :attr:`chambers <CapitolWords.chambers>`.
+                they were given; see :attr:`CapitolWords.chambers`.
             congress (int or Set[int]): Filter speeches by the congress in which
-                they were given; see :attr:`congresses <CapitolWords.congresses>`.
+                they were given; see :attr:`CapitolWords.congresses`.
             date_range (List[str] or Tuple[str]): Filter speeches by the date on
                 which they were given. Both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
@@ -258,103 +318,16 @@ class CapitolWords(Dataset):
             min_len (int): Filter speeches by the length (number of characters)
                 of their text content.
             limit (int): Yield no more than ``limit`` speeches that match all
-                specified filters, in chronological order.
+                specified filters.
 
         Yields:
-            dict: Full text and metadata of next (by chronological order) speech
-            in dataset passing all filter params.
+            str: Text of the next speech in dataset passing all filters.
+            dict: Metadata of the next speech in dataset passing all filters.
 
         Raises:
             ValueError: If any filtering options are invalid.
         """
-        records = self._iterate(
-            False,
-            speaker_name,
-            speaker_party,
-            chamber,
-            congress,
-            date_range,
-            min_len,
-            limit,
-        )
-        for record in records:
-            yield record
-
-    def _iterate(
-        self,
-        text_only,
-        speaker_name,
-        speaker_party,
-        chamber,
-        congress,
-        date_range,
-        min_len,
-        limit,
-    ):
-        """
-        Low-level method to iterate over the records in this dataset. Used by
-        :meth:`CapitolWords.texts()` and :meth:`CapitolWords.records()`.
-        """
-        if not self.filename:
-            raise IOError("{} file not found".format(self._filename))
-
-        if speaker_name:
-            if isinstance(speaker_name, compat.string_types):
-                speaker_name = {speaker_name}
-            if not all(item in self.speaker_names for item in speaker_name):
-                raise ValueError(
-                    "all values in `speaker_name` must be valid; "
-                    "see :attr:`CapitolWords.speaker_names`"
-                )
-        if speaker_party:
-            if isinstance(speaker_party, compat.string_types):
-                speaker_party = {speaker_party}
-            if not all(item in self.speaker_parties for item in speaker_party):
-                raise ValueError(
-                    "all values in `speaker_party` must be valid; "
-                    "see :attr:`CapitolWords.speaker_parties`"
-                )
-        if chamber:
-            if isinstance(chamber, compat.string_types):
-                chamber = {chamber}
-            if not all(item in self.chambers for item in chamber):
-                raise ValueError(
-                    "all values in `chamber` must be valid; "
-                    "see :attr:`CapitolWords.chambers`"
-                )
-        if congress:
-            if isinstance(congress, int):
-                congress = {congress}
-            if not all(item in self.congresses for item in congress):
-                raise ValueError(
-                    "all values in `congress` must be valid; "
-                    "see :attr:`CapitolWords.congresses`"
-                )
-        if date_range:
-            date_range = self._parse_date_range(date_range)
-
-        n = 0
-        mode = "rb" if compat.PY2 else "rt"  # TODO: check this
-        for line in io.read_json(self.filename, mode=mode, lines=True):
-
-            if speaker_name and line["speaker_name"] not in speaker_name:
-                continue
-            if speaker_party and line["speaker_party"] not in speaker_party:
-                continue
-            if chamber and line["chamber"] not in chamber:
-                continue
-            if congress and line["congress"] not in congress:
-                continue
-            if date_range and not date_range[0] <= line["date"] <= date_range[1]:
-                continue
-            if min_len and len(line["text"]) < min_len:
-                continue
-
-            if text_only is True:
-                yield line["text"]
-            else:
-                yield line
-
-            n += 1
-            if n == limit:
-                break
+        filters = self._get_filters(
+            speaker_name, speaker_party, chamber, congress, date_range, min_len)
+        for record in itertools.islice(self._filtered_iter(filters), limit):
+            yield record.pop("text"), record
