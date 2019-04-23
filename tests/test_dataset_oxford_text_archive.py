@@ -43,7 +43,7 @@ def test_texts():
 
 
 def test_texts_limit():
-    for limit in (1, 5, 100):
+    for limit in (1, 5, 10):
         assert sum(1 for _ in DATASET.texts(limit=limit)) == limit
 
 

@@ -3,10 +3,10 @@
 Oxford Text Archive
 -------------------
 
-A collection of ~2.7k Creative Commons records from the Oxford Text Archive,
+A collection of ~2.7k Creative Commons literary works from the Oxford Text Archive,
 containing primarily English-language 16th-20th century literature and history.
 
-Records include the following fields:
+Records include the following data:
 
     * ``text``: Full text of the literary work.
     * ``title``: Title of the literary work.
@@ -243,7 +243,7 @@ class OxfordTextArchive(Dataset):
 
     def texts(self, author=None, date_range=None, min_len=None, limit=None):
         """
-        Iterate over records in this dataset, optionally filtering by a variety
+        Iterate over works in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield texts only.
 
         Args:
@@ -269,7 +269,7 @@ class OxfordTextArchive(Dataset):
 
     def records(self, author=None, date_range=None, min_len=None, limit=None):
         """
-        Iterate over records in this dataset, optionally filtering by a variety
+        Iterate over works in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield text + metadata pairs.
 
         Args:
