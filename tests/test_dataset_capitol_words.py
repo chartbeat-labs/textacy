@@ -10,7 +10,7 @@ from textacy.datasets.capitol_words import CapitolWords
 DATASET = CapitolWords()
 
 pytestmark = pytest.mark.skipif(
-    DATASET.filename is None,
+    DATASET.filepath is None,
     reason="CapitolWords dataset must be downloaded before running tests",
 )
 
@@ -19,12 +19,12 @@ pytestmark = pytest.mark.skipif(
 def test_download(tmpdir):
     dataset = CapitolWords(data_dir=str(tempdir))
     dataset.download()
-    assert os.path.exists(dataset.filename)
+    assert os.path.exists(dataset._filepath)
 
 
-def test_ioerror(tmpdir):
+def test_oserror(tmpdir):
     dataset = CapitolWords(data_dir=str(tmpdir))
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         _ = list(dataset.texts())
 
 
@@ -34,7 +34,7 @@ def test_texts():
 
 
 def test_texts_limit():
-    for limit in (1, 5, 100):
+    for limit in (1, 5, 10):
         assert sum(1 for _ in DATASET.texts(limit=limit)) == limit
 
 
@@ -46,16 +46,17 @@ def test_texts_min_len():
 
 
 def test_records():
-    for record in DATASET.records(limit=3):
-        assert isinstance(record, dict)
+    for text, meta in DATASET.records(limit=3):
+        assert isinstance(text, compat.unicode_)
+        assert isinstance(meta, dict)
 
 
 def test_records_speaker_name():
     speaker_names = ({"Bernie Sanders"}, {"Ted Cruz", "Barack Obama"})
     for speaker_name in speaker_names:
         assert all(
-            r["speaker_name"] in speaker_name
-            for r in DATASET.records(speaker_name=speaker_name, limit=10)
+            meta["speaker_name"] in speaker_name
+            for text, meta in DATASET.records(speaker_name=speaker_name, limit=10)
         )
 
 
@@ -63,8 +64,8 @@ def test_records_speaker_party():
     speaker_parties = ({"R"}, {"D", "I"})
     for speaker_party in speaker_parties:
         assert all(
-            r["speaker_party"] in speaker_party
-            for r in DATASET.records(speaker_party=speaker_party, limit=10)
+            meta["speaker_party"] in speaker_party
+            for text, meta in DATASET.records(speaker_party=speaker_party, limit=10)
         )
 
 
@@ -72,7 +73,8 @@ def test_records_chamber():
     chambers = ({"House"}, {"House", "Senate"})
     for chamber in chambers:
         assert all(
-            r["chamber"] in chamber for r in DATASET.records(chamber=chamber, limit=10)
+            meta["chamber"] in chamber
+            for text, meta in DATASET.records(chamber=chamber, limit=10)
         )
 
 
@@ -80,8 +82,8 @@ def test_records_congress():
     congresses = ({104}, {104, 114})
     for congress in congresses:
         assert all(
-            r["congress"] in congress
-            for r in DATASET.records(congress=congress, limit=10)
+            meta["congress"] in congress
+            for text, meta in DATASET.records(congress=congress, limit=10)
         )
 
 
@@ -89,8 +91,8 @@ def test_records_date_range():
     date_ranges = (["2000-01-01", "2001-01-01"], ("2010-01-01", "2010-02-01"))
     for date_range in date_ranges:
         assert all(
-            date_range[0] <= r["date"] < date_range[1]
-            for r in DATASET.records(date_range=date_range, limit=10)
+            date_range[0] <= meta["date"] < date_range[1]
+            for text, meta in DATASET.records(date_range=date_range, limit=10)
         )
 
 
@@ -98,7 +100,7 @@ def test_bad_filters():
     bad_filters = (
         {"speaker_name": "Burton DeWilde"},
         {"speaker_party": "Whigs"},
-        {"chamber": "Pot"},
+        {"chamber": "White House"},
         {"congress": 42},
         {"date_range": "2016-01-01"},
     )
