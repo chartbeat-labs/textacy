@@ -102,7 +102,7 @@ class OxfordTextArchive(Dataset):
 
     def __init__(self, data_dir=DATA_DIR):
         super(OxfordTextArchive, self).__init__(NAME, meta=META)
-        self._data_dir = os.path.join(DATA_DIR, NAME)
+        self._data_dir = os.path.join(data_dir, NAME)
         self._text_dirpath = os.path.join(self._data_dir, "master", "text")
         self._metadata_filepath = os.path.join(self._data_dir, "master", "metadata.tsv")
         self._metadata = None
@@ -131,7 +131,10 @@ class OxfordTextArchive(Dataset):
         Dict[str, dict]
         """
         if not self._metadata:
-            self._metadata = self._load_and_parse_metadata()
+            try:
+                self._metadata = self._load_and_parse_metadata()
+            except OSError as e:
+                LOGGER.error(e)
         return self._metadata
 
     def _load_and_parse_metadata(self):
@@ -141,8 +144,10 @@ class OxfordTextArchive(Dataset):
         of the fields, and remove a couple fields that are identical throughout.
         """
         if not os.path.isfile(self._metadata_filepath):
-            raise IOError(
-                "metadata file {} not found".format(self._metadata_filepath))
+            raise OSError(
+                "metadata file {} not found;\n"
+                "has the dataset been downloaded yet?".format(self._metadata_filepath)
+            )
 
         re_extract_year = re.compile(r"(\d{4})")
         re_extract_authors = re.compile(
@@ -185,7 +190,10 @@ class OxfordTextArchive(Dataset):
 
     def __iter__(self):
         if not os.path.isdir(self._text_dirpath):
-            raise IOError("text directory {} not found".format(self.text_dirpath))
+            raise OSError(
+                "text directory {} not found;\n"
+                "has the dataset been downloaded yet?".format(self._text_dirpath)
+            )
         _metadata = self.metadata  # for performance
         for filepath in sorted(tio.get_filenames(self._text_dirpath, extension=".txt")):
             id_, _ = os.path.splitext(os.path.basename(filepath))

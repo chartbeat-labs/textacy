@@ -10,7 +10,7 @@ from textacy.datasets.oxford_text_archive import OxfordTextArchive
 DATASET = OxfordTextArchive()
 
 pytestmark = pytest.mark.skipif(
-    DATASET.filename is None,
+    DATASET.metadata is None,
     reason="OxfordTextArchive dataset must be downloaded before running tests",
 )
 
@@ -19,12 +19,14 @@ pytestmark = pytest.mark.skipif(
 def test_download(tmpdir):
     dataset = OxfordTextArchive(data_dir=str(tempdir))
     dataset.download()
-    assert os.path.exists(dataset.filename)
+    assert os.path.exists(dataset.metadata)
+    assert os.path.exists(dataset._metadata_filepath)
+    assert os.path.exists(dataset._text_dirpath)
 
 
-def test_ioerror(tmpdir):
+def test_oserror(tmpdir):
     dataset = OxfordTextArchive(data_dir=str(tmpdir))
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         _ = list(dataset.texts())
 
 
@@ -46,17 +48,18 @@ def test_texts_min_len():
 
 
 def test_records():
-    for record in DATASET.records(limit=3):
-        assert isinstance(record, dict)
+    for text, meta in DATASET.records(limit=3):
+        assert isinstance(text, compat.unicode_)
+        assert isinstance(meta, dict)
 
 
 def test_records_author():
     authors = ({"Shakespeare, William"}, {"Wollstonecraft, Mary", "Twain, Mark"})
     for author in authors:
         assert all(
-            a in author
-            for r in DATASET.records(author=author, limit=10)
-            for a in r["author"]
+            athr in author
+            for text, meta in DATASET.records(author=author, limit=3)
+            for athr in meta["author"]
         )
 
 
@@ -64,8 +67,8 @@ def test_records_date_range():
     date_ranges = (["1900-01-01", "1950-01-01"], ("1600-01-01", "1700-01-01"))
     for date_range in date_ranges:
         assert all(
-            date_range[0] <= r["year"] < date_range[1]
-            for r in DATASET.records(date_range=date_range, limit=10)
+            date_range[0] <= meta["year"] < date_range[1]
+            for text, meta in DATASET.records(date_range=date_range, limit=10)
         )
 
 
