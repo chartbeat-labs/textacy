@@ -19,7 +19,6 @@ pytestmark = pytest.mark.skipif(
 def test_download(tmpdir):
     dataset = OxfordTextArchive(data_dir=str(tempdir))
     dataset.download()
-    assert os.path.exists(dataset.metadata)
     assert os.path.exists(dataset._metadata_filepath)
     assert os.path.exists(dataset._text_dirpath)
 
@@ -28,6 +27,14 @@ def test_oserror(tmpdir):
     dataset = OxfordTextArchive(data_dir=str(tmpdir))
     with pytest.raises(OSError):
         _ = list(dataset.texts())
+
+
+def test_metadata():
+    assert DATASET.metadata is not None
+    for record in DATASET.records(limit=10):
+        pass
+    assert all(entry.get("id") for entry in DATASET.metadata.values())
+    assert not any(entry.get("text") for entry in DATASET.metadata.values())
 
 
 def test_texts():
