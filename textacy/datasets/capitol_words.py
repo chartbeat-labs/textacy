@@ -50,52 +50,48 @@ DOWNLOAD_ROOT = "https://github.com/bdewilde/textacy-data/releases/download/"
 
 class CapitolWords(Dataset):
     """
-    Stream Congressional speeches from a compressed json file on disk, either
-    as texts (str) or records (dict) with both text content and metadata.
+    Stream a collection of Congressional speeches from a compressed json file on disk,
+    either as texts or text + metadata pairs.
 
-    Download a Python version-specific compressed json file from the
-    `textacy-data <https://github.com/bdewilde/textacy-data>`_ repo::
+    Download the data (one time only!) from the textacy-data repo
+    (https://github.com/bdewilde/textacy-data), and save its contents to disk::
 
         >>> cw = CapitolWords()
         >>> cw.download()
         >>> cw.info
-        {'data_dir': 'path/to/textacy/data/capitolwords',
-         'description': 'Collection of ~11k speeches in the Congressional Record given by notable U.S. politicians between Jan 1996 and Jun 2016.',
-         'name': 'capitol_words',
-         'site_url': 'http://sunlightlabs.github.io/Capitol-Words/'}
+        {'name': 'capitol_words',
+         'site_url': 'http://sunlightlabs.github.io/Capitol-Words/',
+         'description': 'Collection of ~11k speeches in the Congressional Record given by notable U.S. politicians between Jan 1996 and Jun 2016.'}
 
-    Iterate over speeches as plain texts or records with both text and metadata::
+    Iterate over speeches as texts or records with both text and metadata::
 
-        >>> for text in cw.texts(limit=5):
-        ...     print(text)
-        >>> for record in cw.records(limit=5):
-        ...     print(record['title'], record['date'])
-        ...     print(record['text'])
+        >>> for text in cw.texts(limit=3):
+        ...     print(text, end="\n\n")
+        >>> for text, meta in cw.records(limit=3):
+        ...     print("\n{} ({})\n{}".format(meta["title"], meta["speaker_name"], text))
 
     Filter speeches by a variety of metadata fields and text length::
 
-        >>> for record in cw.records(speaker_name='Bernie Sanders', limit=1):
-        ...     print(record['date'], record['text'])
-        >>> for record in cw.records(speaker_party='D', congress={110, 111, 112},
-        ...                          chamber='Senate', limit=5):
-        ...     print(record['speaker_name'], record['title'])
-        >>> for record in cw.records(speaker_name={'Barack Obama', 'Hillary Clinton'},
-        ...                          date_range=('2002-01-01', '2002-12-31')):
-        ...     print(record['speaker_name'], record['title'], record['date'])
+        >>> for text, meta in cw.records(speaker_name="Bernie Sanders", limit=3):
+        ...     print("\n{}, {}\n{}".format(meta["title"], meta["date"], text))
+        >>> for text, meta in cw.records(speaker_party="D", congress={110, 111, 112},
+        ...                          chamber="Senate", limit=3):
+        ...     print(meta["title"], meta["speaker_name"], meta["date"])
+        >>> for text, meta in cw.records(speaker_name={"Barack Obama", "Hillary Clinton"},
+        ...                              date_range=("2005-01-01", "2005-12-31")):
+        ...     print(meta["title"], meta["speaker_name"], meta["date"])
         >>> for text in cw.texts(min_len=50000):
         ...     print(len(text))
 
     Stream speeches into a :class:`textacy.Corpus`::
 
-        >>> text_stream, metadata_stream = textacy.io.split_records(
-        ...     cw.records(limit=100), 'text')
-        >>> c = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
-        >>> c
-        Corpus(100 docs; 70500 tokens)
+        >>> texts, metas = textacy.io.unzip(ota.records(limit=100))
+        >>> textacy.textacy.Corpus("en", texts=texts, metadatas=metas)
+        Corpus(100 docs; 70496 tokens)
 
     Args:
-        data_dir (str): Path to directory on disk under which the data
-            (a compressed json file like ``capitol-words-py3.json.gz``) is stored.
+        data_dir (str): Path to directory on disk under which dataset data is stored,
+            i.e. ``/path/to/data_dir/capitol_words`` .
 
     Attributes:
         min_date (str): Earliest date for which speeches are available, as an
@@ -219,7 +215,7 @@ class CapitolWords(Dataset):
         if date_range is not None:
             date_range = _parse_date_range(date_range, self.min_date, self.max_date)
             filters.append(
-                lambda record: record.get("year") and date_range[0] <= record["year"] < date_range[1]
+                lambda record: record.get("date") and date_range[0] <= record["date"] < date_range[1]
             )
         candidate_filters = [
             (speaker_name, compat.string_types, "speaker_name", "speaker_names"),

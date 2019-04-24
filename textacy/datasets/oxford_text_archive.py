@@ -49,8 +49,8 @@ DOWNLOAD_URL = "https://github.com/mimno/ota/archive/master.zip"
 
 class OxfordTextArchive(Dataset):
     """
-    Stream literary works from a zip file on disk, either as texts (str) or
-    records (dict) with both text content and metadata.
+    Stream a collection of English-language literary works from text files on disk,
+    either as texts or text + metadata pairs.
 
     Download the data (one time only!), saving and extracting its contents to disk::
 
@@ -86,7 +86,7 @@ class OxfordTextArchive(Dataset):
 
     Args:
         data_dir (str): Path to directory on disk under which dataset data is stored,
-            i.e. ``/path/to/data_dir/oxford_text_archive``
+            i.e. ``/path/to/data_dir/oxford_text_archive`` .
 
     Attributes:
         min_date (str): Earliest date for which records are available, as an
