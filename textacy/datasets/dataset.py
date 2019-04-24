@@ -182,3 +182,54 @@ def _parse_date_range(date_range, min_date, max_date):
         )
         date_range = (date_range[0], max_date)
     return tuple(date_range)
+
+
+def validate_and_clip_range(req_range, full_range, type_=None):
+    """
+    Validate and clip range values, for use in filtering datasets.
+
+    Args:
+        req_range (list or tuple)
+        full_range (list or tuple)
+        type_: If specified, the type or types that each value in ``req_range``
+            must be instances of.
+
+    Returns:
+        tuple: Range for which null or too-small/large values have been
+        clipped to the min/max valid values.
+
+    Raises:
+        ValueError
+        TypeError
+    """
+    if not isinstance(req_range, (list, tuple)):
+        raise ValueError(
+            "range must be a list or tuple, not {}".format(type(req_range))
+        )
+    if len(req_range) != 2:
+        raise ValueError("range must have exactly two items: start and end")
+    if type_:
+        for val in req_range:
+            if val is not None and not isinstance(val, type_):
+                raise TypeError(
+                    "range value {} must be {}, not {}".format(val, type_, type(val))
+                )
+    if req_range[0] is None:
+        req_range = (full_range[0], req_range[1])
+    elif req_range[0] < full_range[0]:
+        logging.warning(
+            "start of  range %s < minimum valid value %s; clipping range ...",
+            req_range[0],
+            full_range[0],
+        )
+        req_range = (full_range[0], req_range[1])
+    if req_range[1] is None:
+        req_range = (req_range[0], full_range[1])
+    elif req_range[1] > full_range[1]:
+        logging.warning(
+            "end of range %s > maximum valid value %s; clipping range ...",
+            req_range[1],
+            full_range[1],
+        )
+        req_range = (req_range[0], full_range[1])
+    return tuple(req_range)
