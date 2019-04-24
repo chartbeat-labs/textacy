@@ -6,7 +6,7 @@ Supreme Court Decisions
 A collection of ~8.4k (almost all) decisions issued by the U.S. Supreme Court
 from November 1946 through June 2016 -- the "modern" era.
 
-Records include the following fields:
+Records include the following data:
 
     * ``text``: Full text of the Court's decision.
     * ``case_name``: Name of the court case, in all caps.
@@ -48,28 +48,28 @@ weight as recall. Still, given occasionally baffling inconsistencies in case
 naming, citation ids, and decision dates, a very small percentage of texts
 may be incorrectly matched to metadata. (Sorry.)
 """
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
+import itertools
 import logging
 import os
 
-import requests
-
 from .. import compat
-from .. import data_dir
-from .. import io
-from .base import Dataset
+from .. import data_dir as DATA_DIR
+from .. import io as tio
+from .dataset import Dataset, _download, _parse_date_range
 
 LOGGER = logging.getLogger(__name__)
 
 NAME = "supreme_court"
-DESCRIPTION = (
-    "Collection of ~8.4k decisions issued by the U.S. Supreme Court "
-    "between November 1946 and June 2016."
-)
-SITE_URL = "http://caselaw.findlaw.com/court/us-supreme-court"
+META = {
+    "site_url": "http://caselaw.findlaw.com/court/us-supreme-court",
+    "description": (
+        "Collection of ~8.4k decisions issued by the U.S. Supreme Court "
+        "between November 1946 and June 2016."
+    ),
+}
 DOWNLOAD_ROOT = "https://github.com/bdewilde/textacy-data/releases/download/"
-DATA_DIR = os.path.join(data_dir, NAME)
 
 
 class SupremeCourt(Dataset):
@@ -560,28 +560,26 @@ class SupremeCourt(Dataset):
     }
 
     def __init__(self, data_dir=DATA_DIR):
-        super(SupremeCourt, self).__init__(
-            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir
-        )
-        self.filestub = "supreme-court-py{py_version}.json.gz".format(
-            py_version=2 if compat.PY2 else 3
-        )
-        self._filename = os.path.join(data_dir, self.filestub)
+        super(SupremeCourt, self).__init__(NAME, meta=META)
+        self._data_dir = os.path.join(data_dir, NAME)
+        self._filename = "supreme-court-py{py_version}.json.gz".format(
+            py_version=2 if compat.PY2 else 3)
+        self._filepath = os.path.join(self._data_dir, self._filename)
 
     @property
-    def filename(self):
+    def filepath(self):
         """
         str: Full path on disk for SupremeCourt data as compressed json file.
             ``None`` if file is not found, e.g. has not yet been downloaded.
         """
-        if os.path.isfile(self._filename):
-            return self._filename
+        if os.path.isfile(self._filepath):
+            return self._filepath
         else:
             return None
 
     def download(self, force=False):
         """
-        Download the data as Python version-specific compressed json file and
+        Download the data as a Python version-specific compressed json file and
         save it to disk under the ``data_dir`` directory.
 
         Args:
@@ -589,185 +587,172 @@ class SupremeCourt(Dataset):
                 exists on disk under ``data_dir``.
         """
         release_tag = "supreme_court_py{py_version}_v{data_version}".format(
-            py_version=2 if compat.PY2 else 3, data_version=1.0
+            py_version=2 if compat.PY2 else 3,
+            data_version=1.0,
         )
-        url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self.filestub)
-        fname = self._filename
-        if os.path.isfile(fname) and force is False:
-            LOGGER.warning("File %s already exists; skipping download...", fname)
-            return
-        LOGGER.info("Downloading data from %s and writing it to %s", url, fname)
-        io.write_http_stream(
-            url, fname, mode="wb", encoding=None, make_dirs=True, chunk_size=1024
+        url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
+        filepath = _download(
+            url,
+            filename=self._filename,
+            dirpath=self._data_dir,
+            force=force,
         )
+
+    def __iter__(self):
+        if not os.path.isfile(self._filepath):
+            raise OSError(
+                "dataset file {} not found;\n"
+                "has the dataset been downloaded yet?".format(self._filepath)
+            )
+        mode = "rb" if compat.PY2 else "rt"  # TODO: check this
+        for record in tio.read_json(self._filepath, mode=mode, lines=True):
+            yield record
+
+    def _get_filters(
+        self,
+        opinion_author,
+        decision_direction,
+        issue_area,
+        date_range,
+        min_len,
+    ):
+        filters = []
+
+        def get_filter(filter_vals, vals_type, record_field, class_attr):
+            if filter_vals is not None:
+                if isinstance(filter_vals, vals_type):
+                    filter_vals = {filter_vals}
+                if not all(val in getattr(self, class_attr) for val in filter_vals):
+                    raise ValueError(
+                        "not all values in `{record_field}` are valid; "
+                        "see :attr:`SupremeCourt.{class_attr}`".format(
+                            record_field=record_field,
+                            class_attr=class_attr,
+                        )
+                    )
+                return lambda record: record.get(record_field) in filter_vals
+            else:
+                return None
+
+        if min_len is not None:
+            if min_len < 1:
+                raise ValueError("`min_len` must be at least 1")
+            filters.append(
+                lambda record: len(record.get("text", "")) >= min_len
+            )
+        if date_range is not None:
+            date_range = _parse_date_range(date_range, self.min_date, self.max_date)
+            filters.append(
+                lambda record: (
+                    record.get("decision_date")
+                    and date_range[0] <= record["decision_date"] < date_range[1]
+                )
+            )
+        candidate_filters = [
+            (opinion_author, int, "opinion_author", "opinion_author_codes"),
+            (decision_direction, compat.string_types, "decision_direction", "decision_directions"),
+            (issue_area, int, "issue_area", "issue_area_codes"),
+        ]
+        for candidate_filter in candidate_filters:
+            filter_ = get_filter(*candidate_filter)
+            if filter_:
+                filters.append(filter_)
+        return filters
+
+    def _filtered_iter(self, filters):
+        if filters:
+            for record in self:
+                if all(filter_(record) for filter_ in filters):
+                    yield record
+        else:
+            for record in self:
+                yield record
 
     def texts(
         self,
         opinion_author=None,
-        issue_area=None,
         decision_direction=None,
+        issue_area=None,
         date_range=None,
         min_len=None,
-        limit=-1,
+        limit=None,
     ):
         """
-        Iterate over cases (text-only) in this dataset, optionally filtering
-        by a variety of metadata and/or text length, in chronological order
-        (of decision date).
+        Iterate over decisions in this dataset, optionally filtering by a variety
+        of metadata and/or text length, and yield texts only,
+        in chronological order by decision date.
 
         Args:
-            opinion_author (int or Set[int]): Filter cases by the name(s) of the
-                majority opinion's author, coded as an integer whose mapping is
-                given in :attr:`opinion_author_codes <SupremeCourt.opinion_author_codes>`.
-            issue_area (int or Set[int]): Filter cases by the issue area of the
-                case's subject matter, coded as an integer whose mapping is
-                given in :attr:`issue_area_codes <SupremeCourt.issue_area_codes>`.
-            decision_direction (str or Set[str]): Filter cases by the ideological
+            opinion_author (int or Set[int]): Filter decisions by the name(s)
+                of the majority opinion's author, coded as an integer whose mapping
+                is given in :attr:`SupremeCourt.opinion_author_codes`.
+            decision_direction (str or Set[str]): Filter decisions by the ideological
                 direction of the majority's decision; see
-                :attr:`decision_directions <SupremeCourt.decision_directions>`.
-            date_range (List[str] or Tuple[str]): Filter cases by the date on
+                :attr:`SupremeCourt.decision_directions`.
+            issue_area (int or Set[int]): Filter decisions by the issue area
+                of the case's subject matter, coded as an integer whose mapping
+                is given in :attr:`SupremeCourt.issue_area_codes`.
+            date_range (List[str] or Tuple[str]): Filter decisions by the date on
                 which they were decided; both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
-                available for the corpus.
-            min_len (int): Filter cases by the length (number of characters)
+                available for the dataset.
+            min_len (int): Filter decisions by the length (number of characters)
                 of their text content.
-            limit (int): Yield no more than ``limit`` texts that match all
-                specified filters, in chronological order.
+            limit (int): Yield no more than ``limit`` decisions that match all
+                specified filters.
 
         Yields:
-            str: Full text of next (by chronological order) case in dataset
-            passing all filter params.
+            str: Text of the next decision in dataset passing all filters.
 
         Raises:
             ValueError: If any filtering options are invalid.
         """
-        texts = self._iterate(
-            True,
-            opinion_author=opinion_author,
-            issue_area=issue_area,
-            decision_direction=decision_direction,
-            date_range=date_range,
-            min_len=min_len,
-            limit=limit,
-        )
-        for text in texts:
-            yield text
+        filters = self._get_filters(
+            opinion_author, decision_direction, issue_area, date_range, min_len)
+        for record in itertools.islice(self._filtered_iter(filters), limit):
+            yield record["text"]
 
     def records(
         self,
         opinion_author=None,
-        issue_area=None,
         decision_direction=None,
+        issue_area=None,
         date_range=None,
         min_len=None,
-        limit=-1,
+        limit=None,
     ):
         """
-        Iterate over cases (including text and metadata) in this dataset,
-        optionally filtering by a variety of metadata and/or text length,
-        in chronological order (of decision date).
+        Iterate over decisions in this dataset, optionally filtering by a variety
+        of metadata and/or text length, and yield text + metadata pairs,
+        in chronological order by decision date.
 
         Args:
-            opinion_author (int or Set[int]): Filter cases by the name(s) of the
-                majority opinion's author, coded as an integer whose mapping is
-                given in :attr:`opinion_author_codes <SupremeCourt.opinion_author_codes>`.
-            issue_area (int or Set[int]): Filter cases by the issue area of the
-                case's subject matter, coded as an integer whose mapping is
-                given in :attr:`issue_area_codes <SupremeCourt.issue_area_codes>`.
-            decision_direction (str or Set[str]): Filter cases by the ideological
+            opinion_author (int or Set[int]): Filter decisions by the name(s)
+                of the majority opinion's author, coded as an integer whose mapping
+                is given in :attr:`SupremeCourt.opinion_author_codes`.
+            decision_direction (str or Set[str]): Filter decisions by the ideological
                 direction of the majority's decision; see
-                :attr:`decision_directions <SupremeCourt.decision_directions>`.
-            date_range (List[str] or Tuple[str]): Filter cases by the date on
+                :attr:`SupremeCourt.decision_directions`.
+            issue_area (int or Set[int]): Filter decisions by the issue area
+                of the case's subject matter, coded as an integer whose mapping
+                is given in :attr:`SupremeCourt.issue_area_codes`.
+            date_range (List[str] or Tuple[str]): Filter decisions by the date on
                 which they were decided; both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
-                available for the corpus.
-            min_len (int): Filter cases by the length (number of characters)
+                available for the dataset.
+            min_len (int): Filter decisions by the length (number of characters)
                 of their text content.
-            limit (int): Yield no more than ``limit`` texts that match all
-                specified filters, in chronological order.
+            limit (int): Yield no more than ``limit`` decisions that match all
+                specified filters.
 
         Yields:
-            dict: Full text and metadata of next (by chronological order) case
-            in dataset passing all filter params.
+            str: Text of the next decision in dataset passing all filters.
+            dict: Metadata of the next decision in dataset passing all filters.
 
         Raises:
             ValueError: If any filtering options are invalid.
         """
-        records = self._iterate(
-            False,
-            opinion_author=opinion_author,
-            issue_area=issue_area,
-            decision_direction=decision_direction,
-            date_range=date_range,
-            min_len=min_len,
-            limit=limit,
-        )
-        for record in records:
-            yield record
-
-    def _iterate(
-        self,
-        text_only,
-        opinion_author=None,
-        decision_direction=None,
-        issue_area=None,
-        date_range=None,
-        min_len=None,
-        limit=-1,
-    ):
-        """
-        Low-level method to iterate over the records in this dataset. Used by
-        :meth:`SupremeCourt.texts()` and :meth:`SupremeCourt.records()`.
-        """
-        if not self.filename:
-            raise IOError("{} file not found".format(self._filename))
-
-        if opinion_author:
-            if isinstance(opinion_author, int):
-                opinion_author = {opinion_author}
-            if not all(oa in self.opinion_author_codes for oa in opinion_author):
-                msg = "invalid `opinion_author` value; see `SupremeCourt.opinion_author_codes`"
-                raise ValueError(msg)
-        if issue_area:
-            if isinstance(issue_area, int):
-                issue_area = {issue_area}
-            if not all(ii in self.issue_area_codes for ii in issue_area):
-                msg = "invalid `issue_area` value; see `SupremeCourt.issue_area_codes`"
-                raise ValueError(msg)
-        if decision_direction:
-            if isinstance(decision_direction, compat.string_types):
-                decision_direction = {decision_direction}
-            if not all(dd in self.decision_directions for dd in decision_direction):
-                msg = "invalid `decision_direction` value; see `SupremeCourt.decision_directions`"
-                raise ValueError(msg)
-        if date_range:
-            date_range = self._parse_date_range(date_range)
-
-        n = 0
-        mode = "rb" if compat.PY2 else "rt"
-        for line in io.read_json(self.filename, mode=mode, lines=True):
-            if opinion_author and line["maj_opinion_author"] not in opinion_author:
-                continue
-            if issue_area and line["issue_area"] not in issue_area:
-                continue
-            if (
-                decision_direction
-                and line["decision_direction"] not in decision_direction
-            ):
-                continue
-            if (
-                date_range
-                and not date_range[0] <= line["decision_date"] <= date_range[1]
-            ):
-                continue
-            if min_len and len(line["text"]) < min_len:
-                continue
-
-            if text_only is True:
-                yield line["text"]
-            else:
-                yield line
-
-            n += 1
-            if n == limit:
-                break
+        filters = self._get_filters(
+            opinion_author, decision_direction, issue_area, date_range, min_len)
+        for record in itertools.islice(self._filtered_iter(filters), limit):
+            yield record.pop("text"), record
