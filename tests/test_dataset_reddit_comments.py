@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import os
 
 import pytest
@@ -92,5 +93,10 @@ def test_bad_filters():
     for bad_filter in bad_filters:
         with pytest.raises(ValueError):
             list(DATASET.texts(**bad_filter))
-    with pytest.raises(TypeError):
-        list(DATASET.texts(score_range=["low", "high"]))
+    bad_filters = (
+        {"score_range": ["low", "high"]},
+        {"date_range": (datetime.date(2007, 10, 1), datetime.date(2007, 11, 1))},
+    )
+    for bad_filter in bad_filters:
+        with pytest.raises(TypeError):
+            list(DATASET.texts(**bad_filter))

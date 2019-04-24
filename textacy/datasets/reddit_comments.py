@@ -146,7 +146,11 @@ class RedditComments(Dataset):
             force (bool): If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
-        date_range = validate_and_clip_range(date_range, (self.min_date, self.max_date))
+        date_range = validate_and_clip_range(
+            date_range,
+            (self.min_date, self.max_date),
+            type_=compat.string_types,
+        )
         filestubs = self._generate_filestubs(date_range)
         for filestub in filestubs:
             filepath = _download(
@@ -226,7 +230,10 @@ class RedditComments(Dataset):
             )
         if date_range is not None:
             date_range = validate_and_clip_range(
-                date_range, (self.min_date, self.max_date))
+                date_range,
+                (self.min_date, self.max_date),
+                type_=compat.string_types,
+            )
             filters.append(
                 lambda record: (
                     record.get("created_utc")
@@ -235,7 +242,10 @@ class RedditComments(Dataset):
             )
         if score_range is not None:
             score_range = validate_and_clip_range(
-                score_range, (self._min_score, self._max_score))
+                score_range,
+                (self._min_score, self._max_score),
+                type_=(int, float),
+            )
             filters.append(
                 lambda record: (
                     record.get("score")

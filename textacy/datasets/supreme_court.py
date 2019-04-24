@@ -57,7 +57,7 @@ import os
 from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
-from .dataset import Dataset, _download, _parse_date_range
+from .dataset import Dataset, _download, validate_and_clip_range
 
 LOGGER = logging.getLogger(__name__)
 
@@ -636,7 +636,11 @@ class SupremeCourt(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if date_range is not None:
-            date_range = _parse_date_range(date_range, self.min_date, self.max_date)
+            date_range = validate_and_clip_range(
+                date_range,
+                (self.min_date, self.max_date),
+                type_=compat.string_types,
+            )
             filters.append(
                 lambda record: (
                     record.get("decision_date")

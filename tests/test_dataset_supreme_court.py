@@ -1,5 +1,6 @@
 from __future__ import absolute_import, unicode_literals
 
+import datetime
 import os
 
 import pytest
@@ -103,7 +104,14 @@ def test_bad_filters():
         {"issue_area": "legalizing gay marriage, woo!"},
         {"issue_area": 1000},
         {"date_range": "2016-01-01"},
+        {"min_len": -1},
     )
     for bad_filter in bad_filters:
         with pytest.raises(ValueError):
+            list(DATASET.texts(**bad_filter))
+    bad_filters = (
+        {"date_range": (datetime.date(2000, 1, 1), datetime.date(2001, 1, 1))},
+    )
+    for bad_filter in bad_filters:
+        with pytest.raises(TypeError):
             list(DATASET.texts(**bad_filter))
