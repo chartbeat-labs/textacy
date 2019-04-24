@@ -10,7 +10,7 @@ from textacy.datasets.supreme_court import SupremeCourt
 DATASET = SupremeCourt()
 
 pytestmark = pytest.mark.skipif(
-    DATASET.filename is None,
+    DATASET.filepath is None,
     reason="SupremeCourt dataset must be downloaded before running tests",
 )
 
@@ -19,12 +19,12 @@ pytestmark = pytest.mark.skipif(
 def test_download(tmpdir):
     dataset = SupremeCourt(data_dir=str(tmpdir))
     dataset.download()
-    assert os.path.exists(dataset.filename)
+    assert os.path.exists(dataset._filepath)
 
 
-def test_ioerror(tmpdir):
+def test_oserror(tmpdir):
     dataset = SupremeCourt(data_dir=str(tmpdir))
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         _ = list(dataset.texts())
 
 
@@ -39,23 +39,24 @@ def test_texts_limit():
 
 
 def test_texts_min_len():
-    for min_len in (100, 200, 500):
+    for min_len in (100, 200, 1000):
         assert all(
             len(text) >= min_len for text in DATASET.texts(min_len=min_len, limit=10)
         )
 
 
 def test_records():
-    for record in DATASET.records(limit=3):
-        assert isinstance(record, dict)
+    for text, meta in DATASET.records(limit=3):
+        assert isinstance(text, compat.unicode_)
+        assert isinstance(meta, dict)
 
 
 def test_records_opinion_author():
     opinion_authors = ({78}, {78, 81})
     for opinion_author in opinion_authors:
         assert all(
-            r["maj_opinion_author"] in opinion_author
-            for r in DATASET.records(opinion_author=opinion_author, limit=10)
+            meta["maj_opinion_author"] in opinion_author
+            for text, meta in DATASET.records(opinion_author=opinion_author, limit=10)
         )
 
 
@@ -63,8 +64,8 @@ def test_records_decision_direction():
     decision_directions = ("liberal", {"conservative", "unspecifiable"})
     for decision_direction in decision_directions:
         assert all(
-            r["decision_direction"] in decision_direction
-            for r in DATASET.records(decision_direction=decision_direction, limit=10)
+            meta["decision_direction"] in decision_direction
+            for text, meta in DATASET.records(decision_direction=decision_direction, limit=10)
         )
 
 
@@ -72,8 +73,8 @@ def test_records_issue_area():
     issue_areas = ({2}, {4, 5, 6})
     for issue_area in issue_areas:
         assert all(
-            r["issue_area"] in issue_area
-            for r in DATASET.records(issue_area=issue_area, limit=10)
+            meta["issue_area"] in issue_area
+            for text, meta in DATASET.records(issue_area=issue_area, limit=10)
         )
 
 
@@ -81,8 +82,8 @@ def test_records_date_range():
     date_ranges = (["1970-01-01", "1971-01-01"], ("1971-07-01", "1971-12-31"))
     for date_range in date_ranges:
         assert all(
-            date_range[0] <= r["decision_date"] < date_range[1]
-            for r in DATASET.records(date_range=date_range, limit=10)
+            date_range[0] <= meta["decision_date"] < date_range[1]
+            for text, meta in DATASET.records(date_range=date_range, limit=10)
         )
 
 
