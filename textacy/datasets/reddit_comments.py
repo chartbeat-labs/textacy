@@ -19,68 +19,72 @@ The raw data was originally collected by /u/Stuck_In_the_Matrix via Reddit's
 APIS, and stored for posterity by the `Internet Archive <https://archive.org>`_.
 For more details, refer to https://archive.org/details/2015_reddit_comments_corpus.
 """
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
+import itertools
 import logging
 import os
 import re
 from datetime import datetime
 
-import requests
-
 from .. import compat
-from .. import data_dir
-from .. import io
+from .. import data_dir as DATA_DIR
+from .. import io as tio
 from .. import preprocess
-from .base import Dataset
+from .dataset import Dataset, _download, validate_and_clip_range
 
 LOGGER = logging.getLogger(__name__)
 
 NAME = "reddit_comments"
-DESCRIPTION = (
-    "Collection of ~1.5 billion publicly available Reddit comments "
-    "from October 2007 through May 2015."
-)
-SITE_URL = "https://archive.org/details/2015_reddit_comments_corpus"
-DATA_DIR = os.path.join(data_dir, NAME)
-
+META = {
+    "site_url": "https://archive.org/details/2015_reddit_comments_corpus",
+    "description": (
+        "Collection of ~1.5 billion publicly available Reddit comments "
+        "from October 2007 through May 2015."
+    ),
+}
 DOWNLOAD_ROOT = "https://archive.org/download/2015_reddit_comments_corpus/reddit_data/"
-MIN_SCORE = -2147483647
-MAX_SCORE = 2147483647
 
 REDDIT_LINK_RE = re.compile(r"\[([^]]+)\]\(https?://[^\)]+\)")
 
 
 class RedditComments(Dataset):
     """
-    Stream Reddit comments from 1 or more compressed files on disk, either
-    as texts (str) or records (dict) with both text content and metadata.
+    Stream a collection of Reddit comments from 1 or more compressed files on disk,
+    either as texts or text + metadata pairs.
 
-    Download 1 or more files, optionally within a given date range::
+    Download the data (one time only!) or subsets thereof by specifying a date range::
 
         >>> rc = RedditComments()
-        >>> rc.download(date_range=('2007-10', '2008-01'))
+        >>> rc.download(date_range=("2007-10", "2008-03"))
         >>> rc.info
-        {'data_dir': 'path/to/textacy/data/reddit_comments',
-         'description': 'An archive of ~1.5 billion publicly available Reddit comments from October 2007 through May 2015.',
-         'name': 'reddit_comments',
-         'site_url': 'https://archive.org/details/2015_reddit_comments_corpus'}
+        {'name': 'reddit_comments',
+         'site_url': 'https://archive.org/details/2015_reddit_comments_corpus',
+         'description': 'Collection of ~1.5 billion publicly available Reddit comments from October 2007 through May 2015.'}
 
-    Iterate over comments as plain texts or records with both text and metadata::
+    Iterate over comments as texts or records with both text and metadata::
 
         >>> for text in rc.texts(limit=5):
         ...     print(text)
-        >>> for record in rc.records(limit=5):
-        ...     print(record['body'], record['author'], record['created_utc'])
+        >>> for text, meta in rc.records(limit=5):
+        ...     print("\n{} {}\n{}".format(meta["author"], meta["created_utc"], text))
 
     Filter comments by a variety of metadata fields and text length::
 
-        >>> for record in rc.records(subreddit='politics', limit=5):
-        ...     print(record['body'], record['score'])
-        >>> for record in rc.records(date_range=('2015-01-01', '2015-01-02'), limit=5):
-        ...     print(record['created_utc'])
-        >>> for record in rc.records(min_len=1000, limit=1):
-        ...     print(record['body'], len(record['body']))
+        >>> for text, meta in rc.records(subreddit="politics", limit=5):
+        ...     print(meta["score"], ":", text)
+        >>> for text, meta in rc.records(date_range=("2008-01", "2008-03"), limit=5):
+        ...     print(meta["created_utc"])
+        >>> for text, meta in rc.records(score_range=(10, None), limit=5):
+        ...     print(meta["score"], ":", text)
+        >>> for text in rc.texts(min_len=2000, limit=5):
+        ...     print(len(text))
+
+    Stream comments into a :class:`textacy.Corpus`::
+
+        >>> texts, metas = textacy.io.unzip(rc.records(limit=1000))
+        >>> textacy.Corpus("en", texts=texts, metadatas=metas)
+        Corpus(1000 docs; 27582 tokens)
 
     Args:
         data_dir (str): Path to directory on disk under which the data is stored.
@@ -99,32 +103,38 @@ class RedditComments(Dataset):
 
     min_date = "2007-10-01"
     max_date = "2015-06-01"
+    _min_score = -2147483647
+    _max_score = 2147483647
 
     def __init__(self, data_dir=DATA_DIR):
-        super(RedditComments, self).__init__(
-            name=NAME, description=DESCRIPTION, site_url=SITE_URL, data_dir=data_dir
-        )
+        super(RedditComments, self).__init__(NAME, meta=META)
+        self._data_dir = os.path.join(data_dir, NAME)
+        self._date_range = None
 
     @property
-    def filenames(self):
+    def filepaths(self):
         """
         Tuple[str]: Full paths on disk for all Reddit comments files found under
-            the ``data_dir`` directory, sorted chronologically.
+        the ``data_dir`` directory, sorted chronologically.
         """
-        if os.path.exists(self.data_dir):
+        if os.path.isdir(self._data_dir):
             return tuple(
                 sorted(
-                    io.get_filenames(self.data_dir, extension=".bz2", recursive=True)
+                    tio.get_filenames(
+                        self._data_dir,
+                        match_regex=r"RC_\d{4}",
+                        extension=".bz2",
+                        recursive=True,
+                    )
                 )
             )
         else:
-            LOGGER.warning("%s data directory does not exist", self.data_dir)
             return tuple()
 
     def download(self, date_range=(None, None), force=False):
         """
         Download 1 or more monthly Reddit comments files from archive.org
-        and save them to disk under the ``data_dir`` used to instantiate.
+        and save them to disk under the ``data_dir`` directory.
 
         Args:
             date_range (Tuple[str]): Interval specifying the [start, end) dates
@@ -136,60 +146,115 @@ class RedditComments(Dataset):
             force (bool): If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
-        date_range = self._parse_date_range(date_range)
-        fstubs = self._generate_filestubs(date_range)
-        for fstub in fstubs:
-            url = compat.urljoin(DOWNLOAD_ROOT, fstub)
-            filename = os.path.join(self.data_dir, fstub)
-            if os.path.isfile(filename) and force is False:
-                LOGGER.warning("File %s already exists; skipping download...", filename)
-                continue
-            LOGGER.info("Downloading data from %s and writing it to %s", url, filename)
-            io.write_http_stream(
-                url, filename, mode="wb", encoding=None, make_dirs=True, chunk_size=1024
+        date_range = validate_and_clip_range(date_range, (self.min_date, self.max_date))
+        filestubs = self._generate_filestubs(date_range)
+        for filestub in filestubs:
+            filepath = _download(
+                compat.urljoin(DOWNLOAD_ROOT, filestub),
+                filename=filestub,
+                dirpath=self._data_dir,
+                force=force,
             )
-
-    def _parse_score_range(self, score_range):
-        """Flexibly parse score range args."""
-        if not isinstance(score_range, (list, tuple)):
-            raise ValueError(
-                "`score_range` must be a list or tuple, not {}".format(
-                    type(score_range)
-                )
-            )
-        if len(score_range) != 2:
-            raise ValueError("`score_range` must have exactly two items: min and max")
-        if not score_range[0]:
-            score_range = (MIN_SCORE, score_range[1])
-        if not score_range[1]:
-            score_range = (score_range[0], MAX_SCORE)
-        return tuple(score_range)
 
     def _generate_filestubs(self, date_range):
         """
-        Generate a list of monthly filenames in the interval [start, end),
+        Generate a list of monthly filepath stubs in the interval [start, end),
         each with format "YYYY/RC_YYYY-MM.bz2".
         """
         fstubs = []
-        yrmo, end = date_range
-        while yrmo < end:
-            # parse current yrmo
-            try:
-                dt = datetime.strptime(yrmo, "%Y-%m")
-            except ValueError:
-                dt = datetime.strptime(yrmo, "%Y-%m-%d")
-            fstubs.append(dt.strftime("%Y/RC_%Y-%m.bz2"))
-            # dead simple iteration to next yrmo
-            next_yr = dt.year
-            next_mo = dt.month + 1
-            if next_mo > 12:
-                next_yr += 1
-                next_mo = 1
-            yrmo = datetime(next_yr, next_mo, 1).strftime("%Y-%m")
+        start = self._parse_date(date_range[0])
+        end = self._parse_date(date_range[1])
+        for tot_mo in compat.range_(self._total_mos(start) - 1, self._total_mos(end) - 1):
+            yr, mo = divmod(tot_mo, 12)
+            fstubs.append(datetime(yr, mo + 1, 1).strftime("%Y/RC_%Y-%m.bz2"))
         return tuple(fstubs)
 
+    def _parse_date(self, dt):
+        """dt (str) => datetime"""
+        try:
+            return datetime.strptime(dt, "%Y-%m")
+        except ValueError:
+            return datetime.strptime(dt, "%Y-%m-%d")
+
+    def _total_mos(self, dt):
+        """dt (datetime) => int"""
+        return dt.month + 12 * dt.year
+
+    def __iter__(self):
+        # for performance reasons, only iterate over files that are requested
+        if self._date_range is not None:
+            filepaths = [
+                os.path.join(self._data_dir, filestub)
+                for filestub in self._generate_filestubs(self._date_range)
+            ]
+            for filepath in filepaths:
+                if not os.path.isfile(filepath):
+                    raise OSError(
+                        "requested comments file {} not found;\n"
+                        "has the dataset been downloaded yet?".format(filepath)
+                    )
+        else:
+            filepaths = self.filepaths
+            if not filepaths:
+                raise OSError(
+                    "no comments files found in {} directory;\n"
+                    "has the dataset been downloaded yet?".format(self._data_dir)
+                )
+
+        for filepath in filepaths:
+            for line in tio.read_json(filepath, mode="rb", lines=True):
+                line["created_utc"] = self._convert_timestamp(
+                    line.get("created_utc", ""))
+                line["retrieved_on"] = self._convert_timestamp(
+                    line.get("retrieved_on", ""))
+                line["body"] = self._clean_content(line["body"])
+                yield line
+
+    def _get_filters(self, subreddit, date_range, score_range, min_len):
+        filters = []
+        if min_len is not None:
+            if min_len < 1:
+                raise ValueError("`min_len` must be at least 1")
+            filters.append(
+                lambda record: len(record.get("body", "")) >= min_len
+            )
+        if subreddit is not None:
+            if isinstance(subreddit, compat.string_types):
+                subreddit = {subreddit}
+            filters.append(
+                lambda record: record.get("subreddit", "") in subreddit
+            )
+        if date_range is not None:
+            date_range = validate_and_clip_range(
+                date_range, (self.min_date, self.max_date))
+            filters.append(
+                lambda record: (
+                    record.get("created_utc")
+                    and date_range[0] <= record["created_utc"] < date_range[1]
+                )
+            )
+        if score_range is not None:
+            score_range = validate_and_clip_range(
+                score_range, (self._min_score, self._max_score))
+            filters.append(
+                lambda record: (
+                    record.get("score")
+                    and score_range[0] <= record["score"] < score_range[1]
+                )
+            )
+        return filters
+
+    def _filtered_iter(self, filters):
+        if filters:
+            for record in self:
+                if all(filter_(record) for filter_ in filters):
+                    yield record
+        else:
+            for record in self:
+                yield record
+
     def texts(
-        self, subreddit=None, date_range=None, score_range=None, min_len=0, limit=-1
+        self, subreddit=None, date_range=None, score_range=None, min_len=None, limit=None
     ):
         """
         Iterate over comments (text-only) in 1 or more files of this dataset,
@@ -213,25 +278,22 @@ class RedditComments(Dataset):
             min_len (int): Filter comments for those whose body length in chars
                 is at least this long.
             limit (int): Maximum number of comments passing all filters to yield.
-                If -1, all comments are iterated over.
+                If None, all comments are iterated over.
 
         Yields:
             str: Plain text of next (by chronological order) comment in dataset
             passing all filter params.
         """
-        texts = self._iterate(
-            True,
-            subreddit=subreddit,
-            date_range=date_range,
-            score_range=score_range,
-            min_len=min_len,
-            limit=limit,
-        )
-        for text in texts:
-            yield text
+        self._date_range = date_range  # used to limit files iterated
+        try:
+            filters = self._get_filters(subreddit, date_range, score_range, min_len)
+            for record in itertools.islice(self._filtered_iter(filters), limit):
+                yield record["body"]
+        finally:
+            self._date_range = None
 
     def records(
-        self, subreddit=None, date_range=None, score_range=None, min_len=0, limit=-1
+        self, subreddit=None, date_range=None, score_range=None, min_len=None, limit=None
     ):
         """
         Iterate over comments (including text and metadata) in 1 or more files
@@ -255,88 +317,19 @@ class RedditComments(Dataset):
             min_len (int): Filter comments for those whose body length in chars
                 is at least this long.
             limit (int): Maximum number of comments passing all filters to yield.
-                If -1, all comments are iterated over.
+                If None, all comments are iterated over.
 
         Yields:
             dict: Full text and metadata of next (by chronological order) comment
             in dataset passing all filter params.
         """
-        records = self._iterate(
-            False,
-            subreddit=subreddit,
-            date_range=date_range,
-            score_range=score_range,
-            min_len=min_len,
-            limit=limit,
-        )
-        for record in records:
-            yield record
-
-    def _iterate(self, text_only, subreddit, date_range, score_range, min_len, limit):
-        """
-        Low-level method to iterate over the records in this dataset. Used by
-        :meth:`RedditComments.texts()` and :meth:`RedditComments.records()`.
-        """
-        if subreddit:
-            if isinstance(subreddit, compat.string_types):
-                subreddit = {subreddit}
-            elif isinstance(subreddit, (list, tuple)):
-                subreddit = set(subreddit)
-        if score_range:
-            score_range = self._parse_score_range(score_range)
-        if date_range:
-            date_range = self._parse_date_range(date_range)
-            needed_filenames = {
-                os.path.join(self.data_dir, fstub)
-                for fstub in self._generate_filestubs(date_range)
-            }
-            filenames = tuple(
-                fname for fname in self.filenames if fname in needed_filenames
-            )
-        else:
-            filenames = self.filenames
-
-        if not filenames:
-            raise IOError(
-                "No files found at {} corresponding to date range {}".format(
-                    self.data_dir, date_range
-                )
-            )
-
-        n = 0
-        for filename in filenames:
-            for line in io.read_json(filename, mode="rb", lines=True):
-
-                if subreddit and line["subreddit"] not in subreddit:
-                    continue
-                if score_range and not score_range[0] <= line["score"] < score_range[1]:
-                    continue
-                line["created_utc"] = self._convert_timestamp(
-                    line.get("created_utc", "")
-                )
-                if (
-                    date_range
-                    and not date_range[0] <= line["created_utc"] < date_range[1]
-                ):
-                    continue
-                line["body"] = self._clean_content(line["body"])
-                if min_len and len(line["body"]) < min_len:
-                    continue
-
-                if text_only is True:
-                    yield line["body"]
-                else:
-                    line["retrieved_on"] = self._convert_timestamp(
-                        line.get("retrieved_on", "")
-                    )
-                    yield line
-
-                n += 1
-                if n == limit:
-                    break
-
-            if n == limit:
-                break
+        self._date_range = date_range  # used to limit files iterated
+        try:
+            filters = self._get_filters(subreddit, date_range, score_range, min_len)
+            for record in itertools.islice(self._filtered_iter(filters), limit):
+                yield record.pop("body"), record
+        finally:
+            self._date_range = None
 
     def _convert_timestamp(self, timestamp):
         try:
