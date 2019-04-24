@@ -57,7 +57,8 @@ import os
 from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
-from .dataset import Dataset, _download, validate_and_clip_range
+from .dataset import Dataset
+from .utils import download_file, validate_and_clip_range
 
 LOGGER = logging.getLogger(__name__)
 
@@ -586,7 +587,7 @@ class SupremeCourt(Dataset):
             data_version=1.0,
         )
         url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
-        filepath = _download(
+        filepath = download_file(
             url,
             filename=self._filename,
             dirpath=self._data_dir,

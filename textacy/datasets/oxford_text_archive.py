@@ -31,7 +31,8 @@ import re
 from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
-from .dataset import Dataset, _download, validate_and_clip_range, _unpack_archive
+from .dataset import Dataset
+from .utils import download_file, validate_and_clip_range, unpack_archive
 
 LOGGER = logging.getLogger(__name__)
 
@@ -116,7 +117,7 @@ class OxfordTextArchive(Dataset):
             force (bool): If True, always download the dataset even if
                 it already exists.
         """
-        filepath = _download(
+        filepath = download_file(
             DOWNLOAD_URL,
             filename=None,
             dirpath=self._data_dir,

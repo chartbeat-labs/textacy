@@ -6,11 +6,10 @@ import os
 import pytest
 
 from textacy import compat
-from textacy.datasets.dataset import (
-    Dataset,
+from textacy.datasets.utils import (
     validate_and_clip_range,
-    _download,
-    _get_filename_from_url,
+    download_file,
+    get_filename_from_url,
 )
 
 
@@ -68,4 +67,4 @@ def test_get_filename_from_url():
         ["http%3A%2F%2Fwww.foo.bar%2Fbat.tar.gz", "bat.tar.gz"]
     ]
     for url, fname in url_fnames:
-        assert _get_filename_from_url(url) == fname
+        assert get_filename_from_url(url) == fname

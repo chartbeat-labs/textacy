@@ -31,7 +31,8 @@ from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
 from .. import preprocess
-from .dataset import Dataset, _download, validate_and_clip_range
+from .dataset import Dataset
+from .utils import download_file, validate_and_clip_range
 
 LOGGER = logging.getLogger(__name__)
 
@@ -153,7 +154,7 @@ class RedditComments(Dataset):
         )
         filestubs = self._generate_filestubs(date_range)
         for filestub in filestubs:
-            filepath = _download(
+            filepath = download_file(
                 compat.urljoin(DOWNLOAD_ROOT, filestub),
                 filename=filestub,
                 dirpath=self._data_dir,
