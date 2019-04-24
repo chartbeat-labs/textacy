@@ -87,13 +87,13 @@ def test_records_date_range():
 def test_bad_filters():
     bad_filters = (
         {"author": "Burton DeWilde"},
-        {"date_range": "2016-01-01"},
         {"min_len": -1},
     )
     for bad_filter in bad_filters:
         with pytest.raises(ValueError):
             list(DATASET.texts(**bad_filter))
     bad_filters = (
+        {"date_range": "2016-01-01"},
         {"date_range": (datetime.date(1800, 1, 1), datetime.date(1900, 1, 1))},
     )
     for bad_filter in bad_filters:

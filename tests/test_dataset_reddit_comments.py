@@ -86,16 +86,16 @@ def test_records_score_range():
 
 def test_bad_filters():
     bad_filters = (
-        {"date_range": "2016-01-01"},
-        {"score_range": 10},
         {"min_len": -1},
     )
     for bad_filter in bad_filters:
         with pytest.raises(ValueError):
             list(DATASET.texts(**bad_filter))
     bad_filters = (
-        {"score_range": ["low", "high"]},
+        {"date_range": "2016-01-01"},
         {"date_range": (datetime.date(2007, 10, 1), datetime.date(2007, 11, 1))},
+        {"score_range": 10},
+        {"score_range": ["low", "high"]},
     )
     for bad_filter in bad_filters:
         with pytest.raises(TypeError):

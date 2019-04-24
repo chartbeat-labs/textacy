@@ -216,7 +216,7 @@ class CapitolWords(Dataset):
             date_range = validate_and_clip_range(
                 date_range,
                 (self.min_date, self.max_date),
-                type_=compat.string_types,
+                val_type=compat.string_types,
             )
             filters.append(
                 lambda record: record.get("date") and date_range[0] <= record["date"] < date_range[1]

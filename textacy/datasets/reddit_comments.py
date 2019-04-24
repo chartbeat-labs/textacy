@@ -149,7 +149,7 @@ class RedditComments(Dataset):
         date_range = validate_and_clip_range(
             date_range,
             (self.min_date, self.max_date),
-            type_=compat.string_types,
+            val_type=compat.string_types,
         )
         filestubs = self._generate_filestubs(date_range)
         for filestub in filestubs:
@@ -232,7 +232,7 @@ class RedditComments(Dataset):
             date_range = validate_and_clip_range(
                 date_range,
                 (self.min_date, self.max_date),
-                type_=compat.string_types,
+                val_type=compat.string_types,
             )
             filters.append(
                 lambda record: (
@@ -244,7 +244,7 @@ class RedditComments(Dataset):
             score_range = validate_and_clip_range(
                 score_range,
                 (self._min_score, self._max_score),
-                type_=(int, float),
+                val_type=(int, float),
             )
             filters.append(
                 lambda record: (
