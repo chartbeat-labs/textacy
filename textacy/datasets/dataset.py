@@ -151,14 +151,14 @@ def _unpack_archive(filepath, extract_dir=None):
             return os.path.join(extract_dir, src_basename)
 
 
-def validate_and_clip_range(req_range, full_range, type_=None):
+def validate_and_clip_range(req_range, full_range, val_type=None):
     """
     Validate and clip range values, for use in filtering datasets.
 
     Args:
         req_range (list or tuple)
         full_range (list or tuple)
-        type_: If specified, the type or types that each value in ``req_range``
+        val_type: If specified, the type or types that each value in ``req_range``
             must be instances of.
 
     Returns:
@@ -166,21 +166,25 @@ def validate_and_clip_range(req_range, full_range, type_=None):
         clipped to the min/max valid values.
 
     Raises:
-        ValueError
         TypeError
+        ValueError
     """
-    if not isinstance(req_range, (list, tuple)):
-        raise ValueError(
-            "range must be a list or tuple, not {}".format(type(req_range))
-        )
-    if len(req_range) != 2:
-        raise ValueError("range must have exactly two items: start and end")
-    if type_:
-        for val in req_range:
-            if val is not None and not isinstance(val, type_):
-                raise TypeError(
-                    "range value {} must be {}, not {}".format(val, type_, type(val))
-                )
+    for range_ in (req_range, full_range):
+        if not isinstance(range_, (list, tuple)):
+            raise TypeError(
+                "range must be a list or tuple, not {}".format(type(range_))
+            )
+        if len(range_) != 2:
+            raise ValueError("range must have exactly two items: start and end")
+    if val_type:
+        for range_ in (req_range, full_range):
+            for val in range_:
+                if val is not None and not isinstance(val, val_type):
+                    raise TypeError(
+                        "range value {} must be {}, not {}".format(
+                            val, val_type, type(val)
+                        )
+                    )
     if req_range[0] is None:
         req_range = (full_range[0], req_range[1])
     elif req_range[0] < full_range[0]:
