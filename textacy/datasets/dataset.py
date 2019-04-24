@@ -151,39 +151,6 @@ def _unpack_archive(filepath, extract_dir=None):
             return os.path.join(extract_dir, src_basename)
 
 
-def _parse_date_range(date_range, min_date, max_date):
-    """
-    Flexibly parse date range args, where ``date_range`` is length-2 list or
-    tuple for which null values will be automatically set equal to the min
-    or max valid dates.
-    """
-    if not isinstance(date_range, (list, tuple)):
-        raise ValueError(
-            "`date_range` must be a list or tuple, not {}".format(type(date_range))
-        )
-    if len(date_range) != 2:
-        raise ValueError("`date_range` must have exactly two items: start and end")
-    if not date_range[0]:
-        date_range = (min_date, date_range[1])
-    elif date_range[0] < min_date:
-        logging.warning(
-            "start of date_range %s < minimum valid date %s; clipping range ...",
-            date_range[0],
-            min_date,
-        )
-        date_range = (min_date, date_range[1])
-    if not date_range[1]:
-        date_range = (date_range[0], max_date)
-    elif date_range[1] > max_date:
-        logging.warning(
-            "end of date_range %s > maximum valid date %s; clipping range ...",
-            date_range[1],
-            max_date,
-        )
-        date_range = (date_range[0], max_date)
-    return tuple(date_range)
-
-
 def validate_and_clip_range(req_range, full_range, type_=None):
     """
     Validate and clip range values, for use in filtering datasets.
