@@ -88,7 +88,7 @@ def _get_filename_from_url(url):
     Returns:
         str: Filename in URL.
     """
-    return os.path.basename(compat.urlparse(url).path)
+    return os.path.basename(compat.urlparse(compat.url_unquote_plus(url)).path)
 
 
 def _unpack_archive(filepath, extract_dir=None):
