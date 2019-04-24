@@ -54,36 +54,44 @@ def test_records():
 def test_records_opinion_author():
     opinion_authors = ({78}, {78, 81})
     for opinion_author in opinion_authors:
+        records = list(DATASET.records(opinion_author=opinion_author, limit=10))
+        assert len(records) >= 1
         assert all(
             meta["maj_opinion_author"] in opinion_author
-            for text, meta in DATASET.records(opinion_author=opinion_author, limit=10)
+            for text, meta in records
         )
 
 
 def test_records_decision_direction():
     decision_directions = ("liberal", {"conservative", "unspecifiable"})
     for decision_direction in decision_directions:
+        records = list(DATASET.records(decision_direction=decision_direction, limit=10))
+        assert len(records) >= 1
         assert all(
             meta["decision_direction"] in decision_direction
-            for text, meta in DATASET.records(decision_direction=decision_direction, limit=10)
+            for text, meta in records
         )
 
 
 def test_records_issue_area():
     issue_areas = ({2}, {4, 5, 6})
     for issue_area in issue_areas:
+        records = list(DATASET.records(issue_area=issue_area, limit=10))
+        assert len(records) >= 1
         assert all(
             meta["issue_area"] in issue_area
-            for text, meta in DATASET.records(issue_area=issue_area, limit=10)
+            for text, meta in records
         )
 
 
 def test_records_date_range():
     date_ranges = (["1970-01-01", "1971-01-01"], ("1971-07-01", "1971-12-31"))
     for date_range in date_ranges:
+        records = list(DATASET.records(date_range=date_range, limit=10))
+        assert len(records) >= 1
         assert all(
             date_range[0] <= meta["decision_date"] < date_range[1]
-            for text, meta in DATASET.records(date_range=date_range, limit=10)
+            for text, meta in records
         )
 
 

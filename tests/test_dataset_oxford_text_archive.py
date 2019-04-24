@@ -63,9 +63,11 @@ def test_records():
 def test_records_author():
     authors = ({"Shakespeare, William"}, {"Wollstonecraft, Mary", "Twain, Mark"})
     for author in authors:
+        records = list(DATASET.records(author=author, limit=3))
+        assert len(records) >= 1
         assert all(
             athr in author
-            for text, meta in DATASET.records(author=author, limit=3)
+            for text, meta in records
             for athr in meta["author"]
         )
 
@@ -73,9 +75,11 @@ def test_records_author():
 def test_records_date_range():
     date_ranges = (["1900-01-01", "1950-01-01"], ("1600-01-01", "1700-01-01"))
     for date_range in date_ranges:
+        records = list(DATASET.records(date_range=date_range, limit=10))
+        assert len(records) >= 1
         assert all(
             date_range[0] <= meta["year"] < date_range[1]
-            for text, meta in DATASET.records(date_range=date_range, limit=10)
+            for text, meta in records
         )
 
 

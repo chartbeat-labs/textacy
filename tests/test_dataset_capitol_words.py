@@ -54,45 +54,55 @@ def test_records():
 def test_records_speaker_name():
     speaker_names = ({"Bernie Sanders"}, {"Ted Cruz", "Barack Obama"})
     for speaker_name in speaker_names:
+        records = list(DATASET.records(speaker_name=speaker_name, limit=10))
+        assert len(records) >= 1
         assert all(
             meta["speaker_name"] in speaker_name
-            for text, meta in DATASET.records(speaker_name=speaker_name, limit=10)
+            for text, meta in records
         )
 
 
 def test_records_speaker_party():
     speaker_parties = ({"R"}, {"D", "I"})
     for speaker_party in speaker_parties:
+        records = list(DATASET.records(speaker_party=speaker_party, limit=10))
+        assert len(records) >= 1
         assert all(
             meta["speaker_party"] in speaker_party
-            for text, meta in DATASET.records(speaker_party=speaker_party, limit=10)
+            for text, meta in records
         )
 
 
 def test_records_chamber():
     chambers = ({"House"}, {"House", "Senate"})
     for chamber in chambers:
+        records = list(DATASET.records(chamber=chamber, limit=10))
+        assert len(records) >= 1
         assert all(
             meta["chamber"] in chamber
-            for text, meta in DATASET.records(chamber=chamber, limit=10)
+            for text, meta in records
         )
 
 
 def test_records_congress():
     congresses = ({104}, {104, 114})
     for congress in congresses:
+        records = list(DATASET.records(congress=congress, limit=10))
+        assert len(records) >= 1
         assert all(
             meta["congress"] in congress
-            for text, meta in DATASET.records(congress=congress, limit=10)
+            for text, meta in records
         )
 
 
 def test_records_date_range():
     date_ranges = (["2000-01-01", "2001-01-01"], ("2010-01-01", "2010-02-01"))
     for date_range in date_ranges:
+        records = list(DATASET.records(date_range=date_range, limit=10))
+        assert len(records) >= 1
         assert all(
             date_range[0] <= meta["date"] < date_range[1]
-            for text, meta in DATASET.records(date_range=date_range, limit=10)
+            for text, meta in records
         )
 
 

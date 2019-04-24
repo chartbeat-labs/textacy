@@ -74,49 +74,44 @@ DOWNLOAD_ROOT = "https://github.com/bdewilde/textacy-data/releases/download/"
 
 class SupremeCourt(Dataset):
     """
-    Stream U.S. Supreme Court decisions from a compressed json file on disk,
-    either as texts (str) or records (dict) with both text content and metadata.
+    Stream a collection of U.S. Supreme Court decisions from a compressed json file on disk,
+    either as texts or text + metadata pairs.
 
-    Download a Python version-specific compressed json file from the
-    `textacy-data <https://github.com/bdewilde/textacy-data>`_ repo::
+    Download the data (one time only!) from the textacy-data repo
+    (https://github.com/bdewilde/textacy-data), and save its contents to disk::
 
         >>> sc = SupremeCourt()
         >>> sc.download()
         >>> sc.info
-        {'data_dir': 'path/to/textacy/data/supreme_court',
-         'description': 'Collection of ~8.4k decisions issued by the U.S. Supreme Court between November 1946 and June 2016.',
-         'name': 'supreme_court',
-         'site_url': 'http://caselaw.findlaw.com/court/us-supreme-court'}
+        {'name': 'supreme_court',
+         'site_url': 'http://caselaw.findlaw.com/court/us-supreme-court',
+         'description': 'Collection of ~8.4k decisions issued by the U.S. Supreme Court between November 1946 and June 2016.'}
 
-    Iterate over decisions as plain texts or records with both text and metadata::
+    Iterate over decisions as texts or records with both text and metadata::
 
-        >>> for text in sc.texts(limit=1):
-        ...     print(text)
-        >>> for record in sc.records(limit=1):
-        ...     print(record['case_name'], record['decision_date'])
-        ...     print(record['text'])
+        >>> for text in sc.texts(limit=3):
+        ...     print(text[:500], end="\n\n")
+        >>> for text, meta in sc.records(limit=3):
+        ...     print("\n{} ({})\n{}".format(meta["case_name"], meta["decision_date"], text[:500]))
 
     Filter decisions by a variety of metadata fields and text length::
 
-        >>> for record in sc.records(opinion_author=109, limit=1):  # Notorious RBG!
-        ...     print(record['case_name'], record['decision_direction'], record['n_maj_votes'])
-        >>> for record in sc.records(decision_direction='liberal',
-        ...                          issue_area={1, 9, 10}, limit=10):
-        ...     print(record['maj_opinion_author'], record['n_maj_votes'])
-        >>> for record in sc.records(opinion_author=102,
-        ...                          date_range=('1990-01-01', '1999-12-31')):
-        ...     print(record['case_name'], record['decision_date'])
-        ...     print(sc.issue_codes[record['issue']])
-        >>> for text in sc.texts(min_len=50000):
+        >>> for text, meta in sc.records(opinion_author=109, limit=3):  # Notorious RBG!
+        ...     print(meta["case_name"], meta["decision_direction"], meta["n_maj_votes"])
+        >>> for text, meta in sc.records(decision_direction="liberal",
+        ...                              issue_area={1, 9, 10}, limit=3):
+        ...     print(meta["case_name"], meta["maj_opinion_author"], meta["n_maj_votes"])
+        >>> for text, meta in sc.records(opinion_author=102, date_range=('1985-02-11', '1986-02-11')):
+        ...     print("\n{} ({})".format(meta["case_name"], meta["decision_date"]))
+        ...     print(sc.issue_codes[meta["issue"]], "=>", meta["decision_direction"])
+        >>> for text in sc.texts(min_len=250000):
         ...     print(len(text))
 
     Stream decisions into a :class:`textacy.Corpus`::
 
-        >>> text_stream, metadata_stream = textacy.io.split_records(
-        ...     sc.records(limit=100), 'text')
-        >>> c = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
-        >>> c
-        Corpus(100 docs; 615135 tokens)
+        >>> texts, metas = textacy.io.unzip(sc.records(limit=25))
+        >>> textacy.Corpus("en", texts=texts, metadatas=metas)
+        Corpus(25 docs; 136696 tokens)
 
     Args:
         data_dir (str): Path to directory on disk under which the data
@@ -649,7 +644,7 @@ class SupremeCourt(Dataset):
                 )
             )
         candidate_filters = [
-            (opinion_author, int, "opinion_author", "opinion_author_codes"),
+            (opinion_author, int, "maj_opinion_author", "opinion_author_codes"),
             (decision_direction, compat.string_types, "decision_direction", "decision_directions"),
             (issue_area, int, "issue_area", "issue_area_codes"),
         ]
