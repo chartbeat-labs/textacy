@@ -31,8 +31,8 @@ from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
 from .. import preprocess
+from . import utils
 from .dataset import Dataset
-from .utils import download_file, validate_and_clip_range_filter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -147,14 +147,14 @@ class RedditComments(Dataset):
             force (bool): If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
-        date_range = validate_and_clip_range_filter(
+        date_range = utils.validate_and_clip_range_filter(
             date_range,
             (self.min_date, self.max_date),
             val_type=compat.string_types,
         )
         filestubs = self._generate_filestubs(date_range)
         for filestub in filestubs:
-            filepath = download_file(
+            filepath = utils.download_file(
                 compat.urljoin(DOWNLOAD_ROOT, filestub),
                 filename=filestub,
                 dirpath=self._data_dir,
@@ -224,13 +224,12 @@ class RedditComments(Dataset):
                 lambda record: len(record.get("body", "")) >= min_len
             )
         if subreddit is not None:
-            if isinstance(subreddit, compat.string_types):
-                subreddit = {subreddit}
+            subreddit = utils.validate_set_member_filter(subreddit, compat.string_types)
             filters.append(
-                lambda record: record.get("subreddit", "") in subreddit
+                lambda record: record.get("subreddit") in subreddit
             )
         if date_range is not None:
-            date_range = validate_and_clip_range_filter(
+            date_range = utils.validate_and_clip_range_filter(
                 date_range,
                 (self.min_date, self.max_date),
                 val_type=compat.string_types,
@@ -242,7 +241,7 @@ class RedditComments(Dataset):
                 )
             )
         if score_range is not None:
-            score_range = validate_and_clip_range_filter(
+            score_range = utils.validate_and_clip_range_filter(
                 score_range,
                 (self._min_score, self._max_score),
                 val_type=(int, float),

@@ -31,8 +31,8 @@ import re
 from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
+from . import utils
 from .dataset import Dataset
-from .utils import download_file, validate_and_clip_range_filter, unpack_archive
 
 LOGGER = logging.getLogger(__name__)
 
@@ -117,14 +117,14 @@ class OxfordTextArchive(Dataset):
             force (bool): If True, always download the dataset even if
                 it already exists.
         """
-        filepath = download_file(
+        filepath = utils.download_file(
             DOWNLOAD_URL,
             filename=None,
             dirpath=self._data_dir,
             force=force,
         )
         if filepath:
-            _unpack_archive(filepath, extract_dir=None)
+            utils.unpack_archive(filepath, extract_dir=None)
 
     @property
     def metadata(self):
@@ -216,18 +216,13 @@ class OxfordTextArchive(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if author is not None:
-            if isinstance(author, compat.string_types):
-                author = {author}
-            if not all(athr in self.authors for athr in author):
-                raise ValueError(
-                    "not all values in `author` are valid; "
-                    "see :attr:`OxfordTextArchive.authors`"
-                )
+            author = utils.validate_set_member_filter(
+                author, compat.string_types, valid_vals=self.authors)
             filters.append(
                 lambda record: record.get("author") and all(athr in author for athr in record["author"])
             )
         if date_range is not None:
-            date_range = validate_and_clip_range_filter(
+            date_range = utils.validate_and_clip_range_filter(
                 date_range,
                 (self.min_date, self.max_date),
                 val_type=compat.string_types,

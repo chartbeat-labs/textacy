@@ -57,8 +57,8 @@ import os
 from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
+from . import utils
 from .dataset import Dataset
-from .utils import download_file, validate_and_clip_range_filter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -587,7 +587,7 @@ class SupremeCourt(Dataset):
             data_version=1.0,
         )
         url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
-        filepath = download_file(
+        filepath = utils.download_file(
             url,
             filename=self._filename,
             dirpath=self._data_dir,
@@ -613,23 +613,6 @@ class SupremeCourt(Dataset):
         min_len,
     ):
         filters = []
-
-        def get_filter(filter_vals, vals_type, record_field, class_attr):
-            if filter_vals is not None:
-                if isinstance(filter_vals, vals_type):
-                    filter_vals = {filter_vals}
-                if not all(val in getattr(self, class_attr) for val in filter_vals):
-                    raise ValueError(
-                        "not all values in `{record_field}` are valid; "
-                        "see :attr:`SupremeCourt.{class_attr}`".format(
-                            record_field=record_field,
-                            class_attr=class_attr,
-                        )
-                    )
-                return lambda record: record.get(record_field) in filter_vals
-            else:
-                return None
-
         if min_len is not None:
             if min_len < 1:
                 raise ValueError("`min_len` must be at least 1")
@@ -637,7 +620,7 @@ class SupremeCourt(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if date_range is not None:
-            date_range = validate_and_clip_range_filter(
+            date_range = utils.validate_and_clip_range_filter(
                 date_range,
                 (self.min_date, self.max_date),
                 val_type=compat.string_types,
@@ -648,15 +631,21 @@ class SupremeCourt(Dataset):
                     and date_range[0] <= record["decision_date"] < date_range[1]
                 )
             )
-        candidate_filters = [
-            (opinion_author, int, "maj_opinion_author", "opinion_author_codes"),
-            (decision_direction, compat.string_types, "decision_direction", "decision_directions"),
-            (issue_area, int, "issue_area", "issue_area_codes"),
-        ]
-        for candidate_filter in candidate_filters:
-            filter_ = get_filter(*candidate_filter)
-            if filter_:
-                filters.append(filter_)
+        if opinion_author is not None:
+            opinion_author = utils.validate_set_member_filter(
+                opinion_author, int, valid_vals=self.opinion_author_codes)
+            filters.append(
+                lambda record: record.get("maj_opinion_author") in opinion_author)
+        if decision_direction is not None:
+            decision_direction = utils.validate_set_member_filter(
+                decision_direction, compat.string_types, valid_vals=self.decision_directions)
+            filters.append(
+                lambda record: record.get("decision_direction") in decision_direction)
+        if issue_area is not None:
+            issue_area = utils.validate_set_member_filter(
+                issue_area, int, valid_vals=self.issue_area_codes)
+            filters.append(
+                lambda record: record.get("issue_area") in issue_area)
         return filters
 
     def _filtered_iter(self, filters):

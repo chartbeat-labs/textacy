@@ -98,10 +98,8 @@ def test_records_date_range():
 
 def test_bad_filters():
     bad_filters = (
-        {"opinion_author": "Burton DeWilde"},
         {"opinion_author": 1000},
         {"decision_direction": "blatantly political"},
-        {"issue_area": "legalizing gay marriage, woo!"},
         {"issue_area": 1000},
         {"min_len": -1},
     )
@@ -109,6 +107,8 @@ def test_bad_filters():
         with pytest.raises(ValueError):
             list(DATASET.texts(**bad_filter))
     bad_filters = (
+        {"opinion_author": "Burton DeWilde"},
+        {"issue_area": "legalizing gay marriage, woo!"},
         {"date_range": "2016-01-01"},
         {"date_range": (datetime.date(2000, 1, 1), datetime.date(2001, 1, 1))},
     )

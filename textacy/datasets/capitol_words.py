@@ -33,8 +33,8 @@ import os
 from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
+from . import utils
 from .dataset import Dataset
-from .utils import download_file, validate_and_clip_range_filter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -163,7 +163,7 @@ class CapitolWords(Dataset):
             data_version=1.0,
         )
         url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
-        filepath = download_file(
+        filepath = utils.download_file(
             url,
             filename=self._filename,
             dirpath=self._data_dir,
@@ -190,23 +190,6 @@ class CapitolWords(Dataset):
         min_len,
     ):
         filters = []
-
-        def get_filter(filter_vals, vals_type, record_field, class_attr):
-            if filter_vals is not None:
-                if isinstance(filter_vals, vals_type):
-                    filter_vals = {filter_vals}
-                if not all(val in getattr(self, class_attr) for val in filter_vals):
-                    raise ValueError(
-                        "not all values in `{record_field}` are valid; "
-                        "see :attr:`CapitolWords.{class_attr}`".format(
-                            record_field=record_field,
-                            class_attr=class_attr,
-                        )
-                    )
-                return lambda record: record.get(record_field) in filter_vals
-            else:
-                return None
-
         if min_len is not None:
             if min_len < 1:
                 raise ValueError("`min_len` must be at least 1")
@@ -214,24 +197,33 @@ class CapitolWords(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if date_range is not None:
-            date_range = validate_and_clip_range_filter(
+            date_range = utils.validate_and_clip_range_filter(
                 date_range,
                 (self.min_date, self.max_date),
                 val_type=compat.string_types,
             )
             filters.append(
-                lambda record: record.get("date") and date_range[0] <= record["date"] < date_range[1]
+                lambda record: (
+                    record.get("date")
+                    and date_range[0] <= record["date"] < date_range[1]
+                )
             )
-        candidate_filters = [
-            (speaker_name, compat.string_types, "speaker_name", "speaker_names"),
-            (speaker_party, compat.string_types, "speaker_party", "speaker_parties"),
-            (chamber, compat.string_types, "chamber", "chambers"),
-            (congress, int, "congress", "congresses"),
-        ]
-        for candidate_filter in candidate_filters:
-            filter_ = get_filter(*candidate_filter)
-            if filter_:
-                filters.append(filter_)
+        if speaker_name is not None:
+            speaker_name = utils.validate_set_member_filter(
+                speaker_name, compat.string_types, valid_vals=self.speaker_names)
+            filters.append(lambda record: record.get("speaker_name") in speaker_name)
+        if speaker_party is not None:
+            speaker_party = utils.validate_set_member_filter(
+                speaker_party, compat.string_types, valid_vals=self.speaker_parties)
+            filters.append(lambda record: record.get("speaker_party") in speaker_party)
+        if chamber is not None:
+            chamber = utils.validate_set_member_filter(
+                chamber, compat.string_types, valid_vals=self.chambers)
+            filters.append(lambda record: record.get("chamber") in chamber)
+        if congress is not None:
+            congress = utils.validate_set_member_filter(
+                congress, int, valid_vals=self.congresses)
+            filters.append(lambda record: record.get("congress") in congress)
         return filters
 
     def _filtered_iter(self, filters):

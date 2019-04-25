@@ -140,28 +140,25 @@ def validate_set_member_filter(filter_vals, vals_type, valid_vals=None):
         TypeError
         ValueError
     """
-    if filter_vals is not None:
-        if isinstance(filter_vals, vals_type):
-            filter_vals = {filter_vals}
-        elif isinstance(filter_vals, (list, tuple)):
-            filter_vals = set(filter_vals)
-        if (not isinstance(filter_vals, set)
-                or not all(isinstance(fv, vals_type) for fv in filter_vals)):
-            raise TypeError(
-                "filter values must be {} or a set thereof, not {}".format(
-                    vals_type, type(filter_vals),
+    if isinstance(filter_vals, vals_type):
+        filter_vals = {filter_vals}
+    elif isinstance(filter_vals, (list, tuple)):
+        filter_vals = set(filter_vals)
+    if (not isinstance(filter_vals, set)
+            or not all(isinstance(fv, vals_type) for fv in filter_vals)):
+        raise TypeError(
+            "filter values must be {} or a set thereof, not {}".format(
+                vals_type, type(filter_vals),
+            )
+        )
+    if valid_vals is not None:
+        if not all(filter_val in valid_vals for filter_val in filter_vals):
+            raise ValueError(
+                "not all values in filter are valid: {}".format(
+                    filter_vals.difference(valid_vals)
                 )
             )
-        if valid_vals is not None:
-            if not all(filter_val in valid_vals for filter_val in filter_vals):
-                raise ValueError(
-                    "not all values in filter are valid: {}".format(
-                        filter_vals.difference(valid_vals)
-                    )
-                )
-        return filter_vals
-    else:
-        return None
+    return filter_vals
 
 
 def validate_and_clip_range_filter(filter_range, full_range, val_type=None):

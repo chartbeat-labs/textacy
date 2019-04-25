@@ -37,8 +37,8 @@ import requests
 from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
+from . import utils
 from .dataset import Dataset
-from .utils import download_file
 
 LOGGER = logging.getLogger(__name__)
 
@@ -320,7 +320,7 @@ class Wikipedia(Dataset):
         """
         file_url = compat.urljoin(DOWNLOAD_ROOT, self._filestub)
         self._check_file_url(file_url)
-        filepath = download_file(
+        filepath = utils.download_file(
             file_url,
             filename=self._filestub,
             dirpath=self._data_dir,
