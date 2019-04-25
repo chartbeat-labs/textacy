@@ -164,7 +164,7 @@ def validate_set_member_filter(filter_vals, vals_type, valid_vals=None):
         return None
 
 
-def validate_and_clip_range(filter_range, full_range, val_type=None):
+def validate_and_clip_range_filter(filter_range, full_range, val_type=None):
     """
     Validate and clip range values, for use in filtering datasets.
 

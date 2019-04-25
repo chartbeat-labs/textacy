@@ -38,7 +38,7 @@ from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
 from .dataset import Dataset
-from .utils import download_file, validate_and_clip_range
+from .utils import download_file
 
 LOGGER = logging.getLogger(__name__)
 

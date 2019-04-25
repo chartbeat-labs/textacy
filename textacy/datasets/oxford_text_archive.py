@@ -32,7 +32,7 @@ from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
 from .dataset import Dataset
-from .utils import download_file, validate_and_clip_range, unpack_archive
+from .utils import download_file, validate_and_clip_range_filter, unpack_archive
 
 LOGGER = logging.getLogger(__name__)
 
@@ -227,7 +227,7 @@ class OxfordTextArchive(Dataset):
                 lambda record: record.get("author") and all(athr in author for athr in record["author"])
             )
         if date_range is not None:
-            date_range = validate_and_clip_range(
+            date_range = validate_and_clip_range_filter(
                 date_range,
                 (self.min_date, self.max_date),
                 val_type=compat.string_types,

@@ -7,14 +7,14 @@ import pytest
 
 from textacy import compat
 from textacy.datasets.utils import (
-    validate_and_clip_range,
+    validate_and_clip_range_filter,
     validate_set_member_filter,
     download_file,
     get_filename_from_url,
 )
 
 
-class TestValidateAndClipRange(object):
+class TestValidateAndClipRangeFilter(object):
 
     def test_good_inputs(self):
         inputs = [
@@ -27,7 +27,7 @@ class TestValidateAndClipRange(object):
             [(-5, 5), (-10, 10), (int, float)],
         ]
         for input_ in inputs:
-            output = validate_and_clip_range(*input_)
+            output = validate_and_clip_range_filter(*input_)
             assert isinstance(output, tuple)
             assert len(output) == 2
             assert output[0] == max(input_[0][0], input_[1][0])
@@ -45,7 +45,7 @@ class TestValidateAndClipRange(object):
         ]
         for input_ in inputs:
             with pytest.raises(TypeError):
-                validate_and_clip_range(*input_)
+                validate_and_clip_range_filter(*input_)
 
     def test_bad_valueerror(self):
         inputs = [
@@ -57,7 +57,7 @@ class TestValidateAndClipRange(object):
         ]
         for input_ in inputs:
             with pytest.raises(ValueError):
-                validate_and_clip_range(*input_)
+                validate_and_clip_range_filter(*input_)
 
 
 class TestValidateSetMemberFilter(object):

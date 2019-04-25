@@ -34,7 +34,7 @@ from .. import compat
 from .. import data_dir as DATA_DIR
 from .. import io as tio
 from .dataset import Dataset
-from .utils import download_file, validate_and_clip_range
+from .utils import download_file, validate_and_clip_range_filter
 
 LOGGER = logging.getLogger(__name__)
 
@@ -214,7 +214,7 @@ class CapitolWords(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if date_range is not None:
-            date_range = validate_and_clip_range(
+            date_range = validate_and_clip_range_filter(
                 date_range,
                 (self.min_date, self.max_date),
                 val_type=compat.string_types,
