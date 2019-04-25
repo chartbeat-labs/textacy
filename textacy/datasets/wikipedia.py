@@ -205,30 +205,43 @@ re_magic_words = re.compile("|".join(magic_words))
 
 class Wikipedia(Dataset):
     """
-    Stream Wikipedia articles from versioned, language-specific database dumps,
-    either as texts (str) or records (dict) with both text content and metadata.
+    Stream a collection of Wikipedia pages from a versioned, language-specific
+    database dump, either as texts or text + metadata pairs.
 
-    Download a database dump for a given language and version::
+    Download a database dump for a given language and version (one time only!)
+    and save its contents to disk::
 
-        >>> wp = Wikipedia(lang='en', version='latest')
+        >>> wp = Wikipedia(lang="en", version="latest")
         >>> wp.download()
         >>> wp.info
-        {'data_dir': 'path/to/textacy/data/wikipedia',
-         'description': 'All articles for a given Wikimedia wiki, including wikitext source and metadata, as a single database dump in XML format.',
-         'name': 'wikipedia',
-         'site_url': 'https://meta.wikimedia.org/wiki/Data_dumps'}
+        {'name': 'wikipedia',
+         'site_url': 'https://meta.wikimedia.org/wiki/Data_dumps',
+         'description': 'All articles for a given language- and version-specific Wikipedia site snapshot.'}
 
-    Iterate over articles as plain texts or records with both text and metadata::
+    Iterate over wiki pages as texts or records with both text and metadata::
 
         >>> for text in wp.texts(limit=5):
-        ...     print(text)
-        >>> for record in wp.records(limit=5):
-        ...     print(record['title'], record['text'][:500])
+        ...     print(text[:500])
+        >>> for text, meta in wp.records(limit=5):
+        ...     print(meta["page_id"], meta["title"])
 
-    Filter articles by text length::
+    Use a slower method to get cleaner text and additional page metadata::
 
-        >>> for text in wp.texts(min_len=1000, limit=1):
-        ...     print(text)
+        >>> for text, meta in wp.records(fast=False, limit=5):
+        ...     print("{} {}\n{}\n{}".format(
+        ...         meta["page_id"], meta["title"], meta["categories"], meta["wiki_links"][:5])
+        ...     )
+
+    Filter wiki pages by text length::
+
+        >>> for text in wp.texts(min_len=10000, limit=5):
+        ...     print(len(text))
+
+    Stream wiki pages into a :class:`textacy.Corpus`::
+
+        >>> texts, metas = textacy.io.unzip(wp.records(min_len=10000, limit=10))
+        >>> textacy.Corpus("en", texts=texts, metadatas=metas)
+        Corpus(10 docs; 93702 tokens)
 
     Args:
         data_dir (str): Path to directory on disk under which database dump
@@ -250,9 +263,9 @@ class Wikipedia(Dataset):
     Attributes:
         lang (str): Standard two-letter language code used in instantiation.
         version (str): Database dump version used in instantiation.
-        filestub (str): The component of ``filename`` that is unique to this
+        filestub (str): The component of ``filepath`` that is unique to this
             lang- and version-specific database dump.
-        filename (str): Full path on disk for the lang- and version-specific
+        filepath (str): Full path on disk for the lang- and version-specific
             Wikipedia database dump, found under the ``data_dir`` directory.
         project (str): the canonical name for the wikimedia project which is
             used as a component of ``filestub``.
@@ -472,8 +485,8 @@ class Wikipedia(Dataset):
 
         Args:
             fast (bool): If True, page text is parsed and cleaned using a fast method
-                that gives decent results; otherwise, a slower method that gives
-                high-quality results is used.
+                that produces decently clean text; otherwise, a slower method
+                that produces higher-quality text is used instead.
 
                 .. note:: The `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
                    package must be installed for ``fast=False``.
@@ -503,8 +516,9 @@ class Wikipedia(Dataset):
 
         Args:
             fast (bool): If True, page text is parsed and cleaned using a fast method
-                that gives decent results; otherwise, a slower method that gives
-                high-quality results is used.
+                that produces decently clean text; otherwise, a slower method
+                that produces higher-quality text *and* adds several fields to the
+                metadata is used instead.
 
                 .. note:: The `mwparserfromhell <mwparserfromhell.readthedocs.org>`_
                    package must be installed for ``fast=False``.
