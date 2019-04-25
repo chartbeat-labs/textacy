@@ -1,3 +1,10 @@
+"""
+Dataset Utils
+-------------
+
+Shared functionality for downloading, naming, and extracting the contents
+of datasets, as well as filtering for particular subsets.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
@@ -114,16 +121,59 @@ def unpack_archive(filepath, extract_dir=None):
             return os.path.join(extract_dir, src_basename)
 
 
-def validate_and_clip_range(req_range, full_range, val_type=None):
+def validate_set_member_filter(filter_vals, vals_type, valid_vals=None):
+    """
+    Validate filter values that must be of a certain type or
+    found among a set of known values.
+
+    Args:
+        filter_vals (obj or Set[obj]): Value or values to filter records by.
+        vals_type (type or Tuple[type]): Type(s) of which all ``filter_vals``
+            must be instances.
+        valid_vals (Set[obj]): Set of valid values in which all ``filter_vals``
+            must be found.
+
+    Return:
+        Set[obj]: Validated and standardized filter values.
+
+    Raises:
+        TypeError
+        ValueError
+    """
+    if filter_vals is not None:
+        if isinstance(filter_vals, vals_type):
+            filter_vals = {filter_vals}
+        elif isinstance(filter_vals, (list, tuple)):
+            filter_vals = set(filter_vals)
+        if (not isinstance(filter_vals, set)
+                or not all(isinstance(fv, vals_type) for fv in filter_vals)):
+            raise TypeError(
+                "filter values must be {} or a set thereof, not {}".format(
+                    vals_type, type(filter_vals),
+                )
+            )
+        if valid_vals is not None:
+            if not all(filter_val in valid_vals for filter_val in filter_vals):
+                raise ValueError(
+                    "not all values in filter are valid: {}".format(
+                        filter_vals.difference(valid_vals)
+                    )
+                )
+        return filter_vals
+    else:
+        return None
+
+
+def validate_and_clip_range(filter_range, full_range, val_type=None):
     """
     Validate and clip range values, for use in filtering datasets.
 
     Args:
-        req_range (list or tuple): Requested range to use for filter, i.e.
+        filter_range (list or tuple): Range to use for filter, i.e.
             ``[start_val, end_val)`` .
         full_range (list or tuple): Full range available for filter, i.e.
             ``[min_val, max_val)`` .
-        val_type: If specified, the type or types that each value in ``req_range``
+        val_type: If specified, the type or types that each value in ``filter_range``
             must be instances of.
 
     Returns:
@@ -134,7 +184,7 @@ def validate_and_clip_range(req_range, full_range, val_type=None):
         TypeError
         ValueError
     """
-    for range_ in (req_range, full_range):
+    for range_ in (filter_range, full_range):
         if not isinstance(range_, (list, tuple)):
             raise TypeError(
                 "range must be a list or tuple, not {}".format(type(range_))
@@ -142,7 +192,7 @@ def validate_and_clip_range(req_range, full_range, val_type=None):
         if len(range_) != 2:
             raise ValueError("range must have exactly two items: start and end")
     if val_type:
-        for range_ in (req_range, full_range):
+        for range_ in (filter_range, full_range):
             for val in range_:
                 if val is not None and not isinstance(val, val_type):
                     raise TypeError(
@@ -150,22 +200,22 @@ def validate_and_clip_range(req_range, full_range, val_type=None):
                             val, val_type, type(val)
                         )
                     )
-    if req_range[0] is None:
-        req_range = (full_range[0], req_range[1])
-    elif req_range[0] < full_range[0]:
+    if filter_range[0] is None:
+        filter_range = (full_range[0], filter_range[1])
+    elif filter_range[0] < full_range[0]:
         LOGGER.warning(
             "start of  range %s < minimum valid value %s; clipping range ...",
-            req_range[0],
+            filter_range[0],
             full_range[0],
         )
-        req_range = (full_range[0], req_range[1])
-    if req_range[1] is None:
-        req_range = (req_range[0], full_range[1])
-    elif req_range[1] > full_range[1]:
+        filter_range = (full_range[0], filter_range[1])
+    if filter_range[1] is None:
+        filter_range = (filter_range[0], full_range[1])
+    elif filter_range[1] > full_range[1]:
         LOGGER.warning(
             "end of range %s > maximum valid value %s; clipping range ...",
-            req_range[1],
+            filter_range[1],
             full_range[1],
         )
-        req_range = (req_range[0], full_range[1])
-    return tuple(req_range)
+        filter_range = (filter_range[0], full_range[1])
+    return tuple(filter_range)

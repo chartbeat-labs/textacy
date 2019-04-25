@@ -8,6 +8,7 @@ import pytest
 from textacy import compat
 from textacy.datasets.utils import (
     validate_and_clip_range,
+    validate_set_member_filter,
     download_file,
     get_filename_from_url,
 )
@@ -57,6 +58,47 @@ class TestValidateAndClipRange(object):
         for input_ in inputs:
             with pytest.raises(ValueError):
                 validate_and_clip_range(*input_)
+
+
+class TestValidateSetMemberFilter(object):
+
+    def test_good_inputs(self):
+        inputs = [
+            [{"a", "b"}, compat.string_types, {"a", "b", "c"}],
+            ["a", compat.string_types, {"a", "b", "c"}],
+            [("a", "b"), compat.string_types, {"a", "b", "c"}],
+            [["a", "b"], compat.string_types],
+            [{1, 2}, int, {1, 2, 3}],
+            [{1, 2}, (int, float), {1, 2, 3}],
+            [1, int, {1: "a", 2: "b", 3: "c"}],
+            [{3.14, 42.0}, float],
+            [3.14, (int, float)],
+        ]
+        for input_ in inputs:
+            output = validate_set_member_filter(*input_)
+            assert isinstance(output, set)
+            assert all(isinstance(val, input_[1]) for val in output)
+
+    def test_bad_typeerror(self):
+        inputs = [
+            [{"a", "b"}, int],
+            ["a", int],
+            [("a", "b"), (int, float)],
+        ]
+        for input_ in inputs:
+            with pytest.raises(TypeError):
+                validate_set_member_filter(*input_)
+
+    def test_bad_valueerror(self):
+        inputs = [
+            [{"a", "b"}, compat.string_types, {"x", "y", "z"}],
+            [{"a", "x"}, compat.string_types, {"x", "y", "z"}],
+            ["a", compat.string_types, {"x", "y", "z"}],
+            ["a", compat.string_types, {"x": 24, "y": 25, "z": 26}],
+        ]
+        for input_ in inputs:
+            with pytest.raises(ValueError):
+                validate_set_member_filter(*input_)
 
 
 def test_get_filename_from_url():
