@@ -295,7 +295,7 @@ implemented in ``textacy`` to help users get up and running, faster:
     >>> cw = textacy.datasets.CapitolWords()
     >>> cw.download()
     >>> records = cw.records(speaker_name={'Hillary Clinton', 'Barack Obama'})
-    >>> text_stream, metadata_stream = textacy.io.split_records(records, 'text')
+    >>> text_stream, metadata_stream = textacy.io.unzip(records)
 
 Make a Corpus
 -------------

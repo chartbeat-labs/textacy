@@ -13,20 +13,19 @@ from textacy.datasets.capitol_words import CapitolWords
 DATASET = CapitolWords()
 
 pytestmark = pytest.mark.skipif(
-    DATASET.filename is None,
+    DATASET.filepath is None,
     reason="CapitolWords dataset must be downloaded before running tests",
 )
 
 
 @pytest.fixture(scope="module")
 def corpus(request):
-    texts, metadatas = io.split_records(DATASET.records(limit=3), "text")
-    corpus = Corpus("en", texts=texts, metadatas=metadatas)
+    texts, metas = io.unzip(DATASET.records(limit=3))
+    corpus = Corpus("en", texts=texts, metadatas=metas)
     return corpus
 
 
 # init tests
-
 
 def test_corpus_init_lang():
     assert isinstance(Corpus("en"), Corpus)
@@ -45,23 +44,23 @@ def test_corpus_init_texts():
 
 def test_corpus_init_texts_and_metadatas():
     limit = 3
-    texts, metadatas = io.split_records(DATASET.records(limit=limit), "text")
+    texts, metas = io.unzip(DATASET.records(limit=limit))
     texts = list(texts)
-    metadatas = list(metadatas)
-    corpus = Corpus("en", texts=texts, metadatas=metadatas)
+    metas = list(metas)
+    corpus = Corpus("en", texts=texts, metadatas=metas)
     assert len(corpus.docs) == limit
     assert all(doc.spacy_vocab is corpus.spacy_vocab for doc in corpus)
     for i in range(limit):
         assert texts[i] == corpus[i].text
-        assert metadatas[i] == corpus[i].metadata
+        assert metas[i] == corpus[i].metadata
 
 
 def test_corpus_init_docs():
     limit = 3
-    texts, metadatas = io.split_records(DATASET.records(limit=limit), "text")
+    texts, metas = io.unzip(DATASET.records(limit=limit))
     docs = [
-        Doc(text, lang="en", metadata=metadata)
-        for text, metadata in zip(texts, metadatas)
+        Doc(text, lang="en", metadata=meta)
+        for text, meta in zip(texts, metas)
     ]
     corpus = Corpus("en", docs=docs)
     assert len(corpus.docs) == limit

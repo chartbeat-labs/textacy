@@ -14,7 +14,7 @@ from textacy import cache, compat, constants, extract, io, keyterms, text_utils
 DATASET = textacy.datasets.CapitolWords()
 
 pytestmark = pytest.mark.skipif(
-    DATASET.filename is None,
+    DATASET.filepath is None,
     reason="CapitolWords dataset must be downloaded before running tests",
 )
 
@@ -32,15 +32,14 @@ def doc(text):
 
 @pytest.fixture(scope="module")
 def corpus():
-    spacy_lang = cache.load_spacy("en")
     records = DATASET.records(speaker_name={"Bernie Sanders"}, limit=10)
-    text_stream, metadata_stream = io.split_records(records, "text")
-    corpus = Corpus(spacy_lang, texts=text_stream, metadatas=metadata_stream)
+    texts, metas = io.unzip(records)
+    corpus = Corpus("en", texts=texts, metadatas=metas)
     return corpus
 
 
 def test_streaming_functionality(corpus):
-    assert isinstance(DATASET, textacy.datasets.base.Dataset)
+    assert isinstance(DATASET, textacy.datasets.dataset.Dataset)
     assert isinstance(corpus, Corpus)
 
 

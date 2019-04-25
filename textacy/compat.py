@@ -12,7 +12,8 @@ if PY2:
     import cPickle as pickle
     from backports import csv
     from itertools import izip as zip_
-    from urlparse import urljoin
+    from urllib import unquote_plus as url_unquote_plus
+    from urlparse import urljoin, urlparse
 
     range_ = xrange
 
@@ -29,7 +30,8 @@ else:
     import csv
     import pickle
     from builtins import zip as zip_
-    from urllib.parse import urljoin
+    from urllib.parse import unquote_plus as url_unquote_plus
+    from urllib.parse import urljoin, urlparse
 
     range_ = range
 
