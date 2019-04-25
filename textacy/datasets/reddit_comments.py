@@ -292,8 +292,7 @@ class RedditComments(Dataset):
                 If None, all comments are iterated over.
 
         Yields:
-            str: Plain text of next (by chronological order) comment in dataset
-            passing all filter params.
+            str: Text of the next comment in dataset passing all filters.
         """
         self._date_range = date_range  # used to limit files iterated
         try:
@@ -331,8 +330,8 @@ class RedditComments(Dataset):
                 If None, all comments are iterated over.
 
         Yields:
-            dict: Full text and metadata of next (by chronological order) comment
-            in dataset passing all filter params.
+            str: Text of the next comment in dataset passing all filters.
+            dict: Metadata of the next comment in dataset passing all filters.
         """
         self._date_range = date_range  # used to limit files iterated
         try:
