@@ -10,7 +10,7 @@ from textacy.datasets.wikipedia import Wikipedia
 DATASET = Wikipedia(lang="en", version="latest")
 
 pytestmark = pytest.mark.skipif(
-    DATASET.filename is None,
+    DATASET.filepath is None,
     reason="Wikipedia dataset must be downloaded before running tests",
 )
 
@@ -19,17 +19,26 @@ pytestmark = pytest.mark.skipif(
 def test_download(tmpdir):
     dataset = Wikipedia(data_dir=str(tmpdir))
     dataset.download()
-    assert os.path.exists(dataset.filename)
+    assert os.path.exists(dataset.filepath)
 
 
-def test_ioerror(tmpdir):
+def test_oserror(tmpdir):
     dataset = Wikipedia(data_dir=str(tmpdir))
-    with pytest.raises(IOError):
+    with pytest.raises(OSError):
         _ = list(dataset.texts())
 
 
 def test_texts():
-    for text in DATASET.texts(limit=3):
+    texts = list(DATASET.texts(limit=3))
+    assert len(texts) > 0
+    for text in texts:
+        assert isinstance(text, compat.unicode_)
+
+
+def test_texts_nofast():
+    texts = list(DATASET.texts(fast=False, limit=3))
+    assert len(texts) > 0
+    for text in texts:
         assert isinstance(text, compat.unicode_)
 
 
@@ -46,13 +55,20 @@ def test_texts_min_len():
 
 
 def test_records():
-    for record in DATASET.records(limit=3):
-        assert isinstance(record, dict)
+    for text, meta in DATASET.records(limit=3):
+        assert isinstance(text, compat.unicode_)
+        assert isinstance(meta, dict)
 
 
-def test_records_fast():
-    for record in DATASET.records(limit=3, fast=True):
-        assert isinstance(record, dict)
+def test_records_nofast():
+    for text, meta in DATASET.records(fast=False, limit=3):
+        assert isinstance(text, compat.unicode_)
+        assert isinstance(meta, dict)
+
+
+def test_records_headings():
+    for text, meta in DATASET.records(include_headings=True, limit=3):
+        assert text.startswith(meta["title"])
 
 
 # TODO: test individual parsing functions
