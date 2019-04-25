@@ -35,6 +35,9 @@ Datasets
 .. automodule:: textacy.datasets.oxford_text_archive
     :members:
 
+.. automodule:: textacy.datasets.utils
+    :members:
+
 Text Preprocessing
 ------------------
 
