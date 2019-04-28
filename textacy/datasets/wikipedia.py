@@ -402,6 +402,9 @@ class Wikipedia(Dataset):
 
     def _get_filters(self, min_len):
         filters = []
+        # is there any reason we would *not* want to filter out redirects?
+        filters.append(
+            lambda record: not record.get("text", "").startswith("#REDIRECT"))
         if min_len is not None:
             if min_len < 1:
                 raise ValueError("`min_len` must be at least 1")
