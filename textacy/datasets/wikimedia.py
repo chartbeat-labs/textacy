@@ -63,28 +63,41 @@ DOWNLOAD_ROOT = "https://dumps.wikimedia.your.org/other/cirrussearch/"
 
 is_bad_category_funcs = {
     "wiki": {
+        "de": lambda cat: cat.startswith("Wikipedia:"),
         "en": lambda cat: cat == "All stub articles" or cat.startswith("Disambiguation pages") or re.search(r"^(?:All )?(?:Wikipedia )?(?:[Aa]rticles?|[Pp]ages)", cat, flags=re.UNICODE) is not None,  # noqa
+        "nl": lambda cat: cat.startswith("Wikipedia:"),
     },
     "wikinews": {
         "de": lambda cat: cat in {"Artikelstatus: Fertig", "Veröffentlicht"},
         "en": lambda cat: cat in {"Archived", "Published", "AutoArchived", "No publish"},
         "es": lambda cat: cat in {"Archivado", "Artículos publicados"},
         "fr": lambda cat: cat in {"Article archivé", "Article publié"},
+        "it": lambda cat: cat in {"Pubblicati"},
+        "nl": lambda cat: cat in {"Gepubliceerd"},
         "pt": lambda cat: cat in {"Arquivado", "Publicado"},
     }
 }
 
-is_bad_wiki_link_funcs = {
+_bad_wiki_link_starts = {
     "wiki": {
-        "en": lambda wl: wl.startswith("Wikipedia:") or wl.startswith("Help:"),
-        "pt": lambda wl: wl.startswith("Wikipédia:") or wl.startswith("Ajuda:"),
+        "de": ("Wikipedia:", "Hilfe:"),
+        "el": ("Βοήθεια:", ),
+        "en": ("Wikipedia:", "Help:"),
+        "es": ("Wikipedia:", "Ayuda:"),
+        "fr": ("Wikipédia:", "Aide:"),
+        "it": ("Wikipedia:", "Aiuto:"),
+        "nl": ("Wikipedia:", ),
+        "pt": ("Wikipédia:", "Ajuda:"),
     },
     "wikinews": {
-        "de": lambda wl: wl.startswith("Wikinews:"),
-        "en": lambda wl: wl.startswith("Wikinews:") or wl.startswith("Template:") or wl.startswith("User:"),  # noqa
-        "es": lambda wl: wl.startswith("Wikinoticias:"),
-        "fr": lambda wl: wl.startswith("Wikinews:"),
-        "pt": lambda wl: wl.startswith("Wikinotícias:"),
+        "de": ("Wikinews:", ),
+        # TODO: "el"
+        "en": ("Wikinews:", "Template:", "User:"),
+        "es": ("Wikinoticias:", ),
+        "fr": ("Wikinews:", ),
+        "it": ("Wikinotizie:", ),
+        "nl": ("Wikinieuws:", ),
+        "pt": ("Wikinotícias:", ),
     }
 }
 
@@ -201,7 +214,7 @@ class Wikimedia(Dataset):
             )
 
         is_bad_category = is_bad_category_funcs.get(self.project, {}).get(self.lang)
-        is_bad_wiki_link = is_bad_wiki_link_funcs.get(self.project, {}).get(self.lang)
+        bad_wl_starts = _bad_wiki_link_starts.get(self.project, {}).get(self.lang, tuple())
 
         lines = tio.read_json(self.filepath, mode="rb", lines=True)
         for index, source in itertoolz.partition(2, lines):
@@ -220,13 +233,10 @@ class Wikimedia(Dataset):
                 )
             else:
                 categories = tuple(source.get("category", []))
-            if is_bad_wiki_link:
-                wiki_links = tuple(
-                    wl for wl in source.get("outgoing_link", [])
-                    if not is_bad_wiki_link(wl)
-                )
-            else:
-                wiki_links = tuple(source.get("outgoing_link", []))
+            wiki_links = tuple(
+                wl for wl in source.get("outgoing_link", [])
+                if not any(wl.startswith(bwls) for bwls in bad_wl_starts)
+            )
             yield {
                 "page_id": index["index"]["_id"],
                 "title": source["title"],
