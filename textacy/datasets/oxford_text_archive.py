@@ -67,13 +67,13 @@ class OxfordTextArchive(Dataset):
         >>> for text in ota.texts(limit=3):
         ...     print(text[:200])
         >>> for text, meta in ota.records(limit=3):
-        ...     print("\n{}, {}".format(meta["title"], meta["year"]))
+        ...     print("\\n{}, {}".format(meta["title"], meta["year"]))
         ...     print(text[:300])
 
     Filter literary works by a variety of metadata fields and text length::
 
         >>> for text, meta in ota.records(author="Shakespeare, William", limit=1):
-        ...     print("{}\n{}".format(meta["title"], text[:500]))
+        ...     print("{}\\n{}".format(meta["title"], text[:500]))
         >>> for text, meta in ota.records(date_range=("1900-01-01", "1990-01-01"), limit=5):
         ...     print(meta["year"], meta["author"])
         >>> for text in ota.texts(min_len=4000000):

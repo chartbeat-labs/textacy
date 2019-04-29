@@ -68,7 +68,7 @@ class RedditComments(Dataset):
         >>> for text in rc.texts(limit=5):
         ...     print(text)
         >>> for text, meta in rc.records(limit=5):
-        ...     print("\n{} {}\n{}".format(meta["author"], meta["created_utc"], text))
+        ...     print("\\n{} {}\\n{}".format(meta["author"], meta["created_utc"], text))
 
     Filter comments by a variety of metadata fields and text length::
 

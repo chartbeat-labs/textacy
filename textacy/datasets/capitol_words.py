@@ -67,14 +67,14 @@ class CapitolWords(Dataset):
     Iterate over speeches as texts or records with both text and metadata::
 
         >>> for text in cw.texts(limit=3):
-        ...     print(text, end="\n\n")
+        ...     print(text, end="\\n\\n")
         >>> for text, meta in cw.records(limit=3):
-        ...     print("\n{} ({})\n{}".format(meta["title"], meta["speaker_name"], text))
+        ...     print("\\n{} ({})\\n{}".format(meta["title"], meta["speaker_name"], text))
 
     Filter speeches by a variety of metadata fields and text length::
 
         >>> for text, meta in cw.records(speaker_name="Bernie Sanders", limit=3):
-        ...     print("\n{}, {}\n{}".format(meta["title"], meta["date"], text))
+        ...     print("\\n{}, {}\\n{}".format(meta["title"], meta["date"], text))
         >>> for text, meta in cw.records(speaker_party="D", congress={110, 111, 112},
         ...                          chamber="Senate", limit=3):
         ...     print(meta["title"], meta["speaker_name"], meta["date"])

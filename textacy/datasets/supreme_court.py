@@ -91,9 +91,9 @@ class SupremeCourt(Dataset):
     Iterate over decisions as texts or records with both text and metadata::
 
         >>> for text in sc.texts(limit=3):
-        ...     print(text[:500], end="\n\n")
+        ...     print(text[:500], end="\\n\\n")
         >>> for text, meta in sc.records(limit=3):
-        ...     print("\n{} ({})\n{}".format(meta["case_name"], meta["decision_date"], text[:500]))
+        ...     print("\\n{} ({})\\n{}".format(meta["case_name"], meta["decision_date"], text[:500]))
 
     Filter decisions by a variety of metadata fields and text length::
 
@@ -103,7 +103,7 @@ class SupremeCourt(Dataset):
         ...                              issue_area={1, 9, 10}, limit=3):
         ...     print(meta["case_name"], meta["maj_opinion_author"], meta["n_maj_votes"])
         >>> for text, meta in sc.records(opinion_author=102, date_range=('1985-02-11', '1986-02-11')):
-        ...     print("\n{} ({})".format(meta["case_name"], meta["decision_date"]))
+        ...     print("\\n{} ({})".format(meta["case_name"], meta["decision_date"]))
         ...     print(sc.issue_codes[meta["issue"]], "=>", meta["decision_direction"])
         >>> for text in sc.texts(min_len=250000):
         ...     print(len(text))
