@@ -61,6 +61,33 @@ METAS = {
 # DOWNLOAD_ROOT = "https://dumps.wikimedia.org/other/cirrussearch/"
 DOWNLOAD_ROOT = "https://dumps.wikimedia.your.org/other/cirrussearch/"
 
+is_bad_category_funcs = {
+    "wiki": {
+        "en": lambda cat: cat == "All stub articles" or cat.startswith("Disambiguation pages") or re.search(r"^(?:All )?(?:Wikipedia )?(?:[Aa]rticles?|[Pp]ages)", cat, flags=re.UNICODE) is not None,  # noqa
+    },
+    "wikinews": {
+        "de": lambda cat: cat in {"Artikelstatus: Fertig", "Veröffentlicht"},
+        "en": lambda cat: cat in {"Archived", "Published", "AutoArchived", "No publish"},
+        "es": lambda cat: cat in {"Archivado", "Artículos publicados"},
+        "fr": lambda cat: cat in {"Article archivé", "Article publié"},
+        "pt": lambda cat: cat in {"Arquivado", "Publicado"},
+    }
+}
+
+is_bad_wiki_link_funcs = {
+    "wiki": {
+        "en": lambda wl: wl.startswith("Wikipedia:") or wl.startswith("Help:"),
+        "pt": lambda wl: wl.startswith("Wikipédia:") or wl.startswith("Ajuda:"),
+    },
+    "wikinews": {
+        "de": lambda wl: wl.startswith("Wikinews:"),
+        "en": lambda wl: wl.startswith("Wikinews:") or wl.startswith("Template:") or wl.startswith("User:"),  # noqa
+        "es": lambda wl: wl.startswith("Wikinoticias:"),
+        "fr": lambda wl: wl.startswith("Wikinews:"),
+        "pt": lambda wl: wl.startswith("Wikinotícias:"),
+    }
+}
+
 
 class Wikimedia(Dataset):
     """
@@ -172,6 +199,10 @@ class Wikimedia(Dataset):
                 "has the dataset been downloaded yet?".format(
                     self.project, self.filepath)
             )
+
+        is_bad_category = is_bad_category_funcs.get(self.project, {}).get(self.lang)
+        is_bad_wiki_link = is_bad_wiki_link_funcs.get(self.project, {}).get(self.lang)
+
         lines = tio.read_json(self.filepath, mode="rb", lines=True)
         for index, source in itertoolz.partition(2, lines):
             if source.get("namespace") != self.namespace:
@@ -181,16 +212,31 @@ class Wikimedia(Dataset):
             text = source.get("text")
             if opening_text and text and text.startswith(opening_text):
                 text = opening_text + "\n\n" + text[len(opening_text):].strip()
+            # do minimal cleaning of categories and wiki links, if available
+            if is_bad_category:
+                categories = tuple(
+                    cat for cat in source.get("category", [])
+                    if not is_bad_category(cat)
+                )
+            else:
+                categories = tuple(source.get("category", []))
+            if is_bad_wiki_link:
+                wiki_links = tuple(
+                    wl for wl in source.get("outgoing_link", [])
+                    if not is_bad_wiki_link(wl)
+                )
+            else:
+                wiki_links = tuple(source.get("outgoing_link", []))
             yield {
                 "page_id": index["index"]["_id"],
                 "title": source["title"],
                 "text": text,
                 "headings": tuple(source.get("heading", [])),
-                "wiki_links": tuple(source.get("outgoing_link", [])),
+                "wiki_links": wiki_links,
                 "ext_links": tuple(
                     compat.url_unquote_plus(el)
                     for el in source.get("external_link", [])),
-                "categories": tuple(source.get("category", [])),
+                "categories": categories,
                 "dt_created": source.get("create_timestamp"),
                 "n_incoming_links": source.get("incoming_links"),
                 "popularity_score": source.get("popularity_score"),
