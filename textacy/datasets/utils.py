@@ -216,3 +216,30 @@ def validate_and_clip_range_filter(filter_range, full_range, val_type=None):
         )
         filter_range = (filter_range[0], full_range[1])
     return tuple(filter_range)
+
+
+def to_collection(val, col_type, val_type):
+    """
+    Validate and cast a filter value to a collection of filter values.
+
+    Args:
+        val (object)
+        col_type (type)
+        val_type (type)
+
+    Returns:
+        object: collection of type ``col_type`` with values all of type ``val_type``
+
+    Raises:
+        TypeError
+    """
+    if val is None:
+        return None
+    if isinstance(val, val_type):
+        return col_type([val])
+    elif isinstance(val, (tuple, list, set, frozenset)):
+        if not all(isinstance(v, val_type) for v in val):
+            raise TypeError()
+        return col_type(val)
+    else:
+        raise TypeError()
