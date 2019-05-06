@@ -54,10 +54,49 @@ RE_MOVIE_ID = re.compile(r"/(tt\d+)/")
 
 class IMDB(Dataset):
     """
-    TODO
+    Stream a collection of IMDB movie reviews from text files on disk,
+    either as texts or text + metadata pairs.
+
+    Download the data (one time only!), saving and extracting its contents to disk::
+
+        >>> imdb = IMDB()
+        >>> imdb.download()
+        >>> imdb.info
+        {'name': 'imdb',
+         'site_url': 'http://ai.stanford.edu/~amaas/data/sentiment',
+         'description': 'Collection of 50k highly polar movie reviews split evenly into train and test sets, with 25k positive and 25k negative labels. Also includes some unlabeled reviews.'}
+
+    Iterate over movie reviews as texts or records with both text and metadata::
+
+        >>> for text in ds.texts(limit=5):
+        ...     print(text)
+        >>> for text, meta in ds.records(limit=5):
+        ...     print("\\n{} {}\\n{}".format(meta["label"], meta["rating"], text))
+
+    Filter movie reviews by a variety of metadata fields and text length::
+
+        >>> for text, meta in ds.records(label="pos", limit=5):
+        ...     print(meta["rating"], ":", text)
+        >>> for text, meta in ds.records(rating_range=(9, 11), limit=5):
+        ...     print(meta["rating"], text)
+        >>> for text in ds.texts(min_len=1000, limit=5):
+        ...     print(len(text))
+
+    Stream movie reviews into a :class:`textacy.Corpus`::
+
+        >>> texts, metas = textacy.io.unzip(ds.records(limit=100))
+        >>> textacy.Corpus("en", texts=texts, metadatas=metas)
+        Corpus(100 docs; 24340 tokens)
+
+    Args:
+        data_dir (str): Path to directory on disk under which the data is stored.
+
+    Attributes:
+        min_rating (int): Lowest possible movie rating.
+        max_rating (str): Highest possible movie rating.
     """
 
-    min_rating = 0
+    min_rating = 1
     max_rating = 10
 
     def __init__(self, data_dir=DATA_DIR):
@@ -148,7 +187,7 @@ class IMDB(Dataset):
             fpath = os.path.join(
                 self._data_dir, "aclImdb", subset, "urls_{}.txt".format(label))
             self._movie_ids[subset][label] = {
-                id_: RE_MOVIE_ID(line).group(1)
+                id_: RE_MOVIE_ID.search(line).group(1)
                 for id_, line in enumerate(tio.read_text(fpath, mode="rt", lines=True))
             }
             return self._movie_ids[subset][label][id_]
