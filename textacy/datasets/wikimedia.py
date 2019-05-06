@@ -91,7 +91,7 @@ _bad_wiki_link_starts = {
     },
     "wikinews": {
         "de": ("Wikinews:", ),
-        # TODO: "el"
+        "el": ("Βικινέα", ),
         "en": ("Wikinews:", "Template:", "User:"),
         "es": ("Wikinoticias:", ),
         "fr": ("Wikinews:", ),
