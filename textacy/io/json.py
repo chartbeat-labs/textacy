@@ -11,8 +11,6 @@ import datetime
 import functools
 import json
 
-import ijson
-
 from .. import compat
 from .utils import open_sesame, _validate_read_mode, _validate_write_mode
 
@@ -27,34 +25,20 @@ def read_json(fname, mode="rt", encoding=None, lines=False):
         mode (str): Mode with which ``fname`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
             in ``fname``. Only applicable in text mode.
-        lines (str or bool): If False or '', all data is read in at once; if True,
-            items are read in one line at a time; if 'item', each item in the
-            top-level array is read in one at a time. Individual fields can also
-            be accessed; for example, if 'item.text', each array item's 'text'
-            value is read in one at a time.
+        lines (bool): If False, all data is read in at once; otherwise, data is
+            read in one line at a time.
 
     Yields:
-        object: Next matching JSON item; could be a dict, list, int, float, str,
+        object: Next JSON item; could be a dict, list, int, float, str,
         depending on the value of ``lines``.
-
-    See Also:
-        Refer to the ``ijson`` docs at https://pypi.python.org/pypi/ijson/
-        for usage details on specifying (sub-)items via ``lines`` as a string.
     """
     _validate_read_mode(mode)
-    if not isinstance(lines, (compat.unicode_, bytes, bool)):
-        raise ValueError(
-            'lines="{}" is invalid; must be a string or boolean value'.format(lines)
-        )
     with open_sesame(fname, mode=mode, encoding=encoding) as f:
-        if not lines:
+        if lines is False:
             yield json.load(f)
-        elif lines is True:
+        else:
             for line in f:
                 yield json.loads(line)
-        elif isinstance(lines, compat.string_types):
-            for item in ijson.items(f, lines):
-                yield item
 
 
 def read_json_mash(fname, mode="rt", encoding=None, buffer_size=2048):

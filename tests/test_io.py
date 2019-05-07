@@ -112,16 +112,6 @@ def test_read_write_json_unicode(tmpdir, spacy_doc):
             assert observed == expected
 
 
-def test_read_write_json_lines_str(tmpdir, spacy_doc):
-    to_write = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
-    for subfield in ("idx", "sent"):
-        expected = [item[subfield] for item in to_write]
-        filename = str(tmpdir.join("test_read_write_json_lines.json"))
-        io.write_json(to_write, filename, make_dirs=True)
-        observed = list(io.read_json(filename, lines="item." + subfield))
-        assert observed == expected
-
-
 def test_read_write_json_lines_bytes(tmpdir, spacy_doc):
     expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
     for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
