@@ -216,7 +216,7 @@ class OxfordTextArchive(Dataset):
             author = utils.validate_set_member_filter(
                 author, compat.string_types, valid_vals=self.authors)
             filters.append(
-                lambda record: record.get("author") and all(athr in author for athr in record["author"])
+                lambda record: record.get("author") and any(athr in author for athr in record["author"])
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
@@ -241,8 +241,9 @@ class OxfordTextArchive(Dataset):
         of metadata and/or text length, and yield texts only.
 
         Args:
-            author (str or Set[str]): Filter texts by the authors' name;
-                see :attr:`OxfordTextArchive.authors`.
+            author (str or Set[str]): Filter texts by the authors' name.
+                For multiple values (Set[str]), ANY rather than ALL of the authors
+                must be found among a given works's authors.
             date_range (List[str] or Tuple[str]): Filter texts by the date on
                 which it was published; both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date
