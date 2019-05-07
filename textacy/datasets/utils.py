@@ -24,11 +24,17 @@ LOGGER = logging.getLogger(__name__)
 
 def download_file(url, filename=None, dirpath=DATA_DIR, force=False):
     """
+    Download a file from ``url`` and save it to disk.
+
     Args:
-        url (str)
-        filename (str)
-        dirpath (str)
-        force (bool)
+        url (str): Web address from which to download data.
+        filename (str): Name of the file to which downloaded data is saved.
+            If None, a filename will be inferred from the ``url``.
+        dirpath (str): Full path to the directory on disk under which
+            downloaded data will be saved as ``filename``.
+        force (bool): If True, download the data even if it already exists at
+            ``dirpath/filename``; otherwise, only download if the data doesn't
+            already exist on disk.
 
     Returns:
         str
@@ -44,7 +50,6 @@ def download_file(url, filename=None, dirpath=DATA_DIR, force=False):
         return None
     else:
         write_http_stream(url, filepath, mode="wb", make_dirs=True)
-    # TODO: check the data to make sure all is well?
     return filepath
 
 
@@ -121,6 +126,37 @@ def unpack_archive(filepath, extract_dir=None):
             return os.path.join(extract_dir, src_basename)
 
 
+def to_collection(val, val_type, col_type):
+    """
+    Validate and cast a filter value to a collection of filter values.
+
+    Args:
+        val (object)
+        val_type (type)
+        col_type (type)
+
+    Returns:
+        object: collection of type ``col_type`` with values all of type ``val_type``
+
+    Raises:
+        TypeError
+    """
+    if val is None:
+        return None
+    if isinstance(val, val_type):
+        return col_type([val])
+    elif isinstance(val, (tuple, list, set, frozenset)):
+        if not all(isinstance(v, val_type) for v in val):
+            raise TypeError("not all values are of type {}".format(val_type))
+        return col_type(val)
+    else:
+        raise TypeError(
+            "values must be {} or a collection thereof, not {}".format(
+                val_type, type(val),
+            )
+        )
+
+
 def validate_set_member_filter(filter_vals, vals_type, valid_vals=None):
     """
     Validate filter values that must be of a certain type or
@@ -140,17 +176,7 @@ def validate_set_member_filter(filter_vals, vals_type, valid_vals=None):
         TypeError
         ValueError
     """
-    if isinstance(filter_vals, vals_type):
-        filter_vals = {filter_vals}
-    elif isinstance(filter_vals, (list, tuple)):
-        filter_vals = set(filter_vals)
-    if (not isinstance(filter_vals, set)
-            or not all(isinstance(fv, vals_type) for fv in filter_vals)):
-        raise TypeError(
-            "filter values must be {} or a set thereof, not {}".format(
-                vals_type, type(filter_vals),
-            )
-        )
+    filter_vals = to_collection(filter_vals, vals_type, set)
     if valid_vals is not None:
         if not all(filter_val in valid_vals for filter_val in filter_vals):
             raise ValueError(
@@ -216,30 +242,3 @@ def validate_and_clip_range_filter(filter_range, full_range, val_type=None):
         )
         filter_range = (filter_range[0], full_range[1])
     return tuple(filter_range)
-
-
-def to_collection(val, col_type, val_type):
-    """
-    Validate and cast a filter value to a collection of filter values.
-
-    Args:
-        val (object)
-        col_type (type)
-        val_type (type)
-
-    Returns:
-        object: collection of type ``col_type`` with values all of type ``val_type``
-
-    Raises:
-        TypeError
-    """
-    if val is None:
-        return None
-    if isinstance(val, val_type):
-        return col_type([val])
-    elif isinstance(val, (tuple, list, set, frozenset)):
-        if not all(isinstance(v, val_type) for v in val):
-            raise TypeError()
-        return col_type(val)
-    else:
-        raise TypeError()

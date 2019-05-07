@@ -237,8 +237,8 @@ class IMDB(Dataset):
         Yields:
             str: Text of the next movie review in dataset passing all filters.
         """
-        self._subset = utils.to_collection(subset, tuple, compat.string_types)
-        self._label = utils.to_collection(label, tuple, compat.string_types)
+        self._subset = utils.to_collection(subset, compat.string_types, tuple)
+        self._label = utils.to_collection(label, compat.string_types, tuple)
         try:
             filters = self._get_filters(rating_range, min_len)
             for record in itertools.islice(self._filtered_iter(filters), limit):
@@ -266,8 +266,8 @@ class IMDB(Dataset):
             str: Text of the next movie review in dataset passing all filters.
             dict: Metadata of the next movie review in dataset passing all filters.
         """
-        self._subset = utils.to_collection(subset, tuple, compat.string_types)
-        self._label = utils.to_collection(label, tuple, compat.string_types)
+        self._subset = utils.to_collection(subset, compat.string_types, tuple)
+        self._label = utils.to_collection(label, compat.string_types, tuple)
         try:
             filters = self._get_filters(rating_range, min_len)
             for record in itertools.islice(self._filtered_iter(filters), limit):
