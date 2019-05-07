@@ -95,10 +95,8 @@ class CapitolWords(Dataset):
             i.e. ``/path/to/data_dir/capitol_words`` .
 
     Attributes:
-        min_date (str): Earliest date for which speeches are available, as an
-            ISO-formatted string (YYYY-MM-DD).
-        max_date (str): Latest date for which speeches are available, as an
-            ISO-formatted string (YYYY-MM-DD).
+        full_date_range (Tuple[str]): First and last dates for which speeches
+            are available, each as an ISO-formatted string (YYYY-MM-DD).
         speaker_names (Set[str]): Full names of all speakers included in corpus,
             e.g. "Bernie Sanders".
         speaker_parties (Set[str]): All distinct political parties of speakers,
@@ -109,8 +107,7 @@ class CapitolWords(Dataset):
             speeches were given, e.g. 114.
     """
 
-    min_date = "1996-01-01"
-    max_date = "2016-06-30"
+    full_date_range = ("1996-01-01", "2016-06-30")
     speaker_names = {
         "Barack Obama",
         "Bernie Sanders",
@@ -198,10 +195,7 @@ class CapitolWords(Dataset):
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range,
-                (self.min_date, self.max_date),
-                val_type=compat.string_types,
-            )
+                date_range, self.full_date_range, val_type=compat.string_types)
             filters.append(
                 lambda record: (
                     record.get("date")

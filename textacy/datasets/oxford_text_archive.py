@@ -90,16 +90,13 @@ class OxfordTextArchive(Dataset):
             i.e. ``/path/to/data_dir/oxford_text_archive`` .
 
     Attributes:
-        min_date (str): Earliest date for which records are available, as an
-            ISO-formatted string ("YYYY-MM-DD").
-        max_date (str): Latest date for which records are available, as an
-            ISO-formatted string ("YYYY-MM-DD").
+        full_date_range (Tuple[str]): First and last dates for which works
+            are available, each as an ISO-formatted string (YYYY-MM-DD).
         authors (Set[str]): Full names of all distinct authors included in this
             dataset, e.g. "Shakespeare, William".
     """
 
-    min_date = "0018-01-01"
-    max_date = "1990-01-01"
+    full_date_range = ("0018-01-01", "1990-01-01")
 
     def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
         super(OxfordTextArchive, self).__init__(NAME, meta=META)
@@ -223,10 +220,7 @@ class OxfordTextArchive(Dataset):
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range,
-                (self.min_date, self.max_date),
-                val_type=compat.string_types,
-            )
+                date_range, self.full_date_range, val_type=compat.string_types)
             filters.append(
                 lambda record: record.get("year") and date_range[0] <= record["year"] < date_range[1]
             )

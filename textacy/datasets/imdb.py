@@ -92,12 +92,11 @@ class IMDB(Dataset):
         data_dir (str): Path to directory on disk under which the data is stored.
 
     Attributes:
-        min_rating (int): Lowest possible movie rating.
-        max_rating (str): Highest possible movie rating.
+        full_rating_range (Tuple[int]): Lowest and highest ratings for which
+            movie reviews are available.
     """
 
-    min_rating = 1
-    max_rating = 10
+    full_rating_range = (1, 10)
 
     def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
         super(IMDB, self).__init__(NAME, meta=META)
@@ -202,10 +201,7 @@ class IMDB(Dataset):
             )
         if rating_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                rating_range,
-                (self.min_rating, self.max_rating),
-                val_type=int,
-            )
+                rating_range, self.full_rating_range, val_type=int)
             filters.append(
                 lambda record: (
                     record.get("rating")

@@ -119,10 +119,8 @@ class SupremeCourt(Dataset):
             (a compressed json file like ``supreme-court-py3.json.gz``) is stored.
 
     Attributes:
-        min_date (str): Earliest date for which decisions are available, as an
-            ISO-formatted string ("YYYY-MM-DD").
-        max_date (str): Latest date for which decisions are available, as an
-            ISO-formatted string ("YYYY-MM-DD").
+        full_date_range (Tuple[str]): First and last dates for which decisions
+            are available, each as an ISO-formatted string (YYYY-MM-DD).
         decision_directions (Set[str]): All distinct decision directions,
             e.g. "liberal".
         opinion_author_codes (Dict[int, str]): Mapping of majority opinion authors,
@@ -133,11 +131,8 @@ class SupremeCourt(Dataset):
             case's core disagreement, from id code to description.
     """
 
-    min_date = "1946-11-18"
-    max_date = "2016-06-27"
-
+    full_date_range = ("1946-11-18", "2016-06-27")
     decision_directions = {"conservative", "liberal", "unspecifiable"}
-
     opinion_author_codes = {
         -1: None,
         1: "Jay, John",
@@ -255,7 +250,6 @@ class SupremeCourt(Dataset):
         113: "Sotomayor, Sonia",
         114: "Kagan, Elena",
     }
-
     issue_area_codes = {
         -1: None,
         1: "Criminal Procedure",
@@ -273,7 +267,6 @@ class SupremeCourt(Dataset):
         13: "Miscellaneous",
         14: "Private Action",
     }
-
     issue_codes = {
         "100010": "federal-state ownership dispute (cf. Submerged Lands Act)",
         "100020": "federal pre-emption of state court jurisdiction",
@@ -621,10 +614,7 @@ class SupremeCourt(Dataset):
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range,
-                (self.min_date, self.max_date),
-                val_type=compat.string_types,
-            )
+                date_range, self.full_date_range, val_type=compat.string_types)
             filters.append(
                 lambda record: (
                     record.get("decision_date")
