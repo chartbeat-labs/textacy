@@ -131,12 +131,12 @@ class CapitolWords(Dataset):
     chambers = {"Extensions", "House", "Senate"}
     congresses = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
 
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
         super(CapitolWords, self).__init__(NAME, meta=META)
-        self._data_dir = os.path.join(data_dir, NAME)
+        self.data_dir = data_dir
         self._filename = "capitol-words-py{py_version}.json.gz".format(
             py_version=2 if compat.PY2 else 3)
-        self._filepath = os.path.join(self._data_dir, self._filename)
+        self._filepath = os.path.join(self.data_dir, self._filename)
 
     @property
     def filepath(self):
@@ -166,7 +166,7 @@ class CapitolWords(Dataset):
         filepath = utils.download_file(
             url,
             filename=self._filename,
-            dirpath=self._data_dir,
+            dirpath=self.data_dir,
             force=force,
         )
 

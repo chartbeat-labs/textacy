@@ -99,9 +99,9 @@ class IMDB(Dataset):
     min_rating = 1
     max_rating = 10
 
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
         super(IMDB, self).__init__(NAME, meta=META)
-        self._data_dir = os.path.join(data_dir, NAME)
+        self.data_dir = data_dir
         self._movie_ids = {"train": {}, "test": {}}
         self._subset_labels = {
             "train": ("pos", "neg", "unsup"),
@@ -122,7 +122,7 @@ class IMDB(Dataset):
         filepath = utils.download_file(
             DOWNLOAD_URL,
             filename="aclImdb.tar.gz",
-            dirpath=self._data_dir,
+            dirpath=self.data_dir,
             force=force,
         )
         if filepath:
@@ -132,12 +132,12 @@ class IMDB(Dataset):
     def _check_data(self):
         """Check that necessary data is found on disk, or raise an OSError."""
         data_dirpaths = (
-            os.path.join(self._data_dir, "aclImdb", subset, label)
+            os.path.join(self.data_dir, "aclImdb", subset, label)
             for subset, labels in self._subset_labels.items()
             for label in labels
         )
         url_filepaths = (
-            os.path.join(self._data_dir, "aclImdb", subset, "urls_{}.txt".format(label))
+            os.path.join(self.data_dir, "aclImdb", subset, "urls_{}.txt".format(label))
             for subset, labels in self._subset_labels.items()
             for label in labels
         )
@@ -157,7 +157,7 @@ class IMDB(Dataset):
     def __iter__(self):
         self._check_data()
         dirpaths = tuple(
-            os.path.join(self._data_dir, "aclImdb", subset, label)
+            os.path.join(self.data_dir, "aclImdb", subset, label)
             for subset in self._subset or self._subset_labels.keys()
             for label in self._label or self._subset_labels[subset]
         )
@@ -185,7 +185,7 @@ class IMDB(Dataset):
             return self._movie_ids[subset][label][id_]
         except KeyError:
             fpath = os.path.join(
-                self._data_dir, "aclImdb", subset, "urls_{}.txt".format(label))
+                self.data_dir, "aclImdb", subset, "urls_{}.txt".format(label))
             self._movie_ids[subset][label] = {
                 id_: RE_MOVIE_ID.search(line).group(1)
                 for id_, line in enumerate(tio.read_text(fpath, mode="rt", lines=True))

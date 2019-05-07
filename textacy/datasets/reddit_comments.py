@@ -107,9 +107,9 @@ class RedditComments(Dataset):
     _min_score = -2147483647
     _max_score = 2147483647
 
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
         super(RedditComments, self).__init__(NAME, meta=META)
-        self._data_dir = os.path.join(data_dir, NAME)
+        self.data_dir = data_dir
         self._date_range = None
 
     @property
@@ -118,11 +118,11 @@ class RedditComments(Dataset):
         Tuple[str]: Full paths on disk for all Reddit comments files found under
         the ``data_dir`` directory, sorted chronologically.
         """
-        if os.path.isdir(self._data_dir):
+        if os.path.isdir(self.data_dir):
             return tuple(
                 sorted(
                     tio.get_filenames(
-                        self._data_dir,
+                        self.data_dir,
                         match_regex=r"RC_\d{4}",
                         extension=".bz2",
                         recursive=True,
@@ -157,7 +157,7 @@ class RedditComments(Dataset):
             filepath = utils.download_file(
                 compat.urljoin(DOWNLOAD_ROOT, filestub),
                 filename=filestub,
-                dirpath=self._data_dir,
+                dirpath=self.data_dir,
                 force=force,
             )
 
@@ -189,7 +189,7 @@ class RedditComments(Dataset):
         # for performance reasons, only iterate over files that are requested
         if self._date_range is not None:
             filepaths = [
-                os.path.join(self._data_dir, filestub)
+                os.path.join(self.data_dir, filestub)
                 for filestub in self._generate_filestubs(self._date_range)
             ]
             for filepath in filepaths:
@@ -203,7 +203,7 @@ class RedditComments(Dataset):
             if not filepaths:
                 raise OSError(
                     "no comments files found in {} directory;\n"
-                    "has the dataset been downloaded yet?".format(self._data_dir)
+                    "has the dataset been downloaded yet?".format(self.data_dir)
                 )
 
         for filepath in filepaths:

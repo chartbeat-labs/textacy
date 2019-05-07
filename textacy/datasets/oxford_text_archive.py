@@ -101,11 +101,11 @@ class OxfordTextArchive(Dataset):
     min_date = "0018-01-01"
     max_date = "1990-01-01"
 
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
         super(OxfordTextArchive, self).__init__(NAME, meta=META)
-        self._data_dir = os.path.join(data_dir, NAME)
-        self._text_dirpath = os.path.join(self._data_dir, "master", "text")
-        self._metadata_filepath = os.path.join(self._data_dir, "master", "metadata.tsv")
+        self.data_dir = data_dir
+        self._text_dirpath = os.path.join(self.data_dir, "master", "text")
+        self._metadata_filepath = os.path.join(self.data_dir, "master", "metadata.tsv")
         self._metadata = None
 
     def download(self, force=False):
@@ -120,7 +120,7 @@ class OxfordTextArchive(Dataset):
         filepath = utils.download_file(
             DOWNLOAD_URL,
             filename=None,
-            dirpath=self._data_dir,
+            dirpath=self.data_dir,
             force=force,
         )
         if filepath:
