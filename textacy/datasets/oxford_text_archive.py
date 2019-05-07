@@ -67,13 +67,13 @@ class OxfordTextArchive(Dataset):
         >>> for text in ota.texts(limit=3):
         ...     print(text[:200])
         >>> for text, meta in ota.records(limit=3):
-        ...     print("\n{}, {}".format(meta["title"], meta["year"]))
+        ...     print("\\n{}, {}".format(meta["title"], meta["year"]))
         ...     print(text[:300])
 
     Filter literary works by a variety of metadata fields and text length::
 
         >>> for text, meta in ota.records(author="Shakespeare, William", limit=1):
-        ...     print("{}\n{}".format(meta["title"], text[:500]))
+        ...     print("{}\\n{}".format(meta["title"], text[:500]))
         >>> for text, meta in ota.records(date_range=("1900-01-01", "1990-01-01"), limit=5):
         ...     print(meta["year"], meta["author"])
         >>> for text in ota.texts(min_len=4000000):
@@ -90,22 +90,19 @@ class OxfordTextArchive(Dataset):
             i.e. ``/path/to/data_dir/oxford_text_archive`` .
 
     Attributes:
-        min_date (str): Earliest date for which records are available, as an
-            ISO-formatted string ("YYYY-MM-DD").
-        max_date (str): Latest date for which records are available, as an
-            ISO-formatted string ("YYYY-MM-DD").
+        full_date_range (Tuple[str]): First and last dates for which works
+            are available, each as an ISO-formatted string (YYYY-MM-DD).
         authors (Set[str]): Full names of all distinct authors included in this
             dataset, e.g. "Shakespeare, William".
     """
 
-    min_date = "0018-01-01"
-    max_date = "1990-01-01"
+    full_date_range = ("0018-01-01", "1990-01-01")
 
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
         super(OxfordTextArchive, self).__init__(NAME, meta=META)
-        self._data_dir = os.path.join(data_dir, NAME)
-        self._text_dirpath = os.path.join(self._data_dir, "master", "text")
-        self._metadata_filepath = os.path.join(self._data_dir, "master", "metadata.tsv")
+        self.data_dir = data_dir
+        self._text_dirpath = os.path.join(self.data_dir, "master", "text")
+        self._metadata_filepath = os.path.join(self.data_dir, "master", "metadata.tsv")
         self._metadata = None
 
     def download(self, force=False):
@@ -120,7 +117,7 @@ class OxfordTextArchive(Dataset):
         filepath = utils.download_file(
             DOWNLOAD_URL,
             filename=None,
-            dirpath=self._data_dir,
+            dirpath=self.data_dir,
             force=force,
         )
         if filepath:
@@ -219,14 +216,11 @@ class OxfordTextArchive(Dataset):
             author = utils.validate_set_member_filter(
                 author, compat.string_types, valid_vals=self.authors)
             filters.append(
-                lambda record: record.get("author") and all(athr in author for athr in record["author"])
+                lambda record: record.get("author") and any(athr in author for athr in record["author"])
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range,
-                (self.min_date, self.max_date),
-                val_type=compat.string_types,
-            )
+                date_range, self.full_date_range, val_type=compat.string_types)
             filters.append(
                 lambda record: record.get("year") and date_range[0] <= record["year"] < date_range[1]
             )
@@ -247,8 +241,9 @@ class OxfordTextArchive(Dataset):
         of metadata and/or text length, and yield texts only.
 
         Args:
-            author (str or Set[str]): Filter texts by the authors' name;
-                see :attr:`OxfordTextArchive.authors`.
+            author (str or Set[str]): Filter texts by the authors' name.
+                For multiple values (Set[str]), ANY rather than ALL of the authors
+                must be found among a given works's authors.
             date_range (List[str] or Tuple[str]): Filter texts by the date on
                 which it was published; both start and end date must be specified,
                 but a null value for either will be replaced by the min/max date

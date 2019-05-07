@@ -26,13 +26,16 @@ Datasets
 .. automodule:: textacy.datasets.supreme_court
     :members:
 
-.. automodule:: textacy.datasets.wikipedia
+.. automodule:: textacy.datasets.wikimedia
     :members:
 
 .. automodule:: textacy.datasets.reddit_comments
     :members:
 
 .. automodule:: textacy.datasets.oxford_text_archive
+    :members:
+
+.. automodule:: textacy.datasets.imdb
     :members:
 
 .. automodule:: textacy.datasets.utils

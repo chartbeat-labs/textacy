@@ -91,9 +91,9 @@ class SupremeCourt(Dataset):
     Iterate over decisions as texts or records with both text and metadata::
 
         >>> for text in sc.texts(limit=3):
-        ...     print(text[:500], end="\n\n")
+        ...     print(text[:500], end="\\n\\n")
         >>> for text, meta in sc.records(limit=3):
-        ...     print("\n{} ({})\n{}".format(meta["case_name"], meta["decision_date"], text[:500]))
+        ...     print("\\n{} ({})\\n{}".format(meta["case_name"], meta["decision_date"], text[:500]))
 
     Filter decisions by a variety of metadata fields and text length::
 
@@ -103,7 +103,7 @@ class SupremeCourt(Dataset):
         ...                              issue_area={1, 9, 10}, limit=3):
         ...     print(meta["case_name"], meta["maj_opinion_author"], meta["n_maj_votes"])
         >>> for text, meta in sc.records(opinion_author=102, date_range=('1985-02-11', '1986-02-11')):
-        ...     print("\n{} ({})".format(meta["case_name"], meta["decision_date"]))
+        ...     print("\\n{} ({})".format(meta["case_name"], meta["decision_date"]))
         ...     print(sc.issue_codes[meta["issue"]], "=>", meta["decision_direction"])
         >>> for text in sc.texts(min_len=250000):
         ...     print(len(text))
@@ -119,10 +119,8 @@ class SupremeCourt(Dataset):
             (a compressed json file like ``supreme-court-py3.json.gz``) is stored.
 
     Attributes:
-        min_date (str): Earliest date for which decisions are available, as an
-            ISO-formatted string ("YYYY-MM-DD").
-        max_date (str): Latest date for which decisions are available, as an
-            ISO-formatted string ("YYYY-MM-DD").
+        full_date_range (Tuple[str]): First and last dates for which decisions
+            are available, each as an ISO-formatted string (YYYY-MM-DD).
         decision_directions (Set[str]): All distinct decision directions,
             e.g. "liberal".
         opinion_author_codes (Dict[int, str]): Mapping of majority opinion authors,
@@ -133,11 +131,8 @@ class SupremeCourt(Dataset):
             case's core disagreement, from id code to description.
     """
 
-    min_date = "1946-11-18"
-    max_date = "2016-06-27"
-
+    full_date_range = ("1946-11-18", "2016-06-27")
     decision_directions = {"conservative", "liberal", "unspecifiable"}
-
     opinion_author_codes = {
         -1: None,
         1: "Jay, John",
@@ -255,7 +250,6 @@ class SupremeCourt(Dataset):
         113: "Sotomayor, Sonia",
         114: "Kagan, Elena",
     }
-
     issue_area_codes = {
         -1: None,
         1: "Criminal Procedure",
@@ -273,7 +267,6 @@ class SupremeCourt(Dataset):
         13: "Miscellaneous",
         14: "Private Action",
     }
-
     issue_codes = {
         "100010": "federal-state ownership dispute (cf. Submerged Lands Act)",
         "100020": "federal pre-emption of state court jurisdiction",
@@ -555,12 +548,12 @@ class SupremeCourt(Dataset):
         "90520": "miscellaneous judicial power, especially diversity jurisdiction",
     }
 
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
         super(SupremeCourt, self).__init__(NAME, meta=META)
-        self._data_dir = os.path.join(data_dir, NAME)
+        self.data_dir = data_dir
         self._filename = "supreme-court-py{py_version}.json.gz".format(
             py_version=2 if compat.PY2 else 3)
-        self._filepath = os.path.join(self._data_dir, self._filename)
+        self._filepath = os.path.join(self.data_dir, self._filename)
 
     @property
     def filepath(self):
@@ -590,7 +583,7 @@ class SupremeCourt(Dataset):
         filepath = utils.download_file(
             url,
             filename=self._filename,
-            dirpath=self._data_dir,
+            dirpath=self.data_dir,
             force=force,
         )
 
@@ -621,10 +614,7 @@ class SupremeCourt(Dataset):
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range,
-                (self.min_date, self.max_date),
-                val_type=compat.string_types,
-            )
+                date_range, self.full_date_range, val_type=compat.string_types)
             filters.append(
                 lambda record: (
                     record.get("decision_date")

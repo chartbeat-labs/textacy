@@ -68,7 +68,7 @@ class RedditComments(Dataset):
         >>> for text in rc.texts(limit=5):
         ...     print(text)
         >>> for text, meta in rc.records(limit=5):
-        ...     print("\n{} {}\n{}".format(meta["author"], meta["created_utc"], text))
+        ...     print("\\n{} {}\\n{}".format(meta["author"], meta["created_utc"], text))
 
     Filter comments by a variety of metadata fields and text length::
 
@@ -93,23 +93,19 @@ class RedditComments(Dataset):
             "YYYY/RC_YYYY-MM.bz2".
 
     Attributes:
-        min_date (str): Earliest date for which comments are available, as an
-            ISO-formatted string ("YYYY-MM-DD").
-        max_date (str): Latest date for which comments are available, as an
-            ISO-formatted string ("YYYY-MM-DD").
+        full_date_range (Tuple[str]): First and last dates for which comments
+            are available, each as an ISO-formatted string (YYYY-MM-DD).
         filenames (Tuple[str]): Full paths on disk for all Reddit comments files
             found under :attr:`ReddictComments.data_dir` directory, sorted
             in chronological order.
     """
 
-    min_date = "2007-10-01"
-    max_date = "2015-06-01"
-    _min_score = -2147483647
-    _max_score = 2147483647
+    full_date_range = ("2007-10-01", "2015-06-01")
+    _full_score_range = (-2147483647, 2147483647)
 
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
         super(RedditComments, self).__init__(NAME, meta=META)
-        self._data_dir = os.path.join(data_dir, NAME)
+        self.data_dir = data_dir
         self._date_range = None
 
     @property
@@ -118,11 +114,11 @@ class RedditComments(Dataset):
         Tuple[str]: Full paths on disk for all Reddit comments files found under
         the ``data_dir`` directory, sorted chronologically.
         """
-        if os.path.isdir(self._data_dir):
+        if os.path.isdir(self.data_dir):
             return tuple(
                 sorted(
                     tio.get_filenames(
-                        self._data_dir,
+                        self.data_dir,
                         match_regex=r"RC_\d{4}",
                         extension=".bz2",
                         recursive=True,
@@ -148,16 +144,13 @@ class RedditComments(Dataset):
                 exists on disk under ``data_dir``.
         """
         date_range = utils.validate_and_clip_range_filter(
-            date_range,
-            (self.min_date, self.max_date),
-            val_type=compat.string_types,
-        )
+            date_range, self.full_date_range, val_type=compat.string_types)
         filestubs = self._generate_filestubs(date_range)
         for filestub in filestubs:
             filepath = utils.download_file(
                 compat.urljoin(DOWNLOAD_ROOT, filestub),
                 filename=filestub,
-                dirpath=self._data_dir,
+                dirpath=self.data_dir,
                 force=force,
             )
 
@@ -189,7 +182,7 @@ class RedditComments(Dataset):
         # for performance reasons, only iterate over files that are requested
         if self._date_range is not None:
             filepaths = [
-                os.path.join(self._data_dir, filestub)
+                os.path.join(self.data_dir, filestub)
                 for filestub in self._generate_filestubs(self._date_range)
             ]
             for filepath in filepaths:
@@ -203,7 +196,7 @@ class RedditComments(Dataset):
             if not filepaths:
                 raise OSError(
                     "no comments files found in {} directory;\n"
-                    "has the dataset been downloaded yet?".format(self._data_dir)
+                    "has the dataset been downloaded yet?".format(self.data_dir)
                 )
 
         for filepath in filepaths:
@@ -230,10 +223,7 @@ class RedditComments(Dataset):
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range,
-                (self.min_date, self.max_date),
-                val_type=compat.string_types,
-            )
+                date_range, self.full_date_range, val_type=compat.string_types)
             filters.append(
                 lambda record: (
                     record.get("created_utc")
@@ -242,10 +232,7 @@ class RedditComments(Dataset):
             )
         if score_range is not None:
             score_range = utils.validate_and_clip_range_filter(
-                score_range,
-                (self._min_score, self._max_score),
-                val_type=(int, float),
-            )
+                score_range, self._full_score_range, val_type=(int, float))
             filters.append(
                 lambda record: (
                     record.get("score")

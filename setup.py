@@ -11,7 +11,6 @@ INSTALL_REQUIRES = [
     "cytoolz>=0.8.0",
     "ftfy>=4.2.0,<5.0.0",
     "ijson>=2.3",
-    "mwparserfromhell>=0.4.4",
     "networkx>=1.11",
     "numpy>=1.9.0,<2.0.0",
     "pyemd>=0.3.0",

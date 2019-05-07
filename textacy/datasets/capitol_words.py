@@ -67,14 +67,14 @@ class CapitolWords(Dataset):
     Iterate over speeches as texts or records with both text and metadata::
 
         >>> for text in cw.texts(limit=3):
-        ...     print(text, end="\n\n")
+        ...     print(text, end="\\n\\n")
         >>> for text, meta in cw.records(limit=3):
-        ...     print("\n{} ({})\n{}".format(meta["title"], meta["speaker_name"], text))
+        ...     print("\\n{} ({})\\n{}".format(meta["title"], meta["speaker_name"], text))
 
     Filter speeches by a variety of metadata fields and text length::
 
         >>> for text, meta in cw.records(speaker_name="Bernie Sanders", limit=3):
-        ...     print("\n{}, {}\n{}".format(meta["title"], meta["date"], text))
+        ...     print("\\n{}, {}\\n{}".format(meta["title"], meta["date"], text))
         >>> for text, meta in cw.records(speaker_party="D", congress={110, 111, 112},
         ...                          chamber="Senate", limit=3):
         ...     print(meta["title"], meta["speaker_name"], meta["date"])
@@ -95,10 +95,8 @@ class CapitolWords(Dataset):
             i.e. ``/path/to/data_dir/capitol_words`` .
 
     Attributes:
-        min_date (str): Earliest date for which speeches are available, as an
-            ISO-formatted string (YYYY-MM-DD).
-        max_date (str): Latest date for which speeches are available, as an
-            ISO-formatted string (YYYY-MM-DD).
+        full_date_range (Tuple[str]): First and last dates for which speeches
+            are available, each as an ISO-formatted string (YYYY-MM-DD).
         speaker_names (Set[str]): Full names of all speakers included in corpus,
             e.g. "Bernie Sanders".
         speaker_parties (Set[str]): All distinct political parties of speakers,
@@ -109,8 +107,7 @@ class CapitolWords(Dataset):
             speeches were given, e.g. 114.
     """
 
-    min_date = "1996-01-01"
-    max_date = "2016-06-30"
+    full_date_range = ("1996-01-01", "2016-06-30")
     speaker_names = {
         "Barack Obama",
         "Bernie Sanders",
@@ -131,12 +128,12 @@ class CapitolWords(Dataset):
     chambers = {"Extensions", "House", "Senate"}
     congresses = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
 
-    def __init__(self, data_dir=DATA_DIR):
+    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
         super(CapitolWords, self).__init__(NAME, meta=META)
-        self._data_dir = os.path.join(data_dir, NAME)
+        self.data_dir = data_dir
         self._filename = "capitol-words-py{py_version}.json.gz".format(
             py_version=2 if compat.PY2 else 3)
-        self._filepath = os.path.join(self._data_dir, self._filename)
+        self._filepath = os.path.join(self.data_dir, self._filename)
 
     @property
     def filepath(self):
@@ -166,7 +163,7 @@ class CapitolWords(Dataset):
         filepath = utils.download_file(
             url,
             filename=self._filename,
-            dirpath=self._data_dir,
+            dirpath=self.data_dir,
             force=force,
         )
 
@@ -198,10 +195,7 @@ class CapitolWords(Dataset):
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range,
-                (self.min_date, self.max_date),
-                val_type=compat.string_types,
-            )
+                date_range, self.full_date_range, val_type=compat.string_types)
             filters.append(
                 lambda record: (
                     record.get("date")

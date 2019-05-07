@@ -66,7 +66,7 @@ def test_records_author():
     for author in authors:
         records = list(DATASET.records(author=author, limit=3))
         assert len(records) >= 1
-        assert all(
+        assert any(
             athr in author
             for text, meta in records
             for athr in meta["author"]
