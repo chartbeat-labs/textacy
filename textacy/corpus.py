@@ -1,48 +1,42 @@
 # -*- coding: utf-8 -*-
 """
-Load, process, iterate, transform, and save a collection of documents — a corpus.
+Corpus
+------
+
+An ordered collection of :class:`spacy.tokens.Doc`, all of the same language
+and sharing the same :class:`spacy.language.Language` processing pipeline
+and vocabulary, with data held *in-memory*. Includes functionality for
+easily adding, getting, and removing of documents; saving to / loading from disk;
+and tracking basic corpus statistics.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import collections
-import copy
+import io
+import itertools
 import logging
-import math
-import multiprocessing
-import os
+from collections.abc import Iterable
 
 import numpy as np
+import spacy
+import srsly
 from cytoolz import itertoolz
-from spacy.language import Language as SpacyLang
-from spacy.pipeline import DependencyParser
-from spacy.tokens.doc import Doc as SpacyDoc
-from spacy.util import get_lang_class
+from thinc.neural.ops import NumpyOps
 
 from . import cache
 from . import compat
-from . import io
-from . import utils
-from .doc import Doc
-
-LOGGER = logging.getLogger(__name__)
 
 
 class Corpus(object):
     """
-    An ordered collection of :class:`Doc <textacy.doc.Doc>` s, all of the
-    same language and sharing the same ``spacy.Language`` models and vocabulary.
-    Track corpus statistics; flexibly add, iterate through, filter for, and
-    remove documents; save and load parsed content and metadata to and from
-    disk; and more.
+    An ordered collection of :class:`spacy.tokens.Doc`, all of the same language
+    and sharing the same :class:`spacy.language.Language` processing pipeline
+    and vocabulary, with data held *in-memory*.
 
     Initialize from a stream of texts and corresponding metadatas::
 
-        >>> cw = textacy.datasets.CapitolWords()
-        >>> records = cw.docs(limit=50)
-        >>> text_stream, metadata_stream = textacy.io.split_records(
-        ...     records, 'text')
-        >>> corpus = textacy.Corpus(
-        ...     'en', texts=text_stream, metadatas=metadata_stream)
+        >>> ds = textacy.datasets.CapitolWords()
+        >>> records = ds.records(limit=50)
+        >>> corpus = textacy.Corpus("en", data=records)
         >>> print(corpus)
         Corpus(50 docs; 32163 tokens)
 
@@ -54,7 +48,7 @@ class Corpus(object):
         [Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work..."),
          Doc(219 tokens; "Mr. Speaker, a relationship, to work and surviv..."),
          Doc(336 tokens; "Mr. Speaker, I thank the gentleman for yielding...")]
-        >>> match_func = lambda doc: doc.metadata['speaker_name'] == 'Bernie Sanders'
+        >>> match_func = lambda doc: doc.metadata["speaker_name"] == "Bernie Sanders"
         >>> for doc in corpus.get(match_func, limit=3):
         ...     print(doc)
         Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work...")
@@ -63,115 +57,54 @@ class Corpus(object):
 
     Add and remove documents, with automatic updating of corpus statistics::
 
-        >>> records = cw.docs(congress=114, limit=25)
-        >>> text_stream, metadata_stream = textacy.io.split_records(
-        ...     records, 'text')
-        >>> corpus.add_texts(text_stream, metadatas=metadata_stream)
+        >>> records = ds.records(congress=114, limit=25)
+        >>> corpus.add(records)
         >>> print(corpus)
         Corpus(75 docs; 55869 tokens)
-        >>> corpus.remove(lambda doc: doc.metadata['speaker_name'] == 'Rick Santorum')
+        >>> corpus.remove(lambda doc: doc.metadata["speaker_name"] == "Rick Santorum")
         >>> print(corpus)
         Corpus(60 docs; 48532 tokens)
         >>> del corpus[:5]
         >>> print(corpus)
         Corpus(55 docs; 47444 tokens)
 
-    Get word and doc frequencies in absolute, relative, or binary form:
+    Get word and doc frequencies in absolute, relative, or binary form? TBD.
 
-        >>> counts = corpus.word_freqs(lemmatize=True, weighting='count')
-        >>> idf = corpus.word_doc_freqs(lemmatize=True, weighting='idf')
+    Save corpus data to and load from disk::
 
-    Save to and load from disk::
-
-        >>> corpus.save('~/Desktop/congress.pkl')
-        >>> corpus = textacy.Corpus.load('~/Desktop/congress.pkl')
+        >>> corpus.save("~/Desktop/capitol_words_sample.bin")
+        >>> corpus = textacy.Corpus.load("en", "~/Desktop/capitol_words_sample.bin")
         >>> print(corpus)
         Corpus(55 docs; 47444 tokens)
 
     Args:
-        lang (str or ``spacy.Language``): Language of content for all docs in
-            corpus. Pass a standard 2-letter language code (e.g. "en") or the name
-            of a spacy model for the desired language (e.g. "en_core_web_md")
-            or an already-instantiated ``spacy.Language`` object. If a str, the
-            value is used to instantiate the corresponding ``spacy.Language``
-            with all models loaded by default, and the appropriate 2-letter lang
-            code is assigned to :attr:`Corpus.lang`.
-
-            **Note:** The ``spacy.Language`` object parses all documents contents
-            and sets the :attr:`spacy_vocab` and :attr:`spacy_stringstore`
-            attributes. See https://spacy.io/docs/usage/models#available for
-            available spacy models.
-        texts (Iterable[str]): Stream of documents as (unicode) text, to be
-            processed by spaCy and added to the corpus as
-            :class:`Doc <textacy.doc.Doc>` s.
-        docs (Iterable[:class:`Doc <textacy.doc.Doc>`] or Iterable[``spacy.Doc``]):
-            Stream of documents already-processed by spaCy alone or via textacy.
-        metadatas (Iterable[dict]): Stream of dictionaries of relevant doc
-            metadata. **Note:** This stream must align exactly with ``texts`` or
-            ``docs``, or else metadata will be mis-assigned. More concretely,
-            the first item in ``metadatas`` will be assigned to the first item
-            in ``texts`` or ``docs``, and so on from there.
+        lang (str or :class:`spacy.language.Language`)
+        data (obj or Iterable[obj])
 
     Attributes:
-        lang (str): 2-letter code for language of documents in :class:`Corpus`.
-        n_docs (int): Number of documents in :class:`Corpus`.
-        n_tokens (int): Total number of tokens of all documents in :class:`Corpus`.
-        n_sents (int): Total number of sentences of all documents in :class:`Corpus`.
-            If the ``spacy.Language`` used to process documents did not include
-            a syntactic parser, upon which sentence segmentation relies, this
-            value will be null.
-        docs (List[:class:`Doc <textacy.doc.Doc>`]): List of documents in
-            :class:`Corpus`. In 99% of cases, you should never have to interact
-            directly with this list; instead, index and slice directly on
-            :class:`Corpus` or use the flexible :meth:`Corpus.get() <Corpus.get>`
-            and :meth:`Corpus.remove() <Corpus.remove>` methods.
-        spacy_lang (``spacy.Language``): http://spacy.io/docs/#english
-        spacy_vocab (``spacy.Vocab``): https://spacy.io/docs#vocab
-        spacy_stringstore (``spacy.StringStore``): https://spacy.io/docs#stringstore
+        lang (str)
+        spacy_lang (:class:`spacy.language.Language`)
+        docs (List[:class:`spacy.tokens.Doc`])
+        n_docs (int)
+        n_sents (int)
+        n_tokens (int)
     """
 
-    def __init__(self, lang, texts=None, docs=None, metadatas=None):
-        if isinstance(lang, compat.unicode_):
-            self.spacy_lang = cache.load_spacy(lang)
-        elif isinstance(lang, SpacyLang):
-            self.spacy_lang = lang
-        else:
-            raise TypeError(
-                "`lang` must be {}, not {}".format(
-                    {compat.unicode_, SpacyLang}, type(lang)
-                )
-            )
+    def __init__(self, lang, data=None):
+        self.spacy_lang = _get_spacy_lang(lang)
         self.lang = self.spacy_lang.lang
-        self.spacy_vocab = self.spacy_lang.vocab
-        self.spacy_stringstore = self.spacy_vocab.strings
         self.docs = []
+        self._doc_ids = []
         self.n_docs = 0
+        self.n_sents = 0
         self.n_tokens = 0
-        # sentence segmentation requires parse; if not available, skip it
-        if self.spacy_lang.has_pipe("parser") or any(
-            isinstance(pipe[1], DependencyParser) for pipe in self.spacy_lang.pipeline
-        ):
-            self.n_sents = 0
-        else:
-            self.n_sents = None
+        if data:
+            self.add(data)
 
-        if texts and docs:
-            msg = (
-                "Corpus may be initialized with either `texts` or `docs`, but not both."
-            )
-            raise ValueError(msg)
-        if texts:
-            self.add_texts(texts, metadatas=metadatas)
-        elif docs:
-            if metadatas:
-                for doc, metadata in compat.zip_(docs, metadatas):
-                    self.add_doc(doc, metadata=metadata)
-            else:
-                for doc in docs:
-                    self.add_doc(doc)
+    # dunder
 
     def __repr__(self):
-        return "Corpus({} docs; {} tokens)".format(self.n_docs, self.n_tokens)
+        return "Corpus({} docs, {} tokens)".format(self.n_docs, self.n_tokens)
 
     def __len__(self):
         return self.n_docs
@@ -180,217 +113,179 @@ class Corpus(object):
         for doc in self.docs:
             yield doc
 
+    def __contains__(self, doc):
+        return id(doc) in self._doc_ids
+
     def __getitem__(self, idx_or_slice):
         return self.docs[idx_or_slice]
 
     def __delitem__(self, idx_or_slice):
         if isinstance(idx_or_slice, int):
-            self._remove_one_doc_by_index(idx_or_slice)
+            self._remove_doc_by_index(idx_or_slice)
         elif isinstance(idx_or_slice, slice):
             start, end, step = idx_or_slice.indices(self.n_docs)
-            indexes = compat.range_(start, end, step)
-            self._remove_many_docs_by_index(indexes)
+            for idx in compat.range_(start, end, step):
+                self._remove_doc_by_index(idx)
         else:
-            msg = 'value must be {}, not "{}"'.format({int, slice}, type(idx_or_slice))
-            raise ValueError(msg)
+            raise TypeError()  # TODO
 
-    @property
-    def vectors(self):
-        """Constituent docs' word vectors stacked together in a matrix."""
-        return np.vstack((doc.spacy_doc.vector for doc in self))
+    # add documents
 
-    ##########
-    # FILEIO #
-
-    def save(self, filepath):
+    def add(self, data, batch_size=1000):
         """
-        Save :class:`Corpus` documents' content and metadata to disk,
-        as a ``pickle`` file.
+        Add one or a stream of texts, records, or :class:`spacy.tokens.Doc`s
+        to the corpus, ensuring that all processing is or has already been done
+        by the :attr:`Corpus.spacy_lang` pipeline.
 
         Args:
-            filepath (str): Full path to file on disk where documents' content and
-                metadata are to be saved.
+            data (obj or Iterable[obj]):
+                str or Iterable[str]
+                Tuple[str, dict] or Iterable[Tuple[str, dict]]
+                :class:`spacy.tokens.Doc` or Iterable[:class:`spacy.tokens.Doc`]
+            batch_size (int)
 
         See Also:
-            :meth:`Corpus.load()`
+            * :meth:`Corpus.add_text()`
+            * :meth:`Corpus.add_texts()`
+            * :meth:`Corpus.add_record()`
+            * :meth:`Corpus.add_records()`
+            * :meth:`Corpus.add_doc()`
+            * :meth:`Corpus.add_docs()`
         """
-        # HACK: add spacy language metadata to first doc's user_data
-        # so we can re-instantiate the same language upon Corpus.load()
-        self[0].spacy_doc.user_data["textacy"]["spacy_lang_meta"] = self.spacy_lang.meta
-        io.write_spacy_docs((doc.spacy_doc for doc in self), filepath)
+        if isinstance(data, compat.unicode_):
+            self.add_text(data)
+        elif isinstance(data, spacy.tokens.Doc):
+            self.add_doc(data)
+        elif self._is_record(data):
+            self.add_record(data)
+        elif isinstance(data, Iterable):
+            first, data = itertoolz.peek(data)
+            if isinstance(first, compat.unicode_):
+                self.add_texts(data, batch_size=batch_size)
+            elif isinstance(first, spacy.tokens.Doc):
+                self.add_docs(data)
+            elif self._is_record(first):
+                self.add_records(data, batch_size=batch_size)
+            else:
+                raise TypeError()  # TODO
+        else:
+            raise TypeError()  # TODO
 
-    @classmethod
-    def load(cls, filepath):
+    def add_text(self, text):
         """
-        Load documents' pickled content and metadata from disk, and initialize
-        a :class:`Corpus` with a spacy language pipeline equivalent to what was
-        in use previously, when the corpus was saved.
+        Add one text to the corpus, processing it into a :class:`spacy.tokens.Doc`
+        using the :attr:`Corpus.spacy_lang` pipeline.
 
         Args:
-            filepath (str): Full path to file on disk where documents' content and
-                metadata are saved.
-
-        Returns:
-            :class:`Corpus`
-
-        See Also:
-            :meth:`Corpus.save()`
+            text (str)
         """
-        spacy_docs = io.read_spacy_docs(filepath)
-        # HACK: pop spacy language metadata from first doc's user_data
-        # so we can (more or less...) re-instantiate the same language pipeline
-        first_spacy_doc, spacy_docs = itertoolz.peek(spacy_docs)
-        spacy_lang_meta = first_spacy_doc.user_data["textacy"].pop("spacy_lang_meta")
-        # manually instantiate the spacy language pipeline and
-        # hope that the spacy folks either make this easier or don't touch it
-        spacy_lang = get_lang_class(spacy_lang_meta["lang"])(
-            vocab=first_spacy_doc.vocab, meta=spacy_lang_meta
-        )
-        for name in spacy_lang_meta["pipeline"]:
-            spacy_lang.add_pipe(spacy_lang.create_pipe(name))
-        return cls(spacy_lang, docs=spacy_docs)
+        self._add_valid_doc(self.spacy_lang(text))
 
-    #################
-    # ADD DOCUMENTS #
+    def add_texts(self, texts, batch_size=1000):
+        """
+        Add a stream of texts to the corpus, efficiently processing them into
+        :class:`spacy.tokens.Doc`s using the :attr:`Corpus.spacy_lang` pipeline.
 
-    def _add_textacy_doc(self, doc):
-        doc.corpus_index = self.n_docs
-        doc.corpus = self
+        Args:
+            texts (Iterable[str])
+            batch_size (int)
+        """
+        for doc in self.spacy_lang.pipe(texts, as_tuples=False, batch_size=batch_size):
+            self._add_valid_doc(doc)
+
+    def add_record(self, record):
+        """
+        Add one record to the corpus, processing it into a :class:`spacy.tokens.Doc`
+        using the :attr:`Corpus.spacy_lang` pipeline.
+
+        Args:
+            record (Tuple[str, dict])
+        """
+        doc = self.spacy_lang(record[0])
+        # doc._.metadata = record[1]
+        doc.user_data.get("textacy", {})["metadata"] = record[1]
+        self._add_valid_doc(doc)
+
+    def add_records(self, records, batch_size=1000):
+        """
+        Add a stream of records to the corpus, efficiently processing them into
+        :class:`spacy.tokens.Doc`s using the :attr:`Corpus.spacy_lang` pipeline.
+
+        Args:
+            records (Iterable[Tuple[str, dict]])
+            batch_size (int)
+        """
+        for doc, meta in self.spacy_lang.pipe(records, as_tuples=True, batch_size=batch_size):
+            # doc._.metadata = meta
+            doc.user_data.get("textacy", {})["metadata"] = meta
+            self._add_valid_doc(doc)
+
+    def add_doc(self, doc):
+        """
+        Add one :class:`spacy.tokens.Doc` to the corpus, provided it was processed
+        using the :attr:`Corpus.spacy_lang` pipeline.
+
+        Args:
+            doc (:class:`spacy.tokens.Doc`)
+        """
+        if not isinstance(doc, spacy.tokens.Doc):
+            raise TypeError()  # TODO
+        if doc.vocab is not self.spacy_lang.vocab:
+            raise ValueError()  # TODO
+        self._add_valid_doc(doc)
+
+    def add_docs(self, docs):
+        """
+        Add a stream of :class:`spacy.tokens.Doc` to the corpus, provided
+        they were processed using the :attr:`Corpus.spacy_lang` pipeline.
+
+        Args:
+            doc (Iterable[:class:`spacy.tokens.Doc`])
+        """
+        for doc in docs:
+            self.add_doc(doc)
+
+    def _add_valid_doc(self, doc):
         self.docs.append(doc)
+        self._doc_ids.append(id(doc))
         self.n_docs += 1
-        self.n_tokens += doc.n_tokens
-        # sentence segmentation requires parse; if not available, skip it
-        if self.spacy_lang.has_pipe("parser") or any(
-            isinstance(pipe[1], DependencyParser) for pipe in self.spacy_lang.pipeline
+        self.n_tokens += len(doc)
+        if doc.is_sentenced:
+            self.n_sents += sum(1 for _ in doc.sents)
+
+    def _is_record(self, obj):
+        if (
+            isinstance(obj, (tuple, list))
+            and len(obj) == 2
+            and isinstance(obj[0], compat.unicode_)
+            and isinstance(obj[1], dict)
         ):
-            self.n_sents += doc.n_sents
-        LOGGER.debug("added %s to Corpus[%s]", doc, doc.corpus_index)
-
-    def add_texts(self, texts, metadatas=None, n_threads=None, batch_size=1000):
-        """
-        Process a stream of texts (and a corresponding stream of metadata dicts,
-        optionally) in parallel with spaCy; add as :class:`Doc <textacy.doc.Doc>` s
-        to the corpus.
-
-        Args:
-            texts (Iterable[str]): Stream of texts to add to corpus as
-                :class:`Doc <textacy.doc.Doc>` s.
-            metadatas (Iterable[dict]): Stream of dictionaries of relevant
-                document metadata.
-
-                .. note:: This stream must align exactly with ``texts``, or
-                   metadata will be mis-assigned to texts. More concretely,
-                   the first item in ``metadatas`` will be assigned to
-                   the first item in ``texts``, and so on from there.
-
-            n_threads (int): Number of threads to use when processing ``texts``
-            in parallel, if available. DEPRECATED! This never worked correctly
-                in spacy v2.0, and no longer does in anything in spacy v2.1.
-            batch_size (int): Number of texts to process at a time.
-
-        See Also:
-            - :func:`io.split_records() <textacy.io.utils.split_records>`
-            - https://spacy.io/api/language#pipe
-        """
-        if n_threads is not None:
-            utils.deprecated(
-                "The `n_threads` arg never worked correctly in spacy v2.0, and "
-                "doesn't do anything in spacy v2.1, so textacy won't pass it on.",
-                action="once",
-            )
-        spacy_docs = self.spacy_lang.pipe(texts, batch_size=batch_size)
-        if metadatas:
-            for i, (spacy_doc, metadata) in enumerate(
-                compat.zip_(spacy_docs, metadatas)
-            ):
-                self._add_textacy_doc(
-                    Doc(spacy_doc, lang=self.spacy_lang, metadata=metadata)
-                )
-                if i % batch_size == 0:
-                    LOGGER.info("adding texts to %s...", self)
+            return True
         else:
-            for i, spacy_doc in enumerate(spacy_docs):
-                self._add_textacy_doc(
-                    Doc(spacy_doc, lang=self.spacy_lang, metadata=None)
-                )
-                if i % batch_size == 0:
-                    LOGGER.info("adding texts to %s...", self)
+            return False
 
-    def add_text(self, text, metadata=None):
+    # get documents
+
+    def get(self, match_func, limit=None):
         """
-        Create a :class:`Doc <textacy.doc.Doc>` from ``text`` and ``metadata``,
-        then add it to the corpus.
+        Get all (or N <= ``limit``) docs in :class:`Corpus` for which
+        ``match_func(doc)`` is True.
 
         Args:
-            text (str): Document (text) content to add to corpus as a
-                :class:`Doc <textacy.doc.Doc>`.
-            metadata (dict): Dictionary of relevant document metadata.
-        """
-        self._add_textacy_doc(Doc(text, lang=self.spacy_lang, metadata=metadata))
-
-    def add_doc(self, doc, metadata=None):
-        """
-        Add an existing :class:`Doc <textacy.doc.Doc>` or initialize a
-        new one from a ``spacy.Doc`` to the corpus.
-
-        Args:
-            doc (:class:`Doc <textacy.doc.Doc>` or ``spacy.Doc``)
-            metadata (dict): Dictionary of relevant document metadata. Note:
-                If specified, this will *overwrite* any existing metadata.
-
-        Warning:
-            If ``doc`` was already added to this or another :class:`Corpus`,
-            it will be deep-copied and then added as if a new document. A warning
-            message will be logged. This is probably not a thing you should do.
-        """
-        if isinstance(doc, Doc):
-            if doc.spacy_vocab is not self.spacy_vocab:
-                msg = "Doc.spacy_vocab {} != Corpus.spacy_vocab {}".format(
-                    doc.spacy_vocab, self.spacy_vocab
-                )
-                raise ValueError(msg)
-            if hasattr(doc, "corpus_index"):
-                doc = copy.deepcopy(doc)
-                LOGGER.warning("Doc already associated with a Corpus; adding anyway...")
-            if metadata is not None:
-                doc.metadata = metadata
-            self._add_textacy_doc(doc)
-        elif isinstance(doc, SpacyDoc):
-            if doc.vocab is not self.spacy_vocab:
-                msg = "SpacyDoc.vocab {} != Corpus.spacy_vocab {}".format(
-                    doc.vocab, self.spacy_vocab
-                )
-                raise ValueError(msg)
-            metadata = metadata or doc.user_data.get("textacy", {}).get("metadata")
-            self._add_textacy_doc(Doc(doc, lang=self.spacy_lang, metadata=metadata))
-        else:
-            msg = '`doc` must be {}, not "{}"'.format({Doc, SpacyDoc}, type(doc))
-            raise ValueError(msg)
-
-    #################
-    # GET DOCUMENTS #
-
-    def get(self, match_func, limit=-1):
-        """
-        Iterate over docs in :class:`Corpus` and return all (or N <= ``limit``)
-        for which ``match_func(doc)`` is True.
-
-        Args:
-            match_func (func): Function that takes a :class:`Doc <textacy.doc.Doc>`
+            match_func (Callable): Function that takes a :class:`spacy.tokens.Doc`
                 as input and returns a boolean value. For example::
 
                     Corpus.get(lambda x: len(x) >= 100)
 
-                gets all docs with 100+ tokens. And::
+                gets all docs with at least 100 tokens. And::
 
-                    Corpus.get(lambda x: x.metadata['author'] == 'Burton DeWilde')
+                    Corpus.get(lambda doc: doc.metadata["author"] == "Burton DeWilde")
 
                 gets all docs whose author was given as 'Burton DeWilde'.
             limit (int): Maximum number of matched docs to return.
 
         Yields:
-            :class:`Doc <textacy.doc.Doc>`: Next document passing
-            ``match_func`` up to ``limit`` docs.
+            :class:`spacy.tokens.Doc`: Next document passing ``match_func``.
 
         See Also:
             :meth:`Corpus.remove()`
@@ -399,69 +294,29 @@ class Corpus(object):
            Python's usual indexing and slicing: ``Corpus[0]`` gets the first
            document in the corpus; ``Corpus[:5]`` gets the first 5; etc.
         """
-        n_matched_docs = 0
-        for doc in self:
-            if match_func(doc) is True:
-                yield doc
-                n_matched_docs += 1
-                if n_matched_docs == limit:
-                    break
+        matched_docs = (doc for doc in self if match_func(doc) is True)
+        for doc in itertools.islice(matched_docs, limit):
+            yield doc
 
-    ###############
-    # REMOVE DOCS #
+    # remove documents
 
-    def _remove_one_doc_by_index(self, index):
-        doc = self[index]
-        n_tokens_removed = doc.n_tokens
-        n_sents_removed = doc.n_sents if self.spacy_lang.parser else None
-        # actually remove the doc
-        del self.docs[index]
-        # shift `corpus_index` attribute on docs higher up in the list
-        for doc in self[index:]:
-            doc.corpus_index -= 1
-        # decrement the corpus doc/token/sent counts
-        self.n_docs -= 1
-        self.n_tokens -= n_tokens_removed
-        if n_sents_removed:
-            self.n_sents -= n_sents_removed
-
-    def _remove_many_docs_by_index(self, indexes):
-        indexes = sorted(indexes, reverse=True)
-        n_docs_removed = len(indexes)
-        n_sents_removed = 0
-        n_tokens_removed = 0
-        for index in indexes:
-            n_tokens_removed += self[index].n_tokens
-            if self.spacy_lang.parser:
-                n_sents_removed += self[index].n_sents
-            # actually remove the doc
-            del self.docs[index]
-        # shift the `corpus_index` attribute for all docs at once
-        for i, doc in enumerate(self):
-            doc.corpus_index = i
-        # decrement the corpus doc/sent/token counts
-        self.n_docs -= n_docs_removed
-        self.n_tokens -= n_tokens_removed
-        self.n_sents -= n_sents_removed
-
-    def remove(self, match_func, limit=-1):
+    def remove(self, match_func, limit=None):
         """
         Remove all (or N <= ``limit``) docs in :class:`Corpus` for which
         ``match_func(doc)`` is True. Corpus doc/sent/token counts are adjusted
-        accordingly, as are the :attr:`Doc.corpus_index <textacy.doc.Doc.corpus_index>`
-        attributes on affected documents.
+        accordingly.
 
         Args:
-            match_func (func): Function that takes a :class:`Doc <textacy.doc.Doc>`
+            match_func (func): Function that takes a :class:`spacy.tokens.Doc`
                 and returns a boolean value. For example::
 
                     Corpus.remove(lambda x: len(x) >= 100)
 
-                removes docs with 100+ tokens. And::
+                removes docs with at least 100 tokens. And::
 
-                    Corpus.remove(lambda x: x.metadata['author'] == 'Burton DeWilde')
+                    Corpus.remove(lambda doc: doc.metadata["author"] == "Burton DeWilde")
 
-                removes docs whose author was given as 'Burton DeWilde'.
+                removes docs whose author was given as "Burton DeWilde".
             limit (int): Maximum number of matched docs to remove.
 
         See Also:
@@ -472,123 +327,139 @@ class Corpus(object):
            first document in the corpus; ``del Corpus[:5]`` removes the first
            5; etc.
         """
-        n_matched_docs = 0
-        matched_indexes = []
-        for i, doc in enumerate(self):
-            if match_func(doc) is True:
-                matched_indexes.append(i)
-                n_matched_docs += 1
-                if n_matched_docs == limit:
-                    break
-        self._remove_many_docs_by_index(matched_indexes)
+        matched_docs = (doc for doc in self if match_func(doc) is True)
+        for doc in itertools.islice(matched_docs, limit):
+            self._remove_doc_by_index(self._doc_ids.index(id(doc)))
 
-    def word_freqs(self, normalize="lemma", weighting="count", as_strings=False):
+    def _remove_doc_by_index(self, idx):
+        doc = self.docs[idx]
+        self.n_docs -= 1
+        self.n_tokens -= len(doc)
+        if doc.is_sentenced:
+            self.n_sents -= sum(1 for _ in doc.sents)
+        del self.docs[idx]
+        del self._doc_ids[idx]
+
+    # useful properties
+
+    @property
+    def vectors(self):
+        """Constituent docs' word vectors stacked in a 2d array."""
+        return np.vstack((doc.vector for doc in self))
+
+    @property
+    def vector_norms(self):
+        """Constituent docs' L2-normalized word vectors stacked in a 2d array."""
+        return np.vstack((doc.vector_norm for doc in self))
+
+    # useful methods
+
+    # word_freqs() ?
+    # word_doc_freqs() ?
+
+    # file io
+
+    def save(self, filepath):
         """
-        Map the set of unique words in :class:`Corpus` to their counts as absolute,
-        relative, or binary frequencies of occurence. This is akin to
-        :func:`Doc.to_bag_of_words() <textacy.doc.Doc.to_bag_of_words>`.
+        Save :class:`Corpus` to disk as binary data.
 
         Args:
-            normalize (str): if 'lemma', lemmatize words before counting; if
-                'lower', lowercase words before counting; otherwise, words are
-                counted using the form with which they they appear in docs
-            weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
-                words. If 'count' (default), weights are the absolute number of
-                occurrences (count) of word in corpus. If 'binary', all counts
-                are set equal to 1. If 'freq', word counts are normalized by the
-                total token count, giving their relative frequency of occurrence.
-                Note: The resulting set of frequencies won't (necessarily) sum
-                to 1.0, since punctuation and stop words are filtered out after
-                counts are normalized.
-            as_strings (bool): if True, words are returned as strings; if False
-                (default), words are returned as their unique integer ids
-
-        Returns:
-            dict: mapping of a unique word id or string (depending on the value
-            of ``as_strings``) to its absolute, relative, or binary frequency
-            of occurrence (depending on the value of ``weighting``).
+            filepath (str): Full path to file on disk where :class:`Corpus` data
+                will be saved as a binary file.
 
         See Also:
-            :func:`vsm.get_term_freqs() <textacy.vsm.get_term_freqs>``
+            :meth:`Corpus.load()`
         """
-        word_counts = collections.Counter()
-        for doc in self:
-            word_counts.update(
-                doc.to_bag_of_words(
-                    normalize=normalize, weighting="count", as_strings=as_strings
-                )
-            )
-        if weighting == "count":
-            word_counts = dict(word_counts)
-        if weighting == "freq":
-            n_tokens = self.n_tokens
-            word_counts = {
-                word: weight / n_tokens for word, weight in word_counts.items()
-            }
-        elif weighting == "binary":
-            word_counts = {word: 1 for word in word_counts.keys()}
-        return word_counts
+        # TODO: handle document metadata!
+        attrs = [
+            spacy.attrs.ORTH,
+            spacy.attrs.SPACY,
+            spacy.attrs.LEMMA,
+            spacy.attrs.ENT_IOB,
+            spacy.attrs.ENT_TYPE,
+        ]
+        if self[0].is_tagged:
+            attrs.append(spacy.attrs.TAG)
+        if self[0].is_parsed:
+            attrs.append(spacy.attrs.HEAD)
+            attrs.append(spacy.attrs.DEP)
+        else:
+            attrs.append(spacy.attrs.SENT_START)
 
-    def word_doc_freqs(
-        self, normalize="lemma", weighting="count", smooth_idf=True, as_strings=False
-    ):
+        tokens = []
+        lengths = []
+        strings = set()
+        for doc in self:
+            tokens.append(doc.to_array(attrs))
+            lengths.append(len(doc))
+            strings.update(tok.text for tok in doc)
+
+        msg = {
+            "meta": self.spacy_lang.meta,
+            "attrs": attrs,
+            "tokens": np.vstack(tokens).tobytes("C"),
+            "lengths": np.asarray(lengths, dtype="int32").tobytes("C"),
+            "strings": list(strings),
+        }
+        # TODO: use tio.open_sesame?
+        with io.open(filepath, mode="wb") as f:
+            f.write(srsly.msgpack_dumps(msg))
+
+    @classmethod
+    def load(cls, lang, filepath):
         """
-        Map the set of unique words in :class:`Corpus` to their *document* counts
-        as absolute, relative, inverse, or binary frequencies of occurence.
+        Load previously saved :class:`Corpus` binary data, reproduce the original
+        `:class:`spacy.tokens.Doc`s tokens and annotations, and instantiate
+        a new :class:`Corpus` from them.
 
         Args:
-            normalize (str): if 'lemma', lemmatize words before counting; if
-                'lower', lowercase words before counting; otherwise, words are
-                counted using the form with which they they appear in docs
-            weighting ({'count', 'freq', 'idf', 'binary'}): Type of weight to
-                assign to words. If 'count' (default), weights are the absolute
-                number (count) of documents in which word appears. If 'binary',
-                all counts are set equal to 1. If 'freq', word doc counts are
-                normalized by the total document count, giving their relative
-                frequency of occurrence. If 'idf', weights are the log of the
-                inverse relative frequencies: ``log(n_docs / word_doc_count)``
-                or ``log(1 + n_docs / word_doc_count)`` if ``smooth_idf`` is True.
-            smooth_idf (bool): if True, add 1 to all document frequencies when
-                calculating 'idf' weighting, equivalent to adding a single
-                document to the corpus containing every unique word
-            as_strings (bool): if True, words are returned as strings; if False
-                (default), words are returned as their unique integer ids
+            lang (str or :class:`spacy.language.Language`)
+            filepath (str): Full path to file on disk where :class:`Corpus` data
+                was previously saved as a binary file.
 
         Returns:
-            dict: mapping of a unique word id or string (depending on the value
-            of ``as_strings``) to the number of documents in which it appears
-            weighted as absolute, relative, or binary frequencies (depending
-            on the value of ``weighting``).
+            :class:`Corpus`
 
         See Also:
-            :func:`vsm.get_doc_freqs() <textacy.vsm.matrix_utils.get_doc_freqs>`
+            :meth:`Corpus.save()`
         """
-        word_doc_counts = collections.Counter()
-        for doc in self:
-            word_doc_counts.update(
-                doc.to_bag_of_words(
-                    normalize=normalize, weighting="binary", as_strings=as_strings
+        spacy_lang = _get_spacy_lang(lang)
+        # TODO: use tio.open_sesame?
+        with io.open(filepath, mode="rb") as f:
+            msg = srsly.msgpack_loads(f.read())
+        if spacy_lang.meta != msg["meta"]:
+            logging.warning("the spacy langs are different!")
+        for string in msg["strings"]:
+            spacy_lang.vocab[string]
+        attrs = msg["attrs"]
+        lengths = np.frombuffer(msg["lengths"], dtype="int32")
+        flat_tokens = np.frombuffer(msg["tokens"], dtype="uint64")
+        flat_tokens = flat_tokens.reshape(
+            (flat_tokens.size // len(attrs), len(attrs))
+        )
+        tokens = np.asarray(NumpyOps().unflatten(flat_tokens, lengths))
+
+        def _make_docs(tokens):
+            for toks in tokens:
+                doc = spacy.tokens.Doc(
+                    spacy_lang.vocab,
+                    words=[spacy_lang.vocab.strings[orth] for orth in toks[:, 0]],
+                    spaces=np.ndarray.tolist(toks[:, 1]),
                 )
+                doc = doc.from_array(attrs[2:], toks[:, 2:])
+                yield doc
+
+        return cls(spacy_lang, data=_make_docs(tokens))
+
+
+def _get_spacy_lang(lang):
+    if isinstance(lang, compat.unicode_):
+        return cache.load_spacy(lang)
+    elif isinstance(lang, spacy.language.Language):
+        return lang
+    else:
+        raise TypeError(
+            "`lang` must be {}, not {}".format(
+                {compat.unicode_, spacy.language.Language}, type(lang)
             )
-        if weighting == "count":
-            word_doc_counts = dict(word_doc_counts)
-        elif weighting == "freq":
-            n_docs = self.n_docs
-            word_doc_counts = {
-                word: count / n_docs for word, count in word_doc_counts.items()
-            }
-        elif weighting == "idf":
-            n_docs = self.n_docs
-            if smooth_idf is True:
-                word_doc_counts = {
-                    word: math.log(1 + n_docs / count)
-                    for word, count in word_doc_counts.items()
-                }
-            else:
-                word_doc_counts = {
-                    word: math.log(n_docs / count)
-                    for word, count in word_doc_counts.items()
-                }
-        elif weighting == "binary":
-            word_doc_counts = {word: 1 for word in word_doc_counts.keys()}
-        return word_doc_counts
+        )
