@@ -20,7 +20,7 @@ def term_lists():
         "Why does the lamb love Mary so? The eager children cry.",
         "Mary loves the lamb, you know, the teacher did reply.",
     ]
-    corpus = Corpus("en", texts=texts)
+    corpus = Corpus("en", data=texts)
     term_lists_ = [
         doc.to_terms_list(ngrams=1, named_entities=False, as_strings=True)
         for doc in corpus

@@ -33,8 +33,7 @@ def doc(text):
 @pytest.fixture(scope="module")
 def corpus():
     records = DATASET.records(speaker_name={"Bernie Sanders"}, limit=10)
-    texts, metas = io.unzip(records)
-    corpus = Corpus("en", texts=texts, metadatas=metas)
+    corpus = Corpus("en", data=records)
     return corpus
 
 
