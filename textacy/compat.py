@@ -11,6 +11,7 @@ is_osx = sys.platform == "darwin"
 if PY2:
     import cPickle as pickle
     from backports import csv
+    from collections import Iterable
     from itertools import izip as zip_
     from urllib import unquote_plus as url_unquote_plus
     from urlparse import urljoin, urlparse
@@ -30,6 +31,7 @@ else:
     import csv
     import pickle
     from builtins import zip as zip_
+    from collections.abc import Iterable
     from urllib.parse import unquote_plus as url_unquote_plus
     from urllib.parse import urljoin, urlparse
 

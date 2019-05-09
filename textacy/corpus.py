@@ -14,7 +14,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import io
 import itertools
 import logging
-from collections.abc import Iterable
 
 import numpy as np
 import spacy
@@ -158,7 +157,7 @@ class Corpus(object):
             self.add_doc(data)
         elif self._is_record(data):
             self.add_record(data)
-        elif isinstance(data, Iterable):
+        elif isinstance(data, compat.Iterable):
             first, data = itertoolz.peek(data)
             if isinstance(first, compat.unicode_):
                 self.add_texts(data, batch_size=batch_size)
