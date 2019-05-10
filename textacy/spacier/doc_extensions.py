@@ -102,7 +102,7 @@ def set_meta(doc, value):
         value (dict)
     """
     if not isinstance(value, dict):
-        raise TypeError()
+        raise TypeError()  # TODO
     try:
         doc.user_data["textacy"]["meta"] = value
     except KeyError:
@@ -205,7 +205,7 @@ def to_terms_list(
         Despite the name, this is a generator function; to get an
         actual list of terms, call ``list(doc.to_terms_list())``.
     """
-    if not named_entities and not ngrams:
+    if not (named_entities or ngrams):
         raise ValueError("either `named_entities` or `ngrams` must be included")
     if ngrams and isinstance(ngrams, int):
         ngrams = (ngrams,)

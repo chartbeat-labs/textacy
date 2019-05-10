@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+import numpy as np
 import pytest
 import spacy
 
@@ -19,7 +20,7 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture(scope="module")
 def corpus(request):
-    return Corpus("en", data=DATASET.records(limit=3))
+    return Corpus("en", data=DATASET.records(limit=5))
 
 
 class TestCorpusInit(object):
@@ -65,14 +66,47 @@ class TestCorpusInit(object):
         assert corpus.n_sents == 0
 
 
-class TestCorpusMethods(object):
+class TestCorpusDunder(object):
 
-    def test_corpus_iter(self, corpus):
+    def test_repr(self, corpus):
+        repr = compat.unicode_(corpus)
+        assert repr.startswith("Corpus")
+        assert all("{}".format(n) in repr for n in [corpus.n_docs, corpus.n_tokens])
+
+    def test_len(self, corpus):
+        assert isinstance(len(corpus), int)
+        assert len(corpus) == len(corpus.docs) == corpus.n_docs
+
+    def test_iter(self, corpus):
         assert isinstance(corpus, compat.Iterable)
 
-    def test_corpus_indexing(self, corpus):
+    def test_getitem(self, corpus):
         assert isinstance(corpus[0], spacy.tokens.Doc)
         assert all(isinstance(doc, spacy.tokens.Doc) for doc in corpus[0:2])
+
+    def test_delitem(self, corpus):
+        del corpus[-1]
+        del corpus[-1:]
+        with pytest.raises(TypeError):
+            del corpus["foo"]
+
+
+class TestCorpusProperties(object):
+
+    def test_vectors(self, corpus):
+        vectors = corpus.vectors
+        assert isinstance(vectors, np.ndarray)
+        assert len(vectors.shape) == 2
+        assert vectors.shape[0] == len(corpus)
+
+    def test_vector_norms(self, corpus):
+        vector_norms = corpus.vector_norms
+        assert isinstance(vector_norms, np.ndarray)
+        assert len(vector_norms.shape) == 2
+        assert vector_norms.shape[0] == len(corpus)
+
+
+class TestCorpusMethods(object):
 
     def test_corpus_add(self, corpus):
         spacy_lang = cache.load_spacy("en")

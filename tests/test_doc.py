@@ -70,11 +70,13 @@ class TestMakeSpacyDoc(object):
     def test_invalid_data_lang_combo(self):
         spacy_lang = cache.load_spacy("en")
         combos = (
-            (spacy_lang("Hellow, how are you my friend?"), "es"),
-            # TODO: add more combos, if you can convince pytest to not hang forever
+            (spacy_lang("Hello, how are you my friend?"), "es"),
+            (spacy_lang("Hello, how are you my friend?"), True),
+            ("This is an English sentence.", True),
+            (("This is an English sentence.", {"foo": "bar"}), True),
         )
         for data, lang in combos:
-            with pytest.raises(ValueError):
+            with pytest.raises((ValueError, TypeError)):
                 _ = make_spacy_doc(data, lang=lang)
 
 
@@ -89,6 +91,20 @@ def test_set_remove_extensions():
 
 class TestDocExtensions(object):
 
+    def test_lang(self, doc):
+        lang = doc._.lang
+        assert isinstance(lang, compat.unicode_)
+        assert lang == doc.vocab.lang
+
+    def test_preview(self, doc):
+        preview = doc._.preview
+        assert isinstance(preview, compat.unicode_)
+        assert preview.startswith("Doc")
+
+    def test_tokens(self, doc):
+        tokens = list(doc._.tokens)[:5]
+        assert all(isinstance(token, spacy.tokens.Token) for token in tokens)
+
     def test_n_tokens(self, doc):
         n_tokens = doc._.n_tokens
         assert isinstance(n_tokens, int) and n_tokens > 0
@@ -96,6 +112,12 @@ class TestDocExtensions(object):
     def test_n_sents(self, doc):
         n_sents = doc._.n_sents
         assert isinstance(n_sents, int) and n_sents > 0
+
+    def test_meta(self, doc):
+        meta = doc._.meta
+        assert isinstance(meta, dict)
+        with pytest.raises(TypeError):
+            doc._.meta = None
 
     # TODO: re-add this test if count() gets implemented
     # def test_term_count(self, doc):
@@ -113,6 +135,16 @@ class TestDocExtensions(object):
         assert isinstance(tokenized_text[0][0], compat.unicode_)
         assert len(tokenized_text) == doc._.n_sents
 
+    def test_to_tokenized_text_nosents(self):
+        spacy_lang = cache.load_spacy("en")
+        with spacy_lang.disable_pipes("parser"):
+            doc = spacy_lang("This is sentence #1. This is sentence #2.")
+        tokenized_text = doc._.to_tokenized_text()
+        assert isinstance(tokenized_text, list)
+        assert len(tokenized_text) == 1
+        assert isinstance(tokenized_text[0], list)
+        assert isinstance(tokenized_text[0][0], compat.unicode_)
+
     def test_to_tagged_text(self, doc):
         tagged_text = doc._.to_tagged_text()
         assert isinstance(tagged_text, list)
@@ -120,6 +152,17 @@ class TestDocExtensions(object):
         assert isinstance(tagged_text[0][0], tuple)
         assert isinstance(tagged_text[0][0][0], compat.unicode_)
         assert len(tagged_text) == doc._.n_sents
+
+    def test_to_tagged_text_nosents(self):
+        spacy_lang = cache.load_spacy("en")
+        with spacy_lang.disable_pipes("parser"):
+            doc = spacy_lang("This is sentence #1. This is sentence #2.")
+        tagged_text = doc._.to_tagged_text()
+        assert isinstance(tagged_text, list)
+        assert len(tagged_text) == 1
+        assert isinstance(tagged_text[0], list)
+        assert isinstance(tagged_text[0][0], tuple)
+        assert isinstance(tagged_text[0][0][0], compat.unicode_)
 
     def test_to_terms_list(self, doc):
         full_terms_list = list(doc._.to_terms_list(as_strings=True))
@@ -135,6 +178,46 @@ class TestDocExtensions(object):
         assert len(list(doc._.to_terms_list(ngrams=1))) < len(full_terms_list)
         assert len(list(doc._.to_terms_list(ngrams=(1, 2)))) < len(full_terms_list)
         assert len(list(doc._.to_terms_list(ngrams=False))) < len(full_terms_list)
+
+    def test_to_terms_list_kwargs(self, doc):
+        full_terms_list = list(doc._.to_terms_list())
+        for as_strings in (True, False):
+            kwargs_sets = (
+                {"ngrams": (1, 2), "filter_nums": True},
+                {"ngrams": (1, 2), "named_entities": False},
+                {"normalize": "lower"},
+                {"normalize": None},
+                {"normalize": lambda term: term.text.upper()},
+            )
+            for kwargs in kwargs_sets:
+                terms_list = list(doc._.to_terms_list(as_strings=as_strings, **kwargs))
+
+    def test_to_terms_list_error(self, doc):
+        with pytest.raises(ValueError):
+            _ = list(doc._.to_terms_list(ngrams=False, named_entities=False))
+
+    def test_to_bag_of_terms(self, doc):
+        bot = doc._.to_bag_of_terms(weighting="count")
+        assert isinstance(bot, dict)
+        assert isinstance(list(bot.keys())[0], compat.int_types)
+        assert isinstance(list(bot.values())[0], int)
+        bot = doc._.to_bag_of_terms(weighting="binary")
+        assert isinstance(bot, dict)
+        assert isinstance(list(bot.keys())[0], compat.int_types)
+        assert isinstance(list(bot.values())[0], int)
+        for value in list(bot.values())[0:10]:
+            assert value < 2
+        bot = doc._.to_bag_of_terms(weighting="freq")
+        assert isinstance(bot, dict)
+        assert isinstance(list(bot.keys())[0], compat.int_types)
+        assert isinstance(list(bot.values())[0], float)
+        bot = doc._.to_bag_of_terms(as_strings=True)
+        assert isinstance(bot, dict)
+        assert isinstance(list(bot.keys())[0], compat.unicode_)
+
+    def test_to_bag_of_terms_error(self, doc):
+        with pytest.raises(ValueError):
+            _ = doc._.to_bag_of_terms(weighting="foo")
 
     def test_to_bag_of_words(self, doc):
         bow = doc._.to_bag_of_words(weighting="count")
@@ -154,6 +237,10 @@ class TestDocExtensions(object):
         bow = doc._.to_bag_of_words(as_strings=True)
         assert isinstance(bow, dict)
         assert isinstance(list(bow.keys())[0], compat.unicode_)
+
+    def test_to_bag_of_words_error(self, doc):
+        with pytest.raises(ValueError):
+            _ = doc._.to_bag_of_words(weighting="foo")
 
     # def test_doc_save_and_load(self, tmpdir, doc):
     #     filepath = str(tmpdir.join("test_doc_save_and_load.pkl"))
