@@ -33,7 +33,7 @@ class Corpus(object):
     and sharing the same :class:`spacy.language.Language` processing pipeline
     and vocabulary, with data held *in-memory*.
 
-    Initialize from a stream of texts and corresponding metadatas::
+    Initialize from a stream of texts or (text, metadata) pairs::
 
         >>> ds = textacy.datasets.CapitolWords()
         >>> records = ds.records(limit=50)
@@ -79,8 +79,20 @@ class Corpus(object):
         Corpus(55 docs; 47444 tokens)
 
     Args:
-        lang (str or :class:`spacy.language.Language`)
-        data (obj or Iterable[obj])
+        lang (str or :class:`spacy.language.Language`):
+            Language with which spaCy processes (or processed) all documents
+            added to the corpus, whether as ``data`` now or later.
+
+            Pass a standard 2-letter language code (e.g. "en"),
+            or the name of a spacy language pipeline (e.g. "en_core_web_md"),
+            or an already-instantiated :class:`spacy.language.Language` object.
+
+            A given / detected language string is then used to instantiate
+            a corresponding ``Language`` with all default components enabled.
+        data (obj or Iterable[obj]): One or a stream of texts, records,
+            or :class:`spacy.tokens.Doc` s to be added to the corpus.
+
+            .. seealso:: :meth:`Corpus.add()`
 
     Attributes:
         lang (str)
@@ -136,7 +148,7 @@ class Corpus(object):
 
     def add(self, data, batch_size=1000):
         """
-        Add one or a stream of texts, records, or :class:`spacy.tokens.Doc`s
+        Add one or a stream of texts, records, or :class:`spacy.tokens.Doc` s
         to the corpus, ensuring that all processing is or has already been done
         by the :attr:`Corpus.spacy_lang` pipeline.
 
@@ -197,7 +209,7 @@ class Corpus(object):
     def add_texts(self, texts, batch_size=1000):
         """
         Add a stream of texts to the corpus, efficiently processing them into
-        :class:`spacy.tokens.Doc`s using the :attr:`Corpus.spacy_lang` pipeline.
+        :class:`spacy.tokens.Doc` s using the :attr:`Corpus.spacy_lang` pipeline.
 
         Args:
             texts (Iterable[str])
@@ -221,7 +233,7 @@ class Corpus(object):
     def add_records(self, records, batch_size=1000):
         """
         Add a stream of records to the corpus, efficiently processing them into
-        :class:`spacy.tokens.Doc`s using the :attr:`Corpus.spacy_lang` pipeline.
+        :class:`spacy.tokens.Doc` s using the :attr:`Corpus.spacy_lang` pipeline.
 
         Args:
             records (Iterable[Tuple[str, dict]])
@@ -253,7 +265,7 @@ class Corpus(object):
 
     def add_docs(self, docs):
         """
-        Add a stream of :class:`spacy.tokens.Doc` to the corpus, provided
+        Add a stream of :class:`spacy.tokens.Doc` s to the corpus, provided
         they were processed using the :attr:`Corpus.spacy_lang` pipeline.
 
         Args:

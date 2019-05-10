@@ -13,14 +13,64 @@ from . import utils
 
 def make_spacy_doc(data, lang=text_utils.detect_language):
     """
-    TODO
+    Make a :class:`spacy.tokens.Doc` from valid inputs, and automatically
+    load/validate :class:`spacy.language.Language` pipelines to process ``data``.
+
+    Make a ``Doc`` from text:
+
+    .. code-block:: pycon
+
+        >>> text = "To be, or not to be, that is the question."
+        >>> make_spacy_doc(text)
+        >>> make_spacy_doc(text, lang="en")
+        >>> make_spacy_doc(text, lang="en_core_web_sm")
+        >>> make_spacy_doc(text, lang=textacy.load_spacy("en"))
+
+    Make a ``Doc`` from a (text, metadata) pair, aka a "record":
+
+    .. code-block:: pycon
+
+        >>> record = (text, {"author": "Shakespeare, William"})
+        >>> doc = make_spacy_doc(record)
+        >>> doc._.preview
+        'Doc(13 tokens: "To be, or not to be, that is the question.")'
+        >>> doc._.meta
+        {'author': 'Shakespeare, William'}
+
+    Validate that an existing ``Doc`` is compatible with ``lang``:
+
+    .. code-block:: pycon
+
+        >>> spacy_lang = textacy.load_spacy("en")
+        >>> doc = spacy_lang(text)
+        >>> make_spacy_doc(doc, lang="en")
+        >>> make_spacy_doc(doc, lang="es")
+        ...
+        ValueError: lang of spacy pipeline used to process document ('en') must be the same as `lang` ('es')
 
     Args:
-        data (str or Tuple[str, dict] or :class:`spacy.tokens.Doc`)
-        lang (str or :class:`spacy.language.Language` or Callable)
+        data (str or Tuple[str, dict] or :class:`spacy.tokens.Doc`):
+            Make a :class:`spacy.tokens.Doc` from a text or (text, metadata) pair.
+            If already a ``Doc``, ensure that it's compatible with ``lang``
+            to avoid surprises downstream, and return it as-is.
+        lang (str or :class:`spacy.language.Language` or Callable):
+            Language with which spaCy processes (or processed) ``data``.
+
+            *If known*, pass a standard 2-letter language code (e.g. "en"),
+            or the name of a spacy language pipeline (e.g. "en_core_web_md"),
+            or an already-instantiated :class:`spacy.language.Language` object.
+            *If not known*, pass a function that takes unicode text as input
+            and outputs a standard 2-letter language code.
+
+            A given / detected language string is then used to instantiate
+            a corresponding ``Language`` with all default components enabled.
 
     Returns:
         :class:`spacy.tokens.Doc`
+
+    Raises:
+        TypeError
+        ValueError
     """
     if isinstance(data, compat.unicode_):
         return _make_spacy_doc_from_text(data, lang)
@@ -89,7 +139,7 @@ def _make_spacy_doc_from_doc(doc, lang):
         if not lang.startswith(langstr):
             raise ValueError(
                 "lang of spacy pipeline used to process document ('{}') "
-                "must be the same as `lang` ('{}')".format(lang, langstr)
+                "must be the same as `lang` ('{}')".format(langstr, lang)
             )
     elif isinstance(lang, spacy.language.Language):
         # just want to make sure that doc and lang share the same vocabulary

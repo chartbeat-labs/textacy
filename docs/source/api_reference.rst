@@ -1,24 +1,31 @@
 .. _ref-api-reference:
 
+*************
 API Reference
-=============
-
-Doc
----
+*************
 
 .. automodule:: textacy.doc
     :members:
 
-Corpus
-------
-
 .. automodule:: textacy.corpus
+    :members:
+
+spacier
+=======
+
+.. automodule:: textacy.spacier.doc_extensions
+    :members:
+
+.. automodule:: textacy.spacier.components
+    :members:
+
+.. automodule:: textacy.spacier.utils
     :members:
 
 .. _ref-api-datasets:
 
-Datasets
---------
+datasets
+========
 
 .. automodule:: textacy.datasets.capitol_words
     :members:
@@ -41,14 +48,14 @@ Datasets
 .. automodule:: textacy.datasets.utils
     :members:
 
-Text Preprocessing
-------------------
+text preprocessing
+==================
 
 .. automodule:: textacy.preprocess
     :members:
 
-Information Extraction
-----------------------
+information extraction
+======================
 
 .. automodule:: textacy.extract
     :members:
@@ -56,8 +63,8 @@ Information Extraction
 .. automodule:: textacy.keyterms
     :members:
 
-Vectorization & Topic Modeling
-------------------------------
+vectorization & topic modeling
+==============================
 
 .. automodule:: textacy.vsm.vectorizers
     :members:
@@ -69,7 +76,7 @@ Vectorization & Topic Modeling
     :members:
 
 IO
---
+==
 
 .. automodule:: textacy.io.utils
     :members:
@@ -92,8 +99,8 @@ IO
 .. automodule:: textacy.io.http
     :members:
 
-Visualization
--------------
+visualization
+=============
 
 .. automodule:: textacy.viz.termite
     :members:
@@ -101,8 +108,8 @@ Visualization
 .. automodule:: textacy.viz.network
     :members:
 
-Utilities
----------
+utilities
+=========
 
 .. automodule:: textacy.cache
     :members:
@@ -113,8 +120,8 @@ Utilities
 .. automodule:: textacy.spacy_utils
     :members:
 
-Miscellany
-----------
+miscellany
+==========
 
 .. automodule:: textacy.network
     :members:
@@ -126,13 +133,4 @@ Miscellany
     :members:
 
 .. automodule:: textacy.lexicon_methods
-    :members:
-
-Spacier
--------
-
-.. automodule:: textacy.spacier.components
-    :members:
-
-.. automodule:: textacy.spacier.utils
     :members:
