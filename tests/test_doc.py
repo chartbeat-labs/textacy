@@ -6,7 +6,12 @@ import spacy
 
 from textacy import cache
 from textacy import compat
-from textacy.doc import make_spacy_doc
+from textacy.doc import (
+    make_spacy_doc,
+    remove_doc_extensions,
+    set_doc_extensions,
+    _doc_extensions,
+)
 
 TEXT = """
 Since the so-called "statistical revolution" in the late 1980s and mid 1990s, much Natural Language Processing research has relied heavily on machine learning.
@@ -82,6 +87,15 @@ class TestMakeSpacyDoc(object):
         spacy_lang = cache.load_spacy("en")
         with pytest.raises(ValueError):
             _ = make_spacy_doc(spacy_lang("Hola, cómo estás mi amigo?"), lang="es")
+
+
+def test_set_remove_extensions():
+    remove_doc_extensions()
+    for name in _doc_extensions.keys():
+        assert spacy.tokens.Doc.has_extension(name) is False
+    set_doc_extensions()
+    for name in _doc_extensions.keys():
+        assert spacy.tokens.Doc.has_extension(name) is True
 
 
 class TestDocExtensions(object):

@@ -48,7 +48,7 @@ def remove_doc_extensions():
     from the global :class:`spacy.tokens.Doc`.
     """
     for name in _doc_extensions.keys():
-        _ = spacy.tokens.Doc.set_extension(name)
+        _ = spacy.tokens.Doc.remove_extension(name)
 
 
 def make_spacy_doc(data, lang=text_utils.detect_language):
