@@ -48,7 +48,7 @@ class Corpus(object):
         [Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work..."),
          Doc(219 tokens; "Mr. Speaker, a relationship, to work and surviv..."),
          Doc(336 tokens; "Mr. Speaker, I thank the gentleman for yielding...")]
-        >>> match_func = lambda doc: doc.metadata["speaker_name"] == "Bernie Sanders"
+        >>> match_func = lambda doc: doc._.meta["speaker_name"] == "Bernie Sanders"
         >>> for doc in corpus.get(match_func, limit=3):
         ...     print(doc)
         Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work...")
@@ -61,7 +61,7 @@ class Corpus(object):
         >>> corpus.add(records)
         >>> print(corpus)
         Corpus(75 docs; 55869 tokens)
-        >>> corpus.remove(lambda doc: doc.metadata["speaker_name"] == "Rick Santorum")
+        >>> corpus.remove(lambda doc: doc._.meta["speaker_name"] == "Rick Santorum")
         >>> print(corpus)
         Corpus(60 docs; 48532 tokens)
         >>> del corpus[:5]
@@ -202,8 +202,7 @@ class Corpus(object):
             record (Tuple[str, dict])
         """
         doc = self.spacy_lang(record[0])
-        # doc._.metadata = record[1]
-        doc.user_data.get("textacy", {})["metadata"] = record[1]
+        doc._.meta = record[1]
         self._add_valid_doc(doc)
 
     def add_records(self, records, batch_size=1000):
@@ -216,8 +215,7 @@ class Corpus(object):
             batch_size (int)
         """
         for doc, meta in self.spacy_lang.pipe(records, as_tuples=True, batch_size=batch_size):
-            # doc._.metadata = meta
-            doc.user_data.get("textacy", {})["metadata"] = meta
+            doc._.meta = meta
             self._add_valid_doc(doc)
 
     def add_doc(self, doc):
@@ -268,7 +266,7 @@ class Corpus(object):
 
                 gets all docs with at least 100 tokens. And::
 
-                    Corpus.get(lambda doc: doc.metadata["author"] == "Burton DeWilde")
+                    Corpus.get(lambda doc: doc._.meta["author"] == "Burton DeWilde")
 
                 gets all docs whose author was given as 'Burton DeWilde'.
             limit (int): Maximum number of matched docs to return.
@@ -303,7 +301,7 @@ class Corpus(object):
 
                 removes docs with at least 100 tokens. And::
 
-                    Corpus.remove(lambda doc: doc.metadata["author"] == "Burton DeWilde")
+                    Corpus.remove(lambda doc: doc._.meta["author"] == "Burton DeWilde")
 
                 removes docs whose author was given as "Burton DeWilde".
             limit (int): Maximum number of matched docs to remove.

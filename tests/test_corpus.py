@@ -2,14 +2,10 @@
 from __future__ import absolute_import, unicode_literals
 
 import pytest
-
 import spacy
 
 from textacy import Corpus
-from textacy import Doc
 from textacy import cache
-from textacy import compat
-from textacy import io
 from textacy.datasets.capitol_words import CapitolWords
 
 DATASET = CapitolWords()
@@ -49,8 +45,7 @@ class TestCorpusInit(object):
         assert len(corpus) == len(corpus.docs) == limit
         assert all(doc.vocab is corpus.spacy_lang.vocab for doc in corpus)
         assert all(record[0] == doc.text for record, doc in zip(records, corpus))
-        # TODO: handle document metadata!
-        # assert all(record[1] == doc._.meta for record, doc in zip(records, corpus))
+        assert all(record[1] == doc._.meta for record, doc in zip(records, corpus))
 
     def test_corpus_init_docs(self):
         limit = 3
