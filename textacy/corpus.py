@@ -23,6 +23,7 @@ from thinc.neural.ops import NumpyOps
 
 from . import cache
 from . import compat
+from . import io as tio
 from . import utils
 
 
@@ -127,7 +128,9 @@ class Corpus(object):
             for idx in compat.range_(start, end, step):
                 self._remove_doc_by_index(idx)
         else:
-            raise TypeError()  # TODO
+            raise TypeError(
+                "list indices must be integers or slices, not {}".format(type(idx_or_slice))
+            )
 
     # add documents
 
@@ -167,9 +170,19 @@ class Corpus(object):
             elif utils.is_record(first):
                 self.add_records(data, batch_size=batch_size)
             else:
-                raise TypeError()  # TODO
+                raise TypeError(
+                    "data must be one of {} or an interable thereof, not {}".format(
+                        {compat.unicode_, spacy.tokens.Doc, tuple},
+                        type(data),
+                    )
+                )
         else:
-            raise TypeError()  # TODO
+            raise TypeError(
+                "data must be one of {} or an interable thereof, not {}".format(
+                    {compat.unicode_, spacy.tokens.Doc, tuple},
+                    type(data),
+                )
+            )
 
     def add_text(self, text):
         """
@@ -227,9 +240,15 @@ class Corpus(object):
             doc (:class:`spacy.tokens.Doc`)
         """
         if not isinstance(doc, spacy.tokens.Doc):
-            raise TypeError()  # TODO
+            raise TypeError(
+                "doc must be a {}, not {}".format(spacy.tokens.Doc, type(doc))
+            )
         if doc.vocab is not self.spacy_lang.vocab:
-            raise ValueError()  # TODO
+            raise ValueError(
+                "doc.vocab ({}) must be the same as corpus.vocab ({})".format(
+                    doc.vocab, self.spacy_lang.vocab,
+                )
+            )
         self._add_valid_doc(doc)
 
     def add_docs(self, docs):
@@ -388,8 +407,7 @@ class Corpus(object):
             "lengths": np.asarray(lengths, dtype="int32").tobytes("C"),
             "strings": list(strings),
         }
-        # TODO: use tio.open_sesame?
-        with io.open(filepath, mode="wb") as f:
+        with tio.open_sesame(filepath, mode="wb") as f:
             f.write(srsly.msgpack_dumps(msg))
 
     @classmethod
@@ -411,8 +429,7 @@ class Corpus(object):
             :meth:`Corpus.save()`
         """
         spacy_lang = _get_spacy_lang(lang)
-        # TODO: use tio.open_sesame?
-        with io.open(filepath, mode="rb") as f:
+        with tio.open_sesame(filepath, mode="rb") as f:
             msg = srsly.msgpack_loads(f.read())
         if spacy_lang.meta != msg["meta"]:
             logging.warning("the spacy langs are different!")
