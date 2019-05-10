@@ -25,23 +25,33 @@ def doc(request):
     return make_spacy_doc((TEXT, {"foo": "bar!"}), lang="en")
 
 
+@pytest.fixture(scope="module")
+def langs():
+    return ("en", cache.load_spacy("en"), lambda text: "en")
+
+
 class TestMakeSpacyDoc(object):
 
-    def test_unicode_content(self):
-        assert isinstance(
-            make_spacy_doc("This is an English sentence."),
-            spacy.tokens.Doc,
-        )
+    def test_text_data(self, langs):
+        text = "This is an English sentence."
+        assert isinstance(make_spacy_doc(text), spacy.tokens.Doc)
+        for lang in langs:
+            assert isinstance(make_spacy_doc(text, lang=lang), spacy.tokens.Doc)
 
-    def test_spacydoc_content(self):
+    def test_record_data(self, langs):
+        record = ("This is an English sentence.", {"foo": "bar"})
+        assert isinstance(make_spacy_doc(record), spacy.tokens.Doc)
+        for lang in langs:
+            assert isinstance(make_spacy_doc(record, lang=lang), spacy.tokens.Doc)
+
+    def test_doc_data(self, langs):
         spacy_lang = cache.load_spacy("en")
-        spacy_doc = spacy_lang("This is an English sentence.")
-        assert isinstance(
-            make_spacy_doc(spacy_doc),
-            spacy.tokens.Doc,
-        )
+        doc = spacy_lang("This is an English sentence.")
+        assert isinstance(make_spacy_doc(doc), spacy.tokens.Doc)
+        for lang in langs:
+            assert isinstance(make_spacy_doc(doc, lang=lang), spacy.tokens.Doc)
 
-    def test_invalid_content(self):
+    def test_invalid_data(self):
         invalid_contents = [
             b"This is an English sentence in bytes.",
             {"content": "This is an English sentence as dict value."},
@@ -51,42 +61,21 @@ class TestMakeSpacyDoc(object):
             with pytest.raises(TypeError):
                 _ = make_spacy_doc(invalid_content)
 
-    def test_lang_str(self):
-        assert isinstance(
-            make_spacy_doc("This is an English sentence.", lang="en"),
-            spacy.tokens.Doc,
-        )
-
-    def test_lang_spacylang(self):
-        spacy_lang = cache.load_spacy("en")
-        assert isinstance(
-            make_spacy_doc("This is an English sentence.", lang=spacy_lang),
-            spacy.tokens.Doc,
-        )
-
-    def test_lang_callable(self):
-        def dumb_detect_language(text):
-            return "en"
-
-        assert isinstance(
-            make_spacy_doc("This is an English sentence.", lang=dumb_detect_language),
-            spacy.tokens.Doc,
-        )
-        assert isinstance(
-            make_spacy_doc("This is an English sentence.", lang=lambda x: "en"),
-            spacy.tokens.Doc,
-        )
-
     def test_invalid_lang(self):
         invalid_langs = [b"en", ["en", "en_core_web_sm"], True]
         for invalid_lang in invalid_langs:
             with pytest.raises(TypeError):
                 _ = make_spacy_doc("This is an English sentence.", lang=invalid_lang)
 
-    def test_invalid_content_lang_combo(self):
+    def test_invalid_data_lang_combo(self):
         spacy_lang = cache.load_spacy("en")
-        with pytest.raises(ValueError):
-            _ = make_spacy_doc(spacy_lang("Hola, cómo estás mi amigo?"), lang="es")
+        combos = (
+            (spacy_lang("Hellow, how are you my friend?"), "es"),
+            # TODO: add more combos, if you can convince pytest to not hang forever
+        )
+        for data, lang in combos:
+            with pytest.raises(ValueError):
+                _ = make_spacy_doc(data, lang=lang)
 
 
 def test_set_remove_extensions():

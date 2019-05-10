@@ -5,7 +5,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import types
 
 import spacy
-from cytoolz import itertoolz
 
 from . import cache
 from . import compat
@@ -105,7 +104,7 @@ def _make_spacy_doc_from_record(record, lang):
         spacy_lang = lang
         langstr = spacy_lang.lang
     elif callable(lang):
-        langstr = lang(text)
+        langstr = lang(record[0])
         spacy_lang = cache.load_spacy(langstr)
     else:
         raise TypeError(
