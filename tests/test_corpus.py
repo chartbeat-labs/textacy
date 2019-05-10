@@ -6,6 +6,7 @@ import spacy
 
 from textacy import Corpus
 from textacy import cache
+from textacy import compat
 from textacy.datasets.capitol_words import CapitolWords
 
 DATASET = CapitolWords()
@@ -64,14 +65,66 @@ class TestCorpusInit(object):
         assert corpus.n_sents == 0
 
 
-def test_corpus_save_and_load(tmpdir, corpus):
-    filepath = str(tmpdir.join("test_corpus_save_and_load.pkl"))
-    corpus.save(filepath)
-    loaded_corpus = Corpus.load("en", filepath)
-    assert isinstance(loaded_corpus, Corpus)
-    assert len(loaded_corpus) == len(corpus)
-    assert loaded_corpus.spacy_lang.meta == corpus.spacy_lang.meta
-    assert loaded_corpus.spacy_lang.pipe_names == corpus.spacy_lang.pipe_names
+class TestCorpusMethods(object):
 
+    def test_corpus_iter(self, corpus):
+        assert isinstance(corpus, compat.Iterable)
 
-# TODO: add more tests :)
+    def test_corpus_indexing(self, corpus):
+        assert isinstance(corpus[0], spacy.tokens.Doc)
+        assert all(isinstance(doc, spacy.tokens.Doc) for doc in corpus[0:2])
+
+    def test_corpus_add(self, corpus):
+        spacy_lang = cache.load_spacy("en")
+        datas = (
+            "This is an english sentence.",
+            ("This is an english sentence.", {"foo": "bar"}),
+            spacy_lang("This is an english sentence."),
+            ["This is one sentence.", "This is another sentence."],
+            [("This is sentence #1.", {"foo": "bar"}), ("This is sentence #2.", {"bat": "baz"})],
+            [spacy_lang("This is sentence #1"), spacy_lang("This is sentence #2")],
+        )
+        n_docs = corpus.n_docs
+        for data in datas:
+            corpus.add(data)
+            assert corpus.n_docs > n_docs
+            n_docs = corpus.n_docs
+
+    def test_corpus_add_typeerror(self, corpus):
+        datas = (
+            b"This is a byte string.",
+            [b"This is a byte string.", b"This is another byte string."],
+        )
+        for data in datas:
+            with pytest.raises(TypeError):
+                corpus.add(data)
+
+    def test_corpus_get(self, corpus):
+        match_funcs = (
+            lambda doc: True,
+            lambda doc: doc._.meta.get("speaker_name") == "Bernie Sanders",
+        )
+        for match_func in match_funcs:
+            assert len(list(corpus.get(match_func))) > 0
+            assert len(list(corpus.get(match_func, limit=1))) == 1
+
+    def test_corpus_remove(self, corpus):
+        match_funcs = (
+            lambda doc: doc._.meta.get("foo") == "bar",
+            lambda doc: len(doc) < 10,
+        )
+        n_docs = corpus.n_docs
+        for match_func in match_funcs[:1]:
+            corpus.remove(match_func)
+            assert corpus.n_docs < n_docs
+            assert not any([match_func(doc) for doc in corpus])
+            n_docs = corpus.n_docs
+
+    def test_corpus_save_and_load(self, corpus, tmpdir):
+        filepath = str(tmpdir.join("test_corpus_save_and_load.pkl"))
+        corpus.save(filepath)
+        loaded_corpus = Corpus.load("en", filepath)
+        assert isinstance(loaded_corpus, Corpus)
+        assert len(loaded_corpus) == len(corpus)
+        assert loaded_corpus.spacy_lang.meta == corpus.spacy_lang.meta
+        assert loaded_corpus.spacy_lang.pipe_names == corpus.spacy_lang.pipe_names
