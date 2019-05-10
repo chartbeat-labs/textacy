@@ -101,6 +101,8 @@ def set_meta(doc, value):
         doc (:class:`spacy.tokens.Doc`)
         value (dict)
     """
+    if not isinstance(value, dict):
+        raise TypeError()
     try:
         doc.user_data["textacy"]["meta"] = value
     except KeyError:
