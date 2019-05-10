@@ -13,8 +13,10 @@ from textacy.preprocess import preprocess_text
 from textacy.doc import make_spacy_doc, remove_doc_extensions, set_doc_extensions
 from textacy.corpus import Corpus
 from textacy.text_stats import TextStats
-from textacy.tm import TopicModel
-from textacy.vsm import Vectorizer
+# keep these out of the main namespace
+# they're somewhat niche, and slow to import bc of heavy dependencies
+# from textacy.tm import TopicModel
+# from textacy.vsm import Vectorizer
 
 set_doc_extensions()
 

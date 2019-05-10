@@ -9,9 +9,11 @@ from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.tokens.span import Span as SpacySpan
 
 import textacy.datasets
-from textacy import Corpus, Vectorizer, TextStats, TopicModel, preprocess_text
+from textacy import Corpus, TextStats, preprocess_text
 from textacy import cache, compat, constants, extract, io, keyterms, text_utils
 from textacy.doc import make_spacy_doc
+from textacy.tm import TopicModel
+from textacy.vsm import Vectorizer
 
 DATASET = textacy.datasets.CapitolWords()
 

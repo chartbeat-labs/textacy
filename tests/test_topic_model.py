@@ -5,7 +5,9 @@ import numpy as np
 import pytest
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
-from textacy import Corpus, TopicModel, Vectorizer
+from textacy import Corpus
+from textacy.tm import TopicModel
+from textacy.vsm import Vectorizer
 
 
 @pytest.fixture(scope="module")

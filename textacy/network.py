@@ -17,7 +17,7 @@ from spacy.tokens.token import Token as SpacyToken
 
 from . import compat
 from . import extract
-from . import vsm
+# from . import vsm
 
 LOGGER = logging.getLogger(__name__)
 
@@ -165,6 +165,8 @@ def sents_to_semantic_network(sents, normalize="lemma", edge_weighting="cosine")
         - Consider normalizing the strings so that like terms are counted together
           (see :func:`textacy.spacier.utils.get_normalized_text()`)
     """
+    from . import vsm
+
     if isinstance(sents[0], compat.unicode_):
         pass
     elif isinstance(sents[0], SpacySpan):
