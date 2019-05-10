@@ -146,7 +146,7 @@ def remove_punct(text, marks=None):
     if marks:
         return re.sub("[{}]+".format(re.escape(marks)), " ", text, flags=re.UNICODE)
     else:
-        return text.translate(constants.PUNCT_TRANSLATE_UNICODE)
+        return text.translate(constants.PUNCT_TRANSLATE_UNICODE.data)
 
 
 def remove_accents(text, method="unicode"):

@@ -36,10 +36,32 @@ POS_REGEX_PATTERNS = {
            'VP': r'<AUX>* <ADV>* <VERB>'}
     }
 
-PUNCT_TRANSLATE_UNICODE = dict.fromkeys(
-    (i for i in compat.range_(sys.maxunicode)
-     if unicodedata.category(compat.chr_(i)).startswith('P')),
-    u' ')
+
+class PunctTranslateUnicode(object):
+    """
+    Class to make loading of unicode data into a punctuation translation mapping
+    lazy, and only computed one time if at all. This speeds up package imports
+    significantly.
+
+    No, technically this isn't a constant, but I'm prepared to make an exception.
+    """
+
+    def __init__(self):
+        self._data = None
+
+    @property
+    def data(self):
+        if not self._data:
+            self._data = dict.fromkeys(
+                (i for i in compat.range_(sys.maxunicode)
+                 if unicodedata.category(compat.chr_(i)).startswith('P')),
+                " "
+            )
+        return self._data
+
+
+PUNCT_TRANSLATE_UNICODE = PunctTranslateUnicode()
+
 
 ACRONYM_REGEX = re.compile(r"(?:^|(?<=\W))(?:(?:(?:(?:[A-Z]\.?)+[a-z0-9&/-]?)+(?:[A-Z][s.]?|[0-9]s?))|(?:[0-9](?:\-?[A-Z])+))(?:$|(?=\W))", flags=re.UNICODE)
 EMAIL_REGEX = re.compile(r"(?:^|(?<=[^\w@.)]))([\w+-](\.(?!\.))?)*?[\w+-]@(?:\w-?)*?\w+(\.([a-z]{2,})){1,3}(?:$|(?=\b))", flags=re.IGNORECASE | re.UNICODE)
