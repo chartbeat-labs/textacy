@@ -24,7 +24,6 @@ from sklearn.metrics import pairwise_distances
 
 from . import compat
 from . import extract
-from .doc import Doc
 
 
 NONWORDCHARS_REGEX = re.compile(r"\W+", flags=re.IGNORECASE | re.UNICODE)
@@ -36,8 +35,8 @@ def word_movers(doc1, doc2, metric="cosine"):
     Distance.
 
     Args:
-        doc1 (:class:`textacy.Doc` or :class:`spacy.Doc`)
-        doc2 (:class:`textacy.Doc` or :class:`spacy.Doc`)
+        doc1 (:class:`spacy.tokens.Doc`)
+        doc2 (:class:`spacy.tokens.Doc`)
         metric ({'cosine', 'euclidean', 'l1', 'l2', 'manhattan'})
 
     Returns:
@@ -87,21 +86,18 @@ def word_movers(doc1, doc2, metric="cosine"):
 
 def word2vec(obj1, obj2):
     """
-    Measure the semantic similarity between one Doc or spacy Doc, Span, Token,
+    Measure the semantic similarity between one spacy Doc, Span, Token,
     or Lexeme and another like object using the cosine distance between the
     objects' (average) word2vec vectors.
 
     Args:
-        obj1 (``textacy.Doc``, ``spacy.Doc``, ``spacy.Span``, ``spacy.Token``, or ``spacy.Lexeme``)
-        obj2 (``textacy.Doc``, ``spacy.Doc``, ``spacy.Span``, ``spacy.Token``, or ``spacy.Lexeme``)
+        obj1 (``spacy.Doc``, ``spacy.Span``, ``spacy.Token``, or ``spacy.Lexeme``)
+        obj2 (``spacy.Doc``, ``spacy.Span``, ``spacy.Token``, or ``spacy.Lexeme``)
 
     Returns
         float: similarity between `obj1` and `obj2` in the interval [0.0, 1.0],
         where larger values correspond to more similar objects
     """
-    if isinstance(obj1, Doc) and isinstance(obj2, Doc):
-        obj1 = obj1.spacy_doc
-        obj2 = obj2.spacy_doc
     return obj1.similarity(obj2)
 
 
