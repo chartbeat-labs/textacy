@@ -86,7 +86,7 @@ def test_records_issue_area():
 
 
 def test_records_date_range():
-    date_ranges = (["1970-01-01", "1971-01-01"], ("1971-07-01", "1971-12-31"))
+    date_ranges = (["1947-01-01", "1948-01-01"], ("1947-07-01", "1947-12-31"))
     for date_range in date_ranges:
         records = list(DATASET.records(date_range=date_range, limit=10))
         assert len(records) >= 1
