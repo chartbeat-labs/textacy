@@ -23,6 +23,7 @@ from thinc.neural.ops import NumpyOps
 
 from . import cache
 from . import compat
+from . import utils
 
 
 class Corpus(object):
@@ -155,7 +156,7 @@ class Corpus(object):
             self.add_text(data)
         elif isinstance(data, spacy.tokens.Doc):
             self.add_doc(data)
-        elif self._is_record(data):
+        elif utils.is_record(data):
             self.add_record(data)
         elif isinstance(data, compat.Iterable):
             first, data = itertoolz.peek(data)
@@ -163,7 +164,7 @@ class Corpus(object):
                 self.add_texts(data, batch_size=batch_size)
             elif isinstance(first, spacy.tokens.Doc):
                 self.add_docs(data)
-            elif self._is_record(first):
+            elif utils.is_record(first):
                 self.add_records(data, batch_size=batch_size)
             else:
                 raise TypeError()  # TODO
@@ -251,17 +252,6 @@ class Corpus(object):
         self.n_tokens += len(doc)
         if doc.is_sentenced:
             self.n_sents += sum(1 for _ in doc.sents)
-
-    def _is_record(self, obj):
-        if (
-            isinstance(obj, (tuple, list))
-            and len(obj) == 2
-            and isinstance(obj[0], compat.unicode_)
-            and isinstance(obj[1], dict)
-        ):
-            return True
-        else:
-            return False
 
     # get documents
 
