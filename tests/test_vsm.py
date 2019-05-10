@@ -23,7 +23,7 @@ def tokenized_docs():
     ]
     corpus = Corpus("en", data=texts)
     tokenized_docs = [
-        list(doc.to_terms_list(ngrams=1, named_entities=False, normalize="lower", as_strings=True))
+        list(doc._.to_terms_list(ngrams=1, named_entities=False, normalize="lower", as_strings=True))
         for doc in corpus
     ]
     return tokenized_docs
