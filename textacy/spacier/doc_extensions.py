@@ -1,5 +1,22 @@
 # -*- coding: utf-8 -*-
-# TODO: module docstring
+"""
+spaCy Doc extensions
+--------------------
+
+Functionality for inspecting, customizing, and transforming spaCy's core
+data structure, :class:`spacy.tokens.Doc`, accessible directly as functions
+that take a ``Doc`` as their first argument or as custom attributes/methods
+on instantiated docs prepended by an underscore:
+
+.. code-block:: pycon
+
+    >>> spacy_lang = textacy.load_spacy("en")
+    >>> doc = nlp("This is a short text.")
+    >>> print(get_preview(doc))
+    Doc(6 tokens: "This is a short text.")
+    >>> print(doc._.preview)
+    Doc(6 tokens: "This is a short text.")
+"""
 # TODO: `count` method extension?
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -11,6 +28,8 @@ from .. import extract
 from .. import network
 
 __all__ = [
+    "set_doc_extensions",
+    "remove_doc_extensions",
     "get_lang",
     "get_preview",
     "get_tokens",
@@ -25,6 +44,25 @@ __all__ = [
     "to_bag_of_words",
     "to_semantic_network",
 ]
+
+
+def set_doc_extensions():
+    """
+    Set textacy's custom property and method doc extensions
+    on the global :class:`spacy.tokens.Doc`.
+    """
+    for name, kwargs in _doc_extensions.items():
+        if not spacy.tokens.Doc.has_extension(name):
+            spacy.tokens.Doc.set_extension(name, **kwargs)
+
+
+def remove_doc_extensions():
+    """
+    Remove textacy's custom property and method doc extensions
+    from the global :class:`spacy.tokens.Doc`.
+    """
+    for name in _doc_extensions.keys():
+        _ = spacy.tokens.Doc.remove_extension(name)
 
 
 def get_lang(doc):
@@ -102,7 +140,7 @@ def set_meta(doc, value):
         value (dict)
     """
     if not isinstance(value, dict):
-        raise TypeError()  # TODO
+        raise TypeError("doc metadata must be a dict, not {}".format(type(value)))
     try:
         doc.user_data["textacy"]["meta"] = value
     except KeyError:
@@ -513,3 +551,21 @@ def to_semantic_network(
             nodes, {"words", "sents"}
         )
         raise ValueError(msg)
+
+
+_doc_extensions = {
+    # property extensions
+    "lang": {"getter": get_lang},
+    "preview": {"getter": get_preview},
+    "tokens": {"getter": get_tokens},
+    "meta": {"getter": get_meta, "setter": set_meta},
+    "n_tokens": {"getter": get_n_tokens},
+    "n_sents": {"getter": get_n_sents},
+    # method extensions
+    "to_tokenized_text": {"method": to_tokenized_text},
+    "to_tagged_text": {"method": to_tagged_text},
+    "to_terms_list": {"method": to_terms_list},
+    "to_bag_of_terms": {"method": to_bag_of_terms},
+    "to_bag_of_words": {"method": to_bag_of_words},
+    "to_semantic_network": {"method": to_semantic_network},
+}

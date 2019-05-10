@@ -10,9 +10,10 @@ data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 from textacy.cache import load_spacy
 from textacy.preprocess import preprocess_text
-from textacy.doc import make_spacy_doc, remove_doc_extensions, set_doc_extensions
+from textacy.doc import make_spacy_doc
 from textacy.corpus import Corpus
 from textacy.text_stats import TextStats
+from textacy.spacier.doc_extensions import remove_doc_extensions, set_doc_extensions
 # keep these out of the main namespace
 # they're somewhat niche, and slow to import bc of heavy dependencies
 # from textacy.tm import TopicModel
