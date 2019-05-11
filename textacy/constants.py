@@ -13,65 +13,60 @@ from . import compat
 
 DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
-NUMERIC_ENT_TYPES = {'ORDINAL', 'CARDINAL', 'MONEY', 'QUANTITY', 'PERCENT', 'TIME', 'DATE'}
-SUBJ_DEPS = {'agent', 'csubj', 'csubjpass', 'expl', 'nsubj', 'nsubjpass'}
-OBJ_DEPS = {'attr', 'dobj', 'dative', 'oprd'}
-AUX_DEPS = {'aux', 'auxpass', 'neg'}
+NUMERIC_ENT_TYPES = {"ORDINAL", "CARDINAL", "MONEY", "QUANTITY", "PERCENT", "TIME", "DATE"}
+SUBJ_DEPS = {"agent", "csubj", "csubjpass", "expl", "nsubj", "nsubjpass"}
+OBJ_DEPS = {"attr", "dobj", "dative", "oprd"}
+AUX_DEPS = {"aux", "auxpass", "neg"}
 
-REPORTING_VERBS = {'according', 'accuse', 'acknowledge', 'add', 'admit', 'agree',
-                   'allege', 'announce', 'argue', 'ask', 'assert', 'believe', 'blame',
-                   'charge', 'cite', 'claim', 'complain', 'concede', 'conclude',
-                   'confirm', 'contend', 'criticize', 'declare', 'decline', 'deny',
-                   'describe', 'disagree', 'disclose', 'estimate', 'explain', 'fear',
-                   'hope', 'insist', 'maintain', 'mention', 'note', 'observe', 'order',
-                   'predict', 'promise', 'recall', 'recommend', 'reply', 'report', 'say',
-                   'state', 'stress', 'suggest', 'tell', 'testify', 'think', 'urge', 'warn',
-                   'worry', 'write'}
+REPORTING_VERBS = {
+    "according", "accuse", "acknowledge", "add", "admit", "agree",
+    "allege", "announce", "argue", "ask", "assert", "believe", "blame",
+    "charge", "cite", "claim", "complain", "concede", "conclude",
+    "confirm", "contend", "criticize", "declare", "decline", "deny",
+    "describe", "disagree", "disclose", "estimate", "explain", "fear",
+    "hope", "insist", "maintain", "mention", "note", "observe", "order",
+    "predict", "promise", "recall", "recommend", "reply", "report", "say",
+    "state", "stress", "suggest", "tell", "testify", "think", "urge", "warn",
+    "worry", "write"
+}
 
-CURRENCIES = {'$': 'USD', 'zł': 'PLN', '£': 'GBP', '¥': 'JPY', '฿': 'THB',
-              '₡': 'CRC', '₦': 'NGN', '₩': 'KRW', '₪': 'ILS', '₫': 'VND',
-              '€': 'EUR', '₱': 'PHP', '₲': 'PYG', '₴': 'UAH', '₹': 'INR'}
+CURRENCIES = {
+    "$": "USD", "zł": "PLN", "£": "GBP", "¥": "JPY", "฿": "THB",
+    "₡": "CRC", "₦": "NGN", "₩": "KRW", "₪": "ILS", "₫": "VND",
+    "€": "EUR", "₱": "PHP", "₲": "PYG", "₴": "UAH", "₹": "INR",
+}
 
 POS_REGEX_PATTERNS = {
-    'en': {'NP': r'<DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN>|<PROPN> <PART>?)+',
-           'PP': r'<ADP> <DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN> <PART>?)+',
-           'VP': r'<AUX>* <ADV>* <VERB>'}
+    "en": {
+        "NP": r"<DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN>|<PROPN> <PART>?)+",
+        "PP": r"<ADP> <DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN> <PART>?)+",
+        "VP": r"<AUX>* <ADV>* <VERB>",
     }
+}
 
-
-class PunctTranslateUnicode(object):
-    """
-    Class to make loading of unicode data into a punctuation translation mapping
-    lazy, and only computed one time if at all. This speeds up package imports
-    significantly.
-
-    No, technically this isn't a constant, but I'm prepared to make an exception.
-    """
-
-    def __init__(self):
-        self._data = None
-
-    @property
-    def data(self):
-        if not self._data:
-            self._data = dict.fromkeys(
-                (i for i in compat.range_(sys.maxunicode)
-                 if unicodedata.category(compat.chr_(i)).startswith('P')),
-                " "
-            )
-        return self._data
-
-
-PUNCT_TRANSLATE_UNICODE = PunctTranslateUnicode()
-
-
-ACRONYM_REGEX = re.compile(r"(?:^|(?<=\W))(?:(?:(?:(?:[A-Z]\.?)+[a-z0-9&/-]?)+(?:[A-Z][s.]?|[0-9]s?))|(?:[0-9](?:\-?[A-Z])+))(?:$|(?=\W))", flags=re.UNICODE)
-EMAIL_REGEX = re.compile(r"(?:^|(?<=[^\w@.)]))([\w+-](\.(?!\.))?)*?[\w+-]@(?:\w-?)*?\w+(\.([a-z]{2,})){1,3}(?:$|(?=\b))", flags=re.IGNORECASE | re.UNICODE)
-PHONE_REGEX = re.compile(r'(?:^|(?<=[^\w)]))(\+?1[ .-]?)?(\(?\d{3}\)?[ .-]?)?(\d{3}[ .-]?\d{4})(\s?(?:ext\.?|[#x-])\s?\d{2,6})?(?:$|(?=\W))')
-NUMBERS_REGEX = re.compile(r'(?:^|(?<=[^\w,.]))[+–-]?(([1-9]\d{0,2}(,\d{3})+(\.\d*)?)|([1-9]\d{0,2}([ .]\d{3})+(,\d*)?)|(\d*?[.,]\d+)|\d+)(?:$|(?=\b))')
-CURRENCY_REGEX = re.compile('({})+'.format('|'.join(re.escape(c) for c in CURRENCIES.keys())))
-LINEBREAK_REGEX = re.compile(r'((\r\n)|[\n\v])+')
-NONBREAKING_SPACE_REGEX = re.compile(r'(?!\n)\s+')
+ACRONYM_REGEX = re.compile(
+    r"(?:^|(?<=\W))"
+    r"(?:(?:(?:(?:[A-Z]\.?)+[a-z0-9&/-]?)+(?:[A-Z][s.]?|[0-9]s?))|(?:[0-9](?:\-?[A-Z])+))"
+    r"(?:$|(?=\W))",
+    flags=re.UNICODE)
+EMAIL_REGEX = re.compile(
+    r"(?:^|(?<=[^\w@.)]))([\w+-](\.(?!\.))?)*?[\w+-]@(?:\w-?)*?\w+(\.([a-z]{2,})){1,3}"
+    r"(?:$|(?=\b))",
+    flags=re.IGNORECASE | re.UNICODE)
+PHONE_REGEX = re.compile(
+    # core components of a phone number
+    r"(?:^|(?<=[^\w)]))(\+?1[ .-]?)?(\(?\d{3}\)?[ .-]?)?(\d{3}[ .-]?\d{4})"
+    # extensions, etc.
+    r"(\s?(?:ext\.?|[#x-])\s?\d{2,6})?(?:$|(?=\W))",
+    flags=re.IGNORECASE)
+NUMBERS_REGEX = re.compile(
+    r"(?:^|(?<=[^\w,.]))[+–-]?"
+    r"(([1-9]\d{0,2}(,\d{3})+(\.\d*)?)|([1-9]\d{0,2}([ .]\d{3})+(,\d*)?)|(\d*?[.,]\d+)|\d+)"
+    "(?:$|(?=\b))")
+CURRENCY_REGEX = re.compile(
+    "({})+".format("|".join(re.escape(c) for c in CURRENCIES.keys())))
+LINEBREAK_REGEX = re.compile(r"((\r\n)|[\n\v])+")
+NONBREAKING_SPACE_REGEX = re.compile(r"(?!\n)\s+")
 URL_REGEX = re.compile(
     r"(?:^|(?<![\w/.]))"
     # protocol identifier
@@ -121,14 +116,40 @@ SHORT_URL_REGEX = re.compile(
 
 # regexes for cleaning up crufty terms
 DANGLING_PARENS_TERM_RE = re.compile(
-    r'(?:\s|^)(\()\s{1,2}(.*?)\s{1,2}(\))(?:\s|$)', flags=re.UNICODE)
+    r"(?:\s|^)(\()\s{1,2}(.*?)\s{1,2}(\))(?:\s|$)", flags=re.UNICODE)
 LEAD_TAIL_CRUFT_TERM_RE = re.compile(
-    r'^([^\w(-] ?)+|([^\w).!?] ?)+$', flags=re.UNICODE)
+    r"^([^\w(-] ?)+|([^\w).!?] ?)+$", flags=re.UNICODE)
 LEAD_HYPHEN_TERM_RE = re.compile(
-    r'^-([^\W\d_])', flags=re.UNICODE)
+    r"^-([^\W\d_])", flags=re.UNICODE)
 NEG_DIGIT_TERM_RE = re.compile(
-    r'(-) (\d)', flags=re.UNICODE)
+    r"(-) (\d)", flags=re.UNICODE)
 WEIRD_HYPHEN_SPACE_TERM_RE = re.compile(
-    r'(?<=[^\W\d]) (-[^\W\d])', flags=re.UNICODE)
+    r"(?<=[^\W\d]) (-[^\W\d])", flags=re.UNICODE)
 WEIRD_APOSTR_SPACE_TERM_RE = re.compile(
     r"([^\W\d]+) ('[a-z]{1,2}\b)", flags=re.UNICODE)
+
+
+class PunctTranslateUnicode(object):
+    """
+    Class to make loading of unicode data into a punctuation translation mapping
+    lazy, and only computed one time if at all. This speeds up package imports
+    significantly.
+
+    No, technically this isn't a constant, but I'm prepared to make an exception.
+    """
+
+    def __init__(self):
+        self._data = None
+
+    @property
+    def data(self):
+        if not self._data:
+            self._data = dict.fromkeys(
+                (i for i in compat.range_(sys.maxunicode)
+                 if unicodedata.category(compat.chr_(i)).startswith("P")),
+                " "
+            )
+        return self._data
+
+
+PUNCT_TRANSLATE_UNICODE = PunctTranslateUnicode()
