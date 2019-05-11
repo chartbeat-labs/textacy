@@ -22,9 +22,11 @@ LOGGER.setLevel(logging.INFO)
 
 DATASET_NAME_TO_CLASS = {
     "capitol_words": datasets.CapitolWords,
+    "imdb": datasets.IMDB,
     "oxford_text_archive": datasets.OxfordTextArchive,
     "reddit_comments": datasets.RedditComments,
     "supreme_court": datasets.SupremeCourt,
+    "wikinews": datasets.Wikinews,
     "wikipedia": datasets.Wikipedia,
     "depechemood": lexicon_methods.download_depechemood,
 }
@@ -68,15 +70,15 @@ if __name__ == "__main__":
         "--lang",
         type=str,
         required=False,
-        help='if `dataset_name` is "wikipedia", language of wikipedia '
-        "database dump to download",
+        help='if `dataset_name` is "wikipedia" or "wikinews", language of '
+        "the database dump to download",
     )
     parser_download.add_argument(
         "--version",
         type=str,
         required=False,
-        help='if `dataset_name` is "wikipedia", version of wikipedia '
-        "database dump to download",
+        help='if `dataset_name` is "wikipedia" or "wikinews", version of '
+        "the database dump to download",
     )
     parser_download.add_argument(
         "--force",
