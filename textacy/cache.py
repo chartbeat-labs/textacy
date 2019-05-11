@@ -157,13 +157,13 @@ def load_depechemood(data_dir=None, weighting="normfreq"):
     """
     if data_dir is None:
         data_dir = os.path.join(constants.DEFAULT_DATA_DIR, "depechemood", "DepecheMood_V1.0")
-    fname = os.path.join(
+    filepath = os.path.join(
         data_dir, "DepecheMood_{weighting}.txt".format(weighting=weighting)
     )
     delimiter = b"\t" if compat.PY2 else "\t"
     # HACK: Py2's csv module fail
     try:
-        with io.open(fname, mode="rt") as csvfile:
+        with io.open(filepath, mode="rt") as csvfile:
             csvreader = csv.reader(csvfile, delimiter=delimiter)
             rows = list(csvreader)
     except (OSError, IOError):
@@ -177,7 +177,7 @@ def load_depechemood(data_dir=None, weighting="normfreq"):
             data_dir,
         )
         raise
-    LOGGER.debug("Loading DepecheMood lexicon from %s", fname)
+    LOGGER.debug("Loading DepecheMood lexicon from %s", filepath)
     cols = rows[0]
     return {
         row[0]: {cols[i]: float(row[i]) for i in compat.range_(1, 9)}

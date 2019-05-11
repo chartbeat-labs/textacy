@@ -13,13 +13,13 @@ import scipy.sparse as sp
 from .utils import open_sesame
 
 
-def read_sparse_matrix(fname, kind="csc"):
+def read_sparse_matrix(filepath, kind="csc"):
     """
     Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
-    at ``fname``, and return an instantiated sparse matrix.
+    at ``filepath``, and return an instantiated sparse matrix.
 
     Args:
-        fname (str): Path to file on disk from which data will be read.
+        filepath (str): Path to file on disk from which data will be read.
         kind ({'csc', 'csr'}): Kind of sparse matrix to instantiate.
 
     Returns:
@@ -29,7 +29,7 @@ def read_sparse_matrix(fname, kind="csc"):
     See Also:
         https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.io.html#numpy-binary-files-npy-npz
     """
-    npz_file = np.load(fname)
+    npz_file = np.load(filepath)
     if kind == "csc":
         return sp.csc_matrix(
             (npz_file["data"], npz_file["indices"], npz_file["indptr"]),
@@ -46,20 +46,20 @@ def read_sparse_matrix(fname, kind="csc"):
         )
 
 
-def write_sparse_matrix(data, fname, compressed=True, make_dirs=False):
+def write_sparse_matrix(data, filepath, compressed=True, make_dirs=False):
     """
-    Write sparse matrix ``data`` to disk at ``fname``, optionally compressed,
+    Write sparse matrix ``data`` to disk at ``filepath``, optionally compressed,
     into a single ``.npz`` file.
 
     Args:
         data (:class:`scipy.sparse.csc_matrix` or :class:`scipy.sparse.csr_matrix`)
-        fname (str): Path to file on disk to which data will be written.
-            If ``fname`` does not end in ``.npz``, that extension is
+        filepath (str): Path to file on disk to which data will be written.
+            If ``filepath`` does not end in ``.npz``, that extension is
             automatically appended to the name.
         compressed (bool): If True, save arrays into a single file in compressed
             numpy binary format.
         make_dirs (bool): If True, automatically create (sub)directories if
-            not already present in order to write ``fname``.
+            not already present in order to write ``filepath``.
 
     See Also:
         https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.io.html#numpy-binary-files-npy-npz
@@ -70,10 +70,10 @@ def write_sparse_matrix(data, fname, compressed=True, make_dirs=False):
             'not "{}"'.format(type(data))
         )
     if make_dirs is True:
-        _make_dirs(fname, "w")
+        _make_dirs(filepath, "w")
     if compressed is True:
         np.savez_compressed(
-            fname,
+            filepath,
             data=data.data,
             indices=data.indices,
             indptr=data.indptr,
@@ -81,7 +81,7 @@ def write_sparse_matrix(data, fname, compressed=True, make_dirs=False):
         )
     else:
         np.savez(
-            fname,
+            filepath,
             data=data.data,
             indices=data.indices,
             indptr=data.indptr,

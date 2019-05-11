@@ -17,13 +17,13 @@ from .utils import open_sesame
 from ..utils import deprecated
 
 
-def read_spacy_docs(fname, format="pickle", lang=None):
+def read_spacy_docs(filepath, format="pickle", lang=None):
     """
-    Read the contents of a file at ``fname``, written either in pickle or binary
+    Read the contents of a file at ``filepath``, written either in pickle or binary
     format.
 
     Args:
-        fname (str): Path to file on disk from which data will be read.
+        filepath (str): Path to file on disk from which data will be read.
         format ({"pickle", "binary"}): Format of the data that was written to disk.
             If 'pickle', use ``pickle`` in python's stdlib; if 'binary', use
             the 3rd-party ``msgpack`` library.
@@ -42,7 +42,7 @@ def read_spacy_docs(fname, format="pickle", lang=None):
 
         lang (str or ``spacy.Language``): Already-instantiated ``spacy.Language``
             object, or the string name by which it can be loaded, used to process
-            the docs written to disk at ``fname``. Note that this is only applicable
+            the docs written to disk at ``filepath``. Note that this is only applicable
             when ``format="binary"``.
 
     Yields:
@@ -53,7 +53,7 @@ def read_spacy_docs(fname, format="pickle", lang=None):
             provided when ``format="binary"``
     """
     if format == "pickle":
-        with open_sesame(fname, mode="rb") as f:
+        with open_sesame(filepath, mode="rb") as f:
             for spacy_doc in compat.pickle.load(f):
                 yield spacy_doc
     elif format == "binary":
@@ -72,7 +72,7 @@ def read_spacy_docs(fname, format="pickle", lang=None):
             raise ValueError(
                 "lang = '{}' is invalid; must be a str or `spacy.Language`"
             )
-        with open_sesame(fname, mode="rb") as f:
+        with open_sesame(filepath, mode="rb") as f:
             unpacker = msgpack.Unpacker(f, raw=False, unicode_errors="strict")
             for msg in unpacker:
 
@@ -126,18 +126,18 @@ def read_spacy_docs(fname, format="pickle", lang=None):
 
 
 def write_spacy_docs(
-    data, fname, make_dirs=False, format="pickle", exclude=("tensor",), include_tensor=None
+    data, filepath, make_dirs=False, format="pickle", exclude=("tensor",), include_tensor=None
 ):
     """
-    Write one or more ``Doc`` s to disk at ``fname`` in either pickle or
+    Write one or more ``Doc`` s to disk at ``filepath`` in either pickle or
     binary format.
 
     Args:
         data (:class:`spacy.tokens.Doc` or Iterable[:class:`spacy.tokens.Doc`]):
             A single ``Doc`` or a sequence of ``Doc`` s to write to disk.
-        fname (str): Path to file on disk to which data will be written.
+        filepath (str): Path to file on disk to which data will be written.
         make_dirs (bool): If True, automatically create (sub)directories if
-            not already present in order to write ``fname``.
+            not already present in order to write ``filepath``.
         format ({"pickle", "binary"}): Format of the data written to disk.
             If "pickle", use python's stdlib ``pickle``; if "binary", use
             the 3rd-party ``msgpack`` library.
@@ -180,10 +180,10 @@ def write_spacy_docs(
     if isinstance(data, SpacyDoc):
         data = [data]
     if format == "pickle":
-        with open_sesame(fname, mode="wb", make_dirs=make_dirs) as f:
+        with open_sesame(filepath, mode="wb", make_dirs=make_dirs) as f:
             compat.pickle.dump(list(data), f, protocol=-1)
     elif format == "binary":
-        with open_sesame(fname, mode="wb", make_dirs=make_dirs) as f:
+        with open_sesame(filepath, mode="wb", make_dirs=make_dirs) as f:
             for spacy_doc in data:
                 f.write(spacy_doc.to_bytes(exclude=exclude))
     else:
