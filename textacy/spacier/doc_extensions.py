@@ -29,6 +29,7 @@ from .. import network
 
 __all__ = [
     "set_doc_extensions",
+    "get_doc_extensions",
     "remove_doc_extensions",
     "get_lang",
     "get_preview",
@@ -54,6 +55,14 @@ def set_doc_extensions():
     for name, kwargs in _doc_extensions.items():
         if not spacy.tokens.Doc.has_extension(name):
             spacy.tokens.Doc.set_extension(name, **kwargs)
+
+
+def get_doc_extensions():
+    """
+    Get textacy's custom property and method doc extensions
+    that can be set on or removed from the global :class:`spacy.tokens.Doc`.
+    """
+    return _doc_extensions
 
 
 def remove_doc_extensions():
