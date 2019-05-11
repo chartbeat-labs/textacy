@@ -28,7 +28,7 @@ import re
 from datetime import datetime
 
 from .. import compat
-from .. import DEFAULT_DATA_DIR
+from .. import constants
 from .. import io as tio
 from .. import preprocess
 from . import utils
@@ -102,7 +102,7 @@ class RedditComments(Dataset):
     full_date_range = ("2007-10-01", "2015-06-01")
     _full_score_range = (-2147483647, 2147483647)
 
-    def __init__(self, data_dir=os.path.join(DEFAULT_DATA_DIR, NAME)):
+    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
         super(RedditComments, self).__init__(NAME, meta=META)
         self.data_dir = data_dir
         self._date_range = None

@@ -19,7 +19,7 @@ import requests
 from spacy.parts_of_speech import ADJ, ADV, NOUN, VERB
 
 from . import cache
-from . import DEFAULT_DATA_DIR
+from . import constants
 
 LOGGER = logging.getLogger(__name__)
 
@@ -85,7 +85,7 @@ def download_depechemood(data_dir=None, force=False):
             on disk under ``data_dir``.
     """
     if data_dir is None:
-        data_dir = os.path.join(DEFAULT_DATA_DIR, "depechemood")
+        data_dir = os.path.join(constants.DEFAULT_DATA_DIR, "depechemood")
     if os.path.exists(os.path.join(data_dir, "DepecheMood_V1.0")) and force is False:
         LOGGER.warning(
             "DepecheMood data already exists in %s; skipping download...", data_dir

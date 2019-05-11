@@ -20,7 +20,7 @@ from cachetools import cached, LRUCache
 from cachetools.keys import hashkey
 
 from . import compat
-from . import DEFAULT_DATA_DIR
+from . import constants
 
 LOGGER = logging.getLogger(__name__)
 
@@ -156,7 +156,7 @@ def load_depechemood(data_dir=None, weighting="normfreq"):
         :func:`download_depechemood <textacy.lexicon_methods.download_depechemood>`
     """
     if data_dir is None:
-        data_dir = os.path.join(DEFAULT_DATA_DIR, "depechemood", "DepecheMood_V1.0")
+        data_dir = os.path.join(constants.DEFAULT_DATA_DIR, "depechemood", "DepecheMood_V1.0")
     fname = os.path.join(
         data_dir, "DepecheMood_{weighting}.txt".format(weighting=weighting)
     )

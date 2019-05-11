@@ -1,7 +1,6 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
-import os
 
 from textacy.about import __version__
 from textacy.constants import DEFAULT_DATA_DIR
@@ -19,5 +18,6 @@ from textacy.spacier.doc_extensions import set_doc_extensions
 set_doc_extensions()
 
 logger = logging.getLogger("textacy")
-if len(logger.handlers) == 0:  # ensure reload() doesn't add another handler
+# ensure reload() doesn't add another handler
+if len(logger.handlers) == 0:
     logger.addHandler(logging.NullHandler())

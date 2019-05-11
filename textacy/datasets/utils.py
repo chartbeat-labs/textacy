@@ -16,13 +16,13 @@ import zipfile
 from tqdm import tqdm
 
 from .. import compat
-from .. import DEFAULT_DATA_DIR
+from .. import constants
 from ..io import write_http_stream
 
 LOGGER = logging.getLogger(__name__)
 
 
-def download_file(url, filename=None, dirpath=DEFAULT_DATA_DIR, force=False):
+def download_file(url, filename=None, dirpath=constants.DEFAULT_DATA_DIR, force=False):
     """
     Download a file from ``url`` and save it to disk.
 

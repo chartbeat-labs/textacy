@@ -30,11 +30,11 @@ import logging
 import os
 import re
 
-from textacy import compat
-from textacy import DEFAULT_DATA_DIR
-from textacy import io as tio
-from textacy.datasets import utils
-from textacy.datasets.dataset import Dataset
+from .. import compat
+from .. import constants
+from .. import io as tio
+from . import utils
+from .dataset import Dataset
 
 LOGGER = logging.getLogger(__name__)
 
@@ -97,7 +97,7 @@ class IMDB(Dataset):
 
     full_rating_range = (1, 10)
 
-    def __init__(self, data_dir=os.path.join(DEFAULT_DATA_DIR, NAME)):
+    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
         super(IMDB, self).__init__(NAME, meta=META)
         self.data_dir = data_dir
         self._movie_ids = {"train": {}, "test": {}}

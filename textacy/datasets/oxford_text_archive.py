@@ -29,7 +29,7 @@ import os
 import re
 
 from .. import compat
-from .. import DEFAULT_DATA_DIR
+from .. import constants
 from .. import io as tio
 from . import utils
 from .dataset import Dataset
@@ -97,7 +97,7 @@ class OxfordTextArchive(Dataset):
 
     full_date_range = ("0018-01-01", "1990-01-01")
 
-    def __init__(self, data_dir=os.path.join(DEFAULT_DATA_DIR, NAME)):
+    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
         super(OxfordTextArchive, self).__init__(NAME, meta=META)
         self.data_dir = data_dir
         self._text_dirpath = os.path.join(self.data_dir, "master", "text")
