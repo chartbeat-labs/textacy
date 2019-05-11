@@ -20,8 +20,8 @@ pytestmark = pytest.mark.skipif(
 def test_download(tmpdir):
     dataset = OxfordTextArchive(data_dir=str(tempdir))
     dataset.download()
-    assert os.path.exists(dataset._metadata_filepath)
-    assert os.path.exists(dataset._text_dirpath)
+    assert os.path.isfile(dataset._metadata_filepath)
+    assert os.path.isdir(dataset._text_dirpath)
 
 
 def test_oserror(tmpdir):

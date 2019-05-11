@@ -85,7 +85,7 @@ def unpack_archive(filepath, extract_dir=None):
     if not extract_dir:
         extract_dir = os.path.dirname(filepath)
     # TODO: os.makedirs(path, exist_ok=True) when PY3-only
-    if not os.path.exists(extract_dir):
+    if not os.path.isdir(extract_dir):
         os.makedirs(extract_dir)
     is_zipfile = zipfile.is_zipfile(filepath)
     is_tarfile = tarfile.is_tarfile(filepath)

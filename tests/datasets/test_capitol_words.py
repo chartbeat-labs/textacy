@@ -20,7 +20,7 @@ pytestmark = pytest.mark.skipif(
 def test_download(tmpdir):
     dataset = CapitolWords(data_dir=str(tempdir))
     dataset.download()
-    assert os.path.exists(dataset._filepath)
+    assert os.path.isfile(dataset._filepath)
 
 
 def test_oserror(tmpdir):

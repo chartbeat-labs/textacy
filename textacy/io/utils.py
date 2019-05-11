@@ -79,7 +79,7 @@ def open_sesame(
     filepath = os.path.realpath(os.path.expanduser(filepath))
     if make_dirs is True:
         _make_dirs(filepath, mode)
-    elif mode.startswith("r") and not os.path.exists(filepath):
+    elif mode.startswith("r") and not os.path.isfile(filepath):
         raise OSError('file "{}" does not exist'.format(filepath))
 
     compression = _get_compression(filepath, compression)
@@ -190,7 +190,7 @@ def _make_dirs(filepath, mode):
     directories will be created as needed.
     """
     head, _ = os.path.split(filepath)
-    if "w" in mode and head and not os.path.exists(head):
+    if "w" in mode and head and not os.path.isdir(head):
         os.makedirs(head)
 
 
@@ -327,7 +327,7 @@ def get_filepaths(
     Raises:
         OSError: if ``dirpath`` is not found on disk
     """
-    if not os.path.exists(dirpath):
+    if not os.path.isdir(dirpath):
         raise OSError('directory "{}" does not exist'.format(dirpath))
     re_match = re.compile(match_regex) if match_regex else None
     re_ignore = re.compile(ignore_regex) if ignore_regex else None
