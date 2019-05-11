@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+"""A convenient and flexible entry point for making spaCy docs, one at a time."""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import types
@@ -21,10 +22,9 @@ def make_spacy_doc(data, lang=text_utils.detect_language):
     .. code-block:: pycon
 
         >>> text = "To be, or not to be, that is the question."
-        >>> make_spacy_doc(text)
-        >>> make_spacy_doc(text, lang="en")
-        >>> make_spacy_doc(text, lang="en_core_web_sm")
-        >>> make_spacy_doc(text, lang=textacy.load_spacy("en"))
+        >>> doc = make_spacy_doc(text)
+        >>> doc._.preview
+        'Doc(13 tokens: "To be, or not to be, that is the question.")'
 
     Make a ``Doc`` from a (text, metadata) pair, aka a "record":
 
@@ -37,7 +37,17 @@ def make_spacy_doc(data, lang=text_utils.detect_language):
         >>> doc._.meta
         {'author': 'Shakespeare, William'}
 
-    Validate that an existing ``Doc`` is compatible with ``lang``:
+    Specify the language / ``Language`` pipeline used to process the text --- or don't:
+
+    .. code-block:: pycon
+
+        >>> make_spacy_doc(text)
+        >>> make_spacy_doc(text, lang="en")
+        >>> make_spacy_doc(text, lang="en_core_web_sm")
+        >>> make_spacy_doc(text, lang=textacy.load_spacy("en"))
+        >>> make_spacy_doc(text, lang=textacy.text_utils.detect_language)
+
+    Ensure that an already-processed ``Doc`` is compatible with ``lang``:
 
     .. code-block:: pycon
 

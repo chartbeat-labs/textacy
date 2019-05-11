@@ -1,5 +1,5 @@
 """
-Module for exporting textacy/spacy objects into "third-party" formats.
+Module for exporting spaCy objects into "third-party" formats.
 """
 import collections
 import operator
@@ -18,11 +18,11 @@ def docs_to_gensim(
     filter_nums=False,
 ):
     """
-    Convert a sequence of ``spacy.Doc`` s into a gensim-friendly corpus and a
+    Convert a sequence of ``Doc`` s into a gensim-friendly corpus and a
     string that can be loaded into a :class:`gensim.corpora.Dictionary`.
 
     Args:
-        spacy_docs (Iterable[``spacy.Doc``])
+        spacy_docs (Iterable[:class:`spacy.tokens.Doc`])
         spacy_vocab (``spacy.Vocab``)
         lemmatize (bool): if True, use lemmatized strings for words
         lowercase (bool): if True (and ``lemmatize`` is False), use lowercased
@@ -81,11 +81,11 @@ def docs_to_gensim(
 
 def doc_to_conll(doc):
     """
-    Convert a single ``spacy.Doc`` into a CoNLL-U formatted str, as described at
+    Convert a single ``Doc`` into a CoNLL-U formatted str, as described at
     http://universaldependencies.org/docs/format.html.
 
     Args:
-        doc (``spacy.Doc``)
+        doc (:class:`spacy.tokens.Doc`)
 
     Returns:
         str

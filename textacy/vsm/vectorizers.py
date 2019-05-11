@@ -38,10 +38,9 @@ class Vectorizer(object):
 
     Stream a corpus with metadata from disk::
 
-        >>> cw = textacy.datasets.CapitolWords()
-        >>> text_stream, metadata_stream = textacy.io.split_records(
-        ...     cw.records(limit=1000), 'text', itemwise=False)
-        >>> corpus = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
+        >>> ds = textacy.datasets.CapitolWords()
+        >>> records = ds.records(limit=1000)
+        >>> corpus = textacy.Corpus("en", data=records)
         >>> corpus
         Corpus(1000 docs; 538172 tokens)
 

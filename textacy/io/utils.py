@@ -223,9 +223,7 @@ def coerce_content_type(content, file_mode):
 def split_records(items, content_field, itemwise=False):
     """
     Split records' content (text) from associated metadata, but keep them paired
-    together for convenient loading into a :class:`textacy.Doc <textacy.doc.Doc>`
-    (with ``itemwise=True``) or :class:`textacy.Corpus <textacy.corpus.Corpus>`
-    (with ``itemwise=False``).
+    together.
 
     Args:
         items (Iterable[dict] or Iterable[list]): An iterable of dicts, e.g. as

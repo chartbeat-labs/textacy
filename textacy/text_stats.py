@@ -24,7 +24,7 @@ class TextStats(object):
     document. For example::
 
         >>> text = next(textacy.datasets.CapitolWords().texts(limit=1))
-        >>> doc = textacy.Doc(text)
+        >>> doc = textacy.make_spacy_doc(text)
         >>> ts = TextStats(doc)
         >>> ts.n_words
         136
@@ -51,7 +51,7 @@ class TextStats(object):
          'wiener_sachtextformel': 8.266410784313727}
 
     Args:
-        doc (:class:`textacy.Doc` or :class:`SpacyDoc`): A text document processed
+        doc (:class:`spacy.tokens.Doc`): A text document processed
             by spacy. Need only be tokenized.
 
     Attributes:
@@ -84,7 +84,7 @@ class TextStats(object):
             above between ``flesch_kincaid_grade_level`` and ``wiener_sachtextformel``.
 
     Raises:
-        ValueError: If ``doc`` is not a :class:`textacy.Doc` or :class:`SpacyDoc`.
+        ValueError: If ``doc`` is not a :class:`spacy.tokens.Doc`.
     """
 
     def __init__(self, doc):

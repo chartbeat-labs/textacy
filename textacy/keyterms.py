@@ -38,7 +38,7 @@ def sgrank(
     Extract key terms from a document using the [SGRank]_ algorithm.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc``)
+        doc (:class:`spacy.tokens.Doc`)
         ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3, 4, 5, 6)``
                 (default) includes all ngrams from 1 to 6; `2`
                 if only bigrams are wanted
@@ -211,7 +211,7 @@ def textrank(doc, normalize="lemma", n_keyterms=10):
     with the parameter values used in the [TextRank]_ algorithm.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc``)
+        doc (:class:`spacy.tokens.Doc`)
         normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``spacy.Token`` and return a str,
@@ -244,7 +244,7 @@ def singlerank(doc, normalize="lemma", n_keyterms=10):
     with the parameter values used in the [SingleRank]_ algorithm.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc``)
+        doc (:class:`spacy.tokens.Doc`)
         normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``spacy.Token`` and return a str,
@@ -288,7 +288,7 @@ def key_terms_from_semantic_network(
     terms, connected by edges and weights specified by parameters.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc``)
+        doc (:class:`spacy.tokens.Doc`)
         normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``spacy.Token`` and return a str,

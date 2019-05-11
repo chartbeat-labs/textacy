@@ -20,7 +20,7 @@ def _merge_entities(doc):
     a single token.
 
     Args:
-        doc (``spacy.doc``)
+        doc (:class:`spacy.tokens.Doc`)
     """
     for ent in doc.ents:
         try:

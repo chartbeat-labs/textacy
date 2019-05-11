@@ -48,7 +48,7 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
                make weird parsing errors.
 
     Returns:
-        ``spacy.Doc``: A single processed document, initialized from
+        :class:`spacy.tokens.Doc`: A single processed document, initialized from
         components accumulated chunk by chunk.
     """
     if isinstance(lang, compat.unicode_):
@@ -84,8 +84,8 @@ def merge_spans(spans, doc):
     Merge spans into single tokens in ``doc``, *in-place*.
 
     Args:
-        spans (Iterable[``spacy.Span``])
-        doc (``spacy.Doc``)
+        spans (Iterable[:class:`spacy.tokens.Span`])
+        doc (:class:`spacy.tokens.Doc`)
     """
     try:  # retokenizer was added to spacy in v2.0.11
         with doc.retokenize() as retokenizer:
@@ -106,7 +106,7 @@ def preserve_case(token):
     Return True if ``token`` is a proper noun or acronym; otherwise, False.
 
     Args:
-        token (``spacy.Token``)
+        token (:class:`spacy.tokens.Token`)
 
     Returns:
         bool
@@ -131,7 +131,7 @@ def get_normalized_text(span_or_token):
     text is lemmatized.
 
     Args:
-        span_or_token (``spacy.Span`` or ``spacy.Token``)
+        span_or_token (:class:`spacy.tokens.Span` or :class:`spacy.tokens.Token`)
 
     Returns:
         str

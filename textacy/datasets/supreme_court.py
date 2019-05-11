@@ -110,8 +110,7 @@ class SupremeCourt(Dataset):
 
     Stream decisions into a :class:`textacy.Corpus`::
 
-        >>> texts, metas = textacy.io.unzip(sc.records(limit=25))
-        >>> textacy.Corpus("en", texts=texts, metadatas=metas)
+        >>> textacy.Corpus("en", data=sc.records(limit=25))
         Corpus(25 docs; 136696 tokens)
 
     Args:
