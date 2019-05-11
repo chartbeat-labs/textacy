@@ -328,15 +328,15 @@ def get_filenames(
     """
     if not os.path.exists(dirname):
         raise OSError('directory "{}" does not exist'.format(dirname))
-    match_regex = re.compile(match_regex) if match_regex else None
-    ignore_regex = re.compile(ignore_regex) if ignore_regex else None
+    re_match = re.compile(match_regex) if match_regex else None
+    re_ignore = re.compile(ignore_regex) if ignore_regex else None
 
     def is_good_file(filename, filepath):
         if ignore_invisible and filename.startswith("."):
             return False
-        if match_regex and not match_regex.search(filename):
+        if re_match and not re_match.search(filename):
             return False
-        if ignore_regex and ignore_regex.search(filename):
+        if re_ignore and re_ignore.search(filename):
             return False
         if extension and not os.path.splitext(filename)[-1] == extension:
             return False

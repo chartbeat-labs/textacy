@@ -46,7 +46,7 @@ META = {
 }
 DOWNLOAD_ROOT = "https://archive.org/download/2015_reddit_comments_corpus/reddit_data/"
 
-REDDIT_LINK_RE = re.compile(r"\[([^]]+)\]\(https?://[^\)]+\)")
+RE_REDDIT_LINK = re.compile(r"\[([^]]+)\]\(https?://[^\)]+\)")
 
 
 class RedditComments(Dataset):
@@ -336,7 +336,7 @@ class RedditComments(Dataset):
 
     def _clean_content(self, content):
         # strip out link markup, e.g. [foo](http://foo.com)
-        content = REDDIT_LINK_RE.sub(r"\1", content)
+        content = RE_REDDIT_LINK.sub(r"\1", content)
         # clean up basic HTML cruft
         content = content.replace("&gt;", ">").replace("&lt;", "<")
         # strip out text markup, e.g. * for bold text

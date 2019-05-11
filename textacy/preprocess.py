@@ -42,8 +42,8 @@ def normalize_whitespace(text):
     Given ``text`` str, replace one or more spacings with a single space, and one
     or more linebreaks with a single newline. Also strip leading/trailing whitespace.
     """
-    return constants.NONBREAKING_SPACE_REGEX.sub(
-        " ", constants.LINEBREAK_REGEX.sub(r"\n", text)
+    return constants.RE_NONBREAKING_SPACE.sub(
+        " ", constants.RE_LINEBREAK.sub(r"\n", text)
     ).strip()
 
 
@@ -82,24 +82,24 @@ def unpack_contractions(text):
 
 def replace_urls(text, replace_with="*URL*"):
     """Replace all URLs in ``text`` str with ``replace_with`` str."""
-    return constants.URL_REGEX.sub(
-        replace_with, constants.SHORT_URL_REGEX.sub(replace_with, text)
+    return constants.RE_URL.sub(
+        replace_with, constants.RE_SHORT_URL.sub(replace_with, text)
     )
 
 
 def replace_emails(text, replace_with="*EMAIL*"):
     """Replace all emails in ``text`` str with ``replace_with`` str."""
-    return constants.EMAIL_REGEX.sub(replace_with, text)
+    return constants.RE_EMAIL.sub(replace_with, text)
 
 
 def replace_phone_numbers(text, replace_with="*PHONE*"):
     """Replace all phone numbers in ``text`` str with ``replace_with`` str."""
-    return constants.PHONE_REGEX.sub(replace_with, text)
+    return constants.RE_PHONE.sub(replace_with, text)
 
 
 def replace_numbers(text, replace_with="*NUMBER*"):
     """Replace all numbers in ``text`` str with ``replace_with`` str."""
-    return constants.NUMBERS_REGEX.sub(replace_with, text)
+    return constants.RE_NUMBERS.sub(replace_with, text)
 
 
 def replace_currency_symbols(text, replace_with=None):
@@ -121,7 +121,7 @@ def replace_currency_symbols(text, replace_with=None):
             text = text.replace(k, v)
         return text
     else:
-        return constants.CURRENCY_REGEX.sub(replace_with, text)
+        return constants.RE_CURRENCY.sub(replace_with, text)
 
 
 def remove_punct(text, marks=None):

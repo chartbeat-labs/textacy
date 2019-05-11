@@ -44,30 +44,30 @@ POS_REGEX_PATTERNS = {
     }
 }
 
-ACRONYM_REGEX = re.compile(
+RE_ACRONYM = re.compile(
     r"(?:^|(?<=\W))"
     r"(?:(?:(?:(?:[A-Z]\.?)+[a-z0-9&/-]?)+(?:[A-Z][s.]?|[0-9]s?))|(?:[0-9](?:\-?[A-Z])+))"
     r"(?:$|(?=\W))",
     flags=re.UNICODE)
-EMAIL_REGEX = re.compile(
+RE_EMAIL = re.compile(
     r"(?:^|(?<=[^\w@.)]))([\w+-](\.(?!\.))?)*?[\w+-]@(?:\w-?)*?\w+(\.([a-z]{2,})){1,3}"
     r"(?:$|(?=\b))",
     flags=re.IGNORECASE | re.UNICODE)
-PHONE_REGEX = re.compile(
+RE_PHONE = re.compile(
     # core components of a phone number
     r"(?:^|(?<=[^\w)]))(\+?1[ .-]?)?(\(?\d{3}\)?[ .-]?)?(\d{3}[ .-]?\d{4})"
     # extensions, etc.
     r"(\s?(?:ext\.?|[#x-])\s?\d{2,6})?(?:$|(?=\W))",
     flags=re.IGNORECASE)
-NUMBERS_REGEX = re.compile(
+RE_NUMBERS = re.compile(
     r"(?:^|(?<=[^\w,.]))[+–-]?"
     r"(([1-9]\d{0,2}(,\d{3})+(\.\d*)?)|([1-9]\d{0,2}([ .]\d{3})+(,\d*)?)|(\d*?[.,]\d+)|\d+)"
-    "(?:$|(?=\b))")
-CURRENCY_REGEX = re.compile(
+    r"(?:$|(?=\b))")
+RE_CURRENCY = re.compile(
     "({})+".format("|".join(re.escape(c) for c in CURRENCIES.keys())))
-LINEBREAK_REGEX = re.compile(r"((\r\n)|[\n\v])+")
-NONBREAKING_SPACE_REGEX = re.compile(r"(?!\n)\s+")
-URL_REGEX = re.compile(
+RE_LINEBREAK = re.compile(r"((\r\n)|[\n\v])+")
+RE_NONBREAKING_SPACE = re.compile(r"(?!\n)\s+")
+RE_URL = re.compile(
     r"(?:^|(?<![\w/.]))"
     # protocol identifier
     # r"(?:(?:https?|ftp)://)"  <-- alt?
@@ -102,7 +102,7 @@ URL_REGEX = re.compile(
     r"(?:/\S*)?"
     r"(?:$|(?![\w?!+&/]))",
     flags=re.UNICODE | re.IGNORECASE)  # source: https://gist.github.com/dperini/729294
-SHORT_URL_REGEX = re.compile(
+RE_SHORT_URL = re.compile(
     r"(?:^|(?<![\w/.]))"
     # optional scheme
     r"(?:(?:https?://)?)"
@@ -115,17 +115,17 @@ SHORT_URL_REGEX = re.compile(
     flags=re.IGNORECASE)
 
 # regexes for cleaning up crufty terms
-DANGLING_PARENS_TERM_RE = re.compile(
+RE_DANGLING_PARENS_TERM = re.compile(
     r"(?:\s|^)(\()\s{1,2}(.*?)\s{1,2}(\))(?:\s|$)", flags=re.UNICODE)
-LEAD_TAIL_CRUFT_TERM_RE = re.compile(
+RE_LEAD_TAIL_CRUFT_TERM = re.compile(
     r"^([^\w(-] ?)+|([^\w).!?] ?)+$", flags=re.UNICODE)
-LEAD_HYPHEN_TERM_RE = re.compile(
+RE_LEAD_HYPHEN_TERM = re.compile(
     r"^-([^\W\d_])", flags=re.UNICODE)
-NEG_DIGIT_TERM_RE = re.compile(
+RE_NEG_DIGIT_TERM = re.compile(
     r"(-) (\d)", flags=re.UNICODE)
-WEIRD_HYPHEN_SPACE_TERM_RE = re.compile(
+RE_WEIRD_HYPHEN_SPACE_TERM = re.compile(
     r"(?<=[^\W\d]) (-[^\W\d])", flags=re.UNICODE)
-WEIRD_APOSTR_SPACE_TERM_RE = re.compile(
+RE_WEIRD_APOSTR_SPACE_TERM = re.compile(
     r"([^\W\d]+) ('[a-z]{1,2}\b)", flags=re.UNICODE)
 
 

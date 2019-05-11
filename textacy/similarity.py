@@ -26,7 +26,7 @@ from . import compat
 from . import extract
 
 
-NONWORDCHARS_REGEX = re.compile(r"\W+", flags=re.IGNORECASE | re.UNICODE)
+RE_NONWORDCHARS = re.compile(r"\W+", flags=re.IGNORECASE | re.UNICODE)
 
 
 def word_movers(doc1, doc2, metric="cosine"):
@@ -258,4 +258,4 @@ def _process(s):
     """
     if not s:
         return ""
-    return NONWORDCHARS_REGEX.sub(" ", s).lower().strip()
+    return RE_NONWORDCHARS.sub(" ", s).lower().strip()
