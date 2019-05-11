@@ -278,8 +278,8 @@ def to_terms_list(
             entities
             and ne_kwargs["exclude_types"]
             and any(
-                ne_type in ne_kwargs["exclude_types"]
-                for ne_type in constants.NUMERIC_ENT_TYPES
+                ent_type in ne_kwargs["exclude_types"]
+                for ent_type in constants.NUMERIC_ENT_TYPES
             )
         ):
             ngram_kwargs["filter_nums"] = True

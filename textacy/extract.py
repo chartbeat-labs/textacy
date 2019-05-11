@@ -231,8 +231,8 @@ def entities(doc, include_types=None, exclude_types=None, drop_determiners=True,
     # HACK: spacy's models have been erroneously tagging whitespace as entities
     # https://github.com/explosion/spaCy/commit/1e6725e9b734862e61081a916baf440697b9971e
     ents = (ent for ent in ents if not ent.text.isspace())
-    include_types = _parse_ne_types(include_types, "include")
-    exclude_types = _parse_ne_types(exclude_types, "exclude")
+    include_types = _parse_ent_types(include_types, "include")
+    exclude_types = _parse_ent_types(exclude_types, "exclude")
     if include_types:
         if isinstance(include_types, compat.unicode_):
             ents = (ent for ent in ents if ent.label_ == include_types)
@@ -304,10 +304,7 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
         :class:`spacy.tokens.Span`: the next noun chunk from ``doc`` in order of appearance
         in the document
     """
-    if hasattr(doc, "spacy_doc"):
-        ncs = doc.spacy_doc.noun_chunks
-    else:
-        ncs = doc.noun_chunks
+    ncs = doc.noun_chunks
     if drop_determiners is True:
         ncs = (nc if nc[0].pos != DET else nc[1:] for nc in ncs)
     if min_freq > 1:
@@ -815,11 +812,7 @@ def direct_quotations(doc):
 
     TODO: Better approach would use ML, but needs a training dataset.
     """
-    if hasattr(doc, "spacy_doc"):
-        doc_lang = doc.lang
-        doc = doc.spacy_doc
-    else:
-        doc_lang = doc.vocab.lang
+    doc_lang = doc.vocab.lang
     if doc_lang != "en":
         raise NotImplementedError("sorry, English-language texts only :(")
     quote_end_punct = {",", ".", "?", "!"}
@@ -887,7 +880,7 @@ def direct_quotations(doc):
             except IndexError:
                 continue
             #         if rv_subj.text in {'he', 'she'}:
-            #             for ne in entities(doc, good_ne_types={'PERSON'}):
+            #             for ne in entities(doc, include_types={'PERSON'}):
             #                 if ne.start < rv_subj.i:
             #                     speaker = ne
             #                 else:
