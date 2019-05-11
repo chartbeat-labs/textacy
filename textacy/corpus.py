@@ -1,13 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-Corpus
-------
-
-An ordered collection of :class:`spacy.tokens.Doc`, all of the same language
-and sharing the same :class:`spacy.language.Language` processing pipeline
-and vocabulary, with data held *in-memory*. Includes functionality for
-easily adding, getting, and removing of documents; saving to / loading from disk;
-and tracking basic corpus statistics.
+A class for working with a collection of spaCy docs. Includes functionality for
+easily adding, getting, and removing documents; saving to / loading their data
+from disk; and tracking basic corpus statistics.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -33,50 +28,61 @@ class Corpus(object):
     and sharing the same :class:`spacy.language.Language` processing pipeline
     and vocabulary, with data held *in-memory*.
 
-    Initialize from a stream of texts or (text, metadata) pairs::
+    Initialize from a language / ``Language`` and (optionally) one or a stream
+    of texts or (text, metadata) pairs:
+
+    .. code-block:: pycon
 
         >>> ds = textacy.datasets.CapitolWords()
         >>> records = ds.records(limit=50)
         >>> corpus = textacy.Corpus("en", data=records)
-        >>> print(corpus)
-        Corpus(50 docs; 32163 tokens)
+        >>> corpus
+        Corpus(50 docs, 32175 tokens)
 
-    Index, slice, and flexibly get particular documents::
+    Add or remove documents, with automatic updating of corpus statistics:
 
-        >>> corpus[0]
-        Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work...")
-        >>> corpus[:3]
-        [Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work..."),
-         Doc(219 tokens; "Mr. Speaker, a relationship, to work and surviv..."),
-         Doc(336 tokens; "Mr. Speaker, I thank the gentleman for yielding...")]
-        >>> match_func = lambda doc: doc._.meta["speaker_name"] == "Bernie Sanders"
+    .. code-block:: pycon
+
+        >>> texts = ds.texts(congress=114, limit=25)
+        >>> corpus.add(texts)
+        >>> corpus.add("If Burton were a member of Congress, here's what he'd say.")
+        >>> corpus
+        Corpus(76 docs, 55906 tokens)
+        >>> corpus.remove(lambda doc: doc._.meta.get("speaker_name") == "Rick Santorum")
+        >>> corpus
+        Corpus(67 docs, 50662 tokens)
+
+    Get subsets of documents matching your particular use case:
+
+    .. code-block:: pycon
+
+        >>> match_func = lambda doc: doc._.meta.get("speaker_name") == "Bernie Sanders"
         >>> for doc in corpus.get(match_func, limit=3):
-        ...     print(doc)
-        Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work...")
-        Doc(336 tokens; "Mr. Speaker, I thank the gentleman for yielding...")
-        Doc(177 tokens; "Mr. Speaker, if we want to understand why in th...")
+        ...     print(doc._.preview)
+        Doc(159 tokens: "Mr. Speaker, 480,000 Federal employees are work...")
+        Doc(336 tokens: "Mr. Speaker, I thank the gentleman for yielding...")
+        Doc(177 tokens: "Mr. Speaker, if we want to understand why in th...")
 
-    Add and remove documents, with automatic updating of corpus statistics::
+    Get or remove documents by indexing, too:
 
-        >>> records = ds.records(congress=114, limit=25)
-        >>> corpus.add(records)
-        >>> print(corpus)
-        Corpus(75 docs; 55869 tokens)
-        >>> corpus.remove(lambda doc: doc._.meta["speaker_name"] == "Rick Santorum")
-        >>> print(corpus)
-        Corpus(60 docs; 48532 tokens)
+    .. code-block:: pycon
+
+        >>> corpus[0]._.preview
+        'Doc(159 tokens: "Mr. Speaker, 480,000 Federal employees are work...")'
+        >>> [doc._.preview for doc in corpus[:3]]
+        ['Doc(159 tokens: "Mr. Speaker, 480,000 Federal employees are work...")',
+         'Doc(219 tokens: "Mr. Speaker, a relationship, to work and surviv...")',
+         'Doc(336 tokens: "Mr. Speaker, I thank the gentleman for yielding...")']
         >>> del corpus[:5]
-        >>> print(corpus)
-        Corpus(55 docs; 47444 tokens)
-
-    Get word and doc frequencies in absolute, relative, or binary form? TBD.
+        >>> corpus
+        Corpus(62 docs, 43668 tokens)
 
     Save corpus data to and load from disk::
 
         >>> corpus.save("~/Desktop/capitol_words_sample.bin")
         >>> corpus = textacy.Corpus.load("en", "~/Desktop/capitol_words_sample.bin")
-        >>> print(corpus)
-        Corpus(55 docs; 47444 tokens)
+        >>> corpus
+        Corpus(62 docs, 43668 tokens)
 
     Args:
         lang (str or :class:`spacy.language.Language`):
@@ -134,11 +140,11 @@ class Corpus(object):
 
     def __delitem__(self, idx_or_slice):
         if isinstance(idx_or_slice, int):
-            self._remove_doc_by_index(idx_or_slice)
+            self._remove_one_doc_by_index(idx_or_slice)
         elif isinstance(idx_or_slice, slice):
             start, end, step = idx_or_slice.indices(self.n_docs)
-            for idx in compat.range_(start, end, step):
-                self._remove_doc_by_index(idx)
+            idxs = compat.range_(start, end, step)
+            self._remove_many_docs_by_index(idxs)
         else:
             raise TypeError(
                 "list indices must be integers or slices, not {}".format(type(idx_or_slice))
@@ -347,9 +353,9 @@ class Corpus(object):
         """
         matched_docs = (doc for doc in self if match_func(doc) is True)
         for doc in itertools.islice(matched_docs, limit):
-            self._remove_doc_by_index(self._doc_ids.index(id(doc)))
+            self._remove_one_doc_by_index(self._doc_ids.index(id(doc)))
 
-    def _remove_doc_by_index(self, idx):
+    def _remove_one_doc_by_index(self, idx):
         doc = self.docs[idx]
         self.n_docs -= 1
         self.n_tokens -= len(doc)
@@ -357,6 +363,10 @@ class Corpus(object):
             self.n_sents -= sum(1 for _ in doc.sents)
         del self.docs[idx]
         del self._doc_ids[idx]
+
+    def _remove_many_docs_by_index(self, idxs):
+        for idx in sorted(idxs, reverse=True):
+            self._remove_one_doc_by_index(idx)
 
     # useful properties
 
