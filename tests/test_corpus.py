@@ -19,7 +19,7 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def corpus(request):
+def corpus():
     return Corpus("en", data=DATASET.records(limit=5))
 
 
@@ -162,3 +162,4 @@ class TestCorpusMethods(object):
         assert len(loaded_corpus) == len(corpus)
         assert loaded_corpus.spacy_lang.meta == corpus.spacy_lang.meta
         assert loaded_corpus.spacy_lang.pipe_names == corpus.spacy_lang.pipe_names
+        assert corpus[0].user_data == loaded_corpus[0].user_data

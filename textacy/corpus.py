@@ -398,7 +398,6 @@ class Corpus(object):
         See Also:
             :meth:`Corpus.load()`
         """
-        # TODO: handle document metadata!
         attrs = [
             spacy.attrs.ORTH,
             spacy.attrs.SPACY,
@@ -417,10 +416,12 @@ class Corpus(object):
         tokens = []
         lengths = []
         strings = set()
+        user_datas = []
         for doc in self:
             tokens.append(doc.to_array(attrs))
             lengths.append(len(doc))
             strings.update(tok.text for tok in doc)
+            user_datas.append(doc.user_data)
 
         msg = {
             "meta": self.spacy_lang.meta,
@@ -428,6 +429,7 @@ class Corpus(object):
             "tokens": np.vstack(tokens).tobytes("C"),
             "lengths": np.asarray(lengths, dtype="int32").tobytes("C"),
             "strings": list(strings),
+            "user_datas": user_datas,
         }
         with tio.open_sesame(filepath, mode="wb") as f:
             f.write(srsly.msgpack_dumps(msg))
@@ -464,18 +466,20 @@ class Corpus(object):
             (flat_tokens.size // len(attrs), len(attrs))
         )
         tokens = np.asarray(NumpyOps().unflatten(flat_tokens, lengths))
+        user_datas = msg["user_datas"]
 
-        def _make_docs(tokens):
-            for toks in tokens:
+        def _make_spacy_docs(tokens, user_datas):
+            for toks, user_data in compat.zip_(tokens, user_datas):
                 doc = spacy.tokens.Doc(
                     spacy_lang.vocab,
                     words=[spacy_lang.vocab.strings[orth] for orth in toks[:, 0]],
                     spaces=np.ndarray.tolist(toks[:, 1]),
                 )
                 doc = doc.from_array(attrs[2:], toks[:, 2:])
+                doc.user_data = user_data
                 yield doc
 
-        return cls(spacy_lang, data=_make_docs(tokens))
+        return cls(spacy_lang, data=_make_spacy_docs(tokens, user_datas))
 
 
 def _get_spacy_lang(lang):
