@@ -22,7 +22,7 @@ class TextStatsComponent(object):
     """
     A custom component to be added to a spaCy language pipeline that computes
     one, some, or all text stats for a parsed doc and sets the values
-    as custom attributes on a :obj:`SpacyDoc`.
+    as custom attributes on a :class:`spacy.tokens.Doc`.
 
     Add the component to a pipeline, *after* the parser (as well as any
     subsequent components that modify the tokens/sentences of the doc)::
@@ -125,10 +125,10 @@ def merge_entities(doc):
         Burton DeWilde
 
     Args:
-        doc (``SpacyDoc``)
+        doc (:class:`spacy.tokens.Doc`)
 
     Returns:
-        ``SpacyDoc``: Input ``doc`` with entities merged.
+        :class:`spacy.tokens.Doc`: Input ``doc`` with entities merged.
     """
     spacier_utils.merge_spans(doc.ents, doc)
     return doc

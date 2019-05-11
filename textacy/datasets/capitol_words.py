@@ -86,8 +86,7 @@ class CapitolWords(Dataset):
 
     Stream speeches into a :class:`textacy.Corpus`::
 
-        >>> texts, metas = textacy.io.unzip(ota.records(limit=100))
-        >>> textacy.Corpus("en", texts=texts, metadatas=metas)
+        >>> textacy.Corpus("en", data=ota.records(limit=100))
         Corpus(100 docs; 70496 tokens)
 
     Args:

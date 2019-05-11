@@ -53,9 +53,9 @@ def test_records():
 
 
 def test_records_speaker_name():
-    speaker_names = ({"Bernie Sanders"}, {"Ted Cruz", "Barack Obama"})
+    speaker_names = ({"Bernie Sanders"}, {"Joseph Biden", "Rick Santorum"})
     for speaker_name in speaker_names:
-        records = list(DATASET.records(speaker_name=speaker_name, limit=10))
+        records = list(DATASET.records(speaker_name=speaker_name, limit=3))
         assert len(records) >= 1
         assert all(
             meta["speaker_name"] in speaker_name
@@ -97,9 +97,9 @@ def test_records_congress():
 
 
 def test_records_date_range():
-    date_ranges = (["2000-01-01", "2001-01-01"], ("2010-01-01", "2010-02-01"))
+    date_ranges = (["1997-01-01", "1998-01-01"], ("1997-01-01", "1997-02-01"))
     for date_range in date_ranges:
-        records = list(DATASET.records(date_range=date_range, limit=10))
+        records = list(DATASET.records(date_range=date_range, limit=3))
         assert len(records) >= 1
         assert all(
             date_range[0] <= meta["date"] < date_range[1]

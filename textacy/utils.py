@@ -62,3 +62,16 @@ def print_markdown(items):
         for k, v in items
     )
     print("{}".format("\n".join(md_items)))
+
+
+def is_record(obj):
+    """Check whether ``obj`` is a "record" -- that is, a (text, metadata) 2-tuple."""
+    if (
+        isinstance(obj, (tuple, list))
+        and len(obj) == 2
+        and isinstance(obj[0], compat.unicode_)
+        and isinstance(obj[1], dict)
+    ):
+        return True
+    else:
+        return False

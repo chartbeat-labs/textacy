@@ -5,11 +5,15 @@ from operator import itemgetter
 import numpy as np
 import pytest
 import scipy.sparse as sp
+from spacy.tokens.doc import Doc as SpacyDoc
 from spacy.tokens.span import Span as SpacySpan
 
 import textacy.datasets
-from textacy import Doc, Corpus, Vectorizer, TextStats, TopicModel, preprocess_text
+from textacy import Corpus, TextStats, preprocess_text
 from textacy import cache, compat, constants, extract, io, keyterms, text_utils
+from textacy.doc import make_spacy_doc
+from textacy.tm import TopicModel
+from textacy.vsm import Vectorizer
 
 DATASET = textacy.datasets.CapitolWords()
 
@@ -21,20 +25,19 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture(scope="module")
 def text():
-    return list(DATASET.texts(speaker_name={"Bernie Sanders"}, limit=1))[0]
+    return next(DATASET.texts(speaker_name={"Bernie Sanders"}, limit=1)).strip()
 
 
 @pytest.fixture(scope="module")
 def doc(text):
     spacy_lang = cache.load_spacy("en")
-    return Doc(text.strip(), lang=spacy_lang)
+    return make_spacy_doc(text, lang=spacy_lang)
 
 
 @pytest.fixture(scope="module")
 def corpus():
     records = DATASET.records(speaker_name={"Bernie Sanders"}, limit=10)
-    texts, metas = io.unzip(records)
-    corpus = Corpus("en", texts=texts, metadatas=metas)
+    corpus = Corpus("en", data=records)
     return corpus
 
 
@@ -56,7 +59,7 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
     )
     doc_term_matrix = vectorizer.fit_transform(
         (
-            doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+            doc._.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
             for doc in corpus
         )
     )
@@ -74,9 +77,9 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
 
 
 def test_corpus_functionality(corpus):
-    assert isinstance(corpus[0], Doc)
+    assert isinstance(corpus[0], SpacyDoc)
     assert list(
-        corpus.get(lambda doc: doc.metadata["speaker_name"] == "Bernie Sanders")
+        corpus.get(lambda doc: doc._.meta["speaker_name"] == "Bernie Sanders")
     )
 
 

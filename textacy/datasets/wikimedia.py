@@ -377,8 +377,7 @@ class Wikipedia(Wikimedia):
 
     Stream wiki pages into a :class:`textacy.Corpus`::
 
-        >>> texts, metas = textacy.io.unzip(wp.records(min_len=2000, limit=50))
-        >>> textacy.Corpus("en", texts=texts, metadatas=metas)
+        >>> textacy.Corpus("en", data=wp.records(min_len=2000, limit=50))
         Corpus(50 docs; 72368 tokens)
 
     Args:
@@ -438,8 +437,7 @@ class Wikinews(Wikimedia):
 
     Stream wiki pages into a :class:`textacy.Corpus`::
 
-        >>> texts, metas = textacy.io.unzip(wn.records(limit=100))
-        >>> textacy.Corpus("en", texts=texts, metadatas=metas)
+        >>> textacy.Corpus("en", data=wn.records(limit=100))
         Corpus(100 docs; 33092 tokens)
 
     Args:

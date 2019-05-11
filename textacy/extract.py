@@ -36,7 +36,7 @@ def words(
     optionally filtering words by part-of-speech tag and frequency.
 
     Args:
-        doc (``textacy.Doc``, ``spacy.Doc``, or ``spacy.Span``)
+        doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
         filter_stops (bool): if True, remove stop words from word list
         filter_punct (bool): if True, remove punctuation from word list
         filter_nums (bool): if True, remove number-like words (e.g. 10, 'ten')
@@ -49,7 +49,7 @@ def words(
             ``min_freq`` times
 
     Yields:
-        ``spacy.Token``: the next token from ``doc`` passing specified filters
+        :class:`spacy.tokens.Token`: the next token from ``doc`` passing specified filters
         in order of appearance in the document
 
     Raises:
@@ -112,7 +112,7 @@ def ngrams(
     parts-of-speech of the constituent words.
 
     Args:
-        doc (``textacy.Doc``, ``spacy.Doc``, or ``spacy.Span``)
+        doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
         n (int): number of tokens per n-gram; 2 => bigrams, 3 => trigrams, etc.
         filter_stops (bool): if True, remove ngrams that start or end
             with a stop word
@@ -128,7 +128,7 @@ def ngrams(
             ``min_freq`` times
 
     Yields:
-        ``spacy.Span``: the next ngram from ``doc`` passing all specified
+        :class:`spacy.tokens.Span`: the next ngram from ``doc`` passing all specified
         filters, in order of appearance in the document
 
     Raises:
@@ -200,7 +200,7 @@ def named_entities(
     a spacy-parsed doc, optionally filtering by entity types and frequencies.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc``)
+        doc (:class:`spacy.tokens.Doc`)
         include_types (str or Set[str]): remove named entities whose type IS NOT
             in this param; if "NUMERIC", all numeric entity types ("DATE",
             "MONEY", "ORDINAL", etc.) are included
@@ -222,7 +222,7 @@ def named_entities(
             than ``min_freq`` times
 
     Yields:
-        ``spacy.Span``: the next named entity from ``doc`` passing all specified
+        :class:`spacy.tokens.Span`: the next named entity from ``doc`` passing all specified
         filters in order of appearance in the document
 
     Raises:
@@ -299,14 +299,14 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
     filtering by frequency and dropping leading determiners.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc``)
+        doc (:class:`spacy.tokens.Doc`)
         drop_determiners (bool): remove leading determiners (e.g. "the")
             from phrases (e.g. "the quick brown fox" => "quick brown fox")
         min_freq (int): remove chunks that occur in ``doc`` fewer than
             ``min_freq`` times
 
     Yields:
-        ``spacy.Span``: the next noun chunk from ``doc`` in order of appearance
+        :class:`spacy.tokens.Span`: the next noun chunk from ``doc`` in order of appearance
         in the document
     """
     if hasattr(doc, "spacy_doc"):
@@ -330,7 +330,7 @@ def pos_regex_matches(doc, pattern):
     part-of-speech tags match the specified regex pattern.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
+        doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
         pattern (str): Pattern of consecutive POS tags whose corresponding words
             are to be extracted, inspired by the regex patterns used in NLTK's
             `nltk.chunk.regexp`. Tags are uppercase, from the universal tag set;
@@ -346,7 +346,7 @@ def pos_regex_matches(doc, pattern):
             * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
 
     Yields:
-        ``spacy.Span``: the next span of consecutive tokens from ``doc`` whose
+        :class:`spacy.tokens.Span`: the next span of consecutive tokens from ``doc`` whose
         parts-of-speech match ``pattern``, in order of apperance
     """
     # standardize and transform the regular expression pattern...
@@ -366,19 +366,18 @@ def subject_verb_object_triples(doc):
     spacy-parsed doc. Note that this only works for SVO languages.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
+        doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
 
     Yields:
-        Tuple[``spacy.Span``, ``spacy.Span``, ``spacy.Span``]: The next 3-tuple
-        of spans from ``doc`` representing a (subject, verb, object) triple,
-        in order of appearance.
+        Tuple[:class:`spacy.tokens.Span`]: The next 3-tuple of spans from ``doc``
+        representing a (subject, verb, object) triple, in order of appearance.
     """
     # TODO: What to do about questions, where it may be VSO instead of SVO?
     # TODO: What about non-adjacent verb negations?
     # TODO: What about object (noun) negations?
     if isinstance(doc, SpacySpan):
         sents = [doc]
-    else:  # textacy.Doc or spacy.Doc
+    else:  # spacy.Doc
         sents = doc.sents
 
     for sent in sents:
@@ -423,7 +422,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
     only the most frequently occurring definition is returned.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc`` or ``spacy.Span``)
+        doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
         known_acro_defs (dict): if certain acronym/definition pairs
             are known, pass them in as {acronym (str): definition (str)};
             algorithm will not attempt to find new definitions
@@ -446,7 +445,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
 
     if isinstance(doc, SpacySpan):
         sents = [doc]
-    else:  # textacy.Doc or spacy.Doc
+    else:  # spacy.Doc
         sents = doc.sents
 
     # iterate over sentences and their tokens
@@ -514,7 +513,7 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
 
     Args:
         acronym (str): acronym for which definition is sought
-        window (``spacy.Span``): a span of tokens from which definition
+        window (:class:`spacy.tokens.Span`): a span of tokens from which definition
             extraction will be attempted
         threshold (float): minimum "confidence" in definition required
             for acceptance; valid values in [0.0, 1.0]; higher value => stricter threshold
@@ -675,7 +674,7 @@ def semistructured_statements(
     (entity, cue, fragment) triple. This is similar to subject-verb-object triples.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc``)
+        doc (:class:`spacy.tokens.Doc`)
         entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
             "global warming", "Python")
         cue (str): verb lemma with which ``entity`` is associated
@@ -685,7 +684,7 @@ def semistructured_statements(
         max_n_words (int): max number of tokens allowed in a matching fragment
 
     Yields:
-        (``spacy.Span`` or ``spacy.Token``, ``spacy.Span`` or ``spacy.Token``, ``spacy.Span``):
+        (:class:`spacy.tokens.Span` or :class:`spacy.tokens.Token`, :class:`spacy.tokens.Span` or :class:`spacy.tokens.Token`, :class:`spacy.tokens.Span`):
         where each element is a matching (entity, cue, fragment) triple
 
     Notes:
@@ -809,10 +808,10 @@ def direct_quotations(doc):
     or mixed quotations) using rules and patterns. English only.
 
     Args:
-        doc (``textacy.Doc`` or ``spacy.Doc``)
+        doc (:class:`spacy.tokens.Doc`)
 
     Yields:
-        (``spacy.Span``, ``spacy.Token``, ``spacy.Span``): next quotation in ``doc``
+        (:class:`spacy.tokens.Span`, :class:`spacy.tokens.Token`, :class:`spacy.tokens.Span`): next quotation in ``doc``
         represented as a (speaker, reporting verb, quotation) 3-tuple
 
     Notes:

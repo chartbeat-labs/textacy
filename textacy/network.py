@@ -17,7 +17,7 @@ from spacy.tokens.token import Token as SpacyToken
 
 from . import compat
 from . import extract
-from . import vsm
+# from . import vsm
 
 LOGGER = logging.getLogger(__name__)
 
@@ -31,14 +31,14 @@ def terms_to_semantic_network(
     other terms that co-occur within ``window_width`` terms of itself.
 
     Args:
-        terms (List[str] or List[``spacy.Token``])
+        terms (List[str] or List[:class:`spacy.tokens.Token`])
         normalize (str or Callable): If 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if false-y, use the form of terms as they appear
-            in ``terms``; if a callable, must accept a ``spacy.Token`` and return
+            in ``terms``; if a callable, must accept a ``Token`` and return
             a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
 
             .. note:: This is applied to the elements of ``terms`` *only* if
-               it's a list of ``spacy.Token``.
+               it's a list of ``Token``.
 
         window_width (int): Size of sliding window over ``terms`` that determines
             which are said to co-occur. If 2, only immediately adjacent terms
@@ -139,14 +139,14 @@ def sents_to_semantic_network(sents, normalize="lemma", edge_weighting="cosine")
     the (cosine or jaccard) similarity of their constituent words.
 
     Args:
-        sents (List[str] or List[``spacy.Span``])
+        sents (List[str] or List[:class:`spacy.tokens.Span`])
         normalize (str or Callable): If 'lemma', lemmatize words in sents;
             if 'lower', lowercase word in sents; if false-y, use the form of words
-            as they appear in sents; if a callable, must accept a ``spacy.Token``
+            as they appear in sents; if a callable, must accept a :class:`spacy.tokens.Token` .
             and return a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
 
             .. note:: This is applied to the elements of ``sents`` *only* if
-               it's a list of ``spacy.Span``.
+               it's a list of ``Span`` s.
 
         edge_weighting ({'cosine', 'jaccard'}): Similarity metric to use for
             weighting edges between sentences. If 'cosine', use the cosine
@@ -165,6 +165,8 @@ def sents_to_semantic_network(sents, normalize="lemma", edge_weighting="cosine")
         - Consider normalizing the strings so that like terms are counted together
           (see :func:`textacy.spacier.utils.get_normalized_text()`)
     """
+    from . import vsm
+
     if isinstance(sents[0], compat.unicode_):
         pass
     elif isinstance(sents[0], SpacySpan):

@@ -5,7 +5,9 @@ import numpy as np
 import pytest
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
-from textacy import Corpus, TopicModel, Vectorizer
+from textacy import Corpus
+from textacy.tm import TopicModel
+from textacy.vsm import Vectorizer
 
 
 @pytest.fixture(scope="module")
@@ -20,9 +22,9 @@ def term_lists():
         "Why does the lamb love Mary so? The eager children cry.",
         "Mary loves the lamb, you know, the teacher did reply.",
     ]
-    corpus = Corpus("en", texts=texts)
+    corpus = Corpus("en", data=texts)
     term_lists_ = [
-        doc.to_terms_list(ngrams=1, named_entities=False, as_strings=True)
+        doc._.to_terms_list(ngrams=1, named_entities=False, as_strings=True)
         for doc in corpus
     ]
     return term_lists_

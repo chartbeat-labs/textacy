@@ -46,7 +46,7 @@ def read_spacy_docs(fname, format="pickle", lang=None):
             when ``format="binary"``.
 
     Yields:
-        ``spacy.Doc``: Next deserialized document.
+        :class:`spacy.tokens.Doc`: Next deserialized document.
 
     Raises:
         ValueError: if format is not "pickle" or "binary", or if ``lang`` is not
@@ -129,12 +129,12 @@ def write_spacy_docs(
     data, fname, make_dirs=False, format="pickle", exclude=("tensor",), include_tensor=None
 ):
     """
-    Write one or more ``spacy.Doc`` s to disk at ``fname`` in either pickle or
+    Write one or more ``Doc`` s to disk at ``fname`` in either pickle or
     binary format.
 
     Args:
-        data (``spacy.Doc`` or Iterable[``spacy.Doc``]): A single ``spacy.Doc``
-            or a sequence of ``spacy.Doc`` s to write to disk.
+        data (:class:`spacy.tokens.Doc` or Iterable[:class:`spacy.tokens.Doc`]):
+            A single ``Doc`` or a sequence of ``Doc`` s to write to disk.
         fname (str): Path to file on disk to which data will be written.
         make_dirs (bool): If True, automatically create (sub)directories if
             not already present in order to write ``fname``.
@@ -158,7 +158,7 @@ def write_spacy_docs(
             By default, excludes tensors in order to reproduce existing behavior
             of ``include_tensor=False``.
         include_tensor (bool): DEPRECATED! Use ``exclude`` instead.
-            If False, ``spacy.Doc`` tensors are not written
+            If False, ``Doc`` tensors are not written
             to disk; otherwise, they are. Note that this is only applicable when
             ``format="binary"``. Also note that including tensors *significantly*
             increases the file size of serialized docs.

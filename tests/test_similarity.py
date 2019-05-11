@@ -2,8 +2,8 @@ from __future__ import absolute_import, unicode_literals
 
 import pytest
 
-from textacy import Doc
 from textacy import compat, similarity
+from textacy.doc import make_spacy_doc
 
 
 @pytest.fixture(scope="module")
@@ -18,12 +18,12 @@ def text2():
 
 @pytest.fixture(scope="module")
 def doc1(text1):
-    return Doc(text1, lang="en")
+    return make_spacy_doc(text1, lang="en")
 
 
 @pytest.fixture(scope="module")
 def doc2(text2):
-    return Doc(text2, lang="en")
+    return make_spacy_doc(text2, lang="en")
 
 
 def test_word_movers_metrics(doc1, doc2):
