@@ -312,37 +312,37 @@ def test_read_write_sparse_matrix_csc_compressed(tmpdir):
     assert abs(observed - expected).nnz == 0
 
 
-def test_get_filenames():
+def test_get_filepaths():
     expected = sorted(
         os.path.join(TESTS_DIR, fname)
         for fname in os.listdir(TESTS_DIR)
         if os.path.isfile(os.path.join(TESTS_DIR, fname))
     )
     observed = sorted(
-        io.get_filenames(TESTS_DIR, ignore_invisible=False, recursive=False)
+        io.get_filepaths(TESTS_DIR, ignore_invisible=False, recursive=False)
     )
     assert observed == expected
 
 
-def test_get_filenames_ignore_invisible():
+def test_get_filepaths_ignore_invisible():
     path = os.path.dirname(os.path.abspath(__file__))
-    assert len(list(io.get_filenames(path, ignore_invisible=True))) <= len(
-        list(io.get_filenames(path, ignore_invisible=False))
+    assert len(list(io.get_filepaths(path, ignore_invisible=True))) <= len(
+        list(io.get_filepaths(path, ignore_invisible=False))
     )
 
 
-def test_get_filenames_ignore_regex():
+def test_get_filepaths_ignore_regex():
     assert (
         len(
             list(
-                io.get_filenames(TESTS_DIR, ignore_regex="test_", ignore_invisible=True)
+                io.get_filepaths(TESTS_DIR, ignore_regex="test_", ignore_invisible=True)
             )
         )
         == 0
     )
 
 
-def test_get_filenames_match_regex():
+def test_get_filepaths_match_regex():
     assert (
-        len(list(io.get_filenames(TESTS_DIR, match_regex="io", extension=".py"))) == 1
+        len(list(io.get_filepaths(TESTS_DIR, match_regex="io", extension=".py"))) == 1
     )

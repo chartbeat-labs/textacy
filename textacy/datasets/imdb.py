@@ -160,7 +160,7 @@ class IMDB(Dataset):
             for label in self._label or self._subset_labels[subset]
         )
         for dirpath in dirpaths:
-            for filepath in tio.get_filenames(dirpath, match_regex=r"^\d+_\d+\.txt$"):
+            for filepath in tio.get_filepaths(dirpath, match_regex=r"^\d+_\d+\.txt$"):
                 yield self._load_record(filepath)
 
     def _load_record(self, filepath):

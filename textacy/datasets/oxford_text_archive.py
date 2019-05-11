@@ -192,7 +192,7 @@ class OxfordTextArchive(Dataset):
                 "has the dataset been downloaded yet?".format(self._text_dirpath)
             )
         _metadata = self.metadata  # for performance
-        for filepath in sorted(tio.get_filenames(self._text_dirpath, extension=".txt")):
+        for filepath in sorted(tio.get_filepaths(self._text_dirpath, extension=".txt")):
             id_, _ = os.path.splitext(os.path.basename(filepath))
             record = _metadata.get(id_, {}).copy()
             if not record:

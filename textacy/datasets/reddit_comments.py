@@ -116,7 +116,7 @@ class RedditComments(Dataset):
         if os.path.isdir(self.data_dir):
             return tuple(
                 sorted(
-                    tio.get_filenames(
+                    tio.get_filepaths(
                         self.data_dir,
                         match_regex=r"RC_\d{4}",
                         extension=".bz2",
