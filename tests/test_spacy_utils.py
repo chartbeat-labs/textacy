@@ -7,7 +7,7 @@ from textacy import cache, spacy_utils
 
 @pytest.fixture(scope="module")
 def spacy_doc():
-    spacy_lang = cache.load_spacy("en")
+    spacy_lang = cache.load_spacy_lang("en")
     text = """
     The unit tests aren't going well.
     I love Python, but I don't love backwards incompatibilities.

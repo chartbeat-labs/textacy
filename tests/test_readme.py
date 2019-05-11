@@ -30,7 +30,7 @@ def text():
 
 @pytest.fixture(scope="module")
 def doc(text):
-    spacy_lang = cache.load_spacy("en")
+    spacy_lang = cache.load_spacy_lang("en")
     return make_spacy_doc(text, lang=spacy_lang)
 
 

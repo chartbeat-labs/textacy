@@ -76,7 +76,7 @@ specify it yourself when initializing the doc:
 
 .. code-block:: pycon
 
-    >>> en = textacy.load_spacy("en_core_web_sm", disable=("parser",))
+    >>> en = textacy.load_spacy_lang("en_core_web_sm", disable=("parser",))
     >>> doc = textacy.make_spacy_doc(text, lang=en)
     >>> doc._.preview
     'Doc(85 tokens: "Since the so-called "statistical revolution" in...")'
@@ -334,7 +334,7 @@ of texts, records, or (valid) ``Doc`` s.
 .. code-block:: pycon
 
     >>> textacy.Corpus(
-    ...     textacy.load_spacy("en_core_web_sm", disable=("parser", "tagger")),
+    ...     textacy.load_spacy_lang("en_core_web_sm", disable=("parser", "tagger")),
     ...     data=ds.texts(speaker_party="R", chamber="House", limit=100))
     Corpus(100 docs, 31356 tokens)
 

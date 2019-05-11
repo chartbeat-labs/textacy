@@ -118,7 +118,7 @@ def merge_entities(doc):
     Merge named entities into single tokens in ``doc``, *in-place*. Can be used
     as a stand-alone function, or as part of a spaCy language pipeline::
 
-        >>> spacy_lang = textacy.load_spacy('en')
+        >>> spacy_lang = textacy.load_spacy_lang('en')
         >>> spacy_lang.add_pipe(merge_entities, after='ner')
         >>> doc = spacy_lang('Burton DeWilde is an entity in this sentence.')
         >>> doc[0]

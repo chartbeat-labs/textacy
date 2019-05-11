@@ -16,7 +16,7 @@ TEXT = (
 
 @pytest.fixture(scope="module")
 def spacy_lang():
-    spacy_lang = cache.load_spacy("en")
+    spacy_lang = cache.load_spacy_lang("en")
     text_stats_component = components.TextStatsComponent()
     spacy_lang.add_pipe(text_stats_component, after="parser")
 

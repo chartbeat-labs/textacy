@@ -71,27 +71,28 @@ def clear():
     LRU_CACHE.clear()
 
 
-@cached(LRU_CACHE, key=functools.partial(hashkey, "spacy"))
-def load_spacy(name, disable=None):
+@cached(LRU_CACHE, key=functools.partial(hashkey, "spacy_lang"))
+def load_spacy_lang(name, disable=None):
     """
-    Load a spaCy pipeline (model weights as binary data, ordered sequence of
-    component functions, and language-specific data) for tokenizing and annotating
-    text. An LRU cache saves pipelines in memory, up to 2GB.
+    Load a spaCy language processing pipeline (model weights as binary data,
+    sequence of component functions, and language-specific data) for tokenizing
+    and annotating text. An LRU cache saves language pipelines in memory.
 
     Args:
-        name (str or :class:`pathlib.Path`): spaCy model to load, i.e. a shortcut
-            link, full package name, or path to model directory.
+        name (str or :class:`pathlib.Path`): spaCy language pipeline to load,
+            i.e. a shortcut link, full package name, or path to model directory.
         disable (Tuple[str]): Names of pipeline components to disable, if any.
 
             .. note:: Although spaCy's API specifies this argument as a list,
                here we require a tuple. Pipelines are stored in the LRU cache
                with unique identifiers generated from the hash of the function
-               name and args, and lists aren't hashable.
+               name and args --- and lists aren't hashable.
 
     Returns:
-        ``spacy.<lang>.<Language>``: A Language object with the loaded model.
+        ``spacy.<lang>.<Language>``: A loaded ``Language`` pipeline.
 
-    .. seealso:: https://spacy.io/api/top-level#spacy.load
+    See Also:
+        https://spacy.io/api/top-level#spacy.load
     """
     if disable is None:
         disable = []

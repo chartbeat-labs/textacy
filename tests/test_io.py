@@ -19,7 +19,7 @@ TESTS_DIR = os.path.split(__file__)[0]
 
 @pytest.fixture(scope="module")
 def spacy_doc():
-    spacy_lang = cache.load_spacy("en")
+    spacy_lang = cache.load_spacy_lang("en")
     spacy_doc = spacy_lang(TEXT)
     return spacy_doc
 

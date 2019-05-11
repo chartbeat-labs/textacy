@@ -13,7 +13,7 @@ from textacy import cache, constants, extract
 
 @pytest.fixture(scope="module")
 def spacy_doc():
-    spacy_lang = cache.load_spacy("en")
+    spacy_lang = cache.load_spacy_lang("en")
     text = """
     Two weeks ago, I was in Kuwait participating in an I.M.F. seminar for Arab educators.
     For 30 minutes, we discussed the impact of technology trends on education in the Middle East.

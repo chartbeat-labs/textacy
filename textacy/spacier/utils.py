@@ -52,7 +52,7 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
         components accumulated chunk by chunk.
     """
     if isinstance(lang, compat.unicode_):
-        lang = cache.load_spacy(lang)
+        lang = cache.load_spacy_lang(lang)
     elif not isinstance(lang, SpacyLang):
         raise TypeError(
             "`lang` must be {}, not {}".format({compat.unicode_, SpacyLang}, type(lang))

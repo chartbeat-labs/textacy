@@ -484,7 +484,7 @@ class Corpus(object):
 
 def _get_spacy_lang(lang):
     if isinstance(lang, compat.unicode_):
-        return cache.load_spacy(lang)
+        return cache.load_spacy_lang(lang)
     elif isinstance(lang, spacy.language.Language):
         return lang
     else:

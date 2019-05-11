@@ -11,7 +11,7 @@ from textacy import cache, export
 @pytest.fixture(scope="module")
 def spacy_doc():
     text = "I would have lived in peace. But my enemies brought me war."
-    spacy_lang = cache.load_spacy("en")
+    spacy_lang = cache.load_spacy_lang("en")
     spacy_doc = spacy_lang(text)
     return spacy_doc
 

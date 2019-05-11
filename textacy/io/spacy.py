@@ -67,7 +67,7 @@ def read_spacy_docs(fname, format="pickle", lang=None):
         elif isinstance(lang, SpacyLang):
             vocab = lang.vocab
         elif isinstance(lang, compat.unicode_):
-            vocab = cache.load_spacy(lang).vocab
+            vocab = cache.load_spacy_lang(lang).vocab
         else:
             raise ValueError(
                 "lang = '{}' is invalid; must be a str or `spacy.Language`"

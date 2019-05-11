@@ -10,7 +10,7 @@ on instantiated docs prepended by an underscore:
 
 .. code-block:: pycon
 
-    >>> spacy_lang = textacy.load_spacy("en")
+    >>> spacy_lang = textacy.load_spacy_lang("en")
     >>> doc = nlp("This is a short text.")
     >>> print(get_preview(doc))
     Doc(6 tokens: "This is a short text.")

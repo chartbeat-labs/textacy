@@ -81,7 +81,7 @@ class TestDocExtensions(object):
         assert len(tokenized_text) == doc._.n_sents
 
     def test_to_tokenized_text_nosents(self):
-        spacy_lang = cache.load_spacy("en")
+        spacy_lang = cache.load_spacy_lang("en")
         with spacy_lang.disable_pipes("parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tokenized_text = doc._.to_tokenized_text()
@@ -99,7 +99,7 @@ class TestDocExtensions(object):
         assert len(tagged_text) == doc._.n_sents
 
     def test_to_tagged_text_nosents(self):
-        spacy_lang = cache.load_spacy("en")
+        spacy_lang = cache.load_spacy_lang("en")
         with spacy_lang.disable_pipes("parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tagged_text = doc._.to_tagged_text()
