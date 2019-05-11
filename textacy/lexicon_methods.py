@@ -19,7 +19,7 @@ import requests
 from spacy.parts_of_speech import ADJ, ADV, NOUN, VERB
 
 from . import cache
-from . import data_dir as DEFAULT_DATA_DIR
+from . import DEFAULT_DATA_DIR
 
 LOGGER = logging.getLogger(__name__)
 

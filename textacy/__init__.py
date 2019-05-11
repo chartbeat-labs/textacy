@@ -1,13 +1,10 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
 import os
 
-from .about import __version__
-
-
-data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-
+from textacy.about import __version__
+from textacy.constants import DEFAULT_DATA_DIR
 from textacy.cache import load_spacy_lang
 from textacy.preprocess import preprocess_text
 from textacy.doc import make_spacy_doc

@@ -20,7 +20,7 @@ from cachetools import cached, LRUCache
 from cachetools.keys import hashkey
 
 from . import compat
-from . import data_dir as DEFAULT_DATA_DIR
+from . import DEFAULT_DATA_DIR
 
 LOGGER = logging.getLogger(__name__)
 

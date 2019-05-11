@@ -4,12 +4,14 @@ Collection of regular expressions and other (small, generally useful) constants.
 """
 from __future__ import unicode_literals
 
+import os
 import re
 import sys
 import unicodedata
 
 from . import compat
 
+DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
 NUMERIC_ENT_TYPES = {'ORDINAL', 'CARDINAL', 'MONEY', 'QUANTITY', 'PERCENT', 'TIME', 'DATE'}
 SUBJ_DEPS = {'agent', 'csubj', 'csubjpass', 'expl', 'nsubj', 'nsubjpass'}
