@@ -2,7 +2,7 @@
 """
 Collection of regular expressions and other (small, generally useful) constants.
 """
-from __future__ import unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import os
 import re

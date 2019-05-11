@@ -1,11 +1,12 @@
 """
 Module for exporting spaCy objects into "third-party" formats.
 """
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import collections
 import operator
 
-from spacy import attrs
-from spacy import strings
+import spacy
 
 
 def docs_to_gensim(
@@ -41,14 +42,14 @@ def docs_to_gensim(
         each doc is a list of (integer word ID, word count) 2-tuples
     """
     count_by = (
-        attrs.LEMMA
+        spacy.attrs.LEMMA
         if lemmatize is True
-        else attrs.LOWER
+        else spacy.attrs.LOWER
         if lowercase is True
-        else attrs.ORTH
+        else spacy.attrs.ORTH
     )
     gcorpus = []
-    stringstore = strings.StringStore()
+    stringstore = spacy.strings.StringStore()
     doc_freqs = collections.Counter()
 
     for spacy_doc in spacy_docs:

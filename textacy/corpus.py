@@ -6,7 +6,6 @@ from disk; and tracking basic corpus statistics.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
-import io
 import itertools
 import logging
 
@@ -20,6 +19,8 @@ from . import cache
 from . import compat
 from . import io as tio
 from . import utils
+
+LOGGER = logging.getLogger(__name__)
 
 
 class Corpus(object):
@@ -456,7 +457,7 @@ class Corpus(object):
         with tio.open_sesame(filepath, mode="rb") as f:
             msg = srsly.msgpack_loads(f.read())
         if spacy_lang.meta != msg["meta"]:
-            logging.warning("the spacy langs are different!")
+            LOGGER.warning("the spacy langs are different!")
         for string in msg["strings"]:
             spacy_lang.vocab[string]
         attrs = msg["attrs"]

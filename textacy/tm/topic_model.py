@@ -10,7 +10,7 @@ import logging
 
 import numpy as np
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
-from sklearn.externals import joblib
+from sklearn.externals import joblib  # TODO: sklearn has dropped this vendorized version
 
 from .. import compat
 from .. import viz

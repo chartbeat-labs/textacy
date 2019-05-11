@@ -5,13 +5,12 @@ JSON
 Functions for reading from and writing to disk records in JSON format,
 as one record per file or one record per *line* in a file.
 """
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
 import functools
 import json
 
-from .. import compat
 from .utils import open_sesame, _validate_read_mode, _validate_write_mode
 
 

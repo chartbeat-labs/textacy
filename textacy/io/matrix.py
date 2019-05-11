@@ -5,7 +5,7 @@ Matrix
 Functions for reading from and writing to disk CSC and CSR sparse matrices
 in numpy binary format.
 """
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import numpy as np
 import scipy.sparse as sp

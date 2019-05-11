@@ -8,7 +8,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 
-from spacy.attrs import intify_attrs
 from spacy.tokens import Doc as SpacyDoc
 
 from . import utils as spacier_utils
@@ -94,6 +93,8 @@ class TextStatsComponent(object):
         else:
             self.attrs = tuple(attrs)
         for attr in self.attrs:
+            # TODO: see if there's a better way to handle this
+            # that doesn't involve clobbering existing property extensions
             SpacyDoc.set_extension(attr, default=None, force=True)
             LOGGER.debug('"%s" custom attribute added to `spacy.tokens.Doc`')
 

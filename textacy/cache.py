@@ -9,8 +9,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import csv
 import functools
-import io
 import inspect
+import io
 import logging
 import os
 import sys

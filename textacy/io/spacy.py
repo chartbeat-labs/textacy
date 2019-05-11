@@ -5,7 +5,7 @@ spaCy
 Functions for reading from and writing to disk spacy documents in either
 pickle or binary format. Be warned: Both formats have pros and cons.
 """
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from srsly import msgpack
 from spacy.language import Language as SpacyLang

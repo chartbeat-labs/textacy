@@ -6,6 +6,8 @@ Represent documents as semantic networks, where nodes are individual terms or
 whole sentences and edges are weighted by the strength of their co-occurrence or
 similarity, respectively.
 """
+from __future__ import absolute_import, division, print_function, unicode_literals
+
 import collections
 import itertools
 import logging
@@ -17,7 +19,7 @@ from spacy.tokens.token import Token as SpacyToken
 
 from . import compat
 from . import extract
-# from . import vsm
+# from . import vsm  # we're hiding this import within a function
 
 LOGGER = logging.getLogger(__name__)
 
