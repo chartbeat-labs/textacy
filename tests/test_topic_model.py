@@ -70,10 +70,10 @@ def test_init_model():
 
 
 def test_save_load(tmpdir, model):
-    filename = str(tmpdir.join("model.pkl"))
+    filepath = str(tmpdir.join("model.pkl"))
     expected = model.model.components_
-    model.save(filename)
-    tmp_model = TopicModel.load(filename)
+    model.save(filepath)
+    tmp_model = TopicModel.load(filepath)
     observed = tmp_model.model.components_
     assert observed.shape == expected.shape
     assert np.equal(observed, expected).all()

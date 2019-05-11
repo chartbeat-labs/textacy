@@ -145,13 +145,13 @@ class TopicModel(object):
             self.n_topics, str(self.model).split("(", 1)[0]
         )
 
-    def save(self, filename):
-        _ = joblib.dump(self.model, filename, compress=3)
-        LOGGER.info("%s model saved to %s", self.model, filename)
+    def save(self, filepath):
+        _ = joblib.dump(self.model, filepath, compress=3)
+        LOGGER.info("%s model saved to %s", self.model, filepath)
 
     @classmethod
-    def load(cls, filename):
-        model = joblib.load(filename)
+    def load(cls, filepath):
+        model = joblib.load(filepath)
         n_topics = model.n_topics if hasattr(model, "n_topics") else model.n_components
         return cls(model, n_topics=n_topics)
 

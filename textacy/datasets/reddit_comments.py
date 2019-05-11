@@ -94,7 +94,7 @@ class RedditComments(Dataset):
     Attributes:
         full_date_range (Tuple[str]): First and last dates for which comments
             are available, each as an ISO-formatted string (YYYY-MM-DD).
-        filenames (Tuple[str]): Full paths on disk for all Reddit comments files
+        filepaths (Tuple[str]): Full paths on disk for all Reddit comments files
             found under :attr:`ReddictComments.data_dir` directory, sorted
             in chronological order.
     """

@@ -27,40 +27,40 @@ def spacy_doc():
 def test_read_write_text_bytes(tmpdir):
     expected = compat.to_bytes(TEXT)
     for ext in (".txt", ".gz", ".bz2", ".xz"):
-        filename = str(tmpdir.join("test_read_write_file_bytes" + ext))
+        filepath = str(tmpdir.join("test_read_write_file_bytes" + ext))
         if compat.PY2 is True and ext == ".xz":
             with pytest.raises(ValueError):
-                io.open_sesame(filename, mode="wb", encoding="utf-8", make_dirs=True)
+                io.open_sesame(filepath, mode="wb", encoding="utf-8", make_dirs=True)
         else:
-            io.write_text(expected, filename, mode="wb", make_dirs=True)
-            observed = next(io.read_text(filename, mode="rb"))
+            io.write_text(expected, filepath, mode="wb", make_dirs=True)
+            observed = next(io.read_text(filepath, mode="rb"))
             assert observed == expected
 
 
 def test_read_write_text_unicode(tmpdir):
     expected = TEXT
     for ext in (".txt", ".gz", ".bz2", ".xz"):
-        filename = str(tmpdir.join("test_read_write_file_unicode" + ext))
+        filepath = str(tmpdir.join("test_read_write_file_unicode" + ext))
         if compat.PY2 is True and ext != ".txt":
             with pytest.raises(ValueError):
-                io.open_sesame(filename, mode="wt", encoding="utf-8", make_dirs=True)
+                io.open_sesame(filepath, mode="wt", encoding="utf-8", make_dirs=True)
         else:
-            io.write_text(expected, filename, mode="wt", make_dirs=True)
-            observed = next(io.read_text(filename, mode="rt"))
+            io.write_text(expected, filepath, mode="wt", make_dirs=True)
+            observed = next(io.read_text(filepath, mode="rt"))
             assert observed == expected
 
 
 def test_read_write_text_lines_bytes(tmpdir, spacy_doc):
     expected = [compat.to_bytes(sent.text) for sent in spacy_doc.sents]
     for ext in (".txt", ".gz", ".bz2", ".xz"):
-        filename = str(tmpdir.join("test_read_write_file_lines_bytes" + ext))
+        filepath = str(tmpdir.join("test_read_write_file_lines_bytes" + ext))
         if compat.PY2 is True and ext == ".xz":
             with pytest.raises(ValueError):
-                io.open_sesame(filename, mode="wb", encoding="utf-8", make_dirs=True)
+                io.open_sesame(filepath, mode="wb", encoding="utf-8", make_dirs=True)
         else:
-            io.write_text(expected, filename, mode="wb", make_dirs=True, lines=True)
+            io.write_text(expected, filepath, mode="wb", make_dirs=True, lines=True)
             observed = [
-                line.strip() for line in io.read_text(filename, mode="rb", lines=True)
+                line.strip() for line in io.read_text(filepath, mode="rb", lines=True)
             ]
             assert observed == expected
 
@@ -68,14 +68,14 @@ def test_read_write_text_lines_bytes(tmpdir, spacy_doc):
 def test_read_write_text_lines_unicode(tmpdir, spacy_doc):
     expected = [sent.text for sent in spacy_doc.sents]
     for ext in (".txt", ".gz", ".bz2", ".xz"):
-        filename = str(tmpdir.join("test_read_write_file_lines_unicode" + ext))
+        filepath = str(tmpdir.join("test_read_write_file_lines_unicode" + ext))
         if compat.PY2 is True and ext != ".txt":
             with pytest.raises(ValueError):
-                io.open_sesame(filename, mode="wt", encoding=None, make_dirs=True)
+                io.open_sesame(filepath, mode="wt", encoding=None, make_dirs=True)
         else:
-            io.write_text(expected, filename, mode="wt", make_dirs=True, lines=True)
+            io.write_text(expected, filepath, mode="wt", make_dirs=True, lines=True)
             observed = [
-                line.strip() for line in io.read_text(filename, mode="rt", lines=True)
+                line.strip() for line in io.read_text(filepath, mode="rt", lines=True)
             ]
             assert observed == expected
 
@@ -83,54 +83,54 @@ def test_read_write_text_lines_unicode(tmpdir, spacy_doc):
 def test_read_write_json_bytes(tmpdir, spacy_doc):
     expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
     for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
-        filename = str(tmpdir.join("test_read_write_json_bytes" + ext))
+        filepath = str(tmpdir.join("test_read_write_json_bytes" + ext))
         if compat.PY2 is True:
             if ext == ".json.xz":
                 with pytest.raises(ValueError):
                     io.open_sesame(
-                        filename, mode="wb", encoding="utf-8", make_dirs=True
+                        filepath, mode="wb", encoding="utf-8", make_dirs=True
                     )
             else:
-                io.write_json(expected, filename, mode="wb", make_dirs=True)
-                observed = next(io.read_json(filename, mode="rb", lines=False))
+                io.write_json(expected, filepath, mode="wb", make_dirs=True)
+                observed = next(io.read_json(filepath, mode="rb", lines=False))
                 assert observed == expected
         else:
             with pytest.raises(TypeError):
-                io.write_json(expected, filename, "wb", make_dirs=True)
+                io.write_json(expected, filepath, "wb", make_dirs=True)
 
 
 def test_read_write_json_unicode(tmpdir, spacy_doc):
     expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
     for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
-        filename = str(tmpdir.join("test_read_write_json_unicode" + ext))
+        filepath = str(tmpdir.join("test_read_write_json_unicode" + ext))
         if compat.PY2 is True and ext != ".json":
             with pytest.raises(ValueError):
-                io.open_sesame(filename, mode="wt", encoding=None, make_dirs=True)
+                io.open_sesame(filepath, mode="wt", encoding=None, make_dirs=True)
         else:
-            io.write_json(expected, filename, mode="wt", make_dirs=True)
-            observed = next(io.read_json(filename, mode="rt", lines=False))
+            io.write_json(expected, filepath, mode="wt", make_dirs=True)
+            observed = next(io.read_json(filepath, mode="rt", lines=False))
             assert observed == expected
 
 
 def test_read_write_json_lines_bytes(tmpdir, spacy_doc):
     expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
     for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
-        filename = str(tmpdir.join("test_read_write_json_lines_bytes" + ext))
+        filepath = str(tmpdir.join("test_read_write_json_lines_bytes" + ext))
         if compat.PY2 is True:
             if ext == ".json.xz":
                 with pytest.raises(ValueError):
                     io.open_sesame(
-                        filename, mode="wb", encoding="utf-8", make_dirs=True
+                        filepath, mode="wb", encoding="utf-8", make_dirs=True
                     )
             else:
-                io.write_json(expected, filename, mode="wb", make_dirs=True, lines=True)
-                observed = list(io.read_json(filename, mode="rb", lines=True))
+                io.write_json(expected, filepath, mode="wb", make_dirs=True, lines=True)
+                observed = list(io.read_json(filepath, mode="rb", lines=True))
                 assert observed == expected
         else:
             with pytest.raises(TypeError):
                 io.write_json(
                     expected,
-                    filename,
+                    filepath,
                     mode="wb",
                     encoding=None,
                     make_dirs=True,
@@ -141,13 +141,13 @@ def test_read_write_json_lines_bytes(tmpdir, spacy_doc):
 def test_read_write_json_lines_unicode(tmpdir, spacy_doc):
     expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
     for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
-        filename = str(tmpdir.join("test_read_write_json_lines_unicode" + ext))
+        filepath = str(tmpdir.join("test_read_write_json_lines_unicode" + ext))
         if compat.PY2 is True and ext != ".json":
             with pytest.raises(ValueError):
-                io.open_sesame(filename, mode="wt", encoding=None, make_dirs=True)
+                io.open_sesame(filepath, mode="wt", encoding=None, make_dirs=True)
         else:
-            io.write_json(expected, filename, mode="wt", make_dirs=True, lines=True)
-            observed = list(io.read_json(filename, mode="rt", lines=True))
+            io.write_json(expected, filepath, mode="wt", make_dirs=True, lines=True)
+            observed = list(io.read_json(filepath, mode="rt", lines=True))
             assert observed == expected
 
 
@@ -157,13 +157,13 @@ def test_read_write_csv_compressed(tmpdir):
         ["here's some more text: boom!", "escándalo", 1.0],
     ]
     for ext in (".csv", ".csv.gz", ".csv.bz2", ".csv.xz"):
-        filename = str(tmpdir.join("test_read_write_csv" + ext))
+        filepath = str(tmpdir.join("test_read_write_csv" + ext))
         if compat.PY2 is True and ext != ".csv":
             with pytest.raises(ValueError):
-                io.open_sesame(filename, mode="wt", encoding=None, make_dirs=True)
+                io.open_sesame(filepath, mode="wt", encoding=None, make_dirs=True)
         else:
-            io.write_csv(expected, filename, make_dirs=True)
-            observed = list(io.read_csv(filename))
+            io.write_csv(expected, filepath, make_dirs=True)
+            observed = list(io.read_csv(filepath))
             assert observed == expected
 
 
@@ -173,9 +173,9 @@ def test_read_write_csv_delimiters(tmpdir):
         ["here's some more text: boom!", "escándalo", 1.0],
     ]
     for delimiter in (",", "\t", "|", ":"):
-        filename = str(tmpdir.join("test_read_write_csv.csv"))
-        io.write_csv(expected, filename, delimiter=delimiter, make_dirs=True)
-        observed = list(io.read_csv(filename, delimiter=delimiter))
+        filepath = str(tmpdir.join("test_read_write_csv.csv"))
+        io.write_csv(expected, filepath, delimiter=delimiter, make_dirs=True)
+        observed = list(io.read_csv(filepath, delimiter=delimiter))
         assert observed == expected
 
 
@@ -184,9 +184,9 @@ def test_read_write_csv_dialect(tmpdir):
         ["this is some text", "scandal", 42.0],
         ["here's some more text: boom!", "escándalo", 1.0],
     ]
-    filename = str(tmpdir.join("test_read_write_csv.csv"))
-    io.write_csv(expected, filename, dialect="excel", make_dirs=True)
-    observed = list(io.read_csv(filename, dialect="infer"))
+    filepath = str(tmpdir.join("test_read_write_csv.csv"))
+    io.write_csv(expected, filepath, dialect="excel", make_dirs=True)
+    observed = list(io.read_csv(filepath, dialect="infer"))
     assert observed == expected
 
 
@@ -195,10 +195,10 @@ def test_read_write_csv_dict(tmpdir):
         {"text": "this is some text", "kind": "scandal", "number": 42.0},
         {"text": "here's some more text: boom!", "kind": "escándalo", "number": 1.0},
     ]
-    filename = str(tmpdir.join("test_read_write_csv_dict.csv"))
+    filepath = str(tmpdir.join("test_read_write_csv_dict.csv"))
     io.write_csv(
         expected,
-        filename,
+        filepath,
         dialect="excel",
         make_dirs=True,
         fieldnames=["text", "kind", "number"],
@@ -206,7 +206,7 @@ def test_read_write_csv_dict(tmpdir):
     observed = [
         dict(item)
         for item in io.read_csv(
-            filename, dialect="excel", fieldnames=["text", "kind", "number"]
+            filepath, dialect="excel", fieldnames=["text", "kind", "number"]
         )
     ]
     assert observed == expected
@@ -215,27 +215,27 @@ def test_read_write_csv_dict(tmpdir):
 def test_read_write_spacy_docs(tmpdir, spacy_doc):
     expected = [tok.lower_ for tok in spacy_doc]
     for ext in (".pkl", ".pkl.gz", ".pkl.bz2", ".pkl.xz"):
-        filename = str(tmpdir.join("test_read_write_spacy_docs" + ext))
+        filepath = str(tmpdir.join("test_read_write_spacy_docs" + ext))
         if compat.PY2 is True and ext == ".pkl.xz":
             with pytest.raises(ValueError):
-                io.open_sesame(filename, mode="wb", encoding=None, make_dirs=True)
+                io.open_sesame(filepath, mode="wb", encoding=None, make_dirs=True)
         else:
-            io.write_spacy_docs(spacy_doc, filename, True)
+            io.write_spacy_docs(spacy_doc, filepath, True)
             observed = [
-                tok.lower_ for doc in io.read_spacy_docs(filename) for tok in doc
+                tok.lower_ for doc in io.read_spacy_docs(filepath) for tok in doc
             ]
             assert observed == expected
 
 
 def test_read_write_spacy_docs_binary(tmpdir, spacy_doc):
     expected = [tok.lower_ for tok in spacy_doc]
-    filename = str(tmpdir.join("test_read_write_spacy_docs_binary.bin"))
-    io.write_spacy_docs(spacy_doc, filename, True, format="binary")
+    filepath = str(tmpdir.join("test_read_write_spacy_docs_binary.bin"))
+    io.write_spacy_docs(spacy_doc, filepath, True, format="binary")
     with pytest.raises(ValueError):
-        next(io.read_spacy_docs(filename, format="binary", lang=None))
+        next(io.read_spacy_docs(filepath, format="binary", lang=None))
     observed = [
         tok.lower_
-        for doc in io.read_spacy_docs(filename, format="binary", lang="en")
+        for doc in io.read_spacy_docs(filepath, format="binary", lang="en")
         for tok in doc
     ]
     assert observed == expected
@@ -243,14 +243,14 @@ def test_read_write_spacy_docs_binary(tmpdir, spacy_doc):
 
 def test_read_write_spacy_docs_binary_exclude(tmpdir, spacy_doc):
     expected = [tok.lower_ for tok in spacy_doc]
-    filename = str(tmpdir.join("test_read_write_spacy_docs_binary_exclude.bin"))
+    filepath = str(tmpdir.join("test_read_write_spacy_docs_binary_exclude.bin"))
     io.write_spacy_docs(
-        spacy_doc, filename, True,
+        spacy_doc, filepath, True,
         format="binary", exclude=["sentiment", "user_data"],
     )
     observed = [
         tok.lower_
-        for doc in io.read_spacy_docs(filename, format="binary", lang="en")
+        for doc in io.read_spacy_docs(filepath, format="binary", lang="en")
         for tok in doc
     ]
     assert observed == expected
@@ -264,9 +264,9 @@ def test_read_write_sparse_matrix_csr(tmpdir):
         ),
         shape=(3, 3),
     )
-    filename = str(tmpdir.join("test_read_write_sparse_matrix_csr.npz"))
-    io.write_sparse_matrix(expected, filename, compressed=False)
-    observed = io.read_sparse_matrix(filename, kind="csr")
+    filepath = str(tmpdir.join("test_read_write_sparse_matrix_csr.npz"))
+    io.write_sparse_matrix(expected, filepath, compressed=False)
+    observed = io.read_sparse_matrix(filepath, kind="csr")
     assert abs(observed - expected).nnz == 0
 
 
@@ -278,9 +278,9 @@ def test_read_write_sparse_matrix_csr_compressed(tmpdir):
         ),
         shape=(3, 3),
     )
-    filename = str(tmpdir.join("test_read_write_sparse_matrix_csr_compressed.npz"))
-    io.write_sparse_matrix(expected, filename, compressed=True)
-    observed = io.read_sparse_matrix(filename, kind="csr")
+    filepath = str(tmpdir.join("test_read_write_sparse_matrix_csr_compressed.npz"))
+    io.write_sparse_matrix(expected, filepath, compressed=True)
+    observed = io.read_sparse_matrix(filepath, kind="csr")
     assert abs(observed - expected).nnz == 0
 
 
@@ -292,9 +292,9 @@ def test_read_write_sparse_matrix_csc(tmpdir):
         ),
         shape=(3, 3),
     )
-    filename = str(tmpdir.join("test_read_write_sparse_matrix_csc.npz"))
-    io.write_sparse_matrix(expected, filename, compressed=False)
-    observed = io.read_sparse_matrix(filename, kind="csc")
+    filepath = str(tmpdir.join("test_read_write_sparse_matrix_csc.npz"))
+    io.write_sparse_matrix(expected, filepath, compressed=False)
+    observed = io.read_sparse_matrix(filepath, kind="csc")
     assert abs(observed - expected).nnz == 0
 
 
@@ -306,9 +306,9 @@ def test_read_write_sparse_matrix_csc_compressed(tmpdir):
         ),
         shape=(3, 3),
     )
-    filename = str(tmpdir.join("test_read_write_sparse_matrix_csc_compressed.npz"))
-    io.write_sparse_matrix(expected, filename, compressed=True)
-    observed = io.read_sparse_matrix(filename, kind="csc")
+    filepath = str(tmpdir.join("test_read_write_sparse_matrix_csc_compressed.npz"))
+    io.write_sparse_matrix(expected, filepath, compressed=True)
+    observed = io.read_sparse_matrix(filepath, kind="csc")
     assert abs(observed - expected).nnz == 0
 
 
