@@ -47,7 +47,7 @@ class Vectorizer(object):
     Tokenize and vectorize the first 600 documents of this corpus::
 
         >>> tokenized_docs = (
-        ...     doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+        ...     doc.to_terms_list(ngrams=1, entities=True, as_strings=True)
         ...     for doc in corpus[:600])
         >>> vectorizer = Vectorizer(
         ...     apply_idf=True, norm='l2',
@@ -61,7 +61,7 @@ class Vectorizer(object):
     the groups, terms, and weights learned in the previous step::
 
         >>> tokenized_docs = (
-        ...     doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+        ...     doc.to_terms_list(ngrams=1, entities=True, as_strings=True)
         ...     for doc in corpus[600:])
         >>> doc_term_matrix = vectorizer.transform(tokenized_docs)
         >>> doc_term_matrix
@@ -80,7 +80,7 @@ class Vectorizer(object):
     to a particular set of values::
 
         >>> tokenized_docs = (
-        ...     doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+        ...     doc.to_terms_list(ngrams=1, entities=True, as_strings=True)
         ...     for doc in corpus[:600])
         >>> vectorizer = Vectorizer(
         ...     apply_idf=True, idf_type='smooth', norm='l2',
@@ -381,7 +381,7 @@ class Vectorizer(object):
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
-                    >>> ((ne.text for ne in extract.named_entities(doc))
+                    >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
                     >>> (doc.to_terms_list(as_strings=True)
                     ...  for doc in docs)
@@ -406,7 +406,7 @@ class Vectorizer(object):
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
-                    >>> ((ne.text for ne in extract.named_entities(doc))
+                    >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
                     >>> (doc.to_terms_list(as_strings=True)
                     ...  for doc in docs)
@@ -433,7 +433,7 @@ class Vectorizer(object):
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
-                    >>> ((ne.text for ne in extract.named_entities(doc))
+                    >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
                     >>> (doc.to_terms_list(as_strings=True)
                     ...  for doc in docs)
@@ -739,7 +739,7 @@ class GroupVectorizer(Vectorizer):
     are grouped not by documents but by a categorical value in the docs' metadata::
 
         >>> tokenized_docs, groups = textacy.io.unzip(
-        ...     (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True),
+        ...     (doc.to_terms_list(ngrams=1, entities=True, as_strings=True),
         ...      doc.metadata['speaker_name'])
         ...     for doc in corpus[:600])
         >>> vectorizer = GroupVectorizer(
@@ -754,7 +754,7 @@ class GroupVectorizer(Vectorizer):
     the groups, terms, and weights learned in the previous step::
 
         >>> tokenized_docs, groups = textacy.io.unzip(
-        ...     (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True),
+        ...     (doc.to_terms_list(ngrams=1, entities=True, as_strings=True),
         ...      doc.metadata['speaker_name'])
         ...     for doc in corpus[600:])
         >>> grp_term_matrix = vectorizer.transform(tokenized_docs, groups)
@@ -774,7 +774,7 @@ class GroupVectorizer(Vectorizer):
     to a particular set of values::
 
         >>> tokenized_docs, groups = textacy.io.unzip(
-        ...     (doc.to_terms_list(ngrams=1, named_entities=True, as_strings=True),
+        ...     (doc.to_terms_list(ngrams=1, entities=True, as_strings=True),
         ...      doc.metadata['speaker_name'])
         ...     for doc in corpus[:600])
         >>> vectorizer = GroupVectorizer(
@@ -950,7 +950,7 @@ class GroupVectorizer(Vectorizer):
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
-                    >>> ((ne.text for ne in extract.named_entities(doc))
+                    >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
                     >>> (doc.to_terms_list(as_strings=True)
                     ...  for doc in docs)
@@ -980,7 +980,7 @@ class GroupVectorizer(Vectorizer):
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
-                    >>> ((ne.text for ne in extract.named_entities(doc))
+                    >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
                     >>> (doc.to_terms_list(as_strings=True)
                     ...  for doc in docs)
@@ -1012,7 +1012,7 @@ class GroupVectorizer(Vectorizer):
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
-                    >>> ((ne.text for ne in extract.named_entities(doc))
+                    >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
                     >>> (doc.to_terms_list(as_strings=True)
                     ...  for doc in docs)

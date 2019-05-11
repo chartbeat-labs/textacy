@@ -138,7 +138,7 @@ extract various elements of interest:
      corpora of typical]
     >>> list(textacy.extract.ngrams(doc, 2, min_freq=2))
     [Natural Language, natural language]
-    >>> list(textacy.extract.named_entities(doc, drop_determiners=True))
+    >>> list(textacy.extract.entities(doc, drop_determiners=True))
     [late 1980s and mid 1990s]
     >>> pattern = textacy.constants.POS_REGEX_PATTERNS["en"]["NP"]
     >>> pattern
@@ -223,7 +223,7 @@ and term inclusion criteria:
 .. code-block:: pycon
 
     >>> bot = doc._.to_bag_of_terms(
-    ...     ngrams=(1, 2, 3), named_entities=True, weighting="count",
+    ...     ngrams=(1, 2, 3), entities=True, weighting="count",
     ...     as_strings=True)
     >>> sorted(bot.items(), key=lambda x: x[1], reverse=True)[:15]
     [('call', 2),
@@ -380,7 +380,7 @@ weighting, and filtering of terms:
     ...     tf_type="linear", apply_idf=True, idf_type="smooth", norm="l2",
     ...     min_df=2, max_df=0.95)
     >>> doc_term_matrix = vectorizer.fit_transform(
-    ...     (doc._.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+    ...     (doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
     ...      for doc in corpus))
     >>> print(repr(doc_term_matrix))
     <1240x12577 sparse matrix of type '<class 'numpy.float64'>'

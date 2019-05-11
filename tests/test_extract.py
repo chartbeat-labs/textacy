@@ -93,7 +93,7 @@ class TestNGrams(object):
 class TestNamedEntities(object):
 
     def test_default(self, spacy_doc):
-        result = list(extract.named_entities(spacy_doc, drop_determiners=False))
+        result = list(extract.entities(spacy_doc, drop_determiners=False))
         assert all(isinstance(span, SpacySpan) for span in result)
         assert all(span.label_ for span in result)
         assert all(span[0].ent_type for span in result)
@@ -101,33 +101,33 @@ class TestNamedEntities(object):
     def test_include_types(self, spacy_doc):
         ne_types = ["PERSON", "GPE"]
         for include_types in ne_types:
-            result = extract.named_entities(spacy_doc, include_types=include_types)
+            result = extract.entities(spacy_doc, include_types=include_types)
             assert all(span.label_ == include_types for span in result)
         ne_types = [{"PERSON", "GPE"}, ("DATE", "ORG"), ["LOC"]]
         for include_types in ne_types:
-            result = extract.named_entities(spacy_doc, include_types=include_types)
+            result = extract.entities(spacy_doc, include_types=include_types)
             assert all(span.label_ in include_types for span in result)
         # special numeric cases!
         ne_types = ["NUMERIC", ("NUMERIC",), {"PERSON", "NUMERIC"}]
         for include_types in ne_types:
             include_types_parsed = extract._parse_ne_types(include_types, "include")
-            result = extract.named_entities(spacy_doc, include_types=include_types)
+            result = extract.entities(spacy_doc, include_types=include_types)
             assert all(span.label_ in include_types_parsed for span in result)
 
     def test_exclude_types(self, spacy_doc):
         ne_types = ["PERSON", "GPE"]
         for exclude_types in ne_types:
-            result = extract.named_entities(spacy_doc, exclude_types=exclude_types)
+            result = extract.entities(spacy_doc, exclude_types=exclude_types)
             assert all(span.label_ != exclude_types for span in result)
         ne_types = [{"PERSON", "GPE"}, ("DATE", "ORG"), ["LOC"]]
         for exclude_types in ne_types:
-            result = extract.named_entities(spacy_doc, exclude_types=exclude_types)
+            result = extract.entities(spacy_doc, exclude_types=exclude_types)
             assert all(span.label_ not in exclude_types for span in result)
         # special numeric cases!
         ne_types = ["NUMERIC", ("NUMERIC",), {"PERSON", "NUMERIC"}]
         for exclude_types in ne_types:
             exclude_types_parsed = extract._parse_ne_types(exclude_types, "exclude")
-            result = extract.named_entities(spacy_doc, exclude_types=exclude_types)
+            result = extract.entities(spacy_doc, exclude_types=exclude_types)
             assert all(span.label_ not in exclude_types_parsed for span in result)
 
     def test_parse_ne_types_bad_type(self):
@@ -136,17 +136,17 @@ class TestNamedEntities(object):
                 _ = extract._parse_ne_types(bad_type, "include")
 
     def test_min_freq(self, spacy_doc):
-        result = list(extract.named_entities(spacy_doc, min_freq=2))
+        result = list(extract.entities(spacy_doc, min_freq=2))
         assert len(result) == 0
 
     def test_determiner(self, spacy_doc):
-        result = list(extract.named_entities(spacy_doc, drop_determiners=False))
+        result = list(extract.entities(spacy_doc, drop_determiners=False))
         assert all(isinstance(span, SpacySpan) for span in result)
         assert any(span[0].pos_ == "DET" for span in result)
         assert all(span.label_ for span in result)
 
     def test_drop_determiners(self, spacy_doc):
-        result = list(extract.named_entities(spacy_doc, drop_determiners=True))
+        result = list(extract.entities(spacy_doc, drop_determiners=True))
         assert not any(span[0].pos_ == "DET" for span in result)
         assert all(span.label_ for span in result)
 

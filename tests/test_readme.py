@@ -59,7 +59,7 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
     )
     doc_term_matrix = vectorizer.fit_transform(
         (
-            doc._.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+            doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
             for doc in corpus
         )
     )
@@ -113,7 +113,7 @@ def test_extract_functionality(doc):
         assert len(trigram) == 3
 
     nes = list(
-        extract.named_entities(doc, drop_determiners=False, exclude_types="numeric")
+        extract.entities(doc, drop_determiners=False, exclude_types="numeric")
     )[:10]
     for ne in nes:
         assert isinstance(ne, SpacySpan)

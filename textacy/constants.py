@@ -11,7 +11,7 @@ import unicodedata
 from . import compat
 
 
-NUMERIC_NE_TYPES = {'ORDINAL', 'CARDINAL', 'MONEY', 'QUANTITY', 'PERCENT', 'TIME', 'DATE'}
+NUMERIC_ENT_TYPES = {'ORDINAL', 'CARDINAL', 'MONEY', 'QUANTITY', 'PERCENT', 'TIME', 'DATE'}
 SUBJ_DEPS = {'agent', 'csubj', 'csubjpass', 'expl', 'nsubj', 'nsubjpass'}
 OBJ_DEPS = {'attr', 'dobj', 'dative', 'oprd'}
 AUX_DEPS = {'aux', 'auxpass', 'neg'}
