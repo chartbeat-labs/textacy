@@ -102,7 +102,7 @@ any metadata associated with the main text content.
 See https://spacy.io/usage/processing-pipelines#custom-components-attributes
 for implementation details.
 
-**Note:** Older versions of textacy (<0.8.0) used a ``textacy.Doc`` class
+**Note:** Older versions of textacy (<0.7.0) used a ``textacy.Doc`` class
 as a convenient wrapper around an underlying spaCy ``Doc``, with additional
 functionality available as class attributes and methods. Once spaCy started
 natively supporting custom extensions on ``Doc`` objects (as well as custom
