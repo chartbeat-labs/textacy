@@ -6,8 +6,10 @@ from disk; and tracking basic corpus statistics.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import collections
 import itertools
 import logging
+import math
 
 import numpy as np
 import spacy
@@ -76,14 +78,33 @@ class Corpus(object):
          'Doc(336 tokens: "Mr. Speaker, I thank the gentleman for yielding...")']
         >>> del corpus[:5]
         >>> corpus
-        Corpus(62 docs, 43668 tokens)
+        Corpus(62 docs, 49754 tokens)
 
-    Save corpus data to and load from disk::
+    Compute basic corpus statistics:
+
+    .. code-block:: pycon
+
+        >>> corpus.n_docs, corpus.n_sents, corpus.n_tokens
+        (62, 2193, 49754)
+        >>> word_counts = corpus.word_counts(as_strings=True)
+        >>> sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        [('-PRON-', 3068), ('people', 248), ('year', 171), ('work', 156), ('$', 153)]
+        >>> word_doc_counts = corpus.word_doc_counts(weighting="freq", as_strings=True)
+        >>> sorted(word_doc_counts.items(), key=lambda x: x[1], reverse=True)[:5]
+        [('-PRON-', 0.9838709677419355),
+         ('Mr.', 0.7258064516129032),
+         ('President', 0.5483870967741935),
+         ('ask', 0.45161290322580644),
+         ('year', 0.45161290322580644)]
+
+    Save corpus data to and load from disk:
+
+    .. code-block:: pycon
 
         >>> corpus.save("~/Desktop/capitol_words_sample.bin")
         >>> corpus = textacy.Corpus.load("en", "~/Desktop/capitol_words_sample.bin")
         >>> corpus
-        Corpus(62 docs, 43668 tokens)
+        Corpus(62 docs, 49754 tokens)
 
     Args:
         lang (str or :class:`spacy.language.Language`):
@@ -383,8 +404,130 @@ class Corpus(object):
 
     # useful methods
 
-    # word_freqs() ?
-    # word_doc_freqs() ?
+    def word_counts(self, normalize="lemma", weighting="count", as_strings=False):
+        """
+        Map the set of unique words in :class:`Corpus` to their counts as
+        absolute, relative, or binary frequencies of occurence,
+        similar to :meth:`Doc._.to_bag_of_words()` but aggregated over all docs.
+
+        Args:
+            normalize (str): If "lemma", lemmatize words before counting; if
+                "lower", lowercase words before counting; otherwise, words are
+                counted using the form with which they appear.
+            weighting ({"count", "freq", "binary"}): Type of weight to assign to
+                words. If "count" (default), weights are the absolute number of
+                occurrences (count) of word in corpus. If "binary", all counts
+                are set equal to 1. If "freq", word counts are normalized by the
+                total token count, giving their relative frequency of occurrence.
+
+                .. note:: The resulting set of frequencies won't (necessarily) sum
+                   to 1.0, since punctuation and stop words are filtered out after
+                   counts are normalized.
+
+            as_strings (bool): If True, words are returned as strings; if False
+                (default), words are returned as their unique integer ids.
+
+        Returns:
+            dict: mapping of a unique word id or string (depending on the value
+            of ``as_strings``) to its absolute, relative, or binary frequency
+            of occurrence (depending on the value of ``weighting``).
+
+        See Also:
+            :func:`textacy.vsm.get_term_freqs()`
+        """
+        word_counts_ = collections.Counter()
+        for doc in self:
+            word_counts_.update(
+                doc._.to_bag_of_words(
+                    normalize=normalize, weighting="count", as_strings=as_strings
+                )
+            )
+        if weighting == "count":
+            word_counts_ = dict(word_counts_)
+        elif weighting == "freq":
+            n_tokens = self.n_tokens
+            word_counts_ = {
+                word: count / n_tokens for word, count in word_counts_.items()
+            }
+        elif weighting == "binary":
+            word_counts_ = {word: 1 for word in word_counts_.keys()}
+        else:
+            raise ValueError(
+                "weighting='{}' is invalid; valid values are {}".format(
+                    weighting, {"count", "freq", "binary"}
+                )
+            )
+        return word_counts_
+
+    def word_doc_counts(
+        self, normalize="lemma", weighting="count", smooth_idf=True, as_strings=False
+    ):
+        """
+        Map the set of unique words in :class:`Corpus` to their *document* counts
+        as absolute, relative, inverse, or binary frequencies of occurence.
+
+        Args:
+            normalize (str): If "lemma", lemmatize words before counting; if
+                "lower", lowercase words before counting; otherwise, words are
+                counted using the form with which they appear.
+            weighting ({"count", "freq", "idf", "binary"}): Type of weight to
+                assign to words. If "count" (default), weights are the absolute
+                number (count) of documents in which word appears. If "binary",
+                all counts are set equal to 1. If "freq", word doc counts are
+                normalized by the total document count, giving their relative
+                frequency of occurrence. If "idf", weights are the log of the
+                inverse relative frequencies: ``log(n_docs / word_doc_count)``
+                or (if ``smooth_idf`` is True) ``log(1 + (n_docs / word_doc_count))`` .
+            smooth_idf (bool): If True, add 1 to all word doc counts when
+                calculating "idf" weighting, equivalent to adding a single
+                document to the corpus containing every unique word.
+            as_strings (bool): If True, words are returned as strings; if False
+                (default), words are returned as their unique integer ids
+
+        Returns:
+            dict: mapping of a unique word id or string (depending on the value
+            of ``as_strings``) to the number of documents in which it appears
+            weighted as absolute, relative, or binary frequencies (depending
+            on the value of ``weighting``).
+
+        See Also:
+            :func:`textacy.vsm.get_doc_freqs()`
+        """
+        word_doc_counts_ = collections.Counter()
+        for doc in self:
+            word_doc_counts_.update(
+                doc._.to_bag_of_words(
+                    normalize=normalize, weighting="binary", as_strings=as_strings
+                )
+            )
+        if weighting == "count":
+            word_doc_counts_ = dict(word_doc_counts_)
+        elif weighting == "freq":
+            n_docs = self.n_docs
+            word_doc_counts_ = {
+                word: count / n_docs for word, count in word_doc_counts_.items()
+            }
+        elif weighting == "idf":
+            n_docs = self.n_docs
+            if smooth_idf is True:
+                word_doc_counts_ = {
+                    word: math.log(1 + (n_docs / count))
+                    for word, count in word_doc_counts_.items()
+                }
+            else:
+                word_doc_counts_ = {
+                    word: math.log(n_docs / count)
+                    for word, count in word_doc_counts_.items()
+                }
+        elif weighting == "binary":
+            word_doc_counts_ = {word: 1 for word in word_doc_counts_.keys()}
+        else:
+            raise ValueError(
+                "weighting='{}' is invalid; valid values are {}".format(
+                    weighting, {"count", "freq", "idf", "binary"}
+                )
+            )
+        return word_doc_counts_
 
     # file io
 
