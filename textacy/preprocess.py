@@ -10,31 +10,26 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import re
 import unicodedata
 
-from ftfy import fix_text
-
 from . import constants
 
 
 def fix_bad_unicode(text, normalization="NFC"):
     """
-    Fix unicode text that's "broken" using `ftfy <http://ftfy.readthedocs.org/>`_;
+    Fix unicode text that's "broken" using `ftfy <https://ftfy.readthedocs.io>`_;
     this includes mojibake, HTML entities and other code cruft,
     and non-standard forms for display purposes.
 
-    Args:
-        text (str): raw text
-        normalization ({'NFC', 'NFKC', 'NFD', 'NFKD'}): if 'NFC',
-            combines characters and diacritics written using separate code points,
-            e.g. converting "e" plus an acute accent modifier into "é"; unicode
-            can be converted to NFC form without any change in its meaning!
-            if 'NFKC', additional normalizations are applied that can change
-            the meanings of characters, e.g. ellipsis characters will be replaced
-            with three periods
-
-    Returns:
-        str
+    Warning:
+        As of v0.7.0, this is no longer implemented within textacy. Instead,
+        install and import ``ftfy`` independently, then call ``ftfy.fix_text(text)``
+        with a much larger variety of params, as needed for your use case.
     """
-    return fix_text(text, normalization=normalization)
+    return NotImplementedError(
+        "As of v0.7.0, :func:`fix_bad_unicode()` is no longer implemented in textacy. "
+        "Instead, install and import ``ftfy`` directly, and call ``ftfy.fix_text(text)`` ,"
+        "which is more extensive and customizable than textacy's wrapper of it."
+        "For details, check out https://ftfy.readthedocs.io."
+    )
 
 
 def normalize_whitespace(text):
