@@ -154,6 +154,37 @@ class TestCorpusMethods(object):
             assert not any([match_func(doc) for doc in corpus])
             n_docs = corpus.n_docs
 
+    def test_corpus_word_counts(self, corpus):
+        abs_counts = corpus.word_counts(weighting="count", normalize="lower")
+        rel_counts = corpus.word_counts(weighting="freq", normalize="lower")
+        assert isinstance(abs_counts, dict)
+        assert all(isinstance(count, int) for count in abs_counts.values())
+        assert min(abs_counts.values()) > 0
+        assert isinstance(rel_counts, dict)
+        assert all(isinstance(count, float) for count in rel_counts.values())
+        assert min(rel_counts.values()) > 0 and max(rel_counts.values()) <= 1
+
+    def test_corpus_word_counts_error(self, corpus):
+        with pytest.raises(ValueError):
+            corpus.word_counts(weighting="foo")
+
+    def test_corpus_word_doc_counts(self, corpus):
+        abs_counts = corpus.word_doc_counts(weighting="count", normalize="lower")
+        rel_counts = corpus.word_doc_counts(weighting="freq", normalize="lower")
+        inv_counts = corpus.word_doc_counts(weighting="idf", normalize="lower")
+        assert isinstance(abs_counts, dict)
+        assert all(isinstance(count, int) for count in abs_counts.values())
+        assert min(abs_counts.values()) > 0
+        assert isinstance(rel_counts, dict)
+        assert all(isinstance(count, float) for count in rel_counts.values())
+        assert min(rel_counts.values()) > 0 and max(rel_counts.values()) <= 1
+        assert isinstance(inv_counts, dict)
+        assert min(inv_counts.values()) > 0
+
+    def test_corpus_word_doc_counts_error(self, corpus):
+        with pytest.raises(ValueError):
+            corpus.word_doc_counts(weighting="foo")
+
     def test_corpus_save_and_load(self, corpus, tmpdir):
         filepath = str(tmpdir.join("test_corpus_save_and_load.pkl"))
         corpus.save(filepath)

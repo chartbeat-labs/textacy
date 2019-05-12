@@ -414,11 +414,11 @@ class Corpus(object):
             normalize (str): If "lemma", lemmatize words before counting; if
                 "lower", lowercase words before counting; otherwise, words are
                 counted using the form with which they appear.
-            weighting ({"count", "freq", "binary"}): Type of weight to assign to
-                words. If "count" (default), weights are the absolute number of
-                occurrences (count) of word in corpus. If "binary", all counts
-                are set equal to 1. If "freq", word counts are normalized by the
-                total token count, giving their relative frequency of occurrence.
+            weighting ({"count", "freq"}): Type of weight to assign to words.
+                If "count" (default), weights are the absolute number of
+                occurrences (count) of word in corpus.
+                If "freq", word counts are normalized by the total token count,
+                giving their relative frequencies of occurrence.
 
                 .. note:: The resulting set of frequencies won't (necessarily) sum
                    to 1.0, since punctuation and stop words are filtered out after
@@ -449,12 +449,10 @@ class Corpus(object):
             word_counts_ = {
                 word: count / n_tokens for word, count in word_counts_.items()
             }
-        elif weighting == "binary":
-            word_counts_ = {word: 1 for word in word_counts_.keys()}
         else:
             raise ValueError(
                 "weighting='{}' is invalid; valid values are {}".format(
-                    weighting, {"count", "freq", "binary"}
+                    weighting, {"count", "freq"}
                 )
             )
         return word_counts_
@@ -470,12 +468,11 @@ class Corpus(object):
             normalize (str): If "lemma", lemmatize words before counting; if
                 "lower", lowercase words before counting; otherwise, words are
                 counted using the form with which they appear.
-            weighting ({"count", "freq", "idf", "binary"}): Type of weight to
-                assign to words. If "count" (default), weights are the absolute
-                number (count) of documents in which word appears. If "binary",
-                all counts are set equal to 1. If "freq", word doc counts are
-                normalized by the total document count, giving their relative
-                frequency of occurrence. If "idf", weights are the log of the
+            weighting ({"count", "freq", "idf"}): Type of weight to assign to words.
+                If "count" (default), weights are the absolute number (count)
+                of documents in which word appears. If "freq", word doc counts
+                are normalized by the total document count, giving their relative
+                frequencies of occurrence. If "idf", weights are the log of the
                 inverse relative frequencies: ``log(n_docs / word_doc_count)``
                 or (if ``smooth_idf`` is True) ``log(1 + (n_docs / word_doc_count))`` .
             smooth_idf (bool): If True, add 1 to all word doc counts when
@@ -519,12 +516,10 @@ class Corpus(object):
                     word: math.log(n_docs / count)
                     for word, count in word_doc_counts_.items()
                 }
-        elif weighting == "binary":
-            word_doc_counts_ = {word: 1 for word in word_doc_counts_.keys()}
         else:
             raise ValueError(
                 "weighting='{}' is invalid; valid values are {}".format(
-                    weighting, {"count", "freq", "idf", "binary"}
+                    weighting, {"count", "freq", "idf"}
                 )
             )
         return word_doc_counts_
