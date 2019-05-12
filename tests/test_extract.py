@@ -218,17 +218,17 @@ class TestAcronymsAndDefinitions(object):
         assert observed == expected
 
 
-@pytest.mark.skip(
-    reason="Direct quotation extraction needs to be improved; it fails here"
-)
 def test_direct_quotations(spacy_doc):
     expected = [
-        'he, said, "I heard Donald Trump say we need to close mosques in the United States,"',
-        'he, said, "Is that what we want our kids to learn?"',
+        ("he", "said", '"I heard Donald Trump say we need to close mosques in the United States,"'),
+        ("he", "said", '"Is that what we want our kids to learn?"'),
     ]
+    result = list(extract.direct_quotations(spacy_doc))
+    assert all(isinstance(dq, tuple) for dq in result)
+    assert all(isinstance(obj, (Span, Token)) for dq in result for obj in dq)
     observed = [
-        ", ".join(item.text for item in triple)
-        for triple in extract.direct_quotations(spacy_doc)
+        tuple(obj.text for obj in dq)
+        for dq in result
     ]
     assert observed == expected
 

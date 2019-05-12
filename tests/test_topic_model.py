@@ -135,3 +135,20 @@ def test_top_topic_terms_weights(vectorizer, model):
     for topic_idx, term_weights in observed:
         for i in range(len(term_weights) - 1):
             assert term_weights[i][1] >= term_weights[i + 1][1]
+
+
+def _xfailif():
+    try:
+        import matplotlib.pyplot as plt
+        return False
+    except ImportError:
+        return True
+
+
+@pytest.mark.xfail(
+    _xfailif(),
+    reason="matplotlib is an optional dependency, but required for this viz")
+def test_termite_plot(model, vectorizer, doc_term_matrix):
+    model.termite_plot(
+        doc_term_matrix, vectorizer.id_to_term,
+        topics=-1, n_terms=25, sort_terms_by="seriation")

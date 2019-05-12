@@ -2,6 +2,15 @@
 Language Detection
 ------------------
 """
+# TODO: identify the "best" language detector available for OSS python
+# in terms of prediction accuracy/precision/recall, speed, and installation
+# current candidates:
+# - cld2-cffi https://github.com/GregBowyer/cld2-cffi
+# - pycld2 https://github.com/aboSamoor/pycld2
+# - cld3 https://github.com/google/cld3 or https://github.com/Elizafox/cld3
+# - langdetect https://github.com/Mimino666/langdetect
+# - whatthelang https://github.com/indix/whatthelang
+# - langid https://github.com/saffsd/langid.py
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
