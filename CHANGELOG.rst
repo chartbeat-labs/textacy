@@ -1,6 +1,117 @@
 Changelog
 =========
 
+0.7.0 (in development)
+----------------------
+
+New and Changed:
+
+- **Removed ``textacy.Doc``, and split its functionality into two parts**
+
+  - **New:** Added ``textacy.make_spacy_doc()`` as a convenient and flexible entry point
+    for making spaCy ``Doc`` s from text or (text, metadata) pairs, with optional
+    spaCy language pipeline specification. It's similar to ``textacy.Doc.__init__``,
+    with the exception that text and metadata are passed in together as a 2-tuple.
+  - **New:** Added a variety of custom doc property and method extensions to
+    the global ``spacy.tokens.Doc`` class, accessible via its ``Doc._`` "underscore"
+    property. These are similar to the properties/methods on ``textacy.Doc``,
+    they just require an interstitial underscore. For example,
+    ``textacy.Doc.to_bag_of_words()`` => ``spacy.tokens.Doc._.to_bag_of_words()``.
+  - **New:** Added functions for setting, getting, and removing these extensions.
+    Note that they are set automatically when textacy is imported.
+
+
+- **Simplified and improved performance of ``textacy.Corpus``**
+
+  - Documents are now added through a simpler API, either in ``Corpus.__init__``
+    or ``Corpus.add()``; they may be one or a stream of texts, (text, metadata)
+    pairs, or existing spaCy ``Doc`` s. When adding many documents, the spaCy
+    language processing pipeline is used in a faster and more efficient way.
+  - Saving / loading corpus data to disk is now more efficient and robust.
+  - Note: ``Corpus`` is now a collection of spaCy ``Doc`` s rather than ``textacy.Doc`` s.
+
+
+- **Simplified, standardized, and added ``Dataset`` functionality**
+
+  - **New:** Added an ``IMDB`` dataset, built on the classic 2011 dataset
+    commonly used to train sentiment analysis models.
+  - **New:** Added a base ``Wikimedia`` dataset, from which a reworked
+    ``Wikipedia`` dataset and a separate ``Wikinews`` dataset inherit.
+    The underlying data source has changed, from XML db dumps of raw wiki markup
+    to JSON db dumps of (relatively) clean text and metadata; now, the code is
+    simpler, faster, and totally language-agnostic.
+  - ``Dataset.records()`` now streams (text, metadata) pairs rather than a dict
+    containing both text and metadata, so users don't need to know field names
+    and split them into separate streams before creating ``Doc`` or ``Corpus``
+    objects from the data.
+  - Filtering and limiting the number of texts/records produced is now clearer
+    and more consistent between ``.texts()`` and ``.records()`` methods on
+    a given ``Dataset`` --- and more performant!
+  - Downloading datasets now always shows progress bars and saves to the same
+    file names. When appropriate, downloaded archive files' contents are
+    automatically extracted for easy inspection.
+  - Common functionality (such as validating filter values) is now standardized
+    and consolidated in the ``datasets.utils`` module.
+
+
+- **Quality of life improvements**
+
+  - Reduced load time for ``import textacy`` from ~2-3 seconds to ~1 second,
+    by lazy-loading expensive variables, deferring a couple heavy imports, and
+    dropping a couple dependencies. Specifically:
+
+    - ``ftfy`` was dropped, and a ``NotImplementedError`` is now raised
+      in textacy's wrapper function, ``textacy.preprocess.fix_bad_unicode()``.
+      Users with bad unicode should now directly call ``ftfy.fix_text()``.
+    - ``ijson`` was dropped, and the behavior of ``textacy.read_json()``
+      is now simpler and consistent with other functions for line-delimited data.
+    - ``mwparserfromhell`` was dropped, since the reworked ``Wikipedia`` dataset
+      no longer requires complicated and slow parsing of wiki markup.
+
+  - Renamed certain functions and variables for clarity, and for consistency with
+    existing conventions:
+
+    - ``textacy.load_spacy()`` => ``textacy.load_spacy_lang()``
+    - ``textacy.extract.named_entities()`` => ``textacy.extract.entities()``
+    - ``textacy.data_dir`` => ``textacy.DEFAULT_DATA_DIR``
+    - ``filename`` => ``filepath`` and ``dirname`` => ``dirpath`` when specifying
+      full paths to files/dirs on disk, and ``textacy.io.utils.get_filenames()``
+      => ``textacy.io.utils.get_filepaths()`` accordingly
+    - compiled regular expressions now consistently start with ``RE_``
+    - ``SpacyDoc`` => ``Doc``, ``SpacySpan`` => ``Span``, ``SpacyToken`` => ``Token``,
+      ``SpacyLang`` => ``Language`` as variables and in docs
+
+  - Removed deprecated functionality
+
+    - top-level ``spacy_utils.py`` and ``spacy_pipelines.py`` are gone;
+      use equivalent functionality in the ``spacier`` subpackage instead
+    - ``math_utils.py`` is gone; it was long neglected, and never actually used
+
+  - Replaced ``textacy.compat.bytes_to_unicode()`` and ``textacy.compat.unicode_to_bytes()``
+    with ``textacy.compat.to_unicode()`` and ``textacy.compat.to_bytes()``, which
+    are safer and accept either binary or text strings as input.
+  - Moved and renamed language detection functionality,
+    ``textacy.text_utils.detect_language()`` => ``textacy.lang_utils.detect_lang()``.
+    The idea is to add more/better lang-related functionality here in the future.
+  - Updated and cleaned up documentation throughout the code base.
+  - Added and refactored _many_ tests, for both new and old functionality,
+    significantly increasing test coverage while significantly reducing run-time.
+    Also, added a proper coverage report to CI builds. This should help prevent
+    future errors and inspire better test-writing.
+  - Bumped the minimum required spaCy version: ``v2.0.0`` => ``v2.0.12``,
+    for access to their full set of custom extension functionality.
+
+Fixed:
+
+- The progress bar during an HTTP download now always closes, preventing weird
+  nesting issues if another bar is subsequently displayed.
+- Filtering datasets by multiple values performed either a logical AND or OR
+  over the values, which was confusing; now, a logical OR is always performed.
+- The existence of files/directories on disk is now checked _properly_ via
+  ``os.path.isfile()`` or ``os.path.isdir()``, rather than ``os.path.exists()``.
+- Fixed a variety of formatting errors raised by sphinx when generating HTML docs.
+
+
 0.6.3 (2019-03-23)
 ------------------
 
