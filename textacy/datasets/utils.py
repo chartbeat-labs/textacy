@@ -93,12 +93,13 @@ def unpack_archive(filepath, extract_dir=None):
         LOGGER.debug("'%s' is not an archive", filepath)
         return extract_dir
     else:
+        pbar_kwargs = dict(unit="files", unit_scale=True)
         if is_zipfile:
             LOGGER.info("extracting data from zip archive '%s'", filepath)
             with zipfile.ZipFile(filepath, mode="r") as zf:
                 # zf.extractall(path=extract_dir)
                 members = zf.namelist()
-                with tqdm(iterable=members, total=len(members)) as pbar:
+                with tqdm(iterable=members, total=len(members), **pbar_kwargs) as pbar:
                     for member in members:
                         zf.extract(member, path=extract_dir)
                         pbar.update()
@@ -107,7 +108,7 @@ def unpack_archive(filepath, extract_dir=None):
             with tarfile.open(filepath, mode="r") as tf:
                 # tf.extractall(path=extract_dir)
                 members = tf.getnames()
-                for member in tqdm(iterable=members, total=len(members)):
+                for member in tqdm(iterable=members, total=len(members), **pbar_kwargs):
                     tf.extract(member, path=extract_dir)
         src_basename = os.path.commonpath(members)
         dest_basename = os.path.basename(filepath)
