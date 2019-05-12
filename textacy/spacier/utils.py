@@ -10,11 +10,9 @@ import itertools
 
 import numpy as np
 from spacy import attrs
-from spacy.language import Language as SpacyLang
+from spacy.language import Language
 from spacy.symbols import NOUN, PROPN, VERB
-from spacy.tokens.doc import Doc as SpacyDoc
-from spacy.tokens.span import Span as SpacySpan
-from spacy.tokens.token import Token as SpacyToken
+from spacy.tokens import Doc, Span, Token
 
 from .. import cache
 from .. import compat
@@ -53,9 +51,9 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
     """
     if isinstance(lang, compat.unicode_):
         lang = cache.load_spacy_lang(lang)
-    elif not isinstance(lang, SpacyLang):
+    elif not isinstance(lang, Language):
         raise TypeError(
-            "`lang` must be {}, not {}".format({compat.unicode_, SpacyLang}, type(lang))
+            "`lang` must be {}, not {}".format({compat.unicode_, Language}, type(lang))
         )
 
     words = []
@@ -73,7 +71,7 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
         i += chunk_size
     # now, initialize the doc from words and spaces
     # then load attribute values from the concatenated np array
-    doc = SpacyDoc(lang.vocab, words=words, spaces=spaces)
+    doc = Doc(lang.vocab, words=words, spaces=spaces)
     doc = doc.from_array(cols, np.concatenate(np_arrays, axis=0))
 
     return doc
@@ -136,11 +134,11 @@ def get_normalized_text(span_or_token):
     Returns:
         str
     """
-    if isinstance(span_or_token, SpacyToken):
+    if isinstance(span_or_token, Token):
         return (
             span_or_token.text if preserve_case(span_or_token) else span_or_token.lemma_
         )
-    elif isinstance(span_or_token, SpacySpan):
+    elif isinstance(span_or_token, Span):
         return " ".join(
             token.text if preserve_case(token) else token.lemma_
             for token in span_or_token

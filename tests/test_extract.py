@@ -5,8 +5,7 @@ import collections
 import re
 
 import pytest
-from spacy.tokens import Span as SpacySpan
-from spacy.tokens import Token as SpacyToken
+from spacy.tokens import Span, Token
 
 from textacy import cache, compat, constants, extract
 
@@ -28,7 +27,7 @@ class TestWords(object):
 
     def test_default(self, spacy_doc):
         result = list(extract.words(spacy_doc))
-        assert all(isinstance(tok, SpacyToken) for tok in result)
+        assert all(isinstance(tok, Token) for tok in result)
         assert not any(tok.is_space for tok in result)
 
     def test_filter(self, spacy_doc):
@@ -67,7 +66,7 @@ class TestNGrams(object):
     def test_n(self, spacy_doc):
         for n in (1, 2):
             result = list(extract.ngrams(spacy_doc, n))
-            assert all(isinstance(span, SpacySpan) for span in result)
+            assert all(isinstance(span, Span) for span in result)
             assert all(len(span) == n for span in result)
 
     def test_filter(self, spacy_doc):
@@ -102,7 +101,7 @@ class TestEntities(object):
 
     def test_default(self, spacy_doc):
         result = list(extract.entities(spacy_doc, drop_determiners=False))
-        assert all(isinstance(span, SpacySpan) for span in result)
+        assert all(isinstance(span, Span) for span in result)
         assert all(span.label_ for span in result)
         assert all(span[0].ent_type for span in result)
 
@@ -149,7 +148,7 @@ class TestEntities(object):
 
     def test_determiner(self, spacy_doc):
         result = list(extract.entities(spacy_doc, drop_determiners=False))
-        assert all(isinstance(span, SpacySpan) for span in result)
+        assert all(isinstance(span, Span) for span in result)
         assert any(span[0].pos_ == "DET" for span in result)
         assert all(span.label_ for span in result)
 
@@ -163,11 +162,11 @@ class TestNounChunks(object):
 
     def test_default(self, spacy_doc):
         result = list(extract.noun_chunks(spacy_doc))
-        assert all(isinstance(span, SpacySpan) for span in result)
+        assert all(isinstance(span, Span) for span in result)
 
     def test_determiner(self, spacy_doc):
         result = list(extract.noun_chunks(spacy_doc, drop_determiners=False))
-        assert all(isinstance(span, SpacySpan) for span in result)
+        assert all(isinstance(span, Span) for span in result)
         assert any(span[0].pos_ == "DET" for span in result)
 
     def test_min_freq(self, spacy_doc):
@@ -180,7 +179,7 @@ class TestPOSRegexMatches(object):
 
     def test_simple(self, spacy_doc):
         result = list(extract.pos_regex_matches(spacy_doc, r"<NOUN>+"))
-        assert all(isinstance(span, SpacySpan) for span in result)
+        assert all(isinstance(span, Span) for span in result)
         assert all(tok.pos_ == "NOUN" for span in result for tok in span)
 
     def test_complex(self, spacy_doc):
@@ -188,7 +187,7 @@ class TestPOSRegexMatches(object):
         valid_pos = set(re.findall(r"(\w+)", pattern))
         required_pos = {"NOUN", "PROPN"}
         result = list(extract.pos_regex_matches(spacy_doc, pattern))
-        assert all(isinstance(span, SpacySpan) for span in result)
+        assert all(isinstance(span, Span) for span in result)
         assert all(tok.pos_ in valid_pos for span in result for tok in span)
         assert all(any(tok.pos_ in required_pos for tok in span) for span in result)
 
@@ -198,7 +197,7 @@ class TestSubjectVerbObjectTriples(object):
     def test_default(self, spacy_doc):
         result = list(extract.subject_verb_object_triples(spacy_doc))
         assert all(isinstance(triple, tuple) for triple in result)
-        assert all(isinstance(span, SpacySpan) for triple in result for span in triple)
+        assert all(isinstance(span, Span) for triple in result for span in triple)
         assert all(any(tok.pos_ == "VERB" for tok in triple[1]) for triple in result)
 
 
@@ -242,5 +241,5 @@ def test_semistructured_statements(spacy_doc):
     )
     observed = next(extract.semistructured_statements(spacy_doc, "we", cue="discuss"))
     assert isinstance(observed, tuple) and len(observed) == 3
-    assert all(isinstance(obj, (SpacySpan, SpacyToken)) for obj in observed)
+    assert all(isinstance(obj, (Span, Token)) for obj in observed)
     assert all(obs.text == exp for obs, exp in compat.zip_(observed, expected))

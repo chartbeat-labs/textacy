@@ -9,8 +9,6 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 from math import sqrt
 
-from spacy.tokens import Doc as SpacyDoc
-
 from . import cache
 from . import extract
 from . import utils
@@ -88,12 +86,8 @@ class TextStats(object):
     """
 
     def __init__(self, doc):
-        if isinstance(doc, SpacyDoc):
-            self.lang = doc.vocab.lang
-            self.n_sents = sum(1 for _ in doc.sents)
-        else:
-            self.lang = doc.lang
-            self.n_sents = doc.n_sents
+        self.lang = doc.vocab.lang
+        self.n_sents = sum(1 for _ in doc.sents)
         # get objs for basic count computations
         hyphenator = cache.load_hyphenator(lang=self.lang)
         words = tuple(

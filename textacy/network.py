@@ -14,8 +14,7 @@ import logging
 
 import networkx as nx
 from cytoolz import itertoolz
-from spacy.tokens.span import Span as SpacySpan
-from spacy.tokens.token import Token as SpacyToken
+from spacy.tokens import Span, Token
 
 from . import compat
 from . import extract
@@ -86,7 +85,7 @@ def terms_to_semantic_network(
 
     if isinstance(terms[0], compat.unicode_):
         windows = itertoolz.sliding_window(window_width, terms)
-    elif isinstance(terms[0], SpacyToken):
+    elif isinstance(terms[0], Token):
         if normalize == "lemma":
             windows = (
                 (tok.lemma_ for tok in window)
@@ -171,7 +170,7 @@ def sents_to_semantic_network(sents, normalize="lemma", edge_weighting="cosine")
 
     if isinstance(sents[0], compat.unicode_):
         pass
-    elif isinstance(sents[0], SpacySpan):
+    elif isinstance(sents[0], Span):
         if normalize == "lemma":
             sents = (
                 (

@@ -8,8 +8,8 @@ pickle or binary format. Be warned: Both formats have pros and cons.
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from srsly import msgpack
-from spacy.language import Language as SpacyLang
-from spacy.tokens.doc import Doc as SpacyDoc
+from spacy.language import Language
+from spacy.tokens import Doc
 
 from .. import cache
 from .. import compat
@@ -64,7 +64,7 @@ def read_spacy_docs(filepath, format="pickle", lang=None):
                 "and these should be the same as were used when processing "
                 "the original docs!"
             )
-        elif isinstance(lang, SpacyLang):
+        elif isinstance(lang, Language):
             vocab = lang.vocab
         elif isinstance(lang, compat.unicode_):
             vocab = cache.load_spacy_lang(lang).vocab
@@ -108,7 +108,7 @@ def read_spacy_docs(filepath, format="pickle", lang=None):
                     spaces.append(bool(has_space))
                     start = end + has_space
 
-                spacy_doc = SpacyDoc(
+                spacy_doc = Doc(
                     vocab, words=words, spaces=spaces, user_data=user_data
                 )
                 spacy_doc = spacy_doc.from_array(msg["array_head"][2:], attrs[:, 2:])
@@ -177,7 +177,7 @@ def write_spacy_docs(
         elif include_tensor is True and "tensor" in exclude:
             exclude = [field for field in exclude if field != "tensor"]
 
-    if isinstance(data, SpacyDoc):
+    if isinstance(data, Doc):
         data = [data]
     if format == "pickle":
         with open_sesame(filepath, mode="wb", make_dirs=make_dirs) as f:

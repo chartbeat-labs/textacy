@@ -14,7 +14,7 @@ import re
 import numpy as np
 from cytoolz import itertoolz
 from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
-from spacy.tokens.span import Span as SpacySpan
+from spacy.tokens import Span
 
 from . import compat
 from . import constants
@@ -247,7 +247,7 @@ def entities(doc, include_types=None, exclude_types=None, drop_determiners=True,
         ents = (
             ent
             if ent[0].pos != DET
-            else SpacySpan(
+            else Span(
                 ent.doc, ent.start + 1, ent.end, label=ent.label, vector=ent.vector
             )
             for ent in ents
@@ -367,7 +367,7 @@ def subject_verb_object_triples(doc):
     # TODO: What to do about questions, where it may be VSO instead of SVO?
     # TODO: What about non-adjacent verb negations?
     # TODO: What about object (noun) negations?
-    if isinstance(doc, SpacySpan):
+    if isinstance(doc, Span):
         sents = [doc]
     else:  # spacy.Doc
         sents = doc.sents
@@ -435,7 +435,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
             acro_defs[acro] = [(def_, 1.0)]
         known_acronyms = set(acro_defs.keys())
 
-    if isinstance(doc, SpacySpan):
+    if isinstance(doc, Span):
         sents = [doc]
     else:  # spacy.Doc
         sents = doc.sents
