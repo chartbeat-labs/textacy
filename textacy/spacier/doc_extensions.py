@@ -17,7 +17,6 @@ on instantiated docs prepended by an underscore:
     >>> print(doc._.preview)
     Doc(6 tokens: "This is a short text.")
 """
-# TODO: `count` method extension?
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import spacy

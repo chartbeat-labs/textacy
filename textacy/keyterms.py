@@ -784,7 +784,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
     results = {}
     # greedily select to maximize exprel metric
     for _ in compat.range_(k):
-        if not contrib:  # TODO: check that .items(): not needed
+        if not contrib:
             break
         # find word with highest l-step expanded relevance score
         max_word_score = sorted(
