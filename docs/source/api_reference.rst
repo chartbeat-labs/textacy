@@ -114,10 +114,10 @@ utilities
 .. automodule:: textacy.cache
     :members:
 
-.. automodule:: textacy.text_utils
+.. automodule:: textacy.lang_utils
     :members:
 
-.. automodule:: textacy.spacy_utils
+.. automodule:: textacy.text_utils
     :members:
 
 miscellany

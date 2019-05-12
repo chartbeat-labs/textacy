@@ -6,22 +6,22 @@ Functions for reading from and writing to disk records in CSV format, where
 CSVs may be delimited not only by commas (the default) but tabs, pipes, and
 other valid one-char delimiters.
 """
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from .. import compat
 from .utils import open_sesame
 
 
-def read_csv(fname, encoding=None, fieldnames=None, dialect="excel", delimiter=","):
+def read_csv(filepath, encoding=None, fieldnames=None, dialect="excel", delimiter=","):
     """
-    Read the contents of a CSV file at ``fname``, streaming line-by-line,
+    Read the contents of a CSV file at ``filepath``, streaming line-by-line,
     where each line is a list of strings and/or floats whose values
     are separated by ``delimiter``.
 
     Args:
-        fname (str): Path to file on disk from which data will be read.
+        filepath (str): Path to file on disk from which data will be read.
         encoding (str): Name of the encoding used to decode or encode the data
-            in ``fname``.
+            in ``filepath``.
         fieldnames (List[str] or 'infer'): If specified, gives names for columns
             of values, which are used as keys in an ordered dictionary representation
             of each line's data. If 'infer', the first kB of data is analyzed
@@ -48,7 +48,7 @@ def read_csv(fname, encoding=None, fieldnames=None, dialect="excel", delimiter="
         https://docs.python.org/3/library/csv.html#csv.reader
     """
     has_header = False
-    with open_sesame(fname, mode="rt", encoding=encoding, newline="") as f:
+    with open_sesame(filepath, mode="rt", encoding=encoding, newline="") as f:
         if dialect == "infer" or fieldnames == "infer":
             sniffer = compat.csv.Sniffer()
             # add pipes to the list of preferred delimiters, and put spaces last
@@ -93,7 +93,7 @@ def read_csv(fname, encoding=None, fieldnames=None, dialect="excel", delimiter="
 
 def write_csv(
     data,
-    fname,
+    filepath,
     encoding=None,
     make_dirs=False,
     fieldnames=None,
@@ -101,7 +101,7 @@ def write_csv(
     delimiter=",",
 ):
     """
-    Write rows of ``data`` to disk at ``fname``, where each row is an iterable
+    Write rows of ``data`` to disk at ``filepath``, where each row is an iterable
     or a dictionary of strings and/or numbers, written to one line with values
     separated by ``delimiter``.
 
@@ -121,14 +121,14 @@ def write_csv(
                  {'text': 'The movie was okay, I guess.', 'score': 0.2},
                  {'text': 'Worst. Movie. Ever.', 'score': -1.0}]
 
-        fname (str): Path to file on disk to which data will be written.
+        filepath (str): Path to file on disk to which data will be written.
         encoding (str): Name of the encoding used to decode or encode the data
-            in ``fname``.
+            in ``filepath``.
         make_dirs (bool): If True, automatically create (sub)directories if
-            not already present in order to write ``fname``.
+            not already present in order to write ``filepath``.
         fieldnames (List[str]): Sequence of keys that identify the order in which
-            values in each rows' dictionary is written to ``fname``. These are
-            included in ``fname`` as a header row of column names.
+            values in each rows' dictionary is written to ``filepath``. These are
+            included in ``filepath`` as a header row of column names.
 
             .. note:: Only specify this if ``data`` is an iterable of dictionaries.
 
@@ -140,7 +140,7 @@ def write_csv(
         https://docs.python.org/3/library/csv.html#csv.writer
     """
     with open_sesame(
-        fname, mode="wt", newline="", encoding=encoding, make_dirs=make_dirs
+        filepath, mode="wt", newline="", encoding=encoding, make_dirs=make_dirs
     ) as f:
         if fieldnames:
             csv_writer = compat.csv.DictWriter(

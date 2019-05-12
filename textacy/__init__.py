@@ -1,19 +1,15 @@
-from __future__ import absolute_import
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import logging
-import os
 
-from .about import __version__
-
-
-data_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
-
-from textacy.cache import load_spacy
+from textacy.about import __version__
+from textacy.constants import DEFAULT_DATA_DIR
+from textacy.cache import load_spacy_lang
 from textacy.preprocess import preprocess_text
 from textacy.doc import make_spacy_doc
 from textacy.corpus import Corpus
 from textacy.text_stats import TextStats
-from textacy.spacier.doc_extensions import remove_doc_extensions, set_doc_extensions
+from textacy.spacier.doc_extensions import set_doc_extensions
 # keep these out of the main namespace
 # they're somewhat niche, and slow to import bc of heavy dependencies
 # from textacy.tm import TopicModel
@@ -22,5 +18,6 @@ from textacy.spacier.doc_extensions import remove_doc_extensions, set_doc_extens
 set_doc_extensions()
 
 logger = logging.getLogger("textacy")
-if len(logger.handlers) == 0:  # ensure reload() doesn't add another handler
+# ensure reload() doesn't add another handler
+if len(logger.handlers) == 0:
     logger.addHandler(logging.NullHandler())

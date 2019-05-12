@@ -5,8 +5,7 @@ from operator import itemgetter
 import numpy as np
 import pytest
 import scipy.sparse as sp
-from spacy.tokens.doc import Doc as SpacyDoc
-from spacy.tokens.span import Span as SpacySpan
+from spacy.tokens import Doc, Span
 
 import textacy.datasets
 from textacy import Corpus, TextStats, preprocess_text
@@ -30,7 +29,7 @@ def text():
 
 @pytest.fixture(scope="module")
 def doc(text):
-    spacy_lang = cache.load_spacy("en")
+    spacy_lang = cache.load_spacy_lang("en")
     return make_spacy_doc(text, lang=spacy_lang)
 
 
@@ -59,7 +58,7 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
     )
     doc_term_matrix = vectorizer.fit_transform(
         (
-            doc._.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+            doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
             for doc in corpus
         )
     )
@@ -77,7 +76,7 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
 
 
 def test_corpus_functionality(corpus):
-    assert isinstance(corpus[0], SpacyDoc)
+    assert isinstance(corpus[0], Doc)
     assert list(
         corpus.get(lambda doc: doc._.meta["speaker_name"] == "Bernie Sanders")
     )
@@ -102,21 +101,21 @@ def test_extract_functionality(doc):
         extract.ngrams(doc, 2, filter_stops=True, filter_punct=True, filter_nums=False)
     )[:10]
     for bigram in bigrams:
-        assert isinstance(bigram, SpacySpan)
+        assert isinstance(bigram, Span)
         assert len(bigram) == 2
 
     trigrams = list(
         extract.ngrams(doc, 3, filter_stops=True, filter_punct=True, min_freq=2)
     )[:10]
     for trigram in trigrams:
-        assert isinstance(trigram, SpacySpan)
+        assert isinstance(trigram, Span)
         assert len(trigram) == 3
 
     nes = list(
-        extract.named_entities(doc, drop_determiners=False, exclude_types="numeric")
+        extract.entities(doc, drop_determiners=False, exclude_types="numeric")
     )[:10]
     for ne in nes:
-        assert isinstance(ne, SpacySpan)
+        assert isinstance(ne, Span)
         assert ne.label_
         assert ne.label_ != "QUANTITY"
 
@@ -124,7 +123,7 @@ def test_extract_functionality(doc):
         extract.pos_regex_matches(doc, constants.POS_REGEX_PATTERNS["en"]["NP"])
     )[:10]
     for match in pos_regex_matches:
-        assert isinstance(match, SpacySpan)
+        assert isinstance(match, Span)
 
     stmts = list(extract.semistructured_statements(doc, "I", cue="be"))[:10]
     for stmt in stmts:

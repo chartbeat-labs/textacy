@@ -23,7 +23,7 @@ def doc(request):
 
 @pytest.fixture(scope="module")
 def langs():
-    return ("en", cache.load_spacy("en"), lambda text: "en")
+    return ("en", cache.load_spacy_lang("en"), lambda text: "en")
 
 
 class TestMakeSpacyDoc(object):
@@ -41,7 +41,7 @@ class TestMakeSpacyDoc(object):
             assert isinstance(make_spacy_doc(record, lang=lang), spacy.tokens.Doc)
 
     def test_doc_data(self, langs):
-        spacy_lang = cache.load_spacy("en")
+        spacy_lang = cache.load_spacy_lang("en")
         doc = spacy_lang("This is an English sentence.")
         assert isinstance(make_spacy_doc(doc), spacy.tokens.Doc)
         for lang in langs:
@@ -64,7 +64,7 @@ class TestMakeSpacyDoc(object):
                 _ = make_spacy_doc("This is an English sentence.", lang=invalid_lang)
 
     def test_invalid_data_lang_combo(self):
-        spacy_lang = cache.load_spacy("en")
+        spacy_lang = cache.load_spacy_lang("en")
         combos = (
             (spacy_lang("Hello, how are you my friend?"), "es"),
             (spacy_lang("Hello, how are you my friend?"), True),

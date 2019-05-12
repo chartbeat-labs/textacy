@@ -2,6 +2,8 @@ from __future__ import absolute_import, unicode_literals
 
 import datetime
 import os
+import tarfile
+import zipfile
 
 import pytest
 
@@ -11,7 +13,10 @@ from textacy.datasets.utils import (
     validate_set_member_filter,
     download_file,
     get_filename_from_url,
+    to_collection,
+    unpack_archive,
 )
+from textacy import io as tio
 
 
 class TestValidateAndClipRangeFilter(object):
@@ -32,6 +37,20 @@ class TestValidateAndClipRangeFilter(object):
             assert len(output) == 2
             assert output[0] == max(input_[0][0], input_[1][0])
             assert output[1] == min(input_[0][1], input_[1][1])
+
+    def test_null_inputs(self):
+        inputs = [
+            [(0, None), (-5, 5)],
+            [(None, 0), (-5, 5)],
+        ]
+        for input_ in inputs:
+            output = validate_and_clip_range_filter(*input_)
+            assert isinstance(output, tuple)
+            assert len(output) == 2
+            if input_[0][0] is None:
+                assert output[0] == input_[1][0]
+            elif input_[0][1] is None:
+                assert output[1] == input_[1][1]
 
     def test_bad_typeerror(self):
         inputs = [
@@ -110,3 +129,33 @@ def test_get_filename_from_url():
     ]
     for url, fname in url_fnames:
         assert get_filename_from_url(url) == fname
+
+
+@pytest.mark.skipif(
+    compat.PY2 is True,
+    reason="PY2's stdlib complains about str/unicode/path TypeErrors. So, fuck it."
+)
+def test_unpack_archive(tmpdir):
+    data = "Here's some text data to pack and unpack."
+    fpath_txt = str(tmpdir.join("test_unpack_archive.txt"))
+    with tio.open_sesame(fpath_txt, mode="wt") as f:
+        f.write(data)
+    fpath_zip = str(tmpdir.join("test_unpack_archive.zip"))
+    with zipfile.ZipFile(fpath_zip, "w") as f:
+        f.write(fpath_txt)
+    unpack_archive(fpath_zip, extract_dir=tmpdir)
+    fpath_tar = str(tmpdir.join("test_unpack_archive.tar"))
+    with tarfile.TarFile(fpath_tar, "w") as f:
+        f.add(fpath_txt)
+    unpack_archive(fpath_tar, extract_dir=tmpdir)
+    unpack_archive(fpath_txt, extract_dir=tmpdir)
+
+
+def test_to_collection():
+    in_outs = [
+        [(1, int, list), [1]],
+        [([1, 2], int, tuple), (1, 2)],
+    ]
+    assert to_collection(None, int, list) is None
+    for in_, out_ in in_outs:
+        assert to_collection(*in_) == out_

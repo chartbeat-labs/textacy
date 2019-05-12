@@ -9,8 +9,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import csv
 import functools
-import io
 import inspect
+import io
 import logging
 import os
 import sys
@@ -20,7 +20,7 @@ from cachetools import cached, LRUCache
 from cachetools.keys import hashkey
 
 from . import compat
-from . import data_dir as DEFAULT_DATA_DIR
+from . import constants
 
 LOGGER = logging.getLogger(__name__)
 
@@ -71,27 +71,28 @@ def clear():
     LRU_CACHE.clear()
 
 
-@cached(LRU_CACHE, key=functools.partial(hashkey, "spacy"))
-def load_spacy(name, disable=None):
+@cached(LRU_CACHE, key=functools.partial(hashkey, "spacy_lang"))
+def load_spacy_lang(name, disable=None):
     """
-    Load a spaCy pipeline (model weights as binary data, ordered sequence of
-    component functions, and language-specific data) for tokenizing and annotating
-    text. An LRU cache saves pipelines in memory, up to 2GB.
+    Load a spaCy language processing pipeline (model weights as binary data,
+    sequence of component functions, and language-specific data) for tokenizing
+    and annotating text. An LRU cache saves language pipelines in memory.
 
     Args:
-        name (str or :class:`pathlib.Path`): spaCy model to load, i.e. a shortcut
-            link, full package name, or path to model directory.
+        name (str or :class:`pathlib.Path`): spaCy language pipeline to load,
+            i.e. a shortcut link, full package name, or path to model directory.
         disable (Tuple[str]): Names of pipeline components to disable, if any.
 
             .. note:: Although spaCy's API specifies this argument as a list,
                here we require a tuple. Pipelines are stored in the LRU cache
                with unique identifiers generated from the hash of the function
-               name and args, and lists aren't hashable.
+               name and args --- and lists aren't hashable.
 
     Returns:
-        ``spacy.<lang>.<Language>``: A Language object with the loaded model.
+        ``spacy.<lang>.<Language>``: A loaded ``Language`` pipeline.
 
-    .. seealso:: https://spacy.io/api/top-level#spacy.load
+    See Also:
+        https://spacy.io/api/top-level#spacy.load
     """
     if disable is None:
         disable = []
@@ -155,14 +156,14 @@ def load_depechemood(data_dir=None, weighting="normfreq"):
         :func:`download_depechemood <textacy.lexicon_methods.download_depechemood>`
     """
     if data_dir is None:
-        data_dir = os.path.join(DEFAULT_DATA_DIR, "depechemood", "DepecheMood_V1.0")
-    fname = os.path.join(
+        data_dir = os.path.join(constants.DEFAULT_DATA_DIR, "depechemood", "DepecheMood_V1.0")
+    filepath = os.path.join(
         data_dir, "DepecheMood_{weighting}.txt".format(weighting=weighting)
     )
     delimiter = b"\t" if compat.PY2 else "\t"
     # HACK: Py2's csv module fail
     try:
-        with io.open(fname, mode="rt") as csvfile:
+        with io.open(filepath, mode="rt") as csvfile:
             csvreader = csv.reader(csvfile, delimiter=delimiter)
             rows = list(csvreader)
     except (OSError, IOError):
@@ -176,7 +177,7 @@ def load_depechemood(data_dir=None, weighting="normfreq"):
             data_dir,
         )
         raise
-    LOGGER.debug("Loading DepecheMood lexicon from %s", fname)
+    LOGGER.debug("Loading DepecheMood lexicon from %s", filepath)
     cols = rows[0]
     return {
         row[0]: {cols[i]: float(row[i]) for i in compat.range_(1, 9)}

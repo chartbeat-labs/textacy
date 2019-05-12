@@ -28,7 +28,7 @@ import re
 from datetime import datetime
 
 from .. import compat
-from .. import data_dir as DATA_DIR
+from .. import constants
 from .. import io as tio
 from .. import preprocess
 from . import utils
@@ -46,7 +46,7 @@ META = {
 }
 DOWNLOAD_ROOT = "https://archive.org/download/2015_reddit_comments_corpus/reddit_data/"
 
-REDDIT_LINK_RE = re.compile(r"\[([^]]+)\]\(https?://[^\)]+\)")
+RE_REDDIT_LINK = re.compile(r"\[([^]]+)\]\(https?://[^\)]+\)")
 
 
 class RedditComments(Dataset):
@@ -94,7 +94,7 @@ class RedditComments(Dataset):
     Attributes:
         full_date_range (Tuple[str]): First and last dates for which comments
             are available, each as an ISO-formatted string (YYYY-MM-DD).
-        filenames (Tuple[str]): Full paths on disk for all Reddit comments files
+        filepaths (Tuple[str]): Full paths on disk for all Reddit comments files
             found under :attr:`ReddictComments.data_dir` directory, sorted
             in chronological order.
     """
@@ -102,7 +102,7 @@ class RedditComments(Dataset):
     full_date_range = ("2007-10-01", "2015-06-01")
     _full_score_range = (-2147483647, 2147483647)
 
-    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
+    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
         super(RedditComments, self).__init__(NAME, meta=META)
         self.data_dir = data_dir
         self._date_range = None
@@ -116,7 +116,7 @@ class RedditComments(Dataset):
         if os.path.isdir(self.data_dir):
             return tuple(
                 sorted(
-                    tio.get_filenames(
+                    tio.get_filepaths(
                         self.data_dir,
                         match_regex=r"RC_\d{4}",
                         extension=".bz2",
@@ -336,7 +336,7 @@ class RedditComments(Dataset):
 
     def _clean_content(self, content):
         # strip out link markup, e.g. [foo](http://foo.com)
-        content = REDDIT_LINK_RE.sub(r"\1", content)
+        content = RE_REDDIT_LINK.sub(r"\1", content)
         # clean up basic HTML cruft
         content = content.replace("&gt;", ">").replace("&lt;", "<")
         # strip out text markup, e.g. * for bold text

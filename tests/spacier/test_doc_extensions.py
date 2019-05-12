@@ -81,7 +81,7 @@ class TestDocExtensions(object):
         assert len(tokenized_text) == doc._.n_sents
 
     def test_to_tokenized_text_nosents(self):
-        spacy_lang = cache.load_spacy("en")
+        spacy_lang = cache.load_spacy_lang("en")
         with spacy_lang.disable_pipes("parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tokenized_text = doc._.to_tokenized_text()
@@ -99,7 +99,7 @@ class TestDocExtensions(object):
         assert len(tagged_text) == doc._.n_sents
 
     def test_to_tagged_text_nosents(self):
-        spacy_lang = cache.load_spacy("en")
+        spacy_lang = cache.load_spacy_lang("en")
         with spacy_lang.disable_pipes("parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tagged_text = doc._.to_tagged_text()
@@ -129,7 +129,7 @@ class TestDocExtensions(object):
         for as_strings in (True, False):
             kwargs_sets = (
                 {"ngrams": (1, 2), "filter_nums": True},
-                {"ngrams": (1, 2), "named_entities": False},
+                {"ngrams": (1, 2), "entities": False},
                 {"normalize": "lower"},
                 {"normalize": None},
                 {"normalize": lambda term: term.text.upper()},
@@ -139,7 +139,7 @@ class TestDocExtensions(object):
 
     def test_to_terms_list_error(self, doc):
         with pytest.raises(ValueError):
-            _ = list(doc._.to_terms_list(ngrams=False, named_entities=False))
+            _ = list(doc._.to_terms_list(ngrams=False, entities=False))
 
     def test_to_bag_of_terms(self, doc):
         bot = doc._.to_bag_of_terms(weighting="count")

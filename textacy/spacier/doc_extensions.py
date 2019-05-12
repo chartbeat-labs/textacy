@@ -10,7 +10,7 @@ on instantiated docs prepended by an underscore:
 
 .. code-block:: pycon
 
-    >>> spacy_lang = textacy.load_spacy("en")
+    >>> spacy_lang = textacy.load_spacy_lang("en")
     >>> doc = nlp("This is a short text.")
     >>> print(get_preview(doc))
     Doc(6 tokens: "This is a short text.")
@@ -29,6 +29,7 @@ from .. import network
 
 __all__ = [
     "set_doc_extensions",
+    "get_doc_extensions",
     "remove_doc_extensions",
     "get_lang",
     "get_preview",
@@ -54,6 +55,14 @@ def set_doc_extensions():
     for name, kwargs in _doc_extensions.items():
         if not spacy.tokens.Doc.has_extension(name):
             spacy.tokens.Doc.set_extension(name, **kwargs)
+
+
+def get_doc_extensions():
+    """
+    Get textacy's custom property and method doc extensions
+    that can be set on or removed from the global :class:`spacy.tokens.Doc`.
+    """
+    return _doc_extensions
 
 
 def remove_doc_extensions():
@@ -192,7 +201,7 @@ def to_tagged_text(doc):
 def to_terms_list(
     doc,
     ngrams=(1, 2, 3),
-    named_entities=True,
+    entities=True,
     normalize="lemma",
     as_strings=False,
     **kwargs
@@ -206,7 +215,7 @@ def to_terms_list(
         ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3)``
             (default) includes unigrams (words), bigrams, and trigrams; `2`
             if only bigrams are wanted; falsy (e.g. False) to not include any
-        named_entities (bool): if True (default), include named entities
+        entities (bool): if True (default), include named entities
             in the terms list; note: if ngrams are also included, named
             entities are added *first*, and any ngrams that exactly overlap
             with an entity are skipped to prevent double-counting
@@ -229,7 +238,7 @@ def to_terms_list(
 
             see :func:`extract.words <textacy.extract.words>`,
             :func:`extract.ngrams <textacy.extract.ngrams>`,
-            and :func:`extract.named_entities <textacy.extract.named_entities>`
+            and :func:`extract.entities <textacy.extract.entities>`
             for more information on these parameters
 
     Yields:
@@ -237,17 +246,17 @@ def to_terms_list(
         integer id or as a string
 
     Raises:
-        ValueError: if neither ``named_entities`` nor ``ngrams`` are included
+        ValueError: if neither ``entities`` nor ``ngrams`` are included
 
     Note:
         Despite the name, this is a generator function; to get an
         actual list of terms, call ``list(doc.to_terms_list())``.
     """
-    if not (named_entities or ngrams):
-        raise ValueError("either `named_entities` or `ngrams` must be included")
+    if not (entities or ngrams):
+        raise ValueError("either `entities` or `ngrams` must be included")
     if ngrams and isinstance(ngrams, int):
         ngrams = (ngrams,)
-    if named_entities is True:
+    if entities is True:
         ne_kwargs = {
             "include_types": kwargs.get("include_types"),
             "exclude_types": kwargs.get("exclude_types"),
@@ -261,9 +270,9 @@ def to_terms_list(
                     ne_kwargs["exclude_types"], (set, frozenset, list, tuple)
                 ):
                     ne_kwargs["exclude_types"] = set(ne_kwargs["exclude_types"])
-                    ne_kwargs["exclude_types"].add(constants.NUMERIC_NE_TYPES)
+                    ne_kwargs["exclude_types"].add(constants.NUMERIC_ENT_TYPES)
             else:
-                ne_kwargs["exclude_types"] = constants.NUMERIC_NE_TYPES
+                ne_kwargs["exclude_types"] = constants.NUMERIC_ENT_TYPES
     if ngrams:
         ngram_kwargs = {
             "filter_stops": kwargs.get("filter_stops", True),
@@ -275,11 +284,11 @@ def to_terms_list(
         }
         # if numeric entities are to be filtered, we should filter numeric ngrams
         if (
-            named_entities
+            entities
             and ne_kwargs["exclude_types"]
             and any(
-                ne_type in ne_kwargs["exclude_types"]
-                for ne_type in constants.NUMERIC_NE_TYPES
+                ent_type in ne_kwargs["exclude_types"]
+                for ent_type in constants.NUMERIC_ENT_TYPES
             )
         ):
             ngram_kwargs["filter_nums"] = True
@@ -287,8 +296,8 @@ def to_terms_list(
     terms = []
     # special case: ensure that named entities aren't double-counted when
     # adding words or ngrams that were already added as named entities
-    if named_entities is True and ngrams:
-        ents = tuple(extract.named_entities(doc, **ne_kwargs))
+    if entities is True and ngrams:
+        ents = tuple(extract.entities(doc, **ne_kwargs))
         ent_idxs = {(ent.start, ent.end) for ent in ents}
         terms.append(ents)
         for n in ngrams:
@@ -310,8 +319,8 @@ def to_terms_list(
                 )
     # otherwise, no need to check for overlaps
     else:
-        if named_entities is True:
-            terms.append(extract.named_entities(doc, **ne_kwargs))
+        if entities is True:
+            terms.append(extract.entities(doc, **ne_kwargs))
         else:
             for n in ngrams:
                 if n == 1:
@@ -364,7 +373,7 @@ def to_terms_list(
 def to_bag_of_terms(
     doc,
     ngrams=(1, 2, 3),
-    named_entities=True,
+    entities=True,
     normalize="lemma",
     weighting="count",
     as_strings=False,
@@ -379,7 +388,7 @@ def to_bag_of_terms(
         ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3)``
             (default) includes unigrams (words), bigrams, and trigrams; `2`
             if only bigrams are wanted; falsy (e.g. False) to not include any
-        named_entities (bool): if True (default), include named entities;
+        entities (bool): if True (default), include named entities;
             note: if ngrams are also included, any ngrams that exactly
             overlap with an entity are skipped to prevent double-counting
         normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
@@ -406,7 +415,7 @@ def to_bag_of_terms(
 
             See :func:`extract.words() <textacy.extract.words>`,
             :func:`extract.ngrams() <textacy.extract.ngrams>`,
-            and :func:`extract.named_entities() <textacy.extract.named_entities>`
+            and :func:`extract.entities() <textacy.extract.entities>`
             for more information on these parameters.
 
     Returns:
@@ -422,7 +431,7 @@ def to_bag_of_terms(
     terms_list = to_terms_list(
         doc,
         ngrams=ngrams,
-        named_entities=named_entities,
+        entities=entities,
         normalize=normalize,
         as_strings=as_strings,
         **kwargs

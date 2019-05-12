@@ -4,7 +4,7 @@ Utils
 
 Functions to help read and write data to disk in a variety of formats.
 """
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import bz2
 import gzip
@@ -26,6 +26,7 @@ except ImportError:  # Py2
 from cytoolz import itertoolz
 
 from .. import compat
+from .. import utils
 
 _ext_to_compression = {".bz2": "bz2", ".gz": "gzip", ".xz": "xz", ".zip": "zip"}
 
@@ -78,7 +79,7 @@ def open_sesame(
     filepath = os.path.realpath(os.path.expanduser(filepath))
     if make_dirs is True:
         _make_dirs(filepath, mode)
-    elif mode.startswith("r") and not os.path.exists(filepath):
+    elif mode.startswith("r") and not os.path.isfile(filepath):
         raise OSError('file "{}" does not exist'.format(filepath))
 
     compression = _get_compression(filepath, compression)
@@ -189,7 +190,7 @@ def _make_dirs(filepath, mode):
     directories will be created as needed.
     """
     head, _ = os.path.split(filepath)
-    if "w" in mode and head and not os.path.exists(head):
+    if "w" in mode and head and not os.path.isdir(head):
         os.makedirs(head)
 
 
@@ -293,8 +294,8 @@ def unzip(seq):
     return tuple(itertools.starmap(itertoolz.pluck, enumerate(seqs)))
 
 
-def get_filenames(
-    dirname,
+def get_filepaths(
+    dirpath,
     match_regex=None,
     ignore_regex=None,
     extension=None,
@@ -302,12 +303,12 @@ def get_filenames(
     recursive=False,
 ):
     """
-    Yield full paths of files on disk under directory ``dirname``, optionally
+    Yield full paths of files on disk under directory ``dirpath``, optionally
     filtering for or against particular patterns or file extensions and
     crawling all subdirectories.
 
     Args:
-        dirname (str): Path to directory on disk where files are stored.
+        dirpath (str): Path to directory on disk where files are stored.
         match_regex (str): Regular expression pattern. Only files whose names
             match this pattern are included.
         ignore_regex (str): Regular expression pattern. Only files whose names
@@ -318,42 +319,57 @@ def get_filenames(
             those that begin with a period.; otherwise, include them.
         recursive (bool): If True, iterate recursively through subdirectories
             in search of files to include; otherwise, only return files located
-            directly under ``dirname``.
+            directly under ``dirpath``.
 
     Yields:
         str: Next file's name, including the full path on disk.
 
     Raises:
-        OSError: if ``dirname`` is not found on disk
+        OSError: if ``dirpath`` is not found on disk
     """
-    if not os.path.exists(dirname):
-        raise OSError('directory "{}" does not exist'.format(dirname))
-    match_regex = re.compile(match_regex) if match_regex else None
-    ignore_regex = re.compile(ignore_regex) if ignore_regex else None
+    if not os.path.isdir(dirpath):
+        raise OSError('directory "{}" does not exist'.format(dirpath))
+    re_match = re.compile(match_regex) if match_regex else None
+    re_ignore = re.compile(ignore_regex) if ignore_regex else None
 
-    def is_good_file(filename, filepath):
-        if ignore_invisible and filename.startswith("."):
+    def is_good_file(dpath, fname):
+        if ignore_invisible and fname.startswith("."):
             return False
-        if match_regex and not match_regex.search(filename):
+        if re_match and not re_match.search(fname):
             return False
-        if ignore_regex and ignore_regex.search(filename):
+        if re_ignore and re_ignore.search(fname):
             return False
-        if extension and not os.path.splitext(filename)[-1] == extension:
+        if extension and not os.path.splitext(fname)[-1] == extension:
             return False
-        if not os.path.isfile(os.path.join(filepath, filename)):
+        if not os.path.isfile(os.path.join(dpath, fname)):
             return False
         return True
 
     if recursive is True:
-        for dirpath, _, filenames in os.walk(dirname):
-            if ignore_invisible and dirpath.startswith("."):
+        for dirpath_, _, filenames in os.walk(dirpath):
+            if ignore_invisible and dirpath_.startswith("."):
                 continue
             for filename in filenames:
                 if filename.startswith("."):
                     continue
-                if is_good_file(filename, dirpath):
-                    yield os.path.join(dirpath, filename)
+                if is_good_file(dirpath_, filename):
+                    yield os.path.join(dirpath_, filename)
     else:
-        for filename in os.listdir(dirname):
-            if is_good_file(filename, dirname):
-                yield os.path.join(dirname, filename)
+        for filename in os.listdir(dirpath):
+            if is_good_file(dirpath, filename):
+                yield os.path.join(dirpath, filename)
+
+
+def get_filenames(*args, **kwargs):
+    """
+    :func:`get_filenames()` has been renamed :func:`get_filepaths()`
+    for clarity and consistency with existing naming conventions;
+    please use that function instead of this one.
+    """
+    utils.deprecated(
+        "`get_filenames()` has been renamed `get_filepaths()` "
+        "for clarity and consistency with existing naming conventions; "
+        "please use that function instead of this one",
+        action="once",
+    )
+    return get_filepaths(*args, **kwargs)

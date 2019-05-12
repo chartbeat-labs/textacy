@@ -24,7 +24,7 @@ def term_lists():
     ]
     corpus = Corpus("en", data=texts)
     term_lists_ = [
-        doc._.to_terms_list(ngrams=1, named_entities=False, as_strings=True)
+        doc._.to_terms_list(ngrams=1, entities=False, as_strings=True)
         for doc in corpus
     ]
     return term_lists_
@@ -70,10 +70,10 @@ def test_init_model():
 
 
 def test_save_load(tmpdir, model):
-    filename = str(tmpdir.join("model.pkl"))
+    filepath = str(tmpdir.join("model.pkl"))
     expected = model.model.components_
-    model.save(filename)
-    tmp_model = TopicModel.load(filename)
+    model.save(filepath)
+    tmp_model = TopicModel.load(filepath)
     observed = tmp_model.model.components_
     assert observed.shape == expected.shape
     assert np.equal(observed, expected).all()
@@ -135,3 +135,20 @@ def test_top_topic_terms_weights(vectorizer, model):
     for topic_idx, term_weights in observed:
         for i in range(len(term_weights) - 1):
             assert term_weights[i][1] >= term_weights[i + 1][1]
+
+
+def _xfailif():
+    try:
+        import matplotlib.pyplot as plt
+        return False
+    except ImportError:
+        return True
+
+
+@pytest.mark.xfail(
+    _xfailif(),
+    reason="matplotlib is an optional dependency, but required for this viz")
+def test_termite_plot(model, vectorizer, doc_term_matrix):
+    model.termite_plot(
+        doc_term_matrix, vectorizer.id_to_term,
+        topics=-1, n_terms=25, sort_terms_by="seriation")

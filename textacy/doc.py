@@ -8,11 +8,11 @@ import spacy
 
 from . import cache
 from . import compat
-from . import text_utils
+from . import lang_utils
 from . import utils
 
 
-def make_spacy_doc(data, lang=text_utils.detect_language):
+def make_spacy_doc(data, lang=lang_utils.detect_lang):
     """
     Make a :class:`spacy.tokens.Doc` from valid inputs, and automatically
     load/validate :class:`spacy.language.Language` pipelines to process ``data``.
@@ -44,14 +44,14 @@ def make_spacy_doc(data, lang=text_utils.detect_language):
         >>> make_spacy_doc(text)
         >>> make_spacy_doc(text, lang="en")
         >>> make_spacy_doc(text, lang="en_core_web_sm")
-        >>> make_spacy_doc(text, lang=textacy.load_spacy("en"))
-        >>> make_spacy_doc(text, lang=textacy.text_utils.detect_language)
+        >>> make_spacy_doc(text, lang=textacy.load_spacy_lang("en"))
+        >>> make_spacy_doc(text, lang=textacy.lang_utils.detect_lang)
 
     Ensure that an already-processed ``Doc`` is compatible with ``lang``:
 
     .. code-block:: pycon
 
-        >>> spacy_lang = textacy.load_spacy("en")
+        >>> spacy_lang = textacy.load_spacy_lang("en")
         >>> doc = spacy_lang(text)
         >>> make_spacy_doc(doc, lang="en")
         >>> make_spacy_doc(doc, lang="es")
@@ -99,14 +99,14 @@ def make_spacy_doc(data, lang=text_utils.detect_language):
 
 def _make_spacy_doc_from_text(text, lang):
     if isinstance(lang, compat.unicode_):
-        spacy_lang = cache.load_spacy(lang)
+        spacy_lang = cache.load_spacy_lang(lang)
         langstr = spacy_lang.lang
     elif isinstance(lang, spacy.language.Language):
         spacy_lang = lang
         langstr = spacy_lang.lang
     elif callable(lang):
         langstr = lang(text)
-        spacy_lang = cache.load_spacy(langstr)
+        spacy_lang = cache.load_spacy_lang(langstr)
     else:
         raise TypeError(
             "`lang` must be {}, not {}".format(
@@ -119,14 +119,14 @@ def _make_spacy_doc_from_text(text, lang):
 
 def _make_spacy_doc_from_record(record, lang):
     if isinstance(lang, compat.unicode_):
-        spacy_lang = cache.load_spacy(lang)
+        spacy_lang = cache.load_spacy_lang(lang)
         langstr = spacy_lang.lang
     elif isinstance(lang, spacy.language.Language):
         spacy_lang = lang
         langstr = spacy_lang.lang
     elif callable(lang):
         langstr = lang(record[0])
-        spacy_lang = cache.load_spacy(langstr)
+        spacy_lang = cache.load_spacy_lang(langstr)
     else:
         raise TypeError(
             "`lang` must be {}, not {}".format(

@@ -9,7 +9,7 @@ from setuptools import setup, find_packages
 INSTALL_REQUIRES = [
     "cachetools>=2.0.0",
     "cytoolz>=0.8.0",
-    "ftfy>=4.2.0,<5.0.0",
+    "joblib>=0.13.0",
     "networkx>=1.11",
     "numpy>=1.9.0,<2.0.0",
     "pyemd>=0.3.0",

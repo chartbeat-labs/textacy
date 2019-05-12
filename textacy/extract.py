@@ -14,7 +14,7 @@ import re
 import numpy as np
 from cytoolz import itertoolz
 from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
-from spacy.tokens.span import Span as SpacySpan
+from spacy.tokens import Span
 
 from . import compat
 from . import constants
@@ -192,103 +192,98 @@ def ngrams(
         yield ngram
 
 
-def named_entities(
-    doc, include_types=None, exclude_types=None, drop_determiners=True, min_freq=1
-):
+def entities(doc, include_types=None, exclude_types=None, drop_determiners=True, min_freq=1):
     """
     Extract an ordered sequence of named entities (PERSON, ORG, LOC, etc.) from
-    a spacy-parsed doc, optionally filtering by entity types and frequencies.
+    a ``Doc``, optionally filtering by entity types and frequencies.
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
-        include_types (str or Set[str]): remove named entities whose type IS NOT
+        include_types (str or Set[str]): remove entities whose type IS NOT
             in this param; if "NUMERIC", all numeric entity types ("DATE",
             "MONEY", "ORDINAL", etc.) are included
-        exclude_types (str or Set[str]): remove named entities whose type IS
+        exclude_types (str or Set[str]): remove entities whose type IS
             in this param; if "NUMERIC", all numeric entity types ("DATE",
             "MONEY", "ORDINAL", etc.) are excluded
         drop_determiners (bool): Remove leading determiners (e.g. "the")
-            from named entities (e.g. "the United States" => "United States").
+            from entities (e.g. "the United States" => "United States").
 
             .. note:: Entities from which a leading determiner has been removed
-               are, effectively, *new* entities, and not saved to the ``SpacyDoc``
+               are, effectively, *new* entities, and not saved to the ``Doc``
                from which they came. This is irritating but unavoidable, since
                this function is not meant to have side-effects on document state.
                If you're only using the text of the returned spans, this is no
                big deal, but watch out if you're counting on determiner-less
                entities associated with the doc downstream.
 
-        min_freq (int): remove named entities that occur in ``doc`` fewer
+        min_freq (int): remove entities that occur in ``doc`` fewer
             than ``min_freq`` times
 
     Yields:
-        :class:`spacy.tokens.Span`: the next named entity from ``doc`` passing all specified
-        filters in order of appearance in the document
+        :class:`spacy.tokens.Span`: the next entity from ``doc`` passing
+        all specified filters in order of appearance in the document
 
     Raises:
         TypeError: if ``include_types`` or ``exclude_types`` is not a str, a set of
             str, or a falsy value
     """
-    if hasattr(doc, "spacy_doc"):
-        nes = doc.spacy_doc.ents
-    else:
-        nes = doc.ents
+    ents = doc.ents
     # HACK: spacy's models have been erroneously tagging whitespace as entities
     # https://github.com/explosion/spaCy/commit/1e6725e9b734862e61081a916baf440697b9971e
-    nes = (ne for ne in nes if not ne.text.isspace())
-    include_types = _parse_ne_types(include_types, "include")
-    exclude_types = _parse_ne_types(exclude_types, "exclude")
+    ents = (ent for ent in ents if not ent.text.isspace())
+    include_types = _parse_ent_types(include_types, "include")
+    exclude_types = _parse_ent_types(exclude_types, "exclude")
     if include_types:
         if isinstance(include_types, compat.unicode_):
-            nes = (ne for ne in nes if ne.label_ == include_types)
+            ents = (ent for ent in ents if ent.label_ == include_types)
         elif isinstance(include_types, (set, frozenset, list, tuple)):
-            nes = (ne for ne in nes if ne.label_ in include_types)
+            ents = (ent for ent in ents if ent.label_ in include_types)
     if exclude_types:
         if isinstance(exclude_types, compat.unicode_):
-            nes = (ne for ne in nes if ne.label_ != exclude_types)
+            ents = (ent for ent in ents if ent.label_ != exclude_types)
         elif isinstance(exclude_types, (set, frozenset, list, tuple)):
-            nes = (ne for ne in nes if ne.label_ not in exclude_types)
+            ents = (ent for ent in ents if ent.label_ not in exclude_types)
     if drop_determiners is True:
-        nes = (
-            ne
-            if ne[0].pos != DET
-            else SpacySpan(
-                ne.doc, ne.start + 1, ne.end, label=ne.label, vector=ne.vector
+        ents = (
+            ent
+            if ent[0].pos != DET
+            else Span(
+                ent.doc, ent.start + 1, ent.end, label=ent.label, vector=ent.vector
             )
-            for ne in nes
+            for ent in ents
         )
     if min_freq > 1:
-        nes = list(nes)
-        freqs = itertoolz.frequencies(ne.lower_ for ne in nes)
-        nes = (ne for ne in nes if freqs[ne.lower_] >= min_freq)
+        ents = list(ents)
+        freqs = itertoolz.frequencies(ent.lower_ for ent in ents)
+        ents = (ent for ent in ents if freqs[ent.lower_] >= min_freq)
 
-    for ne in nes:
-        yield ne
+    for ent in ents:
+        yield ent
 
 
-def _parse_ne_types(ne_types, which):
-    if not ne_types:
+def _parse_ent_types(ent_types, which):
+    if not ent_types:
         return None
-    elif isinstance(ne_types, compat.unicode_):
-        ne_types = ne_types.upper()
+    elif isinstance(ent_types, compat.unicode_):
+        ent_types = ent_types.upper()
         # replace the shorthand numeric case by its corresponding constant
-        if ne_types == "NUMERIC":
-            return constants.NUMERIC_NE_TYPES
+        if ent_types == "NUMERIC":
+            return constants.NUMERIC_ENT_TYPES
         else:
-            return ne_types
-    elif isinstance(ne_types, (set, frozenset, list, tuple)):
-        ne_types = {ne_type.upper() for ne_type in ne_types}
+            return ent_types
+    elif isinstance(ent_types, (set, frozenset, list, tuple)):
+        ent_types = {ent_type.upper() for ent_type in ent_types}
         # again, replace the shorthand numeric case by its corresponding constant
         # and include it in the set in case other types are specified
-        if any(ne_type == "NUMERIC" for ne_type in ne_types):
-            return ne_types.union(constants.NUMERIC_NE_TYPES)
+        if any(ent_type == "NUMERIC" for ent_type in ent_types):
+            return ent_types.union(constants.NUMERIC_ENT_TYPES)
         else:
-            return ne_types
+            return ent_types
     else:
         allowed_types = (None, compat.unicode_, set, frozenset, list, tuple)
         raise TypeError(
             "{}_types = {} is {}, which is not one of the allowed types: {}".format(
-                which, ne_types, type(ne_types), allowed_types
+                which, ent_types, type(ent_types), allowed_types
             )
         )
 
@@ -309,10 +304,7 @@ def noun_chunks(doc, drop_determiners=True, min_freq=1):
         :class:`spacy.tokens.Span`: the next noun chunk from ``doc`` in order of appearance
         in the document
     """
-    if hasattr(doc, "spacy_doc"):
-        ncs = doc.spacy_doc.noun_chunks
-    else:
-        ncs = doc.noun_chunks
+    ncs = doc.noun_chunks
     if drop_determiners is True:
         ncs = (nc if nc[0].pos != DET else nc[1:] for nc in ncs)
     if min_freq > 1:
@@ -375,7 +367,7 @@ def subject_verb_object_triples(doc):
     # TODO: What to do about questions, where it may be VSO instead of SVO?
     # TODO: What about non-adjacent verb negations?
     # TODO: What about object (noun) negations?
-    if isinstance(doc, SpacySpan):
+    if isinstance(doc, Span):
         sents = [doc]
     else:  # spacy.Doc
         sents = doc.sents
@@ -443,7 +435,7 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
             acro_defs[acro] = [(def_, 1.0)]
         known_acronyms = set(acro_defs.keys())
 
-    if isinstance(doc, SpacySpan):
+    if isinstance(doc, Span):
         sents = [doc]
     else:  # spacy.Doc
         sents = doc.sents
@@ -820,11 +812,7 @@ def direct_quotations(doc):
 
     TODO: Better approach would use ML, but needs a training dataset.
     """
-    if hasattr(doc, "spacy_doc"):
-        doc_lang = doc.lang
-        doc = doc.spacy_doc
-    else:
-        doc_lang = doc.vocab.lang
+    doc_lang = doc.vocab.lang
     if doc_lang != "en":
         raise NotImplementedError("sorry, English-language texts only :(")
     quote_end_punct = {",", ".", "?", "!"}
@@ -892,7 +880,7 @@ def direct_quotations(doc):
             except IndexError:
                 continue
             #         if rv_subj.text in {'he', 'she'}:
-            #             for ne in named_entities(doc, good_ne_types={'PERSON'}):
+            #             for ne in entities(doc, include_types={'PERSON'}):
             #                 if ne.start < rv_subj.i:
             #                     speaker = ne
             #                 else:

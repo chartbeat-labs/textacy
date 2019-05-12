@@ -62,25 +62,25 @@ def read_http_stream(
 
 
 def write_http_stream(
-    url, fname, mode="wt", encoding=None, make_dirs=False, chunk_size=1024, auth=None
+    url, filepath, mode="wt", encoding=None, make_dirs=False, chunk_size=1024, auth=None
 ):
     """
     Download data from ``url`` in a stream, and write successive chunks
-    to disk at ``fname``.
+    to disk at ``filepath``.
 
     Args:
         url (str): URL to which a GET request is made for data.
-        fname (str): Path to file on disk to which data will be written.
-        mode (str): Mode with which ``fname`` is opened.
+        filepath (str): Path to file on disk to which data will be written.
+        mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
-            in ``fname``. Only applicable in text mode.
+            in ``filepath``. Only applicable in text mode.
 
             .. note:: The encoding on the HTTP response is inferred from its
                headers, or set to 'utf-8' as a fall-back in the case that no
                encoding is detected. It is *not* set by ``encoding``.
 
         make_dirs (bool): If True, automatically create (sub)directories if
-            not already present in order to write ``fname``.
+            not already present in order to write ``filepath``.
         chunk_size (int): Number of bytes read into memory per chunk. Because
             decoding may occur, this is not necessarily the length of each chunk.
         auth (Tuple[str, str]): (username, password) pair for simple HTTP
@@ -90,7 +90,7 @@ def write_http_stream(
     """
     decode_unicode = True if "t" in mode else False
     if make_dirs is True:
-        _make_dirs(fname, mode)
+        _make_dirs(filepath, mode)
     # use `closing` to ensure connection and progress bar *always* close
     with closing(requests.get(url, stream=True, auth=auth)) as r:
         LOGGER.info("downloading data from %s ...", url)
@@ -99,7 +99,7 @@ def write_http_stream(
             r.encoding = "utf-8"
         total = int(r.headers.get("content-length", 0))
         with closing(tqdm(unit="B", unit_scale=True, total=total)) as pbar:
-            with io.open(fname, mode=mode, encoding=encoding) as f:
+            with io.open(filepath, mode=mode, encoding=encoding) as f:
                 chunks = r.iter_content(
                     chunk_size=chunk_size, decode_unicode=decode_unicode
                 )

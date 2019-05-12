@@ -24,7 +24,7 @@ class TestWikipedia(object):
     def test_download(self, tmpdir):
         dataset = wikimedia.Wikipedia(data_dir=str(tmpdir))
         dataset.download()
-        assert os.path.exists(dataset.filepath)
+        assert os.path.isfile(dataset.filepath)
 
     def test_oserror(self, tmpdir):
         dataset = wikimedia.Wikipedia(data_dir=str(tmpdir))
@@ -101,7 +101,7 @@ class TestWikinews(object):
     def test_download(self, tmpdir):
         dataset = wikimedia.Wikinews(data_dir=str(tmpdir))
         dataset.download()
-        assert os.path.exists(dataset.filepath)
+        assert os.path.isfile(dataset.filepath)
 
     def test_oserror(self, tmpdir):
         dataset = wikimedia.Wikinews(data_dir=str(tmpdir))

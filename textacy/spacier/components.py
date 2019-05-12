@@ -8,8 +8,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import logging
 
-from spacy.attrs import intify_attrs
-from spacy.tokens import Doc as SpacyDoc
+from spacy.tokens import Doc
 
 from . import utils as spacier_utils
 from .. import compat
@@ -94,7 +93,9 @@ class TextStatsComponent(object):
         else:
             self.attrs = tuple(attrs)
         for attr in self.attrs:
-            SpacyDoc.set_extension(attr, default=None, force=True)
+            # TODO: see if there's a better way to handle this
+            # that doesn't involve clobbering existing property extensions
+            Doc.set_extension(attr, default=None, force=True)
             LOGGER.debug('"%s" custom attribute added to `spacy.tokens.Doc`')
 
     def __call__(self, doc):
@@ -105,7 +106,7 @@ class TextStatsComponent(object):
             except AttributeError:
                 LOGGER.exception(
                     "`TextStats` class doesn't have '%s' attribute, so it can't "
-                    "be set on this `SpacyDoc`. Check the attrs used to initialize "
+                    "be set on this `Doc`. Check the attrs used to initialize "
                     "the `TextStatsComponent` in this pipeline for errors.",
                     attr,
                 )
@@ -118,7 +119,7 @@ def merge_entities(doc):
     Merge named entities into single tokens in ``doc``, *in-place*. Can be used
     as a stand-alone function, or as part of a spaCy language pipeline::
 
-        >>> spacy_lang = textacy.load_spacy('en')
+        >>> spacy_lang = textacy.load_spacy_lang('en')
         >>> spacy_lang.add_pipe(merge_entities, after='ner')
         >>> doc = spacy_lang('Burton DeWilde is an entity in this sentence.')
         >>> doc[0]

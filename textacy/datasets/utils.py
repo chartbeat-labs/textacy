@@ -16,13 +16,13 @@ import zipfile
 from tqdm import tqdm
 
 from .. import compat
-from .. import data_dir as DATA_DIR
+from .. import constants
 from ..io import write_http_stream
 
 LOGGER = logging.getLogger(__name__)
 
 
-def download_file(url, filename=None, dirpath=DATA_DIR, force=False):
+def download_file(url, filename=None, dirpath=constants.DEFAULT_DATA_DIR, force=False):
     """
     Download a file from ``url`` and save it to disk.
 
@@ -85,7 +85,7 @@ def unpack_archive(filepath, extract_dir=None):
     if not extract_dir:
         extract_dir = os.path.dirname(filepath)
     # TODO: os.makedirs(path, exist_ok=True) when PY3-only
-    if not os.path.exists(extract_dir):
+    if not os.path.isdir(extract_dir):
         os.makedirs(extract_dir)
     is_zipfile = zipfile.is_zipfile(filepath)
     is_tarfile = tarfile.is_tarfile(filepath)

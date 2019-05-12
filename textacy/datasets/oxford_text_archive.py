@@ -29,7 +29,7 @@ import os
 import re
 
 from .. import compat
-from .. import data_dir as DATA_DIR
+from .. import constants
 from .. import io as tio
 from . import utils
 from .dataset import Dataset
@@ -97,7 +97,7 @@ class OxfordTextArchive(Dataset):
 
     full_date_range = ("0018-01-01", "1990-01-01")
 
-    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
+    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
         super(OxfordTextArchive, self).__init__(NAME, meta=META)
         self.data_dir = data_dir
         self._text_dirpath = os.path.join(self.data_dir, "master", "text")
@@ -192,7 +192,7 @@ class OxfordTextArchive(Dataset):
                 "has the dataset been downloaded yet?".format(self._text_dirpath)
             )
         _metadata = self.metadata  # for performance
-        for filepath in sorted(tio.get_filenames(self._text_dirpath, extension=".txt")):
+        for filepath in sorted(tio.get_filepaths(self._text_dirpath, extension=".txt")):
             id_, _ = os.path.splitext(os.path.basename(filepath))
             record = _metadata.get(id_, {}).copy()
             if not record:

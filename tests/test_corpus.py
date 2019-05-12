@@ -27,7 +27,7 @@ class TestCorpusInit(object):
 
     def test_corpus_init_lang(self):
         assert isinstance(Corpus("en"), Corpus)
-        assert isinstance(Corpus(cache.load_spacy("en")), Corpus)
+        assert isinstance(Corpus(cache.load_spacy_lang("en")), Corpus)
         for bad_lang in (b"en", None):
             with pytest.raises(TypeError):
                 Corpus(bad_lang)
@@ -51,7 +51,7 @@ class TestCorpusInit(object):
 
     def test_corpus_init_docs(self):
         limit = 3
-        spacy_lang = cache.load_spacy("en")
+        spacy_lang = cache.load_spacy_lang("en")
         texts = DATASET.texts(limit=limit)
         docs = [spacy_lang(text) for text in texts]
         corpus = Corpus("en", data=docs)
@@ -60,7 +60,7 @@ class TestCorpusInit(object):
         assert all(doc1 is doc2 for doc1, doc2 in zip(docs, corpus))
 
     def test_corpus_init_no_parser(self):
-        spacy_lang = cache.load_spacy("en", disable=("parser",))
+        spacy_lang = cache.load_spacy_lang("en", disable=("parser",))
         corpus = Corpus(spacy_lang, data=(spacy_lang("This is a sentence in a doc."),))
         assert len(corpus) == 1
         assert corpus.n_sents == 0
@@ -109,7 +109,7 @@ class TestCorpusProperties(object):
 class TestCorpusMethods(object):
 
     def test_corpus_add(self, corpus):
-        spacy_lang = cache.load_spacy("en")
+        spacy_lang = cache.load_spacy_lang("en")
         datas = (
             "This is an english sentence.",
             ("This is an english sentence.", {"foo": "bar"}),
@@ -153,6 +153,37 @@ class TestCorpusMethods(object):
             assert corpus.n_docs < n_docs
             assert not any([match_func(doc) for doc in corpus])
             n_docs = corpus.n_docs
+
+    def test_corpus_word_counts(self, corpus):
+        abs_counts = corpus.word_counts(weighting="count", normalize="lower")
+        rel_counts = corpus.word_counts(weighting="freq", normalize="lower")
+        assert isinstance(abs_counts, dict)
+        assert all(isinstance(count, int) for count in abs_counts.values())
+        assert min(abs_counts.values()) > 0
+        assert isinstance(rel_counts, dict)
+        assert all(isinstance(count, float) for count in rel_counts.values())
+        assert min(rel_counts.values()) > 0 and max(rel_counts.values()) <= 1
+
+    def test_corpus_word_counts_error(self, corpus):
+        with pytest.raises(ValueError):
+            corpus.word_counts(weighting="foo")
+
+    def test_corpus_word_doc_counts(self, corpus):
+        abs_counts = corpus.word_doc_counts(weighting="count", normalize="lower")
+        rel_counts = corpus.word_doc_counts(weighting="freq", normalize="lower")
+        inv_counts = corpus.word_doc_counts(weighting="idf", normalize="lower")
+        assert isinstance(abs_counts, dict)
+        assert all(isinstance(count, int) for count in abs_counts.values())
+        assert min(abs_counts.values()) > 0
+        assert isinstance(rel_counts, dict)
+        assert all(isinstance(count, float) for count in rel_counts.values())
+        assert min(rel_counts.values()) > 0 and max(rel_counts.values()) <= 1
+        assert isinstance(inv_counts, dict)
+        assert min(inv_counts.values()) > 0
+
+    def test_corpus_word_doc_counts_error(self, corpus):
+        with pytest.raises(ValueError):
+            corpus.word_doc_counts(weighting="foo")
 
     def test_corpus_save_and_load(self, corpus, tmpdir):
         filepath = str(tmpdir.join("test_corpus_save_and_load.pkl"))

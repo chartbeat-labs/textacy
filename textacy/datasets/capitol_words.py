@@ -31,7 +31,7 @@ import logging
 import os
 
 from .. import compat
-from .. import data_dir as DATA_DIR
+from .. import constants
 from .. import io as tio
 from . import utils
 from .dataset import Dataset
@@ -127,7 +127,7 @@ class CapitolWords(Dataset):
     chambers = {"Extensions", "House", "Senate"}
     congresses = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
 
-    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
+    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
         super(CapitolWords, self).__init__(NAME, meta=META)
         self.data_dir = data_dir
         self._filename = "capitol-words-py{py_version}.json.gz".format(

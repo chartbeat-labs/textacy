@@ -5,21 +5,21 @@ Text
 Functions for reading from and writing to disk records in plain text format,
 either as one text per file or one text per *line* in a file.
 """
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 from .utils import open_sesame, _validate_read_mode, _validate_write_mode
 
 
-def read_text(fname, mode="rt", encoding=None, lines=False):
+def read_text(filepath, mode="rt", encoding=None, lines=False):
     """
-    Read the contents of a text file at ``fname``, either all at once
+    Read the contents of a text file at ``filepath``, either all at once
     or streaming line-by-line.
 
     Args:
-        fname (str): Path to file on disk from which data will be read.
-        mode (str): Mode with which ``fname`` is opened.
+        filepath (str): Path to file on disk from which data will be read.
+        mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
-            in ``fname``. Only applicable in text mode.
+            in ``filepath``. Only applicable in text mode.
         lines (bool): If False, all data is read in at once; otherwise, data is
             read in one line at a time.
 
@@ -30,7 +30,7 @@ def read_text(fname, mode="rt", encoding=None, lines=False):
         access the full text.
     """
     _validate_read_mode(mode)
-    with open_sesame(fname, mode=mode, encoding=encoding) as f:
+    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
         if lines is False:
             yield f.read()
         else:
@@ -38,9 +38,9 @@ def read_text(fname, mode="rt", encoding=None, lines=False):
                 yield line
 
 
-def write_text(data, fname, mode="wt", encoding=None, make_dirs=False, lines=False):
+def write_text(data, filepath, mode="wt", encoding=None, make_dirs=False, lines=False):
     """
-    Write text ``data`` to disk at ``fname``, either all at once
+    Write text ``data`` to disk at ``filepath``, either all at once
     or streaming line-by-line.
 
     Args:
@@ -56,17 +56,17 @@ def write_text(data, fname, mode="wt", encoding=None, make_dirs=False, lines=Fal
                  "You're thinking of rigor mortis. Rick and morty is when you get trolled into watching \"never gonna give you up\"",
                  "That's rickrolling. Rick and morty is a type of pasta"]
 
-        fname (str): Path to file on disk to which data will be written.
-        mode (str): Mode with which ``fname`` is opened.
+        filepath (str): Path to file on disk to which data will be written.
+        mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
-            in ``fname``. Only applicable in text mode.
+            in ``filepath``. Only applicable in text mode.
         make_dirs (bool): If True, automatically create (sub)directories if
-            not already present in order to write ``fname``.
+            not already present in order to write ``filepath``.
         lines (bool): If False, all data is written at once; otherwise, data is
             written to disk one line at a time.
     """
     _validate_write_mode(mode)
-    with open_sesame(fname, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
+    with open_sesame(filepath, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
         if lines is False:
             f.write(data)
         else:

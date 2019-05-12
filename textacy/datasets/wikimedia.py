@@ -33,7 +33,7 @@ import requests
 from cytoolz import itertoolz
 
 from .. import compat
-from .. import data_dir as DATA_DIR
+from .. import constants
 from .. import io as tio
 from . import utils
 from .dataset import Dataset
@@ -396,7 +396,7 @@ class Wikipedia(Wikimedia):
     """
 
     def __init__(
-        self, data_dir=os.path.join(DATA_DIR, "wikipedia"),
+        self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, "wikipedia"),
         lang="en", version="current", namespace=0
     ):
         super(Wikipedia, self).__init__(
@@ -456,7 +456,7 @@ class Wikinews(Wikimedia):
     """
 
     def __init__(
-        self, data_dir=os.path.join(DATA_DIR, "wikinews"),
+        self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, "wikinews"),
         lang="en", version="current", namespace=0
     ):
         super(Wikinews, self).__init__(

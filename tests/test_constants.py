@@ -2,12 +2,12 @@
 from __future__ import absolute_import, unicode_literals
 
 from textacy.constants import (
-    ACRONYM_REGEX,
-    URL_REGEX,
-    EMAIL_REGEX,
-    PHONE_REGEX,
-    NUMBERS_REGEX,
-    SHORT_URL_REGEX,
+    RE_ACRONYM,
+    RE_URL,
+    RE_EMAIL,
+    RE_PHONE,
+    RE_NUMBERS,
+    RE_SHORT_URL,
 )
 
 
@@ -229,74 +229,74 @@ PARTIAL_NUMBERS = [
 
 def test_good_acronym_regex():
     for item in GOOD_ACRONYMS:
-        assert item == ACRONYM_REGEX.search(item).group()
+        assert item == RE_ACRONYM.search(item).group()
 
 
 def test_bad_acronym_regex():
     for item in BAD_ACRONYMS:
-        assert ACRONYM_REGEX.search(item) is None
+        assert RE_ACRONYM.search(item) is None
 
 
 def test_good_url_regex():
     for item in GOOD_URLS:
-        assert item == URL_REGEX.search(item).group()
+        assert item == RE_URL.search(item).group()
 
 
 def test_bad_url_regex():
     for item in BAD_URLS:
-        assert URL_REGEX.search(item) is None
+        assert RE_URL.search(item) is None
 
 
 def test_partial_url_regex():
     for item in PARTIAL_URLS:
-        assert item != URL_REGEX.search(item)
+        assert item != RE_URL.search(item)
 
 
 def test_good_short_url_regex():
     for item in GOOD_SHORT_URLS:
-        assert item == SHORT_URL_REGEX.search(item).group()
+        assert item == RE_SHORT_URL.search(item).group()
 
 
 def test_bad_short_url_regex():
     for item in BAD_SHORT_URLS:
-        assert SHORT_URL_REGEX.search(item) is None
+        assert RE_SHORT_URL.search(item) is None
 
 
 def test_good_phone_regex():
     for item in GOOD_PHONES:
-        assert item == PHONE_REGEX.search(item).group()
+        assert item == RE_PHONE.search(item).group()
 
 
 def test_bad_phone_regex():
     for item in BAD_PHONES:
-        assert PHONE_REGEX.search(item) is None
+        assert RE_PHONE.search(item) is None
 
 
 def test_partial_phone_regex():
     for item in PARTIAL_PHONES:
-        assert item != PHONE_REGEX.search(item)
+        assert item != RE_PHONE.search(item)
 
 
 def test_good_email_regex():
     for item in GOOD_EMAILS:
-        assert item == EMAIL_REGEX.search(item).group()
+        assert item == RE_EMAIL.search(item).group()
 
 
 def test_bad_email_regex():
     for item in BAD_EMAILS:
-        assert EMAIL_REGEX.search(item) is None
+        assert RE_EMAIL.search(item) is None
 
 
 def test_good_number_regex():
     for item in GOOD_NUMBERS:
-        assert item == NUMBERS_REGEX.search(item).group()
+        assert item == RE_NUMBERS.search(item).group()
 
 
 def test_bad_number_regex():
     for item in BAD_NUMBERS:
-        assert NUMBERS_REGEX.search(item) is None
+        assert RE_NUMBERS.search(item) is None
 
 
 def test_partial_number_regex():
     for item in PARTIAL_NUMBERS:
-        assert item != NUMBERS_REGEX.search(item)
+        assert item != RE_NUMBERS.search(item)

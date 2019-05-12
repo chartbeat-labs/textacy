@@ -9,49 +9,9 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 import re
 
-try:
-    from cld2 import detect as cld2_detect
-except ImportError:
-    pass
-
-from . import compat
 from . import constants
 
 LOGGER = logging.getLogger(__name__)
-
-
-def detect_language(text):
-    """
-    Detect the most likely language of a text and return its 2-letter code
-    (see https://cloud.google.com/translate/v2/using_rest#language-params).
-    Uses the `cld2-cffi <https://pypi.python.org/pypi/cld2-cffi>`_ package;
-    to take advantage of optional params, call :func:`cld2.detect()` directly.
-
-    Args:
-        text (str)
-
-    Returns:
-        str
-    """
-    try:
-        cld2_detect
-    except NameError:
-        raise ImportError(
-            "`cld2-cffi` must be installed to use textacy's automatic language detection; "
-            "you may do so via `pip install cld2-cffi` or `pip install textacy[lang]`."
-        )
-
-    if compat.PY2:
-        is_reliable, _, best_guesses = cld2_detect(
-            compat.to_bytes(text), bestEffort=True
-        )
-    else:
-        is_reliable, _, best_guesses = cld2_detect(text, bestEffort=True)
-    if is_reliable is False:
-        LOGGER.warning(
-            "Text language detected with low confidence; best guesses: %s", best_guesses
-        )
-    return best_guesses[0][1]
 
 
 def is_acronym(token, exclude=None):
@@ -91,7 +51,7 @@ def is_acronym(token, exclude=None):
     if not 2 <= sum(1 for char in token if char.isalnum()) <= 10:
         return False
     # only certain combinations of letters, digits, and '&/.-' allowed
-    if not constants.ACRONYM_REGEX.match(token):
+    if not constants.RE_ACRONYM.match(token):
         return False
     return True
 
@@ -164,33 +124,33 @@ def clean_terms(terms):
         into a form that changes or obscures the original meaning of the term.
     """
     # get rid of leading/trailing junk characters
-    terms = (constants.LEAD_TAIL_CRUFT_TERM_RE.sub("", term) for term in terms)
-    terms = (constants.LEAD_HYPHEN_TERM_RE.sub(r"\1", term) for term in terms)
+    terms = (constants.RE_LEAD_TAIL_CRUFT_TERM.sub("", term) for term in terms)
+    terms = (constants.RE_LEAD_HYPHEN_TERM.sub(r"\1", term) for term in terms)
     # handle dangling/backwards parens, don't allow '(' or ')' to appear without the other
     terms = (
         ""
         if term.count(")") != term.count("(") or term.find(")") < term.find("(")
         else term
         if "(" not in term
-        else constants.DANGLING_PARENS_TERM_RE.sub(r"\1\2\3", term)
+        else constants.RE_DANGLING_PARENS_TERM.sub(r"\1\2\3", term)
         for term in terms
     )
     # handle oddly separated hyphenated words
     terms = (
         term
         if "-" not in term
-        else constants.NEG_DIGIT_TERM_RE.sub(
-            r"\1\2", constants.WEIRD_HYPHEN_SPACE_TERM_RE.sub(r"\1", term)
+        else constants.RE_NEG_DIGIT_TERM.sub(
+            r"\1\2", constants.RE_WEIRD_HYPHEN_SPACE_TERM.sub(r"\1", term)
         )
         for term in terms
     )
     # handle oddly separated apostrophe'd words
     terms = (
-        constants.WEIRD_APOSTR_SPACE_TERM_RE.sub(r"\1\2", term) if "'" in term else term
+        constants.RE_WEIRD_APOSTR_SPACE_TERM.sub(r"\1\2", term) if "'" in term else term
         for term in terms
     )
     # normalize whitespace
-    terms = (constants.NONBREAKING_SPACE_REGEX.sub(" ", term).strip() for term in terms)
+    terms = (constants.RE_NONBREAKING_SPACE.sub(" ", term).strip() for term in terms)
     for term in terms:
         if re.search(r"\w", term):
             yield term

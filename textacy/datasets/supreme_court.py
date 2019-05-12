@@ -55,7 +55,7 @@ import logging
 import os
 
 from .. import compat
-from .. import data_dir as DATA_DIR
+from .. import constants
 from .. import io as tio
 from . import utils
 from .dataset import Dataset
@@ -547,7 +547,7 @@ class SupremeCourt(Dataset):
         "90520": "miscellaneous judicial power, especially diversity jurisdiction",
     }
 
-    def __init__(self, data_dir=os.path.join(DATA_DIR, NAME)):
+    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
         super(SupremeCourt, self).__init__(NAME, meta=META)
         self.data_dir = data_dir
         self._filename = "supreme-court-py{py_version}.json.gz".format(

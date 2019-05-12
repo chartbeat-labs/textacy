@@ -76,7 +76,7 @@ specify it yourself when initializing the doc:
 
 .. code-block:: pycon
 
-    >>> en = textacy.load_spacy("en_core_web_sm", disable=("parser",))
+    >>> en = textacy.load_spacy_lang("en_core_web_sm", disable=("parser",))
     >>> doc = textacy.make_spacy_doc(text, lang=en)
     >>> doc._.preview
     'Doc(85 tokens: "Since the so-called "statistical revolution" in...")'
@@ -138,7 +138,7 @@ extract various elements of interest:
      corpora of typical]
     >>> list(textacy.extract.ngrams(doc, 2, min_freq=2))
     [Natural Language, natural language]
-    >>> list(textacy.extract.named_entities(doc, drop_determiners=True))
+    >>> list(textacy.extract.entities(doc, drop_determiners=True))
     [late 1980s and mid 1990s]
     >>> pattern = textacy.constants.POS_REGEX_PATTERNS["en"]["NP"]
     >>> pattern
@@ -223,7 +223,7 @@ and term inclusion criteria:
 .. code-block:: pycon
 
     >>> bot = doc._.to_bag_of_terms(
-    ...     ngrams=(1, 2, 3), named_entities=True, weighting="count",
+    ...     ngrams=(1, 2, 3), entities=True, weighting="count",
     ...     as_strings=True)
     >>> sorted(bot.items(), key=lambda x: x[1], reverse=True)[:15]
     [('call', 2),
@@ -334,7 +334,7 @@ of texts, records, or (valid) ``Doc`` s.
 .. code-block:: pycon
 
     >>> textacy.Corpus(
-    ...     textacy.load_spacy("en_core_web_sm", disable=("parser", "tagger")),
+    ...     textacy.load_spacy_lang("en_core_web_sm", disable=("parser", "tagger")),
     ...     data=ds.texts(speaker_party="R", chamber="House", limit=100))
     Corpus(100 docs, 31356 tokens)
 
@@ -380,7 +380,7 @@ weighting, and filtering of terms:
     ...     tf_type="linear", apply_idf=True, idf_type="smooth", norm="l2",
     ...     min_df=2, max_df=0.95)
     >>> doc_term_matrix = vectorizer.fit_transform(
-    ...     (doc._.to_terms_list(ngrams=1, named_entities=True, as_strings=True)
+    ...     (doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
     ...      for doc in corpus))
     >>> print(repr(doc_term_matrix))
     <1240x12577 sparse matrix of type '<class 'numpy.float64'>'
@@ -453,12 +453,12 @@ For example:
     >>> en_corpus = textacy.Corpus(
     ...     "en", data=(
     ...         text for text in texts
-    ...         if textacy.text_utils.detect_language(text) == "en")
+    ...         if textacy.lang_utils.detect_lang(text) == "en")
     ... )
     >>> es_corpus = textacy.Corpus(
     ...     "es", data=(
     ...         text for text in texts
-    ...         if textacy.text_utils.detect_language(text) == "es")
+    ...         if textacy.lang_utils.detect_lang(text) == "es")
     ... )
 
 Both of these options are less convenient than I'd like, but hopefully they

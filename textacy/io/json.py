@@ -5,26 +5,25 @@ JSON
 Functions for reading from and writing to disk records in JSON format,
 as one record per file or one record per *line* in a file.
 """
-from __future__ import absolute_import, print_function, unicode_literals
+from __future__ import absolute_import, division, print_function, unicode_literals
 
 import datetime
 import functools
 import json
 
-from .. import compat
 from .utils import open_sesame, _validate_read_mode, _validate_write_mode
 
 
-def read_json(fname, mode="rt", encoding=None, lines=False):
+def read_json(filepath, mode="rt", encoding=None, lines=False):
     """
-    Read the contents of a JSON file at ``fname``, either all at once
+    Read the contents of a JSON file at ``filepath``, either all at once
     or streaming item-by-item.
 
     Args:
-        fname (str): Path to file on disk from which data will be read.
-        mode (str): Mode with which ``fname`` is opened.
+        filepath (str): Path to file on disk from which data will be read.
+        mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
-            in ``fname``. Only applicable in text mode.
+            in ``filepath``. Only applicable in text mode.
         lines (bool): If False, all data is read in at once; otherwise, data is
             read in one line at a time.
 
@@ -33,7 +32,7 @@ def read_json(fname, mode="rt", encoding=None, lines=False):
         depending on the value of ``lines``.
     """
     _validate_read_mode(mode)
-    with open_sesame(fname, mode=mode, encoding=encoding) as f:
+    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
         if lines is False:
             yield json.load(f)
         else:
@@ -41,16 +40,16 @@ def read_json(fname, mode="rt", encoding=None, lines=False):
                 yield json.loads(line)
 
 
-def read_json_mash(fname, mode="rt", encoding=None, buffer_size=2048):
+def read_json_mash(filepath, mode="rt", encoding=None, buffer_size=2048):
     """
-    Read the contents of a JSON file at ``fname`` one item at a time,
+    Read the contents of a JSON file at ``filepath`` one item at a time,
     where all of the items have been mashed together, end-to-end, on a single line.
 
     Args:
-        fname (str): Path to file on disk to which data will be written.
-        mode (str): Mode with which ``fname`` is opened.
+        filepath (str): Path to file on disk to which data will be written.
+        mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
-            in ``fname``. Only applicable in text mode.
+            in ``filepath``. Only applicable in text mode.
         buffer_size (int): Number of bytes to read in as a chunk.
 
     Yields:
@@ -63,7 +62,7 @@ def read_json_mash(fname, mode="rt", encoding=None, buffer_size=2048):
     """
     _validate_read_mode(mode)
     json_decoder = json.JSONDecoder()
-    with open_sesame(fname, mode=mode, encoding=encoding) as f:
+    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
         buffer_ = ""
         for chunk in iter(functools.partial(f.read, buffer_size), ""):
             buffer_ += chunk
@@ -79,7 +78,7 @@ def read_json_mash(fname, mode="rt", encoding=None, buffer_size=2048):
 
 def write_json(
     data,
-    fname,
+    filepath,
     mode="wt",
     encoding=None,
     make_dirs=False,
@@ -90,7 +89,7 @@ def write_json(
     indent=None,
 ):
     """
-    Write JSON ``data`` to disk at ``fname``, either all at once
+    Write JSON ``data`` to disk at ``filepath``, either all at once
     or streaming item-by-item.
 
     Args:
@@ -105,14 +104,14 @@ def write_json(
                 ]
 
             If ``lines`` is False, all of ``data`` is written as a single object;
-            if True, each item is written to a separate line in ``fname``.
+            if True, each item is written to a separate line in ``filepath``.
 
-        fname (str): Path to file on disk to which data will be written.
-        mode (str): Mode with which ``fname`` is opened.
+        filepath (str): Path to file on disk to which data will be written.
+        mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
-            in ``fname``. Only applicable in text mode.
+            in ``filepath``. Only applicable in text mode.
         make_dirs (bool): If True, automatically create (sub)directories if
-            not already present in order to write ``fname``.
+            not already present in order to write ``filepath``.
         lines (bool): If False, all data is written at once; otherwise, data is
             written to disk one item at a time.
         ensure_ascii (bool): If True, all non-ASCII characters are escaped;
@@ -130,7 +129,7 @@ def write_json(
         https://docs.python.org/3/library/json.html#json.dump
     """
     _validate_write_mode(mode)
-    with open_sesame(fname, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
+    with open_sesame(filepath, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
         if lines is False:
             f.write(
                 json.dumps(
