@@ -1,8 +1,8 @@
 Changelog
 =========
 
-0.7.0 (in development)
-----------------------
+0.7.0 (2019-05-13)
+------------------
 
 New and Changed:
 
@@ -20,7 +20,6 @@ New and Changed:
   - **New:** Added functions for setting, getting, and removing these extensions.
     Note that they are set automatically when textacy is imported.
 
-
 - **Simplified and improved performance of ``textacy.Corpus``**
 
   - Documents are now added through a simpler API, either in ``Corpus.__init__``
@@ -29,7 +28,6 @@ New and Changed:
     language processing pipeline is used in a faster and more efficient way.
   - Saving / loading corpus data to disk is now more efficient and robust.
   - Note: ``Corpus`` is now a collection of spaCy ``Doc`` s rather than ``textacy.Doc`` s.
-
 
 - **Simplified, standardized, and added ``Dataset`` functionality**
 
@@ -52,7 +50,6 @@ New and Changed:
     automatically extracted for easy inspection.
   - Common functionality (such as validating filter values) is now standardized
     and consolidated in the ``datasets.utils`` module.
-
 
 - **Quality of life improvements**
 
