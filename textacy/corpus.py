@@ -53,7 +53,7 @@ class Corpus(object):
         Corpus(76 docs, 55906 tokens)
         >>> corpus.remove(lambda doc: doc._.meta.get("speaker_name") == "Rick Santorum")
         >>> corpus
-        Corpus(67 docs, 50662 tokens)
+        Corpus(61 docs, 48567 tokens)
 
     Get subsets of documents matching your particular use case:
 
@@ -78,33 +78,33 @@ class Corpus(object):
          'Doc(336 tokens: "Mr. Speaker, I thank the gentleman for yielding...")']
         >>> del corpus[:5]
         >>> corpus
-        Corpus(62 docs, 49754 tokens)
+        Corpus(56 docs, 41573 tokens)
 
     Compute basic corpus statistics:
 
     .. code-block:: pycon
 
         >>> corpus.n_docs, corpus.n_sents, corpus.n_tokens
-        (62, 2193, 49754)
+        (56, 1771, 41573)
         >>> word_counts = corpus.word_counts(as_strings=True)
         >>> sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-        [('-PRON-', 3068), ('people', 248), ('year', 171), ('work', 156), ('$', 153)]
+        [('-PRON-', 2553), ('people', 215), ('year', 148), ('Mr.', 139), ('$', 137)]
         >>> word_doc_counts = corpus.word_doc_counts(weighting="freq", as_strings=True)
         >>> sorted(word_doc_counts.items(), key=lambda x: x[1], reverse=True)[:5]
-        [('-PRON-', 0.9838709677419355),
-         ('Mr.', 0.7258064516129032),
-         ('President', 0.5483870967741935),
-         ('ask', 0.45161290322580644),
-         ('year', 0.45161290322580644)]
+        [('-PRON-', 0.9821428571428571),
+         ('Mr.', 0.7678571428571429),
+         ('President', 0.5),
+         ('people', 0.48214285714285715),
+         ('need', 0.44642857142857145)]
 
     Save corpus data to and load from disk:
 
     .. code-block:: pycon
 
-        >>> corpus.save("~/Desktop/capitol_words_sample.bin")
-        >>> corpus = textacy.Corpus.load("en", "~/Desktop/capitol_words_sample.bin")
+        >>> corpus.save("~/Desktop/capitol_words_sample.bin.gz")
+        >>> corpus = textacy.Corpus.load("en", "~/Desktop/capitol_words_sample.bin.gz")
         >>> corpus
-        Corpus(62 docs, 49754 tokens)
+        Corpus(56 docs, 41573 tokens)
 
     Args:
         lang (str or :class:`spacy.language.Language`):
@@ -374,8 +374,14 @@ class Corpus(object):
            5; etc.
         """
         matched_docs = (doc for doc in self if match_func(doc) is True)
-        for doc in itertools.islice(matched_docs, limit):
-            self._remove_one_doc_by_index(self._doc_ids.index(id(doc)))
+        self._remove_many_docs_by_index(
+            self._doc_ids.index(id(doc))
+            for doc in itertools.islice(matched_docs, limit)
+        )
+
+    def _remove_many_docs_by_index(self, idxs):
+        for idx in sorted(idxs, reverse=True):
+            self._remove_one_doc_by_index(idx)
 
     def _remove_one_doc_by_index(self, idx):
         doc = self.docs[idx]
@@ -385,10 +391,6 @@ class Corpus(object):
             self.n_sents -= sum(1 for _ in doc.sents)
         del self.docs[idx]
         del self._doc_ids[idx]
-
-    def _remove_many_docs_by_index(self, idxs):
-        for idx in sorted(idxs, reverse=True):
-            self._remove_one_doc_by_index(idx)
 
     # useful properties
 
