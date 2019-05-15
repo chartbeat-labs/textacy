@@ -17,6 +17,7 @@ from tqdm import tqdm
 
 from .. import compat
 from .. import constants
+from ..utils import to_collection
 from ..io import write_http_stream
 
 LOGGER = logging.getLogger(__name__)
@@ -125,37 +126,6 @@ def unpack_archive(filepath, extract_dir=None):
             )
         else:
             return os.path.join(extract_dir, src_basename)
-
-
-def to_collection(val, val_type, col_type):
-    """
-    Validate and cast a filter value to a collection of filter values.
-
-    Args:
-        val (object)
-        val_type (type)
-        col_type (type)
-
-    Returns:
-        object: collection of type ``col_type`` with values all of type ``val_type``
-
-    Raises:
-        TypeError
-    """
-    if val is None:
-        return None
-    if isinstance(val, val_type):
-        return col_type([val])
-    elif isinstance(val, (tuple, list, set, frozenset)):
-        if not all(isinstance(v, val_type) for v in val):
-            raise TypeError("not all values are of type {}".format(val_type))
-        return col_type(val)
-    else:
-        raise TypeError(
-            "values must be {} or a collection thereof, not {}".format(
-                val_type, type(val),
-            )
-        )
 
 
 def validate_set_member_filter(filter_vals, vals_type, valid_vals=None):

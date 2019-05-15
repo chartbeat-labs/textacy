@@ -13,7 +13,6 @@ from textacy.datasets.utils import (
     validate_set_member_filter,
     download_file,
     get_filename_from_url,
-    to_collection,
     unpack_archive,
 )
 from textacy import io as tio
@@ -149,13 +148,3 @@ def test_unpack_archive(tmpdir):
         f.add(fpath_txt)
     unpack_archive(fpath_tar, extract_dir=tmpdir)
     unpack_archive(fpath_txt, extract_dir=tmpdir)
-
-
-def test_to_collection():
-    in_outs = [
-        [(1, int, list), [1]],
-        [([1, 2], int, tuple), (1, 2)],
-    ]
-    assert to_collection(None, int, list) is None
-    for in_, out_ in in_outs:
-        assert to_collection(*in_) == out_
