@@ -308,7 +308,7 @@ class Corpus(object):
         self.n_docs += 1
         self.n_tokens += len(doc)
         if doc.is_sentenced:
-            self.n_sents += sum(1 for _ in doc.sents)
+            self.n_sents += itertoolz.count(doc.sents)
 
     # get documents
 
@@ -388,7 +388,7 @@ class Corpus(object):
         self.n_docs -= 1
         self.n_tokens -= len(doc)
         if doc.is_sentenced:
-            self.n_sents -= sum(1 for _ in doc.sents)
+            self.n_sents -= itertoolz.count(doc.sents)
         del self.docs[idx]
         del self._doc_ids[idx]
 

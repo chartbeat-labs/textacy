@@ -126,7 +126,7 @@ def get_n_sents(doc):
     Returns:
         int
     """
-    return sum(1 for _ in doc.sents)
+    return itertoolz.count(doc.sents)
 
 
 def get_meta(doc):
