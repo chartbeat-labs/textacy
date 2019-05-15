@@ -477,28 +477,27 @@ def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False)
         else spacy.attrs.LOWER if normalize == "lower"
         else spacy.attrs.ORTH
     )
-    word_to_weight = doc.count_by(count_by)
+
+    wid_weights = doc.count_by(count_by)
     if weighting == "freq":
         n_tokens = len(doc)
-        word_to_weight = {
-            id_: weight / n_tokens for id_, weight in word_to_weight.items()
-        }
+        wid_weights = {wid: weight / n_tokens for wid, weight in wid_weights.items()}
     elif weighting == "binary":
-        word_to_weight = {word: 1 for word in word_to_weight.keys()}
+        wid_weights = {wid: 1 for wid in wid_weights.keys()}
 
     bow = {}
+    vocab = doc.vocab
     if as_strings is False:
-        for id_, weight in word_to_weight.items():
-            lexeme = doc.vocab[id_]
-            if lexeme.is_stop or lexeme.is_punct or lexeme.is_space:
-                continue
-            bow[id_] = weight
+        for wid, weight in wid_weights.items():
+            lex = vocab[wid]
+            if not (lex.is_stop or lex.is_punct or lex.is_space):
+                bow[wid] = weight
     else:
-        for id_, weight in word_to_weight.items():
-            lexeme = doc.vocab[id_]
-            if lexeme.is_stop or lexeme.is_punct or lexeme.is_space:
-                continue
-            bow[doc.vocab.strings[id_]] = weight
+        ss = doc.vocab.strings
+        for wid, weight in wid_weights.items():
+            lex = vocab[wid]
+            if not (lex.is_stop or lex.is_punct or lex.is_space):
+                bow[ss[wid]] = weight
     return bow
 
 

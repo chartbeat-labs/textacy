@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+from __future__ import absolute_import, division, unicode_literals
 
 import pytest
 import spacy
@@ -182,6 +182,25 @@ class TestDocExtensions(object):
         bow = doc._.to_bag_of_words(as_strings=True)
         assert isinstance(bow, dict)
         assert isinstance(list(bow.keys())[0], compat.unicode_)
+
+    def test_to_bag_of_words_values(self):
+        text = "Burton Jacob DeWilde, Burton Jacob, Burton."
+        doc = make_spacy_doc(text, lang="en")
+        bow = doc._.to_bag_of_words(weighting="count", normalize="lower", as_strings=True)
+        assert len(bow) == 3
+        assert bow["burton"] == 3
+        assert bow["jacob"] == 2
+        assert bow["dewilde"] == 1
+        bow = doc._.to_bag_of_words(weighting="freq", normalize="lower", as_strings=True)
+        assert len(bow) == 3
+        assert bow["burton"] == 3 / len(doc)
+        assert bow["jacob"] == 2 / len(doc)
+        assert bow["dewilde"] == 1 / len(doc)
+        bow = doc._.to_bag_of_words(weighting="binary", normalize="lower", as_strings=True)
+        assert len(bow) == 3
+        assert bow["burton"] == 1
+        assert bow["jacob"] == 1
+        assert bow["dewilde"] == 1
 
     def test_to_bag_of_words_error(self, doc):
         with pytest.raises(ValueError):
