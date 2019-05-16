@@ -130,6 +130,7 @@ class TestDocExtensions(object):
             kwargs_sets = (
                 {"ngrams": (1, 2), "filter_nums": True},
                 {"ngrams": (1, 2), "entities": False},
+                {"ngrams": (1, 2), "entities": None},
                 {"normalize": "lower"},
                 {"normalize": None},
                 {"normalize": lambda term: term.text.upper()},
@@ -138,8 +139,14 @@ class TestDocExtensions(object):
                 terms_list = list(doc._.to_terms_list(as_strings=as_strings, **kwargs))
 
     def test_to_terms_list_error(self, doc):
-        with pytest.raises(ValueError):
-            _ = list(doc._.to_terms_list(ngrams=False, entities=False))
+        bad_inputs = (
+            {"ngrams": False, "entities": False},
+            {"entities": (1, 2, 3)},
+            {"normalize": True},
+        )
+        for bad_input in bad_inputs:
+            with pytest.raises(ValueError):
+                _ = list(doc._.to_terms_list(**bad_input))
 
     def test_to_bag_of_terms(self, doc):
         bot = doc._.to_bag_of_terms(weighting="count")

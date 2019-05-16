@@ -19,12 +19,15 @@ on instantiated docs prepended by an underscore:
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import types
+
 import spacy
 from cytoolz import itertoolz
 
 from .. import constants
 from .. import extract
 from .. import network
+from .. import utils
 
 __all__ = [
     "set_doc_extensions",
@@ -206,24 +209,33 @@ def to_terms_list(
     **kwargs
 ):
     """
-    Transform :class:`Doc` into a sequence of ngrams and/or named entities, which
-    aren't necessarily in order of appearance, where each term appears in
-    the list with the same frequency that it appears in :class:`Doc`.
+    Transform ``doc`` into a sequence of ngrams and/or entities — not necessarily
+    in order of appearance — where each appears in the sequence as many times as
+    it appears in ``doc``.
 
     Args:
-        ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3)``
-            (default) includes unigrams (words), bigrams, and trigrams; `2`
-            if only bigrams are wanted; falsy (e.g. False) to not include any
-        entities (bool): if True (default), include named entities
-            in the terms list; note: if ngrams are also included, named
-            entities are added *first*, and any ngrams that exactly overlap
-            with an entity are skipped to prevent double-counting
-        normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
-            lowercase terms; if false-y, use the form of terms as they appear
-            in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
-            and return a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`
-        as_strings (bool): if True, terms are returned as strings; if False
-            (default), terms are returned as their unique integer ids
+        doc (:class:`spacy.tokens.Doc`)
+        ngrams (int or Set[int] or None): ngrams to include in the terms list.
+            If ``{1, 2, 3}``, unigrams, bigrams, and trigrams are included;
+            if ``2``, only bigrams are included; if None, ngrams aren't included,
+            except for those belonging to named entities.
+        entities (bool or None): If True, entities are included in the terms list;
+            if False, they are *excluded* from the list; if None, entities
+            aren't included or excluded at all.
+
+            .. note:: When both ``entities`` and ``ngrams`` are non-null,
+               exact duplicates (based on start and end indexes) are handled.
+               If ``entities`` is True, any duplicate entities are included
+               while duplicate ngrams are discarded to avoid double-counting;
+               if ``entities`` is False, no entities are included of course,
+               and duplicate ngrams are discarded as well.
+
+        normalize (str or callable): If "lemma", lemmatize terms; if "lower",
+            lowercase terms; if falsy, use the form of terms as they appear in doc;
+            if callable, must accept a ``Token`` or ``Span`` and return a str,
+            e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
+        as_strings (bool): If True, terms are returned as strings;
+            if False, terms are returned as their unique integer ids.
         kwargs:
             - filter_stops (bool)
             - filter_punct (bool)
@@ -235,125 +247,110 @@ def to_terms_list(
             - exclude_types (str or Set[str]
             - drop_determiners (bool)
 
-            see :func:`extract.words <textacy.extract.words>`,
-            :func:`extract.ngrams <textacy.extract.ngrams>`,
-            and :func:`extract.entities <textacy.extract.entities>`
-            for more information on these parameters
+            See :func:`extract.words()`, :func:`extract.ngrams()`, and
+            :func:`extract.entities()` for details.
 
     Yields:
         int or str: the next term in the terms list, either as a unique
         integer id or as a string
 
     Raises:
-        ValueError: if neither ``entities`` nor ``ngrams`` are included
+        ValueError: if neither ``entities`` nor ``ngrams`` are included,
+        or if ``entities`` or ``normalize`` have invalid values
 
     Note:
         Despite the name, this is a generator function; to get an
         actual list of terms, call ``list(doc.to_terms_list())``.
     """
     if not (entities or ngrams):
-        raise ValueError("either `entities` or `ngrams` must be included")
-    if ngrams and isinstance(ngrams, int):
-        ngrams = (ngrams,)
-    if entities is True:
-        ne_kwargs = {
-            "include_types": kwargs.get("include_types"),
-            "exclude_types": kwargs.get("exclude_types"),
-            "drop_determiners": kwargs.get("drop_determiners", True),
-            "min_freq": kwargs.get("min_freq", 1),
-        }
-        # if numeric ngrams are to be filtered, we should filter numeric entities
-        if ngrams and kwargs.get("filter_nums") is True:
-            if ne_kwargs["exclude_types"]:
-                if isinstance(
-                    ne_kwargs["exclude_types"], (set, frozenset, list, tuple)
-                ):
-                    ne_kwargs["exclude_types"] = set(ne_kwargs["exclude_types"])
-                    ne_kwargs["exclude_types"].add(constants.NUMERIC_ENT_TYPES)
-            else:
-                ne_kwargs["exclude_types"] = constants.NUMERIC_ENT_TYPES
-    if ngrams:
-        ngram_kwargs = {
-            "filter_stops": kwargs.get("filter_stops", True),
-            "filter_punct": kwargs.get("filter_punct", True),
-            "filter_nums": kwargs.get("filter_nums", False),
-            "include_pos": kwargs.get("include_pos"),
-            "exclude_pos": kwargs.get("exclude_pos"),
-            "min_freq": kwargs.get("min_freq", 1),
-        }
-        # if numeric entities are to be filtered, we should filter numeric ngrams
-        if (
-            entities
-            and ne_kwargs["exclude_types"]
-            and any(
-                ent_type in ne_kwargs["exclude_types"]
-                for ent_type in constants.NUMERIC_ENT_TYPES
+        raise ValueError("`entities` and/or `ngrams` must be included")
+    if not (entities is None or isinstance(entities, bool)):
+        raise ValueError(
+            "entities={} is invalid; choices are {}".format(
+                entities,
+                {True, False, None},
             )
-        ):
-            ngram_kwargs["filter_nums"] = True
-
-    terms = []
-    # special case: ensure that named entities aren't double-counted when
-    # adding words or ngrams that were already added as named entities
-    if entities is True and ngrams:
-        ents = tuple(extract.entities(doc, **ne_kwargs))
-        ent_idxs = {(ent.start, ent.end) for ent in ents}
-        terms.append(ents)
-        for n in ngrams:
+        )
+    if not (normalize in ("lemma", "lower") or callable(normalize) or not normalize):
+        raise ValueError(
+            "normalize={} is invalid; choices are {}".format(
+                normalize,
+                {"lemma", "lower", types.FunctionType, None},
+            )
+        )
+    if ngrams:
+        unigrams_ = []
+        ngrams_ = []
+        ng_kwargs = {
+            "filter_stops", "filter_punct", "filter_nums",
+            "include_pos", "exclude_pos",
+            "min_freq",
+        }
+        ng_kwargs = {key: val for key, val in kwargs.items() if key in ng_kwargs}
+        for n in sorted(utils.to_collection(ngrams, int, set)):
+            # use a faster function for unigrams
             if n == 1:
-                terms.append(
-                    (
-                        word
-                        for word in extract.words(doc, **ngram_kwargs)
-                        if (word.i, word.i + 1) not in ent_idxs
-                    )
-                )
+                unigrams_ = extract.words(doc, **ng_kwargs)
             else:
-                terms.append(
-                    (
-                        ngram
-                        for ngram in extract.ngrams(doc, n, **ngram_kwargs)
-                        if (ngram.start, ngram.end) not in ent_idxs
-                    )
-                )
-    # otherwise, no need to check for overlaps
-    else:
-        if entities is True:
-            terms.append(extract.entities(doc, **ne_kwargs))
+                ngrams_.append(extract.ngrams(doc, n, **ng_kwargs))
+        ngrams_ = itertoolz.concat(ngrams_)
+    if entities is not None:
+        ent_kwargs = {"include_types", "exclude_types", "drop_determiners", "min_freq"}
+        ent_kwargs = {key: val for key, val in kwargs.items() if key in ent_kwargs}
+        entities_ = extract.entities(doc, **ent_kwargs)
+    if ngrams:
+        # use ngrams as-is
+        if entities is None:
+            terms = ngrams_
+        # remove unigrams + ngrams that are duplicates of entities
         else:
-            for n in ngrams:
-                if n == 1:
-                    terms.append(extract.words(doc, **ngram_kwargs))
-                else:
-                    terms.append(extract.ngrams(doc, n, **ngram_kwargs))
+            entities_ = tuple(entities_)
+            ent_idxs = {(ent.start, ent.end) for ent in entities_}
+            unigrams_ = (
+                ug
+                for ug in unigrams_
+                if (ug.i, ug.i + 1) not in ent_idxs
+            )
+            ngrams_ = (
+                ng
+                for ng in ngrams_
+                if (ng.start, ng.end) not in ent_idxs
+            )
+            # add unigrams and ngrams, only
+            if entities is False:
+                terms = itertoolz.concatv(unigrams_, ngrams_)
+            # add unigrams, ngrams, and entities
+            else:
+                terms = itertoolz.concatv(unigrams_, ngrams_, entities_)
+    # use entities as-is
+    else:
+        terms = entities_
 
-    terms = itertoolz.concat(terms)
-
-    # convert token and span objects into integer ids
+    # convert spans into integer ids
     if as_strings is False:
+        ss = doc.vocab.strings
         if normalize == "lemma":
             for term in terms:
                 try:
                     yield term.lemma
                 except AttributeError:
-                    yield doc.vocab.strings.add(term.lemma_)
+                    yield ss.add(term.lemma_)
         elif normalize == "lower":
             for term in terms:
                 try:
                     yield term.lower
                 except AttributeError:
-                    yield doc.vocab.strings.add(term.lower_)
-        elif not normalize:
+                    yield ss.add(term.lower_)
+        elif callable(normalize):
             for term in terms:
-                try:
-                    yield term.orth
-                except AttributeError:
-                    yield doc.vocab.strings.add(term.text)
+                yield ss.add(normalize(term))
         else:
             for term in terms:
-                yield doc.vocab.strings.add(normalize(term))
-
-    # convert token and span objects into strings
+                try:
+                    yield term.text
+                except AttributeError:
+                    yield ss.add(term.text)
+    # convert spans into strings
     else:
         if normalize == "lemma":
             for term in terms:
@@ -361,12 +358,12 @@ def to_terms_list(
         elif normalize == "lower":
             for term in terms:
                 yield term.lower_
-        elif not normalize:
-            for term in terms:
-                yield term.text
-        else:
+        elif callable(normalize):
             for term in terms:
                 yield normalize(term)
+        else:
+            for term in terms:
+                yield term.text
 
 
 def to_bag_of_terms(
