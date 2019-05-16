@@ -301,7 +301,7 @@ def to_terms_list(
     if ngrams:
         # use ngrams as-is
         if entities is None:
-            terms = ngrams_
+            terms = itertoolz.concatv(unigrams_, ngrams_)
         # remove unigrams + ngrams that are duplicates of entities
         else:
             entities_ = tuple(entities_)
