@@ -24,7 +24,7 @@ def term_lists():
     ]
     corpus = Corpus("en", data=texts)
     term_lists_ = [
-        doc._.to_terms_list(ngrams=1, entities=False, as_strings=True)
+        doc._.to_terms_list(ngrams=1, entities=None, as_strings=True)
         for doc in corpus
     ]
     return term_lists_
