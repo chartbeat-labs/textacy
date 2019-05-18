@@ -36,6 +36,8 @@ CURRENCIES = {
     "€": "EUR", "₱": "PHP", "₲": "PYG", "₴": "UAH", "₹": "INR",
 }
 
+MATCHER_VALID_OPS = {"!", "+", "?", "*"}
+
 POS_REGEX_PATTERNS = {
     "en": {
         "NP": r"<DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN>|<PROPN> <PART>?)+",
@@ -43,6 +45,9 @@ POS_REGEX_PATTERNS = {
         "VP": r"<AUX>* <ADV>* <VERB>",
     }
 }
+
+RE_MATCHER_INT_ATTR_VAL = re.compile(r"^int\((\d+)\)$", flags=re.UNICODE)
+RE_MATCHER_BOOL_ATTR_VAL = re.compile(r"^bool\((.*?)\)$", flags=re.UNICODE)
 
 RE_ACRONYM = re.compile(
     r"(?:^|(?<=\W))"

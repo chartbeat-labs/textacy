@@ -12,6 +12,7 @@ import operator
 import re
 
 import numpy as np
+import spacy
 from cytoolz import itertoolz
 from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
 from spacy.tokens import Span
@@ -350,6 +351,120 @@ def pos_regex_matches(doc, pattern):
 
     for m in re.finditer(pattern, tags):
         yield doc[tags[0 : m.start()].count(" ") : tags[0 : m.end()].count(" ")]
+
+
+def matches(doc, patterns, on_match=None):
+    """
+    Extract ``Span`` s from a ``Doc`` matching one or more patterns
+    of per-token attr:value pairs, with optional quantity qualifiers.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
+        patterns (str or List[str] or List[dict] or List[List[dict]]):
+            One or multiple patterns to match against ``doc``
+            using a :class:`spacy.matcher.Matcher`.
+
+            If List[dict] or List[List[dict]], each pattern is specified
+            as attr: value pairs per token, with optional quantity qualifiers:
+
+            * ``[{"POS": "NOUN"}]`` matches singular or plural nouns,
+              like "friend" or "enemies"
+            * ``[{"POS": "PREP"}, {"POS": "DET", "OP": "?"}, {"POS": "ADJ", "OP": "?"}, {"POS": "NOUN", "OP": "+"}]``
+              matches prepositional phrases, like "in the future" or "from the distant past"
+            * ``[{"IS_DIGIT": True}, {"TAG": "NNS"}]`` matches numbered plural nouns,
+              like "60 seconds" or "2 beers"
+
+            If str or List[str], each pattern is specified as one or more
+            per-token patterns separated by whitespace where attribute, value,
+            and optional quantity qualifiers are delimited by colons. Note that
+            boolean and integer values have special syntax: "bool(val)", "int(val)".
+
+            * ``"POS:NOUN"`` matches singular or plural nouns
+            * ``"POS:PREP POS:DET:? POS:ADJ:? POS:NOUN:+"`` matches prepositional phrases
+            * ``"IS_DIGIT:bool(True) TAG:NNS"`` matches numbered plural nouns
+
+        on_match (callable): Callback function to act on matches.
+            Takes the arguments ``matcher``, ``doc``, ``i`` and ``matches``.
+
+    Yields:
+        :class:`spacy.tokens.Span`: Next matching ``Span`` in ``doc``,
+        in order of appearance
+
+    Raises:
+        TypeError
+        ValueError
+
+    See Also:
+        https://spacy.io/usage/rule-based-matching
+        https://spacy.io/api/matcher
+    """
+    if isinstance(patterns, str):
+        patterns = [_make_pattern_from_string(patterns)]
+    elif isinstance(patterns, (list, tuple)):
+        if all(isinstance(item, str) for item in patterns):
+            patterns = [_make_pattern_from_string(pattern) for pattern in patterns]
+        elif all(isinstance(item, dict) for item in patterns):
+            patterns = [patterns]
+        elif all(isinstance(item, (list, tuple)) for item in patterns):
+            pass  # already in the right format!
+        else:
+            raise TypeError(
+                "patterns={} is invalid; values must be one of {}".format(
+                    patterns, {"str", "List[str]", "List[dict]", "List[list[dict]]"})
+            )
+    else:
+        raise TypeError(
+            "patterns={} is invalid; values must be one of {}".format(
+                patterns, {"str", "List[str]", "List[dict]", "List[list[dict]]"})
+        )
+    matcher = spacy.matcher.Matcher(doc.vocab)
+    matcher.add("match", on_match, *patterns)
+    for _, start, end in matcher(doc):
+        yield doc[start:end]
+
+
+def _make_pattern_from_string(patstr):
+    """
+    Args:
+        patstr (str)
+
+    Returns:
+        List[dict]
+    """
+    pattern = []
+    for tokpatstr in re.split(r"\s+", patstr):
+        parts = tokpatstr.split(":")
+        if 2 <= len(parts) <= 3:
+            attr = parts[0]
+            attr_val = parts[1]
+            # handle special bool and int attribute values
+            if "(" in attr_val and ")" in attr_val:
+                bool_match = constants.RE_MATCHER_BOOL_ATTR_VAL.match(attr_val)
+                if bool_match:
+                    attr_val = bool(bool_match.group(1))
+                else:
+                    int_match = constants.RE_MATCHER_INT_ATTR_VAL.match(attr_val)
+                    if int_match:
+                        attr_val = int(int_match.group(1))
+            if len(parts) == 2:
+                pattern.append({attr: attr_val})
+            else:
+                op_val = parts[2]
+                if op_val in constants.MATCHER_VALID_OPS:
+                    pattern.append({attr: attr_val, "OP": op_val})
+                else:
+                    raise ValueError(
+                        "op={} invalid; valid choices are {}".format(
+                            op_val, constants.MATCHER_VALID_OPS)
+                    )
+        else:
+            raise ValueError(
+                "pattern string '{}' is invalid; "
+                "each element in a pattern string must contain an attribute, "
+                "a corresponding value, and an optional quantity qualifier, "
+                "delimited by colons, like attr:value:op".format(patstr)
+            )
+    return pattern
 
 
 def subject_verb_object_triples(doc):
