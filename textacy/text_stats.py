@@ -9,6 +9,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import logging
 from math import sqrt
 
+from cytoolz import itertoolz
+
 from . import cache
 from . import extract
 from . import utils
@@ -87,7 +89,7 @@ class TextStats(object):
 
     def __init__(self, doc):
         self.lang = doc.vocab.lang
-        self.n_sents = sum(1 for _ in doc.sents)
+        self.n_sents = itertoolz.count(doc.sents)
         # get objs for basic count computations
         hyphenator = cache.load_hyphenator(lang=self.lang)
         words = tuple(
