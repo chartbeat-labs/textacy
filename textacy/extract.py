@@ -12,9 +12,9 @@ import operator
 import re
 
 import numpy as np
-import spacy
 from cytoolz import itertoolz
 from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
+from spacy.matcher import Matcher
 from spacy.tokens import Span
 
 from . import compat
@@ -398,10 +398,10 @@ def matches(doc, patterns, on_match=None):
         https://spacy.io/usage/rule-based-matching
         https://spacy.io/api/matcher
     """
-    if isinstance(patterns, str):
+    if isinstance(patterns, compat.unicode_):
         patterns = [_make_pattern_from_string(patterns)]
     elif isinstance(patterns, (list, tuple)):
-        if all(isinstance(item, str) for item in patterns):
+        if all(isinstance(item, compat.unicode_) for item in patterns):
             patterns = [_make_pattern_from_string(pattern) for pattern in patterns]
         elif all(isinstance(item, dict) for item in patterns):
             patterns = [patterns]
@@ -417,7 +417,7 @@ def matches(doc, patterns, on_match=None):
             "patterns={} is invalid; values must be one of {}".format(
                 patterns, {"str", "List[str]", "List[dict]", "List[list[dict]]"})
         )
-    matcher = spacy.matcher.Matcher(doc.vocab)
+    matcher = Matcher(doc.vocab)
     matcher.add("match", on_match, *patterns)
     for _, start, end in matcher(doc):
         yield doc[start:end]
