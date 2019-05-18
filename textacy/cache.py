@@ -74,13 +74,15 @@ def clear():
 @cached(LRU_CACHE, key=functools.partial(hashkey, "spacy_lang"))
 def load_spacy_lang(name, disable=None):
     """
-    Load a spaCy language processing pipeline (model weights as binary data,
-    sequence of component functions, and language-specific data) for tokenizing
-    and annotating text. An LRU cache saves language pipelines in memory.
+    Load a spaCy ``Language``: a shared vocabulary and language-specific data
+    for tokenizing text, and (if available) model data and a processing pipeline
+    containing a sequence of components for annotating a document.
+    An LRU cache saves languages in memory.
 
     Args:
-        name (str or :class:`pathlib.Path`): spaCy language pipeline to load,
-            i.e. a shortcut link, full package name, or path to model directory.
+        name (str or :class:`pathlib.Path`): spaCy language to load.
+            Could be a shortcut link, full package name, or path to model directory,
+            or a 2-letter ISO language code for which spaCy has language data.
         disable (Tuple[str]): Names of pipeline components to disable, if any.
 
             .. note:: Although spaCy's API specifies this argument as a list,
@@ -89,15 +91,30 @@ def load_spacy_lang(name, disable=None):
                name and args --- and lists aren't hashable.
 
     Returns:
-        ``spacy.<lang>.<Language>``: A loaded ``Language`` pipeline.
+        :class:`spacy.<lang>.<Language>`: A loaded spaCy ``Language``.
+
+    Raises:
+        OSError
+        ImportError
 
     See Also:
-        https://spacy.io/api/top-level#spacy.load
+        * https://spacy.io/api/top-level#spacy.load
+        * https://spacy.io/api/top-level#spacy.blank
     """
     if disable is None:
         disable = []
-    LOGGER.debug('Loading "%s" spaCy pipeline', name)
-    return spacy.load(name, disable=disable)
+    # load a full spacy lang processing pipeline
+    try:
+        spacy_lang = spacy.load(name, disable=disable)
+        LOGGER.info("loaded '%s' spaCy language pipeline", name)
+        return spacy_lang
+    except (OSError, IOError) as e:
+        # fall back to a blank spacy lang
+        if isinstance(name, compat.unicode_) and len(name) == 2:
+            spacy_lang = spacy.blank(name)
+            LOGGER.warning("loaded '%s' spaCy language blank", name)
+            return spacy_lang
+        raise e
 
 
 @cached(LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))

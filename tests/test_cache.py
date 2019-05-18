@@ -11,17 +11,28 @@ def test_cache_clear():
     assert len(cache.LRU_CACHE.keys()) == 0
 
 
-def test_load_spacy_lang():
-    for lang in ["en", "en_core_web_sm"]:
-        for disable in [None, ("tagger", "parser", "ner")]:
-            assert isinstance(
-                cache.load_spacy_lang(lang, disable=disable), spacy.language.Language
-            )
+class TestLoadSpacyLang(object):
 
+    def test_load_model(self):
+        for lang in ["en", "en_core_web_sm"]:
+            for disable in [None, ("tagger", "parser", "ner")]:
+                assert isinstance(
+                    cache.load_spacy_lang(lang, disable=disable), spacy.language.Language
+                )
 
-def test_load_spacy_lang_hashability():
-    with pytest.raises(TypeError):
-        _ = cache.load_spacy_lang("en", disable=["tagger", "parser", "ner"])
+    def test_load_blank(self):
+        assert isinstance(
+            cache.load_spacy_lang("ar"), spacy.language.Language)
+
+    def test_disable_hashability(self):
+        with pytest.raises(TypeError):
+            _ = cache.load_spacy_lang("en", disable=["tagger", "parser", "ner"])
+
+    def test_bad_name(self):
+        with pytest.raises((OSError, IOError)):
+            _ = cache.load_spacy_lang("unk")
+        with pytest.raises(ImportError):
+            _ = cache.load_spacy_lang("un")
 
 
 def test_load_pyphen():
