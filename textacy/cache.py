@@ -72,7 +72,7 @@ def clear():
 
 
 @cached(LRU_CACHE, key=functools.partial(hashkey, "spacy_lang"))
-def load_spacy_lang(name, disable=None):
+def load_spacy_lang(name, disable=None, allow_blank=False):
     """
     Load a spaCy ``Language``: a shared vocabulary and language-specific data
     for tokenizing text, and (if available) model data and a processing pipeline
@@ -90,11 +90,16 @@ def load_spacy_lang(name, disable=None):
                with unique identifiers generated from the hash of the function
                name and args --- and lists aren't hashable.
 
+        allow_blank (bool): If True, allow loading of blank spaCy ``Language`` s;
+            if False, raise an OSError/IOError if a full processing pipeline
+            isn't available. Note that spaCy ``Doc`` s produced by blank languages
+            are missing key functionality, e.g. POS tags, entities, sentences.
+
     Returns:
-        :class:`spacy.<lang>.<Language>`: A loaded spaCy ``Language``.
+        :class:`spacy.language.Language`: A loaded spaCy ``Language``.
 
     Raises:
-        OSError
+        OSError/IOError
         ImportError
 
     See Also:
@@ -110,7 +115,7 @@ def load_spacy_lang(name, disable=None):
         return spacy_lang
     except (OSError, IOError) as e:
         # fall back to a blank spacy lang
-        if isinstance(name, compat.unicode_) and len(name) == 2:
+        if allow_blank is True and isinstance(name, compat.unicode_) and len(name) == 2:
             spacy_lang = spacy.blank(name)
             LOGGER.warning("loaded '%s' spaCy language blank", name)
             return spacy_lang

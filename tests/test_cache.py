@@ -17,22 +17,26 @@ class TestLoadSpacyLang(object):
         for lang in ["en", "en_core_web_sm"]:
             for disable in [None, ("tagger", "parser", "ner")]:
                 assert isinstance(
-                    cache.load_spacy_lang(lang, disable=disable), spacy.language.Language
+                    cache.load_spacy_lang(lang, disable=disable),
+                    spacy.language.Language
                 )
 
     def test_load_blank(self):
         assert isinstance(
-            cache.load_spacy_lang("ar"), spacy.language.Language)
+            cache.load_spacy_lang("ar", allow_blank=True),
+            spacy.language.Language
+        )
 
     def test_disable_hashability(self):
         with pytest.raises(TypeError):
             _ = cache.load_spacy_lang("en", disable=["tagger", "parser", "ner"])
 
     def test_bad_name(self):
-        with pytest.raises((OSError, IOError)):
-            _ = cache.load_spacy_lang("unk")
+        for name in ("unk", "un"):
+            with pytest.raises((OSError, IOError)):
+                _ = cache.load_spacy_lang(name)
         with pytest.raises(ImportError):
-            _ = cache.load_spacy_lang("un")
+            _ = cache.load_spacy_lang("un", allow_blank=True)
 
 
 def test_load_pyphen():
