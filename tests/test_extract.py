@@ -259,6 +259,11 @@ class TestMatches(object):
                 "LENGTH:int(5) DEP:nsubj:!",
                 [{"LENGTH": 5}, {"DEP": "nsubj", "OP": "!"}],
             ),
+            ("POS:DET :", [{"POS": "DET"}, {}]),
+            (
+                "IS_PUNCT:bool(False) : IS_PUNCT:bool(True)",
+                [{"IS_PUNCT": False}, {}, {"IS_PUNCT": True}],
+            ),
         ]
         for patstr, pat in patstr_to_pats:
             assert extract._make_pattern_from_string(patstr) == pat

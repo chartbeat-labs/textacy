@@ -373,17 +373,22 @@ def matches(doc, patterns, on_match=None):
               matches prepositional phrases, like "in the future" or "from the distant past"
             * ``[{"IS_DIGIT": True}, {"TAG": "NNS"}]`` matches numbered plural nouns,
               like "60 seconds" or "2 beers"
+            * ``[{"POS": "PROPN", "OP": "+"}, {}]`` matches proper nouns and
+              whatever word follows them, like "Burton DeWilde werk"
 
             If str or List[str], each pattern is specified as one or more
             per-token patterns separated by whitespace where attribute, value,
             and optional quantity qualifiers are delimited by colons. Note that
-            boolean and integer values have special syntax: "bool(val)", "int(val)".
+            boolean and integer values have special syntax --- "bool(val)" and
+            "int(val)", respectively --- and that wildcard tokens still need
+            a colon between the (empty) attribute and value strings.
 
             * ``"POS:NOUN"`` matches singular or plural nouns
             * ``"POS:PREP POS:DET:? POS:ADJ:? POS:NOUN:+"`` matches prepositional phrases
             * ``"IS_DIGIT:bool(True) TAG:NNS"`` matches numbered plural nouns
+            * ``"POS:PROPN:+ :" matches proper nouns and whatever word follows them
 
-            Also note that these pattern strings don't support spaCy's new
+            Also note that these pattern strings don't support spaCy v2.1's
             "extended" pattern syntax; if you need such complex patterns, it's
             probably better to use a List[dict] or List[List[dict]], anyway.
 
@@ -441,22 +446,28 @@ def _make_pattern_from_string(patstr):
         if 2 <= len(parts) <= 3:
             attr = parts[0]
             attr_val = parts[1]
-            # handle special bool and int attribute values
-            spcial_val = constants.RE_MATCHER_SPECIAL_VAL.match(attr_val)
-            if spcial_val:
-                attr_val = eval(spcial_val.group(0))
+            if attr and attr_val:
+                # handle special bool and int attribute values
+                special_val = constants.RE_MATCHER_SPECIAL_VAL.match(attr_val)
+                if special_val:
+                    attr_val = eval(special_val.group(0))
+                tokpat = {attr: attr_val}
+            # handle wildcard tokens
+            else:
+                tokpat = {}
             # handle quantifier ops
             try:
                 op_val = parts[2]
                 if op_val in constants.MATCHER_VALID_OPS:
-                    pattern.append({attr: attr_val, "OP": op_val})
+                    tokpat["OP"] = op_val
                 else:
                     raise ValueError(
                         "op={} invalid; valid choices are {}".format(
                             op_val, constants.MATCHER_VALID_OPS)
                     )
             except IndexError:
-                pattern.append({attr: attr_val})
+                pass
+            pattern.append(tokpat)
         else:
             raise ValueError(
                 "pattern string '{}' is invalid; "
