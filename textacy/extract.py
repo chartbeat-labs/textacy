@@ -20,6 +20,7 @@ from spacy.tokens import Span
 from . import compat
 from . import constants
 from . import text_utils
+from . import utils
 from .spacier import utils as spacy_utils
 
 
@@ -322,6 +323,8 @@ def pos_regex_matches(doc, pattern):
     Extract sequences of consecutive tokens from a spacy-parsed doc whose
     part-of-speech tags match the specified regex pattern.
 
+    *DEPRECATED*
+
     Args:
         doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
         pattern (str): Pattern of consecutive POS tags whose corresponding words
@@ -341,7 +344,16 @@ def pos_regex_matches(doc, pattern):
     Yields:
         :class:`spacy.tokens.Span`: the next span of consecutive tokens from ``doc`` whose
         parts-of-speech match ``pattern``, in order of apperance
+
+    See Also:
+        :func:`textacy.extract.matches()`
     """
+    utils.deprecated(
+        "`pos_regex_matches()` has been deprecated! "
+        "for similar but more powerful and performant functionality, "
+        "use `textacy.extract.matches()` instead.",
+        action="once",
+    )
     # standardize and transform the regular expression pattern...
     pattern = re.sub(r"\s", "", pattern)
     pattern = re.sub(r"<([A-Z]+)\|([A-Z]+)>", r"( (\1|\2))", pattern)
