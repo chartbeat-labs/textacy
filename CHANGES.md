@@ -4,7 +4,7 @@
 
 #### New and Changed:
 
-- **Removed `textacy.Doc`, and split its functionality into two parts**
+- **Removed textacy.Doc, and split its functionality into two parts**
   - **New:** Added `textacy.make_spacy_doc()` as a convenient and flexible entry point
     for making spaCy `Doc` s from text or (text, metadata) pairs, with optional
     spaCy language pipeline specification. It's similar to `textacy.Doc.__init__`,
@@ -16,14 +16,14 @@
     `textacy.Doc.to_bag_of_words()` => `spacy.tokens.Doc._.to_bag_of_words()`.
   - **New:** Added functions for setting, getting, and removing these extensions.
     Note that they are set automatically when textacy is imported.
-- **Simplified and improved performance of `textacy.Corpus`**
+- **Simplified and improved performance of textacy.Corpus**
   - Documents are now added through a simpler API, either in `Corpus.__init__`
     or `Corpus.add()`; they may be one or a stream of texts, (text, metadata)
     pairs, or existing spaCy `Doc` s. When adding many documents, the spaCy
     language processing pipeline is used in a faster and more efficient way.
   - Saving / loading corpus data to disk is now more efficient and robust.
   - Note: `Corpus` is now a collection of spaCy `Doc` s rather than `textacy.Doc` s.
-- **Simplified, standardized, and added `Dataset` functionality**
+- **Simplified, standardized, and added Dataset functionality**
   - **New:** Added an `IMDB` dataset, built on the classic 2011 dataset
     commonly used to train sentiment analysis models.
   - **New:** Added a base `Wikimedia` dataset, from which a reworked
@@ -183,7 +183,7 @@ Many thanks to @abevieiramota, @ckot, @Jude188, and @digest0r for their help!
 
 #### New:
 
-- **Add a new `spacier` sub-package for spaCy-oriented functionality** (#168, #187)
+- **Add a new spacier sub-package for spaCy-oriented functionality** (#168, #187)
   - Thus far, this includes a `components` module with two custom spaCy
     pipeline components: one to compute text stats on parsed documents, and
     another to merge named entities into single tokens in an efficient manner.
@@ -255,12 +255,12 @@ unsupported use cases of this package.
     values in a doc-term matrix are being calculated. Here's a simple and a
     not-so-simple case:
 
-    ``python
+    ```python
     >>> Vectorizer(apply_idf=True, idf_type='smooth').weighting
     'tf * log((n_docs + 1) / (df + 1)) + 1'
     >>> Vectorizer(tf_type='bm25', apply_idf=True, idf_type='smooth', apply_dl=True).weighting
     '(tf * (k + 1)) / (tf + k * (1 - b + b * (length / avg(lengths))) * log((n_docs - df + 0.5) / (df + 0.5))'
-    ``
+    ```
 
   - Terms are now sorted alphabetically after fitting, so you'll have a consistent
     and interpretable ordering in your vocabulary and doc-term-matrix.
