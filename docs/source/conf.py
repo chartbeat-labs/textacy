@@ -19,10 +19,11 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.githubpages",
+    "m2r",
 ]
 
 # The suffix(es) of source filenames.
-source_suffix = ".rst"  # [".rst", ".md"]
+source_suffix = [".rst", ".md"]
 
 # The master toctree document.
 master_doc = "index"

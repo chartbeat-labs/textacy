@@ -6,14 +6,10 @@ fundamentals --- tokenization, part-of-speech tagging, dependency parsing, etc. 
 delegated to another library, `textacy` focuses on the tasks that come before
 and follow after.
 
-[![build status](https://img.shields.io/travis/chartbeat-labs/textacy/master.svg?style=flat-square)](
-    https://travis-ci.org/chartbeat-labs/textacy)
-[![current release version](https://img.shields.io/github/release/chartbeat-labs/textacy.svg?style=flat-square)](
-    https://github.com/chartbeat-labs/textacy/releases)
-[![pypi version](https://img.shields.io/pypi/v/textacy.svg?style=flat-square)](
-    https://pypi.python.org/pypi/textacy)
-[![conda version](https://anaconda.org/conda-forge/textacy/badges/version.svg)](
-    https://anaconda.org/conda-forge/textacy)
+[![build status](https://img.shields.io/travis/chartbeat-labs/textacy/master.svg?style=flat-square)](https://travis-ci.org/chartbeat-labs/textacy)
+[![current release version](https://img.shields.io/github/release/chartbeat-labs/textacy.svg?style=flat-square)](https://github.com/chartbeat-labs/textacy/releases)
+[![pypi version](https://img.shields.io/pypi/v/textacy.svg?style=flat-square)](https://pypi.python.org/pypi/textacy)
+[![conda version](https://anaconda.org/conda-forge/textacy/badges/version.svg)](https://anaconda.org/conda-forge/textacy)
 
 ### Features
 
