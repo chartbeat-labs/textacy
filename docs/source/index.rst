@@ -7,5 +7,5 @@
    getting_started/installation
    getting_started/quickstart
    api_reference
-   changelog
+   changes
    license
