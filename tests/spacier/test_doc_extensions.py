@@ -213,15 +213,6 @@ class TestDocExtensions(object):
         with pytest.raises(ValueError):
             _ = doc._.to_bag_of_words(weighting="foo")
 
-    # def test_doc_save_and_load(self, tmpdir, doc):
-    #     filepath = str(tmpdir.join("test_doc_save_and_load.pkl"))
-    #     doc.save(filepath)
-    #     new_doc = Doc.load(filepath)
-    #     assert isinstance(new_doc, Doc)
-    #     assert len(new_doc) == len(doc)
-    #     assert new_doc.lang == doc.lang
-    #     assert new_doc.metadata == doc.metadata
-
     def test_to_semantic_network_words(self, doc):
         graph = doc._.to_semantic_network(nodes="words", edge_weighting="cooc_freq")
         assert all(isinstance(node, compat.unicode_) for node in graph.nodes)
