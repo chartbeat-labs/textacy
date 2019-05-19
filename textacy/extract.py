@@ -383,6 +383,10 @@ def matches(doc, patterns, on_match=None):
             * ``"POS:PREP POS:DET:? POS:ADJ:? POS:NOUN:+"`` matches prepositional phrases
             * ``"IS_DIGIT:bool(True) TAG:NNS"`` matches numbered plural nouns
 
+            Also note that these pattern strings don't support spaCy's new
+            "extended" pattern syntax; if you need such complex patterns, it's
+            probably better to use a List[dict] or List[List[dict]], anyway.
+
         on_match (callable): Callback function to act on matches.
             Takes the arguments ``matcher``, ``doc``, ``i`` and ``matches``.
 
@@ -432,23 +436,17 @@ def _make_pattern_from_string(patstr):
         List[dict]
     """
     pattern = []
-    for tokpatstr in re.split(r"\s+", patstr):
+    for tokpatstr in constants.RE_MATCHER_TOKPAT_DELIM.split(patstr):
         parts = tokpatstr.split(":")
         if 2 <= len(parts) <= 3:
             attr = parts[0]
             attr_val = parts[1]
             # handle special bool and int attribute values
-            if "(" in attr_val and ")" in attr_val:
-                bool_match = constants.RE_MATCHER_BOOL_ATTR_VAL.match(attr_val)
-                if bool_match:
-                    attr_val = bool(bool_match.group(1))
-                else:
-                    int_match = constants.RE_MATCHER_INT_ATTR_VAL.match(attr_val)
-                    if int_match:
-                        attr_val = int(int_match.group(1))
-            if len(parts) == 2:
-                pattern.append({attr: attr_val})
-            else:
+            spcial_val = constants.RE_MATCHER_SPECIAL_VAL.match(attr_val)
+            if spcial_val:
+                attr_val = eval(spcial_val.group(0))
+            # handle quantifier ops
+            try:
                 op_val = parts[2]
                 if op_val in constants.MATCHER_VALID_OPS:
                     pattern.append({attr: attr_val, "OP": op_val})
@@ -457,6 +455,8 @@ def _make_pattern_from_string(patstr):
                         "op={} invalid; valid choices are {}".format(
                             op_val, constants.MATCHER_VALID_OPS)
                     )
+            except IndexError:
+                pattern.append({attr: attr_val})
         else:
             raise ValueError(
                 "pattern string '{}' is invalid; "

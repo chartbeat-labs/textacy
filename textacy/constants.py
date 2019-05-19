@@ -46,8 +46,10 @@ POS_REGEX_PATTERNS = {
     }
 }
 
-RE_MATCHER_INT_ATTR_VAL = re.compile(r"^int\((\d+)\)$", flags=re.UNICODE)
-RE_MATCHER_BOOL_ATTR_VAL = re.compile(r"^bool\((.*?)\)$", flags=re.UNICODE)
+RE_MATCHER_TOKPAT_DELIM = re.compile(r"\s+")
+RE_MATCHER_SPECIAL_VAL = re.compile(
+    r"^(int|bool)\([^: ]+\)$",
+    flags=re.UNICODE)
 
 RE_ACRONYM = re.compile(
     r"(?:^|(?<=\W))"

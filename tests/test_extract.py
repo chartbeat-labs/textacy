@@ -246,6 +246,28 @@ class TestMatches(object):
         assert matches
         assert all(len(span[0]) == 5 for span in matches)
 
+    def test_make_pattern_from_string(self):
+        patstr_to_pats = [
+            ("TAG:VBZ", [{"TAG": "VBZ"}]),
+            ("POS:NOUN:+", [{"POS": "NOUN", "OP": "+"}]),
+            ("IS_PUNCT:bool(False)", [{"IS_PUNCT": False}]),
+            (
+                "IS_DIGIT:bool(True):? POS:NOUN:*",
+                [{"IS_DIGIT": True, "OP": "?"}, {"POS": "NOUN", "OP": "*"}],
+            ),
+            (
+                "LENGTH:int(5) DEP:nsubj:!",
+                [{"LENGTH": 5}, {"DEP": "nsubj", "OP": "!"}],
+            ),
+        ]
+        for patstr, pat in patstr_to_pats:
+            assert extract._make_pattern_from_string(patstr) == pat
+
+    def test_make_pattern_from_str_error(self):
+        for patstr in ["POS", "POS:NOUN:VERB:+", "POS:NOUN:*?"]:
+            with pytest.raises(ValueError):
+                _ = extract._make_pattern_from_string(patstr)
+
 
 class TestSubjectVerbObjectTriples(object):
 
