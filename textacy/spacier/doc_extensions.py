@@ -260,7 +260,7 @@ def to_terms_list(
 
     Note:
         Despite the name, this is a generator function; to get an
-        actual list of terms, call ``list(doc.to_terms_list())``.
+        actual list of terms, call ``list(to_terms_list(doc))``.
     """
     if not (entities or ngrams):
         raise ValueError("`entities` and/or `ngrams` must be included")
@@ -420,7 +420,7 @@ def to_bag_of_terms(
         of occurrence (depending on the value of ``weighting``).
 
     See Also:
-        :meth:`Doc.to_terms_list() <Doc.to_terms_list>`
+        :func:`to_terms_list()`, which is used under the hood.
     """
     if weighting not in {"count", "freq", "binary"}:
         raise ValueError('weighting "{}" is invalid'.format(weighting))

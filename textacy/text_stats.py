@@ -21,7 +21,9 @@ LOGGER = logging.getLogger(__name__)
 class TextStats(object):
     """
     Compute a variety of basic counts and readability statistics for a given
-    document. For example::
+    document. For example:
+
+    .. code-block:: pycon
 
         >>> text = next(textacy.datasets.CapitolWords().texts(limit=1))
         >>> doc = textacy.make_spacy_doc(text)

@@ -36,7 +36,9 @@ class Vectorizer(object):
     Transform one or more tokenized documents into a sparse document-term matrix
     of shape (# docs, # unique terms), with flexibly weighted and normalized values.
 
-    Stream a corpus with metadata from disk::
+    Stream a corpus with metadata from disk:
+
+    .. code-block:: pycon
 
         >>> ds = textacy.datasets.CapitolWords()
         >>> records = ds.records(limit=1000)
@@ -44,13 +46,15 @@ class Vectorizer(object):
         >>> corpus
         Corpus(1000 docs; 538172 tokens)
 
-    Tokenize and vectorize the first 600 documents of this corpus::
+    Tokenize and vectorize the first 600 documents of this corpus:
+
+    .. code-block:: pycon
 
         >>> tokenized_docs = (
-        ...     doc.to_terms_list(ngrams=1, entities=True, as_strings=True)
+        ...     doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
         ...     for doc in corpus[:600])
         >>> vectorizer = Vectorizer(
-        ...     apply_idf=True, norm='l2',
+        ...     apply_idf=True, norm="l2",
         ...     min_df=3, max_df=0.95)
         >>> doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
         >>> doc_term_matrix
@@ -58,17 +62,21 @@ class Vectorizer(object):
                 with 69673 stored elements in Compressed Sparse Row format>
 
     Tokenize and vectorize the remaining 400 documents of the corpus, using only
-    the groups, terms, and weights learned in the previous step::
+    the groups, terms, and weights learned in the previous step:
+
+    .. code-block:: pycon
 
         >>> tokenized_docs = (
-        ...     doc.to_terms_list(ngrams=1, entities=True, as_strings=True)
+        ...     doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
         ...     for doc in corpus[600:])
         >>> doc_term_matrix = vectorizer.transform(tokenized_docs)
         >>> doc_term_matrix
         <400x4346 sparse matrix of type '<class 'numpy.float64'>'
                 with 38756 stored elements in Compressed Sparse Row format>
 
-    Inspect the terms associated with columns; they're sorted alphabetically::
+    Inspect the terms associated with columns; they're sorted alphabetically:
+
+    .. code-block:: pycon
 
         >>> vectorizer.terms_list[:5]
         ['', '$', '$ 1 million', '$ 1.2 billion', '$ 10 billion']
@@ -77,15 +85,17 @@ class Vectorizer(object):
     a named entity...)
 
     If known in advance, limit the terms included in vectorized outputs
-    to a particular set of values::
+    to a particular set of values:
+
+    .. code-block:: pycon
 
         >>> tokenized_docs = (
-        ...     doc.to_terms_list(ngrams=1, entities=True, as_strings=True)
+        ...     doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
         ...     for doc in corpus[:600])
         >>> vectorizer = Vectorizer(
-        ...     apply_idf=True, idf_type='smooth', norm='l2',
+        ...     apply_idf=True, idf_type="smooth", norm="l2",
         ...     min_df=3, max_df=0.95,
-        ...     vocabulary_terms=['president', 'bill', 'unanimous', 'distinguished', 'american'])
+        ...     vocabulary_terms=["president", "bill", "unanimous", "distinguished", "american"])
         >>> doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
         >>> doc_term_matrix
         <600x5 sparse matrix of type '<class 'numpy.float64'>'
@@ -94,11 +104,13 @@ class Vectorizer(object):
         ['american', 'bill', 'distinguished', 'president', 'unanimous']
 
     Specify different weighting schemes to determine values in the matrix,
-    adding or customizing individual components, as desired::
+    adding or customizing individual components, as desired:
 
-        >>> money_idx = vectorizer.vocabulary_terms['$']
+    .. code-block:: pycon
+
+        >>> money_idx = vectorizer.vocabulary_terms["$"]
         >>> doc_term_matrix = Vectorizer(
-        ...     tf_type='linear', norm=None, min_df=3, max_df=0.95
+        ...     tf_type="linear", norm=None, min_df=3, max_df=0.95
         ...     ).fit_transform(tokenized_docs)
         >>> print(doc_term_matrix[0:7, money_idx].toarray())
         [[0]
@@ -109,7 +121,7 @@ class Vectorizer(object):
          [0]
          [2]]
         >>> doc_term_matrix = Vectorizer(
-        ...     tf_type='sqrt', apply_dl=True, dl_type='sqrt', norm=None, min_df=3, max_df=0.95
+        ...     tf_type="sqrt", apply_dl=True, dl_type="sqrt", norm=None, min_df=3, max_df=0.95
         ...     ).fit_transform(tokenized_docs)
         >>> print(doc_term_matrix[0:7, money_idx].toarray())
         [[0.        ]
@@ -120,7 +132,7 @@ class Vectorizer(object):
          [0.        ]
          [0.11396058]]
         >>> doc_term_matrix = Vectorizer(
-        ...     tf_type='bm25', apply_idf=True, idf_type='smooth', norm=None, min_df=3, max_df=0.95
+        ...     tf_type="bm25", apply_idf=True, idf_type="smooth", norm=None, min_df=3, max_df=0.95
         ...     ).fit_transform(tokenized_docs)
         >>> print(doc_term_matrix[0:7, money_idx].toarray())
         [[0.        ]
@@ -133,7 +145,9 @@ class Vectorizer(object):
 
     If you're not sure what's going on mathematically, :attr:`Vectorizer.weighting`
     gives the formula being used to calculate weights, based on the parameters
-    set when initializing the vectorizer::
+    set when initializing the vectorizer:
+
+    .. code-block:: pycon
 
         >>> vectorizer.weighting
         '(tf * (k + 1)) / (k + tf) * log((n_docs + 1) / (df + 1)) + 1'
@@ -150,67 +164,67 @@ class Vectorizer(object):
       i.e. value (i, j) in an output doc-term matrix corresponds to the number
       of occurrences of term j in doc i. Terms appearing many times in a given
       doc receive higher weights than less common terms.
-      Params: ``tf_type='linear', apply_idf=False, apply_dl=False``
+      Params: ``tf_type="linear", apply_idf=False, apply_dl=False``
     - "tfidf": Doc-specific, *local* tfs are multiplied by their corpus-wide,
       *global* inverse document frequencies (idfs). Terms appearing in many docs
       have higher document frequencies (dfs), correspondingly smaller idfs, and
       in turn, lower weights.
-      Params: ``tf_type='linear', apply_idf=True, idf_type='smooth', apply_dl=False``
+      Params: ``tf_type="linear", apply_idf=True, idf_type="smooth", apply_dl=False``
     - "bm25": This scheme includes a local tf component that increases asymptotically,
       so higher tfs have diminishing effects on the overall weight; a global idf
       component that can go *negative* for terms that appear in a sufficiently
       high proportion of docs; as well as a row-wise normalization that accounts for
       document length, such that terms in shorter docs hit the tf asymptote sooner
       than those in longer docs.
-      Params: ``tf_type='bm25', apply_idf=True, idf_type='bm25', apply_dl=True``
+      Params: ``tf_type="bm25", apply_idf=True, idf_type="bm25", apply_dl=True``
     - "binary": This weighting scheme simply replaces all non-zero tfs with 1,
       indicating the presence or absence of a term in a particular doc. That's it.
-      Params: ``tf_type='binary', apply_idf=False, apply_dl=False``
+      Params: ``tf_type="binary", apply_idf=False, apply_dl=False``
 
     Slightly altered versions of these "standard" weighting schemes are common,
     and may have better behavior in general use cases:
 
     - "lucene-style tfidf": Adds a doc-length normalization to the usual local
       and global components.
-      Params: ``tf_type='linear', apply_idf=True, idf_type='smooth', apply_dl=True, dl_type='sqrt'``
+      Params: ``tf_type="linear", apply_idf=True, idf_type="smooth", apply_dl=True, dl_type="sqrt"``
     - "lucene-style bm25": Uses a smoothed idf instead of the classic bm25 variant
       to prevent weights on terms from going negative.
-      Params: ``tf_type='bm25', apply_idf=True, idf_type='smooth', apply_dl=True, dl_type='linear'``
+      Params: ``tf_type="bm25", apply_idf=True, idf_type="smooth", apply_dl=True, dl_type="linear"``
 
     Args:
-        tf_type ({'linear', 'sqrt', 'log', 'binary'}): Type of term frequency (tf)
+        tf_type ({"linear", "sqrt", "log", "binary"}): Type of term frequency (tf)
             to use for weights' local component:
 
-            - 'linear': tf (tfs are already linear, so left as-is)
-            - 'sqrt': tf => sqrt(tf)
-            - 'log': tf => log(tf) + 1
-            - 'binary': tf => 1
+            - "linear": tf (tfs are already linear, so left as-is)
+            - "sqrt": tf => sqrt(tf)
+            - "log": tf => log(tf) + 1
+            - "binary": tf => 1
 
         apply_idf (bool): If True, apply global idfs to local term weights, i.e.
             divide per-doc term frequencies by the (log of the) total number
             of documents in which they appear; otherwise, don't.
-        idf_type ({'standard', 'smooth', 'bm25'}): Type of inverse document
+        idf_type ({"standard", "smooth", "bm25"}): Type of inverse document
             frequency (idf) to use for weights' global component:
 
-            - 'standard': idf = log(n_docs / df) + 1.0
-            - 'smooth': idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
+            - "standard": idf = log(n_docs / df) + 1.0
+            - "smooth": idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
               to all document frequencies, as if a single document containing
               every unique term was added to the corpus. This prevents zero divisions!
-            - 'bm25': idf = log((n_docs - df + 0.5) / (df + 0.5)), which is
+            - "bm25": idf = log((n_docs - df + 0.5) / (df + 0.5)), which is
               a form commonly used in information retrieval that allows for
               very common terms to receive negative weights.
 
         apply_dl (bool): If True, normalize local(+global) weights by doc length,
             i.e. divide by the total number of in-vocabulary terms appearing
             in a given doc; otherwise, don't.
-        dl_type ({'linear', 'sqrt', 'log'}): Type of document-length scaling
+        dl_type ({"linear", "sqrt", "log"}): Type of document-length scaling
             to use for weights' normalization component:
 
-            - 'linear': dl (dls are already linear, so left as-is)
-            - 'sqrt': dl => sqrt(dl)
-            - 'log': dl => log(dl)
+            - "linear": dl (dls are already linear, so left as-is)
+            - "sqrt": dl => sqrt(dl)
+            - "log": dl => log(dl)
 
-        norm ({'l1', 'l2'} or None): If 'l1' or 'l2', normalize weights by the
+        norm ({"l1", "l2"} or None): If "l1" or "l2", normalize weights by the
             L1 or L2 norms, respectively, of row-wise vectors; otherwise, don't.
         vocabulary_terms (Dict[str, int] or Iterable[str]): Mapping of unique term
             string to unique term id, or an iterable of term strings that gets
@@ -383,7 +397,7 @@ class Vectorizer(object):
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc.to_terms_list(as_strings=True)
+                    >>> (doc._.to_terms_list(as_strings=True)
                     ...  for doc in docs)
 
         Returns:
@@ -408,7 +422,7 @@ class Vectorizer(object):
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc.to_terms_list(as_strings=True)
+                    >>> (doc._.to_terms_list(as_strings=True)
                     ...  for doc in docs)
 
         Returns:
@@ -435,7 +449,7 @@ class Vectorizer(object):
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc.to_terms_list(as_strings=True)
+                    >>> (doc._.to_terms_list(as_strings=True)
                     ...  for doc in docs)
 
         Returns:
@@ -728,10 +742,9 @@ class GroupVectorizer(Vectorizer):
 
     Stream a corpus with metadata from disk::
 
-        >>> cw = textacy.datasets.CapitolWords()
-        >>> text_stream, metadata_stream = textacy.io.split_records(
-        ...     cw.records(limit=1000), 'text', itemwise=False)
-        >>> corpus = textacy.Corpus('en', texts=text_stream, metadatas=metadata_stream)
+        >>> ds = textacy.datasets.CapitolWords()
+        >>> records = ds.records(limit=1000)
+        >>> corpus = textacy.Corpus("en", data=records)
         >>> corpus
         Corpus(1000 docs; 538172 tokens)
 
@@ -739,11 +752,11 @@ class GroupVectorizer(Vectorizer):
     are grouped not by documents but by a categorical value in the docs' metadata::
 
         >>> tokenized_docs, groups = textacy.io.unzip(
-        ...     (doc.to_terms_list(ngrams=1, entities=True, as_strings=True),
-        ...      doc.metadata['speaker_name'])
+        ...     (doc._.to_terms_list(ngrams=1, entities=True, as_strings=True),
+        ...      doc._.meta["speaker_name"])
         ...     for doc in corpus[:600])
         >>> vectorizer = GroupVectorizer(
-        ...     apply_idf=True, idf_type='smooth', norm='l2',
+        ...     apply_idf=True, idf_type="smooth", norm="l2",
         ...     min_df=3, max_df=0.95)
         >>> grp_term_matrix = vectorizer.fit_transform(tokenized_docs, groups)
         >>> grp_term_matrix
@@ -754,8 +767,8 @@ class GroupVectorizer(Vectorizer):
     the groups, terms, and weights learned in the previous step::
 
         >>> tokenized_docs, groups = textacy.io.unzip(
-        ...     (doc.to_terms_list(ngrams=1, entities=True, as_strings=True),
-        ...      doc.metadata['speaker_name'])
+        ...     (doc._.to_terms_list(ngrams=1, entities=True, as_strings=True),
+        ...      doc._.meta["speaker_name"])
         ...     for doc in corpus[600:])
         >>> grp_term_matrix = vectorizer.transform(tokenized_docs, groups)
         >>> grp_term_matrix
@@ -774,14 +787,14 @@ class GroupVectorizer(Vectorizer):
     to a particular set of values::
 
         >>> tokenized_docs, groups = textacy.io.unzip(
-        ...     (doc.to_terms_list(ngrams=1, entities=True, as_strings=True),
-        ...      doc.metadata['speaker_name'])
+        ...     (doc._.to_terms_list(ngrams=1, entities=True, as_strings=True),
+        ...      doc._.meta["speaker_name"])
         ...     for doc in corpus[:600])
         >>> vectorizer = GroupVectorizer(
-        ...     apply_idf=True, idf_type='smooth', norm='l2',
+        ...     apply_idf=True, idf_type="smooth", norm="l2",
         ...     min_df=3, max_df=0.95,
-        ...     vocabulary_terms=['legislation', 'federal government', 'house', 'constitutional'],
-        ...     vocabulary_grps=['Bernie Sanders', 'Lindsey Graham', 'Rick Santorum'])
+        ...     vocabulary_terms=["legislation", "federal government", "house", "constitutional"],
+        ...     vocabulary_grps=["Bernie Sanders", "Lindsey Graham", "Rick Santorum"])
         >>> grp_term_matrix = vectorizer.fit_transform(tokenized_docs, groups)
         >>> grp_term_matrix
         <3x4 sparse matrix of type '<class 'numpy.float64'>'
@@ -795,39 +808,39 @@ class GroupVectorizer(Vectorizer):
     out the :class:`Vectorizer` docstring.
 
     Args:
-        tf_type ({'linear', 'sqrt', 'log', 'binary'}): Type of term frequency (tf)
+        tf_type ({"linear", "sqrt", "log", "binary"}): Type of term frequency (tf)
             to use for weights' local component:
 
-            - 'linear': tf (tfs are already linear, so left as-is)
-            - 'sqrt': tf => sqrt(tf)
-            - 'log': tf => log(tf) + 1
-            - 'binary': tf => 1
+            - "linear": tf (tfs are already linear, so left as-is)
+            - "sqrt": tf => sqrt(tf)
+            - "log": tf => log(tf) + 1
+            - "binary": tf => 1
 
         apply_idf (bool): If True, apply global idfs to local term weights, i.e.
             divide per-doc term frequencies by the total number of documents
             in which they appear (well, the log of that number); otherwise, don't.
-        idf_type ({'standard', 'smooth', 'bm25'}): Type of inverse document
+        idf_type ({"standard", "smooth", "bm25"}): Type of inverse document
             frequency (idf) to use for weights' global component:
 
-            - 'standard': idf = log(n_docs / df) + 1.0
-            - 'smooth': idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
+            - "standard": idf = log(n_docs / df) + 1.0
+            - "smooth": idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
               to all document frequencies, as if a single document containing
               every unique term was added to the corpus.
-            - 'bm25': idf = log((n_docs - df + 0.5) / (df + 0.5)), which is
+            - "bm25": idf = log((n_docs - df + 0.5) / (df + 0.5)), which is
               a form commonly used in information retrieval that allows for
               very common terms to receive negative weights.
 
         apply_dl (bool): If True, normalize local(+global) weights by doc length,
             i.e. divide by the total number of in-vocabulary terms appearing
             in a given doc; otherwise, don't.
-        dl_type ({'linear', 'sqrt', 'log'}): Type of document-length scaling
+        dl_type ({"linear", "sqrt", "log"}): Type of document-length scaling
             to use for weights' normalization component:
 
-            - 'linear': dl (dls are already linear, so left as-is)
-            - 'sqrt': dl => sqrt(dl)
-            - 'log': dl => log(dl)
+            - "linear": dl (dls are already linear, so left as-is)
+            - "sqrt": dl => sqrt(dl)
+            - "log": dl => log(dl)
 
-        norm ({'l1', 'l2'} or None): If 'l1' or 'l2', normalize weights by the
+        norm ({"l1", "l2"} or None): If "l1" or "l2", normalize weights by the
             L1 or L2 norms, respectively, of row-wise vectors; otherwise, don't.
         vocabulary_terms (Dict[str, int] or Iterable[str]): Mapping of unique term
             string to unique term id, or an iterable of term strings that gets
@@ -952,7 +965,7 @@ class GroupVectorizer(Vectorizer):
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc.to_terms_list(as_strings=True)
+                    >>> (doc._.to_terms_list(as_strings=True)
                     ...  for doc in docs)
 
             grps (Iterable[str]): Sequence of group names by which the terms in
@@ -982,7 +995,7 @@ class GroupVectorizer(Vectorizer):
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc.to_terms_list(as_strings=True)
+                    >>> (doc._.to_terms_list(as_strings=True)
                     ...  for doc in docs)
 
             grps (Iterable[str]): Sequence of group names by which the terms in
@@ -1014,7 +1027,7 @@ class GroupVectorizer(Vectorizer):
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc.to_terms_list(as_strings=True)
+                    >>> (doc._.to_terms_list(as_strings=True)
                     ...  for doc in docs)
 
             grps (Iterable[str]): Sequence of group names by which the terms in

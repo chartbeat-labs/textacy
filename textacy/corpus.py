@@ -333,9 +333,6 @@ class Corpus(object):
         Yields:
             :class:`spacy.tokens.Doc`: Next document passing ``match_func``.
 
-        See Also:
-            :meth:`Corpus.remove()`
-
         .. tip:: To get doc(s) by index, treat :class:`Corpus` as a list and use
            Python's usual indexing and slicing: ``Corpus[0]`` gets the first
            document in the corpus; ``Corpus[:5]`` gets the first 5; etc.
@@ -364,9 +361,6 @@ class Corpus(object):
 
                 removes docs whose author was given as "Burton DeWilde".
             limit (int): Maximum number of matched docs to remove.
-
-        See Also:
-            :meth:`Corpus.get()`
 
         .. tip:: To remove doc(s) by index, treat :class:`Corpus` as a list and use
            Python's usual indexing and slicing: ``del Corpus[0]`` removes the

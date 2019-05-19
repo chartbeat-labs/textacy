@@ -26,31 +26,37 @@ class TopicModel(object):
 
     Prepare a vectorized corpus (i.e. document-term matrix) and corresponding
     vocabulary (i.e. mapping of term strings to column indices in the matrix).
-    See :class:`textacy.vsm.Vectorizer` for details. In short::
+    See :class:`textacy.vsm.Vectorizer` for details. In short:
+
+    .. code-block:: pycon
 
         >>> vectorizer = Vectorizer(
-        ...     tf_type='linear', apply_idf=True, idf_type='smooth', norm='l2',
+        ...     tf_type="linear", apply_idf=True, idf_type="smooth", norm="l2",
         ...     min_df=3, max_df=0.95, max_n_terms=100000)
         >>> doc_term_matrix = vectorizer.fit_transform(terms_list)
 
-    Initialize and train a topic model::
+    Initialize and train a topic model:
 
-        >>> model = textacy.tm.TopicModel('nmf', n_topics=20)
+    .. code-block:: pycon
+
+        >>> model = textacy.tm.TopicModel("nmf", n_topics=20)
         >>> model.fit(doc_term_matrix)
         >>> model
         TopicModel(n_topics=10, model=NMF)
 
-    Transform the corpus and interpret our model::
+    Transform the corpus and interpret our model:
+
+    .. code-block:: pycon
 
         >>> doc_topic_matrix = model.transform(doc_term_matrix)
         >>> for topic_idx, top_terms in model.top_topic_terms(vectorizer.id_to_term, topics=[0,1]):
-        ...     print('topic', topic_idx, ':', '   '.join(top_terms))
+        ...     print("topic", topic_idx, ":", "   ".join(top_terms))
         topic 0 : people   american   go   year   work   think   $   today   money   america
         topic 1 : rescind   quorum   order   unanimous   consent   ask   president   mr.   madam   absence
         >>> for topic_idx, top_docs in model.top_topic_docs(doc_topic_matrix, topics=[0,1], top_n=2):
         ...     print(topic_idx)
         ...     for j in top_docs:
-        ...         print(corpus[j].metadata['title'])
+        ...         print(corpus[j]._.meta["title"])
         0
         THE MOST IMPORTANT ISSUES FACING THE AMERICAN PEOPLE
         55TH ANNIVERSARY OF THE BATTLE OF CRETE
@@ -58,7 +64,7 @@ class TopicModel(object):
         CHEMICAL WEAPONS CONVENTION
         MFN STATUS FOR CHINA
         >>> for doc_idx, topics in model.top_doc_topics(doc_topic_matrix, docs=range(5), top_n=2):
-        ...     print(corpus[doc_idx].metadata['title'], ':', topics)
+        ...     print(corpus[doc_idx]._.meta["title"], ":", topics)
         JOIN THE SENATE AND PASS A CONTINUING RESOLUTION : (9, 0)
         MEETING THE CHALLENGE : (2, 0)
         DISPOSING OF SENATE AMENDMENT TO H.R. 1643, EXTENSION OF MOST-FAVORED- NATION TREATMENT FOR BULGARIA : (0, 9)
@@ -77,30 +83,34 @@ class TopicModel(object):
         8 0.0680659204364
         9 0.0725001620636
 
-    Visualize the model::
+    Visualize the model:
+
+    .. code-block:: pycon
 
         >>> model.termite_plot(doc_term_matrix, vectorizer.id_to_term,
-        ...                    topics=-1,  n_terms=25, sort_terms_by='seriation')
+        ...                    topics=-1,  n_terms=25, sort_terms_by="seriation")
 
-    Persist our topic model to disk::
+    Persist our topic model to disk:
 
-        >>> model.save('nmf-10topics.pkl')
+    .. code-block:: pycon
+
+        >>> model.save("nmf-10topics.pkl")
 
     Args:
-        model ({'nmf', 'lda', 'lsa'} or ``sklearn.decomposition.<model>``)
+        model ({"nmf", "lda", "lsa"} or ``sklearn.decomposition.<model>``)
         n_topics (int): number of topics in the model to be initialized
         **kwargs:
             variety of parameters used to initialize the model; see individual
             sklearn pages for full details
 
     Raises:
-        ValueError: if ``model`` not in ``{'nmf', 'lda', 'lsa'}`` or is not an
+        ValueError: if ``model`` not in ``{"nmf", "lda", "lsa"}`` or is not an
             NMF, LatentDirichletAllocation, or TruncatedSVD instance
 
     See Also:
-        - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.NMF.html
-        - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.LatentDirichletAllocation.html
-        - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
+        * http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.NMF.html
+        * http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.LatentDirichletAllocation.html
+        * http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
     """
 
     def __init__(self, model, n_topics=10, **kwargs):
