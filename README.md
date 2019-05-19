@@ -13,19 +13,14 @@ and follow after.
 
 ### Features
 
-- Provide a convenient entry point and interface to one or many documents, with
-  the core processing delegated to spaCy
-- Stream text, json, csv, spaCy binary, and other data to and from disk
-- Download and explore a variety of included datasets with both text content and
-  metadata, from Congressional speeches to historical literature to Reddit comments
-- Clean and normalize raw text, before analyzing it
-- Access and filter basic linguistic elements, such as words, ngrams, and noun
-  chunks; extract named entities, acronyms and their definitions, and key terms
-- Flexibly tokenize and vectorize documents and corpora, then train, interpret,
-  and visualize topic models using LSA, LDA, or NMF methods
-- Compare strings, sets, and documents by a variety of similarity metrics
-- Calculate common text statistics, including Flesch-Kincaid Grade Level,
-  SMOG Index, and multilingual Flesch Reading Ease
+- Convenient entry points to working with one or many documents processed by spaCy, with functionality added via custom extensions
+- Variety of downloadable datasets with both text content and metadata, from Congressional speeches to historical literature to Reddit comments
+- Easy file I/O for streaming data to and from disk
+- Cleaning, normalization, and exploration of raw text — before processing
+- Flexible extraction of words, ngrams, noun chunks, entities, acronyms, key terms, and other elements of interest
+- Tokenization and vectorization of documents, with functionality for training, interpreting, and visualizing topic models
+- String, set, and document similarity comparison by a variety of metrics
+- Calculations for common text statistics, including Flesch-Kincaid Grade Level and multilingual Flesch Reading Ease
 
 ... *and more!*
 
@@ -35,12 +30,6 @@ and follow after.
 - PyPi project: https://pypi.org/project/textacy
 - Source code: https://github.com/chartbeat-labs/textacy
 - Documentation: https://chartbeat-labs.github.io/textacy
-
-**Note:** Docs used to be hosted on ReadTheDocs, but the builds stopped working
-many months ago, and now those docs are out-of-date. This is unfortunate, especially
-since ReadTheDocs allows for multiple versions while GitHub Pages does not.
-I'll keep trying on ReadTheDocs; if the build issues ever get resolved, I'll
-switch the docs back.
 
 
 ### Maintainer
