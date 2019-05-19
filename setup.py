@@ -36,7 +36,9 @@ else:
 
 def read_file(fname, encoding="utf-8"):
     path = os.path.join(os.path.dirname(__file__), fname)
-    return io.open(path, encoding=encoding).read()
+    with io.open(path, encoding=encoding) as f:
+        data = f.read()
+    return data
 
 
 about = {}
@@ -49,16 +51,19 @@ setup(
     name=about["__title__"],
     version=about["__version__"],
     description=about["__description__"],
-    long_description=read_file("README.rst"),
+    long_description=read_file("README.md"),
+    long_description_content_type="text/markdown",
     url=about["__url__"],
     download_url=about["__download_url__"],
     maintainer=about["__maintainer__"],
     maintainer_email=about["__maintainer_email__"],
     license=about["__license__"],
+    python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*",
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
         "Programming Language :: Python",
         "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",

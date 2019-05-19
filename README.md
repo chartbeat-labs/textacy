@@ -1,30 +1,21 @@
-textacy: NLP, before and after spaCy
-====================================
+## textacy: NLP, before and after spaCy
 
-``textacy`` is a Python library for performing a variety of natural language
-processing (NLP) tasks, built on the high-performance ``spacy`` library. With the
+`textacy` is a Python library for performing a variety of natural language
+processing (NLP) tasks, built on the high-performance `spacy` library. With the
 fundamentals --- tokenization, part-of-speech tagging, dependency parsing, etc. ---
-delegated to another library, ``textacy`` focuses on the tasks that come before
+delegated to another library, `textacy` focuses on the tasks that come before
 and follow after.
 
-.. image:: https://img.shields.io/travis/chartbeat-labs/textacy/master.svg?style=flat-square
-    :target: https://travis-ci.org/chartbeat-labs/textacy
-    :alt: build status
+[![build status](https://img.shields.io/travis/chartbeat-labs/textacy/master.svg?style=flat-square)](
+    https://travis-ci.org/chartbeat-labs/textacy)
+[![current release version](https://img.shields.io/github/release/chartbeat-labs/textacy.svg?style=flat-square)](
+    https://github.com/chartbeat-labs/textacy/releases)
+[![pypi version](https://img.shields.io/pypi/v/textacy.svg?style=flat-square)](
+    https://pypi.python.org/pypi/textacy)
+[![conda version](https://anaconda.org/conda-forge/textacy/badges/version.svg)](
+    https://anaconda.org/conda-forge/textacy)
 
-.. image:: https://img.shields.io/github/release/chartbeat-labs/textacy.svg?style=flat-square
-    :target: https://github.com/chartbeat-labs/textacy/releases
-    :alt: current release version
-
-.. image:: https://img.shields.io/pypi/v/textacy.svg?style=flat-square
-    :target: https://pypi.python.org/pypi/textacy
-    :alt: pypi version
-
-.. image:: https://anaconda.org/conda-forge/textacy/badges/version.svg
-    :target: https://anaconda.org/conda-forge/textacy
-    :alt: conda version
-
-Features
---------
+### Features
 
 - Provide a convenient entry point and interface to one or many documents, with
   the core processing delegated to spaCy
@@ -43,8 +34,7 @@ Features
 ... *and more!*
 
 
-Links
------
+### Links
 
 - PyPi project: https://pypi.org/project/textacy
 - Source code: https://github.com/chartbeat-labs/textacy
@@ -57,8 +47,7 @@ I'll keep trying on ReadTheDocs; if the build issues ever get resolved, I'll
 switch the docs back.
 
 
-Maintainer
-----------
+### Maintainer
 
 Howdy, y'all. 👋
 
