@@ -13,6 +13,7 @@ from spacy.tokens import Doc
 from . import utils as spacier_utils
 from .. import compat
 from .. import text_stats
+from .. import utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -116,8 +117,9 @@ class TextStatsComponent(object):
 
 def merge_entities(doc):
     """
-    Merge named entities into single tokens in ``doc``, *in-place*. Can be used
-    as a stand-alone function, or as part of a spaCy language pipeline::
+    Merge named entities into single tokens in ``doc``, *in-place*.
+
+    Can be used as a stand-alone function, or as part of a spaCy language pipeline::
 
         >>> spacy_lang = textacy.load_spacy_lang('en')
         >>> spacy_lang.add_pipe(merge_entities, after='ner')
@@ -130,6 +132,17 @@ def merge_entities(doc):
 
     Returns:
         :class:`spacy.tokens.Doc`: Input ``doc`` with entities merged.
+
+    Warning:
+        *DEPRECATED!* For equivalent functionality, use
+        :func:`spacy.pipeline.functions.merge_entities()` instead.
+        For details, see https://spacy.io/api/pipeline-functions.
     """
+    utils.deprecated(
+        "`merge_entities()` has been deprecated! for equivalent functionality, "
+        "use :func:`spacy.pipeline.functions.merge_entities()` instead. "
+        "For details, see https://spacy.io/api/pipeline-functions.",
+        action="once",
+    )
     spacier_utils.merge_spans(doc.ents, doc)
     return doc

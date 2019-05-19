@@ -13,8 +13,8 @@ from spacy.tokens import Doc
 
 from .. import cache
 from .. import compat
+from .. import utils
 from .utils import open_sesame
-from ..utils import deprecated
 
 
 def read_spacy_docs(filepath, format="pickle", lang=None):
@@ -167,7 +167,7 @@ def write_spacy_docs(
         ValueError: if format is not "pickle" or "binary"
     """
     if include_tensor is not None:
-        deprecated(
+        utils.deprecated(
             "Use `exclude=('tensor',)` instead of `include_tensor=True`, since "
             "spacy has converged on this standard for usage.",
             action="once",

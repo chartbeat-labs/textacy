@@ -323,8 +323,6 @@ def pos_regex_matches(doc, pattern):
     Extract sequences of consecutive tokens from a spacy-parsed doc whose
     part-of-speech tags match the specified regex pattern.
 
-    *DEPRECATED*
-
     Args:
         doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
         pattern (str): Pattern of consecutive POS tags whose corresponding words
@@ -345,8 +343,9 @@ def pos_regex_matches(doc, pattern):
         :class:`spacy.tokens.Span`: the next span of consecutive tokens from ``doc`` whose
         parts-of-speech match ``pattern``, in order of apperance
 
-    See Also:
-        :func:`textacy.extract.matches()`
+    Warning:
+        *DEPRECATED!* For similar but more powerful and performant functionality,
+        use :func:`textacy.extract.matches()` instead.
     """
     utils.deprecated(
         "`pos_regex_matches()` has been deprecated! "
@@ -386,7 +385,7 @@ def matches(doc, patterns, on_match=None):
             * ``[{"IS_DIGIT": True}, {"TAG": "NNS"}]`` matches numbered plural nouns,
               like "60 seconds" or "2 beers"
             * ``[{"POS": "PROPN", "OP": "+"}, {}]`` matches proper nouns and
-              whatever word follows them, like "Burton DeWilde werk"
+              whatever word follows them, like "Burton DeWilde yaaasss"
 
             If str or List[str], each pattern is specified as one or more
             per-token patterns separated by whitespace where attribute, value,
@@ -398,7 +397,7 @@ def matches(doc, patterns, on_match=None):
             * ``"POS:NOUN"`` matches singular or plural nouns
             * ``"POS:PREP POS:DET:? POS:ADJ:? POS:NOUN:+"`` matches prepositional phrases
             * ``"IS_DIGIT:bool(True) TAG:NNS"`` matches numbered plural nouns
-            * ``"POS:PROPN:+ :" matches proper nouns and whatever word follows them
+            * ``"POS:PROPN:+ :"`` matches proper nouns and whatever word follows them
 
             Also note that these pattern strings don't support spaCy v2.1's
             "extended" pattern syntax; if you need such complex patterns, it's
@@ -416,8 +415,8 @@ def matches(doc, patterns, on_match=None):
         ValueError
 
     See Also:
-        https://spacy.io/usage/rule-based-matching
-        https://spacy.io/api/matcher
+        * https://spacy.io/usage/rule-based-matching
+        * https://spacy.io/api/matcher
     """
     if isinstance(patterns, compat.unicode_):
         patterns = [_make_pattern_from_string(patterns)]
