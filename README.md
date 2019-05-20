@@ -1,10 +1,10 @@
 ## textacy: NLP, before and after spaCy
 
-`textacy` is a Python library for performing a variety of natural language
-processing (NLP) tasks, built on the high-performance `spacy` library. With the
+textacy is a Python library for performing a variety of natural language
+processing (NLP) tasks, built on the high-performance spaCy library. With the
 fundamentals --- tokenization, part-of-speech tagging, dependency parsing, etc. ---
-delegated to another library, `textacy` focuses on the tasks that come before
-and follow after.
+delegated to another library, textacy focuses primarily on the tasks
+that come before and follow after.
 
 [![build status](https://img.shields.io/travis/chartbeat-labs/textacy/master.svg?style=flat-square)](https://travis-ci.org/chartbeat-labs/textacy)
 [![current release version](https://img.shields.io/github/release/chartbeat-labs/textacy.svg?style=flat-square)](https://github.com/chartbeat-labs/textacy/releases)

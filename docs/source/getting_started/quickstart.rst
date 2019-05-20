@@ -422,7 +422,7 @@ Since a ``Corpus`` uses the same spaCy language pipeline to process all input te
 it only works in a mono-lingual context. In some cases, though, your collection
 of texts may contain more than one language; for example, if I occasionally tweeted
 in Spanish (sí, ¡se habla español!), the ``burton-tweets.txt`` dataset couldn't
-be fed in its entirety into a single ``Corpus``. This is irritating, I know, but
+be fed in its entirety into a single ``Corpus``. This is irritating, but
 there are some workarounds.
 
 If you haven't already, download spaCy models for the languages you want to analyze ---
@@ -435,14 +435,19 @@ only analyze those for which models are available:
     >>> for text in texts:
     ...     try:
     ...         doc = textacy.make_spacy_doc(text)
-    ...     except OSError:
+    ...     except (OSError, IOError):
     ...         continue
     ...     # do stuff...
 
 When the ``lang`` param is unspecified, textacy tries to auto-detect the text's
 language and load the corresponding model; if that model is unavailable, spaCy
-will raise an ``OSError``. This try/except also handles the case where
-language detection fails and returns, say, "un" for "unknown".
+will raise an ``OSError`` (or an ``IOError`` in PY2). This try/except also handles
+the case where language detection fails and returns, say, "un" for "unknown".
+
+It's worth noting that, although spaCy has statistical models for annotating texts
+in only 10 or so languages, it supports tokenization in dozens of other languages.
+See https://spacy.io/usage/models#languages for details. You can load such languages
+in textacy via ``textacy.load_spacy_lang(langstr, allow_blank=True)``.
 
 If you do need a ``Corpus``, you can split the input texts by language into
 distinct collections, then instantiate monolingual corpora on those collections.
