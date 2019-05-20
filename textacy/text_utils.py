@@ -19,10 +19,10 @@ def is_acronym(token, exclude=None):
     Pass single token as a string, return True/False if is/is not valid acronym.
 
     Args:
-        token (str): single word to check for acronym-ness
-        exclude (Set[str]): if technically valid but not actually good acronyms
+        token (str): Single word to check for acronym-ness
+        exclude (Set[str]): If technically valid but not actually good acronyms
             are known in advance, pass them in as a set of strings; matching
-            tokens will return False
+            tokens will return False.
 
     Returns:
         bool
@@ -64,18 +64,17 @@ def keyword_in_context(
     spanning ``window_width`` characters before and after each occurrence of keyword.
 
     Args:
-        text (str): text in which to search for ``keyword``
-        keyword (str): technically, any valid regular expression string should work,
+        text (str): Text in which to search for ``keyword``.
+        keyword (str): Technically, any valid regular expression string should work,
             but usually this is a single word or short phrase: "spam", "spam and eggs";
             to account for variations, use regex: "[Ss]pam (and|&) [Ee]ggs?"
 
-            N.B. If keyword contains special characters, be sure to escape them!!!
-        ignore_case (bool): if True, ignore letter case in `keyword` matching
-        window_width (int): number of characters on either side of
-            `keyword` to include as "context"
-        print_only (bool): if True, print out all results with nice
-            formatting; if False, return all (pre, kw, post) matches as generator
-            of raw strings
+            Note: If keyword contains special characters, be sure to escape them!
+        ignore_case (bool): If True, ignore letter case in ``keyword`` matching.
+        window_width (int): Number of characters on either side of ``keyword``
+            to include as "context".
+        print_only (bool): If True, print out all results with nice formatting;
+            if False, return all (pre, kw, post) matches as generator of raw strings
 
     Returns:
         generator(Tuple[str, str, str]), or None

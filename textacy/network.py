@@ -33,8 +33,8 @@ def terms_to_semantic_network(
 
     Args:
         terms (List[str] or List[:class:`spacy.tokens.Token`])
-        normalize (str or Callable): If 'lemma', lemmatize terms; if 'lower',
-            lowercase terms; if false-y, use the form of terms as they appear
+        normalize (str or Callable): If "lemma", lemmatize terms; if "lower",
+            lowercase terms; if falsy, use the form of terms as they appear
             in ``terms``; if a callable, must accept a ``Token`` and return
             a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
 
@@ -50,11 +50,11 @@ def terms_to_semantic_network(
             if 'binary', all such edges have weight = 1.
 
     Returns:
-        ``networkx.Graph``: Nodes in this network correspond to individual terms;
+        :class:`networkx.Graph`: Nodes in this network correspond to individual terms;
         those that co-occur are connected by edges with weights determined
         by ``edge_weighting``.
 
-    Notes:
+    Note:
         - Be sure to filter out stopwords, punctuation, certain parts of speech, etc.
           from the terms list before passing it to this function
         - Multi-word terms, such as named entities and compound nouns, must be merged
@@ -156,11 +156,11 @@ def sents_to_semantic_network(sents, normalize="lemma", edge_weighting="cosine")
             all words in a given sentence pair.
 
     Returns:
-        ``networkx.Graph``: Nodes are the integer indexes of the sentences
+        :class:`networkx.Graph`: Nodes are the integer indexes of the sentences
         in ``sents``, *not* the actual text of the sentences! Edges connect
         every node, with weights determined by ``edge_weighting``.
 
-    Notes:
+    Note:
         - If passing sentences as strings, be sure to filter out stopwords, punctuation,
           certain parts of speech, etc. beforehand
         - Consider normalizing the strings so that like terms are counted together

@@ -43,9 +43,8 @@ def sgrank(
     Args:
         doc (:class:`spacy.tokens.Doc`)
         ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3, 4, 5, 6)``
-                (default) includes all ngrams from 1 to 6; `2`
-                if only bigrams are wanted
-        normalize (str or callable): If 'lemma', lemmatize terms; if 'lower',
+            (default) includes all ngrams from 1 to 6; `2` if only bigrams are wanted
+        normalize (str or callable): If "lemma", lemmatize terms; if "lower",
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``Span`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`
@@ -62,12 +61,12 @@ def sgrank(
             Results are typically better with idf information.
 
     Returns:
-        List[Tuple[str, float]]: sorted list of top ``n_keyterms`` key terms and
+        List[Tuple[str, float]]: Sorted list of top ``n_keyterms`` key terms and
         their corresponding SGRank scores
 
     Raises:
-        ValueError: If ``n_keyterms`` is a float but not in (0.0, 1.0] or
-            ``window_width`` < 2.
+        ValueError: if ``n_keyterms`` is a float but not in (0.0, 1.0] or
+            ``window_width`` < 2
 
     References:
         .. [SGRank] Danesh, Sumner, and Martin. "SGRank: Combining Statistical and
@@ -210,12 +209,12 @@ def sgrank(
 
 def textrank(doc, normalize="lemma", n_keyterms=10):
     """
-    Convenience function for calling :func:`key_terms_from_semantic_network <textacy.keyterms.key_terms_from_semantic_network>`
+    Convenience function for calling :func:`key_terms_from_semantic_network()`
     with the parameter values used in the [TextRank]_ algorithm.
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
-        normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
+        normalize (str or callable): If "lemma", lemmatize terms; if "lower",
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``Token`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`
@@ -224,7 +223,8 @@ def textrank(doc, normalize="lemma", n_keyterms=10):
             representing the fraction of top-ranked terms to return as keyterms
 
     Returns:
-        See :func:`key_terms_from_semantic_network`.
+        List[Tuple[str, float]]: Sorted list of top ``n_keyterms`` key terms and
+        their corresponding TextRank ranking scores.
 
     References:
         .. [TextRank] Mihalcea, R., & Tarau, P. (2004, July). TextRank: Bringing
@@ -243,12 +243,12 @@ def textrank(doc, normalize="lemma", n_keyterms=10):
 
 def singlerank(doc, normalize="lemma", n_keyterms=10):
     """
-    Convenience function for calling :func:`key_terms_from_semantic_network <textacy.keyterms.key_terms_from_semantic_network>`
+    Convenience function for calling :func:`key_terms_from_semantic_network()`
     with the parameter values used in the [SingleRank]_ algorithm.
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
-        normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
+        normalize (str or callable): If "lemma", lemmatize terms; if "lower",
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``Token`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`
@@ -257,7 +257,8 @@ def singlerank(doc, normalize="lemma", n_keyterms=10):
             representing the fraction of top-ranked terms to return as keyterms
 
     Returns:
-        see :func:`key_terms_from_semantic_network`.
+        List[Tuple[str, float]]: Sorted list of top ``n_keyterms`` key terms and
+        their corresponding SingleRank ranking scores.
 
     References:
         .. [SingleRank] Hasan, K. S., & Ng, V. (2010, August). Conundrums in unsupervised
@@ -292,32 +293,32 @@ def key_terms_from_semantic_network(
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
-        normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
+        normalize (str or callable): If "lemma", lemmatize terms; if "lower",
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``Token`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`
-        window_width (int): width of sliding window in which term
+        window_width (int): Width of sliding window in which term
             co-occurrences are said to occur
-        edge_weighting ('binary', 'cooc_freq'}): method used to
-            determine weights of edges between nodes in the semantic network;
-            if 'binary', edge weight is set to 1 for any two terms co-occurring
-            within `window_width` terms; if 'cooc_freq', edge weight is set to
+        edge_weighting ("binary", "cooc_freq"}): Method used to determine
+            weights of edges between nodes in the semantic network;
+            if "binary", edge weight is set to 1 for any two terms co-occurring
+            within ``window_width`` terms; if "cooc_freq", edge weight is set to
             the number of times that any two terms co-occur
-        ranking_algo ({'pagerank', 'divrank', 'bestcoverage'}):
-            algorithm with which to rank nodes in the semantic network;
-            `pagerank` is the canonical (and default) algorithm, but it prioritizes
+        ranking_algo ({"pagerank", "divrank", "bestcoverage"}):
+            Algorithm with which to rank nodes in the semantic network;
+            "pagerank" is the canonical (and default) algorithm, but it prioritizes
             node centrality at the expense of node diversity; the other two
             attempt to balance centrality with diversity
-        join_key_words (bool): if True, join consecutive key words
+        join_key_words (bool): If True, join consecutive key words
             together into longer key terms, taking the sum of the constituent words'
             scores as the joined key term's combined score
-        n_keyterms (int or float): if int, number of top-ranked terms
+        n_keyterms (int or float): If int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
             is converted to an integer by ``round(len(doc) * n_keyterms)``
 
     Returns:
-        List[Tuple[str, float]]: sorted list of top ``n_keyterms`` key terms and
-        their corresponding ranking scores
+        List[Tuple[str, float]]: Sorted list of top ``n_keyterms`` key terms and
+        their corresponding ranking scores.
 
     Raises:
         ValueError: if ``n_keyterms`` is a float but not in (0.0, 1.0]
@@ -421,25 +422,24 @@ def most_discriminating_terms(
 ):
     """
     Given a collection of documents assigned to 1 of 2 exclusive groups, get the
-    `top_n_terms` most discriminating terms for group1-and-not-group2 and
+    ``top_n_terms`` most discriminating terms for group1-and-not-group2 and
     group2-and-not-group1.
 
     Args:
-        terms_lists (Iterable[Iterable[str]]): a sequence of documents, each as a
+        terms_lists (Iterable[Iterable[str]]): Sequence of documents, each as a
             sequence of (str) terms; used as input to :func:`doc_term_matrix()`
-        bool_array_grp1 (Iterable[bool]): an ordered sequence of True/False values,
+        bool_array_grp1 (Iterable[bool]): Ordered sequence of True/False values,
             where True corresponds to documents falling into "group 1" and False
-            corresponds to those in "group 2"
-        max_n_terms (int): only consider terms whose document frequency is within
-            the top `max_n_terms` out of all distinct terms; must be > 0
-        top_n_terms (int or float): if int (must be > 0), the total number of most
+            corresponds to those in "group 2".
+        max_n_terms (int): Only consider terms whose document frequency is within
+            the top ``max_n_terms`` out of all distinct terms; must be > 0.
+        top_n_terms (int or float): If int (must be > 0), the total number of most
             discriminating terms to return for each group; if float (must be in
-            the interval (0, 1)), the fraction of `max_n_terms` to return for each group
+            the interval (0, 1)), the fraction of ``max_n_terms`` to return for each group.
 
     Returns:
-        List[str]: top `top_n_terms` most discriminating terms for grp1-not-grp2
-
-        List[str]: top `top_n_terms` most discriminating terms for grp2-not-grp1
+        List[str]: Top ``top_n_terms`` most discriminating terms for grp1-not-grp2
+        List[str]: Top ``top_n_terms`` most discriminating terms for grp2-not-grp1
 
     References:
         King, Gary, Patrick Lam, and Margaret Roberts. "Computer-Assisted Keyword
@@ -709,7 +709,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
     balance between node centrality and diversity.
 
     Args:
-        graph (:class:`networkx.Graph <networkx.Graph>`)
+        graph (:class:`networkx.Graph`)
         k (int): number of results to return for top-k search
         c (int): *l* parameter for *l*-step expansion; best if 1 or 2
         alpha (float): float in [0.0, 1.0] specifying how much of
@@ -718,7 +718,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0):
             more emphasis on diversity
 
     Returns:
-        dict: top ``k`` nodes as ranked by bestcoverage algorithm; keys as node
+        dict: Top ``k`` nodes as ranked by bestcoverage algorithm; keys as node
         identifiers, values as corresponding ranking scores
 
     References:
@@ -823,8 +823,8 @@ def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
     balance between node centrality and diversity.
 
     Args:
-        graph (:class:`networkx.Graph <networkx.Graph>`):
-        r (:class:`numpy.array`,): the "personalization vector";
+        graph (:class:`networkx.Graph`):
+        r (:class:`numpy.ndarray`): the "personalization vector";
             by default, ``r = ones(1, n)/n``
         lambda_ (float): must be in [0.0, 1.0]
         alpha (float): controls the strength of self-links;

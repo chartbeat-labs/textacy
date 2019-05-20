@@ -39,20 +39,20 @@ def words(
 
     Args:
         doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
-        filter_stops (bool): if True, remove stop words from word list
-        filter_punct (bool): if True, remove punctuation from word list
-        filter_nums (bool): if True, remove number-like words (e.g. 10, 'ten')
-            from word list
-        include_pos (str or Set[str]): remove words whose part-of-speech tag
-            IS NOT included in this param
-        exclude_pos (str or Set[str]): remove words whose part-of-speech tag
-            IS in the specified tags
-        min_freq (int): remove words that occur in ``doc`` fewer than
-            ``min_freq`` times
+        filter_stops (bool): If True, remove stop words from word list.
+        filter_punct (bool): If True, remove punctuation from word list.
+        filter_nums (bool): If True, remove number-like words (e.g. 10, "ten")
+            from word list.
+        include_pos (str or Set[str]): Remove words whose part-of-speech tag
+            IS NOT included in this param.
+        exclude_pos (str or Set[str]): Remove words whose part-of-speech tag
+            IS in the specified tags.
+        min_freq (int): Remove words that occur in ``doc`` fewer than
+            ``min_freq`` times.
 
     Yields:
-        :class:`spacy.tokens.Token`: the next token from ``doc`` passing specified filters
-        in order of appearance in the document
+        :class:`spacy.tokens.Token`: Next token from ``doc`` passing specified filters
+        in order of appearance in the document.
 
     Raises:
         TypeError: if ``include_pos`` or ``exclude_pos`` is not a str, a set of str,

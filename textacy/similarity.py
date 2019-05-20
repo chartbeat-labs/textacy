@@ -37,7 +37,7 @@ def word_movers(doc1, doc2, metric="cosine"):
     Args:
         doc1 (:class:`spacy.tokens.Doc`)
         doc2 (:class:`spacy.tokens.Doc`)
-        metric ({'cosine', 'euclidean', 'l1', 'l2', 'manhattan'})
+        metric ({"cosine", "euclidean", "l1", "l2", "manhattan"})
 
     Returns:
         float: Similarity between ``doc1`` and ``doc2`` in the interval [0.0, 1.0],
@@ -95,7 +95,7 @@ def word2vec(obj1, obj2):
         obj2 (:class:`spacy.tokens.Doc`, :class:`spacy.tokens.Span`, :class:`spacy.tokens.Token`, or ``spacy.Lexeme``)
 
     Returns
-        float: similarity between ``obj1`` and ``obj2`` in the interval [0.0, 1.0],
+        float: Similarity between ``obj1`` and ``obj2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar objects
     """
     return obj1.similarity(obj2)
@@ -117,7 +117,7 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
             with a score >= this value will be considered matches
 
     Returns:
-        float: similarity between ``obj1`` and ``obj2`` in the interval [0.0, 1.0],
+        float: Similarity between ``obj1`` and ``obj2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings or sequences
         of strings
 
@@ -162,7 +162,7 @@ def hamming(str1, str2):
         str2 (str)
 
     Returns:
-        float: similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
+        float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings
 
     Note:
@@ -214,11 +214,11 @@ def jaro_winkler(str1, str2, prefix_weight=0.1):
     Args:
         str1 (str)
         str2 (str)
-        prefix_weight (float): the inverse value of common prefix length needed
+        prefix_weight (float): The inverse value of common prefix length needed
             to consider the strings identical
 
     Returns:
-        float: similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
+        float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings
     """
     return _jaro_winkler(str1, str2, prefix_weight)
@@ -234,7 +234,7 @@ def token_sort_ratio(str1, str2):
         str2 (str)
 
     Returns:
-        float: similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
+        float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings.
     """
     if not str1 or not str2:

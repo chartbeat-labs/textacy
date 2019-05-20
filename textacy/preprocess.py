@@ -2,8 +2,8 @@
 """
 Functions that modify raw text *in-place*, replacing contractions, URLs, emails,
 phone numbers, and currency symbols with standardized forms. These should be
-applied before processing by `Spacy <http://spacy.io>`_, but be warned: preprocessing
-may affect the interpretation of the text -- and spacy's processing of it.
+applied before processing by spaCy, but be warned: preprocessing may affect
+the interpretation of the text -- and spaCy's processing of it.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -15,14 +15,15 @@ from . import constants
 
 def fix_bad_unicode(text, normalization="NFC"):
     """
-    Fix unicode text that's "broken" using `ftfy <https://ftfy.readthedocs.io>`_;
+    Fix unicode text that's "broken" using ``ftfy``;
     this includes mojibake, HTML entities and other code cruft,
     and non-standard forms for display purposes.
 
     Warning:
         As of v0.7.0, this is no longer implemented within textacy. Instead,
-        install and import ``ftfy`` independently, then call ``ftfy.fix_text(text)``
-        with a much larger variety of params, as needed for your use case.
+        install and import ``ftfy`` directly, and call ``ftfy.fix_text(text)`` ,
+        which is more extensive and customizable than textacy's wrapper of it.
+        For details, check out https://ftfy.readthedocs.io.
     """
     return NotImplementedError(
         "As of v0.7.0, :func:`fix_bad_unicode()` is no longer implemented in textacy. "
@@ -34,7 +35,7 @@ def fix_bad_unicode(text, normalization="NFC"):
 
 def normalize_whitespace(text):
     """
-    Given ``text`` str, replace one or more spacings with a single space, and one
+    Given ``text``, replace one or more spacings with a single space, and one
     or more linebreaks with a single newline. Also strip leading/trailing whitespace.
     """
     return constants.RE_NONBREAKING_SPACE.sub(
@@ -44,7 +45,7 @@ def normalize_whitespace(text):
 
 def unpack_contractions(text):
     """
-    Replace *English* contractions in ``text`` str with their unshortened forms.
+    Replace *English* contractions in ``text`` with their unshortened forms.
     N.B. The "'d" and "'s" forms are ambiguous (had/would, is/has/possessive),
     so are left as-is.
     """
@@ -76,37 +77,37 @@ def unpack_contractions(text):
 
 
 def replace_urls(text, replace_with="*URL*"):
-    """Replace all URLs in ``text`` str with ``replace_with`` str."""
+    """Replace all URLs in ``text`` with ``replace_with``."""
     return constants.RE_URL.sub(
         replace_with, constants.RE_SHORT_URL.sub(replace_with, text)
     )
 
 
 def replace_emails(text, replace_with="*EMAIL*"):
-    """Replace all emails in ``text`` str with ``replace_with`` str."""
+    """Replace all emails in ``text`` with ``replace_with``."""
     return constants.RE_EMAIL.sub(replace_with, text)
 
 
 def replace_phone_numbers(text, replace_with="*PHONE*"):
-    """Replace all phone numbers in ``text`` str with ``replace_with`` str."""
+    """Replace all phone numbers in ``text`` with ``replace_with``."""
     return constants.RE_PHONE.sub(replace_with, text)
 
 
 def replace_numbers(text, replace_with="*NUMBER*"):
-    """Replace all numbers in ``text`` str with ``replace_with`` str."""
+    """Replace all numbers in ``text`` with ``replace_with``."""
     return constants.RE_NUMBERS.sub(replace_with, text)
 
 
 def replace_currency_symbols(text, replace_with=None):
     """
-    Replace all currency symbols in ``text`` str with string specified by ``replace_with`` str.
+    Replace all currency symbols in ``text`` with string specified by ``replace_with``.
 
     Args:
-        text (str): raw text
-        replace_with (str): if None (default), replace symbols with
-            their standard 3-letter abbreviations (e.g. '$' with 'USD', '£' with 'GBP');
+        text (str): Raw text.
+        replace_with (str): If None (default), replace symbols with
+            their standard 3-letter abbreviations (e.g. "$" with "USD", "£" with "GBP");
             otherwise, pass in a string with which to replace all symbols
-            (e.g. "*CURRENCY*")
+            (e.g. "*CURRENCY*").
 
     Returns:
         str
@@ -125,9 +126,9 @@ def remove_punct(text, marks=None):
     with whitespace.
 
     Args:
-        text (str): raw text
+        text (str): Raw text.
         marks (str): If specified, remove only the characters in this string,
-            e.g. ``marks=',;:'`` removes commas, semi-colons, and colons.
+            e.g. ``marks=",;:"`` removes commas, semi-colons, and colons.
             Otherwise, all punctuation marks are removed.
 
     Returns:
@@ -146,22 +147,22 @@ def remove_punct(text, marks=None):
 
 def remove_accents(text, method="unicode"):
     """
-    Remove accents from any accented unicode characters in ``text`` str, either by
+    Remove accents from any accented unicode characters in ``text``, either by
     transforming them into ascii equivalents or removing them entirely.
 
     Args:
-        text (str): raw text
-        method ({'unicode', 'ascii'}): if 'unicode', remove accented
-            char for any unicode symbol with a direct ASCII equivalent; if 'ascii',
-            remove accented char for any unicode symbol
+        text (str): Raw text.
+        method ({"unicode", "ascii"}): If "unicode", remove accented char
+            for any unicode symbol with a direct ASCII equivalent; if "ascii",
+            remove accented char for any unicode symbol.
 
-            NB: the 'ascii' method is notably faster than 'unicode', but less good
+            Note: The "ascii" method is notably faster than "unicode", but less good.
 
     Returns:
         str
 
     Raises:
-        ValueError: if ``method`` is not in {'unicode', 'ascii'}
+        ValueError: If ``method`` is not in {"unicode", "ascii"}.
     """
     if method == "unicode":
         return "".join(
@@ -194,27 +195,27 @@ def preprocess_text(
     no_accents=False,
 ):
     """
-    Normalize various aspects of a raw text doc before parsing it with Spacy.
+    Normalize various aspects of raw text before parsing it with spaCy.
     A convenience function for applying all other preprocessing functions in one go.
 
     Args:
-        text (str): raw text to preprocess
-        fix_unicode (bool): if True, fix "broken" unicode such as
-            mojibake and garbled HTML entities
-        lowercase (bool): if True, all text is lower-cased
-        no_urls (bool): if True, replace all URL strings with '*URL*'
-        no_emails (bool): if True, replace all email strings with '*EMAIL*'
-        no_phone_numbers (bool): if True, replace all phone number strings
-            with '*PHONE*'
-        no_numbers (bool): if True, replace all number-like strings
-            with '*NUMBER*'
-        no_currency_symbols (bool): if True, replace all currency symbols
+        text (str): Raw text to preprocess.
+        fix_unicode (bool): If True, fix "broken" unicode such as
+            mojibake and garbled HTML entities.
+        lowercase (bool): If True, all text is lower-cased
+        no_urls (bool): If True, replace all URL strings with "*URL*"
+        no_emails (bool): If True, replace all email strings with "*EMAIL*"
+        no_phone_numbers (bool): If True, replace all phone number strings
+            with "*PHONE*"
+        no_numbers (bool): If True, replace all number-like strings
+            with "*NUMBER*"
+        no_currency_symbols (bool): If True, replace all currency symbols
             with their standard 3-letter abbreviations
-        no_punct (bool): if True, remove all punctuation (replace with
+        no_punct (bool): If True, remove all punctuation (replace with
             empty string)
-        no_contractions (bool): if True, replace *English* contractions
+        no_contractions (bool): If True, replace *English* contractions
             with their unshortened forms
-        no_accents (bool): if True, replace all accented characters
+        no_accents (bool): If True, replace all accented characters
             with unaccented versions
 
     Returns:
