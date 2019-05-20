@@ -177,6 +177,10 @@ class TestNounChunks(object):
 
 class TestPOSRegexMatches(object):
 
+    def test_deprecation_warning(self, spacy_doc):
+        with pytest.warns(DeprecationWarning):
+            _ = list(extract.pos_regex_matches(spacy_doc, r"<NOUN>"))
+
     def test_simple(self, spacy_doc):
         result = list(extract.pos_regex_matches(spacy_doc, r"<NOUN>+"))
         assert all(isinstance(span, Span) for span in result)

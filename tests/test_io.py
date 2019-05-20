@@ -342,6 +342,10 @@ class TestIOUtils(object):
             len(list(io.get_filepaths(TESTS_DIR, match_regex="io", extension=".py"))) == 1
         )
 
+    def test_get_filenames_deprecation(self):
+        with pytest.warns(DeprecationWarning):
+            _ = list(io.get_filenames(TESTS_DIR))
+
     def test_get_filenames(self):
         expected = sorted(
             os.path.join(TESTS_DIR, fname)

@@ -54,6 +54,12 @@ def test_attrs_on_doc(spacy_lang, spacy_doc):
         assert isinstance(spacy_doc._.get(attr), (int, float, dict)) is True
 
 
+def test_merge_entities_deprecation(spacy_lang):
+    doc = spacy_lang("Matthew Honnibal and Ines Montani do great work on spaCy.")
+    with pytest.warns(DeprecationWarning):
+        _ = components.merge_entities(doc)
+
+
 def test_merge_entities(spacy_lang):
     doc1 = spacy_lang("Matthew Honnibal and Ines Montani do great work on spaCy.")
     # (temporarily) add this other component to the pipeline
