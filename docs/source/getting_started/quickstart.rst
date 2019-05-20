@@ -277,7 +277,7 @@ Okay, let's not *actually* analyze my ramblings on social media...
 Instead, let's consider a more complicated dataset: a compressed JSON file in the
 mostly-standard "lines" format, in which each line is a separate record with both
 text data and metadata fields. As an example, we can use the "Capitol Words" dataset
-integrated into textacy (see :ref:`ref-api-datasets` for details). The data
+integrated into textacy (see :ref:`api-reference-datasets` for details). The data
 is downloadable from the `textacy-data GitHub repository
 <https://github.com/bdewilde/textacy-data/releases/tag/capitol_words_py3_v1.0>`_.
 
@@ -413,7 +413,7 @@ And that's just getting started! For now, though, I encourage you to pick a data
 --- either your own or one already included in textacy --- and start exploring
 the data. *Most* functionality is well-documented via in-code docstrings; to see
 that information all together in nicely-formatted HTML, be sure to check out
-the :ref:`ref-api-reference`.
+the :ref:`api-reference`.
 
 Working with Many Languages
 ---------------------------

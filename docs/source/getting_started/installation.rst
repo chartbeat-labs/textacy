@@ -64,7 +64,7 @@ work as expected with textacy's automatic language detection.
 
 ``textacy`` itself features convenient access to several datasets comprised of
 thousands of text + metadata records. Data can be downloaded via the ``.download()``
-method on corresponding dataset classes (see :ref:`ref-api-datasets` for details)
+method on corresponding dataset classes (see :ref:`api-reference-datasets` for details)
 or directly from the command line.
 
 For example:
