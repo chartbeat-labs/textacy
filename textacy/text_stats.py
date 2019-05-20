@@ -91,7 +91,7 @@ class TextStats(object):
 
     def __init__(self, doc):
         self.lang = doc.vocab.lang
-        self.n_sents = itertoolz.count(doc.sents)
+        self.n_sents = itertoolz.count(doc.sents) if doc.is_sentenced else None
         # get objs for basic count computations
         hyphenator = cache.load_hyphenator(lang=self.lang)
         words = tuple(
@@ -180,6 +180,12 @@ class TextStats(object):
         if self.n_words == 0:
             LOGGER.warning(
                 "readability stats can't be computed because doc has 0 words"
+            )
+            return None
+        elif self.n_sents is None:
+            LOGGER.warning(
+                "readability stats can't be computed because doc has not been "
+                "segmented into sentences"
             )
             return None
         return {
