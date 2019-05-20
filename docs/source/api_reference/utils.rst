@@ -3,8 +3,8 @@
 Utilities
 =========
 
-.. automodule:: textacy.cache
+.. automodule:: textacy.lang_utils
     :members:
 
-.. automodule:: textacy.lang_utils
+.. automodule:: textacy.cache
     :members:

@@ -1,6 +1,6 @@
 """
-Utils
------
+IO Utils
+--------
 
 Functions to help read and write data to disk in a variety of formats.
 """

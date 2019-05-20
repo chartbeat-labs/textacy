@@ -1,5 +1,8 @@
 # -*- coding: utf-8 -*-
 """
+Key Terms
+---------
+
 Functions for unsupervised automatic key term extraction, both specific algorithms
 (SGRank, TextRank, SingleRank) and a generalization of semantic network-based methods.
 Also includes a function to aggregate common key term variants of the same idea.

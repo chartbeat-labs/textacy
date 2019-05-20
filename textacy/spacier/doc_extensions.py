@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-spaCy Doc extensions
---------------------
+Doc extensions
+--------------
 
 Functionality for inspecting, customizing, and transforming spaCy's core
 data structure, :class:`spacy.tokens.Doc`, accessible directly as functions

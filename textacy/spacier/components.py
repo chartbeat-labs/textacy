@@ -1,6 +1,6 @@
 """
-Components
-----------
+Pipeline Components
+-------------------
 
 Custom components to add to a spaCy language pipeline.
 """
