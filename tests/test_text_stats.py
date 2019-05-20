@@ -59,11 +59,6 @@ def test_flesch_reading_ease(ts):
     assert ts.flesch_reading_ease == pytest.approx(50.707745098039254, rel=1e-2)
 
 
-def test_flesch_readability_ease_warns(ts):
-    with pytest.warns(DeprecationWarning):
-        _ = ts.flesch_readability_ease
-
-
 def test_smog_index(ts):
     assert ts.smog_index == pytest.approx(14.554592549557764, rel=1e-2)
 

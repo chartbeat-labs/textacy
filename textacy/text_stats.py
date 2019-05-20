@@ -13,7 +13,6 @@ from cytoolz import itertoolz
 
 from . import cache
 from . import extract
-from . import utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -117,13 +116,6 @@ class TextStats(object):
     @property
     def flesch_reading_ease(self):
         return flesch_reading_ease(
-            self.n_syllables, self.n_words, self.n_sents, lang=self.lang
-        )
-
-    @property
-    def flesch_readability_ease(self):
-        """For backwards compatibility. Deprecated."""
-        return flesch_readability_ease(
             self.n_syllables, self.n_words, self.n_sents, lang=self.lang
         )
 
@@ -251,20 +243,6 @@ def flesch_reading_ease(n_syllables, n_words, n_sents, lang=None):
             "Flesch Reading Ease is only implemented for these languages: {}. "
             'Passing `lang=None` falls back to "en" (English)'.format(langs)
         )
-
-
-def flesch_readability_ease(n_syllables, n_words, n_sents, lang=None):
-    """
-    Alias for :func:`flesch_reading_ease()`, for backwards compatibility.
-
-    Deprecated!
-    """
-    utils.deprecated(
-        "`flesch_readability_ease()` is an alias for `flesch_reading_ease()` "
-        "for backwards compatibility; it will be removed in a future version.",
-        action="once",
-    )
-    return flesch_reading_ease(n_syllables, n_words, n_sents, lang=lang)
 
 
 def smog_index(n_polysyllable_words, n_sents):
