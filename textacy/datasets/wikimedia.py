@@ -311,6 +311,9 @@ class Wikimedia(Dataset):
 
         Yields:
             str: Text of the next wiki page in dataset passing all filters.
+
+        Raises:
+            ValueError: If any filtering options are invalid.
         """
         filters = self._get_filters(category, wiki_link, min_len)
         for record in itertools.islice(self._filtered_iter(filters), limit):
@@ -339,6 +342,9 @@ class Wikimedia(Dataset):
         Yields:
             str: Text of the next wiki page in dataset passing all filters.
             dict: Metadata of the next wiki page in dataset passing all filters.
+
+        Raises:
+            ValueError: If any filtering options are invalid.
         """
         filters = self._get_filters(category, wiki_link, min_len)
         for record in itertools.islice(self._filtered_iter(filters), limit):
@@ -375,7 +381,7 @@ class Wikipedia(Wikimedia):
         >>> for text in wp.texts(min_len=10000, limit=5):
         ...     print(len(text))
 
-    Stream wiki pages into a :class:`textacy.Corpus`::
+    Stream wiki pages into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
         >>> textacy.Corpus("en", data=wp.records(min_len=2000, limit=50))
         Corpus(50 docs; 72368 tokens)
@@ -435,7 +441,7 @@ class Wikinews(Wikimedia):
         >>> for text in wn.texts(min_len=5000, limit=5):
         ...     print(len(text))
 
-    Stream wiki pages into a :class:`textacy.Corpus`::
+    Stream wiki pages into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
         >>> textacy.Corpus("en", data=wn.records(limit=100))
         Corpus(100 docs; 33092 tokens)

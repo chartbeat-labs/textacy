@@ -58,7 +58,7 @@ def terms_to_semantic_network(
         - Be sure to filter out stopwords, punctuation, certain parts of speech, etc.
           from the terms list before passing it to this function
         - Multi-word terms, such as named entities and compound nouns, must be merged
-          into single strings or spacy.Tokens beforehand
+          into single strings or ``Token`` s beforehand
         - If terms are already strings, be sure to have normalized them so that
           like terms are counted together; for example, by applying
           :func:`textacy.spacier.utils.get_normalized_text()`

@@ -403,8 +403,9 @@ class Corpus(object):
     def word_counts(self, normalize="lemma", weighting="count", as_strings=False):
         """
         Map the set of unique words in :class:`Corpus` to their counts as
-        absolute, relative, or binary frequencies of occurence,
-        similar to :meth:`Doc._.to_bag_of_words()` but aggregated over all docs.
+        absolute, relative, or binary frequencies of occurence, similar to
+        :meth:`Doc._.to_bag_of_words() <textacy.spacier.doc_extensions.to_bag_of_words>`
+        but aggregated over all docs.
 
         Args:
             normalize (str): If "lemma", lemmatize words before counting; if
@@ -429,7 +430,7 @@ class Corpus(object):
             of occurrence (depending on the value of ``weighting``).
 
         See Also:
-            :func:`textacy.vsm.get_term_freqs()`
+            * :func:`textacy.vsm.get_term_freqs() <textacy.vsm.matrix_utils.get_term_freqs>`
         """
         word_counts_ = collections.Counter()
         for doc in self:
@@ -484,7 +485,7 @@ class Corpus(object):
             on the value of ``weighting``).
 
         See Also:
-            :func:`textacy.vsm.get_doc_freqs()`
+            * :func:`textacy.vsm.get_doc_freqs() <textacy.vsm.matrix_utils.get_doc_freqs>`
         """
         word_doc_counts_ = collections.Counter()
         for doc in self:

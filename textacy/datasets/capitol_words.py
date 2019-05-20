@@ -84,7 +84,7 @@ class CapitolWords(Dataset):
         >>> for text in cw.texts(min_len=50000):
         ...     print(len(text))
 
-    Stream speeches into a :class:`textacy.Corpus`::
+    Stream speeches into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
         >>> textacy.Corpus("en", data=ota.records(limit=100))
         Corpus(100 docs; 70496 tokens)

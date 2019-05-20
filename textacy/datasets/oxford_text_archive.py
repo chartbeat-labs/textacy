@@ -79,7 +79,7 @@ class OxfordTextArchive(Dataset):
         >>> for text in ota.texts(min_len=4000000):
         ...     print(len(text))
 
-    Stream literary works into a :class:`textacy.Corpus`::
+    Stream literary works into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
         >>> textacy.Corpus("en", data=ota.records(limit=5))
         Corpus(5 docs; 182289 tokens)

@@ -78,8 +78,11 @@ def remove_doc_extensions():
 
 def get_lang(doc):
     """
-    Get the standard, two-letter language code assigned to ``doc``
+    Get the standard, two-letter language code assigned to ``Doc``
     and its associated :class:`spacy.vocab.Vocab`.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
 
     Returns:
         str
@@ -89,8 +92,11 @@ def get_lang(doc):
 
 def get_preview(doc):
     """
-    Get a short preview of the ``doc``, including the number of tokens
+    Get a short preview of the ``Doc``, including the number of tokens
     and an initial snippet.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
 
     Returns:
         str
@@ -103,7 +109,10 @@ def get_preview(doc):
 
 def get_tokens(doc):
     """
-    Yield the tokens in ``doc``, one at a time.
+    Yield the tokens in ``Doc``, one at a time.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
 
     Yields:
         :class:`spacy.tokens.Token`
@@ -114,7 +123,10 @@ def get_tokens(doc):
 
 def get_n_tokens(doc):
     """
-    Get the number of tokens (including punctuation) in ``doc``.
+    Get the number of tokens (including punctuation) in ``Doc``.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
 
     Returns:
         int
@@ -124,7 +136,10 @@ def get_n_tokens(doc):
 
 def get_n_sents(doc):
     """
-    Get the number of sentences in ``doc``.
+    Get the number of sentences in ``Doc``.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
 
     Returns:
         int
@@ -134,7 +149,10 @@ def get_n_sents(doc):
 
 def get_meta(doc):
     """
-    Get custom metadata added to ``doc``.
+    Get custom metadata added to ``Doc``.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
 
     Returns:
         dict
@@ -144,7 +162,7 @@ def get_meta(doc):
 
 def set_meta(doc, value):
     """
-    Add custom metadata to ``doc``.
+    Add custom metadata to ``Doc``.
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
@@ -161,7 +179,10 @@ def set_meta(doc, value):
 
 def to_tokenized_text(doc):
     """
-    Transform ``doc`` into an ordered, nested list of token-texts per sentence.
+    Transform ``Doc`` into an ordered, nested list of token-texts per sentence.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
 
     Returns:
         List[List[str]]
@@ -181,8 +202,11 @@ def to_tokenized_text(doc):
 
 def to_tagged_text(doc):
     """
-    Transform ``doc`` into an ordered, nested list of (token-text, part-of-speech tag)
+    Transform ``Doc`` into an ordered, nested list of (token-text, part-of-speech tag)
     pairs per sentence.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
 
     Returns:
         List[List[Tuple[str, str]]]
@@ -209,9 +233,9 @@ def to_terms_list(
     **kwargs
 ):
     """
-    Transform ``doc`` into a sequence of ngrams and/or entities — not necessarily
+    Transform ``Doc`` into a sequence of ngrams and/or entities — not necessarily
     in order of appearance — where each appears in the sequence as many times as
-    it appears in ``doc``.
+    it appears in ``Doc``.
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
@@ -233,7 +257,7 @@ def to_terms_list(
         normalize (str or callable): If "lemma", lemmatize terms; if "lower",
             lowercase terms; if falsy, use the form of terms as they appear in doc;
             if callable, must accept a ``Token`` or ``Span`` and return a str,
-            e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
+            e.g. :func:`get_normalized_text() <textacy.spacier.utils.get_normalized_text>`.
         as_strings (bool): If True, terms are returned as strings;
             if False, terms are returned as their unique integer ids.
         kwargs:
@@ -247,8 +271,8 @@ def to_terms_list(
             - exclude_types (str or Set[str]
             - drop_determiners (bool)
 
-            See :func:`extract.words()`, :func:`extract.ngrams()`, and
-            :func:`extract.entities()` for details.
+            See :func:`textacy.extract.words()`, :func:`textacy.extract.ngrams()`,
+            and :func:`textacy.extract.entities()` for details.
 
     Yields:
         int or str: the next term in the terms list, either as a unique
@@ -256,7 +280,7 @@ def to_terms_list(
 
     Raises:
         ValueError: if neither ``entities`` nor ``ngrams`` are included,
-        or if ``entities`` or ``normalize`` have invalid values
+            or if ``entities`` or ``normalize`` have invalid values
 
     Note:
         Despite the name, this is a generator function; to get an
@@ -376,28 +400,28 @@ def to_bag_of_terms(
     **kwargs
 ):
     """
-    Transform :class:`Doc` into a bag-of-terms: the set of unique terms in
-    :class:`Doc` mapped to their frequency of occurrence, where "terms"
-    includes ngrams and/or named entities.
+    Transform ``Doc`` into a bag-of-terms: the set of unique terms in ``Doc``
+    mapped to their frequency of occurrence, where "terms" includes ngrams and/or entities.
 
     Args:
+        doc (:class:`spacy.tokens.Doc`)
         ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3)``
             (default) includes unigrams (words), bigrams, and trigrams; `2`
             if only bigrams are wanted; falsy (e.g. False) to not include any
-        entities (bool): if True (default), include named entities;
+        entities (bool): If True (default), include named entities;
             note: if ngrams are also included, any ngrams that exactly
             overlap with an entity are skipped to prevent double-counting
-        normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
-            lowercase terms; if false-y, use the form of terms as they appear
-            in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
-            and return a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`
-        weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
-            terms. If 'count' (default), weights are the absolute number of
-            occurrences (count) of term in doc. If 'binary', all counts are
-            set equal to 1. If 'freq', term counts are normalized by the
+        normalize (str or callable): If "lemma", lemmatize terms; if "lower",
+            lowercase terms; if falsy, use the form of terms as they appear
+            in ``doc``; if a callable, must accept a ``Token`` or ``Span``
+            and return a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
+        weighting ({"count", "freq", "binary"}): Type of weight to assign to
+            terms. If "count" (default), weights are the absolute number of
+            occurrences (count) of term in doc. If "binary", all counts are
+            set equal to 1. If "freq", term counts are normalized by the
             total token count, giving their relative frequency of occurrence.
-        as_strings (bool): if True, words are returned as strings; if False
-            (default), words are returned as their unique integer ids
+        as_strings (bool): If True, words are returned as strings; if False
+            (default), words are returned as their unique integer ids.
         kwargs:
             - filter_stops (bool)
             - filter_punct (bool)
@@ -409,10 +433,8 @@ def to_bag_of_terms(
             - exclude_types (str or Set[str]
             - drop_determiners (bool)
 
-            See :func:`extract.words() <textacy.extract.words>`,
-            :func:`extract.ngrams() <textacy.extract.ngrams>`,
-            and :func:`extract.entities() <textacy.extract.entities>`
-            for more information on these parameters.
+            See :func:`textacy.extract.words()`, :func:`textacy.extract.ngrams()`,
+            and :func:`textacy.extract.entities()`  for details.
 
     Returns:
         dict: mapping of a unique term id or string (depending on the value
@@ -443,18 +465,18 @@ def to_bag_of_terms(
 
 def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False):
     """
-    Transform :class:`Doc` into a bag-of-words: the set of unique words in
-    :class:`Doc` mapped to their absolute, relative, or binary frequency of
-    occurrence.
+    Transform ``Doc`` into a bag-of-words: the set of unique words in ``Doc``
+    mapped to their absolute, relative, or binary frequency of occurrence.
 
     Args:
-        normalize (str): if 'lemma', lemmatize words before counting; if
-            'lower', lowercase words before counting; otherwise, words are
+        doc (:class:`spacy.tokens.Doc`)
+        normalize (str): If "lemma", lemmatize words before counting; if
+            "lower", lowercase words before counting; otherwise, words are
             counted using the form with which they they appear in doc
-        weighting ({'count', 'freq', 'binary'}): Type of weight to assign to
-            words. If 'count' (default), weights are the absolute number of
-            occurrences (count) of word in doc. If 'binary', all counts are
-            set equal to 1. If 'freq', word counts are normalized by the
+        weighting ({"count", "freq", "binary"}): Type of weight to assign to
+            words. If "count" (default), weights are the absolute number of
+            occurrences (count) of word in doc. If "binary", all counts are
+            set equal to 1. If "freq", word counts are normalized by the
             total token count, giving their relative frequency of occurrence.
             Note: The resulting set of frequencies won't (necessarily) sum
             to 1.0, since punctuation and stop words are filtered out after
@@ -506,30 +528,31 @@ def to_semantic_network(
     window_width=10,
 ):
     """
-    Transform :class:`Doc` into a semantic network, where nodes are either
-    'words' or 'sents' and edges between nodes may be weighted in different ways.
+    Transform ``Doc`` into a semantic network, where nodes are either
+    "words" or "sents" and edges between nodes may be weighted in different ways.
 
     Args:
-        nodes ({'words', 'sents'}): type of doc component to use as nodes
-            in the semantic network
-        normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
-            lowercase terms; if false-y, use the form of terms as they appear
-            in doc; if a callable, must accept a ``spacy.Token`` or ``spacy.Span``
-            (if ``nodes`` = 'words' or 'sents', respectively) and return a
-            str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`
-        edge_weighting (str): type of weighting to apply to edges
-            between nodes; if ``nodes == 'words'``, options are {'cooc_freq', 'binary'},
-            if ``nodes == 'sents'``, options are {'cosine', 'jaccard'}; if
-            'default', 'cooc_freq' or 'cosine' will be automatically used
-        window_width (int): size of sliding window over terms that
-            determines which are said to co-occur; only applicable if 'words'
+        doc (:class:`spacy.tokens.Doc`)
+        nodes ({"words", "sents"}): Type of doc component to use as nodes
+            in the semantic network.
+        normalize (str or callable): If "lemma", lemmatize terms; if "lower",
+            lowercase terms; if falsy, use the form of terms as they appear
+            in doc; if a callable, must accept a ``Token`` or ``Span``
+            (if ``nodes`` = "words" or "sents", respectively) and return a str,
+            e.g. :func:`get_normalized_text() <textacy.spacier.utils.get_normalized_text>`
+        edge_weighting (str): Type of weighting to apply to edges between nodes;
+            if ``nodes`` = "words", options are {"cooc_freq", "binary"},
+            if ``nodes`` = "sents", options are {"cosine", "jaccard"}; if
+            "default", "cooc_freq" or "cosine" will be automatically used.
+        window_width (int): Size of sliding window over terms that determines
+            which are said to co-occur; only applicable if ``nodes`` = "words".
 
     Returns:
         ``networkx.Graph``: where nodes represent either terms or sentences
         in doc; edges, the relationships between them.
 
     Raises:
-        ValueError: if ``nodes`` is neither 'words' nor 'sents'.
+        ValueError: If ``nodes`` is neither "words" nor "sents".
 
     See Also:
         - :func:`terms_to_semantic_network() <textacy.network.terms_to_semantic_network>`

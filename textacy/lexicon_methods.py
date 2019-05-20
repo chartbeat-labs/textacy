@@ -33,7 +33,7 @@ def emotional_valence(words, threshold=0.0, dm_data_dir=None, dm_weighting="norm
     the [DepecheMood]_ dataset.
 
     Args:
-        words (List[``spacy.Token``]): list of words for which to get
+        words (List[:class:`spacy.tokens.Token`]): list of words for which to get
             average emotional valence; note that only nouns, adjectives, adverbs,
             and verbs will be counted
         threshold (float): minimum emotional valence score for which to

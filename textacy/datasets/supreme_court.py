@@ -108,7 +108,7 @@ class SupremeCourt(Dataset):
         >>> for text in sc.texts(min_len=250000):
         ...     print(len(text))
 
-    Stream decisions into a :class:`textacy.Corpus`::
+    Stream decisions into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
         >>> textacy.Corpus("en", data=sc.records(limit=25))
         Corpus(25 docs; 136696 tokens)

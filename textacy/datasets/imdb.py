@@ -83,7 +83,7 @@ class IMDB(Dataset):
         >>> for text in ds.texts(min_len=1000, limit=5):
         ...     print(len(text))
 
-    Stream movie reviews into a :class:`textacy.Corpus`::
+    Stream movie reviews into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
         >>> textacy.Corpus("en", data=ds.records(limit=100))
         Corpus(100 docs; 24340 tokens)
@@ -236,6 +236,9 @@ class IMDB(Dataset):
 
         Yields:
             str: Text of the next movie review in dataset passing all filters.
+
+        Raises:
+            ValueError: If any filtering options are invalid.
         """
         self._subset = utils.to_collection(subset, compat.string_types, tuple)
         self._label = utils.to_collection(label, compat.string_types, tuple)
@@ -265,6 +268,9 @@ class IMDB(Dataset):
         Yields:
             str: Text of the next movie review in dataset passing all filters.
             dict: Metadata of the next movie review in dataset passing all filters.
+
+        Raises:
+            ValueError: If any filtering options are invalid.
         """
         self._subset = utils.to_collection(subset, compat.string_types, tuple)
         self._label = utils.to_collection(label, compat.string_types, tuple)

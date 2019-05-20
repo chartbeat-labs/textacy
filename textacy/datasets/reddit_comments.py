@@ -81,7 +81,7 @@ class RedditComments(Dataset):
         >>> for text in rc.texts(min_len=2000, limit=5):
         ...     print(len(text))
 
-    Stream comments into a :class:`textacy.Corpus`::
+    Stream comments into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
         >>> textacy.Corpus("en", data=rc.records(limit=1000))
         Corpus(1000 docs; 27582 tokens)
@@ -278,6 +278,9 @@ class RedditComments(Dataset):
 
         Yields:
             str: Text of the next comment in dataset passing all filters.
+
+        Raises:
+            ValueError: If any filtering options are invalid.
         """
         self._date_range = date_range  # used to limit files iterated
         try:
@@ -317,6 +320,9 @@ class RedditComments(Dataset):
         Yields:
             str: Text of the next comment in dataset passing all filters.
             dict: Metadata of the next comment in dataset passing all filters.
+
+        Raises:
+            ValueError: If any filtering options are invalid.
         """
         self._date_range = date_range  # used to limit files iterated
         try:

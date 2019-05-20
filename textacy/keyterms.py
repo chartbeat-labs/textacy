@@ -47,7 +47,7 @@ def sgrank(
                 if only bigrams are wanted
         normalize (str or callable): If 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if None, use the form of terms as they appeared in
-            ``doc``; if a callable, must accept a ``spacy.Span`` and return a str,
+            ``doc``; if a callable, must accept a ``Span`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`
         window_width (int): Width of sliding window in which term
             co-occurrences are determined to occur. Note: Larger values may
@@ -217,7 +217,7 @@ def textrank(doc, normalize="lemma", n_keyterms=10):
         doc (:class:`spacy.tokens.Doc`)
         normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if None, use the form of terms as they appeared in
-            ``doc``; if a callable, must accept a ``spacy.Token`` and return a str,
+            ``doc``; if a callable, must accept a ``Token`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`
         n_keyterms (int or float): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
@@ -250,7 +250,7 @@ def singlerank(doc, normalize="lemma", n_keyterms=10):
         doc (:class:`spacy.tokens.Doc`)
         normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if None, use the form of terms as they appeared in
-            ``doc``; if a callable, must accept a ``spacy.Token`` and return a str,
+            ``doc``; if a callable, must accept a ``Token`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`
         n_keyterms (int or float): if int, number of top-ranked terms
             to return as keyterms; if float, must be in the open interval (0, 1),
@@ -294,7 +294,7 @@ def key_terms_from_semantic_network(
         doc (:class:`spacy.tokens.Doc`)
         normalize (str or callable): if 'lemma', lemmatize terms; if 'lower',
             lowercase terms; if None, use the form of terms as they appeared in
-            ``doc``; if a callable, must accept a ``spacy.Token`` and return a str,
+            ``doc``; if a callable, must accept a ``Token`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`
         window_width (int): width of sliding window in which term
             co-occurrences are said to occur
