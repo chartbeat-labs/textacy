@@ -15,6 +15,7 @@ import logging
 import os
 import sys
 
+import joblib
 import spacy
 from cachetools import cached, LRUCache
 from cachetools.keys import hashkey
@@ -120,6 +121,37 @@ def load_spacy_lang(name, disable=None, allow_blank=False):
             LOGGER.warning("loaded '%s' spaCy language blank", name)
             return spacy_lang
         raise e
+
+
+@cached(LRU_CACHE, key=functools.partial(hashkey, "lang_classifier"))
+def load_lang_classifier(data_dir=None):
+    """
+    Load a ``scikit-learn`` estimator that identifies the (main) language
+    in which texts are written.
+
+    Args:
+        data_dir (str): Full path to directory on disk in which a language classifier
+            has been saved. The full filepath should look like this:
+            ``{data_dir}/lang_classifier/textacy_lang_classifier_py{version}.pkl.gz``.
+
+    Returns:
+        :class:`sklearn.pipeline.Pipeline`
+    """
+    import sklearn.feature_extraction
+    import sklearn.neural_network
+    import sklearn.pipeline
+
+    if data_dir is None:
+        data_dir = constants.DEFAULT_DATA_DIR
+    fname = os.path.join(
+        data_dir,
+        "lang_classifier",
+        "textacy-lang-classifier-{}.pkl.gz".format("py2" if compat.PY2 else "py3")
+    )
+    LOGGER.debug("loading language classifier from %s", fname)
+    with io.open(fname, mode="rb") as f:
+        pipeline = joblib.load(f)
+    return pipeline
 
 
 @cached(LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
