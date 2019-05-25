@@ -33,6 +33,26 @@ def fix_bad_unicode(text, normalization="NFC"):
     )
 
 
+def normalize_unicode(text, form="NFC"):
+    """
+    Normalize unicode characters in ``text`` into canonical forms.
+
+    Args:
+        text (str): Raw text.
+        form ({"NFC", "NFD", "NFKC", "NFKD"}): Form of normalization applied to
+            unicode characters. For example, an "e" with accute accent "´" can be
+            written as "e´" (canonical decomposition, "NFD") or "é" (canonical
+            composition, "NFC"). Unicode can be normalized to NFC form
+            without any change in meaning, so it's usually a safe bet. If "NFKC",
+            additional normalizations are applied that can change characters' meanings,
+            e.g. ellipsis characters are replaced with three periods.
+
+    See Also:
+        https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
+    """
+    return unicodedata.normalize(form, text)
+
+
 def normalize_whitespace(text):
     """
     Given ``text``, replace one or more spacings with a single space, and one
@@ -184,6 +204,7 @@ def remove_accents(text, method="unicode"):
 def preprocess_text(
     text,
     fix_unicode=False,
+    normalize_unicode=False,
     lowercase=False,
     no_urls=False,
     no_emails=False,
@@ -202,6 +223,8 @@ def preprocess_text(
         text (str): Raw text to preprocess.
         fix_unicode (bool): If True, fix "broken" unicode such as
             mojibake and garbled HTML entities.
+        normalize_unicode (bool): If True, normalize unicode characters in text
+            into canonical form.
         lowercase (bool): If True, all text is lower-cased
         no_urls (bool): If True, replace all URL strings with "*URL*"
         no_emails (bool): If True, replace all email strings with "*EMAIL*"
@@ -227,6 +250,8 @@ def preprocess_text(
     """
     if fix_unicode is True:
         text = fix_bad_unicode(text, normalization="NFC")
+    if normalize_unicode is True:
+        text = normalize_unicode(text, form="NFC")
     if no_urls is True:
         text = replace_urls(text)
     if no_emails is True:
