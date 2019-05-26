@@ -65,6 +65,10 @@ def main(argv):
         "--n_snippets", "-n", type=int, default=25,
         help="number of text snippets to save per language",
     )
+    parser.add_argument(
+        "--force", action="store_true", default=False,
+        help="if True, overwrite existing lang snippets if found; otherwise, skip",
+    )
     args = parser.parse_args(argv)
 
     if not bool(args.langs) ^ bool(args.langfile):
@@ -80,13 +84,30 @@ def main(argv):
     else:
         outdir = None
 
-    wikipedia.set_rate_limiting(True, min_wait=datetime.timedelta(microseconds=20000))
+    wikipedia.set_rate_limiting(True, min_wait=datetime.timedelta(milliseconds=10))
+    wiki_langs = wikipedia.languages()
 
     for i, lang in enumerate(langs):
-        logging.info("lang: %s (%s/%s) ...", lang, i + 1, len(langs))
-        snippets = get_snippets(lang, args.n_snippets)
+        if lang not in wiki_langs:
+            raise ValueError(
+                "lang='{}' is invalid; available langs are\n{}".format(
+                    lang, sorted(wiki_langs.keys())
+                )
+            )
         if outdir:
             fname = os.path.join(outdir, lang + ".txt")
+            if os.path.isfile(fname) and args.force is False:
+                logging.info(
+                    "snippets for lang %s '%s' already fetched! skipping...",
+                    wiki_langs[lang], lang,
+                )
+                continue
+        logging.info(
+            "fetching snippets for lang %s '%s' (%s/%s) ...",
+            wiki_langs[lang], lang, i + 1, len(langs),
+        )
+        snippets = get_snippets(lang, args.n_snippets)
+        if outdir:
             with io.open(fname, mode="wt", encoding="utf-8") as f:
                 for snippet in snippets:
                     f.write(snippet + "\n")
@@ -113,7 +134,12 @@ def get_snippets(lang, n, timeout=3600):
     start_time = time.time()
     with tqdm(total=n, unit="snippets", unit_scale=True, leave=True) as pbar:
         while len(all_snippets) < n and (time.time() - start_time) < timeout:
-            for title in wikipedia.random(min(25, n)):
+            try:
+                titles = wikipedia.random(min(25, n))
+            except Exception:
+                logging.exception("unable to request random page titles")
+                continue
+            for title in titles:
                 if title in seen_pages or "/" in title:
                     continue
                 try:
@@ -140,7 +166,7 @@ def extract_snippets_from_page(
     snippet_len=(200, 500),
     min_text_frac=0.9,
     exclude_en=False,
-    max_n=3,
+    max_n=5,
 ):
     """
     Args:
