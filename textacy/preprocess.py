@@ -25,7 +25,7 @@ def fix_bad_unicode(text, normalization="NFC"):
         which is more extensive and customizable than textacy's wrapper of it.
         For details, check out https://ftfy.readthedocs.io.
     """
-    return NotImplementedError(
+    raise NotImplementedError(
         "As of v0.7.0, :func:`fix_bad_unicode()` is no longer implemented in textacy. "
         "Instead, install and import ``ftfy`` directly, and call ``ftfy.fix_text(text)`` ,"
         "which is more extensive and customizable than textacy's wrapper of it."
