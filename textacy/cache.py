@@ -123,10 +123,10 @@ def load_spacy_lang(name, disable=None, allow_blank=False):
         raise e
 
 
-@cached(LRU_CACHE, key=functools.partial(hashkey, "lang_classifier"))
-def load_lang_classifier(data_dir=None):
+@cached(LRU_CACHE, key=functools.partial(hashkey, "lang_identifier"))
+def load_lang_identifier(data_dir=None):
     """
-    Load a ``scikit-learn`` estimator that identifies the (main) language
+    Load a ``scikit-learn`` estimator that identifies the (primary) language
     in which texts are written.
 
     Args:
@@ -143,14 +143,18 @@ def load_lang_classifier(data_dir=None):
 
     if data_dir is None:
         data_dir = constants.DEFAULT_DATA_DIR
-    fname = os.path.join(
+    filepath = os.path.join(
         data_dir,
-        "lang_classifier",
-        "textacy-lang-classifier-{}.pkl.gz".format("py2" if compat.PY2 else "py3")
+        "lang_identifier",
+        "textacy-lang-identifier-{}.pkl.gz".format("py2" if compat.PY2 else "py3")
     )
-    LOGGER.debug("loading language classifier from %s", fname)
-    with io.open(fname, mode="rb") as f:
-        pipeline = joblib.load(f)
+    LOGGER.debug("loading lang identifier pipeline from %s", filepath)
+    if os.path.isfile(filepath):
+        with io.open(filepath, mode="rb") as f:
+            pipeline = joblib.load(f)
+    else:
+        # TODO: automatically download?
+        raise OSError("lang identifier pipeline not found at {}".format(filepath))
     return pipeline
 
 
