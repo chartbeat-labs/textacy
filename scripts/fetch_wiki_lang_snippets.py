@@ -168,11 +168,11 @@ def main(argv):
                 for snippet in snippets:
                     f.write(snippet + "\n")
             logging.info(
-                "saved %s %s snippets to %s", n_snippets, lang, fname)
+                "saved %s %s snippets to %s", len(snippets), lang, fname)
         else:
             logging.info(
                 "fetched %s %s snippets but did not save to disk:\n%s\n...",
-                n_snippets, lang, snippets[:3]
+                len(snippets), lang, snippets[:3]
             )
 
 
