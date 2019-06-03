@@ -121,10 +121,10 @@ class LangIdentifier(object):
         )[:topn]
         return [(lang.item(), prob.item()) for lang, prob in lang_probs]
 
-    def make_pipeline(self):
+    def init_pipeline(self):
         """
-        Make a *new* language identification pipeline, overwriting any pre-trained
-        pipeline loaded from disk under :attr:`LangIdentifier.data_dir`.
+        Initialize a *new* language identification pipeline, overwriting any
+        pre-trained pipeline loaded from disk under :attr:`LangIdentifier.data_dir`.
         Must be trained on (text, lang) examples before use.
         """
         import sklearn.feature_extraction
@@ -137,17 +137,17 @@ class LangIdentifier(object):
                     "vectorizer",
                     sklearn.feature_extraction.text.HashingVectorizer(
                         analyzer="char_wb", ngram_range=(1, 3), lowercase=True,
-                        n_features=4096, norm="l1",
+                        n_features=4096, norm="l2",
                     )
                 ),
                 (
                     "classifier",
                     sklearn.neural_network.MLPClassifier(
                         activation="relu", solver="adam", max_iter=200,
-                        shuffle=True, random_state=42,
-                        learning_rate_init=0.01, learning_rate="adaptive",
-                        early_stopping=True, n_iter_no_change=3, tol=0.0001,
                         hidden_layer_sizes=(512,), alpha=0.001, batch_size=512,
+                        learning_rate_init=0.01, learning_rate="adaptive",
+                        early_stopping=True, tol=0.0001,
+                        shuffle=True, random_state=42,
                         verbose=True,
                     )
                 ),
