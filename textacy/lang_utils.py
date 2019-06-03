@@ -98,8 +98,11 @@ class LangIdentifier(object):
             str: 2-letter language code of the most probable language.
         """
         text_ = utils.to_collection(text[:self.max_text_len], compat.unicode_, list)
-        lang = self.pipeline.predict(text_).item()
-        return lang
+        if self._is_valid(text_[0]):
+            lang = self.pipeline.predict(text_).item()
+            return lang
+        else:
+            return "un"
 
     def identify_topn_langs(self, text, topn=3):
         """
@@ -114,12 +117,18 @@ class LangIdentifier(object):
             for the ``topn`` most probable languages.
         """
         text_ = utils.to_collection(text[:self.max_text_len], compat.unicode_, list)
-        lang_probs = sorted(
-            compat.zip_(self.pipeline.classes_, self.pipeline.predict_proba(text_).flat),
-            key=operator.itemgetter(1),
-            reverse=True,
-        )[:topn]
-        return [(lang.item(), prob.item()) for lang, prob in lang_probs]
+        if self._is_valid(text_[0]):
+            lang_probs = sorted(
+                compat.zip_(self.pipeline.classes_, self.pipeline.predict_proba(text_).flat),
+                key=operator.itemgetter(1),
+                reverse=True,
+            )[:topn]
+            return [(lang.item(), prob.item()) for lang, prob in lang_probs]
+        else:
+            return [("un", 1.0)]
+
+    def _is_valid(self, text):
+        return any(char.isalpha() for char in text)
 
     def init_pipeline(self):
         """
