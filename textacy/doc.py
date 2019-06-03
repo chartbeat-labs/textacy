@@ -12,7 +12,7 @@ from . import lang_utils
 from . import utils
 
 
-def make_spacy_doc(data, lang=lang_utils.detect_lang):
+def make_spacy_doc(data, lang=lang_utils.identify_lang):
     """
     Make a :class:`spacy.tokens.Doc` from valid inputs, and automatically
     load/validate :class:`spacy.language.Language` pipelines to process ``data``.
@@ -45,7 +45,7 @@ def make_spacy_doc(data, lang=lang_utils.detect_lang):
         >>> make_spacy_doc(text, lang="en")
         >>> make_spacy_doc(text, lang="en_core_web_sm")
         >>> make_spacy_doc(text, lang=textacy.load_spacy_lang("en"))
-        >>> make_spacy_doc(text, lang=textacy.lang_utils.detect_lang)
+        >>> make_spacy_doc(text, lang=textacy.lang_utils.identify_lang)
 
     Ensure that an already-processed ``Doc`` is compatible with ``lang``:
 

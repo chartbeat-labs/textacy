@@ -458,12 +458,12 @@ For example:
     >>> en_corpus = textacy.Corpus(
     ...     "en", data=(
     ...         text for text in texts
-    ...         if textacy.lang_utils.detect_lang(text) == "en")
+    ...         if textacy.lang_utils.identify_lang(text) == "en")
     ... )
     >>> es_corpus = textacy.Corpus(
     ...     "es", data=(
     ...         text for text in texts
-    ...         if textacy.lang_utils.detect_lang(text) == "es")
+    ...         if textacy.lang_utils.identify_lang(text) == "es")
     ... )
 
 Both of these options are less convenient than I'd like, but hopefully they
