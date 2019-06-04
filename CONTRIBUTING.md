@@ -33,10 +33,10 @@ Use an appropriate template (if available) when [creating your issue](https://gi
 
     You should now have two remotes: read/write-able `origin` points to your GitHub fork, and a read-only `upstream` points to the original repo. Be sure to [keep your fork in sync](https://help.github.com/en/articles/syncing-a-fork) with the original, reducing the likelihood of merge conflicts later on.
 
-1. **Create a branch for each piece of work:** Branch off `master` for each bugfix or feature that you're working on. Give your branch a descriptive, meaningful name like `bugfix-for-issue-1234` or `improve-io-performance`, so others know at a glance what you're working on.
+1. **Create a branch for each piece of work:** Branch off `develop` for each bugfix or feature that you're working on. Give your branch a descriptive, meaningful name like `bugfix-for-issue-1234` or `improve-io-performance`, so others know at a glance what you're working on.
 
-        $ git checkout master
-        $ git pull upstream master && git push origin master
+        $ git checkout develop
+        $ git pull develop master && git push origin develop
         $ git checkout -b my-descriptive-branch-name
 
     At this point, you may want to install your version of `textacy`. It's usually best to do this within a dedicated virtual environment; use whichever tool you're most comfortable with, such as `virtualenv`, `pyenv`, or `conda`.
