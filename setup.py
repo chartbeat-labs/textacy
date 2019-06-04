@@ -19,7 +19,7 @@ INSTALL_REQUIRES = [
     "scipy>=0.17.0",
     "scikit-learn>=0.18.0,<0.21.0",
     "spacy>=2.0.12",
-    "srsly >= 0.0.5",
+    "srsly>=0.0.5",
     "tqdm>=4.11.1",
 ]
 EXTRAS_REQUIRE = {"viz": ["matplotlib>=1.5.0"]}
