@@ -123,41 +123,6 @@ def load_spacy_lang(name, disable=None, allow_blank=False):
         raise e
 
 
-@cached(LRU_CACHE, key=functools.partial(hashkey, "lang_identifier"))
-def load_lang_identifier(data_dir=None):
-    """
-    Load a ``scikit-learn`` estimator that identifies the (primary) language
-    in which texts are written.
-
-    Args:
-        data_dir (str): Full path to directory on disk in which a language classifier
-            has been saved. The full filepath should look like this:
-            ``{data_dir}/lang_classifier/textacy_lang_classifier_py{version}.pkl.gz``.
-
-    Returns:
-        :class:`sklearn.pipeline.Pipeline`
-    """
-    import sklearn.feature_extraction
-    import sklearn.neural_network
-    import sklearn.pipeline
-
-    if data_dir is None:
-        data_dir = constants.DEFAULT_DATA_DIR
-    filepath = os.path.join(
-        data_dir,
-        "lang_identifier",
-        "textacy-lang-identifier-{}.pkl.gz".format("py2" if compat.PY2 else "py3")
-    )
-    LOGGER.debug("loading lang identifier pipeline from %s", filepath)
-    if os.path.isfile(filepath):
-        with io.open(filepath, mode="rb") as f:
-            pipeline = joblib.load(f)
-    else:
-        # TODO: automatically download?
-        raise OSError("lang identifier pipeline not found at {}".format(filepath))
-    return pipeline
-
-
 @cached(LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
 def load_hyphenator(lang):
     """

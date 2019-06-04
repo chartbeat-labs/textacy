@@ -34,12 +34,17 @@ The pipeline was trained on a random subset of 2M texts drawn from two sources:
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import io
 import logging
 import operator
+import os
+
+import joblib
 
 from . import cache
 from . import compat
-from . import utils
+from . import constants
+from .datasets import utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -54,20 +59,53 @@ class LangIdentifier(object):
         pipeline (:class:`sklearn.pipeline.Pipeline`)
     """
 
-    def __init__(self, data_dir=None, max_text_len=1000):
+    def __init__(
+        self,
+        data_dir=os.path.join(constants.DEFAULT_DATA_DIR, "lang_identifier"),
+        max_text_len=1000
+    ):
         self.data_dir = data_dir
+        self.filename = "textacy-lang-identifier-py{}.pkl.gz".format(2 if compat.PY2 else 3)
         self.max_text_len = max_text_len
         self._pipeline = None
         return
 
-    def download(self):
-        raise NotImplementedError("TODO!")
-
     @property
     def pipeline(self):
         if not self._pipeline:
-            self._pipeline = cache.load_lang_identifier(data_dir=self.data_dir)
+            self._pipeline = self._load_pipeline()
         return self._pipeline
+
+    def _load_pipeline(self):
+        filepath = os.path.join(self.data_dir, self.filename)
+        if not os.path.isfile(filepath):
+            self.download()
+        with io.open(filepath, mode="rb") as f:
+            pipeline = joblib.load(f)
+        return pipeline
+
+    def download(self, force=False):
+        """
+        Download the pipeline data as a Python version-specific compressed pickle file
+        and save it to disk under the :attr:`LangIdentifier.data_dir` directory.
+
+        Args:
+            force (bool): If True, download the dataset, even if it already
+                exists on disk under ``data_dir``.
+        """
+        release_tag = "lang_identifier_py{py_version}_v{data_version}".format(
+            py_version=2 if compat.PY2 else 3,
+            data_version=1.0,
+        )
+        url = compat.urljoin(
+            "https://github.com/bdewilde/textacy-data/releases/download/",
+            release_tag + "/" + self.filename)
+        filepath = utils.download_file(
+            url,
+            filename=self.filename,
+            dirpath=self.data_dir,
+            force=force,
+        )
 
     def identify_lang(self, text):
         """
