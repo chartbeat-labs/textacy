@@ -48,7 +48,7 @@ with io.open(os.path.join(root_path, "textacy", "about.py")) as f:
 
 
 setup(
-    name=about["__title__"],
+    name="textacy",
     version=about["__version__"],
     description=about["__description__"],
     long_description=read_file("README.md"),
