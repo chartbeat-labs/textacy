@@ -25,8 +25,9 @@ install:
     - "python -m spacy link en_core_web_sm en"
     - "python -m spacy download es_core_news_sm"
     - "python -m spacy link es_core_news_sm es"
-    - "python -m textacy download capitol_words"
     - "python -m spacy validate"
+    - "python -m textacy download capitol_words"
+    - "python -m textacy download lang_identifier"
 
 script:
   - set -e

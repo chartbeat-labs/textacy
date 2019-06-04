@@ -6,6 +6,12 @@ import pytest
 from textacy import preprocess
 
 
+def test_normalize_unicode():
+    text = "Well… That's a long story."
+    proc_text = "Well... That's a long story."
+    assert preprocess.normalize_unicode(text, form="NFKC") == proc_text
+
+
 def test_normalize_whitespace():
     text = "Hello, world!  Hello...\t \tworld?\n\nHello:\r\n\n\nWorld. "
     proc_text = "Hello, world! Hello... world?\nHello:\nWorld."

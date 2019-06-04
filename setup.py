@@ -17,12 +17,12 @@ INSTALL_REQUIRES = [
     "python-levenshtein>=0.12.0",
     "requests>=2.10.0",
     "scipy>=0.17.0",
-    "scikit-learn>=0.17.0,<0.21.0",
+    "scikit-learn>=0.18.0,<0.21.0",
     "spacy>=2.0.12",
-    "srsly >= 0.0.5",
+    "srsly>=0.0.5",
     "tqdm>=4.11.1",
 ]
-EXTRAS_REQUIRE = {"viz": ["matplotlib>=1.5.0"], "lang": ["cld2-cffi>=0.1.4"]}
+EXTRAS_REQUIRE = {"viz": ["matplotlib>=1.5.0"]}
 EXTRAS_REQUIRE["all"] = list({pkg for pkgs in EXTRAS_REQUIRE.values() for pkg in pkgs})
 
 # as advised by https://hynek.me/articles/conditional-python-dependencies/

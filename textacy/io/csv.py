@@ -12,7 +12,14 @@ from .. import compat
 from .utils import open_sesame
 
 
-def read_csv(filepath, encoding=None, fieldnames=None, dialect="excel", delimiter=","):
+def read_csv(
+    filepath,
+    encoding=None,
+    fieldnames=None,
+    dialect="excel",
+    delimiter=",",
+    quoting=compat.csv.QUOTE_NONNUMERIC,
+):
     """
     Read the contents of a CSV file at ``filepath``, streaming line-by-line,
     where each line is a list of strings and/or floats whose values
@@ -32,6 +39,8 @@ def read_csv(filepath, encoding=None, fieldnames=None, dialect="excel", delimite
             the data is parsed when reading/writing. If 'infer', the first kB
             of data is analyzed to get a best guess for the correct dialect.
         delimiter (str): 1-character string used to separate fields in a row.
+        quoting (int): Type of quoting to apply to field values. See:
+            https://docs.python.org/3/library/csv.html#csv.QUOTE_NONNUMERIC
 
     Yields:
         List[obj]: Next row, whose elements are strings and/or floats.
@@ -53,7 +62,8 @@ def read_csv(filepath, encoding=None, fieldnames=None, dialect="excel", delimite
             sniffer = compat.csv.Sniffer()
             # add pipes to the list of preferred delimiters, and put spaces last
             sniffer.preferred = [",", "\t", "|", ";", ":", " "]
-            sample = "".join(f.readline() for _ in range(5))  # f.read(1024)
+            # sample = "".join(f.readline() for _ in range(5))  # f.read(1024)
+            sample = f.read(1024)
             if dialect == "infer":
                 dialect = sniffer.sniff(sample)
             if fieldnames == "infer":
@@ -65,7 +75,7 @@ def read_csv(filepath, encoding=None, fieldnames=None, dialect="excel", delimite
                 fieldnames=None,
                 dialect=dialect,
                 delimiter=delimiter,
-                quoting=compat.csv.QUOTE_NONNUMERIC,
+                quoting=quoting,
             )
         elif fieldnames:
             csv_reader = compat.csv.DictReader(
@@ -73,7 +83,7 @@ def read_csv(filepath, encoding=None, fieldnames=None, dialect="excel", delimite
                 fieldnames=fieldnames,
                 dialect=dialect,
                 delimiter=delimiter,
-                quoting=compat.csv.QUOTE_NONNUMERIC,
+                quoting=quoting,
             )
             first_row = next(csv_reader)
             # is the first row a header with same values as fieldnames?
@@ -85,7 +95,7 @@ def read_csv(filepath, encoding=None, fieldnames=None, dialect="excel", delimite
                 f,
                 dialect=dialect,
                 delimiter=delimiter,
-                quoting=compat.csv.QUOTE_NONNUMERIC,
+                quoting=quoting,
             )
         for row in csv_reader:
             yield row
@@ -99,6 +109,7 @@ def write_csv(
     fieldnames=None,
     dialect="excel",
     delimiter=",",
+    quoting=compat.csv.QUOTE_NONNUMERIC,
 ):
     """
     Write rows of ``data`` to disk at ``filepath``, where each row is an iterable
@@ -135,6 +146,8 @@ def write_csv(
         dialect (str): Grouping of formatting parameters that determine how
             the data is parsed when reading/writing.
         delimiter (str): 1-character string used to separate fields in a row.
+        quoting (int): Type of quoting to apply to field values. See:
+            https://docs.python.org/3/library/csv.html#csv.QUOTE_NONNUMERIC
 
     See Also:
         https://docs.python.org/3/library/csv.html#csv.writer
@@ -148,7 +161,7 @@ def write_csv(
                 fieldnames,
                 dialect=dialect,
                 delimiter=delimiter,
-                quoting=compat.csv.QUOTE_NONNUMERIC,
+                quoting=quoting,
             )
             csv_writer.writeheader()
         else:
@@ -156,6 +169,6 @@ def write_csv(
                 f,
                 dialect=dialect,
                 delimiter=delimiter,
-                quoting=compat.csv.QUOTE_NONNUMERIC,
+                quoting=quoting,
             )
         csv_writer.writerows(data)

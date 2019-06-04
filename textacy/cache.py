@@ -15,6 +15,7 @@ import logging
 import os
 import sys
 
+import joblib
 import spacy
 from cachetools import cached, LRUCache
 from cachetools.keys import hashkey
