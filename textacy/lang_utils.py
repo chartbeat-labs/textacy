@@ -1,6 +1,36 @@
 """
 Language Identification
 -----------------------
+
+Functionality for identifying the language of a text, using a model inspired by
+Google's Compact Language Detector v3 (https://github.com/google/cld3) and
+implemented with ``scikit-learn``.
+
+Model
+^^^^^
+
+Character unigrams, bigrams, and trigrams are extracted from input text, and
+their frequencies of occurence within the text are counted. The full set of ngrams
+are then hashed into a 4096-dimensional feature vector with values given by
+the L2 norm of the counts. These features are passed into a Multi-layer Perceptron
+with a single hidden layer of 512 rectified linear units and a softmax output layer
+giving probabilities for ~130 different languages as ISO 639-1 language codes.
+
+Technically, the model was implemented as a :class:`sklearn.pipeline.Pipeline`
+with two steps: a :class:`sklearn.feature_extraction.text.HashingVectorizer`
+for vectorizing input texts and a :class:`sklearn.neural_network.MLPClassifier`
+for multi-class language classification.
+
+Dataset
+^^^^^^^
+
+The pipeline was trained on a random subset of 2M texts drawn from two sources:
+
+* Tatoeba: A crowd-sourced collection of ~4M sentences and their translations
+  into many languages. See: https://tatoeba.org/eng/downloads.
+* Wikipedia: A sample of ~200k clean, language-specific snippets collected from
+  each Wikipedia's API, pulling first from articles tagged as "featured" or "good"
+  then falling back on random searches. See: ``textacy/scripts/fetch_wiki_lang_snippets.py``.
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
