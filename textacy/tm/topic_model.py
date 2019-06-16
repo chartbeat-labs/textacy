@@ -369,6 +369,7 @@ class TopicModel(object):
         rank_terms_by="topic_weight",
         sort_terms_by="seriation",
         save=False,
+        rc_params=None,
     ):
         """
         Make a "termite" plot for assessing topic models using a tabular layout
@@ -396,6 +397,8 @@ class TopicModel(object):
                 the default ("seriation") groups similar terms together, which
                 facilitates cross-topic assessment
             save (str): give the full /path/to/fname on disk to save figure
+            rc_params (dict, optional): allow passing parameters to rc_context in matplotlib.plyplot,
+            details in https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.rc_context.html
 
         Returns:
             ``matplotlib.axes.Axes.axis``: Axis on which termite plot is plotted.
@@ -526,4 +529,5 @@ class TopicModel(object):
             term_labels,
             highlight_cols=highlight_cols,
             save=save,
+            rc_params=rc_params,
         )

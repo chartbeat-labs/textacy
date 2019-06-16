@@ -71,6 +71,7 @@ def draw_termite_plot(
     highlight_cols=None,
     highlight_colors=None,
     save=False,
+    rc_params=None,
 ):
     """
     Make a "termite" plot, typically used for assessing topic models with a tabular
@@ -87,6 +88,8 @@ def draw_termite_plot(
             of (light/dark) matplotlib-friendly colors used to highlight a single
             column; if not specified (default), a good set of 6 pairs are used
         save (str, optional): give the full /path/to/fname on disk to save figure
+        rc_params (dict, optional): allow passing parameters to rc_context in matplotlib.plyplot,
+        details in https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.rc_context.html
 
     Returns:
         :obj:`matplotlib.axes.Axes.axis`: Axis on which termite plot is plotted.
@@ -137,6 +140,10 @@ def draw_termite_plot(
             )
             raise ValueError(msg)
         highlight_colors = {hc: COLOR_PAIRS[i] for i, hc in enumerate(highlight_cols)}
+
+    if rc_params:
+        for key in rc_params:
+            RC_PARAMS[key] = rc_params[key]
 
     with plt.rc_context(RC_PARAMS):
         fig, ax = plt.subplots(figsize=(pow(n_cols, 0.8), pow(n_rows, 0.66)))
