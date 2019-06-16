@@ -21,7 +21,8 @@ LOGGER = logging.getLogger(__name__)
 class TopicModel(object):
     """
     Train and apply a topic model to vectorized texts using scikit-learn's
-    implementations of LSA, LDA, and NMF models. Inspect and visualize results.
+    implementations of LSA, LDA, and NMF models. Also any other topic model implementations that have
+    `component_`, `n_topics` and `transform` attributes. Inspect and visualize results.
     Save and load trained models to and from disk.
 
     Prepare a vectorized corpus (i.e. document-term matrix) and corresponding
