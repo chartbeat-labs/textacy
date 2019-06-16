@@ -62,6 +62,22 @@ def test_n_topics():
         assert TopicModel(model, n_topics=20).n_topics == 20
 
 
+def test_duck_typing():
+    class TrainedDummyModel():
+        def __init__(self):
+            self.n_topics = 5
+            self.components_ = np.array([[0,0,0,1], [1,0,0,0]])
+
+        def transform(self, text):
+            return text
+    dummy = TrainedDummyModel()
+    tmodel = TopicModel(dummy)
+
+    assert tmodel.n_topics == dummy.n_topics
+    assert tmodel.model.transform == dummy.transform
+    np.testing.assert_array_equal(tmodel.model.components_, dummy.components_)
+
+
 def test_init_model():
     expecteds = (NMF, LatentDirichletAllocation, TruncatedSVD)
     models = ["nmf", "lda", "lsa"]

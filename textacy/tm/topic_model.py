@@ -103,8 +103,12 @@ class TopicModel(object):
         - http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
     """
 
+    _required_trained_model_attr = {"transform", "components_", "n_topics"}
+
     def __init__(self, model, n_topics=10, **kwargs):
         if isinstance(model, (NMF, LatentDirichletAllocation, TruncatedSVD)):
+            self.model = model
+        elif all([hasattr(model, required_attr) for required_attr in self._required_trained_model_attr]):
             self.model = model
         else:
             self.init_model(model, n_topics=n_topics, **kwargs)
