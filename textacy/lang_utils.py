@@ -24,13 +24,28 @@ for multi-class language classification.
 Dataset
 ^^^^^^^
 
-The pipeline was trained on a random subset of 2M texts drawn from two sources:
+The pipeline was trained on a randomized, stratified subset of ~1.5M texts
+drawn from several sources:
 
-* Tatoeba: A crowd-sourced collection of ~4M sentences and their translations
-  into many languages. See: https://tatoeba.org/eng/downloads.
-* Wikipedia: A sample of ~200k clean, language-specific snippets collected from
-  each Wikipedia's API, pulling first from articles tagged as "featured" or "good"
-  then falling back on random searches. See: ``textacy/scripts/fetch_wiki_lang_snippets.py``.
+- **Tatoeba:** A crowd-sourced collection of ~5M sentences and their translations
+  into many languages. Style is relatively informal; subject matter is a variety
+  of everyday things and goings-on.
+  Source: https://tatoeba.org/eng/downloads.
+- **Leipzig Corpora:** A collection of corpora for many languages in the same format
+  and pulling from comparable sources -- specifically, 10k Wikipedia articles from
+  official database dumps and 10k news articles from either RSS feeds or web scrapes.
+  Only the most recently updated version was used, when available. Style is
+  relatively formal; subject matter is a variety of notable things and goings-on.
+  Source: http://wortschatz.uni-leipzig.de/en/download
+- **UDHR:** The UN's Universal Declaration of Human Rights document, translated
+  into hundreds of languages and split into paragraphs. Style is formal;
+  subject matter is fundamental human rights to be universally protected.
+  Source: https://unicode.org/udhr/index.html
+- **Twitter:** A collection of ~1.5k tweets in each of ~70 languages, posted in
+  July 2014, with languages assigned through a combination of models and human
+  annotators. Style is informal; subject matter is whatever Twitter was going on
+  about back then, who could say.
+  Source: https://blog.twitter.com/engineering/en_us/a/2015/evaluating-language-identification-performance.html
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
@@ -172,10 +187,10 @@ class LangIdentifier(object):
                 (
                     "classifier",
                     sklearn.neural_network.MLPClassifier(
-                        activation="relu", solver="adam", max_iter=200,
-                        hidden_layer_sizes=(512,), alpha=0.001, batch_size=512,
+                        activation="relu", solver="adam",
+                        hidden_layer_sizes=(512,), alpha=0.0001, batch_size=512,
                         learning_rate_init=0.01, learning_rate="adaptive",
-                        early_stopping=True, tol=0.0001,
+                        max_iter=20, early_stopping=True, tol=0.001,
                         shuffle=True, random_state=42,
                         verbose=True,
                     )
