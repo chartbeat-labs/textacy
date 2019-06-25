@@ -1,5 +1,35 @@
 ## Changes
 
+### 0.7.1 (in development)
+
+#### New:
+
+- Added a default, built-in language identification classifier that's moderately fast, moderately accurate, and covers a relatively large number of languages [PR #247]
+  - Implemented a Google CLD3-inspired model in `scikit-learn` and trained it on ~1.5M texts in ~130 different languages spanning a wide variety of subject matter and stylistic formality; overall, speed and performance compare favorably to other open-source options (`langid`, `langdetect`, `cld2-cffi`, and `cld3`)
+  - Dropped `cld2-cffi` dependency [Issue #246]
+- Added `extract.matches()` function to extract spans from a document matching one or more pattern of per-token (attribute, value) pairs, with optional quantity qualifiers; this is a convenient interface to spaCy's rule-based `Matcher` and a more powerful replacement for textacy's existing (now deprecated) `extract.pos_regex_matches()`
+- Added `preprocess.normalize_unicode()` function to transform unicode characters into their canonical forms; this is a less-intensive consolation prize for the previously-removed `fix_unicode()` function
+
+#### Changed:
+
+- Enabled loading blank spaCy `Language` pipelines (tokenization only -- no model-based tagging, parsing, etc.) via `load_spacy_lang(name, allow_blank=True)` for use cases that don't rely on annotations; disabled by default to avoid unwelcome surprises
+- Changed inclusion/exclusion and de-duplication of entities and ngrams in `to_terms_list()` [Issues #169, #179]
+  - `entities = True` => include entities, and drop exact duplicate ngrams
+  - `entities = False` => don't include entities, and also drop exact duplicate ngrams
+  - `entities = None` => use ngrams as-is without checking against entities
+- Moved `to_collection()` function from the `datasets.utils` module to the top-level `utils` module, for use throughout the code base
+- Added `quoting` option to `io.read_csv()` and `io.write_csv()`, for problematic cases
+- Deprecated the `spacier.components.merge_entities()` pipeline component, an implementation of which has since been added into spaCy itself
+- Updated documentation for developer convenience and reader clarity
+  - Split API reference docs into related chunks, rather than having them all together in one long page, and tidied up headers
+  - Fixed errors / inconsistencies in various docstrings (a never-ending struggle...)
+  - Ported package readme and changelog from `.rst` to `.md` format
+
+#### Fixed:
+
+- The `NotImplementedError` previously added to `preprocess.fix_unicode()` is now _raised_ rather than returned [Issue #243]
+
+
 ### 0.7.0 (2019-05-13)
 
 #### New and Changed:
