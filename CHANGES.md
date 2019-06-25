@@ -1,6 +1,6 @@
 ## Changes
 
-### 0.7.1 (in development)
+### 0.7.1 (2019-06-25)
 
 #### New:
 
