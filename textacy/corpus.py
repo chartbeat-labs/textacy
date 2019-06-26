@@ -400,7 +400,8 @@ class Corpus(object):
 
     # useful methods
 
-    def word_counts(self, normalize="lemma", weighting="count", as_strings=False):
+    def word_counts(self, normalize="lemma", weighting="count", as_strings=False,
+                    remove_stop=True, remove_punct=True, remove_space=True):
         """
         Map the set of unique words in :class:`Corpus` to their counts as
         absolute, relative, or binary frequencies of occurence, similar to
@@ -423,6 +424,9 @@ class Corpus(object):
 
             as_strings (bool): If True, words are returned as strings; if False
                 (default), words are returned as their unique integer ids.
+            remove_stop (bool): If True (default), stop word counts are removed.
+            remove_punct (bool): If True (default), punctuation counts are removed.
+            remove_space (bool): If True (default), whitespace counts are removed.
 
         Returns:
             dict: mapping of a unique word id or string (depending on the value
@@ -436,7 +440,9 @@ class Corpus(object):
         for doc in self:
             word_counts_.update(
                 doc._.to_bag_of_words(
-                    normalize=normalize, weighting="count", as_strings=as_strings
+                    normalize=normalize, weighting="count", as_strings=as_strings,
+                    remove_stop=remove_stop, remove_punct=remove_punct, 
+                    remove_space=remove_space
                 )
             )
         if weighting == "count":
@@ -456,7 +462,7 @@ class Corpus(object):
 
     def word_doc_counts(
         self, normalize="lemma", weighting="count", smooth_idf=True, as_strings=False
-    ):
+        remove_stop=True, remove_punct=True, remove_space=True):
         """
         Map the set of unique words in :class:`Corpus` to their *document* counts
         as absolute, relative, inverse, or binary frequencies of occurence.
@@ -477,6 +483,9 @@ class Corpus(object):
                 document to the corpus containing every unique word.
             as_strings (bool): If True, words are returned as strings; if False
                 (default), words are returned as their unique integer ids
+            remove_stop (bool): If True (default), stop word counts are removed.
+            remove_punct (bool): If True (default), punctuation counts are removed.
+            remove_space (bool): If True (default), whitespace counts are removed.
 
         Returns:
             dict: mapping of a unique word id or string (depending on the value
@@ -491,7 +500,9 @@ class Corpus(object):
         for doc in self:
             word_doc_counts_.update(
                 doc._.to_bag_of_words(
-                    normalize=normalize, weighting="binary", as_strings=as_strings
+                    normalize=normalize, weighting="binary", as_strings=as_strings,
+                    remove_stop=remove_stop, remove_punct=remove_punct, 
+                    remove_space=remove_space
                 )
             )
         if weighting == "count":
