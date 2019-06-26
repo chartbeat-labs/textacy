@@ -90,3 +90,33 @@ def test_remove_accents():
     assert preprocess.remove_accents(text, method="ascii") == proc_text
     with pytest.raises(Exception):
         _ = preprocess.remove_accents(text, method="foo")
+
+
+def test_preprocess_text():
+    text = (
+        "Well… That's a long story. "
+        "Hello, world!  Hello...\t \tworld?\n\nHello:\r\n\n\nWorld. "
+        "Y'all can't believe you're not who they've said I'll become, but shouldn't. "
+        "I learned everything I know from www.stackoverflow.com and http://wikipedia.org/ and Mom. "
+        "I can be reached at username@example.com through next Friday. "
+        "I can be reached at 555-123-4567 through next Friday. "
+        "I owe $1,000.99 to 123 people for 2 +1 reasons. "
+        "El niño se asustó -- qué miedo!"
+    )
+    proc_text = (
+        "Well... That's a long story. "
+        "Hello, world! Hello... world?\nHello:\nWorld. "
+        "You all can not believe you are not who they have said I will become, but should not. "
+        "I learned everything I know from *URL* and *URL* and Mom. "
+        "I can be reached at *EMAIL* through next Friday. "
+        "I can be reached at *PHONE* through next Friday. "
+        "I owe USD*NUMBER* to *NUMBER* people for *NUMBER* *NUMBER* reasons. "
+        "El nino se asusto -- que miedo!"
+    )
+    assert preprocess.preprocess_text(
+        text,
+        normalized_unicode=True,
+        no_urls=True, no_emails=True, no_phone_numbers=True,
+        no_numbers=True, no_currency_symbols=True,
+        no_contractions=True, no_accents=True
+    ) == proc_text

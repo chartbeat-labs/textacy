@@ -183,7 +183,7 @@ def remove_accents(text, method="unicode"):
 
 def preprocess_text(
     text,
-    normalize_unicode=False,
+    normalized_unicode=False,
     lowercase=False,
     no_urls=False,
     no_emails=False,
@@ -200,7 +200,7 @@ def preprocess_text(
 
     Args:
         text (str): Raw text to preprocess.
-        normalize_unicode (bool): If True, normalize unicode characters in text
+        normalized_unicode (bool): If True, normalize unicode characters in text
             into canonical form.
         lowercase (bool): If True, all text is lower-cased
         no_urls (bool): If True, replace all URL strings with "*URL*"
@@ -225,7 +225,7 @@ def preprocess_text(
         These changes may negatively affect subsequent NLP analysis performed
         on the text, so choose carefully, and preprocess at your own risk!
     """
-    if normalize_unicode is True:
+    if normalized_unicode is True:
         text = normalize_unicode(text, form="NFC")
     if no_urls is True:
         text = replace_urls(text)
