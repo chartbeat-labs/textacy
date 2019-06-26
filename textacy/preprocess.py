@@ -13,26 +13,6 @@ import unicodedata
 from . import constants
 
 
-def fix_bad_unicode(text, normalization="NFC"):
-    """
-    Fix unicode text that's "broken" using ``ftfy``;
-    this includes mojibake, HTML entities and other code cruft,
-    and non-standard forms for display purposes.
-
-    Warning:
-        As of v0.7.0, this is no longer implemented within textacy. Instead,
-        install and import ``ftfy`` directly, and call ``ftfy.fix_text(text)`` ,
-        which is more extensive and customizable than textacy's wrapper of it.
-        For details, check out https://ftfy.readthedocs.io.
-    """
-    raise NotImplementedError(
-        "As of v0.7.0, :func:`fix_bad_unicode()` is no longer implemented in textacy. "
-        "Instead, install and import ``ftfy`` directly, and call ``ftfy.fix_text(text)`` ,"
-        "which is more extensive and customizable than textacy's wrapper of it."
-        "For details, check out https://ftfy.readthedocs.io."
-    )
-
-
 def normalize_unicode(text, form="NFC"):
     """
     Normalize unicode characters in ``text`` into canonical forms.
@@ -203,7 +183,6 @@ def remove_accents(text, method="unicode"):
 
 def preprocess_text(
     text,
-    fix_unicode=False,
     normalize_unicode=False,
     lowercase=False,
     no_urls=False,
@@ -221,8 +200,6 @@ def preprocess_text(
 
     Args:
         text (str): Raw text to preprocess.
-        fix_unicode (bool): If True, fix "broken" unicode such as
-            mojibake and garbled HTML entities.
         normalize_unicode (bool): If True, normalize unicode characters in text
             into canonical form.
         lowercase (bool): If True, all text is lower-cased
@@ -248,8 +225,6 @@ def preprocess_text(
         These changes may negatively affect subsequent NLP analysis performed
         on the text, so choose carefully, and preprocess at your own risk!
     """
-    if fix_unicode is True:
-        text = fix_bad_unicode(text, normalization="NFC")
     if normalize_unicode is True:
         text = normalize_unicode(text, form="NFC")
     if no_urls is True:
