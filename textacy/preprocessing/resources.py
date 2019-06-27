@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import re
 import sys
+import unicodedata
 
 from .. import compat
 
@@ -87,8 +88,8 @@ RE_HYPHENATED_WORD = re.compile(
     flags=re.UNICODE | re.IGNORECASE)
 
 
-# lazy-load a mapping of unicode punctuation symbol ordinal to whitespace
-# since it's expensive to compute
+# build mapping of unicode punctuation symbol ordinals to their replacements
+# and lazy-load the big one, since it's relatively expensive to compute
 
 PUNCT_TRANSLATION_TABLE = None
 
