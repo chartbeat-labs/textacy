@@ -4,7 +4,12 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import re
 import unicodedata
 
-from .resources import RE_HYPHENATED_WORD, RE_LINEBREAK, RE_NONBREAKING_SPACE
+from .resources import (
+    QUOTE_TRANSLATION_TABLE,
+    RE_HYPHENATED_WORD,
+    RE_LINEBREAK,
+    RE_NONBREAKING_SPACE,
+)
 
 
 def normalize_contractions(text):
@@ -55,6 +60,20 @@ def normalize_hyphenated_words(text):
         str
     """
     return RE_HYPHENATED_WORD.sub(r"\1\2", text)
+
+
+def normalize_quotation_marks(text):
+    """
+    Normalize all "fancy" single- and double-quotation marks in ``text``
+    to just the basic ASCII equivalents (' and ").
+
+    Args:
+        text (str)
+
+    Returns:
+        str
+    """
+    return text.translate(QUOTE_TRANSLATION_TABLE)
 
 
 def normalize_unicode(text, form="NFC"):

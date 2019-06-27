@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
@@ -101,3 +102,8 @@ def _get_punct_translation_table():
             " "
         )
     return PUNCT_TRANSLATION_TABLE
+
+
+QUOTE_TRANSLATION_TABLE = {
+    ord(x): ord(y)
+    for x, y in zip("‘’´`“”", "''''\"\"")}
