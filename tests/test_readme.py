@@ -8,8 +8,17 @@ import scipy.sparse as sp
 from spacy.tokens import Doc, Span
 
 import textacy.datasets
-from textacy import Corpus, TextStats, preprocess_text
-from textacy import cache, compat, constants, extract, io, keyterms, text_utils
+from textacy import Corpus, TextStats
+from textacy import (
+    cache,
+    compat,
+    constants,
+    extract,
+    io,
+    keyterms,
+    preprocessing,
+    text_utils,
+)
 from textacy.doc import make_spacy_doc
 from textacy.tm import TopicModel
 from textacy.vsm import Vectorizer
@@ -83,7 +92,10 @@ def test_corpus_functionality(corpus):
 
 
 def test_plaintext_functionality(text):
-    preprocessed_text = preprocess_text(text, lowercase=True, no_punct=True)[:100]
+    preprocessed_text = preprocessing.normalize_whitespace(text)
+    preprocessed_text = preprocessing.remove_punctuation(text)
+    preprocessed_text = preprocessed_text.lower()
+    # preprocessed_text = preprocess_text(text, lowercase=True, no_punct=True)[:100]
     assert all(char.islower() for char in preprocessed_text if char.isalpha())
     assert all(char.isalnum() or char.isspace() for char in preprocessed_text)
     keyword = "America"

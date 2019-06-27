@@ -5,7 +5,6 @@ import logging
 from textacy.about import __version__
 from textacy.constants import DEFAULT_DATA_DIR
 from textacy.cache import load_spacy_lang
-from textacy.preprocess import preprocess_text
 from textacy.doc import make_spacy_doc
 from textacy.corpus import Corpus
 from textacy.text_stats import TextStats
