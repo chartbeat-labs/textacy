@@ -67,6 +67,14 @@ RE_EMAIL = re.compile(
     r"(?:$|(?=\b))",
     flags=re.UNICODE | re.IGNORECASE)
 
+RE_USER_HANDLE = re.compile(
+    r"(?:^|(?<![\w@.]))@\w+",
+    flags=re.UNICODE | re.IGNORECASE)
+
+RE_HASHTAG = re.compile(
+    r"(?:^|(?<![\w#＃.]))(#|＃)\w+",
+    flags=re.UNICODE | re.IGNORECASE)
+
 RE_PHONE_NUMBER = re.compile(
     # core components of a phone number
     r"(?:^|(?<=[^\w)]))(\+?1[ .-]?)?(\(?\d{3}\)?[ .-]?)?(\d{3}[ .-]?\d{4})"
