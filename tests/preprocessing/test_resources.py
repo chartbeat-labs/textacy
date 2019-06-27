@@ -50,6 +50,10 @@ GOOD_HASHTAGS = [
     "#עברית",
     "#العربية",
 ]
+BAD_HASHTAGS = [
+    "#0",
+    "これはダメ#ハッシュタグ",
+]
 
 GOOD_NUMBERS = [
     "1",
@@ -234,6 +238,10 @@ class TestHashtagRegex(object):
     def test_good_hashtags(self):
         for item in GOOD_HASHTAGS:
             assert item == RE_HASHTAG.search(item).group()
+
+    def test_bad_hashtags(self):
+        for item in BAD_HASHTAGS:
+            assert RE_HASHTAG.search(item) is None
 
 
 class TestNumberRegex(object):
