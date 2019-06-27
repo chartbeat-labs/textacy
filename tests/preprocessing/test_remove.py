@@ -19,9 +19,10 @@ def test_remove_punct_marks():
 
 
 def test_remove_accents():
-    text = "El niño se asustó -- qué miedo!"
-    proc_text = "El nino se asusto -- que miedo!"
-    assert preprocessing.remove_accents(text, method="unicode") == proc_text
-    assert preprocessing.remove_accents(text, method="ascii") == proc_text
-    with pytest.raises(ValueError):
-        _ = preprocessing.remove_accents(text, method="foo")
+    in_outs = [
+        ("El niño se asustó del pingüino -- qué miedo!", "El nino se asusto del pinguino -- que miedo!"),
+        ("Le garçon est très excité pour la forêt.", "Le garcon est tres excite pour la foret."),
+    ]
+    for in_, out_ in in_outs:
+        assert preprocessing.remove_accents(in_, fast=False) == out_
+        assert preprocessing.remove_accents(in_, fast=True) == out_
