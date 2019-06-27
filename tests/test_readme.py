@@ -92,10 +92,9 @@ def test_corpus_functionality(corpus):
 
 
 def test_plaintext_functionality(text):
-    preprocessed_text = preprocessing.normalize_whitespace(text)
     preprocessed_text = preprocessing.remove_punctuation(text)
+    preprocessed_text = preprocessing.normalize_whitespace(text)
     preprocessed_text = preprocessed_text.lower()
-    # preprocessed_text = preprocess_text(text, lowercase=True, no_punct=True)[:100]
     assert all(char.islower() for char in preprocessed_text if char.isalpha())
     assert all(char.isalnum() or char.isspace() for char in preprocessed_text)
     keyword = "America"
