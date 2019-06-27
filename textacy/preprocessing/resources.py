@@ -72,7 +72,7 @@ RE_USER_HANDLE = re.compile(
     flags=re.UNICODE | re.IGNORECASE)
 
 RE_HASHTAG = re.compile(
-    r"(?:^|(?<![\w#＃.]))(#|＃)\w+",
+    r"(?:^|(?<![\w#＃.]))(#|＃)(?!\d)\w+",
     flags=re.UNICODE | re.IGNORECASE)
 
 RE_PHONE_NUMBER = re.compile(
