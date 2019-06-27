@@ -43,14 +43,15 @@ how a particular word or phrase is used in a body of text:
 
 Sometimes, "raw" text is messy and must be cleaned up before analysis; other
 times, an analysis simply benefits from well-standardized text. In either case,
-the ``textacy.preprocessing`` module contains a number of functions to remove
-URLs, punctuation, accents, HTML cruft, etc. as well as normalize whitespace.
-For example:
+the ``textacy.preprocessing`` sub-package contains a number of functions to
+normalize (whitespace, quotation marks, etc.), remove (punctuation, accents, etc.),
+and replace (URLs, emails, numbers, etc.) messy text data. For example:
 
 .. code-block:: pycon
 
-    >>> textacy.preprocess_text(text, lowercase=True, no_punct=True)
-    'since the so called statistical revolution in the late 1980s and mid 1990s much natural language processing research has relied heavily on machine learning formerly many language processing tasks typically involved the direct hand coding of rules which is not in general robust to natural language variation the machine learning paradigm calls instead for using statistical inference to automatically learn such rules through the analysis of large corpora of typical real world examples'
+    >>> from textacy import preprocessing
+    >>> preprocessing.normalize_whitespace(preprocessing.remove_punctuation(text))[:80]
+    'Since the so called statistical revolution in the late 1980s and mid 1990s much '
 
 Make a Doc
 ----------

@@ -8,7 +8,7 @@ from __future__ import absolute_import, unicode_literals
 
 import pytest
 
-from textacy import cache, keyterms, preprocess_text
+from textacy import cache, keyterms, preprocessing
 from textacy.spacier import utils as spacy_utils
 
 
@@ -28,7 +28,7 @@ def spacy_doc():
 
     In May 2011, The New York Times reported that President Barack Obama "has sounded out" Friedman concerning Middle East issues.
     """
-    spacy_doc = spacy_lang(preprocess_text(text), disable=["parser"])
+    spacy_doc = spacy_lang(preprocessing.normalize_whitespace(text), disable=["parser"])
     return spacy_doc
 
 
