@@ -61,7 +61,7 @@ RE_SHORT_URL = re.compile(
     flags=re.UNICODE | re.IGNORECASE)
 
 RE_EMAIL = re.compile(
-    # TODO: r"(?:mailto)?
+    r"(?:mailto:)?"
     r"(?:^|(?<=[^\w@.)]))([\w+-](\.(?!\.))?)*?[\w+-]@(?:\w-?)*?\w+(\.([a-z]{2,})){1,3}"
     r"(?:$|(?=\b))",
     flags=re.UNICODE | re.IGNORECASE)
