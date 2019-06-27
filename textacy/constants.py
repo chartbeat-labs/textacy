@@ -6,10 +6,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 import re
-import sys
-import unicodedata
 
-from . import compat
 
 DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
 
