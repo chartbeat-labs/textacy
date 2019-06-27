@@ -6,12 +6,6 @@ import pytest
 from textacy import preprocessing
 
 
-def test_normalize_contractions():
-    text = "Y'all can't believe you're not who they've said I'll become, but shouldn't."
-    proc_text = "You all can not believe you are not who they have said I will become, but should not."
-    assert preprocessing.normalize_contractions(text) == proc_text
-
-
 def test_normalize_hyphenated_words():
     in_outs = [
         ("I see you shiver with antici- pation.", "I see you shiver with anticipation."),

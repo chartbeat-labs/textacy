@@ -1,5 +1,4 @@
 from .normalize import (
-    normalize_contractions,
     normalize_hyphenated_words,
     normalize_quotation_marks,
     normalize_unicode,
