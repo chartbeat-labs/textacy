@@ -59,7 +59,7 @@ import joblib
 from . import cache
 from . import compat
 from . import constants
-from .datasets import utils
+from . import utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -108,6 +108,7 @@ class LangIdentifier(object):
             force (bool): If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
+        from .datasets.utils import download_file
         release_tag = "lang_identifier_py{py_version}_v{data_version}".format(
             py_version=2 if compat.PY2 else 3,
             data_version=1.0,
@@ -115,7 +116,7 @@ class LangIdentifier(object):
         url = compat.urljoin(
             "https://github.com/bdewilde/textacy-data/releases/download/",
             release_tag + "/" + self.filename)
-        filepath = utils.download_file(
+        filepath = download_file(
             url,
             filename=self.filename,
             dirpath=self.data_dir,
