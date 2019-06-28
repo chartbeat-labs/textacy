@@ -6,6 +6,7 @@ PY2 = sys.version_info.major == 2
 is_windows = sys.platform.startswith("win")
 is_linux = sys.platform.startswith("linux")
 is_osx = sys.platform == "darwin"
+is_narrow_unicode = sys.maxunicode < 0x10ffff
 
 if PY2:
     import cPickle as pickle

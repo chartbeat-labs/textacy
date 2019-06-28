@@ -3,6 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from .resources import (
     RE_CURRENCY_SYMBOL,
     RE_EMAIL,
+    RE_EMOJI,
     RE_HASHTAG,
     RE_NUMBER,
     RE_PHONE_NUMBER,
@@ -38,6 +39,25 @@ def replace_emails(text, replace_with="_EMAIL_"):
         str
     """
     return RE_EMAIL.sub(replace_with, text)
+
+
+def replace_emojis(text, replace_with="_EMOJI_"):
+    """
+    Replace all emoji and pictographs in ``text`` with ``replace_with``.
+
+    Args:
+        text (str)
+        replace_with (str)
+
+    Returns:
+        str
+
+    Note:
+        If your Python has a narrow unicode build ("USC-2"), only dingbats
+        and miscellaneous symbols are replaced because Python isn't able
+        to represent the unicode data for things like emoticons. Sorry!
+    """
+    return RE_EMOJI.sub(replace_with, text)
 
 
 def replace_numbers(text, replace_with="_NUMBER_"):
