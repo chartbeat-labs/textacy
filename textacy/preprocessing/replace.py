@@ -1,3 +1,11 @@
+# -*- coding: utf-8 -*-
+"""
+Replace
+-------
+
+Replace parts of raw text that are semantically important as members of a group
+but not so much in the individual instances.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 from .resources import (

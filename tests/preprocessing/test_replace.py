@@ -28,7 +28,7 @@ def test_replace_emails():
 def test_replace_emojis():
     in_outs = [
         ("ugh, it's raining *again* ☔", "ugh, it's raining *again* _EMOJI_"),
-        ("✌ tests are passing ✌✌", "_EMOJI_ tests are passing _EMOJI_"),
+        ("✌ tests are passing ✌", "_EMOJI_ tests are passing _EMOJI_"),
     ]
     for in_, out_ in in_outs:
         assert preprocessing.replace_emojis(in_) == out_
