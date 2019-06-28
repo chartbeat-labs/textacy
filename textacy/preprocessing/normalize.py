@@ -1,4 +1,10 @@
 # -*- coding: utf-8 -*-
+"""
+Normalize
+---------
+
+Normalize aspects of raw text that may vary in problematic ways.
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import re
@@ -30,7 +36,7 @@ def normalize_hyphenated_words(text):
 def normalize_quotation_marks(text):
     """
     Normalize all "fancy" single- and double-quotation marks in ``text``
-    to just the basic ASCII equivalents (' and ").
+    to just the basic ASCII equivalents.
 
     Args:
         text (str)
