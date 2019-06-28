@@ -1,8 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import, unicode_literals
 
+from textacy import compat
 from textacy.preprocessing.resources import (
     RE_EMAIL,
+    RE_EMOJI,
     RE_HASHTAG,
     RE_NUMBER,
     RE_PHONE_NUMBER,
@@ -39,6 +41,19 @@ BAD_EMAILS = [
     "email@[123.123.123.123]",
     "user@[IPv6:2001:db8::1]]",
 ]
+
+GOOD_EMOJIS = [
+    "☀", "⛿",  # miscellaneous symbols
+    "✀", "➿",  # dingbats
+]
+if not compat.is_narrow_unicode:
+    GOOD_EMOJIS.extend([
+        "🌀", "🗿",  # miscellaneous symbols and pictographs
+        "😀", "🙏",  # emoticons
+        "🚀", "🛺",  # transport and map symbols
+        "🤀", "🧿",  # supplemental symbols and pictographs
+        "🩰", "🪕",  # symbols and pictographs extended-a
+    ])
 
 # source: https://github.com/twitter/twitter-text
 GOOD_HASHTAGS = [
@@ -231,6 +246,15 @@ class TestEmailRegex(object):
     def test_bad_emails(self):
         for item in BAD_EMAILS:
             assert RE_EMAIL.search(item) is None
+
+
+class TestEmojiRegex(object):
+
+    def test_good_emojis(self):
+        for item in GOOD_EMOJIS:
+            match = RE_EMOJI.search(item)
+            assert match is not None
+            assert item == match.group()
 
 
 class TestHashtagRegex(object):
