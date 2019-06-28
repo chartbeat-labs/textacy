@@ -9,8 +9,8 @@ from .. import compat
 
 # compile regexes, so we don't do this on the fly and rely on caching
 
-RE_LINEBREAK = re.compile(r"((\r\n)|[\n\v])+")
-RE_NONBREAKING_SPACE = re.compile(r"(?!\n)\s+", flags=re.UNICODE)
+RE_LINEBREAK = re.compile(r"(\r\n|[\n\v])+")
+RE_NONBREAKING_SPACE = re.compile(r"[^\S\n\v]+", flags=re.UNICODE)
 
 # source: https://gist.github.com/dperini/729294
 RE_URL = re.compile(

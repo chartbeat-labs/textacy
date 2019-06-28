@@ -51,7 +51,9 @@ RE_ACRONYM = re.compile(
     r")"
     r"(?:$|(?=\W))",
     flags=re.UNICODE)
-RE_NONBREAKING_SPACE = re.compile(r"(?!\n)\s+")
+
+RE_LINEBREAK = re.compile(r"(\r\n|[\n\v])+")
+RE_NONBREAKING_SPACE = re.compile(r"[^\S\n\v]+", flags=re.UNICODE)
 
 # regexes for cleaning up crufty terms
 RE_DANGLING_PARENS_TERM = re.compile(
