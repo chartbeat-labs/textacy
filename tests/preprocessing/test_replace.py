@@ -25,6 +25,15 @@ def test_replace_emails():
         assert preprocessing.replace_emails(in_) == out_
 
 
+def test_replace_emojis():
+    in_outs = [
+        ("ugh, it's raining *again* ☔", "ugh, it's raining *again* _EMOJI_"),
+        ("✌ tests are passing ✌✌", "_EMOJI_ tests are passing _EMOJI_"),
+    ]
+    for in_, out_ in in_outs:
+        assert preprocessing.replace_emojis(in_) == out_
+
+
 def test_replace_hashtags():
     in_outs = [
         ("like omg it's #ThrowbackThursday", "like omg it's _TAG_"),
