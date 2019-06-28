@@ -44,7 +44,11 @@ RE_MATCHER_SPECIAL_VAL = re.compile(
 
 RE_ACRONYM = re.compile(
     r"(?:^|(?<=\W))"
-    r"(?:(?:(?:(?:[A-Z]\.?)+[a-z0-9&/-]?)+(?:[A-Z][s.]?|[0-9]s?))|(?:[0-9](?:\-?[A-Z])+))"
+    r"(?:"
+    r"(?:(?:(?:[A-Z]\.?)+[a-z0-9&/-]?)+(?:[A-Z][s.]?|\ds?))"
+    r"|"
+    r"(?:\d(?:\-?[A-Z])+)"
+    r")"
     r"(?:$|(?=\W))",
     flags=re.UNICODE)
 RE_NONBREAKING_SPACE = re.compile(r"(?!\n)\s+")
