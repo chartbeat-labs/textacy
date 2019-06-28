@@ -30,7 +30,6 @@ from datetime import datetime
 from .. import compat
 from .. import constants
 from .. import io as tio
-from .. import preprocessing
 from . import utils
 from .dataset import Dataset
 
@@ -348,4 +347,6 @@ class RedditComments(Dataset):
         # strip out text markup, e.g. * for bold text
         content = content.replace("`", "").replace("*", "").replace("~", "")
         # normalize whitespace
-        return preprocessing.normalize_whitespace(content)
+        return constants.RE_NONBREAKING_SPACE.sub(
+            " ", constants.RE_LINEBREAK.sub(r"\n", content)
+        ).strip()
