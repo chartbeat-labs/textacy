@@ -13,11 +13,10 @@ import warnings
 
 import numpy as np
 from cytoolz import itertoolz
-from Levenshtein import (
-    distance as _levenshtein,
-    hamming as _hamming,
+from jellyfish import (
+    levenshtein_distance as _levenshtein,
+    hamming_distance as _hamming,
     jaro_winkler as _jaro_winkler,
-    ratio as _ratio,
 )
 from pyemd import emd
 from sklearn.metrics import pairwise_distances
@@ -169,20 +168,12 @@ def hamming(str1, str2):
         This uses a *modified* Hamming distance in that it permits strings
         of different lengths to be compared.
     """
-    len_str1 = len(str1)
-    len_str2 = len(str2)
-    if len_str1 == len_str2:
-        distance = _hamming(str1, str2)
-    else:
-        # make sure str1 is as long as or longer than str2
-        if len_str2 > len_str1:
-            str1, str2 = str2, str1
-            len_str1, len_str2 = len_str2, len_str1
-        # distance is # of different chars + difference in str lengths
-        distance = len_str1 - len_str2
-        distance += _hamming(str1[:len_str2], str2)
-    distance /= len_str1
-    return 1.0 - distance
+    distance = _hamming(str1, str2)
+    max_len = max(len(str1), len(str2))
+    try:
+        return 1.0 - (distance / max_len)
+    except ZeroDivisionError:
+        return 1.0
 
 
 def levenshtein(str1, str2):
@@ -202,11 +193,14 @@ def levenshtein(str1, str2):
         where larger values correspond to more similar strings
     """
     distance = _levenshtein(str1, str2)
-    distance /= max(len(str1), len(str2))
-    return 1.0 - distance
+    max_len = max(len(str1), len(str2))
+    try:
+        return 1.0 - (distance / max_len)
+    except ZeroDivisionError:
+        return 1.0
 
 
-def jaro_winkler(str1, str2, prefix_weight=0.1):
+def jaro_winkler(str1, str2):
     """
     Measure the similarity between two strings using Jaro-Winkler similarity
     metric, a modification of Jaro metric giving more weight to a shared prefix.
@@ -214,14 +208,12 @@ def jaro_winkler(str1, str2, prefix_weight=0.1):
     Args:
         str1 (str)
         str2 (str)
-        prefix_weight (float): The inverse value of common prefix length needed
-            to consider the strings identical
 
     Returns:
         float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings
     """
-    return _jaro_winkler(str1, str2, prefix_weight)
+    return _jaro_winkler(str1, str2)
 
 
 def token_sort_ratio(str1, str2):
@@ -243,7 +235,7 @@ def token_sort_ratio(str1, str2):
     str2 = compat.to_unicode(str2)
     str1_proc = _process_and_sort(str1)
     str2_proc = _process_and_sort(str2)
-    return _ratio(str1_proc, str2_proc)
+    return levenshtein(str1_proc, str2_proc)
 
 
 def _process_and_sort(s):
