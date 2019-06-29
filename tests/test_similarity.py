@@ -84,14 +84,52 @@ class TestJaccard(object):
                 )
 
 
-def test_hamming(text_pairs):
-    for text1, text2 in text_pairs:
-        assert 0.0 <= similarity.hamming(text1, text2) <= 1.0
+class TestHamming(object):
+
+    def test_default(self, text_pairs):
+        for text1, text2 in text_pairs:
+            assert 0.0 <= similarity.hamming(text1, text2) <= 1.0
+
+    def test_identity(self, text_pairs):
+        for text1, text2 in text_pairs:
+            assert similarity.hamming(text1, text1) == pytest.approx(1.0, rel=1e-3)
+            assert similarity.hamming(text2, text2) == pytest.approx(1.0, rel=1e-3)
+
+    def test_empty(self, text_pairs):
+        for text1, text2 in text_pairs:
+            assert similarity.hamming(text1, "") == 0.0
 
 
-def test_levenshtein(text_pairs):
-    for text1, text2 in text_pairs:
-        assert 0.0 <= similarity.levenshtein(text1, text2) <= 1.0
+class TestLevenshtein(object):
+
+    def test_default(self, text_pairs):
+        for text1, text2 in text_pairs:
+            assert 0.0 <= similarity.levenshtein(text1, text2) <= 1.0
+
+    def test_identity(self, text_pairs):
+        for text1, text2 in text_pairs:
+            assert similarity.levenshtein(text1, text1) == pytest.approx(1.0, rel=1e-3)
+            assert similarity.levenshtein(text2, text2) == pytest.approx(1.0, rel=1e-3)
+
+    def test_empty(self, text_pairs):
+        for text1, text2 in text_pairs:
+            assert similarity.levenshtein(text1, "") == 0.0
+
+
+class TestTokenSortRatio(object):
+
+    def test_default(self, text_pairs):
+        for text1, text2 in text_pairs:
+            assert 0.0 <= similarity.token_sort_ratio(text1, text2) <= 1.0
+
+    def test_identity(self, text_pairs):
+        for text1, text2 in text_pairs:
+            assert similarity.token_sort_ratio(text1, text1) == pytest.approx(1.0, rel=1e-3)
+            assert similarity.token_sort_ratio(text2, text2) == pytest.approx(1.0, rel=1e-3)
+
+    def test_empty(self, text_pairs):
+        for text1, text2 in text_pairs:
+            assert similarity.token_sort_ratio(text1, "") == 0.0
 
 
 def test_jaro_winkler(text_pairs):
