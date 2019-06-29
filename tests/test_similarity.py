@@ -62,7 +62,7 @@ def test_jaccard_exception(text1, text2):
 
 def test_jaccard_fuzzy_match(text1, text2):
     thresholds = (0.50, 0.70, 0.90)
-    expected_values = (0.454546, 0.272728, 0.09091)
+    expected_values = (0.272728, 0.09091, 0.09091)
     for thresh, expected_value in zip(thresholds, expected_values):
         assert similarity.jaccard(
             text1.split(), text2.split(), fuzzy_match=True, match_threshold=thresh
@@ -86,4 +86,4 @@ def test_levenshtein(text1, text2):
 
 
 def test_jaro_winkler(text1, text2):
-    assert similarity.jaro_winkler(text1, text2) == 0.5718004218004219
+    assert similarity.jaro_winkler(text1, text2) == 0.5945276945276946
