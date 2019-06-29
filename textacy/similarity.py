@@ -25,7 +25,7 @@ from . import compat
 from . import extract
 
 
-RE_WORDCHARS = re.compile(r"[^\W_]+", flags=re.IGNORECASE | re.UNICODE)
+RE_ALNUM = re.compile(r"[^\W_]+", flags=re.IGNORECASE | re.UNICODE)
 
 
 def word_movers(doc1, doc2, metric="cosine"):
@@ -173,7 +173,7 @@ def hamming(str1, str2):
     try:
         return 1.0 - (distance / max_len)
     except ZeroDivisionError:
-        return 1.0
+        return 0.0
 
 
 def levenshtein(str1, str2):
@@ -197,7 +197,7 @@ def levenshtein(str1, str2):
     try:
         return 1.0 - (distance / max_len)
     except ZeroDivisionError:
-        return 1.0
+        return 0.0
 
 
 def jaro_winkler(str1, str2):
@@ -230,7 +230,7 @@ def token_sort_ratio(str1, str2):
         where larger values correspond to more similar strings.
     """
     if not str1 or not str2:
-        return 0
+        return 0.0
     str1 = compat.to_unicode(str1)
     str2 = compat.to_unicode(str2)
     str1_proc = _process_and_sort(str1)
@@ -246,4 +246,4 @@ def _process_and_sort(s):
     """
     if not s:
         return ""
-    return " ".join(sorted(RE_WORDCHARS.findall(s.lower())))
+    return " ".join(sorted(RE_ALNUM.findall(s.lower())))
