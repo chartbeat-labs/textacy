@@ -25,7 +25,7 @@ from . import compat
 from . import extract
 
 
-RE_NONWORDCHARS = re.compile(r"\W+", flags=re.IGNORECASE | re.UNICODE)
+RE_WORDCHARS = re.compile(r"[^\W_]+", flags=re.IGNORECASE | re.UNICODE)
 
 
 def word_movers(doc1, doc2, metric="cosine"):
@@ -239,15 +239,11 @@ def token_sort_ratio(str1, str2):
 
 
 def _process_and_sort(s):
-    """Return a processed string with tokens sorted then re-joined."""
-    return " ".join(sorted(_process(s).split()))
-
-
-def _process(s):
     """
-    Remove all characters but letters and numbers, strip whitespace,
-    and force everything to lower-case.
+    Remove all characters from ``s`` except letters and numbers, strip whitespace,
+    and force everything to lower-case; then sort tokens before re-joining into
+    a single string.
     """
     if not s:
         return ""
-    return RE_NONWORDCHARS.sub(" ", s).lower().strip()
+    return " ".join(sorted(RE_WORDCHARS.findall(s.lower())))
