@@ -16,7 +16,6 @@ from cytoolz import itertoolz
 from jellyfish import (
     levenshtein_distance as _levenshtein,
     hamming_distance as _hamming,
-    jaro_winkler as _jaro_winkler,
 )
 from pyemd import emd
 import sklearn.feature_extraction
@@ -199,22 +198,6 @@ def levenshtein(str1, str2):
         return 1.0 - (distance / max_len)
     except ZeroDivisionError:
         return 0.0
-
-
-def jaro_winkler(str1, str2):
-    """
-    Measure the similarity between two strings using Jaro-Winkler similarity
-    metric, a modification of Jaro metric giving more weight to a shared prefix.
-
-    Args:
-        str1 (str)
-        str2 (str)
-
-    Returns:
-        float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
-        where larger values correspond to more similar strings
-    """
-    return _jaro_winkler(str1, str2)
 
 
 def character_ngrams(str1, str2):

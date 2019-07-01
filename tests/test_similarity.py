@@ -146,8 +146,3 @@ class TestTokenSortRatio(object):
     def test_empty(self, text_pairs):
         for text1, text2 in text_pairs:
             assert similarity.token_sort_ratio(text1, "") == 0.0
-
-
-def test_jaro_winkler(text_pairs):
-    for text1, text2 in text_pairs:
-        assert 0.0 <= similarity.jaro_winkler(text1, text2) <= 1.0
