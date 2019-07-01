@@ -57,11 +57,6 @@ class TestJaccard(object):
             _ = similarity.jaccard(text1, text2)
             _ = similarity.jaccard(text1.split(), text2.split())
 
-    def test_exception(self, text_pairs):
-        for text1, text2 in text_pairs:
-            with pytest.raises(ValueError):
-                _ = similarity.jaccard(text1, text2, True)
-
     def test_fuzzy_match(self, text_pairs):
         thresholds = (0.5, 0.7, 0.9)
         for text1, text2 in text_pairs:
@@ -74,14 +69,16 @@ class TestJaccard(object):
             ]
             assert sims[0] >= sims[1] >= sims[2]
 
-    def test_fuzzy_match_warning(self, text_pairs):
-        threshold = 50
+    def test_fuzzy_match_error(self, text_pairs):
         for text1, text2 in text_pairs:
-            with pytest.warns(UserWarning):
-                _ = similarity.jaccard(
-                    text1.split(), text2.split(),
-                    fuzzy_match=True, match_threshold=threshold
-                )
+            with pytest.raises(ValueError):
+                _ = similarity.jaccard(text1, text2, True)
+
+    def test_match_threshold_error(self, text_pairs):
+        text1, text2 = text_pairs[0]
+        for mt in (-1.0, 1.01, 50):
+            with pytest.raises(ValueError):
+                _ = similarity.jaccard(text1, text2, match_threshold=mt)
 
 
 class TestHamming(object):

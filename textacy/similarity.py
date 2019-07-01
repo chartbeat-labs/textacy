@@ -2,14 +2,14 @@
 Similarity
 ----------
 
-Collection of various semantic similarity metrics between docs, sequences of tokens,
-and individual tokens, where tokens may either be spaCy objects or strings.
+Collection of semantic + lexical similarity metrics between tokens, strings,
+and sequences thereof, returning values between 0.0 (totally dissimilar)
+and 1.0 (totally similar).
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import collections
 import re
-import warnings
 
 import numpy as np
 from cytoolz import itertoolz
@@ -121,14 +121,14 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
         of strings
 
     Raises:
-        ValueError: if ``fuzzy_match`` is True but ``obj1`` and ``obj2`` are strings
+        ValueError: if ``fuzzy_match`` is True but ``obj1`` and ``obj2`` are strings,
+        or if ``match_threshold`` is not a valid float
     """
-    if isinstance(match_threshold, int) and 1 <= match_threshold <= 100:
-        warnings.warn(
-            "`match_threshold` should be a float in [0.0, 1.0]; "
-            "it was automatically converted from the provided int in [0, 100]"
+    if not 0.0 <= match_threshold <= 1.0:
+        raise ValueError(
+            "match_threshold={} is invalid; "
+            "it must be a float in the interval [0.0, 1.0]".format(match_threshold)
         )
-        match_threshold /= 100
     set1 = set(obj1)
     set2 = set(obj2)
     intersection = len(set1 & set2)
@@ -185,8 +185,6 @@ def levenshtein(str1, str2):
     Args:
         str1 (str)
         str2 (str)
-        normalize (bool): if True, divide Levenshtein distance by the total number
-            of characters in the longest string; otherwise leave the distance as-is
 
     Returns:
         float: similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
@@ -198,36 +196,6 @@ def levenshtein(str1, str2):
         return 1.0 - (distance / max_len)
     except ZeroDivisionError:
         return 0.0
-
-
-def character_ngrams(str1, str2):
-    """
-    Measure the similarity between two strings using a character ngrams similarity
-    metric, in which strings are transformed into trigrams of alnum-only characters,
-    vectorized and weighted by tf-idf, then compared by cosine similarity.
-
-    Args:
-        str1 (str)
-        str2 (str)
-
-    Returns:
-        float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
-        where larger values correspond to more similar strings
-
-    Note:
-        This method has been used in cross-lingual plagiarism detection and
-        authorship attribution, and seems to work better on longer texts.
-        At the very least, it is *slow* on shorter texts relative to the other
-        similarity measures.
-    """
-    vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(
-        preprocessor=lambda s: " ".join(RE_ALNUM.findall(s.lower())),
-        analyzer="char",
-        token_pattern="(?u)\\b\\w+\\b",
-        ngram_range=(3, 3),
-    )
-    mat = vectorizer.fit_transform([str1, str2])
-    return 1.0 - pairwise_distances(mat[0, :], mat[1, :], metric="cosine").item()
 
 
 def token_sort_ratio(str1, str2):
@@ -261,3 +229,33 @@ def _process_and_sort(s):
     if not s:
         return ""
     return " ".join(sorted(RE_ALNUM.findall(s.lower())))
+
+
+def character_ngrams(str1, str2):
+    """
+    Measure the similarity between two strings using a character ngrams similarity
+    metric, in which strings are transformed into trigrams of alnum-only characters,
+    vectorized and weighted by tf-idf, then compared by cosine similarity.
+
+    Args:
+        str1 (str)
+        str2 (str)
+
+    Returns:
+        float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
+        where larger values correspond to more similar strings
+
+    Note:
+        This method has been used in cross-lingual plagiarism detection and
+        authorship attribution, and seems to work better on longer texts.
+        At the very least, it is *slow* on shorter texts relative to the other
+        similarity measures.
+    """
+    vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(
+        preprocessor=lambda s: " ".join(RE_ALNUM.findall(s.lower())),
+        analyzer="char",
+        token_pattern="(?u)\\b\\w+\\b",
+        ngram_range=(3, 3),
+    )
+    mat = vectorizer.fit_transform([str1, str2])
+    return 1.0 - pairwise_distances(mat[0, :], mat[1, :], metric="cosine").item()
