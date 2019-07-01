@@ -2,31 +2,30 @@
 Similarity
 ----------
 
-Collection of various semantic similarity metrics between docs, sequences of tokens,
-and individual tokens, where tokens may either be spaCy objects or strings.
+Collection of semantic + lexical similarity metrics between tokens, strings,
+and sequences thereof, returning values between 0.0 (totally dissimilar)
+and 1.0 (totally similar).
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import collections
 import re
-import warnings
 
 import numpy as np
 from cytoolz import itertoolz
-from Levenshtein import (
-    distance as _levenshtein,
-    hamming as _hamming,
-    jaro_winkler as _jaro_winkler,
-    ratio as _ratio,
+from jellyfish import (
+    levenshtein_distance as _levenshtein,
+    hamming_distance as _hamming,
 )
 from pyemd import emd
+import sklearn.feature_extraction
 from sklearn.metrics import pairwise_distances
 
 from . import compat
 from . import extract
 
 
-RE_NONWORDCHARS = re.compile(r"\W+", flags=re.IGNORECASE | re.UNICODE)
+RE_ALNUM = re.compile(r"[^\W_]+", flags=re.IGNORECASE | re.UNICODE)
 
 
 def word_movers(doc1, doc2, metric="cosine"):
@@ -122,14 +121,14 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
         of strings
 
     Raises:
-        ValueError: if ``fuzzy_match`` is True but ``obj1`` and ``obj2`` are strings
+        ValueError: if ``fuzzy_match`` is True but ``obj1`` and ``obj2`` are strings,
+        or if ``match_threshold`` is not a valid float
     """
-    if isinstance(match_threshold, int) and 1 <= match_threshold <= 100:
-        warnings.warn(
-            "`match_threshold` should be a float in [0.0, 1.0]; "
-            "it was automatically converted from the provided int in [0, 100]"
+    if not 0.0 <= match_threshold <= 1.0:
+        raise ValueError(
+            "match_threshold={} is invalid; "
+            "it must be a float in the interval [0.0, 1.0]".format(match_threshold)
         )
-        match_threshold /= 100
     set1 = set(obj1)
     set2 = set(obj2)
     intersection = len(set1 & set2)
@@ -169,20 +168,12 @@ def hamming(str1, str2):
         This uses a *modified* Hamming distance in that it permits strings
         of different lengths to be compared.
     """
-    len_str1 = len(str1)
-    len_str2 = len(str2)
-    if len_str1 == len_str2:
-        distance = _hamming(str1, str2)
-    else:
-        # make sure str1 is as long as or longer than str2
-        if len_str2 > len_str1:
-            str1, str2 = str2, str1
-            len_str1, len_str2 = len_str2, len_str1
-        # distance is # of different chars + difference in str lengths
-        distance = len_str1 - len_str2
-        distance += _hamming(str1[:len_str2], str2)
-    distance /= len_str1
-    return 1.0 - distance
+    distance = _hamming(str1, str2)
+    max_len = max(len(str1), len(str2))
+    try:
+        return 1.0 - (distance / max_len)
+    except ZeroDivisionError:
+        return 0.0
 
 
 def levenshtein(str1, str2):
@@ -194,34 +185,17 @@ def levenshtein(str1, str2):
     Args:
         str1 (str)
         str2 (str)
-        normalize (bool): if True, divide Levenshtein distance by the total number
-            of characters in the longest string; otherwise leave the distance as-is
 
     Returns:
         float: similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings
     """
     distance = _levenshtein(str1, str2)
-    distance /= max(len(str1), len(str2))
-    return 1.0 - distance
-
-
-def jaro_winkler(str1, str2, prefix_weight=0.1):
-    """
-    Measure the similarity between two strings using Jaro-Winkler similarity
-    metric, a modification of Jaro metric giving more weight to a shared prefix.
-
-    Args:
-        str1 (str)
-        str2 (str)
-        prefix_weight (float): The inverse value of common prefix length needed
-            to consider the strings identical
-
-    Returns:
-        float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
-        where larger values correspond to more similar strings
-    """
-    return _jaro_winkler(str1, str2, prefix_weight)
+    max_len = max(len(str1), len(str2))
+    try:
+        return 1.0 - (distance / max_len)
+    except ZeroDivisionError:
+        return 0.0
 
 
 def token_sort_ratio(str1, str2):
@@ -238,24 +212,50 @@ def token_sort_ratio(str1, str2):
         where larger values correspond to more similar strings.
     """
     if not str1 or not str2:
-        return 0
+        return 0.0
     str1 = compat.to_unicode(str1)
     str2 = compat.to_unicode(str2)
     str1_proc = _process_and_sort(str1)
     str2_proc = _process_and_sort(str2)
-    return _ratio(str1_proc, str2_proc)
+    return levenshtein(str1_proc, str2_proc)
 
 
 def _process_and_sort(s):
-    """Return a processed string with tokens sorted then re-joined."""
-    return " ".join(sorted(_process(s).split()))
-
-
-def _process(s):
     """
-    Remove all characters but letters and numbers, strip whitespace,
-    and force everything to lower-case.
+    Remove all characters from ``s`` except letters and numbers, strip whitespace,
+    and force everything to lower-case; then sort tokens before re-joining into
+    a single string.
     """
     if not s:
         return ""
-    return RE_NONWORDCHARS.sub(" ", s).lower().strip()
+    return " ".join(sorted(RE_ALNUM.findall(s.lower())))
+
+
+def character_ngrams(str1, str2):
+    """
+    Measure the similarity between two strings using a character ngrams similarity
+    metric, in which strings are transformed into trigrams of alnum-only characters,
+    vectorized and weighted by tf-idf, then compared by cosine similarity.
+
+    Args:
+        str1 (str)
+        str2 (str)
+
+    Returns:
+        float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
+        where larger values correspond to more similar strings
+
+    Note:
+        This method has been used in cross-lingual plagiarism detection and
+        authorship attribution, and seems to work better on longer texts.
+        At the very least, it is *slow* on shorter texts relative to the other
+        similarity measures.
+    """
+    vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(
+        preprocessor=lambda s: " ".join(RE_ALNUM.findall(s.lower())),
+        analyzer="char",
+        token_pattern="(?u)\\b\\w+\\b",
+        ngram_range=(3, 3),
+    )
+    mat = vectorizer.fit_transform([str1, str2])
+    return 1.0 - pairwise_distances(mat[0, :], mat[1, :], metric="cosine").item()
