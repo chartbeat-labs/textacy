@@ -19,6 +19,7 @@ from jellyfish import (
     jaro_winkler as _jaro_winkler,
 )
 from pyemd import emd
+import sklearn.feature_extraction
 from sklearn.metrics import pairwise_distances
 
 from . import compat
@@ -214,6 +215,36 @@ def jaro_winkler(str1, str2):
         where larger values correspond to more similar strings
     """
     return _jaro_winkler(str1, str2)
+
+
+def character_ngrams(str1, str2):
+    """
+    Measure the similarity between two strings using a character ngrams similarity
+    metric, in which strings are transformed into trigrams of alnum-only characters,
+    vectorized and weighted by tf-idf, then compared by cosine similarity.
+
+    Args:
+        str1 (str)
+        str2 (str)
+
+    Returns:
+        float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
+        where larger values correspond to more similar strings
+
+    Note:
+        This method has been used in cross-lingual plagiarism detection and
+        authorship attribution, and seems to work better on longer texts.
+        At the very least, it is *slow* on shorter texts relative to the other
+        similarity measures.
+    """
+    vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(
+        preprocessor=lambda s: " ".join(RE_ALNUM.findall(s.lower())),
+        analyzer="char",
+        token_pattern="(?u)\\b\\w+\\b",
+        ngram_range=(3, 3),
+    )
+    mat = vectorizer.fit_transform([str1, str2])
+    return 1.0 - pairwise_distances(mat[0, :], mat[1, :], metric="cosine").item()
 
 
 def token_sort_ratio(str1, str2):
