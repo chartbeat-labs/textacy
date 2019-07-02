@@ -81,22 +81,6 @@ class TestJaccard(object):
                 _ = similarity.jaccard(text1, text2, match_threshold=mt)
 
 
-class TestHamming(object):
-
-    def test_default(self, text_pairs):
-        for text1, text2 in text_pairs:
-            assert 0.0 <= similarity.hamming(text1, text2) <= 1.0
-
-    def test_identity(self, text_pairs):
-        for text1, text2 in text_pairs:
-            assert similarity.hamming(text1, text1) == pytest.approx(1.0, rel=1e-3)
-            assert similarity.hamming(text2, text2) == pytest.approx(1.0, rel=1e-3)
-
-    def test_empty(self, text_pairs):
-        for text1, text2 in text_pairs:
-            assert similarity.hamming(text1, "") == 0.0
-
-
 class TestLevenshtein(object):
 
     def test_default(self, text_pairs):
