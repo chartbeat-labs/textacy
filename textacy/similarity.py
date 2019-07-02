@@ -13,10 +13,7 @@ import re
 
 import numpy as np
 from cytoolz import itertoolz
-from jellyfish import (
-    levenshtein_distance as _levenshtein,
-    hamming_distance as _hamming,
-)
+from jellyfish import levenshtein_distance as _levenshtein
 from pyemd import emd
 import sklearn.feature_extraction
 from sklearn.metrics import pairwise_distances
@@ -148,32 +145,6 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
         raise ValueError("fuzzy matching not possible with str inputs")
 
     return intersection / union
-
-
-def hamming(str1, str2):
-    """
-    Measure the similarity between two strings using Hamming distance, which
-    simply gives the number of characters in the strings that are different i.e.
-    the number of substitution edits needed to change one string into the other.
-
-    Args:
-        str1 (str)
-        str2 (str)
-
-    Returns:
-        float: Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
-        where larger values correspond to more similar strings
-
-    Note:
-        This uses a *modified* Hamming distance in that it permits strings
-        of different lengths to be compared.
-    """
-    distance = _hamming(str1, str2)
-    max_len = max(len(str1), len(str2))
-    try:
-        return 1.0 - (distance / max_len)
-    except ZeroDivisionError:
-        return 0.0
 
 
 def levenshtein(str1, str2):
