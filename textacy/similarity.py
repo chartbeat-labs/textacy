@@ -99,8 +99,8 @@ def word2vec(obj1, obj2):
 
 def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
     """
-    Measure the semantic similarity between two strings or sequences of strings
-    using Jaccard distance, with optional fuzzy matching of not-identical pairs
+    Measure the similarity between two strings or sequences of strings using
+    Jaccard distance, with optional fuzzy matching of not-identical pairs
     when ``obj1`` and ``obj2`` are sequences of strings.
 
     Args:
@@ -171,8 +171,9 @@ def levenshtein(str1, str2):
 
 def token_sort_ratio(str1, str2):
     """
-    Measure of similarity between two strings based on minimal edit distance,
-    where ordering of words in each string is normalized before comparing.
+    Measure the similarity between two strings based on :func:`levenshtein()`,
+    only with non-alphanumeric characters removed and the ordering of words
+    in each string sorted before comparison.
 
     Args:
         str1 (str)
