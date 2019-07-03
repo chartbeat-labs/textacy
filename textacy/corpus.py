@@ -401,7 +401,7 @@ class Corpus(object):
     # useful methods
 
     def word_counts(self, normalize="lemma", weighting="count", as_strings=False,
-                    filter_stop=True, filter_punct=True, filter_nums=False):
+                    filter_stops=True, filter_punct=True, filter_nums=False):
         """
         Map the set of unique words in :class:`Corpus` to their counts as
         absolute, relative, or binary frequencies of occurence, similar to
@@ -462,7 +462,7 @@ class Corpus(object):
 
     def word_doc_counts(
         self, normalize="lemma", weighting="count", smooth_idf=True, as_strings=False,
-        remove_stop=True, remove_punct=True, remove_space=True):
+        filter_stops=True, filter_punct=True, filter_nums=True):
         """
         Map the set of unique words in :class:`Corpus` to their *document* counts
         as absolute, relative, inverse, or binary frequencies of occurence.
@@ -483,9 +483,9 @@ class Corpus(object):
                 document to the corpus containing every unique word.
             as_strings (bool): If True, words are returned as strings; if False
                 (default), words are returned as their unique integer ids
-            remove_stop (bool): If True (default), stop word counts are removed.
-            remove_punct (bool): If True (default), punctuation counts are removed.
-            remove_space (bool): If True (default), whitespace counts are removed.
+            filter_stops (bool): If True (default), stop word counts are removed.
+            filter_punct (bool): If True (default), punctuation counts are removed.
+            filter_nums (bool): If True, number counts are removed.
 
         Returns:
             dict: mapping of a unique word id or string (depending on the value
@@ -501,8 +501,8 @@ class Corpus(object):
             word_doc_counts_.update(
                 doc._.to_bag_of_words(
                     normalize=normalize, weighting="binary", as_strings=as_strings,
-                    remove_stop=remove_stop, remove_punct=remove_punct, 
-                    remove_space=remove_space
+                    filter_stops=remove_stop, filter_punct=remove_punct, 
+                    filter_nums=remove_nums
                 )
             )
         if weighting == "count":
