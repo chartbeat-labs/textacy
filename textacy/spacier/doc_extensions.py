@@ -464,7 +464,7 @@ def to_bag_of_terms(
 
 
 def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False, 
-                    remove_stop=True, remove_punct=True, remove_space=True):
+                    filter_stops=True, filter_punct=True, filter_nums=False):
     """
     Transform ``Doc`` into a bag-of-words: the set of unique words in ``Doc``
     mapped to their absolute, relative, or binary frequency of occurrence.
@@ -484,11 +484,11 @@ def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False,
             counts are normalized.
         as_strings (bool): If True, words are returned as strings; if False
             (default), words are returned as their unique integer ids
-        remove_stop (bool): If True (default), stop words are removed after
+        filter_stops (bool): If True (default), stop words are removed after
             counting.
-        remove_punct (bool): If True (default), punctuation tokens are removed
+        filter_punct (bool): If True (default), punctuation tokens are removed
             after counting.
-        remove_space (bool): If True (default), whitespace tokens are removed
+        filter_nums (bool): If True, tokens consisting of digits are removed
             after counting.
 
     Returns:
@@ -516,17 +516,19 @@ def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False,
     if as_strings is False:
         for wid, weight in wid_weights.items():
             lex = vocab[wid]
-            if not ( (lex.is_stop and remove_stop) or 
-                     (lex.is_punct and remove_punct) or 
-                     (lex.is_space and remove_space)):
+            if not ( (lex.is_stop and filter_stops) or 
+                     (lex.is_punct and filter_punct) or
+                     (lex.is_digit and filter_nums) or
+                      lex.is_space):
                 bow[wid] = weight
     else:
         ss = doc.vocab.strings
         for wid, weight in wid_weights.items():
             lex = vocab[wid]
-            if not ( (lex.is_stop and remove_stop) or 
-                     (lex.is_punct and remove_punct) or 
-                     (lex.is_space and remove_space) ):
+            if not ( (lex.is_stop and filter_stops) or 
+                     (lex.is_punct and filter_punct) or 
+                     (lex.is_digit and filter_nums) or
+                      lex.is_space):
                 bow[ss[wid]] = weight
     return bow
 
