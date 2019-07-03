@@ -401,7 +401,7 @@ class Corpus(object):
     # useful methods
 
     def word_counts(self, normalize="lemma", weighting="count", as_strings=False,
-                    remove_stop=True, remove_punct=True, remove_space=True):
+                    filter_stop=True, filter_punct=True, filter_nums=False):
         """
         Map the set of unique words in :class:`Corpus` to their counts as
         absolute, relative, or binary frequencies of occurence, similar to
@@ -424,9 +424,9 @@ class Corpus(object):
 
             as_strings (bool): If True, words are returned as strings; if False
                 (default), words are returned as their unique integer ids.
-            remove_stop (bool): If True (default), stop word counts are removed.
-            remove_punct (bool): If True (default), punctuation counts are removed.
-            remove_space (bool): If True (default), whitespace counts are removed.
+            filter_stops (bool): If True (default), stop word counts are removed.
+            filter_punct (bool): If True (default), punctuation counts are removed.
+            filter_nums (bool): If True, number counts are removed.
 
         Returns:
             dict: mapping of a unique word id or string (depending on the value
@@ -441,8 +441,8 @@ class Corpus(object):
             word_counts_.update(
                 doc._.to_bag_of_words(
                     normalize=normalize, weighting="count", as_strings=as_strings,
-                    remove_stop=remove_stop, remove_punct=remove_punct, 
-                    remove_space=remove_space
+                    filter_stops=filter_stops, filter_punct=filter_punct, 
+                    filter_nums=filter_nums
                 )
             )
         if weighting == "count":
