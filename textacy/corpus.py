@@ -501,8 +501,8 @@ class Corpus(object):
             word_doc_counts_.update(
                 doc._.to_bag_of_words(
                     normalize=normalize, weighting="binary", as_strings=as_strings,
-                    filter_stops=remove_stop, filter_punct=remove_punct, 
-                    filter_nums=remove_nums
+                    filter_stops=filter_stops, filter_punct=filter_punct, 
+                    filter_nums=filter_nums
                 )
             )
         if weighting == "count":
