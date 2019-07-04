@@ -24,6 +24,7 @@ from . import compat
 from . import extract
 from . import network
 from . import similarity
+from . import utils
 from . import vsm
 
 LOGGER = logging.getLogger(__name__)
@@ -205,6 +206,175 @@ def sgrank(
     return sorted(term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True)[
         :n_keyterms
     ]
+
+
+def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
+    """
+    Extract key terms from a document using the YAKE algorithm.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
+        ngrams (int or Set[int]): n of which n-grams to consider as keyterm candidates.
+            ``(1, 2, 3)`` (default) includes all unigrams, bigrams, and trigrams;
+            ``2`` includes bigrams only.
+        window_size (int)
+        match_thresh (float)
+        topn (int or float): Number of top-ranked terms to return as keyterms.
+            If int, represents the absolute number; if float, must be in the
+            interval (0.0, 1.0], and is converted to an integer by
+            ``int(round(len(candidates) * topn))``
+
+    Returns:
+        List[Tuple[str, float]]
+    """
+    ngrams = utils.to_collection(ngrams, int, tuple)
+    if isinstance(topn, float):
+        if not 0.0 < topn <= 1.0:
+            raise ValueError(
+                "topn={} is invalid; "
+                "must be an int or a float between 0.0 and 1.0".format(topn)
+            )
+    # bookkeeping
+    stop_words = set()
+    seen_candidates = set()
+    seen_terms = set()
+
+    def _is_upper_cased(tok):
+        return tok.is_upper or (tok.is_title and not tok.is_sent_start)
+
+    # get key values for each individual occurrence of a word
+    word_vals = collections.defaultdict(lambda: collections.defaultdict(list))
+    for sent_idx, sent in enumerate(doc.sents):
+        padding = [None] * window_size
+        sent_padded = itertoolz.concatv(padding, sent, padding)
+        for window in itertoolz.sliding_window(1 + (2 * window_size), sent_padded):
+            lwords, word, rwords = window[:window_size], window[window_size], window[window_size + 1:]
+            wid = word.lower
+            if word.is_stop:
+                stop_words.add(wid)
+            word_vals[wid]["is_upper_cased"].append(_is_upper_cased(word))
+            word_vals[wid]["sent_idx"].append(sent_idx)
+            word_vals[wid]["left_context"].extend(
+                w.lower for w in lwords
+                if not (w is None or w.is_punct or w.is_space)
+            )
+            word_vals[wid]["right_context"].extend(
+                w.lower for w in rwords
+                if not (w is None or w.is_punct or w.is_space)
+            )
+
+    # compute word frequencies and aggregated statistics
+    word_freqs = {wid: len(vals["is_upper_cased"]) for wid, vals in word_vals.items()}
+    freqs_nsw = [freq for wid, freq in word_freqs.items() if wid not in stop_words]
+    freqs_max = max(word_freqs.values())
+    freq_mean = compat.mean_(freqs_nsw)
+    freq_stdev = compat.stdev_(freqs_nsw)
+
+    # compute per-word weights
+    word_weights = collections.defaultdict(dict)
+    n_sents = itertoolz.count(doc.sents)
+    for wid, vals in word_vals.items():
+        freq = word_freqs[wid]
+        word_weights[wid]["case"] = sum(vals["is_upper_cased"]) / math.log2(1 + freq)
+        word_weights[wid]["pos"] = math.log2(math.log2(3 + compat.median_(vals["sent_idx"])))
+        word_weights[wid]["freq"] = freq / (freq_mean + freq_stdev)
+        n_unique_lc = len(set(vals["left_context"]))
+        n_unique_rc = len(set(vals["right_context"]))
+        try:
+            wl = n_unique_lc / len(vals["left_context"])
+        except ZeroDivisionError:
+            wl = 0.0
+        try:
+            wr = n_unique_rc / len(vals["right_context"])
+        except ZeroDivisionError:
+            wr = 0.0
+        pl = n_unique_lc / freqs_max
+        pr = n_unique_rc / freqs_max
+        word_weights[wid]["rel"] = 1.0 + (wl + wr) * (freq / freqs_max) + pl + pr
+        word_weights[wid]["disp"] = len(set(vals["sent_idx"])) / n_sents
+
+    # combine individual weights into per-word scores
+    word_scores = {
+        wid: (wts["rel"] * wts["pos"]) / (wts["case"] + (wts["freq"] / wts["rel"]) + (wts["disp"] / wts["rel"]))
+        for wid, wts in word_weights.items()
+    }
+
+    # compute scores for candidate terms based on scores of constituent words
+    term_scores = {}
+    include_pos = {"NOUN", "PROPN", "ADJ", "VERB"} if doc.is_tagged else None
+
+    # compute scores for single-word candidates separately; it's faster and simpler
+    if 1 in ngrams:
+        words = (
+            word for word in doc
+            if not (word.is_punct or word.is_space)
+        )
+        if include_pos:
+            words = (
+                word for word in words
+                if word.pos_ in include_pos
+            )
+        for word in words:
+            wid = word.lower
+            if wid in stop_words or wid in seen_candidates:
+                continue
+            else:
+                seen_candidates.add(wid)
+            # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
+            # term_scores[word.lower_] = word_scores[wid] / (word_freqs[wid] * (1 + word_scores[wid]))
+            term_scores[word.lower_] = word_scores[wid] / (math.log2(1 + word_freqs[wid]) * (1 + word_scores[wid]))
+
+    # now compute combined scores for (valid) bigram and trigram and candidates
+    ngrams = itertoolz.concatv(*(itertoolz.sliding_window(n, doc) for n in ngrams if n > 1))
+    ngrams = [
+        ngram
+        for ngram in ngrams
+        if not (ngram[0].is_stop or ngram[-1].is_stop)
+        and not any(w.is_punct or w.is_space for w in ngram)
+    ]
+    if include_pos:
+        ngrams = [
+            ngram
+            for ngram in ngrams
+            if all(w.pos_ in include_pos for w in ngram)
+        ]
+    ngram_freqs = itertoolz.frequencies(
+        " ".join(word.lower_ for word in ngram)
+        for ngram in ngrams)
+    for ngram in ngrams:
+        ngtxt = " ".join(word.lower_ for word in ngram)
+        if ngtxt in seen_candidates:
+            continue
+        else:
+            seen_candidates.add(ngtxt)
+        ngram_word_scores = [word_scores[word.lower] for word in ngram]
+        # multiply individual word scores together in the numerator
+        # TODO: compat this for PY2, PY3.8
+        numerator = compat.reduce_(operator.mul, ngram_word_scores, 1.0)
+        # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
+        # denominator = ngram_freqs[ngtxt] * (1.0 + sum(ngram_word_scores))
+        denominator = math.log2(1 + ngram_freqs[ngtxt]) * (1.0 + sum(ngram_word_scores))
+        term_scores[ngtxt] = numerator / denominator
+
+    # build up a list of key terms in order of increasing score
+    # note: lower scores => higher key-ness; this is just how the researchers did it, shrug
+    key_terms = []
+    if isinstance(topn, float):
+        topn = int(round(len(seen_candidates) * topn))
+    sorted_term_scores = sorted(term_scores.items(), key=operator.itemgetter(1), reverse=False)
+    for term, score in sorted_term_scores:
+        # skip any candidate terms that are too similar to higher-scoring terms
+        if any(similarity.token_sort_ratio(term, st) >= match_thresh for st in seen_terms):
+            continue
+        # skip any candidate terms are substrings within higher-scoring terms
+        if any(term in st for st in seen_terms):
+            continue
+        seen_terms.add(term)
+        key_terms.append((term, score))
+        if len(key_terms) >= topn:
+            break
+
+    return key_terms
 
 
 def textrank(doc, normalize="lemma", n_keyterms=10):
