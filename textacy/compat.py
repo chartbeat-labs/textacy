@@ -16,6 +16,11 @@ if PY2:
     from urllib import unquote_plus as url_unquote_plus
     from urlparse import urljoin, urlparse
 
+    from numpy import mean as mean_
+    from numpy import median as median_
+    from numpy import std as stdev_
+
+    reduce_ = reduce
     range_ = xrange
 
     unicode_ = unicode
@@ -28,6 +33,10 @@ else:
     import pickle
     from builtins import zip as zip_
     from collections.abc import Iterable
+    from functools import reduce as reduce_
+    from statistics import mean as mean_
+    from statistics import median as median_
+    from statistics import stdev as stdev_
     from urllib.parse import unquote_plus as url_unquote_plus
     from urllib.parse import urljoin, urlparse
 
