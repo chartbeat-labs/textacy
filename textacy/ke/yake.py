@@ -146,8 +146,8 @@ def _compute_word_scores(doc, word_occ_vals, word_freqs, stop_words):
     n_sents = itertoolz.count(doc.sents)
     for w_id, vals in word_occ_vals.items():
         freq = word_freqs[w_id]
-        word_weights[w_id]["case"] = sum(vals["is_uc"]) / math.log2(1 + freq)
-        word_weights[w_id]["pos"] = math.log2(math.log2(3 + compat.median_(vals["sent_idx"])))
+        word_weights[w_id]["case"] = sum(vals["is_uc"]) / compat.log2_(1 + freq)
+        word_weights[w_id]["pos"] = compat.log2_(compat.log2_(3 + compat.median_(vals["sent_idx"])))
         word_weights[w_id]["freq"] = freq / freq_baseline
         word_weights[w_id]["disp"] = len(set(vals["sent_idx"])) / n_sents
         n_unique_lc = len(set(vals["l_context"]))
@@ -246,7 +246,7 @@ def _score_unigram_candidates(
             seen_candidates.add(w_id)
         # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
         # term_scores[word.lower_] = word_scores[w_id] / (word_freqs[w_id] * (1 + word_scores[w_id]))
-        term_scores[word.lower_] = word_scores[w_id] / (math.log2(1 + word_freqs[w_id]) * (1 + word_scores[w_id]))
+        term_scores[word.lower_] = word_scores[w_id] / (compat.log2_(1 + word_freqs[w_id]) * (1 + word_scores[w_id]))
 
 
 def _score_ngram_candidates(
@@ -273,7 +273,7 @@ def _score_ngram_candidates(
         numerator = compat.reduce_(operator.mul, ngram_word_scores, 1.0)
         # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
         # denominator = ngram_freqs[ngtxt] * (1.0 + sum(ngram_word_scores))
-        denominator = math.log2(1 + ngram_freqs[ngtxt]) * (1.0 + sum(ngram_word_scores))
+        denominator = compat.log2_(1 + ngram_freqs[ngtxt]) * (1.0 + sum(ngram_word_scores))
         term_scores[ngtxt] = numerator / denominator
 
 
