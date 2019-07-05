@@ -47,85 +47,36 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
                 "must be an int or a float between 0.0 and 1.0".format(topn)
             )
 
-    # bookkeeping
     stop_words = set()
     seen_candidates = set()
-    seen_terms = set()
     # compute key values on a per-word basis
     word_occ_vals = _get_per_word_occurrence_values(doc, stop_words, window_size)
     word_freqs = {w_id: len(vals["is_uc"]) for w_id, vals in word_occ_vals.items()}
     word_scores = _compute_word_scores(doc, word_occ_vals, word_freqs, stop_words)
     # compute scores for candidate terms based on scores of constituent words
     term_scores = {}
-    include_pos = {"NOUN", "PROPN", "ADJ"} if doc.is_tagged else None
     # do single-word candidates separately; it's faster and simpler
     if 1 in ngrams:
-        words = (
-            word for word in doc
-            if not (word.is_punct or word.is_space)
+        candidates = _get_unigram_candidates(doc)
+        _score_unigram_candidates(
+            candidates,
+            word_freqs, word_scores, term_scores,
+            stop_words, seen_candidates,
         )
-        if include_pos:
-            words = (
-                word for word in words
-                if word.pos_ in include_pos
-            )
-        for word in words:
-            w_id = word.lower
-            if w_id in stop_words or w_id in seen_candidates:
-                continue
-            else:
-                seen_candidates.add(w_id)
-            # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
-            # term_scores[word.lower_] = word_scores[w_id] / (word_freqs[w_id] * (1 + word_scores[w_id]))
-            term_scores[word.lower_] = word_scores[w_id] / (math.log2(1 + word_freqs[w_id]) * (1 + word_scores[w_id]))
-    # now compute combined scores for (valid) bigram and trigram and candidates
-    ngrams = itertoolz.concatv(*(itertoolz.sliding_window(n, doc) for n in ngrams if n > 1))
-    ngrams = [
-        ngram
-        for ngram in ngrams
-        if not (ngram[0].is_stop or ngram[-1].is_stop)
-        and not any(w.is_punct or w.is_space for w in ngram)
-    ]
-    if include_pos:
-        ngrams = [
-            ngram
-            for ngram in ngrams
-            if all(w.pos_ in include_pos for w in ngram)
-        ]
+    # now compute combined scores for higher-n ngram and candidates
+    candidates = _get_ngram_candidates(doc, tuple(n for n in ngrams if n > 1))
     ngram_freqs = itertoolz.frequencies(
         " ".join(word.lower_ for word in ngram)
-        for ngram in ngrams)
-    for ngram in ngrams:
-        ngtxt = " ".join(word.lower_ for word in ngram)
-        if ngtxt in seen_candidates:
-            continue
-        else:
-            seen_candidates.add(ngtxt)
-        ngram_word_scores = [word_scores[word.lower] for word in ngram]
-        # multiply individual word scores together in the numerator
-        numerator = compat.reduce_(operator.mul, ngram_word_scores, 1.0)
-        # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
-        # denominator = ngram_freqs[ngtxt] * (1.0 + sum(ngram_word_scores))
-        denominator = math.log2(1 + ngram_freqs[ngtxt]) * (1.0 + sum(ngram_word_scores))
-        term_scores[ngtxt] = numerator / denominator
-
+        for ngram in candidates)
+    _score_ngram_candidates(
+        candidates,
+        ngram_freqs, word_scores, term_scores,
+        seen_candidates,
+    )
     # build up a list of key terms in order of increasing score
-    # NOTE: lower scores => higher key-ness; this is just how the researchers did it, shrug
-    key_terms = []
     if isinstance(topn, float):
         topn = int(round(len(seen_candidates) * topn))
-    sorted_term_scores = sorted(term_scores.items(), key=operator.itemgetter(1), reverse=False)
-    for term, score in sorted_term_scores:
-        # skip any candidate terms that are too similar to higher-scoring terms
-        if any(similarity.token_sort_ratio(term, st) >= match_thresh for st in seen_terms):
-            continue
-        # skip any candidate terms are substrings within higher-scoring terms
-        if any(term in st for st in seen_terms):
-            continue
-        seen_terms.add(term)
-        key_terms.append((term, score))
-        if len(key_terms) >= topn:
-            break
+    key_terms = _get_topn_terms(term_scores, topn, match_thresh)
 
     return key_terms
 
@@ -215,3 +166,140 @@ def _compute_word_scores(doc, word_occ_vals, word_freqs, stop_words):
         for w_id, wts in word_weights.items()
     }
     return word_scores
+
+
+def _get_unigram_candidates(doc):
+    """
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
+
+    Returns:
+        List[:class:`spacy.tokens.Token`]
+    """
+    candidates = (
+        word for word in doc
+        if not (word.is_punct or word.is_space)
+    )
+    if doc.is_tagged:
+        include_pos = {"NOUN", "PROPN", "ADJ"}
+        candidates = (
+            word for word in candidates
+            if word.pos_ in include_pos
+        )
+    return candidates
+
+
+def _get_ngram_candidates(doc, ngrams):
+    """
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
+        ngrams (Tuple[int])
+
+    Returns:
+        List[Tuple[:class:`spacy.tokens.Token`]]
+    """
+    ngrams = itertoolz.concatv(*(itertoolz.sliding_window(n, doc) for n in ngrams))
+    ngrams = (
+        ngram
+        for ngram in ngrams
+        if not (ngram[0].is_stop or ngram[-1].is_stop)
+        and not any(word.is_punct or word.is_space for word in ngram)
+    )
+    if doc.is_tagged:
+        include_pos = {"NOUN", "PROPN", "ADJ"}
+        ngrams = [
+            ngram
+            for ngram in ngrams
+            if all(word.pos_ in include_pos for word in ngram)
+        ]
+    else:
+        ngrams = list(ngrams)
+    return ngrams
+
+
+def _score_unigram_candidates(
+    candidates,
+    word_freqs,
+    word_scores,
+    term_scores,
+    stop_words,
+    seen_candidates,
+):
+    """
+    Args:
+        candidates (List[:class:`spacy.tokens.Token`])
+        word_freqs (Dict[int, float])
+        word_scores (Dict[int, float])
+        term_scores (Dict[str, float])
+        stop_words (Set[str])
+        seen_candidates (Set[str])
+    """
+    for word in candidates:
+        w_id = word.lower
+        if w_id in stop_words or w_id in seen_candidates:
+            continue
+        else:
+            seen_candidates.add(w_id)
+        # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
+        # term_scores[word.lower_] = word_scores[w_id] / (word_freqs[w_id] * (1 + word_scores[w_id]))
+        term_scores[word.lower_] = word_scores[w_id] / (math.log2(1 + word_freqs[w_id]) * (1 + word_scores[w_id]))
+
+
+def _score_ngram_candidates(
+    candidates,
+    ngram_freqs, word_scores, term_scores,
+    seen_candidates,
+):
+    """
+    Args:
+        candidates (List[Tuple[:class:`spacy.tokens.Token`]])
+        ngram_freqs (Dict[str, int])
+        word_scores (Dict[int, float])
+        term_scores (Dict[str, float])
+        seen_candidates (Set[str])
+    """
+    for ngram in candidates:
+        ngtxt = " ".join(word.lower_ for word in ngram)
+        if ngtxt in seen_candidates:
+            continue
+        else:
+            seen_candidates.add(ngtxt)
+        ngram_word_scores = [word_scores[word.lower] for word in ngram]
+        # multiply individual word scores together in the numerator
+        numerator = compat.reduce_(operator.mul, ngram_word_scores, 1.0)
+        # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
+        # denominator = ngram_freqs[ngtxt] * (1.0 + sum(ngram_word_scores))
+        denominator = math.log2(1 + ngram_freqs[ngtxt]) * (1.0 + sum(ngram_word_scores))
+        term_scores[ngtxt] = numerator / denominator
+
+
+def _get_topn_terms(term_scores, topn, match_thresh):
+    """
+    Build up a list of the ``topn`` terms, in order of increasing score.
+
+    Args:
+        term_scores (Dict[str, float])
+        topn (int)
+        match_thresh (float)
+
+    Returns:
+        List[Tuple[str, float]]
+
+    Note:
+        Lower scores => higher key-ness. This is just how the researchers did it, shrug.
+    """
+    topn_terms = []
+    seen_terms = set()
+    sorted_term_scores = sorted(term_scores.items(), key=operator.itemgetter(1), reverse=False)
+    for term, score in sorted_term_scores:
+        # skip any candidate terms that are too similar to a higher-scoring term
+        if any(similarity.token_sort_ratio(term, st) >= match_thresh for st in seen_terms):
+            continue
+        # skip any candidate terms are substrings within higher-scoring terms
+        if any(term in st for st in seen_terms):
+            continue
+        seen_terms.add(term)
+        topn_terms.append((term, score))
+        if len(topn_terms) >= topn:
+            break
+    return topn_terms
