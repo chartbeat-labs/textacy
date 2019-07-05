@@ -51,6 +51,10 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
     seen_candidates = set()
     # compute key values on a per-word basis
     word_occ_vals = _get_per_word_occurrence_values(doc, stop_words, window_size)
+    # doc doesn't have any words...
+    if not word_occ_vals:
+        return []
+
     word_freqs = {w_id: len(vals["is_uc"]) for w_id, vals in word_occ_vals.items()}
     word_scores = _compute_word_scores(doc, word_occ_vals, word_freqs, stop_words)
     # compute scores for candidate terms based on scores of constituent words
