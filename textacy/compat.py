@@ -20,6 +20,12 @@ if PY2:
     from numpy import median as median_
     from numpy import std as stdev_
 
+    from math import log as _log
+
+    def log2_(x):
+        """Return the base-2 logarithm of x."""
+        return _log(x, 2)
+
     reduce_ = reduce
     range_ = xrange
 
@@ -34,6 +40,7 @@ else:
     from builtins import zip as zip_
     from collections.abc import Iterable
     from functools import reduce as reduce_
+    from math import log2 as log2_
     from statistics import mean as mean_
     from statistics import median as median_
     from statistics import stdev as stdev_
