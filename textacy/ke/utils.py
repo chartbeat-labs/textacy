@@ -3,6 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import itertools
 
+from .. import similarity
+
 
 def normalize_terms(terms, normalize):
     """
@@ -54,3 +56,40 @@ def get_consecutive_subsequences(terms, grp_func):
     for key, terms_grp in itertools.groupby(terms, key=grp_func):
         if key:
             yield tuple(terms_grp)
+
+
+def get_topn_terms(term_scores, topn, match_threshold=None):
+    """
+    Build up a list of the ``topn`` terms, filtering out any that are substrings
+    of better-scoring terms and optionally filtering out any that are sufficiently
+    similar to better-scoring terms.
+
+    Args:
+        term_scores (List[Tuple[str, float]]): List of (term, score) pairs,
+            sorted in order from best score to worst. Note that this may be
+            from high to low value or low to high, depending on the algorithm.
+        topn (int): Maximum number of top-scoring terms to get.
+        match_threshold (float): Minimal edit distance between a term and previously
+            seen terms, used to filter out terms that are sufficiently similar
+            to higher-scoring terms. Uses :func:`textacy.similarity.token_sort_ratio()`.
+
+    Returns:
+        List[Tuple[str, float]]
+    """
+    topn_terms = []
+    seen_terms = set()
+    for term, score in term_scores:
+        # skip terms that are substrings of any higher-scoring term
+        if any(term in st for st in seen_terms):
+            continue
+        # skip terms that are sufficiently similar to any higher-scoring term
+        if (
+            match_threshold
+            and any(similarity.token_sort_ratio(term, st) >= match_threshold for st in seen_terms)
+        ):
+            continue
+        seen_terms.add(term)
+        topn_terms.append((term, score))
+        if len(topn_terms) >= topn:
+            break
+    return topn_terms

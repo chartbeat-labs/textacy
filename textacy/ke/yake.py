@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import collections
@@ -6,7 +7,8 @@ import operator
 
 from cytoolz import itertoolz
 
-from .. import compat, similarity, utils
+from . import utils as ke_utils
+from .. import compat, utils
 
 
 def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
@@ -80,9 +82,13 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
     # build up a list of key terms in order of increasing score
     if isinstance(topn, float):
         topn = int(round(len(seen_candidates) * topn))
-    key_terms = _get_topn_terms(term_scores, topn, match_thresh)
-
-    return key_terms
+    sorted_term_scores = sorted(
+        term_scores.items(),
+        key=operator.itemgetter(1),
+        reverse=False,
+    )
+    return ke_utils.get_topn_terms(
+        sorted_term_scores, topn, match_threshold=match_thresh)
 
 
 def _get_per_word_occurrence_values(doc, stop_words, window_size):
@@ -275,35 +281,3 @@ def _score_ngram_candidates(
         # denominator = ngram_freqs[ngtxt] * (1.0 + sum(ngram_word_scores))
         denominator = compat.log2_(1 + ngram_freqs[ngtxt]) * (1.0 + sum(ngram_word_scores))
         term_scores[ngtxt] = numerator / denominator
-
-
-def _get_topn_terms(term_scores, topn, match_thresh):
-    """
-    Build up a list of the ``topn`` terms, in order of increasing score.
-
-    Args:
-        term_scores (Dict[str, float])
-        topn (int)
-        match_thresh (float)
-
-    Returns:
-        List[Tuple[str, float]]
-
-    Note:
-        Lower scores => higher key-ness. This is just how the researchers did it, shrug.
-    """
-    topn_terms = []
-    seen_terms = set()
-    sorted_term_scores = sorted(term_scores.items(), key=operator.itemgetter(1), reverse=False)
-    for term, score in sorted_term_scores:
-        # skip any candidate terms that are too similar to a higher-scoring term
-        if any(similarity.token_sort_ratio(term, st) >= match_thresh for st in seen_terms):
-            continue
-        # skip any candidate terms are substrings within higher-scoring terms
-        if any(term in st for st in seen_terms):
-            continue
-        seen_terms.add(term)
-        topn_terms.append((term, score))
-        if len(topn_terms) >= topn:
-            break
-    return topn_terms
