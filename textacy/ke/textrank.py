@@ -46,12 +46,10 @@ def textrank(doc, normalize="lemma", window_size=2, topn=10):
         window_size=window_size,
         edge_weighting="binary",
     )
-
     # generate a list of candidate terms
     candidates = _get_candidates(doc, normalize)
     if isinstance(topn, float):
         topn = int(round(len(set(candidates)) * topn))
-
     # rank individual words
     # then rank candidates by aggregating constituent word scores
     word_scores = graph_base.rank_nodes_by_pagerank(graph, weight=None)
@@ -60,9 +58,11 @@ def textrank(doc, normalize="lemma", window_size=2, topn=10):
         " ".join(candidate): compat.mean_([word_scores.get(word, 0.0) for word in candidate])
         for candidate in candidates
     }
-    return sorted(
-        candidate_scores.items(), key=operator.itemgetter(1), reverse=True
-    )[:topn]
+    return utils.get_filtered_topn_terms(
+        sorted(candidate_scores.items(), key=operator.itemgetter(1), reverse=True),
+        topn,
+        match_threshold=None,
+    )
 
 
 def _get_candidates(doc, normalize):
@@ -82,12 +82,12 @@ def _get_candidates(doc, normalize):
     if doc.is_tagged:
         include_pos = {"NOUN", "PROPN", "ADJ"}
     else:
-        include_pos = set()
+        include_pos = None
 
     def _is_valid_tok(tok):
         return (
             not (tok.is_stop or tok.is_punct or tok.is_space)
-            and tok.pos_ in include_pos
+            and (include_pos is None or tok.pos_ in include_pos)
         )
 
     candidates = utils.get_consecutive_subsequences(doc, _is_valid_tok)

@@ -16,14 +16,15 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
     Extract key terms from a document using the YAKE algorithm.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`): spaCy document.
+        doc (:class:`spacy.tokens.Doc`)
             Must be sentence-segmented; optionally POS-tagged.
         ngrams (int or Set[int]): n of which n-grams to consider as keyterm candidates.
             For example, `(1, 2, 3)`` includes all unigrams, bigrams, and trigrams,
             while ``2`` includes bigrams only.
         window_size (int): Number of words to the right and left of a given word
             to use as context when computing the "relatedness to context"
-            component of its score.
+            component of its score. Note that the resulting sliding window's
+            full width is ``1 + (2 * window_size)``.
         match_thresh (float)
         topn (int or float): Number of top-ranked terms to return as key terms.
             If an integer, represents the absolute number; if a float, value
@@ -87,7 +88,7 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
         key=operator.itemgetter(1),
         reverse=False,
     )
-    return ke_utils.get_topn_terms(
+    return ke_utils.get_filtered_topn_terms(
         sorted_term_scores, topn, match_threshold=match_thresh)
 
 
