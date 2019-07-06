@@ -3,6 +3,8 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import itertools
 
+from cytoolz import itertoolz
+
 from .. import similarity
 
 
@@ -56,6 +58,39 @@ def get_consecutive_subsequences(terms, grp_func):
     for key, terms_grp in itertools.groupby(terms, key=grp_func):
         if key:
             yield tuple(terms_grp)
+
+
+def get_ngram_candidates(doc, ns, include_pos=("NOUN", "PROPN", "ADJ")):
+    """
+    Get a sequence of good ngrams (for each n in ``ns``) to use as candidates
+    in keyterm extraction algorithms, where "good" means that they don't start
+    or end with a stop word or contain any punctuation-only tokens. Optionally,
+    require all constituent words to have POS tags in ``include_pos``.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
+        ns (Tuple[int])
+        include_pos (Set[str])
+
+    Yields:
+        Tuple[:class:`spacy.tokens.Token`]: Next good ngram, as a tuple of Tokens.
+    """
+    ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns)
+    ngrams = (
+        ngram
+        for ngram in ngrams
+        if not (ngram[0].is_stop or ngram[-1].is_stop)
+        and not any(word.is_punct or word.is_space for word in ngram)
+    )
+    if include_pos:
+        include_pos = set(include_pos)
+        ngrams = (
+            ngram
+            for ngram in ngrams
+            if all(word.pos_ in include_pos for word in ngram)
+        )
+    for ngram in ngrams:
+        yield ngram
 
 
 def get_filtered_topn_terms(term_scores, topn, match_threshold=None):

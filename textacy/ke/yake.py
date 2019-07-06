@@ -47,7 +47,7 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
                 "topn={} is invalid; "
-                "must be an int or a float between 0.0 and 1.0".format(topn)
+                "must be an int, or a float between 0.0 and 1.0".format(topn)
             )
 
     stop_words = set()
@@ -71,7 +71,13 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
             stop_words, seen_candidates,
         )
     # now compute combined scores for higher-n ngram and candidates
-    candidates = _get_ngram_candidates(doc, tuple(n for n in ngrams if n > 1))
+    candidates = list(
+        ke_utils.get_ngram_candidates(
+            doc,
+            [n for n in ngrams if n > 1],
+            include_pos={"NOUN", "PROPN", "ADJ"}
+        )
+    )
     ngram_freqs = itertoolz.frequencies(
         " ".join(word.lower_ for word in ngram)
         for ngram in candidates)
@@ -198,34 +204,6 @@ def _get_unigram_candidates(doc):
             if word.pos_ in include_pos
         )
     return candidates
-
-
-def _get_ngram_candidates(doc, ngrams):
-    """
-    Args:
-        doc (:class:`spacy.tokens.Doc`)
-        ngrams (Tuple[int])
-
-    Returns:
-        List[Tuple[:class:`spacy.tokens.Token`]]
-    """
-    ngrams = itertoolz.concatv(*(itertoolz.sliding_window(n, doc) for n in ngrams))
-    ngrams = (
-        ngram
-        for ngram in ngrams
-        if not (ngram[0].is_stop or ngram[-1].is_stop)
-        and not any(word.is_punct or word.is_space for word in ngram)
-    )
-    if doc.is_tagged:
-        include_pos = {"NOUN", "PROPN", "ADJ"}
-        ngrams = [
-            ngram
-            for ngram in ngrams
-            if all(word.pos_ in include_pos for word in ngram)
-        ]
-    else:
-        ngrams = list(ngrams)
-    return ngrams
 
 
 def _score_unigram_candidates(
