@@ -55,8 +55,9 @@ def textrank(doc, normalize="lemma", window_size=2, topn=10):
     # rank individual words
     # then rank candidates by aggregating constituent word scores
     word_scores = graph_base.rank_nodes_by_pagerank(graph, weight=None)
+    # TODO: PY3 doesn't need to make a list when computing the mean
     candidate_scores = {
-        " ".join(candidate): compat.mean_(word_scores.get(word, 0.0) for word in candidate)
+        " ".join(candidate): compat.mean_([word_scores.get(word, 0.0) for word in candidate])
         for candidate in candidates
     }
     return sorted(
