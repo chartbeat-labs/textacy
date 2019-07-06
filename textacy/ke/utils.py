@@ -58,7 +58,7 @@ def get_consecutive_subsequences(terms, grp_func):
             yield tuple(terms_grp)
 
 
-def get_topn_terms(term_scores, topn, match_threshold=None):
+def get_filtered_topn_terms(term_scores, topn, match_threshold=None):
     """
     Build up a list of the ``topn`` terms, filtering out any that are substrings
     of better-scoring terms and optionally filtering out any that are sufficiently
@@ -78,6 +78,7 @@ def get_topn_terms(term_scores, topn, match_threshold=None):
     """
     topn_terms = []
     seen_terms = set()
+    sim_func = similarity.token_sort_ratio
     for term, score in term_scores:
         # skip terms that are substrings of any higher-scoring term
         if any(term in st for st in seen_terms):
@@ -85,7 +86,7 @@ def get_topn_terms(term_scores, topn, match_threshold=None):
         # skip terms that are sufficiently similar to any higher-scoring term
         if (
             match_threshold
-            and any(similarity.token_sort_ratio(term, st) >= match_threshold for st in seen_terms)
+            and any(sim_func(term, st) >= match_threshold for st in seen_terms)
         ):
             continue
         seen_terms.add(term)
