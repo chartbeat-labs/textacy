@@ -11,7 +11,7 @@ from . import utils as ke_utils
 from .. import compat, utils
 
 
-def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
+def yake(doc, ngrams=(1, 2, 3), window_size=2, topn=10):
     """
     Extract key terms from a document using the YAKE algorithm.
 
@@ -25,7 +25,6 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
             to use as context when computing the "relatedness to context"
             component of its score. Note that the resulting sliding window's
             full width is ``1 + (2 * window_size)``.
-        match_thresh (float)
         topn (int or float): Number of top-ranked terms to return as key terms.
             If an integer, represents the absolute number; if a float, value
             must be in the interval (0.0, 1.0], which is converted to an int by
@@ -95,7 +94,7 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, match_thresh=0.75, topn=10):
         reverse=False,
     )
     return ke_utils.get_filtered_topn_terms(
-        sorted_term_scores, topn, match_threshold=match_thresh)
+        sorted_term_scores, topn, match_threshold=0.8)
 
 
 def _get_per_word_occurrence_values(doc, stop_words, window_size):
