@@ -60,13 +60,6 @@ def test_window_size(spacy_doc):
     assert result_2 != result_4
 
 
-def test_match_thresh(spacy_doc):
-    result_025 = ke.yake(spacy_doc, match_thresh=0.25)
-    result_075 = ke.yake(spacy_doc, match_thresh=0.75)
-    assert len(result_025) > 0 and len(result_075) > 0
-    assert result_025 != result_075
-
-
 def test_empty_doc(empty_spacy_doc):
     result = ke.yake(empty_spacy_doc)
     assert isinstance(result, list)
