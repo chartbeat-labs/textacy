@@ -39,30 +39,28 @@ def textrank(doc, normalize="lemma", window_size=2, topn=10):
                 "must be an int, or a float between 0.0 and 1.0".format(topn)
             )
 
-    # build graph from all words in doc
+    # build a graph from all words in doc, then score them
     graph = graph_base.build_graph_from_terms(
         [word for word in doc],
         normalize=normalize,
         window_size=window_size,
         edge_weighting="binary",
     )
+    word_scores = graph_base.rank_nodes_by_pagerank(graph, weight=None)
     # generate a list of candidate terms
     candidates = _get_candidates(doc, normalize)
     if isinstance(topn, float):
         topn = int(round(len(set(candidates)) * topn))
-    # rank individual words
-    # then rank candidates by aggregating constituent word scores
-    word_scores = graph_base.rank_nodes_by_pagerank(graph, weight=None)
+    # rank candidates by aggregating constituent word scores
     # TODO: PY3 doesn't need to make a list when computing the mean
     candidate_scores = {
         " ".join(candidate): compat.mean_([word_scores.get(word, 0.0) for word in candidate])
         for candidate in candidates
     }
+    sorted_candidate_scores = sorted(
+        candidate_scores.items(), key=operator.itemgetter(1, 0), reverse=True)
     return utils.get_filtered_topn_terms(
-        sorted(candidate_scores.items(), key=operator.itemgetter(1), reverse=True),
-        topn,
-        match_threshold=None,
-    )
+        sorted_candidate_scores, topn, match_threshold=0.8)
 
 
 def _get_candidates(doc, normalize):
