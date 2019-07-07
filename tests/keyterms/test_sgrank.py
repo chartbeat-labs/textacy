@@ -40,17 +40,17 @@ def test_ngrams_2_3(spacy_doc):
     assert all(2 <= len(term.split()) <= 3 for term, _ in result)
 
 
-def test_n_keyterms(spacy_doc):
+def test_topn(spacy_doc):
     for n in (5, 25):
-        result = ke.sgrank(spacy_doc, n_keyterms=n)
+        result = ke.sgrank(spacy_doc, topn=n)
         assert 0 < len(result) <= n
 
 
-def test_n_keyterms_float(spacy_doc):
-    result = ke.sgrank(spacy_doc, n_keyterms=0.2)
+def test_topn_float(spacy_doc):
+    result = ke.sgrank(spacy_doc, topn=0.2)
     assert len(result) > 0
     with pytest.raises(ValueError):
-        _ = ke.sgrank(spacy_doc, n_keyterms=2.0)
+        _ = ke.sgrank(spacy_doc, topn=2.0)
 
 
 def test_normalize_lower(spacy_doc):
@@ -71,13 +71,13 @@ def test_normalize_callable(spacy_doc):
     assert all(term == term.upper() for term, _ in result)
 
 
-def test_window_width(spacy_doc):
-    result_10 = ke.sgrank(spacy_doc, window_width=10)
-    result_100 = ke.sgrank(spacy_doc, window_width=100)
+def test_window_size(spacy_doc):
+    result_10 = ke.sgrank(spacy_doc, window_size=10)
+    result_100 = ke.sgrank(spacy_doc, window_size=100)
     assert len(result_10) > 0 and len(result_100) > 0
     assert result_10 != result_100
     with pytest.raises(ValueError):
-        _ = ke.sgrank(spacy_doc, window_width=1)
+        _ = ke.sgrank(spacy_doc, window_size=1)
 
 
 def test_empty_doc(empty_spacy_doc):
