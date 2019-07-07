@@ -67,18 +67,58 @@ def sgrank(
             )
 
     n_toks = len(doc)
-    # no keyterms to extract from an empty doc...
-    if n_toks == 0:
+    window_size = min(n_toks, window_size)
+    # no keyterms to extract from a (nearly) empty doc...
+    if n_toks < 2:
         return []
 
-    window_size = min(n_toks, window_size)
-    min_term_freq = min(max(n_toks // 1000, 1), 4)
-
-    # build full list of candidate terms
     # if inverse doc freqs available, include nouns, adjectives, and verbs;
     # otherwise, just include nouns and adjectives
     # (without IDF downweighting, verbs dominate the results in a bad way)
     include_pos = {"NOUN", "PROPN", "ADJ", "VERB"} if idf else {"NOUN", "PROPN", "ADJ"}
+    candidates, candidate_counts = _get_candidates(
+        doc, ngrams, normalize, include_pos=include_pos)
+    # scale float topn based on total number of initial candidates
+    if isinstance(topn, float):
+        topn = int(round(len(candidate_counts) * topn))
+    candidates, unique_candidates = _prefilter_candidates(
+        candidates, candidate_counts, topn, idf)
+
+    term_weights = _compute_term_weights(
+        candidates, candidate_counts, unique_candidates, n_toks, idf)
+    # filter terms to only those with positive weights
+    candidates = [cand for cand in candidates if term_weights[cand[0]] > 0]
+    edge_weights = _compute_edge_weights(candidates, term_weights, window_size, n_toks)
+
+    # build the weighted directed graph from edges, rank nodes by pagerank
+    graph = nx.DiGraph()
+    graph.add_edges_from(edge_weights)
+    term_ranks = nx.pagerank_scipy(graph, alpha=0.85, weight="weight")
+
+    return sorted(term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True)[
+        :topn
+    ]
+
+
+def _get_candidates(
+    doc, ngrams, normalize, include_pos=("NOUN", "PROPN", "ADJ", "VERB")
+):
+    """
+    Get n-gram candidate keyterms from ``doc``, with key information for each:
+    its normalized text string, position within the doc, number of constituent words,
+    and frequency of occurrence.
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
+        ngrams (Tuple[int])
+        normalize (str)
+        include_pos (Set[str])
+
+    Returns:
+        List[Tuple[str, int, int, int]]
+        Dict[str, int]
+    """
+    min_term_freq = min(max(len(doc) // 1000, 1), 4)
     candidates_tuples = list(
         ke_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos))
     candidate_texts = [
@@ -97,32 +137,58 @@ def sgrank(
             (ctext, ctup[0].i, len(ctup), candidate_counts[ctext])
             for ctup, ctext in compat.zip_(candidates_tuples, candidate_texts)
         ]
+    return candidates, candidate_counts
 
-    if isinstance(topn, float):
-        topn = int(round(len(set(candidate_texts)) * topn))
 
-    # pre-filter terms to the top N ranked by TF or modified TF*IDF
+def _prefilter_candidates(candidates, candidate_counts, topn, idf):
+    """
+    Filter initial set of candidates to only those with sufficiently high TF or
+    (if available) modified TF*IDF.
+
+    Args:
+        candidates (List[Tuple[str, int, int, int]])
+        candidate_counts (Dict[str, int])
+        topn (int)
+        idf (Dict[str, float])
+
+    Returns:
+        List[Tuple[str, int, int, int]]
+        Set[str]
+    """
     topn_prefilter = max(3 * topn, 100)
     if idf:
         mod_tfidfs = {
             ctext: ccount * idf.get(ctext, 1) if " " not in ctext else ccount
             for ctext, _, _, ccount in candidates
         }
-        candidates_set = {
+        unique_candidates = {
             ctext
             for ctext, _ in sorted(
                 mod_tfidfs.items(), key=operator.itemgetter(1), reverse=True
             )[:topn_prefilter]
         }
     else:
-        candidates_set = {
+        unique_candidates = {
             ctext for ctext, _ in candidate_counts.most_common(topn_prefilter)}
+    candidates = [cand for cand in candidates if cand[0] in unique_candidates]
+    return candidates, unique_candidates
 
-    # filter candidates to those with sufficiently high tf or tfidf
-    candidates = [cand for cand in candidates if cand[0] in candidates_set]
 
-    # compute term weights from statistical attributes:
-    # not subsumed frequency, position of first occurrence, and num words
+def _compute_term_weights(candidates, candidate_counts, unique_candidates, n_toks, idf):
+    """
+    Compute term weights from statistical attributes: position of first occurrence,
+    not subsumed frequency, and number of constituent words.
+
+    Args:
+        candidates (List[Tuple[str, int, int, int]])
+        candidate_counts (Dict[str, int])
+        unique_candidates (Set[str])
+        n_toks (int)
+        idf (Dict[str, float])
+
+    Returns:
+        Dict[str, float]
+    """
     term_weights = {}
     seen_terms = set()
     n_toks_p1 = n_toks + 1
@@ -138,20 +204,33 @@ def sgrank(
         # subtract from subsum_count for the case when ctext == ctext2
         subsum_count = sum(
             candidate_counts[ctext2]
-            for ctext2 in candidates_set
+            for ctext2 in unique_candidates
             if ctext in ctext2
         ) - ccount
         term_freq_factor = ccount - subsum_count
         if idf and clen == 1:
             term_freq_factor *= idf.get(ctext, 1)
         term_weights[ctext] = term_freq_factor * pos_first_occ * clen
+    return term_weights
 
-    # filter terms to only those with positive weights
-    candidates = [cand for cand in candidates if term_weights[cand[0]] > 0]
 
+def _compute_edge_weights(candidates, term_weights, window_size, n_toks):
+    """
+    Compute weights between candidates that occur within a sliding window(s) of
+    each other, then combine with statistical ``term_weights`` and normalize
+    by the total number of outgoing edge weights.
+
+    Args:
+        candidates (List[Tuple[str, int, int, int]])
+        term_weights (Dict[str, float])
+        window_size (int)
+        n_toks (int)
+
+    Returns:
+        Dict[str, float]
+    """
     n_coocs = collections.defaultdict(lambda: collections.defaultdict(int))
     sum_logdists = collections.defaultdict(lambda: collections.defaultdict(float))
-
     # iterate over windows
     # TODO: change <= end_ind to < end_ind and end_ind > n_toks to end_ind >= n_toks
     log_ = math.log  # localize this, for performance
@@ -184,12 +263,4 @@ def sgrank(
             (c1, c2, {"weight": weight / sum_edge_weights})
             for c2, weight in c2s.items()
         )
-
-    # build the weighted directed graph from edges, rank nodes by pagerank
-    graph = nx.DiGraph()
-    graph.add_edges_from(norm_edge_weights)
-    term_ranks = nx.pagerank_scipy(graph, alpha=0.85, weight="weight")
-
-    return sorted(term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True)[
-        :topn
-    ]
+    return norm_edge_weights
