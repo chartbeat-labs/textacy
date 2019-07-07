@@ -94,10 +94,11 @@ def sgrank(
     graph = nx.DiGraph()
     graph.add_edges_from(edge_weights)
     term_ranks = nx.pagerank_scipy(graph, alpha=0.85, weight="weight")
+    sorted_term_ranks = sorted(
+        term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True)
 
-    return sorted(term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True)[
-        :topn
-    ]
+    return ke_utils.get_filtered_topn_terms(
+        sorted_term_ranks, topn, match_threshold=0.8)
 
 
 def _get_candidates(
@@ -232,11 +233,10 @@ def _compute_edge_weights(candidates, term_weights, window_size, n_toks):
     n_coocs = collections.defaultdict(lambda: collections.defaultdict(int))
     sum_logdists = collections.defaultdict(lambda: collections.defaultdict(float))
     # iterate over windows
-    # TODO: change <= end_ind to < end_ind and end_ind > n_toks to end_ind >= n_toks
     log_ = math.log  # localize this, for performance
     for start_ind in compat.range_(n_toks):
         end_ind = start_ind + window_size
-        window_cands = (cand for cand in candidates if start_ind <= cand[1] <= end_ind)
+        window_cands = (cand for cand in candidates if start_ind <= cand[1] < end_ind)
         # get all token combinations within window
         for c1, c2 in itertools.combinations(window_cands, 2):
             n_coocs[c1[0]][c2[0]] += 1
@@ -244,7 +244,7 @@ def _compute_edge_weights(candidates, term_weights, window_size, n_toks):
                 sum_logdists[c1[0]][c2[0]] += log_(window_size / abs(c1[1] - c2[1]))
             except ZeroDivisionError:
                 sum_logdists[c1[0]][c2[0]] += log_(window_size)
-        if end_ind > n_toks:
+        if end_ind >= n_toks:
             break
     # compute edge weights between co-occurring terms (nodes)
     edge_weights = collections.defaultdict(lambda: collections.defaultdict(float))
