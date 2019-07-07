@@ -66,7 +66,7 @@ def test_normalize_none(spacy_doc):
 
 
 def test_normalize_callable(spacy_doc):
-    result = ke.sgrank(spacy_doc, normalize=lambda tok: tok.upper_)
+    result = ke.sgrank(spacy_doc, normalize=lambda tok: tok.text.upper())
     assert len(result) > 0
     assert all(term == term.upper() for term, _ in result)
 
