@@ -39,7 +39,7 @@ def sgrank(
         topn (int or float): Number of top-ranked terms to return as
             keyterms. If int, represents the absolute number; if float, must be
             in the open interval (0.0, 1.0), and is converted to an integer by
-            ``int(round(len(doc) * topn))``
+            ``int(round(len(candidates) * topn))``
         idf (dict): Mapping of ``normalize(term)`` to inverse document frequency
             for re-weighting of unigrams (n-grams with n > 1 have df assumed = 1).
             Results are typically better with idf information.
@@ -65,11 +65,12 @@ def sgrank(
             raise ValueError(
                 "`topn` must be an int, or a float between 0.0 and 1.0"
             )
-        # FIXME
-        n_toks = len(doc)
-        topn = int(round(n_toks * topn))
 
     n_toks = len(doc)
+    # no keyterms to extract from an empty doc...
+    if n_toks == 0:
+        return []
+
     window_size = min(n_toks, window_size)
     min_term_freq = min(max(n_toks // 1000, 1), 4)
 
@@ -97,9 +98,8 @@ def sgrank(
             for ctup, ctext in compat.zip_(candidates_tuples, candidate_texts)
         ]
 
-    # FIXME: un-comment this at some point
-    # if isinstance(topn, float):
-    #     topn = int(round(len(set(candidate_strs)) * topn))
+    if isinstance(topn, float):
+        topn = int(round(len(set(candidate_texts)) * topn))
 
     # pre-filter terms to the top N ranked by TF or modified TF*IDF
     topn_prefilter = max(3 * topn, 100)
