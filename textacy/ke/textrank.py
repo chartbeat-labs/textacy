@@ -4,12 +4,15 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import operator
 
 from . import graph_base, utils
-from .. import compat
 
 
-def textrank(doc, normalize="lemma", window_size=2, topn=10):
+def textrank(doc, normalize="lemma", window_size=2, edge_weighting="binary", topn=10):
     """
-    Extract key terms from a document using the TextRank algorithm.
+    Extract key terms from a document using the TextRank algorithm, or
+    a variation thereof such as SingleRank.
+
+    - TextRank: ``window_size=2`` and ``edge_weighting="binary"``
+    - SingleRank: ``window_size=10`` and ``edge_weighting="count"``
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
@@ -19,6 +22,10 @@ def textrank(doc, normalize="lemma", window_size=2, topn=10):
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
         window_size (int): Size of sliding window in which term co-occurrences
             are determined.
+        edge_weighting ({"count", "binary"}): : If "count", the nodes for
+            all co-occurring terms are connected by edges with weight equal to
+            the number of times they co-occurred within a sliding window;
+            if "binary", all such edges have weight = 1.
         topn (int or float): Number of top-ranked terms to return as key terms.
             If an integer, represents the absolute number; if a float, value
             must be in the interval (0.0, 1.0], which is converted to an int by
@@ -29,8 +36,11 @@ def textrank(doc, normalize="lemma", window_size=2, topn=10):
         their corresponding TextRank ranking scores.
 
     References:
-        Mihalcea, R., & Tarau, P. (2004, July). TextRank: Bringing order into texts.
-        Association for Computational Linguistics.
+        - Mihalcea, R., & Tarau, P. (2004, July). TextRank: Bringing order into texts.
+          Association for Computational Linguistics.
+        - Wan, Xiaojun and Jianguo Xiao. 2008. Single document keyphrase extraction
+          using neighborhood knowledge. In Proceedings of the 23rd AAAI Conference
+          on Artificial Intelligence, pages 855–860.
     """
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
@@ -44,9 +54,9 @@ def textrank(doc, normalize="lemma", window_size=2, topn=10):
         [word for word in doc],
         normalize=normalize,
         window_size=window_size,
-        edge_weighting="binary",
+        edge_weighting=edge_weighting,
     )
-    word_scores = graph_base.rank_nodes_by_pagerank(graph, weight=None)
+    word_scores = graph_base.rank_nodes_by_pagerank(graph, weight="weight")
     # generate a list of candidate terms
     candidates = _get_candidates(doc, normalize)
     if isinstance(topn, float):
@@ -54,7 +64,7 @@ def textrank(doc, normalize="lemma", window_size=2, topn=10):
     # rank candidates by aggregating constituent word scores
     # TODO: PY3 doesn't need to make a list when computing the mean
     candidate_scores = {
-        " ".join(candidate): compat.mean_([word_scores.get(word, 0.0) for word in candidate])
+        " ".join(candidate): sum([word_scores.get(word, 0.0) for word in candidate])
         for candidate in candidates
     }
     sorted_candidate_scores = sorted(
