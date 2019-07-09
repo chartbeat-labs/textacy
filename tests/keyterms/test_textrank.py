@@ -42,10 +42,24 @@ def test_n_keyterms_float(spacy_doc):
 
 
 def test_window_size(spacy_doc):
-    result_2 = ke.textrank(spacy_doc, window_size=2)
-    result_4 = ke.textrank(spacy_doc, window_size=4)
-    assert len(result_2) > 0 and len(result_4) > 0
-    assert result_2 != result_4
+    result1 = ke.textrank(spacy_doc, window_size=2)
+    result2 = ke.textrank(spacy_doc, window_size=4)
+    assert len(result1) > 0 and len(result2) > 0
+    assert result1 != result2
+
+
+def test_edge_weighting(spacy_doc):
+    result1 = ke.textrank(spacy_doc, edge_weighting="binary")
+    result2 = ke.textrank(spacy_doc, edge_weighting="count")
+    assert len(result1) > 0 and len(result2) > 0
+    assert result1 != result2
+
+
+def test_position_bias(spacy_doc):
+    result1 = ke.textrank(spacy_doc, position_bias=False)
+    result2 = ke.textrank(spacy_doc, position_bias=True)
+    assert len(result1) > 0 and len(result2) > 0
+    assert result1 != result2
 
 
 def test_empty_doc(empty_spacy_doc):
