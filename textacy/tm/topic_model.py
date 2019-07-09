@@ -109,7 +109,7 @@ class TopicModel(object):
     def __init__(self, model, n_topics=10, **kwargs):
         if isinstance(model, (NMF, LatentDirichletAllocation, TruncatedSVD)):
             self.model = model
-        elif all([hasattr(model, required_attr) for required_attr in self._required_trained_model_attr]):
+        elif all(hasattr(model, required_attr) for required_attr in self._required_trained_model_attr):
             self.model = model
         else:
             self.init_model(model, n_topics=n_topics, **kwargs)
@@ -398,8 +398,8 @@ class TopicModel(object):
                 the default ("seriation") groups similar terms together, which
                 facilitates cross-topic assessment
             save (str): give the full /path/to/fname on disk to save figure
-            rc_params (dict, optional): allow passing parameters to rc_context in matplotlib.plyplot,
-            details in https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.rc_context.html
+                rc_params (dict, optional): allow passing parameters to rc_context in matplotlib.plyplot,
+                details in https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.rc_context.html
 
         Returns:
             ``matplotlib.axes.Axes.axis``: Axis on which termite plot is plotted.
