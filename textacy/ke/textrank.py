@@ -66,7 +66,7 @@ def textrank(
             )
 
     if position_bias is True:
-        word_pos = collections.defaultdict(int)
+        word_pos = collections.defaultdict(float)
         for word, norm_word in compat.zip_(doc, utils.normalize_terms(doc, normalize)):
             word_pos[norm_word] += 1 / (word.i + 1)
         sum_word_pos = sum(word_pos.values())
