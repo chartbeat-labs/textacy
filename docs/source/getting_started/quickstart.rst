@@ -22,7 +22,8 @@ Let's start with a single text document:
     ...     "of rules, which is not in general robust to natural language variation. "
     ...     "The machine-learning paradigm calls instead for using statistical inference "
     ...     "to automatically learn such rules through the analysis of large corpora "
-    ...     "of typical real-world examples.")
+    ...     "of typical real-world examples."
+    ... )
 
 **Note:** In almost all cases, textacy (as well as spaCy) expects to be
 working with unicode text data. Throughout the code, this is indicated as ``str``
@@ -167,27 +168,24 @@ We can also identify key terms in a document by a number of algorithms:
 
 .. code-block:: pycon
 
-    >>> import textacy.keyterms  # note the import
-    >>> textacy.keyterms.textrank(doc, normalize="lemma", n_keyterms=10)
-    [('rule', 0.053388673426165274),
-     ('language', 0.051393874215877614),
-     ('machine', 0.05117898985460108),
-     ('statistical', 0.04067363609786232),
-     ('world', 0.03714841125591235),
-     ('real', 0.034770679620166826),
-     ('typical', 0.033277268136629116),
-     ('corpora', 0.03214591053006896),
-     ('1990', 0.03162874015505505),
-     ('mid', 0.031567325030955926)]
-    >>> textacy.keyterms.sgrank(doc, ngrams=(1, 2, 3, 4), normalize="lower", n_keyterms=0.1)
-    [('natural language processing research', 0.31188112358833325),
-     ('natural language variation', 0.09554941648195946),
-     ('direct hand coding', 0.09461396545586934),
-     ('mid 1990s', 0.05831079282180467),
-     ('machine learning', 0.0552325339992006),
-     ('late 1980s', 0.04713120721580818),
-     ('general robust', 0.040647628278589344),
-     ('statistical revolution', 0.03898147636679938)]
+    >>> import textacy.ke
+    >>> textacy.ke.textrank(doc, normalize="lemma", topn=10)
+    [('Natural Language Processing research', 0.059959246697826624),
+     ('natural language variation', 0.04488350959275309),
+     ('direct hand coding', 0.037736661821063354),
+     ('statistical inference', 0.03432557996664981),
+     ('statistical revolution', 0.034007535820683756),
+     ('machine learning', 0.03305919655573349),
+     ('mid 1990', 0.026993994406706995),
+     ('late 1980', 0.026499549123496648),
+     ('general robust', 0.024835834233545625),
+     ('large corpora', 0.024322049918545637)]
+    >>> textacy.ke.sgrank(doc, ngrams=(1, 2, 3, 4), normalize="lower", topn=0.1)
+    [('natural language processing research', 0.31279919999041045),
+     ('direct hand coding', 0.09373747682969617),
+     ('natural language variation', 0.09229056171473927),
+     ('mid 1990s', 0.05832421657510258),
+     ('machine learning', 0.05536624437146417)]
 
 Or we can compute basic counts and various readability statistics:
 
