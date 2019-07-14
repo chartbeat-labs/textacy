@@ -211,7 +211,7 @@ def _get_unigram_candidates(doc, include_pos):
     """
     candidates = (
         word for word in doc
-        if not (word.is_punct or word.is_space)
+        if not (word.is_stop or word.is_punct or word.is_space)
     )
     if include_pos:
         candidates = (
