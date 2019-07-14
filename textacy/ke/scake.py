@@ -12,8 +12,8 @@ import operator
 import networkx as nx
 from cytoolz import itertoolz
 
-from . import utils
-from .. import compat
+from . import utils as ke_utils
+from .. import compat, utils
 
 
 def scake(
@@ -26,13 +26,15 @@ def scake(
     Extract key terms from a document using the sCAKE algorithm.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`): A spaCy ``Doc``. Must be sentence-segmented
-            and (optionally) POS-tagged.
+        doc (:class:`spacy.tokens.Doc`): spaCy ``Doc`` from which to extract keyterms.
+            Must be sentence-segmented; optionally POS-tagged.
         normalize (str or callable): If "lemma", lemmatize terms; if "lower",
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``Token`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
-        include_pos (Set[str])
+        include_pos (str or Set[str]): One or more POS tags with which to filter
+            for good candidate keyterms. If None, include tokens of all POS tags
+            (which also allows keyterm extraction from docs without POS-tagging.)
         topn (int or float): Number of top-ranked terms to return as key terms.
             If an integer, represents the absolute number; if a float, value
             must be in the interval (0.0, 1.0], which is converted to an int by
@@ -47,6 +49,8 @@ def scake(
         Aware Keyword Extraction. Information Sciences. 477.
         https://arxiv.org/abs/1811.10831v1
     """
+    # validate / transform args
+    include_pos = utils.to_collection(include_pos, compat.unicode_, set)
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -68,7 +72,7 @@ def scake(
             if not (word.is_stop or word.is_punct or word.is_space)
             and (not include_pos or word.pos_ in include_pos)
         )
-        window_words = utils.normalize_terms(window_words, normalize)
+        window_words = ke_utils.normalize_terms(window_words, normalize)
         cooc_mat.update(
             w1_w2
             for w1_w2 in itertools.combinations(sorted(window_words), 2)
@@ -87,7 +91,7 @@ def scake(
     word_scores = _compute_word_scores(doc, graph, cooc_mat, normalize)
 
     # generate a list of candidate terms
-    candidates = _get_candidates(doc, include_pos, normalize)
+    candidates = _get_candidates(doc, normalize, include_pos)
     if isinstance(topn, float):
         topn = int(round(len(set(candidates)) * topn))
     # rank candidates by aggregating constituent word scores
@@ -97,7 +101,7 @@ def scake(
     }
     sorted_candidate_scores = sorted(
         candidate_scores.items(), key=operator.itemgetter(1, 0), reverse=True)
-    return utils.get_filtered_topn_terms(
+    return ke_utils.get_filtered_topn_terms(
         sorted_candidate_scores, topn, match_threshold=0.8)
 
 
@@ -128,7 +132,7 @@ def _compute_word_scores(doc, graph, cooc_mat, normalize):
     }
     # "positional weight" component
     word_pos = collections.defaultdict(float)
-    for word, word_str in compat.zip_(doc, utils.normalize_terms(doc, normalize)):
+    for word, word_str in compat.zip_(doc, ke_utils.normalize_terms(doc, normalize)):
         word_pos[word_str] += 1 / (word.i + 1)
     return {
         w: word_pos[w] * max_truss_levels[w] * sem_strengths[w] * sem_connectivities[w]
@@ -136,7 +140,7 @@ def _compute_word_scores(doc, graph, cooc_mat, normalize):
     }
 
 
-def _get_candidates(doc, include_pos, normalize):
+def _get_candidates(doc, normalize, include_pos):
     """
     Get a set of candidate terms to be scored by joining the longest
     subsequences of valid words -- non-stopword and non-punct, filtered to
@@ -145,24 +149,21 @@ def _get_candidates(doc, include_pos, normalize):
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
-        include_pos (Set[str])
         normalize (str or callable)
+        include_pos (Set[str])
 
     Returns:
         Set[Tuple[str]]
     """
-    if include_pos:
-        include_pos = set(include_pos)
-
     def _is_valid_tok(tok):
         return (
             not (tok.is_stop or tok.is_punct or tok.is_space)
             and (not include_pos or tok.pos_ in include_pos)
         )
 
-    candidates = utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
+    candidates = ke_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(utils.normalize_terms(candidate, normalize))
+        tuple(ke_utils.normalize_terms(candidate, normalize))
         for candidate in candidates
     }
 

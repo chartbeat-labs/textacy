@@ -15,16 +15,25 @@ from . import utils as ke_utils
 from .. import compat, utils
 
 
-def yake(doc, ngrams=(1, 2, 3), window_size=2, topn=10):
+def yake(
+    doc,
+    ngrams=(1, 2, 3),
+    include_pos=("NOUN", "PROPN", "ADJ"),
+    window_size=2,
+    topn=10,
+):
     """
     Extract key terms from a document using the YAKE algorithm.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`)
+        doc (:class:`spacy.tokens.Doc`): spaCy ``Doc`` from which to extract keyterms.
             Must be sentence-segmented; optionally POS-tagged.
         ngrams (int or Set[int]): n of which n-grams to consider as keyterm candidates.
             For example, `(1, 2, 3)`` includes all unigrams, bigrams, and trigrams,
             while ``2`` includes bigrams only.
+        include_pos (str or Set[str]): One or more POS tags with which to filter
+            for good candidate keyterms. If None, include tokens of all POS tags
+            (which also allows keyterm extraction from docs without POS-tagging.)
         window_size (int): Number of words to the right and left of a given word
             to use as context when computing the "relatedness to context"
             component of its score. Note that the resulting sliding window's
@@ -46,12 +55,17 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, topn=10):
     """
     # validate / transform args
     ngrams = utils.to_collection(ngrams, int, tuple)
+    include_pos = utils.to_collection(include_pos, compat.unicode_, set)
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
                 "topn={} is invalid; "
                 "must be an int, or a float between 0.0 and 1.0".format(topn)
             )
+
+    # bail out on empty docs
+    if not doc:
+        return []
 
     stop_words = set()
     seen_candidates = set()
@@ -67,7 +81,7 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, topn=10):
     term_scores = {}
     # do single-word candidates separately; it's faster and simpler
     if 1 in ngrams:
-        candidates = _get_unigram_candidates(doc)
+        candidates = _get_unigram_candidates(doc, include_pos)
         _score_unigram_candidates(
             candidates,
             word_freqs, word_scores, term_scores,
@@ -76,9 +90,7 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, topn=10):
     # now compute combined scores for higher-n ngram and candidates
     candidates = list(
         ke_utils.get_ngram_candidates(
-            doc,
-            [n for n in ngrams if n > 1],
-            include_pos={"NOUN", "PROPN", "ADJ"}
+            doc, [n for n in ngrams if n > 1], include_pos=include_pos,
         )
     )
     ngram_freqs = itertoolz.frequencies(
@@ -188,10 +200,11 @@ def _compute_word_scores(doc, word_occ_vals, word_freqs, stop_words):
     return word_scores
 
 
-def _get_unigram_candidates(doc):
+def _get_unigram_candidates(doc, include_pos):
     """
     Args:
         doc (:class:`spacy.tokens.Doc`)
+        include_pos (Set[str])
 
     Returns:
         List[:class:`spacy.tokens.Token`]
@@ -200,8 +213,7 @@ def _get_unigram_candidates(doc):
         word for word in doc
         if not (word.is_punct or word.is_space)
     )
-    if doc.is_tagged:
-        include_pos = {"NOUN", "PROPN", "ADJ"}
+    if include_pos:
         candidates = (
             word for word in candidates
             if word.pos_ in include_pos

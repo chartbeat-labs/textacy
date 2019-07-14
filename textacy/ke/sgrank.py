@@ -19,8 +19,9 @@ from .. import compat, extract, utils
 
 def sgrank(
     doc,
-    ngrams=(1, 2, 3, 4, 5, 6),
     normalize="lemma",
+    ngrams=(1, 2, 3, 4, 5, 6),
+    include_pos=("NOUN", "PROPN", "ADJ"),
     window_size=1500,
     topn=10,
     idf=None,
@@ -29,13 +30,16 @@ def sgrank(
     Extract key terms from a document using the SGRank algorithm.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`)
-        ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3, 4, 5, 6)``
-            (default) includes all ngrams from 1 to 6; `2` if only bigrams are wanted
+        doc (:class:`spacy.tokens.Doc`): spaCy ``Doc`` from which to extract keyterms.
         normalize (str or callable): If "lemma", lemmatize terms; if "lower",
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``Span`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`
+        ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3, 4, 5, 6)``
+            (default) includes all ngrams from 1 to 6; `2` if only bigrams are wanted
+        include_pos (str or Set[str]): One or more POS tags with which to filter
+            for good candidate keyterms. If None, include tokens of all POS tags
+            (which also allows keyterm extraction from docs without POS-tagging.)
         window_size (int): Size of sliding window in which term
             co-occurrences are determined to occur. Note: Larger values may
             dramatically increase runtime, owing to the larger number of
@@ -61,7 +65,9 @@ def sgrank(
         Methods to Improve the State of the Art in Unsupervised Keyphrase Extraction."
         Lexical and Computational Semantics (* SEM 2015) (2015): 117.
     """
+    # validate / transform args
     ngrams = utils.to_collection(ngrams, int, tuple)
+    include_pos = utils.to_collection(include_pos, compat.unicode_, set)
     if window_size < 2:
         raise ValueError("`window_size` must be >= 2")
     if isinstance(topn, float):
@@ -72,16 +78,11 @@ def sgrank(
 
     n_toks = len(doc)
     window_size = min(n_toks, window_size)
-    # no keyterms to extract from a (nearly) empty doc...
+    # bail out on (nearly) empty docs
     if n_toks < 2:
         return []
 
-    # if inverse doc freqs available, include nouns, adjectives, and verbs;
-    # otherwise, just include nouns and adjectives
-    # (without IDF downweighting, verbs dominate the results in a bad way)
-    include_pos = {"NOUN", "PROPN", "ADJ", "VERB"} if idf else {"NOUN", "PROPN", "ADJ"}
-    candidates, candidate_counts = _get_candidates(
-        doc, ngrams, normalize, include_pos=include_pos)
+    candidates, candidate_counts = _get_candidates(doc, normalize, ngrams, include_pos)
     # scale float topn based on total number of initial candidates
     if isinstance(topn, float):
         topn = int(round(len(candidate_counts) * topn))
@@ -105,9 +106,7 @@ def sgrank(
         sorted_term_ranks, topn, match_threshold=0.8)
 
 
-def _get_candidates(
-    doc, ngrams, normalize, include_pos=("NOUN", "PROPN", "ADJ", "VERB")
-):
+def _get_candidates(doc, normalize, ngrams, include_pos):
     """
     Get n-gram candidate keyterms from ``doc``, with key information for each:
     its normalized text string, position within the doc, number of constituent words,
@@ -115,8 +114,8 @@ def _get_candidates(
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
-        ngrams (Tuple[int])
         normalize (str)
+        ngrams (Tuple[int])
         include_pos (Set[str])
 
     Returns:

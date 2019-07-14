@@ -8,13 +8,15 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import collections
 import operator
 
-from . import graph_base, utils
-from .. import compat
+from . import graph_base
+from . import utils as ke_utils
+from .. import compat, utils
 
 
 def textrank(
     doc,
     normalize="lemma",
+    include_pos=("NOUN", "PROPN", "ADJ"),
     window_size=2,
     edge_weighting="binary",
     position_bias=False,
@@ -29,11 +31,14 @@ def textrank(
     - PositionRank: ``window_size=10, edge_weighting="count", position_bias=True``
 
     Args:
-        doc (:class:`spacy.tokens.Doc`)
+        doc (:class:`spacy.tokens.Doc`): spaCy ``Doc`` from which to extract keyterms.
         normalize (str or callable): If "lemma", lemmatize terms; if "lower",
             lowercase terms; if None, use the form of terms as they appeared in
             ``doc``; if a callable, must accept a ``Token`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
+        include_pos (str or Set[str]): One or more POS tags with which to filter
+            for good candidate keyterms. If None, include tokens of all POS tags
+            (which also allows keyterm extraction from docs without POS-tagging.)
         window_size (int): Size of sliding window in which term co-occurrences
             are determined.
         edge_weighting ({"count", "binary"}): : If "count", the nodes for
@@ -62,6 +67,8 @@ def textrank(
           to Keyphrase Extraction from Scholarly Documents. In proceedings of ACL*,
           pages 1105-1115.
     """
+    # validate / transform args
+    include_pos = utils.to_collection(include_pos, compat.unicode_, set)
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -69,9 +76,13 @@ def textrank(
                 "must be an int, or a float between 0.0 and 1.0".format(topn)
             )
 
+    # bail out on empty docs
+    if not doc:
+        return []
+
     if position_bias is True:
         word_pos = collections.defaultdict(float)
-        for word, norm_word in compat.zip_(doc, utils.normalize_terms(doc, normalize)):
+        for word, norm_word in compat.zip_(doc, ke_utils.normalize_terms(doc, normalize)):
             word_pos[norm_word] += 1 / (word.i + 1)
         sum_word_pos = sum(word_pos.values())
         word_pos = {word: pos / sum_word_pos for word, pos in word_pos.items()}
@@ -87,7 +98,7 @@ def textrank(
     word_scores = graph_base.rank_nodes_by_pagerank(
         graph, weight="weight", personalization=word_pos)
     # generate a list of candidate terms
-    candidates = _get_candidates(doc, normalize)
+    candidates = _get_candidates(doc, normalize, include_pos)
     if isinstance(topn, float):
         topn = int(round(len(set(candidates)) * topn))
     # rank candidates by aggregating constituent word scores
@@ -98,11 +109,11 @@ def textrank(
     }
     sorted_candidate_scores = sorted(
         candidate_scores.items(), key=operator.itemgetter(1, 0), reverse=True)
-    return utils.get_filtered_topn_terms(
+    return ke_utils.get_filtered_topn_terms(
         sorted_candidate_scores, topn, match_threshold=0.8)
 
 
-def _get_candidates(doc, normalize):
+def _get_candidates(doc, normalize, include_pos):
     """
     Get a set of candidate terms to be scored by joining the longest
     subsequences of valid words -- non-stopword and non-punct, filtered to
@@ -112,23 +123,19 @@ def _get_candidates(doc, normalize):
     Args:
         doc (:class:`spacy.tokens.Doc`)
         normalize (str or callable)
+        include_pos (Set[str])
 
     Returns:
         Set[Tuple[str]]
     """
-    if doc.is_tagged:
-        include_pos = {"NOUN", "PROPN", "ADJ"}
-    else:
-        include_pos = None
-
     def _is_valid_tok(tok):
         return (
             not (tok.is_stop or tok.is_punct or tok.is_space)
             and (include_pos is None or tok.pos_ in include_pos)
         )
 
-    candidates = utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
+    candidates = ke_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(utils.normalize_terms(candidate, normalize))
+        tuple(ke_utils.normalize_terms(candidate, normalize))
         for candidate in candidates
     }
