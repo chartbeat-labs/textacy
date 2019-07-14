@@ -17,6 +17,7 @@ from .. import compat, utils
 
 def yake(
     doc,
+    normalize="lemma",
     ngrams=(1, 2, 3),
     include_pos=("NOUN", "PROPN", "ADJ"),
     window_size=2,
@@ -28,6 +29,12 @@ def yake(
     Args:
         doc (:class:`spacy.tokens.Doc`): spaCy ``Doc`` from which to extract keyterms.
             Must be sentence-segmented; optionally POS-tagged.
+        normalize (str): If "lemma", lemmatize terms; if "lower", lowercase terms;
+            if None, use the form of terms as they appeared in ``doc``.
+
+            .. note:: Unlike the other keyterm extraction functions, this one
+               doesn't accept a callable for ``normalize``.
+
         ngrams (int or Set[int]): n of which n-grams to consider as keyterm candidates.
             For example, `(1, 2, 3)`` includes all unigrams, bigrams, and trigrams,
             while ``2`` includes bigrams only.
@@ -70,7 +77,7 @@ def yake(
     stop_words = set()
     seen_candidates = set()
     # compute key values on a per-word basis
-    word_occ_vals = _get_per_word_occurrence_values(doc, stop_words, window_size)
+    word_occ_vals = _get_per_word_occurrence_values(doc, normalize, stop_words, window_size)
     # doc doesn't have any words...
     if not word_occ_vals:
         return []
@@ -86,6 +93,7 @@ def yake(
             candidates,
             word_freqs, word_scores, term_scores,
             stop_words, seen_candidates,
+            normalize,
         )
     # now compute combined scores for higher-n ngram and candidates
     candidates = list(
@@ -93,13 +101,15 @@ def yake(
             doc, [n for n in ngrams if n > 1], include_pos=include_pos,
         )
     )
+    attr_name = _get_attr_name(normalize, True)
     ngram_freqs = itertoolz.frequencies(
-        " ".join(word.lower_ for word in ngram)
+        " ".join(getattr(word, attr_name) for word in ngram)
         for ngram in candidates)
     _score_ngram_candidates(
         candidates,
         ngram_freqs, word_scores, term_scores,
         seen_candidates,
+        normalize,
     )
     # build up a list of key terms in order of increasing score
     if isinstance(topn, float):
@@ -113,13 +123,37 @@ def yake(
         sorted_term_scores, topn, match_threshold=0.8)
 
 
-def _get_per_word_occurrence_values(doc, stop_words, window_size):
+def _get_attr_name(normalize, as_strings):
+    """
+    Args:
+        normalize (str)
+        as_strings (bool)
+
+    Returns:
+        str
+    """
+    if normalize is None:
+        attr_name = "norm"
+    elif normalize in ("lemma", "lower"):
+        attr_name = normalize
+    else:
+        raise ValueError(
+            "normalize='{}' is invalid; "
+            "must be None or one of {}".format({"lemma", "lower"})
+        )
+    if as_strings is True:
+        attr_name = attr_name + "_"
+    return attr_name
+
+
+def _get_per_word_occurrence_values(doc, normalize, stop_words, window_size):
     """
     Get base values for each individual occurrence of a word, to be aggregated
     and combined into a per-word score.
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
+        normalize (str)
         stop_words (Set[str])
         window_size (int)
 
@@ -131,22 +165,23 @@ def _get_per_word_occurrence_values(doc, stop_words, window_size):
     def _is_upper_cased(tok):
         return tok.is_upper or (tok.is_title and not tok.is_sent_start)
 
+    attr_name = _get_attr_name(normalize, False)
     padding = [None] * window_size
     for sent_idx, sent in enumerate(doc.sents):
         sent_padded = itertoolz.concatv(padding, sent, padding)
         for window in itertoolz.sliding_window(1 + (2 * window_size), sent_padded):
             lwords, word, rwords = window[:window_size], window[window_size], window[window_size + 1:]
-            w_id = word.lower
+            w_id = getattr(word, attr_name)
             if word.is_stop:
                 stop_words.add(w_id)
             word_occ_vals[w_id]["is_uc"].append(_is_upper_cased(word))
             word_occ_vals[w_id]["sent_idx"].append(sent_idx)
             word_occ_vals[w_id]["l_context"].extend(
-                w.lower for w in lwords
+                getattr(w, attr_name) for w in lwords
                 if not (w is None or w.is_punct or w.is_space)
             )
             word_occ_vals[w_id]["r_context"].extend(
-                w.lower for w in rwords
+                getattr(w, attr_name) for w in rwords
                 if not (w is None or w.is_punct or w.is_space)
             )
     return word_occ_vals
@@ -228,6 +263,7 @@ def _score_unigram_candidates(
     term_scores,
     stop_words,
     seen_candidates,
+    normalize,
 ):
     """
     Args:
@@ -237,22 +273,28 @@ def _score_unigram_candidates(
         term_scores (Dict[str, float])
         stop_words (Set[str])
         seen_candidates (Set[str])
+        normalize (str)
     """
+    attr_name = _get_attr_name(normalize, False)
+    attr_name_str = _get_attr_name(normalize, True)
     for word in candidates:
-        w_id = word.lower
+        w_id = getattr(word, attr_name)
         if w_id in stop_words or w_id in seen_candidates:
             continue
         else:
             seen_candidates.add(w_id)
         # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
         # term_scores[word.lower_] = word_scores[w_id] / (word_freqs[w_id] * (1 + word_scores[w_id]))
-        term_scores[word.lower_] = word_scores[w_id] / (compat.log2_(1 + word_freqs[w_id]) * (1 + word_scores[w_id]))
+        term_scores[getattr(word, attr_name_str)] = (
+            word_scores[w_id] / (compat.log2_(1 + word_freqs[w_id]) * (1 + word_scores[w_id]))
+        )
 
 
 def _score_ngram_candidates(
     candidates,
     ngram_freqs, word_scores, term_scores,
     seen_candidates,
+    normalize,
 ):
     """
     Args:
@@ -261,14 +303,17 @@ def _score_ngram_candidates(
         word_scores (Dict[int, float])
         term_scores (Dict[str, float])
         seen_candidates (Set[str])
+        normalize (str)
     """
+    attr_name = _get_attr_name(normalize, False)
+    attr_name_str = _get_attr_name(normalize, True)
     for ngram in candidates:
-        ngtxt = " ".join(word.lower_ for word in ngram)
+        ngtxt = " ".join(getattr(word, attr_name_str) for word in ngram)
         if ngtxt in seen_candidates:
             continue
         else:
             seen_candidates.add(ngtxt)
-        ngram_word_scores = [word_scores[word.lower] for word in ngram]
+        ngram_word_scores = [word_scores[getattr(word, attr_name)] for word in ngram]
         # multiply individual word scores together in the numerator
         numerator = compat.reduce_(operator.mul, ngram_word_scores, 1.0)
         # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
