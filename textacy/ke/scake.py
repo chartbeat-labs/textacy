@@ -9,7 +9,7 @@ import networkx as nx
 from cytoolz import itertoolz
 
 from . import utils
-from .. import compat, utils
+from .. import compat
 
 
 def scake(
@@ -52,7 +52,8 @@ def scake(
 
     # build up a graph of good words, edges weighting by adjacent sentence co-occurrence
     cooc_mat = collections.Counter()
-    for sent1, sent2 in itertoolz.sliding_window(2, doc.sents):
+    n_sents = itertoolz.count(doc.sents)  # in case doc only has 1 sentence
+    for sent1, sent2 in itertoolz.sliding_window(min(2, n_sents), doc.sents):
         window_words = (
             word
             for word in itertoolz.concatv(sent1, sent2)
@@ -65,6 +66,10 @@ def scake(
             for w1_w2 in itertools.combinations(sorted(window_words), 2)
             if w1_w2[0] != w1_w2[1]
         )
+    # doc doesn't have any valid words...
+    if not cooc_mat:
+        return []
+
     graph = nx.Graph()
     graph.add_edges_from(
         (w1, w2, {"weight": weight})
@@ -99,32 +104,24 @@ def _compute_word_scores(doc, graph, cooc_mat, normalize):
     Returns:
         Dict[str, float]
     """
-    word_pos = collections.defaultdict(float)
-    all_word_strs = utils.normalize_terms(doc, normalize)
-    for word, word_str in compat.zip_(doc, all_word_strs):
-        word_pos[word_str] += 1 / (word.i + 1)
-
-    word_strs = list(graph.nodes)
-    truss_levels = collections.defaultdict(list)
-    i = 1
-    while True:
-        subgraph = _get_ktruss(graph, i)
-        if len(subgraph) == 0:
-            break
-        for word in subgraph.nodes:
-            truss_levels[word].append(i)
-        i += 1
-
-    max_truss_level = i - 1
-    max_truss_levels = {w: max(truss_levels[w]) for w in word_strs}
+    word_strs = list(graph.nodes())
+    # "level of hierarchy" component
+    max_truss_levels = _compute_node_truss_levels(graph)
+    max_truss_level = max(max_truss_levels.values())
+    # "semantic strength of a word" component
     sem_strengths = {
-        w: sum(cooc_mat[tuple(sorted([w, nbr]))] * max_truss_levels[nbr] for nbr in graph[w])
+        w: sum(cooc_mat[tuple(sorted([w, nbr]))] * max_truss_levels[nbr] for nbr in graph.neighbors(w))
         for w in word_strs
     }
+    # "semantic connectivity" component
     sem_connectivities = {
-        w: len(set(itertoolz.concat(truss_levels[nbr] for nbr in graph[w]))) / max_truss_level
+        w: len(set(max_truss_levels[nbr] for nbr in graph.neighbors(w))) / max_truss_level
         for w in word_strs
     }
+    # "positional weight" component
+    word_pos = collections.defaultdict(float)
+    for word, word_str in compat.zip_(doc, utils.normalize_terms(doc, normalize)):
+        word_pos[word_str] += 1 / (word.i + 1)
     return {
         w: word_pos[w] * max_truss_levels[w] * sem_strengths[w] * sem_connectivities[w]
         for w in word_strs
@@ -162,31 +159,58 @@ def _get_candidates(doc, include_pos, normalize):
     }
 
 
-def _get_ktruss(G, k):
+def _compute_node_truss_levels(graph):
     """
     Args:
-        G (:class:`networkx.Graph`)
-        k (int)
+        graph (:class:`networkx.Graph`)
 
     Returns:
-        :class:`networkx.Graph`
+        Dict[str, int]
+
+    Reference:
+        Burkhardt, Paul & Faber, Vance & G. Harris, David. (2018).
+        Bounds and algorithms for $k$-truss.
+        https://arxiv.org/abs/1806.05523v1
     """
-    H = G.copy()
-    n_dropped = 1
-    while n_dropped > 0:
-        n_dropped = 0
-        to_drop = []
-        seen = set()
-        for u in H:
-            seen.add(u)
-            nbrs = set(H[u])
-            to_drop.extend(
-                (u, v)
-                for v in nbrs
-                if v not in seen
-                and len(nbrs & set(H[v])) < k
-            )
-        H.remove_edges_from(to_drop)
-        H.remove_nodes_from(list(nx.isolates(H)))
-        n_dropped = len(to_drop)
-    return H
+    max_edge_ks = {}
+    is_removed = collections.defaultdict(int)
+    triangle_counts = {
+        edge: len(set(graph.neighbors(edge[0])) & set(graph.neighbors(edge[1])))
+        for edge in graph.edges()}
+    # rather than iterating over all theoretical values of k
+    # let's break out early once all edges have been removed
+    # max_edge_k = math.ceil(math.sqrt(len(triangle_counts)))
+    # for k in range(1, max_edge_k):
+    k = 1
+    while True:
+        to_remove = collections.deque(
+            edge
+            for edge, tcount in triangle_counts.items()
+            if tcount < k and not is_removed[edge]
+        )
+        while to_remove:
+            edge = to_remove.popleft()
+            is_removed[edge] = 1
+            for nbr in (set(graph.neighbors(edge[0])) & set(graph.neighbors(edge[1]))):
+                for node in edge:
+                    nbr_edge = (node, nbr)
+                    try:
+                        triangle_counts[nbr_edge] -= 1
+                    except KeyError:
+                        # oops, gotta reverse the node ordering on this edge
+                        nbr_edge = (nbr, node)
+                        triangle_counts[nbr_edge] -= 1
+                    if triangle_counts[nbr_edge] == k - 1:
+                        to_remove.append(nbr_edge)
+                        is_removed[nbr_edge] = 1
+            max_edge_ks[edge] = k - 1
+        # here's where we break out early, if possible
+        if len(is_removed) == len(triangle_counts):
+            break
+        else:
+            k += 1
+    max_node_ks = {
+        node: max(k for edge, k in max_edge_ks.items() if node in edge)
+        for node in graph.nodes()
+    }
+    return max_node_ks
