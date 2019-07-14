@@ -21,7 +21,7 @@
   - Added new unsupervised keyterm extraction algorithms: YAKE (`ke.yake()`), sCAKE (`ke.scake()`), and PositionRank (`ke.textrank()`, with non-default parameter values)
   - Added new methods for selecting candidate keyterms: longest matching subsequence candidates (`ke.utils.get_longest_subsequence_candidates()`) and pattern-matching candidates (`ke.utils.get_pattern_matching_candidates()`)
   - Improved speed of SGRank implementation, and generally optimized much of the code
-- **Improved document similarity functionality**
+- **Improved document similarity functionality** (PR #256)
   - Added a character ngram-based similarity measure (`similarity.character_ngrams()`), for something that's useful in different contexts than the other measures
   - Removed Jaro-Winkler string similarity measure (`similarity.jaro_winkler()`), since it didn't add much beyond other measures
   - Improved speed of Token Sort Ratio implementation
