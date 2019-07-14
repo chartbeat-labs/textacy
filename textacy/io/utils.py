@@ -26,7 +26,6 @@ except ImportError:  # Py2
 from cytoolz import itertoolz
 
 from .. import compat
-from .. import utils
 
 _ext_to_compression = {".bz2": "bz2", ".gz": "gzip", ".xz": "xz", ".zip": "zip"}
 
@@ -358,18 +357,3 @@ def get_filepaths(
         for filename in os.listdir(dirpath):
             if is_good_file(dirpath, filename):
                 yield os.path.join(dirpath, filename)
-
-
-def get_filenames(*args, **kwargs):
-    """
-    :func:`get_filenames()` has been renamed :func:`get_filepaths()`
-    for clarity and consistency with existing naming conventions;
-    please use that function instead of this one.
-    """
-    utils.deprecated(
-        "`get_filenames()` has been renamed `get_filepaths()` "
-        "for clarity and consistency with existing naming conventions; "
-        "please use that function instead of this one",
-        action="once",
-    )
-    return get_filepaths(*args, **kwargs)

@@ -1,6 +1,5 @@
 from .utils import (
     coerce_content_type,
-    get_filenames,
     get_filepaths,
     open_sesame,
     split_records,

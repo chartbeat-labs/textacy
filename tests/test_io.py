@@ -341,18 +341,3 @@ class TestIOUtils(object):
         assert (
             len(list(io.get_filepaths(TESTS_DIR, match_regex="io", extension=".py"))) == 1
         )
-
-    def test_get_filenames_deprecation(self):
-        with pytest.warns(DeprecationWarning):
-            _ = list(io.get_filenames(TESTS_DIR))
-
-    def test_get_filenames(self):
-        expected = sorted(
-            os.path.join(TESTS_DIR, fname)
-            for fname in os.listdir(TESTS_DIR)
-            if os.path.isfile(os.path.join(TESTS_DIR, fname))
-        )
-        observed = sorted(
-            io.get_filenames(TESTS_DIR, ignore_invisible=False, recursive=False)
-        )
-        assert observed == expected
