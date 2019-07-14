@@ -127,7 +127,7 @@ def _get_candidates(doc, normalize):
             and (include_pos is None or tok.pos_ in include_pos)
         )
 
-    candidates = utils.get_consecutive_subsequences(doc, _is_valid_tok)
+    candidates = utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
         tuple(utils.normalize_terms(candidate, normalize))
         for candidate in candidates

@@ -13,7 +13,7 @@ from decimal import Decimal
 import numpy as np
 from cytoolz import itertoolz
 
-from .. import similarity, vsm
+from .. import extract, similarity, vsm
 
 
 def normalize_terms(terms, normalize):
@@ -156,32 +156,30 @@ def aggregate_term_variants(terms, acro_defs=None, fuzzy_dedupe=True):
     return agg_terms
 
 
-def get_consecutive_subsequences(terms, grp_func):
+def get_longest_subsequence_candidates(doc, match_func):
     """
-    Get consecutive subsequences of terms for which all ``grp_func(term)`` is True;
-    discard terms for which the output is False.
+    Get candidate keyterms from ``doc``, where candidates are longest consecutive
+    subsequences of tokens for which all ``match_func(token)`` is True.
 
     Args:
-        terms (Sequence[object]): Ordered sequence of terms, probably as
-            strings or spaCy ``Tokens`` or ``Spans``.
-        grp_func (callable): Function applied sequentially to each term in ``terms``
-            that returns a boolean.
+        doc (:class:`spacy.tokens.Doc`)
+        match_func (callable): Function applied sequentially to each ``Token``
+            in ``doc`` that returns True for matching ("good") tokens, False otherwise.
 
     Yields:
-        Tuple[object]: Next consecutive subsequence of terms in ``terms``
-        for which all ``grp_func(term)`` is True, grouped together in a tuple.
+        Tuple[:class:`spacy.tokens.Token`]: Next longest consecutive subsequence candidate,
+        as a tuple of constituent tokens.
     """
-    for key, terms_grp in itertools.groupby(terms, key=grp_func):
-        if key:
-            yield tuple(terms_grp)
+    for key, words_grp in itertools.groupby(doc, key=match_func):
+        if key is True:
+            yield tuple(words_grp)
 
 
 def get_ngram_candidates(doc, ns, include_pos=("NOUN", "PROPN", "ADJ")):
     """
-    Get a sequence of good ngrams (for each n in ``ns``) to use as candidates
-    in keyterm extraction algorithms, where "good" means that they don't start
-    or end with a stop word or contain any punctuation-only tokens. Optionally,
-    require all constituent words to have POS tags in ``include_pos``.
+    Get candidate keyterms from ``doc``, where candidates are n-length sequences
+    of tokens (for all n in ``ns``) that don't start/end with a stop word or
+    contain punctuation tokens, and whose constituent tokens are filtered by POS tag.
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
@@ -189,7 +187,8 @@ def get_ngram_candidates(doc, ns, include_pos=("NOUN", "PROPN", "ADJ")):
         include_pos (Set[str])
 
     Yields:
-        Tuple[:class:`spacy.tokens.Token`]: Next good ngram, as a tuple of Tokens.
+        Tuple[:class:`spacy.tokens.Token`]: Next ngram candidate,
+        as a tuple of constituent Tokens.
     """
     ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns)
     ngrams = (
@@ -207,6 +206,28 @@ def get_ngram_candidates(doc, ns, include_pos=("NOUN", "PROPN", "ADJ")):
         )
     for ngram in ngrams:
         yield ngram
+
+
+def get_pattern_matching_candidates(doc, patterns):
+    """
+    Get candidate keyterms from ``doc``, where candidates are sequences of tokens
+    that match any pattern in ``patterns``
+
+    Args:
+        doc (:class:`spacy.tokens.Doc`)
+        patterns (str or List[str] or List[dict] or List[List[dict]]):
+            One or multiple patterns to match against ``doc``
+            using a :class:`spacy.matcher.Matcher`.
+
+    Yields:
+        Tuple[:class:`spacy.tokens.Token`]: Next pattern-matching candidate,
+        as a tuple of constituent Tokens.
+
+    See Also:
+        :func:`textacy.extract.matches()`
+    """
+    for match in extract.matches(doc, patterns, on_match=None):
+        yield tuple(match)
 
 
 def get_filtered_topn_terms(term_scores, topn, match_threshold=None):
