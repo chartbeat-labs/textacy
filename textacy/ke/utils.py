@@ -13,7 +13,8 @@ from decimal import Decimal
 import numpy as np
 from cytoolz import itertoolz
 
-from .. import extract, similarity, vsm
+from .. import compat, extract, similarity, vsm
+from .. import utils as t_utils
 
 
 def normalize_terms(terms, normalize):
@@ -183,13 +184,20 @@ def get_ngram_candidates(doc, ns, include_pos=("NOUN", "PROPN", "ADJ")):
 
     Args:
         doc (:class:`spacy.tokens.Doc`)
-        ns (Tuple[int])
-        include_pos (Set[str])
+        ns (int or Tuple[int]): One or more n values for which to generate n-grams.
+            For example, ``2`` gets bigrams; ``(2, 3)`` gets bigrams and trigrams.
+        include_pos (str or Set[str]): One or more POS tags with which to filter ngrams.
+            If None, include tokens of all POS tags.
 
     Yields:
         Tuple[:class:`spacy.tokens.Token`]: Next ngram candidate,
         as a tuple of constituent Tokens.
+
+    See Also:
+        :func:`textacy.extract.ngrams()`
     """
+    ns = t_utils.to_collection(ns, int, tuple)
+    include_pos = t_utils.to_collection(include_pos, compat.unicode_, set)
     ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns)
     ngrams = (
         ngram
@@ -198,7 +206,6 @@ def get_ngram_candidates(doc, ns, include_pos=("NOUN", "PROPN", "ADJ")):
         and not any(word.is_punct or word.is_space for word in ngram)
     )
     if include_pos:
-        include_pos = set(include_pos)
         ngrams = (
             ngram
             for ngram in ngrams
