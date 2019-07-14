@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+SGRank
+------
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import collections
@@ -52,7 +56,7 @@ def sgrank(
         ValueError: if ``topn`` is a float but not in (0.0, 1.0] or
             ``window_size`` < 2
 
-    Reference:
+    References:
         Danesh, Sumner, and Martin. "SGRank: Combining Statistical and Graphical
         Methods to Improve the State of the Art in Unsupervised Keyphrase Extraction."
         Lexical and Computational Semantics (* SEM 2015) (2015): 117.

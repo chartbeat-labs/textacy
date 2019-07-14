@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+sCAKE
+-----
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import collections
@@ -38,7 +42,7 @@ def scake(
         List[Tuple[str, float]]: Sorted list of top ``topn`` key terms and
         their corresponding scores.
 
-    Reference:
+    References:
         Duari, Swagata & Bhatnagar, Vasudha. (2018). sCAKE: Semantic Connectivity
         Aware Keyword Extraction. Information Sciences. 477.
         https://arxiv.org/abs/1811.10831v1
