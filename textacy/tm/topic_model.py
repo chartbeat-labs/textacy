@@ -21,7 +21,8 @@ LOGGER = logging.getLogger(__name__)
 class TopicModel(object):
     """
     Train and apply a topic model to vectorized texts using scikit-learn's
-    implementations of LSA, LDA, and NMF models. Inspect and visualize results.
+    implementations of LSA, LDA, and NMF models. Also any other topic model implementations that have
+    `component_`, `n_topics` and `transform` attributes. Inspect and visualize results.
     Save and load trained models to and from disk.
 
     Prepare a vectorized corpus (i.e. document-term matrix) and corresponding
@@ -113,8 +114,12 @@ class TopicModel(object):
         * http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
     """
 
+    _required_trained_model_attr = {"transform", "components_", "n_topics"}
+
     def __init__(self, model, n_topics=10, **kwargs):
         if isinstance(model, (NMF, LatentDirichletAllocation, TruncatedSVD)):
+            self.model = model
+        elif all(hasattr(model, required_attr) for required_attr in self._required_trained_model_attr):
             self.model = model
         else:
             self.init_model(model, n_topics=n_topics, **kwargs)
@@ -375,6 +380,7 @@ class TopicModel(object):
         rank_terms_by="topic_weight",
         sort_terms_by="seriation",
         save=False,
+        rc_params=None,
     ):
         """
         Make a "termite" plot for assessing topic models using a tabular layout
@@ -402,6 +408,8 @@ class TopicModel(object):
                 the default ("seriation") groups similar terms together, which
                 facilitates cross-topic assessment
             save (str): give the full /path/to/fname on disk to save figure
+                rc_params (dict, optional): allow passing parameters to rc_context in matplotlib.plyplot,
+                details in https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.rc_context.html
 
         Returns:
             ``matplotlib.axes.Axes.axis``: Axis on which termite plot is plotted.
@@ -532,4 +540,5 @@ class TopicModel(object):
             term_labels,
             highlight_cols=highlight_cols,
             save=save,
+            rc_params=rc_params,
         )
