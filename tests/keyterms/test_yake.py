@@ -28,6 +28,19 @@ def test_default(spacy_doc):
     )
 
 
+def test_normalize_lower(spacy_doc):
+    result = ke.yake(spacy_doc, normalize="lower")
+    assert len(result) > 0
+    assert all(term == term.lower() for term, _ in result)
+
+
+@pytest.mark.skipif(compat.PY2, reason="PY2 is hot garbage, I don't even care")
+def test_normalize_lemma(spacy_doc):
+    result = ke.yake(spacy_doc, normalize="lemma")
+    assert len(result) > 0
+    assert any(term != term.lower() for term, _ in result)
+
+
 def test_ngrams_1(spacy_doc):
     result = ke.yake(spacy_doc, ngrams=1)
     assert len(result) > 0
