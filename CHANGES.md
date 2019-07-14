@@ -1,5 +1,41 @@
 ## Changes
 
+### 0.8.0 (in development)
+
+#### New and Changed:
+
+- **Refactored and expanded text preprocessing functionality** (PR #253)
+  - Moved code from a top-level `preprocess` module into a `preprocessing` sub-package, and reorganized it in the process
+  - Added new functions:
+    - `replace_hashtags()` to replace hashtags like `#FollowFriday` or `#spacyIRL2019` with `_TAG_`
+    - `replace_user_handles()` to replace user handles like `@bjdewilde` or `@spacy_io` with `_USER_`
+    - `replace_emojis()` to replace emoji symbols like 😉 or 🚀 with `_EMOJI_`
+    - `normalize_hyphenated_words()` to join hyphenated words back together, like `antici-  pation` => `anticipation`
+    - `normalize_quotation_marks()` to replace "fancy" quotation marks with simple ascii equivalents, like `“the god particle”` => `"the god particle"`
+  - Changed a couple functions for clarity and consistency:
+    - `replace_currency_symbols()` now replaces _all_ dedicated ascii and unicode currency symbols with `_CUR_`, rather than just a subset thereof, and no longer provides for replacement with the corresponding currency code (like `$` => `USD`)
+    - `remove_punct()` now has a `fast (bool)` kwarg rather than `method (str)`
+  - Removed `normalize_contractions()`, `preprocess_text()`, and `fix_bad_unicode()` functions, since they were bad/awkward and more trouble than they were worth
+- **Refactored and expanded keyterm extraction functionality** (PR #257)
+  - Moved code from a top-level `keyterms` module into a `ke` sub-package, and cleaned it up / standardized arg names / better shared functionality in the process
+  - Added new unsupervised keyterm extraction algorithms: YAKE (`ke.yake()`), sCAKE (`ke.scake()`), and PositionRank (`ke.textrank()`, with non-default parameter values)
+  - Added new methods for selecting candidate keyterms: longest matching subsequence candidates (`ke.utils.get_longest_subsequence_candidates()`) and pattern-matching candidates (`ke.utils.get_pattern_matching_candidates()`)
+  - Improved speed of SGRank implementation, and generally optimized much of the code
+- **Improved document similarity functionality**
+  - Added a character ngram-based similarity measure (`similarity.character_ngrams()`), for something that's useful in different contexts than the other measures
+  - Removed Jaro-Winkler string similarity measure (`similarity.jaro_winkler()`), since it didn't really add anything beyond other measures
+  - Improved speed of Token Sort Ratio implementation
+  - Replaced `python-levenshtein` dependency with `jellyfish`, for its active development, better documentation, and actually-compliant license
+- **Added customizability to certain functionality**
+  - Added options to `Doc._.to_bag_of_words()` and `Corpus.word_counts()` for optionally filtering out stop words, punctuation, and/or numbers (PR #249)
+  - Allowed for objects that _look like_ `sklearn`-style topic modeling classes to be passed into `tm.TopicModel()` (PR #248)
+  - Added options to customize rc params used by `matplotlib` when drawing a "termite" plot in `viz.draw_termite_plot()` (PR #248)
+
+#### Contributors:
+
+Huge thanks to @kjoshi and @zf109 for the PRs! 🙌
+
+
 ### 0.7.1 (2019-06-25)
 
 #### New:
