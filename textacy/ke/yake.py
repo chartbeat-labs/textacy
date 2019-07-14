@@ -1,4 +1,8 @@
 # -*- coding: utf-8 -*-
+"""
+YAKE
+----
+"""
 from __future__ import absolute_import, division, print_function, unicode_literals
 
 import collections
@@ -34,7 +38,7 @@ def yake(doc, ngrams=(1, 2, 3), window_size=2, topn=10):
         List[Tuple[str, float]]: Sorted list of top ``topn`` key terms and
         their corresponding scores.
 
-    Reference:
+    References:
         Campos, Mangaravite, Pasquali, Jorge, Nunes, and Jatowt. (2018).
         A Text Feature Based Automatic Keyword Extraction Method for Single Documents.
         Advances in Information Retrieval. ECIR 2018.
