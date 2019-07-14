@@ -50,6 +50,10 @@ def scake(
                 "must be an int, or a float between 0.0 and 1.0".format(topn)
             )
 
+    # bail out on empty docs
+    if not doc:
+        return []
+
     # build up a graph of good words, edges weighting by adjacent sentence co-occurrence
     cooc_mat = collections.Counter()
     n_sents = itertoolz.count(doc.sents)  # in case doc only has 1 sentence
