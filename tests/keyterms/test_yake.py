@@ -46,7 +46,7 @@ def test_n_topn(spacy_doc):
         assert 0 < len(result) <= n
 
 
-def test_n_keyterms_float(spacy_doc):
+def test_topn_float(spacy_doc):
     result = ke.yake(spacy_doc, topn=0.2)
     assert len(result) > 0
     with pytest.raises(ValueError):
