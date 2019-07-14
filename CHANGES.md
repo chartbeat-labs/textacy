@@ -1,6 +1,6 @@
 ## Changes
 
-### 0.8.0 (in development)
+### 0.8.0 (2019-07-14)
 
 #### New and Changed:
 
@@ -23,13 +23,14 @@
   - Improved speed of SGRank implementation, and generally optimized much of the code
 - **Improved document similarity functionality**
   - Added a character ngram-based similarity measure (`similarity.character_ngrams()`), for something that's useful in different contexts than the other measures
-  - Removed Jaro-Winkler string similarity measure (`similarity.jaro_winkler()`), since it didn't really add anything beyond other measures
+  - Removed Jaro-Winkler string similarity measure (`similarity.jaro_winkler()`), since it didn't add much beyond other measures
   - Improved speed of Token Sort Ratio implementation
-  - Replaced `python-levenshtein` dependency with `jellyfish`, for its active development, better documentation, and actually-compliant license
+  - Replaced `python-levenshtein` dependency with `jellyfish`, for its active development, better documentation, and _actually-compliant_ license
 - **Added customizability to certain functionality**
-  - Added options to `Doc._.to_bag_of_words()` and `Corpus.word_counts()` for optionally filtering out stop words, punctuation, and/or numbers (PR #249)
+  - Added options to `Doc._.to_bag_of_words()` and `Corpus.word_counts()` for filtering out stop words, punctuation, and/or numbers (PR #249)
   - Allowed for objects that _look like_ `sklearn`-style topic modeling classes to be passed into `tm.TopicModel()` (PR #248)
   - Added options to customize rc params used by `matplotlib` when drawing a "termite" plot in `viz.draw_termite_plot()` (PR #248)
+- Removed deprecated functions with direct replacements: `io.utils.get_filenames()` and `spacier.components.merge_entities()`
 
 #### Contributors:
 

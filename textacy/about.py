@@ -1,4 +1,4 @@
-__version__ = "0.7.1"
+__version__ = "0.8.0"
 __description__ = "NLP, before and after spaCy"
 __url__ = "https://github.com/chartbeat-labs/textacy"
 __download_url__ = "https://pypi.org/project/textacy"
