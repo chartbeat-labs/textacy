@@ -28,6 +28,8 @@ source_suffix = [".rst", ".md"]
 # The master toctree document.
 master_doc = "index"
 
+autodoc_default_flags = ["members"]
+
 # General information about the project.
 project = "textacy"
 copyright = "{year} Chartbeat, Inc".format(year=datetime.datetime.now().year)

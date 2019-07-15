@@ -4,7 +4,5 @@ Doc and Corpus
 ==============
 
 .. automodule:: textacy.doc
-    :members:
 
 .. automodule:: textacy.corpus
-    :members:

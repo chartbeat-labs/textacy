@@ -4,7 +4,5 @@ Visualization
 =============
 
 .. automodule:: textacy.viz.termite
-    :members:
 
 .. automodule:: textacy.viz.network
-    :members:
