@@ -16,7 +16,7 @@ build:
 python:
   version: 3.7
   install:
-    - requirements: requirements-docs.txt
+    - requirements: requirements-dev.txt
     - method: pip
       path: .
   system_packages: true
