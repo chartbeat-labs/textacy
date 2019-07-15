@@ -28,7 +28,9 @@ source_suffix = [".rst", ".md"]
 # The master toctree document.
 master_doc = "index"
 
+# autodoc extension configuration
 autodoc_default_flags = ["members"]
+autodoc_member_order = "bysource"
 
 # General information about the project.
 project = "textacy"
