@@ -25,14 +25,6 @@ INSTALL_REQUIRES = [
 EXTRAS_REQUIRE = {"viz": ["matplotlib>=1.5.0"]}
 EXTRAS_REQUIRE["all"] = list({pkg for pkgs in EXTRAS_REQUIRE.values() for pkg in pkgs})
 
-# as advised by https://hynek.me/articles/conditional-python-dependencies/
-if int(setuptools.__version__.split(".")[0]) < 18:
-    assert "bdist_wheel" not in sys.argv
-    if sys.version_info[0:2] == (2, 7):
-        INSTALL_REQUIRES.append("backports.csv>=1.0.1")
-else:
-    EXTRAS_REQUIRE[':python_version=="2.7"'] = ["backports.csv>=1.0.1"]
-
 
 def read_file(fname, encoding="utf-8"):
     path = os.path.join(os.path.dirname(__file__), fname)
@@ -58,15 +50,13 @@ setup(
     maintainer=about["__maintainer__"],
     maintainer_email=about["__maintainer_email__"],
     license=about["__license__"],
-    python_requires=">=2.7,!=3.0.*,!=3.1.*,!=3.2.*,!=3.3.*,!=3.4.*",
+    python_requires=">=3.5",
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
         "Programming Language :: Python",
-        "Programming Language :: Python :: 2",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
