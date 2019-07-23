@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 A class for working with a collection of spaCy docs. Includes functionality for
 easily adding, getting, and removing documents; saving to / loading their data
 from disk; and tracking basic corpus statistics.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import itertools
 import logging
@@ -18,7 +15,6 @@ from cytoolz import itertoolz
 from thinc.neural.ops import NumpyOps
 
 from . import cache
-from . import compat
 from . import io as tio
 from . import utils
 
@@ -165,7 +161,7 @@ class Corpus(object):
             self._remove_one_doc_by_index(idx_or_slice)
         elif isinstance(idx_or_slice, slice):
             start, end, step = idx_or_slice.indices(self.n_docs)
-            idxs = compat.range_(start, end, step)
+            idxs = range(start, end, step)
             self._remove_many_docs_by_index(idxs)
         else:
             raise TypeError(
@@ -195,15 +191,15 @@ class Corpus(object):
             * :meth:`Corpus.add_doc()`
             * :meth:`Corpus.add_docs()`
         """
-        if isinstance(data, compat.unicode_):
+        if isinstance(data, str):
             self.add_text(data)
         elif isinstance(data, spacy.tokens.Doc):
             self.add_doc(data)
         elif utils.is_record(data):
             self.add_record(data)
-        elif isinstance(data, compat.Iterable):
+        elif isinstance(data, collections.abc.Iterable):
             first, data = itertoolz.peek(data)
-            if isinstance(first, compat.unicode_):
+            if isinstance(first, str):
                 self.add_texts(data, batch_size=batch_size)
             elif isinstance(first, spacy.tokens.Doc):
                 self.add_docs(data)
@@ -212,14 +208,14 @@ class Corpus(object):
             else:
                 raise TypeError(
                     "data must be one of {} or an interable thereof, not {}".format(
-                        {compat.unicode_, spacy.tokens.Doc, tuple},
+                        {str, spacy.tokens.Doc, tuple},
                         type(data),
                     )
                 )
         else:
             raise TypeError(
                 "data must be one of {} or an interable thereof, not {}".format(
-                    {compat.unicode_, spacy.tokens.Doc, tuple},
+                    {str, spacy.tokens.Doc, tuple},
                     type(data),
                 )
             )
@@ -441,7 +437,7 @@ class Corpus(object):
             word_counts_.update(
                 doc._.to_bag_of_words(
                     normalize=normalize, weighting="count", as_strings=as_strings,
-                    filter_stops=filter_stops, filter_punct=filter_punct, 
+                    filter_stops=filter_stops, filter_punct=filter_punct,
                     filter_nums=filter_nums
                 )
             )
@@ -501,7 +497,7 @@ class Corpus(object):
             word_doc_counts_.update(
                 doc._.to_bag_of_words(
                     normalize=normalize, weighting="binary", as_strings=as_strings,
-                    filter_stops=filter_stops, filter_punct=filter_punct, 
+                    filter_stops=filter_stops, filter_punct=filter_punct,
                     filter_nums=filter_nums
                 )
             )
@@ -616,7 +612,7 @@ class Corpus(object):
         user_datas = msg["user_datas"]
 
         def _make_spacy_docs(tokens, user_datas):
-            for toks, user_data in compat.zip_(tokens, user_datas):
+            for toks, user_data in zip(tokens, user_datas):
                 doc = spacy.tokens.Doc(
                     spacy_lang.vocab,
                     words=[spacy_lang.vocab.strings[orth] for orth in toks[:, 0]],
@@ -630,13 +626,13 @@ class Corpus(object):
 
 
 def _get_spacy_lang(lang):
-    if isinstance(lang, compat.unicode_):
+    if isinstance(lang, str):
         return cache.load_spacy_lang(lang)
     elif isinstance(lang, spacy.language.Language):
         return lang
     else:
         raise TypeError(
             "`lang` must be {}, not {}".format(
-                {compat.unicode_, spacy.language.Language}, type(lang)
+                {str, spacy.language.Language}, type(lang)
             )
         )

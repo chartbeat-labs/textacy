@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+import collections
 
 import numpy as np
 import pytest
@@ -7,7 +6,6 @@ import spacy
 
 from textacy import Corpus
 from textacy import cache
-from textacy import compat
 from textacy.datasets.capitol_words import CapitolWords
 
 DATASET = CapitolWords()
@@ -69,7 +67,7 @@ class TestCorpusInit(object):
 class TestCorpusDunder(object):
 
     def test_repr(self, corpus):
-        repr = compat.unicode_(corpus)
+        repr = str(corpus)
         assert repr.startswith("Corpus")
         assert all("{}".format(n) in repr for n in [corpus.n_docs, corpus.n_tokens])
 
@@ -78,7 +76,7 @@ class TestCorpusDunder(object):
         assert len(corpus) == len(corpus.docs) == corpus.n_docs
 
     def test_iter(self, corpus):
-        assert isinstance(corpus, compat.Iterable)
+        assert isinstance(corpus, collections.abc.Iterable)
 
     def test_getitem(self, corpus):
         assert isinstance(corpus[0], spacy.tokens.Doc)
