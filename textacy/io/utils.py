@@ -4,28 +4,20 @@ IO Utils
 
 Functions to help read and write data to disk in a variety of formats.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import bz2
 import gzip
 import io
 import itertools
+import lzma
 import os
 import re
 import warnings
 import zipfile
 
-try:  # Py3
-    import lzma
-except ImportError:  # Py2
-    try:
-        from backports import lzma
-    except ImportError:  # Py2 without backport installed
-        pass
-
 from cytoolz import itertoolz
 
-from .. import compat
+from .. import utils
+
 
 _ext_to_compression = {".bz2": "bz2", ".gz": "gzip", ".xz": "xz", ".zip": "zip"}
 
@@ -69,7 +61,7 @@ def open_sesame(
         OSError: if ``filepath`` doesn't exist but ``mode`` is read
     """
     # check args
-    if not isinstance(filepath, compat.string_types):
+    if not isinstance(filepath, (str, bytes)):
         raise TypeError("filepath must be a string, not {}".format(type(filepath)))
     if encoding and "t" not in mode:
         raise ValueError("encoding only applicable for text mode")
@@ -137,13 +129,7 @@ def _get_file_handle(
         elif compression == "bz2":
             f = bz2.BZ2File(filepath, mode=mode_)
         elif compression == "xz":
-            try:
-                f = lzma.LZMAFile(filepath, mode=mode_)
-            except NameError:
-                raise ValueError(
-                    "lzma compression isn't included in Python 2's stdlib; "
-                    "try gzip or bz2, or install `backports.lzma`"
-                )
+            f = lzma.LZMAFile(filepath, mode=mode_)
         elif compression == "zip":
             zip_file = zipfile.ZipFile(filepath, mode=mode_)
             zip_names = zip_file.namelist()
@@ -165,14 +151,7 @@ def _get_file_handle(
             )
 
         if "t" in mode:
-            if compat.PY2 is True:
-                raise ValueError(
-                    'Python 2 can\'t open compressed files in "{}" mode'.format(mode)
-                )
-            else:
-                f = io.TextIOWrapper(
-                    f, encoding=encoding, errors=errors, newline=newline
-                )
+            f = io.TextIOWrapper(f, encoding=encoding, errors=errors, newline=newline)
 
     # no compression, file is opened as usual
     else:
@@ -214,9 +193,9 @@ def coerce_content_type(content, file_mode):
     try to coerce the content type so it can be written.
     """
     if "t" in file_mode:
-        return compat.to_unicode(content)
+        return utils.to_unicode(content)
     elif "b" in file_mode:
-        return compat.to_bytes(content)
+        return utils.to_bytes(content)
     return content
 
 
