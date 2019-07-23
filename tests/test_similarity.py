@@ -1,8 +1,6 @@
-from __future__ import absolute_import, unicode_literals
-
 import pytest
 
-from textacy import compat, similarity
+from textacy import similarity
 from textacy.doc import make_spacy_doc
 
 
