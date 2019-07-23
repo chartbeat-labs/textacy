@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Wikimedia
 ---------
@@ -21,18 +20,16 @@ so they're dumped in Elasticsearch bulk insert format -- basically, a compressed
 JSON file with one record per line. For more information, refer to
 https://meta.wikimedia.org/wiki/Data_dumps.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import datetime
 import itertools
 import logging
 import os
 import re
+import urllib.parse
 
 import requests
 from cytoolz import itertoolz
 
-from .. import compat
 from .. import constants
 from .. import io as tio
 from . import utils
@@ -178,7 +175,7 @@ class Wikimedia(Dataset):
                 )
                 raise
         for version_dt in version_dts:
-            file_url = compat.urljoin(
+            file_url = urllib.parse.urljoin(
                 DOWNLOAD_ROOT,
                 "{version}/{lang}{project}-{version_dt}-cirrussearch-content.json.gz".format(
                     version=self.version,
@@ -190,7 +187,7 @@ class Wikimedia(Dataset):
             if response.status_code == 200:
                 return file_url
         # check that the version actually exists...
-        response = requests.head(compat.urljoin(DOWNLOAD_ROOT, self.version))
+        response = requests.head(urllib.parse.urljoin(DOWNLOAD_ROOT, self.version))
         if response.status_code != 200:
             raise ValueError(
                 "no Wikimedia CirrusSearch data found for version='{version}'; "
@@ -244,7 +241,7 @@ class Wikimedia(Dataset):
                 "headings": tuple(source.get("heading", [])),
                 "wiki_links": wiki_links,
                 "ext_links": tuple(
-                    compat.url_unquote_plus(el)
+                    urllib.parse.unquote_plus(el)
                     for el in source.get("external_link", [])),
                 "categories": categories,
                 "dt_created": source.get("create_timestamp"),
@@ -262,7 +259,7 @@ class Wikimedia(Dataset):
             )
         if category is not None:
             category = utils.validate_set_member_filter(
-                category, compat.string_types, valid_vals=None)
+                category, (str, bytes), valid_vals=None)
             filters.append(
                 lambda record: (
                     record.get("categories")
@@ -271,7 +268,7 @@ class Wikimedia(Dataset):
             )
         if wiki_link is not None:
             wiki_link = utils.validate_set_member_filter(
-                wiki_link, compat.string_types, valid_vals=None)
+                wiki_link, (str, bytes), valid_vals=None)
             filters.append(
                 lambda record: (
                     record.get("wiki_links")

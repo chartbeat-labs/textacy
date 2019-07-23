@@ -1,12 +1,8 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
-
 import os
 import re
 
 import pytest
 
-from textacy import compat
 from textacy.datasets import wikimedia
 
 
@@ -35,7 +31,7 @@ class TestWikipedia(object):
         texts = list(WIKIPEDIA.texts(limit=3))
         assert len(texts) > 0
         for text in texts:
-            assert isinstance(text, compat.unicode_)
+            assert isinstance(text, str)
 
     def test_texts_limit(self):
         for limit in (1, 5, 10):
@@ -50,7 +46,7 @@ class TestWikipedia(object):
 
     def test_records(self):
         for text, meta in WIKIPEDIA.records(limit=3):
-            assert isinstance(text, compat.unicode_)
+            assert isinstance(text, str)
             assert isinstance(meta, dict)
 
     def test_records_limit(self):
@@ -112,7 +108,7 @@ class TestWikinews(object):
         texts = list(WIKINEWS.texts(limit=3))
         assert len(texts) > 0
         for text in texts:
-            assert isinstance(text, compat.unicode_)
+            assert isinstance(text, str)
 
     def test_texts_limit(self):
         for limit in (1, 5, 10):
@@ -127,7 +123,7 @@ class TestWikinews(object):
 
     def test_records(self):
         for text, meta in WIKINEWS.records(limit=3):
-            assert isinstance(text, compat.unicode_)
+            assert isinstance(text, str)
             assert isinstance(meta, dict)
 
     def test_records_limit(self):
