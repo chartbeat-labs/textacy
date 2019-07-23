@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Doc extensions
 --------------
@@ -17,8 +16,6 @@ on instantiated docs prepended by an underscore:
     >>> print(doc._.preview)
     Doc(6 tokens: "This is a short text.")
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import types
 
 import spacy
@@ -463,7 +460,7 @@ def to_bag_of_terms(
     return bot
 
 
-def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False, 
+def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False,
                     filter_stops=True, filter_punct=True, filter_nums=False):
     """
     Transform ``Doc`` into a bag-of-words: the set of unique words in ``Doc``
@@ -516,7 +513,7 @@ def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False,
     if as_strings is False:
         for wid, weight in wid_weights.items():
             lex = vocab[wid]
-            if not ( (lex.is_stop and filter_stops) or 
+            if not ( (lex.is_stop and filter_stops) or
                      (lex.is_punct and filter_punct) or
                      (lex.is_digit and filter_nums) or
                       lex.is_space):
@@ -525,8 +522,8 @@ def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False,
         ss = doc.vocab.strings
         for wid, weight in wid_weights.items():
             lex = vocab[wid]
-            if not ( (lex.is_stop and filter_stops) or 
-                     (lex.is_punct and filter_punct) or 
+            if not ( (lex.is_stop and filter_stops) or
+                     (lex.is_punct and filter_punct) or
                      (lex.is_digit and filter_nums) or
                       lex.is_space):
                 bow[ss[wid]] = weight

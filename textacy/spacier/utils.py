@@ -4,8 +4,6 @@ spaCy Utils
 
 Helper functions for working with / extending spaCy's core functionality.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import itertools
 
 import numpy as np
@@ -15,7 +13,6 @@ from spacy.symbols import NOUN, PROPN, VERB
 from spacy.tokens import Doc, Span, Token
 
 from .. import cache
-from .. import compat
 from .. import constants
 from .. import text_utils
 
@@ -49,11 +46,11 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
         :class:`spacy.tokens.Doc`: A single processed document, initialized from
         components accumulated chunk by chunk.
     """
-    if isinstance(lang, compat.unicode_):
+    if isinstance(lang, str):
         lang = cache.load_spacy_lang(lang)
     elif not isinstance(lang, Language):
         raise TypeError(
-            "`lang` must be {}, not {}".format({compat.unicode_, Language}, type(lang))
+            "`lang` must be {}, not {}".format({str, Language}, type(lang))
         )
 
     words = []
