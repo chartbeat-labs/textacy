@@ -1,13 +1,10 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
-
 import collections
 import re
 
 import pytest
 from spacy.tokens import Span, Token
 
-from textacy import cache, compat, constants, extract
+from textacy import cache, constants, extract
 
 
 @pytest.fixture(scope="module")
@@ -328,4 +325,4 @@ def test_semistructured_statements(spacy_doc):
     observed = next(extract.semistructured_statements(spacy_doc, "we", cue="discuss"))
     assert isinstance(observed, tuple) and len(observed) == 3
     assert all(isinstance(obj, (Span, Token)) for obj in observed)
-    assert all(obs.text == exp for obs, exp in compat.zip_(observed, expected))
+    assert all(obs.text == exp for obs, exp in zip(observed, expected))
