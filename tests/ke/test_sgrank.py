@@ -1,9 +1,7 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import pytest
 
 import textacy
-from textacy import compat, datasets, ke
+from textacy import datasets, ke
 
 
 @pytest.fixture(scope="module")
@@ -23,7 +21,7 @@ def test_default(spacy_doc):
     assert isinstance(result, list) and len(result) > 0
     assert all(isinstance(ts, tuple) and len(ts) == 2 for ts in result)
     assert all(
-        isinstance(ts[0], compat.unicode_) and isinstance(ts[1], float)
+        isinstance(ts[0], str) and isinstance(ts[1], float)
         for ts in result
     )
 

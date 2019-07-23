@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import itertools
 import logging
@@ -12,7 +9,6 @@ from cytoolz import itertoolz
 from spacy.tokens import Span, Token
 
 from . import utils
-from .. import compat
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,7 +64,7 @@ def build_graph_from_terms(
         window_size = len(terms)
 
     first_term, terms = itertoolz.peek(terms)
-    if isinstance(first_term, compat.unicode_):
+    if isinstance(first_term, str):
         windows = itertoolz.sliding_window(window_size, terms)
     elif isinstance(first_term, (Span, Token)):
         windows = itertoolz.sliding_window(
@@ -175,7 +171,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0, weight="weight"):
         s = set(vertices)
         # s.update(vertices)
         # for each step
-        for _ in compat.range_(l):
+        for _ in range(l):
             # for each node
             next_vertices = []
             for vertex in vertices:
@@ -202,7 +198,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0, weight="weight"):
     sum_contrib = 0.0
     results = {}
     # greedily select to maximize exprel metric
-    for _ in compat.range_(k):
+    for _ in range(k):
         if not contrib:
             break
         # find word with highest l-step expanded relevance score

@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 sCAKE
 -----
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import itertools
 import operator
@@ -13,7 +10,7 @@ import networkx as nx
 from cytoolz import itertoolz
 
 from . import utils as ke_utils
-from .. import compat, utils
+from .. import utils
 
 
 def scake(
@@ -50,7 +47,7 @@ def scake(
         https://arxiv.org/abs/1811.10831v1
     """
     # validate / transform args
-    include_pos = utils.to_collection(include_pos, compat.unicode_, set)
+    include_pos = utils.to_collection(include_pos, str, set)
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -132,7 +129,7 @@ def _compute_word_scores(doc, graph, cooc_mat, normalize):
     }
     # "positional weight" component
     word_pos = collections.defaultdict(float)
-    for word, word_str in compat.zip_(doc, ke_utils.normalize_terms(doc, normalize)):
+    for word, word_str in zip(doc, ke_utils.normalize_terms(doc, normalize)):
         word_pos[word_str] += 1 / (word.i + 1)
     return {
         w: word_pos[w] * max_truss_levels[w] * sem_strengths[w] * sem_connectivities[w]
