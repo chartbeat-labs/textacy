@@ -4,8 +4,6 @@ Text Statistics
 
 Compute a variety of basic counts and readability statistics for documents.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
 from math import sqrt
 
