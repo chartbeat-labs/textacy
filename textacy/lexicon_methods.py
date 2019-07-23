@@ -7,8 +7,6 @@ emotional valence, etc.
 
 This module is a bit of an orphan right now...
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import io
 import logging
