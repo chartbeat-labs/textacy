@@ -24,13 +24,11 @@ Records include the following data:
 This dataset was derived from data provided by the (now defunct) Sunlight
 Foundation's `Capitol Words API <http://sunlightlabs.github.io/Capitol-Words/>`_.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import itertools
 import logging
 import os
+import urllib.parse
 
-from .. import compat
 from .. import constants
 from .. import io as tio
 from . import utils
@@ -130,8 +128,7 @@ class CapitolWords(Dataset):
     def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
         super(CapitolWords, self).__init__(NAME, meta=META)
         self.data_dir = data_dir
-        self._filename = "capitol-words-py{py_version}.json.gz".format(
-            py_version=2 if compat.PY2 else 3)
+        self._filename = "capitol-words-py3.json.gz"
         self._filepath = os.path.join(self.data_dir, self._filename)
 
     @property
@@ -154,11 +151,8 @@ class CapitolWords(Dataset):
             force (bool): If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
-        release_tag = "capitol_words_py{py_version}_v{data_version}".format(
-            py_version=2 if compat.PY2 else 3,
-            data_version=1.0,
-        )
-        url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
+        release_tag = "capitol_words_py3_v{data_version}".format(data_version=1.0)
+        url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
         filepath = utils.download_file(
             url,
             filename=self._filename,
@@ -172,8 +166,7 @@ class CapitolWords(Dataset):
                 "dataset file {} not found;\n"
                 "has the dataset been downloaded yet?".format(self._filepath)
             )
-        mode = "rb" if compat.PY2 else "rt"  # TODO: check this
-        for record in tio.read_json(self._filepath, mode=mode, lines=True):
+        for record in tio.read_json(self._filepath, mode="rt", lines=True):
             yield record
 
     def _get_filters(
@@ -194,7 +187,7 @@ class CapitolWords(Dataset):
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range, self.full_date_range, val_type=compat.string_types)
+                date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: (
                     record.get("date")
@@ -203,15 +196,15 @@ class CapitolWords(Dataset):
             )
         if speaker_name is not None:
             speaker_name = utils.validate_set_member_filter(
-                speaker_name, compat.string_types, valid_vals=self.speaker_names)
+                speaker_name, (str, bytes), valid_vals=self.speaker_names)
             filters.append(lambda record: record.get("speaker_name") in speaker_name)
         if speaker_party is not None:
             speaker_party = utils.validate_set_member_filter(
-                speaker_party, compat.string_types, valid_vals=self.speaker_parties)
+                speaker_party, (str, bytes), valid_vals=self.speaker_parties)
             filters.append(lambda record: record.get("speaker_party") in speaker_party)
         if chamber is not None:
             chamber = utils.validate_set_member_filter(
-                chamber, compat.string_types, valid_vals=self.chambers)
+                chamber, (str, bytes), valid_vals=self.chambers)
             filters.append(lambda record: record.get("chamber") in chamber)
         if congress is not None:
             congress = utils.validate_set_member_filter(

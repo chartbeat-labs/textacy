@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, unicode_literals
-
 import pytest
 import spacy
 
 from textacy import cache
-from textacy import compat
 from textacy.doc import make_spacy_doc
 from textacy.spacier.doc_extensions import (
     remove_doc_extensions,
@@ -38,12 +34,12 @@ class TestDocExtensions(object):
 
     def test_lang(self, doc):
         lang = doc._.lang
-        assert isinstance(lang, compat.unicode_)
+        assert isinstance(lang, str)
         assert lang == doc.vocab.lang
 
     def test_preview(self, doc):
         preview = doc._.preview
-        assert isinstance(preview, compat.unicode_)
+        assert isinstance(preview, str)
         assert preview.startswith("Doc")
 
     def test_tokens(self, doc):
@@ -77,7 +73,7 @@ class TestDocExtensions(object):
         tokenized_text = doc._.to_tokenized_text()
         assert isinstance(tokenized_text, list)
         assert isinstance(tokenized_text[0], list)
-        assert isinstance(tokenized_text[0][0], compat.unicode_)
+        assert isinstance(tokenized_text[0][0], str)
         assert len(tokenized_text) == doc._.n_sents
 
     def test_to_tokenized_text_nosents(self):
@@ -88,14 +84,14 @@ class TestDocExtensions(object):
         assert isinstance(tokenized_text, list)
         assert len(tokenized_text) == 1
         assert isinstance(tokenized_text[0], list)
-        assert isinstance(tokenized_text[0][0], compat.unicode_)
+        assert isinstance(tokenized_text[0][0], str)
 
     def test_to_tagged_text(self, doc):
         tagged_text = doc._.to_tagged_text()
         assert isinstance(tagged_text, list)
         assert isinstance(tagged_text[0], list)
         assert isinstance(tagged_text[0][0], tuple)
-        assert isinstance(tagged_text[0][0][0], compat.unicode_)
+        assert isinstance(tagged_text[0][0][0], str)
         assert len(tagged_text) == doc._.n_sents
 
     def test_to_tagged_text_nosents(self):
@@ -107,14 +103,14 @@ class TestDocExtensions(object):
         assert len(tagged_text) == 1
         assert isinstance(tagged_text[0], list)
         assert isinstance(tagged_text[0][0], tuple)
-        assert isinstance(tagged_text[0][0][0], compat.unicode_)
+        assert isinstance(tagged_text[0][0][0], str)
 
     def test_to_terms_list(self, doc):
         full_terms_list = list(doc._.to_terms_list(as_strings=True))
         full_terms_list_ids = list(doc._.to_terms_list(as_strings=False))
         assert len(full_terms_list) == len(full_terms_list_ids)
-        assert isinstance(full_terms_list[0], compat.unicode_)
-        assert isinstance(full_terms_list_ids[0], compat.int_types)
+        assert isinstance(full_terms_list[0], str)
+        assert isinstance(full_terms_list_ids[0], int)
         assert (
             full_terms_list[0]
             != list(doc._.to_terms_list(as_strings=True, normalize=False))[0]
@@ -151,21 +147,21 @@ class TestDocExtensions(object):
     def test_to_bag_of_terms(self, doc):
         bot = doc._.to_bag_of_terms(weighting="count")
         assert isinstance(bot, dict)
-        assert isinstance(list(bot.keys())[0], compat.int_types)
+        assert isinstance(list(bot.keys())[0], int)
         assert isinstance(list(bot.values())[0], int)
         bot = doc._.to_bag_of_terms(weighting="binary")
         assert isinstance(bot, dict)
-        assert isinstance(list(bot.keys())[0], compat.int_types)
+        assert isinstance(list(bot.keys())[0], int)
         assert isinstance(list(bot.values())[0], int)
         for value in list(bot.values())[0:10]:
             assert value < 2
         bot = doc._.to_bag_of_terms(weighting="freq")
         assert isinstance(bot, dict)
-        assert isinstance(list(bot.keys())[0], compat.int_types)
+        assert isinstance(list(bot.keys())[0], int)
         assert isinstance(list(bot.values())[0], float)
         bot = doc._.to_bag_of_terms(as_strings=True)
         assert isinstance(bot, dict)
-        assert isinstance(list(bot.keys())[0], compat.unicode_)
+        assert isinstance(list(bot.keys())[0], str)
 
     def test_to_bag_of_terms_error(self, doc):
         with pytest.raises(ValueError):
@@ -174,21 +170,21 @@ class TestDocExtensions(object):
     def test_to_bag_of_words(self, doc):
         bow = doc._.to_bag_of_words(weighting="count")
         assert isinstance(bow, dict)
-        assert isinstance(list(bow.keys())[0], compat.int_types)
+        assert isinstance(list(bow.keys())[0], int)
         assert isinstance(list(bow.values())[0], int)
         bow = doc._.to_bag_of_words(weighting="binary")
         assert isinstance(bow, dict)
-        assert isinstance(list(bow.keys())[0], compat.int_types)
+        assert isinstance(list(bow.keys())[0], int)
         assert isinstance(list(bow.values())[0], int)
         for value in list(bow.values())[0:10]:
             assert value < 2
         bow = doc._.to_bag_of_words(weighting="freq")
         assert isinstance(bow, dict)
-        assert isinstance(list(bow.keys())[0], compat.int_types)
+        assert isinstance(list(bow.keys())[0], int)
         assert isinstance(list(bow.values())[0], float)
         bow = doc._.to_bag_of_words(as_strings=True)
         assert isinstance(bow, dict)
-        assert isinstance(list(bow.keys())[0], compat.unicode_)
+        assert isinstance(list(bow.keys())[0], str)
 
     def test_to_bag_of_words_values(self):
         text = "Burton Jacob DeWilde, Burton Jacob, Burton."
@@ -215,10 +211,10 @@ class TestDocExtensions(object):
 
     def test_to_semantic_network_words(self, doc):
         graph = doc._.to_semantic_network(nodes="words", edge_weighting="cooc_freq")
-        assert all(isinstance(node, compat.unicode_) for node in graph.nodes)
+        assert all(isinstance(node, str) for node in graph.nodes)
         assert all(isinstance(d["weight"], int) for n1, n2, d in graph.edges(data=True))
         graph = doc._.to_semantic_network(nodes="words", edge_weighting="binary")
-        assert all(isinstance(node, compat.unicode_) for node in graph.nodes)
+        assert all(isinstance(node, str) for node in graph.nodes)
         assert all(d == {} for n1, n2, d in graph.edges(data=True))
 
     def test_to_semantic_network_sents(self, doc):

@@ -1,6 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
-
 from textacy import lang_utils
 
 GOOD_LANG_SENTS = [

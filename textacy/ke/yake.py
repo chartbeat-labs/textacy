@@ -1,18 +1,17 @@
-# -*- coding: utf-8 -*-
 """
 YAKE
 ----
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
+import functools
 import math
 import operator
+import statistics
 
 from cytoolz import itertoolz
 
 from . import utils as ke_utils
-from .. import compat, utils
+from .. import utils
 
 
 def yake(
@@ -62,7 +61,7 @@ def yake(
     """
     # validate / transform args
     ngrams = utils.to_collection(ngrams, int, tuple)
-    include_pos = utils.to_collection(include_pos, compat.unicode_, set)
+    include_pos = utils.to_collection(include_pos, str, set)
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -205,12 +204,12 @@ def _compute_word_scores(doc, word_occ_vals, word_freqs, stop_words):
     # compute summary stats for word frequencies
     freqs_nsw = [freq for w_id, freq in word_freqs.items() if w_id not in stop_words]
     freq_max = max(word_freqs.values())
-    freq_baseline = compat.mean_(freqs_nsw) + compat.stdev_(freqs_nsw)
+    freq_baseline = statistics.mean(freqs_nsw) + statistics.stdev(freqs_nsw)
     n_sents = itertoolz.count(doc.sents)
     for w_id, vals in word_occ_vals.items():
         freq = word_freqs[w_id]
-        word_weights[w_id]["case"] = sum(vals["is_uc"]) / compat.log2_(1 + freq)
-        word_weights[w_id]["pos"] = compat.log2_(compat.log2_(3 + compat.median_(vals["sent_idx"])))
+        word_weights[w_id]["case"] = sum(vals["is_uc"]) / math.log2(1 + freq)
+        word_weights[w_id]["pos"] = math.log2(math.log2(3 + statistics.mean(vals["sent_idx"])))
         word_weights[w_id]["freq"] = freq / freq_baseline
         word_weights[w_id]["disp"] = len(set(vals["sent_idx"])) / n_sents
         n_unique_lc = len(set(vals["l_context"]))
@@ -286,7 +285,7 @@ def _score_unigram_candidates(
         # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
         # term_scores[word.lower_] = word_scores[w_id] / (word_freqs[w_id] * (1 + word_scores[w_id]))
         term_scores[getattr(word, attr_name_str)] = (
-            word_scores[w_id] / (compat.log2_(1 + word_freqs[w_id]) * (1 + word_scores[w_id]))
+            word_scores[w_id] / (math.log2(1 + word_freqs[w_id]) * (1 + word_scores[w_id]))
         )
 
 
@@ -315,8 +314,8 @@ def _score_ngram_candidates(
             seen_candidates.add(ngtxt)
         ngram_word_scores = [word_scores[getattr(word, attr_name)] for word in ngram]
         # multiply individual word scores together in the numerator
-        numerator = compat.reduce_(operator.mul, ngram_word_scores, 1.0)
+        numerator = functools.reduce(operator.mul, ngram_word_scores, 1.0)
         # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
         # denominator = ngram_freqs[ngtxt] * (1.0 + sum(ngram_word_scores))
-        denominator = compat.log2_(1 + ngram_freqs[ngtxt]) * (1.0 + sum(ngram_word_scores))
+        denominator = math.log2(1 + ngram_freqs[ngtxt]) * (1.0 + sum(ngram_word_scores))
         term_scores[ngtxt] = numerator / denominator

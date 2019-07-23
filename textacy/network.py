@@ -6,8 +6,6 @@ Represent documents as semantic networks, where nodes are individual terms or
 whole sentences and edges are weighted by the strength of their co-occurrence or
 similarity, respectively.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import itertools
 import logging
@@ -16,7 +14,6 @@ import networkx as nx
 from cytoolz import itertoolz
 from spacy.tokens import Span, Token
 
-from . import compat
 from . import extract
 # from . import vsm  # we're hiding this import within a function
 
@@ -83,7 +80,7 @@ def terms_to_semantic_network(
         )
         window_width = len(terms)
 
-    if isinstance(terms[0], compat.unicode_):
+    if isinstance(terms[0], str):
         windows = itertoolz.sliding_window(window_width, terms)
     elif isinstance(terms[0], Token):
         if normalize == "lemma":
@@ -168,7 +165,7 @@ def sents_to_semantic_network(sents, normalize="lemma", edge_weighting="cosine")
     """
     from . import vsm
 
-    if isinstance(sents[0], compat.unicode_):
+    if isinstance(sents[0], str):
         pass
     elif isinstance(sents[0], Span):
         if normalize == "lemma":
@@ -232,8 +229,8 @@ def sents_to_semantic_network(sents, normalize="lemma", edge_weighting="cosine")
     graph = nx.Graph()
     graph.add_edges_from(
         (i, j, {"weight": weights[i][j]})
-        for i in compat.range_(n_sents)
-        for j in compat.range_(i + 1, n_sents)
+        for i in range(n_sents)
+        for j in range(i + 1, n_sents)
     )
 
     return graph

@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
-
 import pytest
 import numpy as np
 from scipy.sparse import coo_matrix
 
 from textacy import Corpus
-from textacy import compat, vsm
+from textacy import vsm
 
 
 @pytest.fixture(scope="module")
@@ -112,7 +109,7 @@ def test_vectorizer_id_to_term(vectorizer_and_dtm):
     assert isinstance(vectorizer.id_to_term, dict)
     assert all(isinstance(key, int) for key in vectorizer.id_to_term)
     assert all(
-        isinstance(val, compat.unicode_) for val in vectorizer.id_to_term.values()
+        isinstance(val, str) for val in vectorizer.id_to_term.values()
     )
     assert len(vectorizer.id_to_term) == len(vectorizer.vocabulary_terms)
 
@@ -120,7 +117,7 @@ def test_vectorizer_id_to_term(vectorizer_and_dtm):
 def test_vectorizer_terms_list(vectorizer_and_dtm):
     vectorizer, dtm = vectorizer_and_dtm
     assert isinstance(vectorizer.terms_list, list)
-    assert isinstance(vectorizer.terms_list[0], compat.unicode_)
+    assert isinstance(vectorizer.terms_list[0], str)
     assert len(vectorizer.terms_list) == len(vectorizer.vocabulary_terms)
     assert len(vectorizer.terms_list) == dtm.shape[1]
     assert vectorizer.terms_list == sorted(vectorizer.terms_list)
@@ -131,7 +128,7 @@ def test_grp_vectorizer_id_to_grp(grp_vectorizer_and_gtm):
     assert isinstance(grp_vectorizer.id_to_grp, dict)
     assert all(isinstance(key, int) for key in grp_vectorizer.id_to_grp)
     assert all(
-        isinstance(val, compat.unicode_) for val in grp_vectorizer.id_to_grp.values()
+        isinstance(val, str) for val in grp_vectorizer.id_to_grp.values()
     )
     assert len(grp_vectorizer.id_to_grp) == len(grp_vectorizer.vocabulary_grps)
 
@@ -140,7 +137,7 @@ def test_grp_vectorizer_terms_and_grp_list(grp_vectorizer_and_gtm):
     grp_vectorizer, gtm = grp_vectorizer_and_gtm
     assert isinstance(grp_vectorizer.terms_list, list)
     assert isinstance(grp_vectorizer.grps_list, list)
-    assert isinstance(grp_vectorizer.terms_list[0], compat.unicode_)
+    assert isinstance(grp_vectorizer.terms_list[0], str)
     assert len(grp_vectorizer.terms_list) == len(grp_vectorizer.vocabulary_terms)
     assert len(grp_vectorizer.terms_list) == gtm.shape[1]
     assert grp_vectorizer.terms_list == sorted(grp_vectorizer.terms_list)

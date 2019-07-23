@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 Remove
 ------
 
 Remove aspects of raw text that may be unwanted for certain use cases.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import re
 import unicodedata
 

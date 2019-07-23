@@ -1,16 +1,13 @@
-# -*- coding: utf-8 -*-
 """
 TextRank
 --------
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import operator
 
 from . import graph_base
 from . import utils as ke_utils
-from .. import compat, utils
+from .. import utils
 
 
 def textrank(
@@ -68,7 +65,7 @@ def textrank(
           pages 1105-1115.
     """
     # validate / transform args
-    include_pos = utils.to_collection(include_pos, compat.unicode_, set)
+    include_pos = utils.to_collection(include_pos, str, set)
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -82,7 +79,7 @@ def textrank(
 
     if position_bias is True:
         word_pos = collections.defaultdict(float)
-        for word, norm_word in compat.zip_(doc, ke_utils.normalize_terms(doc, normalize)):
+        for word, norm_word in zip(doc, ke_utils.normalize_terms(doc, normalize)):
             word_pos[norm_word] += 1 / (word.i + 1)
         sum_word_pos = sum(word_pos.values())
         word_pos = {word: pos / sum_word_pos for word, pos in word_pos.items()}
@@ -102,9 +99,8 @@ def textrank(
     if isinstance(topn, float):
         topn = int(round(len(set(candidates)) * topn))
     # rank candidates by aggregating constituent word scores
-    # TODO: PY3 doesn't need to make a list when computing the mean
     candidate_scores = {
-        " ".join(candidate): sum([word_scores.get(word, 0.0) for word in candidate])
+        " ".join(candidate): sum(word_scores.get(word, 0.0) for word in candidate)
         for candidate in candidates
     }
     sorted_candidate_scores = sorted(

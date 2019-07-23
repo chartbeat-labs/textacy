@@ -5,8 +5,6 @@ HTTP
 Functions for reading data from URLs via streaming HTTP requests and either
 reading it into memory or writing it directly to disk.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import io
 import logging
 from contextlib import closing

@@ -5,10 +5,10 @@ import logging
 import sys
 from pprint import pprint
 
-from . import compat
 from . import datasets
 from . import lang_utils
 from . import lexicon_methods
+from . import utils
 
 # let's cheat and add a handler to the datasets logger
 # whose messages we'll send to stdout
@@ -133,7 +133,7 @@ if __name__ == "__main__":
 
     if args["subcommand"] == "info":
         if args.get("resource_name") is None:
-            pprint(compat.get_config())
+            pprint(utils.get_config())
         # do we have a `Dataset` or similar resource class?
         elif hasattr(RESOURCE_NAME_TO_CLASS[args["resource_name"]], "info"):
             kwargs_init = {

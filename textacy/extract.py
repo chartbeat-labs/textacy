@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
 """
 Functions to extract various elements of interest from documents already parsed
 by spaCy, such as n-grams, named entities, subject-verb-object triples, and
 acronyms.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import itertools
 import operator
@@ -17,7 +14,6 @@ from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
 from spacy.matcher import Matcher
 from spacy.tokens import Span
 
-from . import compat
 from . import constants
 from . import text_utils
 from . import utils
@@ -70,7 +66,7 @@ def words(
     if filter_nums is True:
         words_ = (w for w in words_ if not w.like_num)
     if include_pos:
-        if isinstance(include_pos, compat.unicode_):
+        if isinstance(include_pos, str):
             include_pos = include_pos.upper()
             words_ = (w for w in words_ if w.pos_ == include_pos)
         elif isinstance(include_pos, (set, frozenset, list, tuple)):
@@ -80,7 +76,7 @@ def words(
             msg = 'invalid `include_pos` type: "{}"'.format(type(include_pos))
             raise TypeError(msg)
     if exclude_pos:
-        if isinstance(exclude_pos, compat.unicode_):
+        if isinstance(exclude_pos, str):
             exclude_pos = exclude_pos.upper()
             words_ = (w for w in words_ if w.pos_ != exclude_pos)
         elif isinstance(exclude_pos, (set, frozenset, list, tuple)):
@@ -145,7 +141,7 @@ def ngrams(
     if n < 1:
         raise ValueError("n must be greater than or equal to 1")
 
-    ngrams_ = (doc[i : i + n] for i in compat.range_(len(doc) - n + 1))
+    ngrams_ = (doc[i : i + n] for i in range(len(doc) - n + 1))
     ngrams_ = (ngram for ngram in ngrams_ if not any(w.is_space for w in ngram))
     if filter_stops is True:
         ngrams_ = (
@@ -156,7 +152,7 @@ def ngrams(
     if filter_nums is True:
         ngrams_ = (ngram for ngram in ngrams_ if not any(w.like_num for w in ngram))
     if include_pos:
-        if isinstance(include_pos, compat.unicode_):
+        if isinstance(include_pos, str):
             include_pos = include_pos.upper()
             ngrams_ = (
                 ngram for ngram in ngrams_ if all(w.pos_ == include_pos for w in ngram)
@@ -170,7 +166,7 @@ def ngrams(
             msg = 'invalid `include_pos` type: "{}"'.format(type(include_pos))
             raise TypeError(msg)
     if exclude_pos:
-        if isinstance(exclude_pos, compat.unicode_):
+        if isinstance(exclude_pos, str):
             exclude_pos = exclude_pos.upper()
             ngrams_ = (
                 ngram for ngram in ngrams_ if all(w.pos_ != exclude_pos for w in ngram)
@@ -236,12 +232,12 @@ def entities(doc, include_types=None, exclude_types=None, drop_determiners=True,
     include_types = _parse_ent_types(include_types, "include")
     exclude_types = _parse_ent_types(exclude_types, "exclude")
     if include_types:
-        if isinstance(include_types, compat.unicode_):
+        if isinstance(include_types, str):
             ents = (ent for ent in ents if ent.label_ == include_types)
         elif isinstance(include_types, (set, frozenset, list, tuple)):
             ents = (ent for ent in ents if ent.label_ in include_types)
     if exclude_types:
-        if isinstance(exclude_types, compat.unicode_):
+        if isinstance(exclude_types, str):
             ents = (ent for ent in ents if ent.label_ != exclude_types)
         elif isinstance(exclude_types, (set, frozenset, list, tuple)):
             ents = (ent for ent in ents if ent.label_ not in exclude_types)
@@ -266,7 +262,7 @@ def entities(doc, include_types=None, exclude_types=None, drop_determiners=True,
 def _parse_ent_types(ent_types, which):
     if not ent_types:
         return None
-    elif isinstance(ent_types, compat.unicode_):
+    elif isinstance(ent_types, str):
         ent_types = ent_types.upper()
         # replace the shorthand numeric case by its corresponding constant
         if ent_types == "NUMERIC":
@@ -282,7 +278,7 @@ def _parse_ent_types(ent_types, which):
         else:
             return ent_types
     else:
-        allowed_types = (None, compat.unicode_, set, frozenset, list, tuple)
+        allowed_types = (None, str, set, frozenset, list, tuple)
         raise TypeError(
             "{}_types = {} is {}, which is not one of the allowed types: {}".format(
                 which, ent_types, type(ent_types), allowed_types
@@ -418,10 +414,10 @@ def matches(doc, patterns, on_match=None):
         * https://spacy.io/usage/rule-based-matching
         * https://spacy.io/api/matcher
     """
-    if isinstance(patterns, compat.unicode_):
+    if isinstance(patterns, str):
         patterns = [_make_pattern_from_string(patterns)]
     elif isinstance(patterns, (list, tuple)):
-        if all(isinstance(item, compat.unicode_) for item in patterns):
+        if all(isinstance(item, str) for item in patterns):
             patterns = [_make_pattern_from_string(pattern) for pattern in patterns]
         elif all(isinstance(item, dict) for item in patterns):
             patterns = [patterns]
@@ -661,8 +657,8 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
         n = len(Y)
         b = np.zeros((m, n), dtype=int)
         c = np.zeros((m, n), dtype=int)
-        for i in compat.range_(0, m):
-            for j in compat.range_(0, n):
+        for i in range(0, m):
+            for j in range(0, n):
                 if X[i] == Y[j]:
                     c[i, j] = c[i - 1, j - 1] + 1
                     b[i, j] = 1
@@ -675,8 +671,8 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
     def parse_lcs_matrix(b, start_i, start_j, lcs_length, stack, vectors):
         m = b.shape[0]
         n = b.shape[1]
-        for i in compat.range_(start_i, m):
-            for j in compat.range_(start_j, n):
+        for i in range(start_i, m):
+            for j in range(start_j, n):
                 if b[i, j] == 1:
                     s = (i, j)
                     stack.append(s)
@@ -700,7 +696,7 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
         vv["distance"] = len(v) - last
         vv["stop_count"] = 0
         vv["misses"] = 0
-        for i in compat.range_(first, last + 1):
+        for i in range(first, last + 1):
             if v[i] >= 0 and types[i] == "s":
                 vv["stop_count"] += 1
             elif v[i] is None and types[i] not in ["s", "h"]:
@@ -748,7 +744,7 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
             tok_split = [t[0] for t in tok_text.split("-") if t]
             def_leads.extend(tok_split)
             def_types.extend(
-                "H" if i == 0 else "h" for i in compat.range_(len(tok_split))
+                "H" if i == 0 else "h" for i in range(len(tok_split))
             )
         else:
             def_leads.append(tok_text[0])

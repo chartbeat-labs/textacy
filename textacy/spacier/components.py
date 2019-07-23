@@ -4,13 +4,10 @@ Pipeline Components
 
 Custom components to add to a spaCy language pipeline.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
 
 from spacy.tokens import Doc
 
-from .. import compat
 from .. import text_stats
 
 LOGGER = logging.getLogger(__name__)
@@ -87,7 +84,7 @@ class TextStatsComponent(object):
                 "gulpease_index",
                 "wiener_sachtextformel",
             )
-        elif isinstance(attrs, compat.string_types):
+        elif isinstance(attrs, (str, bytes)):
             self.attrs = (attrs,)
         else:
             self.attrs = tuple(attrs)

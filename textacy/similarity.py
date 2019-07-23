@@ -6,19 +6,16 @@ Collection of semantic + lexical similarity metrics between tokens, strings,
 and sequences thereof, returning values between 0.0 (totally dissimilar)
 and 1.0 (totally similar).
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import re
 
 import numpy as np
+import sklearn.feature_extraction
 from cytoolz import itertoolz
 from jellyfish import levenshtein_distance as _levenshtein
 from pyemd import emd
-import sklearn.feature_extraction
 from sklearn.metrics import pairwise_distances
 
-from . import compat
 from . import extract
 
 
@@ -65,7 +62,7 @@ def word_movers(doc1, doc2, metric="cosine"):
         word_idxs[word.orth] for word in extract.words(doc1) if word.has_vector
     )
     vec1 = np.array(
-        [vec1[word_idx] for word_idx in compat.range_(len(word_idxs))]
+        [vec1[word_idx] for word_idx in range(len(word_idxs))]
     ).astype(np.double)
     vec1 /= vec1.sum()  # normalize word counts
 
@@ -73,7 +70,7 @@ def word_movers(doc1, doc2, metric="cosine"):
         word_idxs[word.orth] for word in extract.words(doc2) if word.has_vector
     )
     vec2 = np.array(
-        [vec2[word_idx] for word_idx in compat.range_(len(word_idxs))]
+        [vec2[word_idx] for word_idx in range(len(word_idxs))]
     ).astype(np.double)
     vec2 /= vec2.sum()  # normalize word counts
 
@@ -132,8 +129,8 @@ def jaccard(obj1, obj2, fuzzy_match=False, match_threshold=0.8):
     union = len(set1 | set2)
     if (
         fuzzy_match is True
-        and not isinstance(obj1, compat.string_types)
-        and not isinstance(obj2, compat.string_types)
+        and not isinstance(obj1, (str, bytes))
+        and not isinstance(obj2, (str, bytes))
     ):
         for item1 in set1.difference(set2):
             if max(token_sort_ratio(item1, item2) for item2 in set2) >= match_threshold:
@@ -185,8 +182,6 @@ def token_sort_ratio(str1, str2):
     """
     if not str1 or not str2:
         return 0.0
-    str1 = compat.to_unicode(str1)
-    str2 = compat.to_unicode(str2)
     str1_proc = _process_and_sort(str1)
     str2_proc = _process_and_sort(str2)
     return levenshtein(str1_proc, str2_proc)

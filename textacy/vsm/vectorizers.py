@@ -13,8 +13,6 @@ with filtering and weighting functionality as described above.
 See the :class:`Vectorizer` and :class:`GroupVectorizer` docstrings for usage
 examples and explanations of the various weighting schemes.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import operator
 from array import array
@@ -23,7 +21,6 @@ import numpy as np
 import scipy.sparse as sp
 from sklearn.preprocessing import normalize as normalize_mat
 
-from .. import compat
 from .matrix_utils import get_doc_lengths, get_inverse_doc_freqs, filter_terms_by_df
 
 
@@ -323,7 +320,7 @@ class Vectorizer(object):
                         "Term ids in `vocabulary` must be unique, but {} ids"
                         "were assigned to more than one term.".format(n_dupe_term_ids)
                     )
-                for i in compat.range_(len(vocabulary)):
+                for i in range(len(vocabulary)):
                     if i not in ids:
                         raise ValueError(
                             "Term ids in `vocabulary` must be compact, i.e. "
@@ -1144,7 +1141,7 @@ class GroupVectorizer(Vectorizer):
         data = array(str("i"))
         cols = array(str("i"))
         rows = array(str("i"))
-        for grp, terms in compat.zip_(grps, tokenized_docs):
+        for grp, terms in zip(grps, tokenized_docs):
 
             try:
                 grp_idx = vocabulary_grps[grp]
@@ -1163,7 +1160,7 @@ class GroupVectorizer(Vectorizer):
 
             data.extend(term_counter.values())
             cols.extend(term_counter.keys())
-            rows.extend(grp_idx for _ in compat.range_(len(term_counter)))
+            rows.extend(grp_idx for _ in range(len(term_counter)))
 
         # do we still want defaultdict behaviour?
         if fixed_vocab_terms is False:

@@ -1,8 +1,6 @@
 """
 Module for exporting spaCy objects into "third-party" formats.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import operator
 

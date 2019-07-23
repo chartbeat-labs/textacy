@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 SGRank
 ------
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import collections
 import itertools
 import math
@@ -14,7 +11,7 @@ import networkx as nx
 from cytoolz import itertoolz
 
 from . import utils as ke_utils
-from .. import compat, extract, utils
+from .. import extract, utils
 
 
 def sgrank(
@@ -67,7 +64,7 @@ def sgrank(
     """
     # validate / transform args
     ngrams = utils.to_collection(ngrams, int, tuple)
-    include_pos = utils.to_collection(include_pos, compat.unicode_, set)
+    include_pos = utils.to_collection(include_pos, str, set)
     if window_size < 2:
         raise ValueError("`window_size` must be >= 2")
     if isinstance(topn, float):
@@ -133,13 +130,13 @@ def _get_candidates(doc, normalize, ngrams, include_pos):
     if min_term_freq > 1:
         candidates = [
             (ctext, ctup[0].i, len(ctup), candidate_counts[ctext])
-            for ctup, ctext in compat.zip_(candidates_tuples, candidate_texts)
+            for ctup, ctext in zip(candidates_tuples, candidate_texts)
             if candidate_counts[ctext] >= min_term_freq
         ]
     else:
         candidates = [
             (ctext, ctup[0].i, len(ctup), candidate_counts[ctext])
-            for ctup, ctext in compat.zip_(candidates_tuples, candidate_texts)
+            for ctup, ctext in zip(candidates_tuples, candidate_texts)
         ]
     return candidates, candidate_counts
 
@@ -237,7 +234,7 @@ def _compute_edge_weights(candidates, term_weights, window_size, n_toks):
     sum_logdists = collections.defaultdict(lambda: collections.defaultdict(float))
     # iterate over windows
     log_ = math.log  # localize this, for performance
-    for start_ind in compat.range_(n_toks):
+    for start_ind in range(n_toks):
         end_ind = start_ind + window_size
         window_cands = (cand for cand in candidates if start_ind <= cand[1] < end_ind)
         # get all token combinations within window

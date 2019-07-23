@@ -1,11 +1,6 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import re
 import sys
 import unicodedata
-
-from .. import compat
 
 # compile regexes, so we don't do this on the fly and rely on caching
 
@@ -91,7 +86,7 @@ RE_CURRENCY_SYMBOL = re.compile(
     r"[$¢£¤¥ƒ֏؋৲৳૱௹฿៛ℳ元円圆圓﷼\u20A0-\u20C0]",
     flags=re.UNICODE)
 
-if compat.is_narrow_unicode:
+if sys.maxunicode < 0x10ffff:
     RE_EMOJI = re.compile(
         r"[\u2600-\u26FF\u2700-\u27BF]",
         flags=re.UNICODE | re.IGNORECASE)
@@ -115,8 +110,8 @@ def _get_punct_translation_table():
     global PUNCT_TRANSLATION_TABLE
     if PUNCT_TRANSLATION_TABLE is None:
         PUNCT_TRANSLATION_TABLE = dict.fromkeys(
-            (i for i in compat.range_(sys.maxunicode)
-             if unicodedata.category(compat.chr_(i)).startswith("P")),
+            (i for i in range(sys.maxunicode)
+             if unicodedata.category(chr(i)).startswith("P")),
             " "
         )
     return PUNCT_TRANSLATION_TABLE

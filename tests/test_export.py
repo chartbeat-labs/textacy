@@ -1,11 +1,9 @@
-from __future__ import absolute_import, unicode_literals
-
 import re
 
 import numpy as np
 import pytest
 
-from textacy import cache, compat, export
+from textacy import cache, export
 
 
 @pytest.fixture(scope="module")
@@ -22,13 +20,13 @@ def test_to_gensim(spacy_doc):
         [spacy_doc], spacy_lang.vocab,
         filter_stops=True, filter_punct=True, filter_nums=True,
     )
-    assert isinstance(result[0], compat.unicode_)
+    assert isinstance(result[0], str)
     assert isinstance(result[1], list)
     assert isinstance(result[1][0], list)
     assert isinstance(result[1][0][0], tuple)
     assert (
-        isinstance(result[1][0][0][0], compat.int_types)
-        and isinstance(result[1][0][0][1], compat.int_types)
+        isinstance(result[1][0][0][0], int)
+        and isinstance(result[1][0][0][1], int)
     )
 
 

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Oxford Text Archive
 -------------------
@@ -20,15 +19,13 @@ stored in his GitHub repo to avoid unnecessary scraping of the OTA site. It is
 downloaded from that repo, and excluding some light cleaning of its metadata,
 is reproduced exactly here.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
+import csv
 import io
 import itertools
 import logging
 import os
 import re
 
-from .. import compat
 from .. import constants
 from .. import io as tio
 from . import utils
@@ -158,7 +155,7 @@ class OxfordTextArchive(Dataset):
         metadata = {}
         with io.open(self._metadata_filepath, mode="rb") as f:
             subf = io.StringIO(f.read().decode("utf-8"))
-            for row in compat.csv.DictReader(subf, delimiter="\t"):
+            for row in csv.DictReader(subf, delimiter="\t"):
                 # only include English-language works (99.9% of all works)
                 if not row["Language"].startswith("English"):
                     continue
@@ -213,13 +210,13 @@ class OxfordTextArchive(Dataset):
             )
         if author is not None:
             author = utils.validate_set_member_filter(
-                author, compat.string_types, valid_vals=self.authors)
+                author, (str, bytes), valid_vals=self.authors)
             filters.append(
                 lambda record: record.get("author") and any(athr in author for athr in record["author"])
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range, self.full_date_range, val_type=compat.string_types)
+                date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: record.get("year") and date_range[0] <= record["year"] < date_range[1]
             )

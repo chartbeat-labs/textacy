@@ -1,11 +1,8 @@
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 import os
 
 import pytest
 
-from textacy import compat
 from textacy.datasets.capitol_words import CapitolWords
 
 DATASET = CapitolWords()
@@ -31,7 +28,7 @@ def test_oserror(tmpdir):
 
 def test_texts():
     for text in DATASET.texts(limit=3):
-        assert isinstance(text, compat.unicode_)
+        assert isinstance(text, str)
 
 
 def test_texts_limit():
@@ -48,7 +45,7 @@ def test_texts_min_len():
 
 def test_records():
     for text, meta in DATASET.records(limit=3):
-        assert isinstance(text, compat.unicode_)
+        assert isinstance(text, str)
         assert isinstance(meta, dict)
 
 

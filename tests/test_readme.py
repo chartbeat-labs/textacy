@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from operator import itemgetter
 
 import numpy as np
@@ -12,7 +10,6 @@ import textacy.ke
 from textacy import Corpus, TextStats
 from textacy import (
     cache,
-    compat,
     constants,
     extract,
     io,
@@ -103,8 +100,8 @@ def test_plaintext_functionality(text):
     )
     for pre, kw, post in kwics:
         assert kw == keyword
-        assert isinstance(pre, compat.unicode_)
-        assert isinstance(post, compat.unicode_)
+        assert isinstance(pre, str)
+        assert isinstance(post, str)
 
 
 def test_extract_functionality(doc):
@@ -139,13 +136,13 @@ def test_extract_functionality(doc):
     stmts = list(extract.semistructured_statements(doc, "I", cue="be"))[:10]
     for stmt in stmts:
         assert isinstance(stmt, list)
-        assert isinstance(stmt[0], compat.unicode_)
+        assert isinstance(stmt[0], str)
         assert len(stmt) == 3
 
     kts = textacy.ke.textrank(doc, topn=10)
     for keyterm in kts:
         assert isinstance(keyterm, tuple)
-        assert isinstance(keyterm[0], compat.unicode_)
+        assert isinstance(keyterm[0], str)
         assert isinstance(keyterm[1], float)
         assert keyterm[1] > 0.0
 

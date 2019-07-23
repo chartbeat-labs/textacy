@@ -5,17 +5,13 @@ Dataset Utils
 Shared functionality for downloading, naming, and extracting the contents
 of datasets, as well as filtering for particular subsets.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
 import os
 import shutil
 import tarfile
+import urllib.parse
 import zipfile
 
-from tqdm import tqdm
-
-from .. import compat
 from .. import constants
 from ..utils import to_collection
 from ..io import write_http_stream
@@ -64,7 +60,7 @@ def get_filename_from_url(url):
     Returns:
         str: Filename in URL.
     """
-    return os.path.basename(compat.urlparse(compat.url_unquote_plus(url)).path)
+    return os.path.basename(urllib.parse.urlparse(urllib.parse.unquote_plus(url)).path)
 
 
 def unpack_archive(filepath, extract_dir=None):
@@ -82,35 +78,26 @@ def unpack_archive(filepath, extract_dir=None):
     Returns:
         str: Path to directory of extracted contents.
     """
-    # TODO: shutil.unpack_archive() when PY3-only
     if not extract_dir:
         extract_dir = os.path.dirname(filepath)
-    # TODO: os.makedirs(path, exist_ok=True) when PY3-only
-    if not os.path.isdir(extract_dir):
-        os.makedirs(extract_dir)
+    os.makedirs(extract_dir, exist_ok=True)
     is_zipfile = zipfile.is_zipfile(filepath)
     is_tarfile = tarfile.is_tarfile(filepath)
     if not is_zipfile and not is_tarfile:
         LOGGER.debug("'%s' is not an archive", filepath)
         return extract_dir
     else:
-        pbar_kwargs = dict(unit="files", unit_scale=True)
+        LOGGER.info("extracting data from archive file '%s'", filepath)
+        shutil.unpack_archive(filepath, extract_dir=extract_dir, format=None)
+        # we want to rename the unpacked directory to a consistent value
+        # unfortunately, shutil doesn't pass this back to us
+        # so, we get the root path of all the constituent members
         if is_zipfile:
-            LOGGER.info("extracting data from zip archive '%s'", filepath)
-            with zipfile.ZipFile(filepath, mode="r") as zf:
-                # zf.extractall(path=extract_dir)
-                members = zf.namelist()
-                with tqdm(iterable=members, total=len(members), **pbar_kwargs) as pbar:
-                    for member in members:
-                        zf.extract(member, path=extract_dir)
-                        pbar.update()
-        elif is_tarfile:
-            LOGGER.info("extracting data from tar archive '%s'", filepath)
-            with tarfile.open(filepath, mode="r") as tf:
-                # tf.extractall(path=extract_dir)
-                members = tf.getnames()
-                for member in tqdm(iterable=members, total=len(members), **pbar_kwargs):
-                    tf.extract(member, path=extract_dir)
+            with zipfile.ZipFile(filepath, mode="r") as f:
+                members = f.namelist()
+        else:
+            with tarfile.open(filepath, mode="r") as f:
+                members = f.getnames()
         src_basename = os.path.commonpath(members)
         dest_basename = os.path.basename(filepath)
         while True:

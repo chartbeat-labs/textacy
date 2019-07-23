@@ -5,14 +5,13 @@ spaCy
 Functions for reading from and writing to disk spacy documents in either
 pickle or binary format. Be warned: Both formats have pros and cons.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+import pickle
 
 from srsly import msgpack
 from spacy.language import Language
 from spacy.tokens import Doc
 
 from .. import cache
-from .. import compat
 from .. import utils
 from .utils import open_sesame
 
@@ -54,7 +53,7 @@ def read_spacy_docs(filepath, format="pickle", lang=None):
     """
     if format == "pickle":
         with open_sesame(filepath, mode="rb") as f:
-            for spacy_doc in compat.pickle.load(f):
+            for spacy_doc in pickle.load(f):
                 yield spacy_doc
     elif format == "binary":
         if lang is None:
@@ -66,7 +65,7 @@ def read_spacy_docs(filepath, format="pickle", lang=None):
             )
         elif isinstance(lang, Language):
             vocab = lang.vocab
-        elif isinstance(lang, compat.unicode_):
+        elif isinstance(lang, str):
             vocab = cache.load_spacy_lang(lang).vocab
         else:
             raise ValueError(
@@ -91,7 +90,7 @@ def read_spacy_docs(filepath, format="pickle", lang=None):
                     user_data_values = msgpack.loads(msg["user_data_values"])
                     user_data = {
                         key: value
-                        for key, value in compat.zip_(user_data_keys, user_data_values)
+                        for key, value in zip(user_data_keys, user_data_values)
                     }
                 else:
                     user_data = None
@@ -101,7 +100,7 @@ def read_spacy_docs(filepath, format="pickle", lang=None):
                 words = []
                 spaces = []
                 start = 0
-                for i in compat.range_(attrs.shape[0]):
+                for i in range(attrs.shape[0]):
                     end = start + int(attrs[i, 0])
                     has_space = int(attrs[i, 1])
                     words.append(text[start: end])
@@ -181,7 +180,7 @@ def write_spacy_docs(
         data = [data]
     if format == "pickle":
         with open_sesame(filepath, mode="wb", make_dirs=make_dirs) as f:
-            compat.pickle.dump(list(data), f, protocol=-1)
+            pickle.dump(list(data), f, protocol=-1)
     elif format == "binary":
         with open_sesame(filepath, mode="wb", make_dirs=make_dirs) as f:
             for spacy_doc in data:

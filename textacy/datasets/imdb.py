@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 IMDB Reviews
 ------------
@@ -22,15 +21,12 @@ Reference: Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan Huang, Andrew Y. 
 and Christopher Potts. (2011). Learning Word Vectors for Sentiment Analysis.
 The 49th Annual Meeting of the Association for Computational Linguistics (ACL 2011).
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import io
 import itertools
 import logging
 import os
 import re
 
-from .. import compat
 from .. import constants
 from .. import io as tio
 from .. import utils
@@ -240,8 +236,8 @@ class IMDB(Dataset):
         Raises:
             ValueError: If any filtering options are invalid.
         """
-        self._subset = utils.to_collection(subset, compat.string_types, tuple)
-        self._label = utils.to_collection(label, compat.string_types, tuple)
+        self._subset = utils.to_collection(subset, (str, bytes), tuple)
+        self._label = utils.to_collection(label, (str, bytes), tuple)
         try:
             filters = self._get_filters(rating_range, min_len)
             for record in itertools.islice(self._filtered_iter(filters), limit):
@@ -272,8 +268,8 @@ class IMDB(Dataset):
         Raises:
             ValueError: If any filtering options are invalid.
         """
-        self._subset = utils.to_collection(subset, compat.string_types, tuple)
-        self._label = utils.to_collection(label, compat.string_types, tuple)
+        self._subset = utils.to_collection(subset, (str, bytes), tuple)
+        self._label = utils.to_collection(label, (str, bytes), tuple)
         try:
             filters = self._get_filters(rating_range, min_len)
             for record in itertools.islice(self._filtered_iter(filters), limit):

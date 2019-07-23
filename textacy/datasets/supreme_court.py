@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Supreme Court Decisions
 -----------------------
@@ -48,13 +47,11 @@ weight as recall. Still, given occasionally baffling inconsistencies in case
 naming, citation ids, and decision dates, a very small percentage of texts
 may be incorrectly matched to metadata. (Sorry.)
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import itertools
 import logging
 import os
+import urllib.parse
 
-from .. import compat
 from .. import constants
 from .. import io as tio
 from . import utils
@@ -550,8 +547,7 @@ class SupremeCourt(Dataset):
     def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
         super(SupremeCourt, self).__init__(NAME, meta=META)
         self.data_dir = data_dir
-        self._filename = "supreme-court-py{py_version}.json.gz".format(
-            py_version=2 if compat.PY2 else 3)
+        self._filename = "supreme-court-py3.json.gz"
         self._filepath = os.path.join(self.data_dir, self._filename)
 
     @property
@@ -574,11 +570,8 @@ class SupremeCourt(Dataset):
             force (bool): If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
-        release_tag = "supreme_court_py{py_version}_v{data_version}".format(
-            py_version=2 if compat.PY2 else 3,
-            data_version=1.0,
-        )
-        url = compat.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
+        release_tag = "supreme_court_py3_v{data_version}".format(data_version=1.0)
+        url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
         filepath = utils.download_file(
             url,
             filename=self._filename,
@@ -592,8 +585,7 @@ class SupremeCourt(Dataset):
                 "dataset file {} not found;\n"
                 "has the dataset been downloaded yet?".format(self._filepath)
             )
-        mode = "rb" if compat.PY2 else "rt"  # TODO: check this
-        for record in tio.read_json(self._filepath, mode=mode, lines=True):
+        for record in tio.read_json(self._filepath, mode="rt", lines=True):
             yield record
 
     def _get_filters(
@@ -613,7 +605,7 @@ class SupremeCourt(Dataset):
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range, self.full_date_range, val_type=compat.string_types)
+                date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: (
                     record.get("decision_date")
@@ -627,7 +619,7 @@ class SupremeCourt(Dataset):
                 lambda record: record.get("maj_opinion_author") in opinion_author)
         if decision_direction is not None:
             decision_direction = utils.validate_set_member_filter(
-                decision_direction, compat.string_types, valid_vals=self.decision_directions)
+                decision_direction, (str, bytes), valid_vals=self.decision_directions)
             filters.append(
                 lambda record: record.get("decision_direction") in decision_direction)
         if issue_area is not None:

@@ -5,8 +5,6 @@ Text
 Functions for reading from and writing to disk records in plain text format,
 either as one text per file or one text per *line* in a file.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 from .utils import open_sesame, _validate_read_mode, _validate_write_mode
 
 

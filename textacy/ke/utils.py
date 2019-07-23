@@ -1,10 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Keyterm Extraction Utils
 ------------------------
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import itertools
 import math
 import operator
@@ -13,7 +10,7 @@ from decimal import Decimal
 import numpy as np
 from cytoolz import itertoolz
 
-from .. import compat, extract, similarity, vsm
+from .. import extract, similarity, vsm
 from .. import utils as t_utils
 
 
@@ -197,7 +194,7 @@ def get_ngram_candidates(doc, ns, include_pos=("NOUN", "PROPN", "ADJ")):
         :func:`textacy.extract.ngrams()`
     """
     ns = t_utils.to_collection(ns, int, tuple)
-    include_pos = t_utils.to_collection(include_pos, compat.unicode_, set)
+    include_pos = t_utils.to_collection(include_pos, str, set)
     ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns)
     ngrams = (
         ngram
