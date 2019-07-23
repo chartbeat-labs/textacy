@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Reddit Comments
 ---------------
@@ -19,15 +18,13 @@ The raw data was originally collected by /u/Stuck_In_the_Matrix via Reddit's
 APIS, and stored for posterity by the `Internet Archive <https://archive.org>`_.
 For more details, refer to https://archive.org/details/2015_reddit_comments_corpus.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import itertools
 import logging
 import os
 import re
+import urllib.parse
 from datetime import datetime
 
-from .. import compat
 from .. import constants
 from .. import io as tio
 from . import utils
@@ -142,11 +139,11 @@ class RedditComments(Dataset):
                 exists on disk under ``data_dir``.
         """
         date_range = utils.validate_and_clip_range_filter(
-            date_range, self.full_date_range, val_type=compat.string_types)
+            date_range, self.full_date_range, val_type=(str, bytes))
         filestubs = self._generate_filestubs(date_range)
         for filestub in filestubs:
             filepath = utils.download_file(
-                compat.urljoin(DOWNLOAD_ROOT, filestub),
+                urllib.parse.urljoin(DOWNLOAD_ROOT, filestub),
                 filename=filestub,
                 dirpath=self.data_dir,
                 force=force,
@@ -160,7 +157,7 @@ class RedditComments(Dataset):
         fstubs = []
         start = self._parse_date(date_range[0])
         end = self._parse_date(date_range[1])
-        for tot_mo in compat.range_(self._total_mos(start) - 1, self._total_mos(end) - 1):
+        for tot_mo in range(self._total_mos(start) - 1, self._total_mos(end) - 1):
             yr, mo = divmod(tot_mo, 12)
             fstubs.append(datetime(yr, mo + 1, 1).strftime("%Y/RC_%Y-%m.bz2"))
         return tuple(fstubs)
@@ -215,13 +212,13 @@ class RedditComments(Dataset):
                 lambda record: len(record.get("body", "")) >= min_len
             )
         if subreddit is not None:
-            subreddit = utils.validate_set_member_filter(subreddit, compat.string_types)
+            subreddit = utils.validate_set_member_filter(subreddit, (str, bytes))
             filters.append(
                 lambda record: record.get("subreddit") in subreddit
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range_filter(
-                date_range, self.full_date_range, val_type=compat.string_types)
+                date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: (
                     record.get("created_utc")
