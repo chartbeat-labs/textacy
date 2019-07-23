@@ -47,17 +47,15 @@ drawn from several sources:
   about back then, who could say.
   Source: https://blog.twitter.com/engineering/en_us/a/2015/evaluating-language-identification-performance.html
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import io
 import logging
 import operator
 import os
+import urllib.parse
 
 import joblib
 
 from . import cache
-from . import compat
 from . import constants
 from . import utils
 
@@ -80,7 +78,7 @@ class LangIdentifier(object):
         max_text_len=1000
     ):
         self.data_dir = data_dir
-        self.filename = "textacy-lang-identifier-py{}.pkl.gz".format(2 if compat.PY2 else 3)
+        self.filename = "textacy-lang-identifier-py3.pkl.gz"
         self.max_text_len = max_text_len
         self._pipeline = None
         return
@@ -109,11 +107,8 @@ class LangIdentifier(object):
                 exists on disk under ``data_dir``.
         """
         from .datasets.utils import download_file
-        release_tag = "lang_identifier_py{py_version}_v{data_version}".format(
-            py_version=2 if compat.PY2 else 3,
-            data_version=1.0,
-        )
-        url = compat.urljoin(
+        release_tag = "lang_identifier_py3_v{data_version}".format(data_version=1.0)
+        url = urllib.parse.urljoin(
             "https://github.com/bdewilde/textacy-data/releases/download/",
             release_tag + "/" + self.filename)
         filepath = download_file(
@@ -133,7 +128,7 @@ class LangIdentifier(object):
         Returns:
             str: 2-letter language code of the most probable language.
         """
-        text_ = utils.to_collection(text[:self.max_text_len], compat.unicode_, list)
+        text_ = utils.to_collection(text[:self.max_text_len], str, list)
         if self._is_valid(text_[0]):
             lang = self.pipeline.predict(text_).item()
             return lang
@@ -152,10 +147,10 @@ class LangIdentifier(object):
             List[Tuple[str, float]]: 2-letter language code and its probability
             for the ``topn`` most probable languages.
         """
-        text_ = utils.to_collection(text[:self.max_text_len], compat.unicode_, list)
+        text_ = utils.to_collection(text[:self.max_text_len], str, list)
         if self._is_valid(text_[0]):
             lang_probs = sorted(
-                compat.zip_(self.pipeline.classes_, self.pipeline.predict_proba(text_).flat),
+                zip(self.pipeline.classes_, self.pipeline.predict_proba(text_).flat),
                 key=operator.itemgetter(1),
                 reverse=True,
             )[:topn]
