@@ -5,8 +5,6 @@ Cache
 Functions to load and cache language data and other NLP resources. Loading data
 from disk can be slow; let's just do it once and forget about it. :)
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import csv
 import functools
 import inspect
@@ -20,7 +18,6 @@ import spacy
 from cachetools import cached, LRUCache
 from cachetools.keys import hashkey
 
-from . import compat
 from . import constants
 
 LOGGER = logging.getLogger(__name__)
@@ -92,15 +89,15 @@ def load_spacy_lang(name, disable=None, allow_blank=False):
                name and args --- and lists aren't hashable.
 
         allow_blank (bool): If True, allow loading of blank spaCy ``Language`` s;
-            if False, raise an OSError/IOError if a full processing pipeline
-            isn't available. Note that spaCy ``Doc`` s produced by blank languages
-            are missing key functionality, e.g. POS tags, entities, sentences.
+            if False, raise an OSError if a full processing pipeline isn't available.
+            Note that spaCy ``Doc`` s produced by blank languages are missing
+            key functionality, e.g. POS tags, entities, sentences.
 
     Returns:
         :class:`spacy.language.Language`: A loaded spaCy ``Language``.
 
     Raises:
-        OSError/IOError
+        OSError
         ImportError
 
     See Also:
@@ -114,9 +111,9 @@ def load_spacy_lang(name, disable=None, allow_blank=False):
         spacy_lang = spacy.load(name, disable=disable)
         LOGGER.info("loaded '%s' spaCy language pipeline", name)
         return spacy_lang
-    except (OSError, IOError) as e:
+    except OSError as e:
         # fall back to a blank spacy lang
-        if allow_blank is True and isinstance(name, compat.unicode_) and len(name) == 2:
+        if allow_blank is True and isinstance(name, str) and len(name) == 2:
             spacy_lang = spacy.blank(name)
             LOGGER.warning("loaded '%s' spaCy language blank", name)
             return spacy_lang
@@ -183,13 +180,11 @@ def load_depechemood(data_dir=None, weighting="normfreq"):
     filepath = os.path.join(
         data_dir, "DepecheMood_{weighting}.txt".format(weighting=weighting)
     )
-    delimiter = b"\t" if compat.PY2 else "\t"
-    # HACK: Py2's csv module fail
     try:
         with io.open(filepath, mode="rt") as csvfile:
-            csvreader = csv.reader(csvfile, delimiter=delimiter)
+            csvreader = csv.reader(csvfile, delimiter="\t")
             rows = list(csvreader)
-    except (OSError, IOError):
+    except OSError:
         LOGGER.exception(
             "Unable to load DepecheMood from %s."
             "\n\nHave you downloaded the data? If not, you can use the "
@@ -203,6 +198,6 @@ def load_depechemood(data_dir=None, weighting="normfreq"):
     LOGGER.debug("Loading DepecheMood lexicon from %s", filepath)
     cols = rows[0]
     return {
-        row[0]: {cols[i]: float(row[i]) for i in compat.range_(1, 9)}
+        row[0]: {cols[i]: float(row[i]) for i in range(1, 9)}
         for row in rows[1:]
     }
