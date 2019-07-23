@@ -1,7 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
+import sys
 
-from textacy import compat
 from textacy.preprocessing.resources import (
     RE_EMAIL,
     RE_EMOJI,
@@ -46,7 +44,7 @@ GOOD_EMOJIS = [
     "☀", "⛿",  # miscellaneous symbols
     "✀", "➿",  # dingbats
 ]
-if not compat.is_narrow_unicode:
+if sys.maxunicode >= 0x10ffff:
     GOOD_EMOJIS.extend([
         "🌀", "🗿",  # miscellaneous symbols and pictographs
         "😀", "🙏",  # emoticons
