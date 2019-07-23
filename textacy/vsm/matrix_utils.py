@@ -6,8 +6,6 @@ Functions for computing corpus-wide term- or document-based values, like
 term frequency, document frequency, and document length, and filtering terms
 from a matrix by their document frequency.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import numpy as np
 import scipy.sparse as sp
 
