@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 from operator import itemgetter
 
 import numpy as np
@@ -12,7 +10,6 @@ import textacy.ke
 from textacy import Corpus, TextStats
 from textacy import (
     cache,
-    compat,
     constants,
     extract,
     io,
