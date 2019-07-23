@@ -57,7 +57,7 @@ Use an appropriate template (if available) when [creating your issue](https://gi
 ### python
 
 - Adhere to [PEP 8 style](https://www.python.org/dev/peps/pep-0008/) as much as is reasonable. In particular, try to keep lines to 90 characters or less; indent levels with four spaces; don't include trailing trailing whitespace, and include vertical whitespace only sparingly; and prefer double-quotes over single-quotes for string literals.
-- Write code that's compatible with both Python 2.7 and Python 3.5+. (For now...) Begin each module with `from __future__ import absolute_import, division, print_function, unicode_literals` to avoid potential differences in behavior between Python versions. Additional logic that deals specifically with 2/3 compatibility should go in `textacy.compat`.
+- Write code that's compatible with Python 3.5+. (Python 2.7 support was dropped in v0.9.) There's no longer any need to begin each module with `from __future__ import absolute_import, division, print_function, unicode_literals`, or to put additional logic that dealing with 2/3 compatibility in a dedicated `compat` module.
 - When naming objects, strive to be both descriptive *and* brief in a way that reflects usage rather than, say, data type. Function names should be all lowercase, with words separated by underscores, and often including an action verb: `normalize_whitespace()`, `read_csv()`, `get_term_freqs()`, and so on. Objects pulled in directly from `spacy` usually have names prepended by `spacy_`, e.g. `spacy_doc` or `spacy_vocab`.
 
 ### git commits
