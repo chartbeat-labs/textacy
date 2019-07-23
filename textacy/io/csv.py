@@ -6,9 +6,8 @@ Functions for reading from and writing to disk records in CSV format, where
 CSVs may be delimited not only by commas (the default) but tabs, pipes, and
 other valid one-char delimiters.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
+import csv
 
-from .. import compat
 from .utils import open_sesame
 
 
@@ -18,7 +17,7 @@ def read_csv(
     fieldnames=None,
     dialect="excel",
     delimiter=",",
-    quoting=compat.csv.QUOTE_NONNUMERIC,
+    quoting=csv.QUOTE_NONNUMERIC,
 ):
     """
     Read the contents of a CSV file at ``filepath``, streaming line-by-line,
@@ -59,7 +58,7 @@ def read_csv(
     has_header = False
     with open_sesame(filepath, mode="rt", encoding=encoding, newline="") as f:
         if dialect == "infer" or fieldnames == "infer":
-            sniffer = compat.csv.Sniffer()
+            sniffer = csv.Sniffer()
             # add pipes to the list of preferred delimiters, and put spaces last
             sniffer.preferred = [",", "\t", "|", ";", ":", " "]
             # sample = "".join(f.readline() for _ in range(5))  # f.read(1024)
@@ -70,7 +69,7 @@ def read_csv(
                 has_header = sniffer.has_header(sample)
             f.seek(0)
         if has_header is True:
-            csv_reader = compat.csv.DictReader(
+            csv_reader = csv.DictReader(
                 f,
                 fieldnames=None,
                 dialect=dialect,
@@ -78,7 +77,7 @@ def read_csv(
                 quoting=quoting,
             )
         elif fieldnames:
-            csv_reader = compat.csv.DictReader(
+            csv_reader = csv.DictReader(
                 f,
                 fieldnames=fieldnames,
                 dialect=dialect,
@@ -91,7 +90,7 @@ def read_csv(
             if not all(key == value for key, value in first_row.items()):
                 yield first_row
         else:
-            csv_reader = compat.csv.reader(
+            csv_reader = csv.reader(
                 f,
                 dialect=dialect,
                 delimiter=delimiter,
@@ -109,7 +108,7 @@ def write_csv(
     fieldnames=None,
     dialect="excel",
     delimiter=",",
-    quoting=compat.csv.QUOTE_NONNUMERIC,
+    quoting=csv.QUOTE_NONNUMERIC,
 ):
     """
     Write rows of ``data`` to disk at ``filepath``, where each row is an iterable
@@ -156,7 +155,7 @@ def write_csv(
         filepath, mode="wt", newline="", encoding=encoding, make_dirs=make_dirs
     ) as f:
         if fieldnames:
-            csv_writer = compat.csv.DictWriter(
+            csv_writer = csv.DictWriter(
                 f,
                 fieldnames,
                 dialect=dialect,
@@ -165,7 +164,7 @@ def write_csv(
             )
             csv_writer.writeheader()
         else:
-            csv_writer = compat.csv.writer(
+            csv_writer = csv.writer(
                 f,
                 dialect=dialect,
                 delimiter=delimiter,
