@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, unicode_literals
-
 import pytest
 import spacy
 
 from textacy import cache
-from textacy import compat
 from textacy.doc import make_spacy_doc
 
 

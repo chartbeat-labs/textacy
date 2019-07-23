@@ -1,13 +1,9 @@
-# -*- coding: utf-8 -*-
 """A convenient and flexible entry point for making spaCy docs, one at a time."""
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import types
 
 import spacy
 
 from . import cache
-from . import compat
 from . import lang_utils
 from . import utils
 
@@ -82,7 +78,7 @@ def make_spacy_doc(data, lang=lang_utils.identify_lang):
         TypeError
         ValueError
     """
-    if isinstance(data, compat.unicode_):
+    if isinstance(data, str):
         return _make_spacy_doc_from_text(data, lang)
     elif isinstance(data, spacy.tokens.Doc):
         return _make_spacy_doc_from_doc(data, lang)
@@ -91,14 +87,14 @@ def make_spacy_doc(data, lang=lang_utils.identify_lang):
     else:
         raise TypeError(
             "`data` must be {}, not {}".format(
-                {compat.unicode_, tuple},
+                {str, tuple},
                 type(data),
             )
         )
 
 
 def _make_spacy_doc_from_text(text, lang):
-    if isinstance(lang, compat.unicode_):
+    if isinstance(lang, str):
         spacy_lang = cache.load_spacy_lang(lang)
         langstr = spacy_lang.lang
     elif isinstance(lang, spacy.language.Language):
@@ -110,7 +106,7 @@ def _make_spacy_doc_from_text(text, lang):
     else:
         raise TypeError(
             "`lang` must be {}, not {}".format(
-                {compat.unicode_, spacy.language.Language, types.FunctionType},
+                {str, spacy.language.Language, types.FunctionType},
                 type(lang),
             )
         )
@@ -118,7 +114,7 @@ def _make_spacy_doc_from_text(text, lang):
 
 
 def _make_spacy_doc_from_record(record, lang):
-    if isinstance(lang, compat.unicode_):
+    if isinstance(lang, str):
         spacy_lang = cache.load_spacy_lang(lang)
         langstr = spacy_lang.lang
     elif isinstance(lang, spacy.language.Language):
@@ -130,7 +126,7 @@ def _make_spacy_doc_from_record(record, lang):
     else:
         raise TypeError(
             "`lang` must be {}, not {}".format(
-                {compat.unicode_, spacy.language.Language, types.FunctionType},
+                {str, spacy.language.Language, types.FunctionType},
                 type(lang),
             )
         )
@@ -142,7 +138,7 @@ def _make_spacy_doc_from_record(record, lang):
 def _make_spacy_doc_from_doc(doc, lang):
     # these checks are probably unnecessary, but in case a user
     # has done something strange, we should complain...
-    if isinstance(lang, compat.unicode_):
+    if isinstance(lang, str):
         # a `lang` as str could be a specific spacy model name,
         # e.g. "en_core_web_sm", while `langstr` would only be "en"
         langstr = doc.vocab.lang
@@ -164,7 +160,7 @@ def _make_spacy_doc_from_doc(doc, lang):
         # the doc, and checking the text lang is an unnecessary performance hit
         raise TypeError(
             "`lang` must be {}, not {}".format(
-                {compat.unicode_, spacy.language.Language, types.FunctionType},
+                {str, spacy.language.Language, types.FunctionType},
                 type(lang),
             )
         )
