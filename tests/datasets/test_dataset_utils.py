@@ -1,5 +1,3 @@
-from __future__ import absolute_import, unicode_literals
-
 import datetime
 import os
 import tarfile
@@ -7,7 +5,6 @@ import zipfile
 
 import pytest
 
-from textacy import compat
 from textacy.datasets.utils import (
     validate_and_clip_range_filter,
     validate_set_member_filter,
@@ -24,7 +21,7 @@ class TestValidateAndClipRangeFilter(object):
         inputs = [
             [("2001-01", "2002-01"), ("2000-01", "2003-01")],
             [["2001-01", "2004-01"], ("2000-01", "2003-01")],
-            [("2001-01", "2002-01"), ["2000-01", "2003-01"], compat.string_types],
+            [("2001-01", "2002-01"), ["2000-01", "2003-01"], (str, bytes)],
             [[-5, 5], [-10, 10]],
             [(-5, 5), (0, 10)],
             [(-5, 5), (-10, 10), int],
@@ -59,7 +56,7 @@ class TestValidateAndClipRangeFilter(object):
             [("2001-01", "2002-01"), ("2000-01", "2003-01"), datetime.date],
             [0, [-10, 10]],
             [(-5, 5), 0],
-            [[-5, 5], [-10, 10], compat.string_types],
+            [[-5, 5], [-10, 10], (str, bytes)],
         ]
         for input_ in inputs:
             with pytest.raises(TypeError):
@@ -71,7 +68,7 @@ class TestValidateAndClipRangeFilter(object):
             [("2001-01", "2002-01"), ["2000-01", "2002-01", "2004-01"]],
             [[0, 5, 10], (-10, 10)],
             [(-5, 5), [-10, 0, 10]],
-            [(-5, 5), [-10, 0, 10], compat.string_types],
+            [(-5, 5), [-10, 0, 10], (str, bytes)],
         ]
         for input_ in inputs:
             with pytest.raises(ValueError):
@@ -82,10 +79,10 @@ class TestValidateSetMemberFilter(object):
 
     def test_good_inputs(self):
         inputs = [
-            [{"a", "b"}, compat.string_types, {"a", "b", "c"}],
-            ["a", compat.string_types, {"a", "b", "c"}],
-            [("a", "b"), compat.string_types, {"a", "b", "c"}],
-            [["a", "b"], compat.string_types],
+            [{"a", "b"}, (str, bytes), {"a", "b", "c"}],
+            ["a", (str, bytes), {"a", "b", "c"}],
+            [("a", "b"), (str, bytes), {"a", "b", "c"}],
+            [["a", "b"], (str, bytes)],
             [{1, 2}, int, {1, 2, 3}],
             [{1, 2}, (int, float), {1, 2, 3}],
             [1, int, {1: "a", 2: "b", 3: "c"}],
@@ -109,10 +106,10 @@ class TestValidateSetMemberFilter(object):
 
     def test_bad_valueerror(self):
         inputs = [
-            [{"a", "b"}, compat.string_types, {"x", "y", "z"}],
-            [{"a", "x"}, compat.string_types, {"x", "y", "z"}],
-            ["a", compat.string_types, {"x", "y", "z"}],
-            ["a", compat.string_types, {"x": 24, "y": 25, "z": 26}],
+            [{"a", "b"}, (str, bytes), {"x", "y", "z"}],
+            [{"a", "x"}, (str, bytes), {"x", "y", "z"}],
+            ["a", (str, bytes), {"x", "y", "z"}],
+            ["a", (str, bytes), {"x": 24, "y": 25, "z": 26}],
         ]
         for input_ in inputs:
             with pytest.raises(ValueError):
@@ -130,10 +127,6 @@ def test_get_filename_from_url():
         assert get_filename_from_url(url) == fname
 
 
-@pytest.mark.skipif(
-    compat.PY2 is True,
-    reason="PY2's stdlib complains about str/unicode/path TypeErrors. So, fuck it."
-)
 def test_unpack_archive(tmpdir):
     data = "Here's some text data to pack and unpack."
     fpath_txt = str(tmpdir.join("test_unpack_archive.txt"))

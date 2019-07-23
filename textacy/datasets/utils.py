@@ -5,17 +5,15 @@ Dataset Utils
 Shared functionality for downloading, naming, and extracting the contents
 of datasets, as well as filtering for particular subsets.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
 import os
 import shutil
 import tarfile
+import urllib.parse
 import zipfile
 
 from tqdm import tqdm
 
-from .. import compat
 from .. import constants
 from ..utils import to_collection
 from ..io import write_http_stream
@@ -64,7 +62,7 @@ def get_filename_from_url(url):
     Returns:
         str: Filename in URL.
     """
-    return os.path.basename(compat.urlparse(compat.url_unquote_plus(url)).path)
+    return os.path.basename(urllib.parse.urlparse(urllib.parse.unquote_plus(url)).path)
 
 
 def unpack_archive(filepath, extract_dir=None):
@@ -85,9 +83,7 @@ def unpack_archive(filepath, extract_dir=None):
     # TODO: shutil.unpack_archive() when PY3-only
     if not extract_dir:
         extract_dir = os.path.dirname(filepath)
-    # TODO: os.makedirs(path, exist_ok=True) when PY3-only
-    if not os.path.isdir(extract_dir):
-        os.makedirs(extract_dir)
+    os.makedirs(extract_dir, exist_ok=True)
     is_zipfile = zipfile.is_zipfile(filepath)
     is_tarfile = tarfile.is_tarfile(filepath)
     if not is_zipfile and not is_tarfile:
