@@ -4,15 +4,12 @@ Topic Models
 
 Convenient and consolidated topic-modeling, built on ``scikit-learn``.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import logging
 
 import joblib
 import numpy as np
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
-from .. import compat
 from .. import viz
 
 LOGGER = logging.getLogger(__name__)
@@ -240,7 +237,7 @@ class TopicModel(object):
                     [(0, (('foo', 0.1415), ('bar', 0.0986)))]
         """
         if topics == -1:
-            topics = compat.range_(self.n_topics)
+            topics = range(self.n_topics)
         elif isinstance(topics, int):
             topics = (topics,)
 
@@ -287,7 +284,7 @@ class TopicModel(object):
                     [(0, ((4, 0.3217), (2, 0.2154)))]
         """
         if topics == -1:
-            topics = compat.range_(self.n_topics)
+            topics = range(self.n_topics)
         elif isinstance(topics, int):
             topics = (topics,)
 
@@ -331,7 +328,7 @@ class TopicModel(object):
                     [(0, ((1, 0.2855), (4, 0.2412)))]
         """
         if docs == -1:
-            docs = compat.range_(doc_topic_matrix.shape[0])
+            docs = range(doc_topic_matrix.shape[0])
         elif isinstance(docs, int):
             docs = (docs,)
 
@@ -439,7 +436,7 @@ class TopicModel(object):
 
         # get topics indices
         if topics == -1:
-            topic_inds = tuple(compat.range_(self.n_topics))
+            topic_inds = tuple(range(self.n_topics))
         elif isinstance(topics, int):
             topic_inds = (topics,)
         else:
@@ -466,7 +463,7 @@ class TopicModel(object):
         if highlight_topics is not None:
             highlight_cols = tuple(
                 i
-                for i in compat.range_(len(topic_inds))
+                for i in range(len(topic_inds))
                 if topic_inds[i] in highlight_topics
             )
         else:
