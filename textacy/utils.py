@@ -1,9 +1,5 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import sys
 import warnings
-
-from . import compat
 
 
 def deprecated(message, action="always"):
@@ -57,7 +53,7 @@ def print_markdown(items):
         items = list(items.items())
     md_items = (
         "- **{}:** {}".format(
-            compat.unicode_(k).replace("\n", " "), compat.unicode_(v).replace("\n", " ")
+            to_unicode(k).replace("\n", " "), to_unicode(v).replace("\n", " ")
         )
         for k, v in items
     )
@@ -69,7 +65,7 @@ def is_record(obj):
     if (
         isinstance(obj, (tuple, list))
         and len(obj) == 2
-        and isinstance(obj[0], compat.unicode_)
+        and isinstance(obj[0], str)
         and isinstance(obj[1], dict)
     ):
         return True
@@ -106,3 +102,41 @@ def to_collection(val, val_type, col_type):
                 val_type, type(val),
             )
         )
+
+
+def to_bytes(s, encoding="utf-8", errors="strict"):
+    """Coerce ``s`` to bytes.
+
+    Args:
+        s (str or bytes)
+        encoding (str)
+        errors (str)
+
+    Returns:
+        bytes
+    """
+    if isinstance(s, str):
+        return s.encode(encoding, errors)
+    elif isinstance(s, bytes):
+        return s
+    else:
+        raise TypeError("`s` must be {}, not {}".format((str, bytes), type(s)))
+
+
+def to_unicode(s, encoding="utf-8", errors="strict"):
+    """Coerce ``s`` to unicode.
+
+    Args:
+        s (str or bytes)
+        encoding (str)
+        errors (str)
+
+    Returns:
+        str
+    """
+    if isinstance(s, bytes):
+        return s.decode(encoding, errors)
+    elif isinstance(s, str):
+        return s
+    else:
+        raise TypeError("`s` must be {}, not {}".format((str, bytes), type(s)))
