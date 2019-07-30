@@ -219,6 +219,7 @@ def flesch_reading_ease(n_syllables, n_words, n_sents, lang=None):
         French: ?
         Italian: https://it.wikipedia.org/wiki/Formula_di_Flesch
         Dutch: ?
+        Portuguese: https://pt.wikipedia.org/wiki/Legibilidade_de_Flesch
         Russian: https://ru.wikipedia.org/wiki/%D0%98%D0%BD%D0%B4%D0%B5%D0%BA%D1%81_%D1%83%D0%B4%D0%BE%D0%B1%D0%BE%D1%87%D0%B8%D1%82%D0%B0%D0%B5%D0%BC%D0%BE%D1%81%D1%82%D0%B8
     """
     if lang is None or lang == "en":
@@ -233,10 +234,12 @@ def flesch_reading_ease(n_syllables, n_words, n_sents, lang=None):
         return 217.0 - (1.3 * n_words / n_sents) - (60.0 * n_syllables / n_words)
     elif lang == "nl":
         return 206.84 - (0.93 * n_words / n_sents) - (77.0 * n_syllables / n_words)
+    elif lang == "pt":
+        return 248.835 - (1.015 * n_words / n_sents) - (84.6 * n_syllables / n_words)
     elif lang == "ru":
         return 206.835 - (1.3 * n_words / n_sents) - (60.1 * n_syllables / n_words)
     else:
-        langs = ["en", "de", "es", "fr", "it", "nl", "ru"]
+        langs = ["en", "de", "es", "fr", "it", "nl", "pt", "ru"]
         raise ValueError(
             "Flesch Reading Ease is only implemented for these languages: {}. "
             'Passing `lang=None` falls back to "en" (English)'.format(langs)
