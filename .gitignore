@@ -1,8 +1,9 @@
 # compiled code
 *.py[co]
 
-# macOS
+# dev env
 .DS_Store
+.vscode/
 
 # distribution / packaging
 build/
