@@ -27,9 +27,10 @@ that come before and follow after.
 
 ### Links
 
-- PyPi project: https://pypi.org/project/textacy
-- Source code: https://github.com/chartbeat-labs/textacy
+- Download: https://pypi.org/project/textacy
 - Documentation: https://chartbeat-labs.github.io/textacy
+- Source code: https://github.com/chartbeat-labs/textacy
+- Bug Tracker: https://github.com/chartbeat-labs/textacy/issues
 
 
 ### Maintainer
