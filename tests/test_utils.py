@@ -1,7 +1,11 @@
+import pathlib
+
 import pytest
 
 from textacy import utils
 
+
+PATHS = (pathlib.Path("."), pathlib.Path.home())
 STRINGS = (b"bytes", "unicode", "úñîçødé")
 NOT_STRINGS = (1, 2.0, ["foo", "bar"], {"foo": "bar"})
 
@@ -31,3 +35,14 @@ def test_to_bytes():
     for obj in NOT_STRINGS:
         with pytest.raises(TypeError):
             utils.to_bytes(obj)
+
+
+def test_to_path():
+    for obj in PATHS:
+        assert isinstance(utils.to_path(obj), pathlib.Path)
+    for obj in STRINGS:
+        if isinstance(obj, str):
+            assert isinstance(utils.to_path(obj), pathlib.Path)
+    for obj in NOT_STRINGS:
+        with pytest.raises(TypeError):
+            utils.to_path(obj)

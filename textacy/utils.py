@@ -1,3 +1,4 @@
+import pathlib
 import sys
 import warnings
 
@@ -140,3 +141,23 @@ def to_unicode(s, encoding="utf-8", errors="strict"):
         return s
     else:
         raise TypeError("`s` must be {}, not {}".format((str, bytes), type(s)))
+
+
+def to_path(path):
+    """
+    Coerce ``path`` to a ``pathlib.Path``.
+
+    Args:
+        path (str or :class:`pathlib.Path`)
+
+    Returns:
+        :class:`pathlib.Path`
+    """
+    if isinstance(path, str):
+        return pathlib.Path(path)
+    elif isinstance(path, pathlib.Path):
+        return path
+    else:
+        raise TypeError(
+            "`path` must be {}, not {}".format((str, pathlib.Path), type(path))
+        )
