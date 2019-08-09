@@ -1,8 +1,6 @@
 import io
 import os
-import sys
 
-import setuptools
 from setuptools import setup, find_packages
 
 
@@ -22,7 +20,9 @@ INSTALL_REQUIRES = [
     "srsly>=0.0.5",
     "tqdm>=4.19.6",
 ]
-EXTRAS_REQUIRE = {"viz": ["matplotlib>=1.5.0"]}
+EXTRAS_REQUIRE = {
+    "viz": ["matplotlib>=1.5.0"],
+}
 EXTRAS_REQUIRE["all"] = list({pkg for pkgs in EXTRAS_REQUIRE.values() for pkg in pkgs})
 
 
@@ -47,10 +47,14 @@ setup(
     long_description_content_type="text/markdown",
     url=about["__url__"],
     download_url=about["__download_url__"],
+    project_urls={
+        "Documentation": "https://chartbeat-labs.github.io/textacy",
+        "Source Code": "https://github.com/chartbeat-labs/textacy",
+        "Bug Tracker": "https://github.com/chartbeat-labs/textacy/issues",
+    },
     maintainer=about["__maintainer__"],
     maintainer_email=about["__maintainer_email__"],
     license=about["__license__"],
-    python_requires=">=3.5",
     classifiers=[
         "Development Status :: 4 - Beta",
         "License :: OSI Approved :: Apache Software License",
@@ -64,8 +68,9 @@ setup(
         "Natural Language :: English",
         "Topic :: Text Processing :: Linguistic",
     ],
-    keywords="textacy, spacy, nlp, text processing, linguistics",
+    keywords="textacy spacy nlp text processing linguistics",
     packages=find_packages(),
+    python_requires=">=3.5",
     install_requires=INSTALL_REQUIRES,
     extras_require=EXTRAS_REQUIRE,
 )
