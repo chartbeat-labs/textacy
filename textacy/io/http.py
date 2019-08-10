@@ -13,6 +13,7 @@ import requests
 from tqdm import tqdm
 
 from .utils import _make_dirs
+from .. import utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,7 +69,8 @@ def write_http_stream(
 
     Args:
         url (str): URL to which a GET request is made for data.
-        filepath (str): Path to file on disk to which data will be written.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            to which data will be written.
         mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
             in ``filepath``. Only applicable in text mode.
@@ -87,6 +89,7 @@ def write_http_stream(
             .. seealso:: http://docs.python-requests.org/en/master/user/authentication/
     """
     decode_unicode = True if "t" in mode else False
+    filepath = utils.to_path(filepath).resolve()
     if make_dirs is True:
         _make_dirs(filepath, mode)
     # use `closing` to ensure connection and progress bar *always* close
@@ -97,7 +100,7 @@ def write_http_stream(
             r.encoding = "utf-8"
         total = int(r.headers.get("content-length", 0))
         with closing(tqdm(unit="B", unit_scale=True, total=total)) as pbar:
-            with io.open(filepath, mode=mode, encoding=encoding) as f:
+            with filepath.open(mode=mode, encoding=encoding) as f:
                 chunks = r.iter_content(
                     chunk_size=chunk_size, decode_unicode=decode_unicode
                 )

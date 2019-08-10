@@ -18,7 +18,8 @@ def read_json(filepath, mode="rt", encoding=None, lines=False):
     or streaming item-by-item.
 
     Args:
-        filepath (str): Path to file on disk from which data will be read.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            from which data will be read.
         mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
             in ``filepath``. Only applicable in text mode.
@@ -44,7 +45,8 @@ def read_json_mash(filepath, mode="rt", encoding=None, buffer_size=2048):
     where all of the items have been mashed together, end-to-end, on a single line.
 
     Args:
-        filepath (str): Path to file on disk to which data will be written.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            to which data will be written.
         mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
             in ``filepath``. Only applicable in text mode.
@@ -104,7 +106,8 @@ def write_json(
             If ``lines`` is False, all of ``data`` is written as a single object;
             if True, each item is written to a separate line in ``filepath``.
 
-        filepath (str): Path to file on disk to which data will be written.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            to which data will be written.
         mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
             in ``filepath``. Only applicable in text mode.
@@ -168,4 +171,4 @@ class ExtendedJSONEncoder(json.JSONEncoder):
         if isinstance(obj, (datetime.datetime, datetime.date)):
             return obj.isoformat()
         else:
-            return super(ExtendedJSONEncoder, self).default(ob)
+            return super(ExtendedJSONEncoder, self).default(obj)

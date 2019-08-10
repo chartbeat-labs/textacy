@@ -8,7 +8,8 @@ in numpy binary format.
 import numpy as np
 import scipy.sparse as sp
 
-from .utils import open_sesame
+from .utils import open_sesame, _make_dirs
+from .. import utils
 
 
 def read_sparse_matrix(filepath, kind="csc"):
@@ -17,7 +18,8 @@ def read_sparse_matrix(filepath, kind="csc"):
     at ``filepath``, and return an instantiated sparse matrix.
 
     Args:
-        filepath (str): Path to file on disk from which data will be read.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            from which data will be read.
         kind ({'csc', 'csr'}): Kind of sparse matrix to instantiate.
 
     Returns:
@@ -40,7 +42,7 @@ def read_sparse_matrix(filepath, kind="csc"):
         )
     else:
         raise ValueError(
-            'kind="{}" is invalid; valid values are {}'.format(kind, ["csc", "csr"])
+            "kind='{}' is invalid; valid values are {}".format(kind, ["csc", "csr"])
         )
 
 
@@ -51,9 +53,9 @@ def write_sparse_matrix(data, filepath, compressed=True, make_dirs=False):
 
     Args:
         data (:class:`scipy.sparse.csc_matrix` or :class:`scipy.sparse.csr_matrix`)
-        filepath (str): Path to file on disk to which data will be written.
-            If ``filepath`` does not end in ``.npz``, that extension is
-            automatically appended to the name.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            to which data will be written. If ``filepath`` does not end in ``.npz``,
+            that extension is automatically appended to the name.
         compressed (bool): If True, save arrays into a single file in compressed
             numpy binary format.
         make_dirs (bool): If True, automatically create (sub)directories if
@@ -65,13 +67,14 @@ def write_sparse_matrix(data, filepath, compressed=True, make_dirs=False):
     if not isinstance(data, (sp.csc_matrix, sp.csr_matrix)):
         raise TypeError(
             "`data` must be a scipy sparse csr or csc matrix, "
-            'not "{}"'.format(type(data))
+            "not '{}'".format(type(data))
         )
+    filepath = utils.to_path(filepath).resolve()
     if make_dirs is True:
         _make_dirs(filepath, "w")
     if compressed is True:
         np.savez_compressed(
-            filepath,
+            str(filepath),
             data=data.data,
             indices=data.indices,
             indptr=data.indptr,
@@ -79,7 +82,7 @@ def write_sparse_matrix(data, filepath, compressed=True, make_dirs=False):
         )
     else:
         np.savez(
-            filepath,
+            str(filepath),
             data=data.data,
             indices=data.indices,
             indptr=data.indptr,

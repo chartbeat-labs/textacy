@@ -14,7 +14,8 @@ def read_text(filepath, mode="rt", encoding=None, lines=False):
     or streaming line-by-line.
 
     Args:
-        filepath (str): Path to file on disk from which data will be read.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            from which data will be read.
         mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
             in ``filepath``. Only applicable in text mode.
@@ -54,7 +55,8 @@ def write_text(data, filepath, mode="wt", encoding=None, make_dirs=False, lines=
                  "You're thinking of rigor mortis. Rick and morty is when you get trolled into watching \"never gonna give you up\"",
                  "That's rickrolling. Rick and morty is a type of pasta"]
 
-        filepath (str): Path to file on disk to which data will be written.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            to which data will be written.
         mode (str): Mode with which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode the data
             in ``filepath``. Only applicable in text mode.

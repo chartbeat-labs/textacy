@@ -25,7 +25,8 @@ def read_csv(
     are separated by ``delimiter``.
 
     Args:
-        filepath (str): Path to file on disk from which data will be read.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            from which data will be read.
         encoding (str): Name of the encoding used to decode or encode the data
             in ``filepath``.
         fieldnames (List[str] or 'infer'): If specified, gives names for columns
@@ -131,7 +132,8 @@ def write_csv(
                  {'text': 'The movie was okay, I guess.', 'score': 0.2},
                  {'text': 'Worst. Movie. Ever.', 'score': -1.0}]
 
-        filepath (str): Path to file on disk to which data will be written.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            to which data will be written.
         encoding (str): Name of the encoding used to decode or encode the data
             in ``filepath``.
         make_dirs (bool): If True, automatically create (sub)directories if

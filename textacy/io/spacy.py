@@ -22,7 +22,8 @@ def read_spacy_docs(filepath, format="pickle", lang=None):
     format.
 
     Args:
-        filepath (str): Path to file on disk from which data will be read.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            from which data will be read.
         format ({"pickle", "binary"}): Format of the data that was written to disk.
             If 'pickle', use ``pickle`` in python's stdlib; if 'binary', use
             the 3rd-party ``msgpack`` library.
@@ -134,7 +135,8 @@ def write_spacy_docs(
     Args:
         data (:class:`spacy.tokens.Doc` or Iterable[:class:`spacy.tokens.Doc`]):
             A single ``Doc`` or a sequence of ``Doc`` s to write to disk.
-        filepath (str): Path to file on disk to which data will be written.
+        filepath (str or :class:`pathlib.Path`): Path to file on disk
+            to which data will be written.
         make_dirs (bool): If True, automatically create (sub)directories if
             not already present in order to write ``filepath``.
         format ({"pickle", "binary"}): Format of the data written to disk.
