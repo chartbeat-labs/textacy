@@ -1,11 +1,11 @@
 """
 Collection of regular expressions and other (small, generally useful) constants.
 """
-import os
+import pathlib
 import re
 
 
-DEFAULT_DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "data")
+DEFAULT_DATA_DIR = pathlib.Path(__file__).parent.resolve() / "data"
 
 NUMERIC_ENT_TYPES = {"ORDINAL", "CARDINAL", "MONEY", "QUANTITY", "PERCENT", "TIME", "DATE"}
 SUBJ_DEPS = {"agent", "csubj", "csubjpass", "expl", "nsubj", "nsubjpass"}
