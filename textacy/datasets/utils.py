@@ -13,7 +13,7 @@ import urllib.parse
 import zipfile
 
 from .. import constants
-from ..utils import to_collection
+from ..utils import to_collection, to_path
 from ..io import write_http_stream
 
 LOGGER = logging.getLogger(__name__)
@@ -27,8 +27,8 @@ def download_file(url, filename=None, dirpath=constants.DEFAULT_DATA_DIR, force=
         url (str): Web address from which to download data.
         filename (str): Name of the file to which downloaded data is saved.
             If None, a filename will be inferred from the ``url``.
-        dirpath (str): Full path to the directory on disk under which
-            downloaded data will be saved as ``filename``.
+        dirpath (str or :class:`pathlib.Path`): Full path to the directory on disk
+            under which downloaded data will be saved as ``filename``.
         force (bool): If True, download the data even if it already exists at
             ``dirpath/filename``; otherwise, only download if the data doesn't
             already exist on disk.
@@ -38,8 +38,8 @@ def download_file(url, filename=None, dirpath=constants.DEFAULT_DATA_DIR, force=
     """
     if not filename:
         filename = get_filename_from_url(url)
-    filepath = os.path.join(dirpath, filename)
-    if os.path.isfile(filepath) and force is False:
+    filepath = to_path(dirpath).resolve() / filename
+    if filepath.is_file() and force is False:
         LOGGER.info(
             "file '%s' already exists and force=False; skipping download...",
             filepath,
@@ -47,7 +47,7 @@ def download_file(url, filename=None, dirpath=constants.DEFAULT_DATA_DIR, force=
         return None
     else:
         write_http_stream(url, filepath, mode="wb", make_dirs=True)
-    return filepath
+    return str(filepath)
 
 
 def get_filename_from_url(url):
@@ -69,17 +69,19 @@ def unpack_archive(filepath, extract_dir=None):
     (or do nothing if the file isn't an archive).
 
     Args:
-        filepath (str): Full path to file on disk from which
-            archived contents will be extracted.
-        extract_dir (str): Path of the directory into which contents
-            will be extracted. If not provided, the same directory
+        filepath (str or :class:`pathlib.Path`): Full path to file on disk
+            from which archived contents will be extracted.
+        extract_dir (str or :class:`pathlib.Path`): Full path of the directory
+            into which contents will be extracted. If not provided, the same directory
             as ``filepath`` is used.
 
     Returns:
         str: Path to directory of extracted contents.
     """
+    filepath = to_path(filepath).resolve()
     if not extract_dir:
-        extract_dir = os.path.dirname(filepath)
+        extract_dir = str(filepath.parent)
+    filepath = str(filepath)
     os.makedirs(extract_dir, exist_ok=True)
     is_zipfile = zipfile.is_zipfile(filepath)
     is_tarfile = tarfile.is_tarfile(filepath)
