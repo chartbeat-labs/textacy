@@ -11,7 +11,6 @@ import itertools
 import lzma
 import os
 import re
-import warnings
 import zipfile
 
 from cytoolz import itertoolz
@@ -233,19 +232,6 @@ def split_records(items, content_field, itemwise=False):
         return ((item.pop(content_field), item) for item in items)
     else:
         return unzip(((item.pop(content_field), item) for item in items))
-
-
-def split_record_fields(items, content_field, itemwise=False):
-    """
-    This functionality has been moved to :func:`split_records()`, and this is just
-    a temporary alias for that other function. You should use it instead of this.
-    """
-    warnings.warn(
-        "`split_record_fields()` has been renamed `split_records()`, "
-        "and this function is just a temporary alias for it.",
-        DeprecationWarning,
-    )
-    return split_records(items, content_field, itemwise=False)
 
 
 def unzip(seq):

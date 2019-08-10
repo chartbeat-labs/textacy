@@ -3,7 +3,6 @@ from .utils import (
     get_filepaths,
     open_sesame,
     split_records,
-    split_record_fields,
     unzip,
 )
 from .csv import read_csv, write_csv
