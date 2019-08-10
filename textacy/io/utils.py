@@ -38,7 +38,8 @@ def open_sesame(
     ``open_sesame`` may be used as a drop-in replacement for :func:`io.open`.
 
     Args:
-        filepath (str): Path on disk (absolute or relative) of the file to open.
+        filepath (str or :class:`pathlib.Path`): Path on disk (absolute or relative)
+            of the file to open.
         mode (str): The mode in which ``filepath`` is opened.
         encoding (str): Name of the encoding used to decode or encode ``filepath``.
             Only applicable in text mode.
@@ -61,20 +62,17 @@ def open_sesame(
         OSError: if ``filepath`` doesn't exist but ``mode`` is read
     """
     # check args
-    if not isinstance(filepath, (str, bytes)):
-        raise TypeError("filepath must be a string, not {}".format(type(filepath)))
     if encoding and "t" not in mode:
         raise ValueError("encoding only applicable for text mode")
 
     # normalize filepath and make dirs, as needed
-    filepath = os.path.realpath(os.path.expanduser(filepath))
+    filepath = utils.to_path(filepath).resolve()
     if make_dirs is True:
         _make_dirs(filepath, mode)
-    elif mode.startswith("r") and not os.path.isfile(filepath):
-        raise OSError('file "{}" does not exist'.format(filepath))
+    elif mode.startswith("r") and not filepath.is_file():
+        raise OSError("file '{}' does not exist".format(filepath))
 
     compression = _get_compression(filepath, compression)
-
     f = _get_file_handle(
         filepath,
         mode,
@@ -83,7 +81,6 @@ def open_sesame(
         errors=errors,
         newline=newline,
     )
-
     return f
 
 
@@ -97,7 +94,7 @@ def _get_compression(filepath, compression):
         return None
     # user wants us to infer compression from filepath
     elif compression == "infer":
-        _, ext = os.path.splitext(filepath)
+        ext = filepath.suffix
         try:
             return _ext_to_compression[ext.lower()]
         except KeyError:
@@ -107,7 +104,7 @@ def _get_compression(filepath, compression):
         return compression
     else:
         raise ValueError(
-            'compression="{}" is invalid; '
+            "compression='{}' is invalid; "
             "valid values are {}.".format(
                 compression, [None, "infer"] + sorted(_ext_to_compression.values())
             )
@@ -121,9 +118,7 @@ def _get_file_handle(
     Get a file handle for the given ``filepath`` and ``mode``, plus optional kwargs.
     """
     if compression:
-
         mode_ = mode.replace("b", "").replace("t", "")
-
         if compression == "gzip":
             f = gzip.GzipFile(filepath, mode=mode_)
         elif compression == "bz2":
@@ -136,16 +131,16 @@ def _get_file_handle(
             if len(zip_names) == 1:
                 f = zip_file.open(zip_names[0])
             elif len(zip_names) == 0:
-                raise ValueError('no files found in zip file "{}"'.format(filepath))
+                raise ValueError("no files found in zip file '{}'".format(filepath))
             else:
                 raise ValueError(
-                    '{} files found in zip file "{}", '
-                    "but only one file is allowed.".format(len(zip_names), filepath)
+                    "{} files found in zip file '{}', "
+                    "but only one file is allowed".format(len(zip_names), filepath)
                 )
         else:
             raise ValueError(
-                'compression="{}" is invalid; '
-                "valid values are {}.".format(
+                "compression='{}' is invalid; "
+                "valid values are {}".format(
                     compression, [None, "infer"] + sorted(_ext_to_compression.values())
                 )
             )
@@ -155,9 +150,7 @@ def _get_file_handle(
 
     # no compression, file is opened as usual
     else:
-        f = io.open(
-            filepath, mode=mode, encoding=encoding, errors=errors, newline=newline
-        )
+        f = filepath.open(mode=mode, encoding=encoding, errors=errors, newline=newline)
 
     return f
 
@@ -167,22 +160,22 @@ def _make_dirs(filepath, mode):
     If writing ``filepath`` to a directory that doesn't exist, all intermediate
     directories will be created as needed.
     """
-    head, _ = os.path.split(filepath)
-    if "w" in mode and head and not os.path.isdir(head):
-        os.makedirs(head)
+    parent = filepath.parent
+    if "w" in mode and parent:
+        os.makedirs(parent, exist_ok=True)
 
 
 def _validate_read_mode(mode):
     if "w" in mode or "a" in mode:
         raise ValueError(
-            'mode="{}" is invalid; file must be opened in read mode'.format(mode)
+            "mode='{}' is invalid; file must be opened in read mode".format(mode)
         )
 
 
 def _validate_write_mode(mode):
     if "r" in mode:
         raise ValueError(
-            'mode="{}" is invalid; file must be opened in write mode'.format(mode)
+            "mode='{}' is invalid; file must be opened in write mode".format(mode)
         )
 
 
@@ -286,7 +279,8 @@ def get_filepaths(
     crawling all subdirectories.
 
     Args:
-        dirpath (str): Path to directory on disk where files are stored.
+        dirpath (str of :class:`pathlib.Path`): Path to directory on disk
+            where files are stored.
         match_regex (str): Regular expression pattern. Only files whose names
             match this pattern are included.
         ignore_regex (str): Regular expression pattern. Only files whose names
@@ -305,8 +299,10 @@ def get_filepaths(
     Raises:
         OSError: if ``dirpath`` is not found on disk
     """
-    if not os.path.isdir(dirpath):
-        raise OSError('directory "{}" does not exist'.format(dirpath))
+    dirpath = utils.to_path(dirpath).resolve()
+    if not dirpath.is_dir():
+        raise OSError("directory '{}' does not exist".format(dirpath))
+
     re_match = re.compile(match_regex) if match_regex else None
     re_ignore = re.compile(ignore_regex) if ignore_regex else None
 
@@ -317,7 +313,7 @@ def get_filepaths(
             return False
         if re_ignore and re_ignore.search(fname):
             return False
-        if extension and not os.path.splitext(fname)[-1] == extension:
+        if extension and os.path.splitext(fname)[-1] != extension:
             return False
         if not os.path.isfile(os.path.join(dpath, fname)):
             return False
@@ -333,6 +329,6 @@ def get_filepaths(
                 if is_good_file(dirpath_, filename):
                     yield os.path.join(dirpath_, filename)
     else:
-        for filename in os.listdir(dirpath):
-            if is_good_file(dirpath, filename):
-                yield os.path.join(dirpath, filename)
+        for subpath in dirpath.iterdir():
+            if is_good_file(str(dirpath), subpath.name):
+                yield str(subpath)
