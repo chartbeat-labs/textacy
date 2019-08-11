@@ -26,9 +26,9 @@ import logging
 import os
 import re
 
-from .. import constants
+from .. import constants, utils
 from .. import io as tio
-from . import utils
+from . import utils as ds_utils
 from .dataset import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -82,8 +82,8 @@ class OxfordTextArchive(Dataset):
         Corpus(5 docs; 182289 tokens)
 
     Args:
-        data_dir (str): Path to directory on disk under which dataset data is stored,
-            i.e. ``/path/to/data_dir/oxford_text_archive`` .
+        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
+            under which dataset is stored, i.e. ``/path/to/data_dir/oxford_text_archive``.
 
     Attributes:
         full_date_range (Tuple[str]): First and last dates for which works
@@ -94,11 +94,11 @@ class OxfordTextArchive(Dataset):
 
     full_date_range = ("0018-01-01", "1990-01-01")
 
-    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
+    def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
         super(OxfordTextArchive, self).__init__(NAME, meta=META)
-        self.data_dir = data_dir
-        self._text_dirpath = os.path.join(self.data_dir, "master", "text")
-        self._metadata_filepath = os.path.join(self.data_dir, "master", "metadata.tsv")
+        self.data_dir = utils.to_path(data_dir).resolve()
+        self._text_dirpath = self.data_dir.joinpath("master", "text")
+        self._metadata_filepath = self.data_dir.joinpath("master", "metadata.tsv")
         self._metadata = None
 
     def download(self, force=False):
@@ -110,14 +110,14 @@ class OxfordTextArchive(Dataset):
             force (bool): If True, always download the dataset even if
                 it already exists.
         """
-        filepath = utils.download_file(
+        filepath = ds_utils.download_file(
             DOWNLOAD_URL,
             filename=None,
             dirpath=self.data_dir,
             force=force,
         )
         if filepath:
-            utils.unpack_archive(filepath, extract_dir=None)
+            ds_utils.unpack_archive(filepath, extract_dir=None)
 
     @property
     def metadata(self):
@@ -137,7 +137,7 @@ class OxfordTextArchive(Dataset):
         zip archive; convert into a dictionary keyed by record ID; clean up some
         of the fields, and remove a couple fields that are identical throughout.
         """
-        if not os.path.isfile(self._metadata_filepath):
+        if not self._metadata_filepath.is_file():
             raise OSError(
                 "metadata file {} not found;\n"
                 "has the dataset been downloaded yet?".format(self._metadata_filepath)
@@ -153,7 +153,7 @@ class OxfordTextArchive(Dataset):
         )
         re_clean_authors = re.compile(r"^[,;. ]+|[,.]+\s*?$")
         metadata = {}
-        with io.open(self._metadata_filepath, mode="rb") as f:
+        with self._metadata_filepath.open(mode="rb") as f:
             subf = io.StringIO(f.read().decode("utf-8"))
             for row in csv.DictReader(subf, delimiter="\t"):
                 # only include English-language works (99.9% of all works)
@@ -183,7 +183,7 @@ class OxfordTextArchive(Dataset):
         return metadata
 
     def __iter__(self):
-        if not os.path.isdir(self._text_dirpath):
+        if not self._text_dirpath.is_dir():
             raise OSError(
                 "text directory {} not found;\n"
                 "has the dataset been downloaded yet?".format(self._text_dirpath)
@@ -209,13 +209,13 @@ class OxfordTextArchive(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if author is not None:
-            author = utils.validate_set_member_filter(
+            author = ds_utils.validate_set_member_filter(
                 author, (str, bytes), valid_vals=self.authors)
             filters.append(
                 lambda record: record.get("author") and any(athr in author for athr in record["author"])
             )
         if date_range is not None:
-            date_range = utils.validate_and_clip_range_filter(
+            date_range = ds_utils.validate_and_clip_range_filter(
                 date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: record.get("year") and date_range[0] <= record["year"] < date_range[1]

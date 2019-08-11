@@ -49,12 +49,11 @@ may be incorrectly matched to metadata. (Sorry.)
 """
 import itertools
 import logging
-import os
 import urllib.parse
 
-from .. import constants
+from .. import constants, utils
 from .. import io as tio
-from . import utils
+from . import utils as ds_utils
 from .dataset import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -111,8 +110,8 @@ class SupremeCourt(Dataset):
         Corpus(25 docs; 136696 tokens)
 
     Args:
-        data_dir (str): Path to directory on disk under which the data
-            (a compressed json file like ``supreme-court-py3.json.gz``) is stored.
+        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
+            under which the data is stored, i.e. ``/path/to/data_dir/supreme_court``.
 
     Attributes:
         full_date_range (Tuple[str]): First and last dates for which decisions
@@ -544,20 +543,20 @@ class SupremeCourt(Dataset):
         "90520": "miscellaneous judicial power, especially diversity jurisdiction",
     }
 
-    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
+    def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
         super(SupremeCourt, self).__init__(NAME, meta=META)
-        self.data_dir = data_dir
+        self.data_dir = utils.to_path(data_dir).resolve()
         self._filename = "supreme-court-py3.json.gz"
-        self._filepath = os.path.join(self.data_dir, self._filename)
+        self._filepath = self.data_dir.joinpath(self._filename)
 
     @property
     def filepath(self):
         """
         str: Full path on disk for SupremeCourt data as compressed json file.
-            ``None`` if file is not found, e.g. has not yet been downloaded.
+        ``None`` if file is not found, e.g. has not yet been downloaded.
         """
-        if os.path.isfile(self._filepath):
-            return self._filepath
+        if self._filepath.is_file():
+            return str(self._filepath)
         else:
             return None
 
@@ -572,7 +571,7 @@ class SupremeCourt(Dataset):
         """
         release_tag = "supreme_court_py3_v{data_version}".format(data_version=1.0)
         url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
-        filepath = utils.download_file(
+        ds_utils.download_file(
             url,
             filename=self._filename,
             dirpath=self.data_dir,
@@ -580,7 +579,7 @@ class SupremeCourt(Dataset):
         )
 
     def __iter__(self):
-        if not os.path.isfile(self._filepath):
+        if not self._filepath.is_file():
             raise OSError(
                 "dataset file {} not found;\n"
                 "has the dataset been downloaded yet?".format(self._filepath)
@@ -604,7 +603,7 @@ class SupremeCourt(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if date_range is not None:
-            date_range = utils.validate_and_clip_range_filter(
+            date_range = ds_utils.validate_and_clip_range_filter(
                 date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: (
@@ -613,17 +612,17 @@ class SupremeCourt(Dataset):
                 )
             )
         if opinion_author is not None:
-            opinion_author = utils.validate_set_member_filter(
+            opinion_author = ds_utils.validate_set_member_filter(
                 opinion_author, int, valid_vals=self.opinion_author_codes)
             filters.append(
                 lambda record: record.get("maj_opinion_author") in opinion_author)
         if decision_direction is not None:
-            decision_direction = utils.validate_set_member_filter(
+            decision_direction = ds_utils.validate_set_member_filter(
                 decision_direction, (str, bytes), valid_vals=self.decision_directions)
             filters.append(
                 lambda record: record.get("decision_direction") in decision_direction)
         if issue_area is not None:
-            issue_area = utils.validate_set_member_filter(
+            issue_area = ds_utils.validate_set_member_filter(
                 issue_area, int, valid_vals=self.issue_area_codes)
             filters.append(
                 lambda record: record.get("issue_area") in issue_area)

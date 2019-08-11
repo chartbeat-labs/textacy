@@ -85,7 +85,8 @@ class IMDB(Dataset):
         Corpus(100 docs; 24340 tokens)
 
     Args:
-        data_dir (str): Path to directory on disk under which the data is stored.
+        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
+            under which the data is stored, i.e. ``/path/to/data_dir/imdb``.
 
     Attributes:
         full_rating_range (Tuple[int]): Lowest and highest ratings for which
@@ -94,9 +95,9 @@ class IMDB(Dataset):
 
     full_rating_range = (1, 10)
 
-    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
+    def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
         super(IMDB, self).__init__(NAME, meta=META)
-        self.data_dir = data_dir
+        self.data_dir = utils.to_path(data_dir).resolve()
         self._movie_ids = {"train": {}, "test": {}}
         self._subset_labels = {
             "train": ("pos", "neg", "unsup"),
@@ -127,23 +128,23 @@ class IMDB(Dataset):
     def _check_data(self):
         """Check that necessary data is found on disk, or raise an OSError."""
         data_dirpaths = (
-            os.path.join(self.data_dir, "aclImdb", subset, label)
+            self.data_dir.joinpath("aclImdb", subset, label)
             for subset, labels in self._subset_labels.items()
             for label in labels
         )
         url_filepaths = (
-            os.path.join(self.data_dir, "aclImdb", subset, "urls_{}.txt".format(label))
+            self.data_dir.joinpath("aclImdb", subset, "urls_{}.txt".format(label))
             for subset, labels in self._subset_labels.items()
             for label in labels
         )
         for dirpath in data_dirpaths:
-            if not os.path.isdir(dirpath):
+            if not dirpath.is_dir():
                 raise OSError(
                     "data directory {} not found; "
                     "has the dataset been downloaded?".format(dirpath)
                 )
         for filepath in url_filepaths:
-            if not os.path.isfile(filepath):
+            if not filepath.is_file():
                 raise OSError(
                     "data file {} not found; "
                     "has the dataset been downloaded?".format(filepath)
@@ -152,7 +153,7 @@ class IMDB(Dataset):
     def __iter__(self):
         self._check_data()
         dirpaths = tuple(
-            os.path.join(self.data_dir, "aclImdb", subset, label)
+            self.data_dir.joinpath("aclImdb", subset, label)
             for subset in self._subset or self._subset_labels.keys()
             for label in self._label or self._subset_labels[subset]
         )
@@ -179,8 +180,7 @@ class IMDB(Dataset):
         try:
             return self._movie_ids[subset][label][id_]
         except KeyError:
-            fpath = os.path.join(
-                self.data_dir, "aclImdb", subset, "urls_{}.txt".format(label))
+            fpath = self.data_dir.joinpath("aclImdb", subset, "urls_{}.txt".format(label))
             self._movie_ids[subset][label] = {
                 id_: RE_MOVIE_ID.search(line).group(1)
                 for id_, line in enumerate(tio.read_text(fpath, mode="rt", lines=True))
@@ -196,7 +196,7 @@ class IMDB(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if rating_range is not None:
-            date_range = ds_utils.validate_and_clip_range_filter(
+            rating_range = ds_utils.validate_and_clip_range_filter(
                 rating_range, self.full_rating_range, val_type=int)
             filters.append(
                 lambda record: (

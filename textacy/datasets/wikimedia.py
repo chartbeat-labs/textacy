@@ -30,9 +30,9 @@ import urllib.parse
 import requests
 from cytoolz import itertoolz
 
-from .. import constants
+from .. import constants, utils
 from .. import io as tio
-from . import utils
+from . import utils as ds_utils
 from .dataset import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -116,11 +116,15 @@ class Wikimedia(Dataset):
         self.version = version
         self.project = project
         self.namespace = int(namespace)
-        self._filestub = "{lang}{project}/{version}/{lang}{project}-{version}-cirrussearch-content.json.gz".format(
-            version=self.version, lang=self.lang, project=self.project,
+        self._filestub = os.path.join(
+            "{lang}{project}".format(lang=self.lang, project=self.project),
+            "{version}".format(version=self.version),
+            "{lang}{project}-{version}-cirrussearch-content.json.gz".format(
+                lang=self.lang, project=self.project, version=self.version,
+            )
         )
-        self.data_dir = data_dir
-        self._filepath = os.path.join(self.data_dir, self._filestub)
+        self.data_dir = utils.to_path(data_dir).resolve()
+        self._filepath = self.data_dir.joinpath(self._filestub)
 
     @property
     def filepath(self):
@@ -128,8 +132,8 @@ class Wikimedia(Dataset):
         str: Full path on disk for the Wikimedia CirrusSearch db dump
         corresponding to the ``project``, ``lang``, and ``version``.
         """
-        if os.path.isfile(self._filepath):
-            return self._filepath
+        if self._filepath.is_file():
+            return str(self._filepath)
         else:
             return None
 
@@ -148,7 +152,7 @@ class Wikimedia(Dataset):
             and can take hours to fully download.
         """
         file_url = self._get_file_url()
-        filepath = utils.download_file(
+        ds_utils.download_file(
             file_url,
             filename=self._filestub,
             dirpath=self.data_dir,
@@ -181,7 +185,8 @@ class Wikimedia(Dataset):
                     version=self.version,
                     lang=self.lang,
                     project=self.project,
-                    version_dt=version_dt.strftime("%Y%m%d"))
+                    version_dt=version_dt.strftime("%Y%m%d")
+                )
             )
             response = requests.head(file_url)
             if response.status_code == 200:
@@ -258,7 +263,7 @@ class Wikimedia(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if category is not None:
-            category = utils.validate_set_member_filter(
+            category = ds_utils.validate_set_member_filter(
                 category, (str, bytes), valid_vals=None)
             filters.append(
                 lambda record: (
@@ -267,7 +272,7 @@ class Wikimedia(Dataset):
                 )
             )
         if wiki_link is not None:
-            wiki_link = utils.validate_set_member_filter(
+            wiki_link = ds_utils.validate_set_member_filter(
                 wiki_link, (str, bytes), valid_vals=None)
             filters.append(
                 lambda record: (
@@ -384,8 +389,8 @@ class Wikipedia(Wikimedia):
         Corpus(50 docs; 72368 tokens)
 
     Args:
-        data_dir (str): Path to directory on disk under which database dump
-            files are stored. Each file is expected as
+        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
+            under which database dump files are stored. Each file is expected as
             ``{lang}{project}/{version}/{lang}{project}-{version}-cirrussearch-content.json.gz``
             immediately under this directory.
         lang (str): Standard two-letter language code, e.g. "en" => "English",
@@ -399,7 +404,7 @@ class Wikipedia(Wikimedia):
     """
 
     def __init__(
-        self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, "wikipedia"),
+        self, data_dir=constants.DEFAULT_DATA_DIR.joinpath("wikipedia"),
         lang="en", version="current", namespace=0
     ):
         super(Wikipedia, self).__init__(
@@ -444,8 +449,8 @@ class Wikinews(Wikimedia):
         Corpus(100 docs; 33092 tokens)
 
     Args:
-        data_dir (str): Path to directory on disk under which database dump
-            files are stored. Each file is expected as
+        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
+            under which database dump files are stored. Each file is expected as
             ``{lang}{project}/{version}/{lang}{project}-{version}-cirrussearch-content.json.gz``
             immediately under this directory.
         lang (str): Standard two-letter language code, e.g. "en" => "English",
@@ -459,7 +464,7 @@ class Wikinews(Wikimedia):
     """
 
     def __init__(
-        self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, "wikinews"),
+        self, data_dir=constants.DEFAULT_DATA_DIR.joinpath("wikinews"),
         lang="en", version="current", namespace=0
     ):
         super(Wikinews, self).__init__(

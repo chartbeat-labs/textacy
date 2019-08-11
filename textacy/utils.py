@@ -125,7 +125,8 @@ def to_bytes(s, encoding="utf-8", errors="strict"):
 
 
 def to_unicode(s, encoding="utf-8", errors="strict"):
-    """Coerce ``s`` to unicode.
+    """
+    Coerce ``s`` to unicode.
 
     Args:
         s (str or bytes)

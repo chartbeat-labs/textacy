@@ -26,12 +26,11 @@ Foundation's `Capitol Words API <http://sunlightlabs.github.io/Capitol-Words/>`_
 """
 import itertools
 import logging
-import os
 import urllib.parse
 
-from .. import constants
+from .. import constants, utils
 from .. import io as tio
-from . import utils
+from . import utils as ds_utils
 from .dataset import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -88,8 +87,8 @@ class CapitolWords(Dataset):
         Corpus(100 docs; 70496 tokens)
 
     Args:
-        data_dir (str): Path to directory on disk under which dataset data is stored,
-            i.e. ``/path/to/data_dir/capitol_words`` .
+        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
+            under which dataset is stored, i.e. ``/path/to/data_dir/capitol_words``.
 
     Attributes:
         full_date_range (Tuple[str]): First and last dates for which speeches
@@ -125,20 +124,20 @@ class CapitolWords(Dataset):
     chambers = {"Extensions", "House", "Senate"}
     congresses = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
 
-    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
+    def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
         super(CapitolWords, self).__init__(NAME, meta=META)
-        self.data_dir = data_dir
+        self.data_dir = utils.to_path(data_dir).resolve()
         self._filename = "capitol-words-py3.json.gz"
-        self._filepath = os.path.join(self.data_dir, self._filename)
+        self._filepath = self.data_dir.joinpath(self._filename)
 
     @property
     def filepath(self):
         """
         str: Full path on disk for CapitolWords data as compressed json file.
-            ``None`` if file is not found, e.g. has not yet been downloaded.
+        ``None`` if file is not found, e.g. has not yet been downloaded.
         """
-        if os.path.isfile(self._filepath):
-            return self._filepath
+        if self._filepath.is_file():
+            return str(self._filepath)
         else:
             return None
 
@@ -153,7 +152,7 @@ class CapitolWords(Dataset):
         """
         release_tag = "capitol_words_py3_v{data_version}".format(data_version=1.0)
         url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
-        filepath = utils.download_file(
+        ds_utils.download_file(
             url,
             filename=self._filename,
             dirpath=self.data_dir,
@@ -161,7 +160,7 @@ class CapitolWords(Dataset):
         )
 
     def __iter__(self):
-        if not os.path.isfile(self._filepath):
+        if not self._filepath.is_file():
             raise OSError(
                 "dataset file {} not found;\n"
                 "has the dataset been downloaded yet?".format(self._filepath)
@@ -186,7 +185,7 @@ class CapitolWords(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if date_range is not None:
-            date_range = utils.validate_and_clip_range_filter(
+            date_range = ds_utils.validate_and_clip_range_filter(
                 date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: (
@@ -195,19 +194,19 @@ class CapitolWords(Dataset):
                 )
             )
         if speaker_name is not None:
-            speaker_name = utils.validate_set_member_filter(
+            speaker_name = ds_utils.validate_set_member_filter(
                 speaker_name, (str, bytes), valid_vals=self.speaker_names)
             filters.append(lambda record: record.get("speaker_name") in speaker_name)
         if speaker_party is not None:
-            speaker_party = utils.validate_set_member_filter(
+            speaker_party = ds_utils.validate_set_member_filter(
                 speaker_party, (str, bytes), valid_vals=self.speaker_parties)
             filters.append(lambda record: record.get("speaker_party") in speaker_party)
         if chamber is not None:
-            chamber = utils.validate_set_member_filter(
+            chamber = ds_utils.validate_set_member_filter(
                 chamber, (str, bytes), valid_vals=self.chambers)
             filters.append(lambda record: record.get("chamber") in chamber)
         if congress is not None:
-            congress = utils.validate_set_member_filter(
+            congress = ds_utils.validate_set_member_filter(
                 congress, int, valid_vals=self.congresses)
             filters.append(lambda record: record.get("congress") in congress)
         return filters

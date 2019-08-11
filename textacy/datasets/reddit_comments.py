@@ -20,14 +20,13 @@ For more details, refer to https://archive.org/details/2015_reddit_comments_corp
 """
 import itertools
 import logging
-import os
 import re
 import urllib.parse
 from datetime import datetime
 
-from .. import constants
+from .. import constants, utils
 from .. import io as tio
-from . import utils
+from . import utils as ds_utils
 from .dataset import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -83,8 +82,9 @@ class RedditComments(Dataset):
         Corpus(1000 docs; 27582 tokens)
 
     Args:
-        data_dir (str): Path to directory on disk under which the data is stored.
-            Each file covers a given month, as indicated in the filenames like
+        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
+            under which the data is stored, i.e. ``/path/to/data_dir/reddit_comments``.
+            Each file covers a given month, as indicated in the filename like
             "YYYY/RC_YYYY-MM.bz2".
 
     Attributes:
@@ -98,9 +98,9 @@ class RedditComments(Dataset):
     full_date_range = ("2007-10-01", "2015-06-01")
     _full_score_range = (-2147483647, 2147483647)
 
-    def __init__(self, data_dir=os.path.join(constants.DEFAULT_DATA_DIR, NAME)):
+    def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
         super(RedditComments, self).__init__(NAME, meta=META)
-        self.data_dir = data_dir
+        self.data_dir = utils.to_path(data_dir).resolve()
         self._date_range = None
 
     @property
@@ -109,7 +109,7 @@ class RedditComments(Dataset):
         Tuple[str]: Full paths on disk for all Reddit comments files found under
         the ``data_dir`` directory, sorted chronologically.
         """
-        if os.path.isdir(self.data_dir):
+        if self.data_dir.is_dir():
             return tuple(
                 sorted(
                     tio.get_filepaths(
@@ -138,11 +138,11 @@ class RedditComments(Dataset):
             force (bool): If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
-        date_range = utils.validate_and_clip_range_filter(
+        date_range = ds_utils.validate_and_clip_range_filter(
             date_range, self.full_date_range, val_type=(str, bytes))
         filestubs = self._generate_filestubs(date_range)
         for filestub in filestubs:
-            filepath = utils.download_file(
+            ds_utils.download_file(
                 urllib.parse.urljoin(DOWNLOAD_ROOT, filestub),
                 filename=filestub,
                 dirpath=self.data_dir,
@@ -177,11 +177,11 @@ class RedditComments(Dataset):
         # for performance reasons, only iterate over files that are requested
         if self._date_range is not None:
             filepaths = [
-                os.path.join(self.data_dir, filestub)
+                self.data_dir.joinpath(filestub)
                 for filestub in self._generate_filestubs(self._date_range)
             ]
             for filepath in filepaths:
-                if not os.path.isfile(filepath):
+                if not filepath.is_file():
                     raise OSError(
                         "requested comments file {} not found;\n"
                         "has the dataset been downloaded yet?".format(filepath)
@@ -212,12 +212,12 @@ class RedditComments(Dataset):
                 lambda record: len(record.get("body", "")) >= min_len
             )
         if subreddit is not None:
-            subreddit = utils.validate_set_member_filter(subreddit, (str, bytes))
+            subreddit = ds_utils.validate_set_member_filter(subreddit, (str, bytes))
             filters.append(
                 lambda record: record.get("subreddit") in subreddit
             )
         if date_range is not None:
-            date_range = utils.validate_and_clip_range_filter(
+            date_range = ds_utils.validate_and_clip_range_filter(
                 date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: (
@@ -226,7 +226,7 @@ class RedditComments(Dataset):
                 )
             )
         if score_range is not None:
-            score_range = utils.validate_and_clip_range_filter(
+            score_range = ds_utils.validate_and_clip_range_filter(
                 score_range, self._full_score_range, val_type=(int, float))
             filters.append(
                 lambda record: (
