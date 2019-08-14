@@ -56,7 +56,7 @@ RE_NONBREAKING_SPACE = re.compile(r"[^\S\n\v]+", flags=re.UNICODE)
 RE_DANGLING_PARENS_TERM = re.compile(
     r"(?:\s|^)(\()\s{1,2}(.*?)\s{1,2}(\))(?:\s|$)", flags=re.UNICODE)
 RE_LEAD_TAIL_CRUFT_TERM = re.compile(
-    r"^([^\w(-] ?)+|([^\w).!?] ?)+$", flags=re.UNICODE)
+    r"^[^\w(-]+|[^\w).!?]+$", flags=re.UNICODE)
 RE_LEAD_HYPHEN_TERM = re.compile(
     r"^-([^\W\d_])", flags=re.UNICODE)
 RE_NEG_DIGIT_TERM = re.compile(
