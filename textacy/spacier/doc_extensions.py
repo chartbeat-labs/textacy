@@ -223,6 +223,7 @@ def to_tagged_text(doc):
 
 def to_terms_list(
     doc,
+    *,
     ngrams=(1, 2, 3),
     entities=True,
     normalize="lemma",
@@ -389,6 +390,7 @@ def to_terms_list(
 
 def to_bag_of_terms(
     doc,
+    *,
     ngrams=(1, 2, 3),
     entities=True,
     normalize="lemma",
@@ -460,8 +462,16 @@ def to_bag_of_terms(
     return bot
 
 
-def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False,
-                    filter_stops=True, filter_punct=True, filter_nums=False):
+def to_bag_of_words(
+    doc,
+    *,
+    normalize="lemma",
+    weighting="count",
+    as_strings=False,
+    filter_stops=True,
+    filter_punct=True,
+    filter_nums=False,
+):
     """
     Transform ``Doc`` into a bag-of-words: the set of unique words in ``Doc``
     mapped to their absolute, relative, or binary frequency of occurrence.
@@ -532,6 +542,7 @@ def to_bag_of_words(doc, normalize="lemma", weighting="count", as_strings=False,
 
 def to_semantic_network(
     doc,
+    *,
     nodes="words",
     normalize="lemma",
     edge_weighting="default",
