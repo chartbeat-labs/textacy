@@ -31,7 +31,7 @@ class TestLoadSpacyLang(object):
 
     def test_bad_name(self):
         for name in ("unk", "un"):
-            with pytest.raises((OSError, IOError)):
+            with pytest.raises(OSError):
                 _ = cache.load_spacy_lang(name)
         with pytest.raises(ImportError):
             _ = cache.load_spacy_lang("un", allow_blank=True)

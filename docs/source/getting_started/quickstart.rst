@@ -434,14 +434,14 @@ only analyze those for which models are available:
     >>> for text in texts:
     ...     try:
     ...         doc = textacy.make_spacy_doc(text)
-    ...     except (OSError, IOError):
+    ...     except OSError:
     ...         continue
     ...     # do stuff...
 
 When the ``lang`` param is unspecified, textacy tries to auto-detect the text's
 language and load the corresponding model; if that model is unavailable, spaCy
-will raise an ``OSError`` (or an ``IOError`` in PY2). This try/except also handles
-the case where language detection fails and returns, say, "un" for "unknown".
+will raise an ``OSError``. This try/except also handles the case where
+language detection fails and returns, say, "un" for "unknown".
 
 It's worth noting that, although spaCy has statistical models for annotating texts
 in only 10 or so languages, it supports tokenization in dozens of other languages.
