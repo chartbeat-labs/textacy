@@ -19,7 +19,7 @@ from ..io import write_http_stream
 LOGGER = logging.getLogger(__name__)
 
 
-def download_file(url, filename=None, dirpath=constants.DEFAULT_DATA_DIR, force=False):
+def download_file(url, *, filename=None, dirpath=constants.DEFAULT_DATA_DIR, force=False):
     """
     Download a file from ``url`` and save it to disk.
 
@@ -63,7 +63,7 @@ def get_filename_from_url(url):
     return os.path.basename(urllib.parse.urlparse(urllib.parse.unquote_plus(url)).path)
 
 
-def unpack_archive(filepath, extract_dir=None):
+def unpack_archive(filepath, *, extract_dir=None):
     """
     Extract data from a zip or tar archive file into a directory
     (or do nothing if the file isn't an archive).

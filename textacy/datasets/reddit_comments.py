@@ -123,7 +123,7 @@ class RedditComments(Dataset):
         else:
             return tuple()
 
-    def download(self, date_range=(None, None), force=False):
+    def download(self, *, date_range=(None, None), force=False):
         """
         Download 1 or more monthly Reddit comments files from archive.org
         and save them to disk under the ``data_dir`` directory.
@@ -246,7 +246,7 @@ class RedditComments(Dataset):
                 yield record
 
     def texts(
-        self, subreddit=None, date_range=None, score_range=None, min_len=None, limit=None
+        self, *, subreddit=None, date_range=None, score_range=None, min_len=None, limit=None
     ):
         """
         Iterate over comments (text-only) in 1 or more files of this dataset,
@@ -287,7 +287,7 @@ class RedditComments(Dataset):
             self._date_range = None
 
     def records(
-        self, subreddit=None, date_range=None, score_range=None, min_len=None, limit=None
+        self, *, subreddit=None, date_range=None, score_range=None, min_len=None, limit=None
     ):
         """
         Iterate over comments (including text and metadata) in 1 or more files

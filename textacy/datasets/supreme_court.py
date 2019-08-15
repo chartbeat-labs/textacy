@@ -560,7 +560,7 @@ class SupremeCourt(Dataset):
         else:
             return None
 
-    def download(self, force=False):
+    def download(self, *, force=False):
         """
         Download the data as a Python version-specific compressed json file and
         save it to disk under the ``data_dir`` directory.
@@ -639,6 +639,7 @@ class SupremeCourt(Dataset):
 
     def texts(
         self,
+        *,
         opinion_author=None,
         decision_direction=None,
         issue_area=None,
@@ -683,6 +684,7 @@ class SupremeCourt(Dataset):
 
     def records(
         self,
+        *,
         opinion_author=None,
         decision_direction=None,
         issue_area=None,

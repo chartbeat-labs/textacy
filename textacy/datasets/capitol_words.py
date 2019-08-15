@@ -141,7 +141,7 @@ class CapitolWords(Dataset):
         else:
             return None
 
-    def download(self, force=False):
+    def download(self, *, force=False):
         """
         Download the data as a Python version-specific compressed json file and
         save it to disk under the ``data_dir`` directory.
@@ -222,6 +222,7 @@ class CapitolWords(Dataset):
 
     def texts(
         self,
+        *,
         speaker_name=None,
         speaker_party=None,
         chamber=None,
@@ -267,6 +268,7 @@ class CapitolWords(Dataset):
 
     def records(
         self,
+        *,
         speaker_name=None,
         speaker_party=None,
         chamber=None,

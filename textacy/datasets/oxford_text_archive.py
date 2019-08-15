@@ -101,7 +101,7 @@ class OxfordTextArchive(Dataset):
         self._metadata_filepath = self.data_dir.joinpath("master", "metadata.tsv")
         self._metadata = None
 
-    def download(self, force=False):
+    def download(self, *, force=False):
         """
         Download the data as a zip archive file, then save it to disk and
         extract its contents under the :attr:`OxfordTextArchive.data_dir` directory.
@@ -231,7 +231,7 @@ class OxfordTextArchive(Dataset):
             for record in self:
                 yield record
 
-    def texts(self, author=None, date_range=None, min_len=None, limit=None):
+    def texts(self, *, author=None, date_range=None, min_len=None, limit=None):
         """
         Iterate over works in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield texts only.
@@ -258,7 +258,7 @@ class OxfordTextArchive(Dataset):
         for record in itertools.islice(self._filtered_iter(filters), limit):
             yield record["text"]
 
-    def records(self, author=None, date_range=None, min_len=None, limit=None):
+    def records(self, *, author=None, date_range=None, min_len=None, limit=None):
         """
         Iterate over works in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield text + metadata pairs.

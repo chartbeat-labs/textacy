@@ -137,7 +137,7 @@ class Wikimedia(Dataset):
         else:
             return None
 
-    def download(self, force=False):
+    def download(self, *, force=False):
         """
         Download the Wikimedia CirrusSearch db dump corresponding to the given
         ``project``, ``lang``, and ``version`` as a compressed JSON file,
@@ -291,7 +291,7 @@ class Wikimedia(Dataset):
             for record in self:
                 yield record
 
-    def texts(self, category=None, wiki_link=None, min_len=None, limit=None):
+    def texts(self, *, category=None, wiki_link=None, min_len=None, limit=None):
         """
         Iterate over wiki pages in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield texts only,
@@ -321,7 +321,7 @@ class Wikimedia(Dataset):
         for record in itertools.islice(self._filtered_iter(filters), limit):
             yield record["text"]
 
-    def records(self, category=None, wiki_link=None, min_len=None, limit=None):
+    def records(self, *, category=None, wiki_link=None, min_len=None, limit=None):
         """
         Iterate over wiki pages in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield text + metadata pairs,
@@ -404,8 +404,11 @@ class Wikipedia(Wikimedia):
     """
 
     def __init__(
-        self, data_dir=constants.DEFAULT_DATA_DIR.joinpath("wikipedia"),
-        lang="en", version="current", namespace=0
+        self,
+        data_dir=constants.DEFAULT_DATA_DIR.joinpath("wikipedia"),
+        lang="en",
+        version="current",
+        namespace=0,
     ):
         super(Wikipedia, self).__init__(
             "wikipedia", METAS["wikipedia"], "wiki", data_dir,
@@ -464,8 +467,11 @@ class Wikinews(Wikimedia):
     """
 
     def __init__(
-        self, data_dir=constants.DEFAULT_DATA_DIR.joinpath("wikinews"),
-        lang="en", version="current", namespace=0
+        self,
+        data_dir=constants.DEFAULT_DATA_DIR.joinpath("wikinews"),
+        lang="en",
+        version="current",
+        namespace=0,
     ):
         super(Wikinews, self).__init__(
             "wikinews", METAS["wikinews"], "wikinews", data_dir,

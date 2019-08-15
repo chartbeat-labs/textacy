@@ -106,7 +106,7 @@ class IMDB(Dataset):
         self._subset = None
         self._label = None
 
-    def download(self, force=False):
+    def download(self, *, force=False):
         """
         Download the data as a compressed tar archive file, then save it to disk and
         extract its contents under the ``data_dir`` directory.
@@ -215,7 +215,9 @@ class IMDB(Dataset):
             for record in self:
                 yield record
 
-    def texts(self, subset=None, label=None, rating_range=None, min_len=None, limit=None):
+    def texts(
+        self, *, subset=None, label=None, rating_range=None, min_len=None, limit=None
+    ):
         """
         Iterate over movie reviews in this dataset, optionally filtering by
         a variety of metadata and/or text length, and yield texts only.
@@ -225,6 +227,11 @@ class IMDB(Dataset):
                 the dataset subset into which they've already been split.
             label (str, {"pos", "neg", "unsup"}): Filter movie reviews by
                 the assigned sentiment label (or lack thereof, for "unsup").
+            rating_range (Tuple[int, int]): Filter movie reviews by the rating assigned
+                by the reviewer. Only those with ratings in the interval [low, high)
+                are included. Both low and high values must be specified, but a null value
+                for either is automatically replaced by the minimum or maximum
+                valid values, respectively.
             min_len (int): Filter movie reviews by the length (number of characters)
                 of their text content.
             limit (int): Yield no more than ``limit`` movie reviews that match all
@@ -246,7 +253,9 @@ class IMDB(Dataset):
             self._subset = None
             self._label = None
 
-    def records(self, subset=None, label=None, rating_range=None, min_len=None, limit=None):
+    def records(
+        self, *, subset=None, label=None, rating_range=None, min_len=None, limit=None
+    ):
         """
         Iterate over movie reviews in this dataset, optionally filtering by
         a variety of metadata and/or text length, and yield text + metadata pairs.
@@ -256,6 +265,11 @@ class IMDB(Dataset):
                 the dataset subset into which they've already been split.
             label (str, {"pos", "neg", "unsup"}): Filter movie reviews by
                 the assigned sentiment label (or lack thereof, for "unsup").
+            rating_range (Tuple[int, int]): Filter movie reviews by the rating assigned
+                by the reviewer. Only those with ratings in the interval [low, high)
+                are included. Both low and high values must be specified, but a null value
+                for either is automatically replaced by the minimum or maximum
+                valid values, respectively.
             min_len (int): Filter movie reviews by the length (number of characters)
                 of their text content.
             limit (int): Yield no more than ``limit`` movie reviews that match all
