@@ -44,7 +44,7 @@ def normalize_quotation_marks(text):
     return text.translate(QUOTE_TRANSLATION_TABLE)
 
 
-def normalize_unicode(text, form="NFC"):
+def normalize_unicode(text, *, form="NFC"):
     """
     Normalize unicode characters in ``text`` into canonical forms.
 

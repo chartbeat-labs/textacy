@@ -10,7 +10,7 @@ import unicodedata
 from .resources import _get_punct_translation_table
 
 
-def remove_accents(text, fast=False):
+def remove_accents(text, *, fast=False):
     """
     Remove accents from any accented unicode characters in ``text``, either by
     replacing them with ASCII equivalents or removing them entirely.
@@ -49,7 +49,7 @@ def remove_accents(text, fast=False):
         )
 
 
-def remove_punctuation(text, marks=None):
+def remove_punctuation(text, *, marks=None):
     """
     Remove punctuation from ``text`` by replacing all instances of ``marks``
     with whitespace.
