@@ -16,6 +16,7 @@ from .. import extract, utils
 
 def sgrank(
     doc,
+    *,
     normalize="lemma",
     ngrams=(1, 2, 3, 4, 5, 6),
     include_pos=("NOUN", "PROPN", "ADJ"),

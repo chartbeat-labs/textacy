@@ -46,7 +46,7 @@ def normalize_terms(terms, normalize):
         yield term
 
 
-def aggregate_term_variants(terms, acro_defs=None, fuzzy_dedupe=True):
+def aggregate_term_variants(terms, *, acro_defs=None, fuzzy_dedupe=True):
     """
     Take a set of unique terms and aggregate terms that are symbolic, lexical,
     and ordering variants of each other, as well as acronyms and fuzzy string matches.
@@ -173,7 +173,7 @@ def get_longest_subsequence_candidates(doc, match_func):
             yield tuple(words_grp)
 
 
-def get_ngram_candidates(doc, ns, include_pos=("NOUN", "PROPN", "ADJ")):
+def get_ngram_candidates(doc, ns, *, include_pos=("NOUN", "PROPN", "ADJ")):
     """
     Get candidate keyterms from ``doc``, where candidates are n-length sequences
     of tokens (for all n in ``ns``) that don't start/end with a stop word or
@@ -234,7 +234,7 @@ def get_pattern_matching_candidates(doc, patterns):
         yield tuple(match)
 
 
-def get_filtered_topn_terms(term_scores, topn, match_threshold=None):
+def get_filtered_topn_terms(term_scores, topn, *, match_threshold=None):
     """
     Build up a list of the ``topn`` terms, filtering out any that are substrings
     of better-scoring terms and optionally filtering out any that are sufficiently
@@ -273,7 +273,7 @@ def get_filtered_topn_terms(term_scores, topn, match_threshold=None):
 
 
 def most_discriminating_terms(
-    terms_lists, bool_array_grp1, max_n_terms=1000, top_n_terms=25
+    terms_lists, bool_array_grp1, *, max_n_terms=1000, top_n_terms=25
 ):
     """
     Given a collection of documents assigned to 1 of 2 exclusive groups, get the

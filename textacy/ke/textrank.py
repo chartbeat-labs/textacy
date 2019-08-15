@@ -12,6 +12,7 @@ from .. import utils
 
 def textrank(
     doc,
+    *,
     normalize="lemma",
     include_pos=("NOUN", "PROPN", "ADJ"),
     window_size=2,

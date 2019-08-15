@@ -15,6 +15,7 @@ from .. import utils
 
 def scake(
     doc,
+    *,
     normalize="lemma",
     include_pos=("NOUN", "PROPN", "ADJ"),
     topn=10,

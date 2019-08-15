@@ -16,6 +16,7 @@ from .. import utils
 
 def yake(
     doc,
+    *,
     normalize="lemma",
     ngrams=(1, 2, 3),
     include_pos=("NOUN", "PROPN", "ADJ"),
@@ -138,7 +139,7 @@ def _get_attr_name(normalize, as_strings):
     else:
         raise ValueError(
             "normalize='{}' is invalid; "
-            "must be None or one of {}".format({"lemma", "lower"})
+            "must be None or one of {}".format(normalize, {None, "lemma", "lower"})
         )
     if as_strings is True:
         attr_name = attr_name + "_"

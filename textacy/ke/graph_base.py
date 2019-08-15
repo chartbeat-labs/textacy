@@ -14,7 +14,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def build_graph_from_terms(
-    terms, normalize="lemma", window_size=10, edge_weighting="count"
+    terms, *, normalize="lemma", window_size=10, edge_weighting="count"
 ):
     """
     Transform an ordered list of non-overlapping terms into a graph,
