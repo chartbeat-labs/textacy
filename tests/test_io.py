@@ -21,7 +21,7 @@ def spacy_doc():
     return spacy_doc
 
 
-class TestTextIO(object):
+class TestTextIO:
 
     def test_read_write_bytes(self, tmpdir):
         expected = utils.to_bytes(TEXT)
@@ -60,7 +60,7 @@ class TestTextIO(object):
             assert observed == expected
 
 
-class TestJSONIO(object):
+class TestJSONIO:
 
     def test_read_write_bytes(self, tmpdir, spacy_doc):
         expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
@@ -100,7 +100,7 @@ class TestJSONIO(object):
             assert observed == expected
 
 
-class TestCSVIO(object):
+class TestCSVIO:
 
     def test_read_write_compressed(self, tmpdir):
         expected = [
@@ -156,7 +156,7 @@ class TestCSVIO(object):
         assert observed == expected
 
 
-class TestSpacyIO(object):
+class TestSpacyIO:
 
     def test_read_write_docs(self, tmpdir, spacy_doc):
         expected = [tok.lower_ for tok in spacy_doc]
@@ -196,7 +196,7 @@ class TestSpacyIO(object):
         assert observed == expected
 
 
-class TestMatrixIO(object):
+class TestMatrixIO:
 
     def test_read_write_sparse_csr(self, tmpdir):
         expected = sp.csr_matrix(
@@ -251,7 +251,7 @@ class TestMatrixIO(object):
         assert abs(observed - expected).nnz == 0
 
 
-class TestIOUtils(object):
+class TestIOUtils:
 
     def test_get_filepaths(self):
         expected = sorted(

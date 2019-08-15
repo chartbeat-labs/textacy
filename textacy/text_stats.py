@@ -15,7 +15,7 @@ from . import extract
 LOGGER = logging.getLogger(__name__)
 
 
-class TextStats(object):
+class TextStats:
     """
     Compute a variety of basic counts and readability statistics for a given
     document. For example:

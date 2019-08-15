@@ -21,7 +21,7 @@ def doc_pairs(text_pairs):
     ]
 
 
-class TestWordMovers(object):
+class TestWordMovers:
 
     def test_metrics(self, doc_pairs):
         metrics = ("cosine", "l1", "manhattan", "l2", "euclidean")
@@ -36,7 +36,7 @@ class TestWordMovers(object):
             assert similarity.word_movers(doc2, doc2) == pytest.approx(1.0, rel=1e-3)
 
 
-class TestWord2Vec(object):
+class TestWord2Vec:
 
     def test_default(self, doc_pairs):
         for doc1, doc2 in doc_pairs:
@@ -48,7 +48,7 @@ class TestWord2Vec(object):
             assert similarity.word2vec(doc2, doc2) == pytest.approx(1.0, rel=1e-3)
 
 
-class TestJaccard(object):
+class TestJaccard:
 
     def test_obj_types(self, text_pairs):
         for text1, text2 in text_pairs:
@@ -79,7 +79,7 @@ class TestJaccard(object):
                 _ = similarity.jaccard(text1, text2, match_threshold=mt)
 
 
-class TestLevenshtein(object):
+class TestLevenshtein:
 
     def test_default(self, text_pairs):
         for text1, text2 in text_pairs:
@@ -95,7 +95,7 @@ class TestLevenshtein(object):
             assert similarity.levenshtein(text1, "") == 0.0
 
 
-class TestCharacterNgrams(object):
+class TestCharacterNgrams:
 
     def test_default(self, text_pairs):
         for text1, text2 in text_pairs:
@@ -111,7 +111,7 @@ class TestCharacterNgrams(object):
             assert similarity.character_ngrams(text1, "") == 0.0
 
 
-class TestTokenSortRatio(object):
+class TestTokenSortRatio:
 
     def test_default(self, text_pairs):
         for text1, text2 in text_pairs:

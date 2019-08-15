@@ -9,7 +9,7 @@ def test_cache_clear():
     assert len(cache.LRU_CACHE.keys()) == 0
 
 
-class TestLoadSpacyLang(object):
+class TestLoadSpacyLang:
 
     def test_load_model(self):
         for lang in ["en", "en_core_web_sm"]:

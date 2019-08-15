@@ -28,7 +28,7 @@ BM25_K1 = 1.6  # value typically bounded in [1.2, 2.0]
 BM25_B = 0.75
 
 
-class Vectorizer(object):
+class Vectorizer:
     """
     Transform one or more tokenized documents into a sparse document-term matrix
     of shape (# docs, # unique terms), with flexibly weighted and normalized values.

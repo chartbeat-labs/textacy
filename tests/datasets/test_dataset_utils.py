@@ -15,7 +15,7 @@ from textacy.datasets.utils import (
 from textacy import io as tio
 
 
-class TestValidateAndClipRangeFilter(object):
+class TestValidateAndClipRangeFilter:
 
     def test_good_inputs(self):
         inputs = [
@@ -75,7 +75,7 @@ class TestValidateAndClipRangeFilter(object):
                 validate_and_clip_range_filter(*input_)
 
 
-class TestValidateSetMemberFilter(object):
+class TestValidateSetMemberFilter:
 
     def test_good_inputs(self):
         inputs = [

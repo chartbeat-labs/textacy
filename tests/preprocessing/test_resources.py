@@ -235,7 +235,7 @@ BAD_SHORT_URLS = [
 ]
 
 
-class TestEmailRegex(object):
+class TestEmailRegex:
 
     def test_good_emails(self):
         for item in GOOD_EMAILS:
@@ -246,7 +246,7 @@ class TestEmailRegex(object):
             assert RE_EMAIL.search(item) is None
 
 
-class TestEmojiRegex(object):
+class TestEmojiRegex:
 
     def test_good_emojis(self):
         for item in GOOD_EMOJIS:
@@ -255,7 +255,7 @@ class TestEmojiRegex(object):
             assert item == match.group()
 
 
-class TestHashtagRegex(object):
+class TestHashtagRegex:
 
     def test_good_hashtags(self):
         for item in GOOD_HASHTAGS:
@@ -266,7 +266,7 @@ class TestHashtagRegex(object):
             assert RE_HASHTAG.search(item) is None
 
 
-class TestNumberRegex(object):
+class TestNumberRegex:
 
     def test_good_numbers(self):
         for item in GOOD_NUMBERS:
@@ -281,7 +281,7 @@ class TestNumberRegex(object):
             assert item != RE_NUMBER.search(item)
 
 
-class TestPhoneNumberRegex(object):
+class TestPhoneNumberRegex:
 
     def test_good_phone_numbers(self):
         for item in GOOD_PHONE_NUMBERS:
@@ -296,7 +296,7 @@ class TestPhoneNumberRegex(object):
             assert item != RE_PHONE_NUMBER.search(item)
 
 
-class TestShortURLRegex(object):
+class TestShortURLRegex:
 
     def test_good_short_urls(self):
         for item in GOOD_SHORT_URLS:
@@ -307,7 +307,7 @@ class TestShortURLRegex(object):
             assert RE_SHORT_URL.search(item) is None
 
 
-class TestURLRegex(object):
+class TestURLRegex:
 
     def test_good_urls(self):
         for item in GOOD_URLS:

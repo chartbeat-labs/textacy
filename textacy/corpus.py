@@ -21,7 +21,7 @@ from . import utils
 LOGGER = logging.getLogger(__name__)
 
 
-class Corpus(object):
+class Corpus:
     """
     An ordered collection of :class:`spacy.tokens.Doc`, all of the same language
     and sharing the same :class:`spacy.language.Language` processing pipeline

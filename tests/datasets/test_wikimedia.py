@@ -14,7 +14,7 @@ WIKIPEDIA = wikimedia.Wikipedia(lang="en", version="current")
     WIKIPEDIA.filepath is None,
     reason="Wikinews dataset must be downloaded before running tests",
 )
-class TestWikipedia(object):
+class TestWikipedia:
 
     @pytest.mark.skip("No need to download a new dataset every time")
     def test_download(self, tmpdir):
@@ -91,7 +91,7 @@ class TestWikipedia(object):
     WIKINEWS.filepath is None,
     reason="Wikinews dataset must be downloaded before running tests",
 )
-class TestWikinews(object):
+class TestWikinews:
 
     @pytest.mark.skip("No need to download a new dataset every time")
     def test_download(self, tmpdir):

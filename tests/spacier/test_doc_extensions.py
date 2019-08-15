@@ -30,7 +30,7 @@ def test_set_remove_extensions():
         assert spacy.tokens.Doc.has_extension(name) is True
 
 
-class TestDocExtensions(object):
+class TestDocExtensions:
 
     def test_lang(self, doc):
         lang = doc._.lang

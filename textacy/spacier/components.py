@@ -13,7 +13,7 @@ from .. import text_stats
 LOGGER = logging.getLogger(__name__)
 
 
-class TextStatsComponent(object):
+class TextStatsComponent:
     """
     A custom component to be added to a spaCy language pipeline that computes
     one, some, or all text stats for a parsed doc and sets the values

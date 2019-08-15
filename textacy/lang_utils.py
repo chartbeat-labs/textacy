@@ -62,7 +62,7 @@ from . import utils
 LOGGER = logging.getLogger(__name__)
 
 
-class LangIdentifier(object):
+class LangIdentifier:
     """
     Args:
         data_dir (str)

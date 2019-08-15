@@ -22,7 +22,7 @@ def langs():
     return ("en", cache.load_spacy_lang("en"), lambda text: "en")
 
 
-class TestMakeSpacyDoc(object):
+class TestMakeSpacyDoc:
 
     def test_text_data(self, langs):
         text = "This is an English sentence."

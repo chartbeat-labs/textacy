@@ -15,7 +15,7 @@ from .. import viz
 LOGGER = logging.getLogger(__name__)
 
 
-class TopicModel(object):
+class TopicModel:
     """
     Train and apply a topic model to vectorized texts using scikit-learn's
     implementations of LSA, LDA, and NMF models. Also any other topic model implementations that have

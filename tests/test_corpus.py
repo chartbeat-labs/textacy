@@ -21,7 +21,7 @@ def corpus():
     return Corpus("en", data=DATASET.records(limit=5))
 
 
-class TestCorpusInit(object):
+class TestCorpusInit:
 
     def test_corpus_init_lang(self):
         assert isinstance(Corpus("en"), Corpus)
@@ -64,7 +64,7 @@ class TestCorpusInit(object):
         assert corpus.n_sents == 0
 
 
-class TestCorpusDunder(object):
+class TestCorpusDunder:
 
     def test_repr(self, corpus):
         repr = str(corpus)
@@ -89,7 +89,7 @@ class TestCorpusDunder(object):
             del corpus["foo"]
 
 
-class TestCorpusProperties(object):
+class TestCorpusProperties:
 
     def test_vectors(self, corpus):
         vectors = corpus.vectors
@@ -104,7 +104,7 @@ class TestCorpusProperties(object):
         assert vector_norms.shape[0] == len(corpus)
 
 
-class TestCorpusMethods(object):
+class TestCorpusMethods:
 
     def test_corpus_add(self, corpus):
         spacy_lang = cache.load_spacy_lang("en")

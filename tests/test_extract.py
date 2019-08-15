@@ -20,7 +20,7 @@ def spacy_doc():
     return spacy_doc
 
 
-class TestWords(object):
+class TestWords:
 
     def test_default(self, spacy_doc):
         result = list(extract.words(spacy_doc))
@@ -54,7 +54,7 @@ class TestWords(object):
         assert all(counts[tok.lower_] >= 2 for tok in result)
 
 
-class TestNGrams(object):
+class TestNGrams:
 
     def test_n_less_than_1(self, spacy_doc):
         with pytest.raises(ValueError):
@@ -94,7 +94,7 @@ class TestNGrams(object):
         assert not any(tok.pos_ == "NOUN" for span in result4 for tok in span)
 
 
-class TestEntities(object):
+class TestEntities:
 
     def test_default(self, spacy_doc):
         result = list(extract.entities(spacy_doc, drop_determiners=False))
@@ -155,7 +155,7 @@ class TestEntities(object):
         assert all(span.label_ for span in result)
 
 
-class TestNounChunks(object):
+class TestNounChunks:
 
     def test_default(self, spacy_doc):
         result = list(extract.noun_chunks(spacy_doc))
@@ -172,7 +172,7 @@ class TestNounChunks(object):
         assert all(text.count(span.lower_) >= 2 for span in result)
 
 
-class TestPOSRegexMatches(object):
+class TestPOSRegexMatches:
 
     def test_deprecation_warning(self, spacy_doc):
         with pytest.warns(DeprecationWarning):
@@ -193,7 +193,7 @@ class TestPOSRegexMatches(object):
         assert all(any(tok.pos_ in required_pos for tok in span) for span in result)
 
 
-class TestMatches(object):
+class TestMatches:
 
     def test_pattern_types(self, spacy_doc):
         all_patterns = [
@@ -275,7 +275,7 @@ class TestMatches(object):
                 _ = extract._make_pattern_from_string(patstr)
 
 
-class TestSubjectVerbObjectTriples(object):
+class TestSubjectVerbObjectTriples:
 
     def test_default(self, spacy_doc):
         result = list(extract.subject_verb_object_triples(spacy_doc))
@@ -284,7 +284,7 @@ class TestSubjectVerbObjectTriples(object):
         assert all(any(tok.pos_ == "VERB" for tok in triple[1]) for triple in result)
 
 
-class TestAcronymsAndDefinitions(object):
+class TestAcronymsAndDefinitions:
 
     def test_default(self, spacy_doc):
         # TODO: figure out if this function no longer works, ugh

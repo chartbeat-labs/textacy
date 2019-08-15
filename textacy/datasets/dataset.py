@@ -1,4 +1,4 @@
-class Dataset(object):
+class Dataset:
     """
     Base class for textacy datasets.
 
