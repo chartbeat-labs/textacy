@@ -12,7 +12,7 @@ from .utils import open_sesame, _make_dirs
 from .. import utils
 
 
-def read_sparse_matrix(filepath, kind="csc"):
+def read_sparse_matrix(filepath, *, kind="csc"):
     """
     Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
     at ``filepath``, and return an instantiated sparse matrix.
@@ -46,7 +46,7 @@ def read_sparse_matrix(filepath, kind="csc"):
         )
 
 
-def write_sparse_matrix(data, filepath, compressed=True, make_dirs=False):
+def write_sparse_matrix(data, filepath, *, compressed=True, make_dirs=False):
     """
     Write sparse matrix ``data`` to disk at ``filepath``, optionally compressed,
     into a single ``.npz`` file.

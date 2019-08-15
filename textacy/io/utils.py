@@ -23,6 +23,7 @@ _ext_to_compression = {".bz2": "bz2", ".gz": "gzip", ".xz": "xz", ".zip": "zip"}
 
 def open_sesame(
     filepath,
+    *,
     mode="rt",
     encoding=None,
     errors=None,
@@ -111,7 +112,7 @@ def _get_compression(filepath, compression):
 
 
 def _get_file_handle(
-    filepath, mode, compression=None, encoding=None, errors=None, newline=None
+    filepath, mode, *, compression=None, encoding=None, errors=None, newline=None,
 ):
     """
     Get a file handle for the given ``filepath`` and ``mode``, plus optional kwargs.
@@ -253,6 +254,7 @@ def unzip(seq):
 
 def get_filepaths(
     dirpath,
+    *,
     match_regex=None,
     ignore_regex=None,
     extension=None,

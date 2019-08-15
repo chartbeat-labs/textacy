@@ -19,7 +19,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def read_http_stream(
-    url, lines=False, decode_unicode=False, chunk_size=1024, auth=None
+    url, *, lines=False, decode_unicode=False, chunk_size=1024, auth=None,
 ):
     """
     Read data from ``url`` in a stream, either all at once or line-by-line.
@@ -61,7 +61,7 @@ def read_http_stream(
 
 
 def write_http_stream(
-    url, filepath, mode="wt", encoding=None, make_dirs=False, chunk_size=1024, auth=None
+    url, filepath, *, mode="wt", encoding=None, make_dirs=False, chunk_size=1024, auth=None,
 ):
     """
     Download data from ``url`` in a stream, and write successive chunks

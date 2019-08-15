@@ -16,7 +16,7 @@ from .. import utils
 from .utils import open_sesame
 
 
-def read_spacy_docs(filepath, format="pickle", lang=None):
+def read_spacy_docs(filepath, *, format="pickle", lang=None):
     """
     Read the contents of a file at ``filepath``, written either in pickle or binary
     format.
@@ -126,7 +126,13 @@ def read_spacy_docs(filepath, format="pickle", lang=None):
 
 
 def write_spacy_docs(
-    data, filepath, make_dirs=False, format="pickle", exclude=("tensor",), include_tensor=None
+    data,
+    filepath,
+    *,
+    make_dirs=False,
+    format="pickle",
+    exclude=("tensor",),
+    include_tensor=None,
 ):
     """
     Write one or more ``Doc`` s to disk at ``filepath`` in either pickle or

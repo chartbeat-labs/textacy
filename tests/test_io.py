@@ -162,7 +162,7 @@ class TestSpacyIO(object):
         expected = [tok.lower_ for tok in spacy_doc]
         for ext in (".pkl", ".pkl.gz", ".pkl.bz2", ".pkl.xz"):
             filepath = str(tmpdir.join("test_read_write_spacy_docs" + ext))
-            io.write_spacy_docs(spacy_doc, filepath, True)
+            io.write_spacy_docs(spacy_doc, filepath, make_dirs=True)
             observed = [
                 tok.lower_ for doc in io.read_spacy_docs(filepath) for tok in doc
             ]
@@ -171,7 +171,7 @@ class TestSpacyIO(object):
     def test_read_write_docs_binary(self, tmpdir, spacy_doc):
         expected = [tok.lower_ for tok in spacy_doc]
         filepath = str(tmpdir.join("test_read_write_spacy_docs_binary.bin"))
-        io.write_spacy_docs(spacy_doc, filepath, True, format="binary")
+        io.write_spacy_docs(spacy_doc, filepath, make_dirs=True, format="binary")
         with pytest.raises(ValueError):
             next(io.read_spacy_docs(filepath, format="binary", lang=None))
         observed = [
@@ -185,7 +185,7 @@ class TestSpacyIO(object):
         expected = [tok.lower_ for tok in spacy_doc]
         filepath = str(tmpdir.join("test_read_write_spacy_docs_binary_exclude.bin"))
         io.write_spacy_docs(
-            spacy_doc, filepath, True,
+            spacy_doc, filepath, make_dirs=True,
             format="binary", exclude=["sentiment", "user_data"],
         )
         observed = [

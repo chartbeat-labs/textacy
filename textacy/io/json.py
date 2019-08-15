@@ -12,7 +12,7 @@ import json
 from .utils import open_sesame, _validate_read_mode, _validate_write_mode
 
 
-def read_json(filepath, mode="rt", encoding=None, lines=False):
+def read_json(filepath, *, mode="rt", encoding=None, lines=False):
     """
     Read the contents of a JSON file at ``filepath``, either all at once
     or streaming item-by-item.
@@ -39,7 +39,7 @@ def read_json(filepath, mode="rt", encoding=None, lines=False):
                 yield json.loads(line)
 
 
-def read_json_mash(filepath, mode="rt", encoding=None, buffer_size=2048):
+def read_json_mash(filepath, *, mode="rt", encoding=None, buffer_size=2048):
     """
     Read the contents of a JSON file at ``filepath`` one item at a time,
     where all of the items have been mashed together, end-to-end, on a single line.
@@ -79,6 +79,7 @@ def read_json_mash(filepath, mode="rt", encoding=None, buffer_size=2048):
 def write_json(
     data,
     filepath,
+    *,
     mode="wt",
     encoding=None,
     make_dirs=False,

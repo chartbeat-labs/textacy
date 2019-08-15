@@ -13,6 +13,7 @@ from .utils import open_sesame
 
 def read_csv(
     filepath,
+    *,
     encoding=None,
     fieldnames=None,
     dialect="excel",
@@ -104,6 +105,7 @@ def read_csv(
 def write_csv(
     data,
     filepath,
+    *,
     encoding=None,
     make_dirs=False,
     fieldnames=None,
