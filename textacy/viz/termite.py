@@ -66,6 +66,7 @@ def draw_termite_plot(
     values_mat,
     col_labels,
     row_labels,
+    *,
     highlight_cols=None,
     highlight_colors=None,
     save=False,

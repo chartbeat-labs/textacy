@@ -39,6 +39,7 @@ RC_PARAMS = {
 
 def draw_semantic_network(
     graph,
+    *,
     node_weights=None,
     spread=3.0,
     draw_nodes=False,
