@@ -251,6 +251,7 @@ class Vectorizer(object):
 
     def __init__(
         self,
+        *,
         tf_type="linear",
         apply_idf=False,
         idf_type="smooth",
@@ -882,6 +883,7 @@ class GroupVectorizer(Vectorizer):
 
     def __init__(
         self,
+        *,
         tf_type="linear",
         apply_idf=False,
         idf_type="smooth",

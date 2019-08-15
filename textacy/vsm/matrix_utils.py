@@ -10,7 +10,7 @@ import numpy as np
 import scipy.sparse as sp
 
 
-def get_term_freqs(doc_term_matrix, type_="linear"):
+def get_term_freqs(doc_term_matrix, *, type_="linear"):
     """
     Compute frequencies for all terms in a document-term matrix, with optional
     sub-linear scaling.
@@ -72,7 +72,7 @@ def get_doc_freqs(doc_term_matrix):
     return np.bincount(doc_term_matrix.indices, minlength=n_terms)
 
 
-def get_inverse_doc_freqs(doc_term_matrix, type_="smooth"):
+def get_inverse_doc_freqs(doc_term_matrix, *, type_="smooth"):
     """
     Compute inverse document frequencies for all terms in a document-term matrix,
     using one of several IDF formulations.
@@ -115,7 +115,7 @@ def get_inverse_doc_freqs(doc_term_matrix, type_="smooth"):
         )
 
 
-def get_doc_lengths(doc_term_matrix, type_="linear"):
+def get_doc_lengths(doc_term_matrix, *, type_="linear"):
     """
     Compute the lengths (i.e. number of terms) for all documents in a
     document-term matrix.
@@ -179,7 +179,7 @@ def get_information_content(doc_term_matrix):
     return ics
 
 
-def apply_idf_weighting(doc_term_matrix, type_="smooth"):
+def apply_idf_weighting(doc_term_matrix, *, type_="smooth"):
     """
     Apply inverse document frequency (idf) weighting to a term-frequency (tf)
     weighted document-term matrix, using one of several IDF formulations.
@@ -201,7 +201,7 @@ def apply_idf_weighting(doc_term_matrix, type_="smooth"):
 
 
 def filter_terms_by_df(
-    doc_term_matrix, term_to_id, max_df=1.0, min_df=1, max_n_terms=None
+    doc_term_matrix, term_to_id, *, max_df=1.0, min_df=1, max_n_terms=None,
 ):
     """
     Filter out terms that are too common and/or too rare (by document frequency),
@@ -277,7 +277,7 @@ def filter_terms_by_df(
     return (doc_term_matrix[:, kept_indices], term_to_id)
 
 
-def filter_terms_by_ic(doc_term_matrix, term_to_id, min_ic=0.0, max_n_terms=None):
+def filter_terms_by_ic(doc_term_matrix, term_to_id, *, min_ic=0.0, max_n_terms=None):
     """
     Filter out terms that are too common and/or too rare (by information content),
     and compactify the top ``max_n_terms`` in the ``id_to_term`` mapping accordingly.
