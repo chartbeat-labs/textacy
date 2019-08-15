@@ -186,7 +186,7 @@ class TopicModel(object):
         except AttributeError:
             return self.model.n_components
 
-    def get_doc_topic_matrix(self, doc_term_matrix, normalize=True):
+    def get_doc_topic_matrix(self, doc_term_matrix, *, normalize=True):
         """
         Transform a document-term matrix into a document-topic matrix, where rows
         correspond to documents and columns to the topics in the topic model.
@@ -207,7 +207,7 @@ class TopicModel(object):
         else:
             return doc_topic_matrix
 
-    def top_topic_terms(self, id2term, topics=-1, top_n=10, weights=False):
+    def top_topic_terms(self, id2term, *, topics=-1, top_n=10, weights=False):
         """
         Get the top ``top_n`` terms by weight per topic in ``model``.
 
@@ -257,7 +257,7 @@ class TopicModel(object):
                     ),
                 )
 
-    def top_topic_docs(self, doc_topic_matrix, topics=-1, top_n=10, weights=False):
+    def top_topic_docs(self, doc_topic_matrix, *, topics=-1, top_n=10, weights=False):
         """
         Get the top ``top_n`` docs by weight per topic in ``doc_topic_matrix``.
 
@@ -301,7 +301,7 @@ class TopicModel(object):
                     ),
                 )
 
-    def top_doc_topics(self, doc_topic_matrix, docs=-1, top_n=3, weights=False):
+    def top_doc_topics(self, doc_topic_matrix, *, docs=-1, top_n=3, weights=False):
         """
         Get the top ``top_n`` topics by weight per doc for ``docs`` in ``doc_topic_matrix``.
 
@@ -370,6 +370,7 @@ class TopicModel(object):
         self,
         doc_term_matrix,
         id2term,
+        *,
         topics=-1,
         sort_topics_by="index",
         highlight_topics=None,
