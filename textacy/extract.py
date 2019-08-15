@@ -22,6 +22,7 @@ from .spacier import utils as spacy_utils
 
 def words(
     doc,
+    *,
     filter_stops=True,
     filter_punct=True,
     filter_nums=False,
@@ -97,6 +98,7 @@ def words(
 def ngrams(
     doc,
     n,
+    *,
     filter_stops=True,
     filter_punct=True,
     filter_nums=False,
@@ -190,7 +192,14 @@ def ngrams(
         yield ngram
 
 
-def entities(doc, include_types=None, exclude_types=None, drop_determiners=True, min_freq=1):
+def entities(
+    doc,
+    *,
+    include_types=None,
+    exclude_types=None,
+    drop_determiners=True,
+    min_freq=1,
+):
     """
     Extract an ordered sequence of named entities (PERSON, ORG, LOC, etc.) from
     a ``Doc``, optionally filtering by entity types and frequencies.
@@ -286,7 +295,7 @@ def _parse_ent_types(ent_types, which):
         )
 
 
-def noun_chunks(doc, drop_determiners=True, min_freq=1):
+def noun_chunks(doc, *, drop_determiners=True, min_freq=1):
     """
     Extract an ordered sequence of noun chunks from a spacy-parsed doc, optionally
     filtering by frequency and dropping leading determiners.
@@ -360,7 +369,7 @@ def pos_regex_matches(doc, pattern):
         yield doc[tags[0 : m.start()].count(" ") : tags[0 : m.end()].count(" ")]
 
 
-def matches(doc, patterns, on_match=None):
+def matches(doc, patterns, *, on_match=None):
     """
     Extract ``Span`` s from a ``Doc`` matching one or more patterns
     of per-token attr:value pairs, with optional quantity qualifiers.
@@ -792,7 +801,7 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
 
 
 def semistructured_statements(
-    doc, entity, cue="be", ignore_entity_case=True, min_n_words=1, max_n_words=20
+    doc, entity, *, cue="be", ignore_entity_case=True, min_n_words=1, max_n_words=20
 ):
     """
     Extract "semi-structured statements" from a spacy-parsed doc, each as a

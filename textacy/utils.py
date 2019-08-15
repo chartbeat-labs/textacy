@@ -3,7 +3,7 @@ import sys
 import warnings
 
 
-def deprecated(message, action="always"):
+def deprecated(message, *, action="always"):
     """
     Show a deprecation warning, optionally filtered.
 
@@ -105,7 +105,7 @@ def to_collection(val, val_type, col_type):
         )
 
 
-def to_bytes(s, encoding="utf-8", errors="strict"):
+def to_bytes(s, *, encoding="utf-8", errors="strict"):
     """Coerce ``s`` to bytes.
 
     Args:
@@ -124,7 +124,7 @@ def to_bytes(s, encoding="utf-8", errors="strict"):
         raise TypeError("`s` must be {}, not {}".format((str, bytes), type(s)))
 
 
-def to_unicode(s, encoding="utf-8", errors="strict"):
+def to_unicode(s, *, encoding="utf-8", errors="strict"):
     """
     Coerce ``s`` to unicode.
 

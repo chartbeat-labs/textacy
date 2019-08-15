@@ -396,7 +396,7 @@ class Corpus(object):
 
     # useful methods
 
-    def word_counts(self, normalize="lemma", weighting="count", as_strings=False,
+    def word_counts(self, *, normalize="lemma", weighting="count", as_strings=False,
                     filter_stops=True, filter_punct=True, filter_nums=False):
         """
         Map the set of unique words in :class:`Corpus` to their counts as
@@ -457,7 +457,7 @@ class Corpus(object):
         return word_counts_
 
     def word_doc_counts(
-        self, normalize="lemma", weighting="count", smooth_idf=True, as_strings=False,
+        self, *, normalize="lemma", weighting="count", smooth_idf=True, as_strings=False,
         filter_stops=True, filter_punct=True, filter_nums=True):
         """
         Map the set of unique words in :class:`Corpus` to their *document* counts

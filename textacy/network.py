@@ -21,7 +21,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def terms_to_semantic_network(
-    terms, normalize="lemma", window_width=10, edge_weighting="cooc_freq"
+    terms, *, normalize="lemma", window_width=10, edge_weighting="cooc_freq",
 ):
     """
     Transform an ordered list of non-overlapping terms into a semantic network,
@@ -130,7 +130,7 @@ def terms_to_semantic_network(
     return graph
 
 
-def sents_to_semantic_network(sents, normalize="lemma", edge_weighting="cosine"):
+def sents_to_semantic_network(sents, *, normalize="lemma", edge_weighting="cosine"):
     """
     Transform a list of sentences into a semantic network, where each sentence is
     represented by a node with edges linking it to other sentences weighted by

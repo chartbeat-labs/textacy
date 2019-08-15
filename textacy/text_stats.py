@@ -203,7 +203,7 @@ def flesch_kincaid_grade_level(n_syllables, n_words, n_sents):
     return (11.8 * n_syllables / n_words) + (0.39 * n_words / n_sents) - 15.59
 
 
-def flesch_reading_ease(n_syllables, n_words, n_sents, lang=None):
+def flesch_reading_ease(n_syllables, n_words, n_sents, *, lang=None):
     """
     Readability score usually in the range [0, 100], related (inversely) to
     :func:`flesch_kincaid_grade_level()`. Higher value => easier text.
@@ -315,6 +315,7 @@ def wiener_sachtextformel(
     n_monosyllable_words,
     n_long_words,
     n_sents,
+    *,
     variant=1,
 ):
     """

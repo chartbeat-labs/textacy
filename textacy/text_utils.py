@@ -55,7 +55,7 @@ def is_acronym(token, exclude=None):
 
 
 def keyword_in_context(
-    text, keyword, ignore_case=True, window_width=50, print_only=True
+    text, keyword, *, ignore_case=True, window_width=50, print_only=True,
 ):
     """
     Search for ``keyword`` in ``text`` via regular expression, return or print strings
