@@ -119,4 +119,4 @@ def _get_punct_translation_table():
 
 QUOTE_TRANSLATION_TABLE = {
     ord(x): ord(y)
-    for x, y in zip("‘’´`“”", "''''\"\"")}
+    for x, y in zip("ʼ‘’´`“”", "'''''\"\"")}

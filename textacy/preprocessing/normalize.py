@@ -33,7 +33,8 @@ def normalize_hyphenated_words(text):
 def normalize_quotation_marks(text):
     """
     Normalize all "fancy" single- and double-quotation marks in ``text``
-    to just the basic ASCII equivalents.
+    to just the basic ASCII equivalents. Note that this will also normalize fancy
+    apostrophes, which are typically represented as single quotation marks.
 
     Args:
         text (str)
