@@ -1,3 +1,21 @@
+"""
+ConceptNet
+----------
+
+ConceptNet is a multilingual knowledge base, representing common words and phrases
+and the common-sense relationships between them. This information is collected from
+a variety of sources, including crowd-sourced resources (e.g. Wiktionary, Open Mind
+Common Sense), games with a purpose (e.g. Verbosity, nadya.jp), and expert-created
+resources (e.g. WordNet, JMDict).
+
+The interface in textacy gives access to several key relationships between terms
+that are useful in a variety of NLP tasks:
+
+    - antonyms: terms that are opposites of each other in some relevant way
+    - hyponyms: terms that are subtypes or specific instances of other terms
+    - meronyms: terms that are parts of other terms
+    - synonyms: terms that are sufficiently similar that they may be used interchangeably
+"""
 import collections
 import json
 import logging
@@ -19,7 +37,7 @@ META = {
     "publication_url": "https://arxiv.org/abs/1612.03975",
     "description": (
         "An open, multilingual semantic network of general knowledge, "
-        "designed to help computers understand the meanings of words.",
+        "designed to help computers understand the meanings of words."
     )
 }
 DOWNLOAD_ROOT = "https://s3.amazonaws.com/conceptnet/downloads/{year}/edges/conceptnet-assertions-{version}.csv.gz"
@@ -27,6 +45,50 @@ DOWNLOAD_ROOT = "https://s3.amazonaws.com/conceptnet/downloads/{year}/edges/conc
 
 class ConceptNet(Resource):
     """
+    Interface to ConceptNet, a multilingual knowledge base representing common words
+    and phrases and the common-sense relationships between them.
+
+    Download the data (one time only!), and save its contents to disk::
+
+        >>> rs = ConceptNet()
+        >>> rs.download()
+        >>> rs.info
+        {'name': 'concept_net',
+         'site_url': 'http://conceptnet.io',
+         'publication_url': 'https://arxiv.org/abs/1612.03975',
+         'description': 'An open, multilingual semantic network of general knowledge, designed to help computers understand the meanings of words.'}
+
+    Access other same-language terms related to a given term in a variety of ways::
+
+        >>> rs.get_synonyms("spouse", lang="en", sense="n")
+        ['mate', 'married person', 'better half', 'partner']
+        >>> rs.get_antonyms("love", lang="en", sense="v")
+        ['detest', 'hate', 'loathe']
+        >>> rs.get_hyponyms("marriage", lang="en", sense="n")
+        ['cohabitation situation', 'union', 'legal agreement', 'ritual', 'family', 'marital status']
+
+    Note that the very first time a given relationship is accessed, the full ConceptNet db
+    must be parsed and split for fast future access. This can take a couple minutes;
+    be patient.
+
+    When passing a spaCy ``Token`` or ``Span``, the corresponding ``lang`` and ``sense``
+    are inferred automatically from the object::
+
+        >>> text = "The quick brown fox jumps over the lazy dog."
+        >>> doc = textacy.make_spacy_doc(text, lang="en")
+        >>> rs.get_synonyms(doc[1])  # quick
+        ['flying', 'fast', 'rapid', 'ready', 'straightaway', 'nimble', 'speedy', 'warm']
+        >>> rs.get_synonyms(doc[4:5])  # jumps over
+        ['leap', 'startle', 'hump', 'flinch', 'jump off', 'skydive', 'jumpstart', ...]
+
+    Many terms won't have entries, for actual linguistic reasons or because the db's
+    coverage of a given language's vocabulary isn't comprehensive::
+
+        >>> rs.get_meronyms(doc[3])  # fox
+        []
+        >>> rs.get_antonyms(doc[7])  # lazy
+        []
+
     Args:
         data_dir (str or :class:`pathlib.Path`)
         version ({"5.7.0", "5.6.0", "5.5.5"})
@@ -46,6 +108,8 @@ class ConceptNet(Resource):
         self._filename = "conceptnet-assertions-{}.csv.gz".format(self.version)
         self._filepath = self.data_dir.joinpath(self._filename)
         self._antonyms = None
+        self._hyponyms = None
+        self._meronyms = None
         self._synonyms = None
 
     def download(self, *, force=False):
@@ -83,7 +147,7 @@ class ConceptNet(Resource):
                 "resource file {} not found;\n"
                 "has the data been downloaded yet?".format(self._filepath)
             )
-        rel_fname = "{}.json".format(_split_uri(relation)[1].lower())
+        rel_fname = "{}.json.gz".format(_split_uri(relation)[1].lower())
         rel_fpath = self.data_dir.joinpath(rel_fname)
         if rel_fpath.is_file():
             LOGGER.debug("loading data for '%s' relation from %s", relation, rel_fpath)
@@ -109,8 +173,6 @@ class ConceptNet(Resource):
                         break
                     start_lang, start_term, start_sense = _parse_concept_uri(start_uri)
                     end_lang, end_term, end_sense = _parse_concept_uri(end_uri)
-                    # TODO: determine if requiring same sense is too string, i.e.
-                    # start_sense == end_sense ?
                     if start_lang == end_lang and start_term != end_term:
                         rel_data[start_lang][start_term][start_sense].add(end_term)
                         if is_symmetric:
@@ -129,11 +191,23 @@ class ConceptNet(Resource):
         Args:
             term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
             lang (str)
-            sense (str)
+            sense ({"n", "v", "a", "r"})
 
         Returns:
             List[str]
         """
+        if lang is not None and lang not in rel_data:
+            raise ValueError(
+                "lang='{}' is invalid; available langs are {}".format(
+                    lang, sorted(rel_data.keys())
+                )
+            )
+        if sense is not None and sense not in self._pos_map.values():
+            raise ValueError(
+                "sense='{}' is invalid; available senses are {}".format(
+                    sense, sorted(self._pos_map.values())
+                )
+            )
         if isinstance(term, str):
             if not (lang and sense):
                 raise ValueError(
@@ -145,21 +219,22 @@ class ConceptNet(Resource):
                 term.text.replace(" ", "_").lower(),
                 term.lemma_.replace(" ", "_").lower(),
             ]
-            lang = term.lang_
-            try:
-                sense = self._pos_map[term.pos]
-            except KeyError:
-                return []
+            if not lang:
+                try:
+                    lang = term.lang_  # token
+                except AttributeError:
+                    lang = term[0].lang_  # span
+            if not sense:
+                try:
+                    sense = self._pos_map[term.pos]  # token
+                except AttributeError:
+                    sense = self._pos_map[term[0].pos]  # span
+                except KeyError:
+                    return []
         else:
             raise TypeError(
                 "`term` must be one of {}, not {}".format(
                     {str, Span, Token}, type(term)
-                )
-            )
-        if lang not in rel_data:
-            raise ValueError(
-                "lang='{}' is invalid; available langs are {}".format(
-                    lang, sorted(rel_data.keys())
                 )
             )
         # TODO: implement an out-of-vocabulary strategy? for example,
@@ -175,7 +250,12 @@ class ConceptNet(Resource):
     def antonyms(self):
         """
         Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to
-        sense to set of term's antonyms. Careful, this is a _large_ nested dictionary.
+        sense to set of term's antonyms -- opposites of the term in some relevant way,
+        like being at opposite ends of a scale or fundamentally similar but with
+        a key difference between them -- such as black <=> white or hot <=> cold. Note
+        that this relationship is symmetric.
+
+        Based on the "/r/Antonym" relation in ConceptNet.
         """
         if not self._antonyms:
             self._antonyms = self._get_relation_data("/r/Antonym", is_symmetric=True)
@@ -185,8 +265,9 @@ class ConceptNet(Resource):
         """
         Args:
             term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
-            lang (str)
-            sense (str)
+            lang (str): Standard code for the language of ``term``.
+            sense ({"n", "v", "a", "r"}): Sense in which ``term`` is used in context,
+                where "n" => "NOUN", "v" => "VERB", "a" => "ADJECTIVE", "r" => "ADVERB".
 
         Returns:
             List[str]
@@ -194,10 +275,65 @@ class ConceptNet(Resource):
         return self._get_relation_values(self.antonyms, term, lang=lang, sense=sense)
 
     @property
+    def hyponyms(self):
+        """
+        Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to
+        sense to set of term's hyponyms -- subtypes or specific instances of the term --
+        such as car => vehicle or Chicago => city. Every A is a B.
+
+        Based on the "/r/IsA" relation in ConceptNet.
+        """
+        if not self._hyponyms:
+            self._hyponyms = self._get_relation_data("/r/IsA", is_symmetric=False)
+        return self._hyponyms
+
+    def get_hyponyms(self, term, *, lang=None, sense=None):
+        """
+        Args:
+            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
+            lang (str): Standard code for the language of ``term``.
+            sense ({"n", "v", "a", "r"}): Sense in which ``term`` is used in context,
+                where "n" => "NOUN", "v" => "VERB", "a" => "ADJECTIVE", "r" => "ADVERB".
+
+        Returns:
+            List[str]
+        """
+        return self._get_relation_values(self.hyponyms, term, lang=lang, sense=sense)
+
+    @property
+    def meronyms(self):
+        """
+        Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to
+        sense to set of term's meronyms -- parts of the term -- such as gearshift => car.
+
+        Based on the "/r/PartOf" relation in ConceptNet.
+        """
+        if not self._meronyms:
+            self._meronyms = self._get_relation_data("/r/PartOf", is_symmetric=False)
+        return self._meronyms
+
+    def get_meronyms(self, term, *, lang=None, sense=None):
+        """
+        Args:
+            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
+            lang (str): Standard code for the language of ``term``.
+            sense ({"n", "v", "a", "r"}): Sense in which ``term`` is used in context,
+                where "n" => "NOUN", "v" => "VERB", "a" => "ADJECTIVE", "r" => "ADVERB".
+
+        Returns:
+            List[str]
+        """
+        return self._get_relation_values(self.meronyms, term, lang=lang, sense=sense)
+
+    @property
     def synonyms(self):
         """
         Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to
-        sense to set of term's synonyms. Careful, this is a _large_ nested dictionary.
+        sense to set of term's synonyms -- sufficiently similar concepts that they may
+        be used interchangeably -- such as sunlight <=> sunshine. Note that
+        this relationship is symmetric.
+
+        Based on the "/r/Synonym" relation in ConceptNet.
         """
         if not self._synonyms:
             self._synonyms = self._get_relation_data("/r/Synonym", is_symmetric=True)
@@ -207,8 +343,9 @@ class ConceptNet(Resource):
         """
         Args:
             term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
-            lang (str)
-            sense (str)
+            lang (str): Standard code for the language of ``term``.
+            sense ({"n", "v", "a", "r"}): Sense in which ``term`` is used in context,
+                where "n" => "NOUN", "v" => "VERB", "a" => "ADJECTIVE", "r" => "ADVERB".
 
         Returns:
             List[str]
