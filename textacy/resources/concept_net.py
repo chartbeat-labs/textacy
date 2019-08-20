@@ -20,7 +20,6 @@ import collections
 import json
 import logging
 
-from spacy.parts_of_speech import ADJ, ADV, NOUN, VERB
 from spacy.tokens import Span, Token
 from tqdm import tqdm
 
@@ -50,7 +49,7 @@ class ConceptNet(Resource):
 
     Download the data (one time only!), and save its contents to disk::
 
-        >>> rs = ConceptNet()
+        >>> rs = textacy.resoures.ConceptNet()
         >>> rs.download()
         >>> rs.info
         {'name': 'concept_net',
@@ -67,7 +66,7 @@ class ConceptNet(Resource):
         >>> rs.get_hyponyms("marriage", lang="en", sense="n")
         ['cohabitation situation', 'union', 'legal agreement', 'ritual', 'family', 'marital status']
 
-    Note that the very first time a given relationship is accessed, the full ConceptNet db
+    **Note:** The very first time a given relationship is accessed, the full ConceptNet db
     must be parsed and split for fast future access. This can take a couple minutes;
     be patient.
 
@@ -90,12 +89,15 @@ class ConceptNet(Resource):
         []
 
     Args:
-        data_dir (str or :class:`pathlib.Path`)
-        version ({"5.7.0", "5.6.0", "5.5.5"})
+        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
+            under which resource data is stored, i.e. ``/path/to/data_dir/concept_net``.
+        version ({"5.7.0", "5.6.0", "5.5.5"}): Version string of the ConceptNet db
+            to use. Since newer versions typically represent improvements over earlier
+            versions, you'll probably want "5.7.0" (the default value).
     """
 
     _version_years = {"5.7.0": 2019, "5.6.0": 2018, "5.5.5": 2017}
-    _pos_map = {NOUN: "n", VERB: "v", ADJ: "a", ADV: "r"}
+    _pos_map = {"NOUN": "n", "VERB": "v", "ADJ": "a", "ADV": "r"}
 
     def __init__(
         self,
@@ -191,23 +193,25 @@ class ConceptNet(Resource):
         Args:
             term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
             lang (str)
-            sense ({"n", "v", "a", "r"})
+            sense (str)
 
         Returns:
             List[str]
         """
         if lang is not None and lang not in rel_data:
             raise ValueError(
-                "lang='{}' is invalid; available langs are {}".format(
+                "lang='{}' is invalid; valid langs are {}".format(
                     lang, sorted(rel_data.keys())
                 )
             )
-        if sense is not None and sense not in self._pos_map.values():
-            raise ValueError(
-                "sense='{}' is invalid; available senses are {}".format(
-                    sense, sorted(self._pos_map.values())
-                )
-            )
+        if sense is not None:
+            # let's be kind and automatically convert standard POS strings
+            if sense in self._pos_map.keys():
+                sense = self._pos_map[sense]
+            # otherwise, return no results as is done when auto-inferrence of sense
+            # results in an invalid value
+            elif sense not in self._pos_map.values():
+                return []
         if isinstance(term, str):
             if not (lang and sense):
                 raise ValueError(
@@ -226,9 +230,9 @@ class ConceptNet(Resource):
                     lang = term[0].lang_  # span
             if not sense:
                 try:
-                    sense = self._pos_map[term.pos]  # token
+                    sense = self._pos_map[term.pos_]  # token
                 except AttributeError:
-                    sense = self._pos_map[term[0].pos]  # span
+                    sense = self._pos_map[term[0].pos_]  # span
                 except KeyError:
                     return []
         else:
@@ -266,8 +270,9 @@ class ConceptNet(Resource):
         Args:
             term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
             lang (str): Standard code for the language of ``term``.
-            sense ({"n", "v", "a", "r"}): Sense in which ``term`` is used in context,
-                where "n" => "NOUN", "v" => "VERB", "a" => "ADJECTIVE", "r" => "ADVERB".
+            sense (str): Sense in which ``term`` is used in context, which in practice
+                is just its part of speech. Valid values: "n" or "NOUN", "v" or "VERB",
+                "a" or "ADJ", "r" or "ADV".
 
         Returns:
             List[str]
@@ -292,8 +297,9 @@ class ConceptNet(Resource):
         Args:
             term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
             lang (str): Standard code for the language of ``term``.
-            sense ({"n", "v", "a", "r"}): Sense in which ``term`` is used in context,
-                where "n" => "NOUN", "v" => "VERB", "a" => "ADJECTIVE", "r" => "ADVERB".
+            sense (str): Sense in which ``term`` is used in context, which in practice
+                is just its part of speech. Valid values: "n" or "NOUN", "v" or "VERB",
+                "a" or "ADJ", "r" or "ADV".
 
         Returns:
             List[str]
@@ -317,8 +323,9 @@ class ConceptNet(Resource):
         Args:
             term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
             lang (str): Standard code for the language of ``term``.
-            sense ({"n", "v", "a", "r"}): Sense in which ``term`` is used in context,
-                where "n" => "NOUN", "v" => "VERB", "a" => "ADJECTIVE", "r" => "ADVERB".
+            sense (str): Sense in which ``term`` is used in context, which in practice
+                is just its part of speech. Valid values: "n" or "NOUN", "v" or "VERB",
+                "a" or "ADJ", "r" or "ADV".
 
         Returns:
             List[str]
@@ -344,8 +351,9 @@ class ConceptNet(Resource):
         Args:
             term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
             lang (str): Standard code for the language of ``term``.
-            sense ({"n", "v", "a", "r"}): Sense in which ``term`` is used in context,
-                where "n" => "NOUN", "v" => "VERB", "a" => "ADJECTIVE", "r" => "ADVERB".
+            sense (str): Sense in which ``term`` is used in context, which in practice
+                is just its part of speech. Valid values: "n" or "NOUN", "v" or "VERB",
+                "a" or "ADJ", "r" or "ADV".
 
         Returns:
             List[str]
