@@ -28,7 +28,6 @@ import re
 
 from .. import constants, utils
 from .. import io as tio
-from . import utils as ds_utils
 from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -110,14 +109,14 @@ class OxfordTextArchive(Dataset):
             force (bool): If True, always download the dataset even if
                 it already exists.
         """
-        filepath = ds_utils.download_file(
+        filepath = tio.download_file(
             DOWNLOAD_URL,
             filename=None,
             dirpath=self.data_dir,
             force=force,
         )
         if filepath:
-            ds_utils.unpack_archive(filepath, extract_dir=None)
+            tio.unpack_archive(filepath, extract_dir=None)
 
     @property
     def metadata(self):
@@ -209,13 +208,13 @@ class OxfordTextArchive(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if author is not None:
-            author = ds_utils.validate_set_member_filter(
+            author = utils.validate_set_members(
                 author, (str, bytes), valid_vals=self.authors)
             filters.append(
                 lambda record: record.get("author") and any(athr in author for athr in record["author"])
             )
         if date_range is not None:
-            date_range = ds_utils.validate_and_clip_range_filter(
+            date_range = utils.validate_and_clip_range(
                 date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: record.get("year") and date_range[0] <= record["year"] < date_range[1]

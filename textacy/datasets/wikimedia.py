@@ -32,7 +32,6 @@ from cytoolz import itertoolz
 
 from .. import constants, utils
 from .. import io as tio
-from . import utils as ds_utils
 from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -152,7 +151,7 @@ class Wikimedia(Dataset):
             and can take hours to fully download.
         """
         file_url = self._get_file_url()
-        ds_utils.download_file(
+        tio.download_file(
             file_url,
             filename=self._filestub,
             dirpath=self.data_dir,
@@ -263,7 +262,7 @@ class Wikimedia(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if category is not None:
-            category = ds_utils.validate_set_member_filter(
+            category = utils.validate_set_members(
                 category, (str, bytes), valid_vals=None)
             filters.append(
                 lambda record: (
@@ -272,7 +271,7 @@ class Wikimedia(Dataset):
                 )
             )
         if wiki_link is not None:
-            wiki_link = ds_utils.validate_set_member_filter(
+            wiki_link = utils.validate_set_members(
                 wiki_link, (str, bytes), valid_vals=None)
             filters.append(
                 lambda record: (

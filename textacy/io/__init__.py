@@ -1,8 +1,11 @@
 from .utils import (
     coerce_content_type,
+    download_file,
+    get_filename_from_url,
     get_filepaths,
     open_sesame,
     split_records,
+    unpack_archive,
     unzip,
 )
 from .csv import read_csv, write_csv

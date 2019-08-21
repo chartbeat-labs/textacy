@@ -27,10 +27,8 @@ import logging
 import os
 import re
 
-from .. import constants
+from .. import constants, utils
 from .. import io as tio
-from .. import utils
-from . import utils as ds_utils
 from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -115,14 +113,14 @@ class IMDB(Dataset):
             force (bool): If True, always download the dataset even if
                 it already exists.
         """
-        filepath = ds_utils.download_file(
+        filepath = tio.download_file(
             DOWNLOAD_URL,
             filename="aclImdb.tar.gz",
             dirpath=self.data_dir,
             force=force,
         )
         if filepath:
-            ds_utils.unpack_archive(filepath, extract_dir=None)
+            tio.unpack_archive(filepath, extract_dir=None)
         self._check_data()
 
     def _check_data(self):
@@ -196,7 +194,7 @@ class IMDB(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if rating_range is not None:
-            rating_range = ds_utils.validate_and_clip_range_filter(
+            rating_range = utils.validate_and_clip_range(
                 rating_range, self.full_rating_range, val_type=int)
             filters.append(
                 lambda record: (

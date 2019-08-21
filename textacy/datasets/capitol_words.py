@@ -30,7 +30,6 @@ import urllib.parse
 
 from .. import constants, utils
 from .. import io as tio
-from . import utils as ds_utils
 from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -152,7 +151,7 @@ class CapitolWords(Dataset):
         """
         release_tag = "capitol_words_py3_v{data_version}".format(data_version=1.0)
         url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
-        ds_utils.download_file(
+        tio.download_file(
             url,
             filename=self._filename,
             dirpath=self.data_dir,
@@ -185,7 +184,7 @@ class CapitolWords(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if date_range is not None:
-            date_range = ds_utils.validate_and_clip_range_filter(
+            date_range = utils.validate_and_clip_range(
                 date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: (
@@ -194,19 +193,19 @@ class CapitolWords(Dataset):
                 )
             )
         if speaker_name is not None:
-            speaker_name = ds_utils.validate_set_member_filter(
+            speaker_name = utils.validate_set_members(
                 speaker_name, (str, bytes), valid_vals=self.speaker_names)
             filters.append(lambda record: record.get("speaker_name") in speaker_name)
         if speaker_party is not None:
-            speaker_party = ds_utils.validate_set_member_filter(
+            speaker_party = utils.validate_set_members(
                 speaker_party, (str, bytes), valid_vals=self.speaker_parties)
             filters.append(lambda record: record.get("speaker_party") in speaker_party)
         if chamber is not None:
-            chamber = ds_utils.validate_set_member_filter(
+            chamber = utils.validate_set_members(
                 chamber, (str, bytes), valid_vals=self.chambers)
             filters.append(lambda record: record.get("chamber") in chamber)
         if congress is not None:
-            congress = ds_utils.validate_set_member_filter(
+            congress = utils.validate_set_members(
                 congress, int, valid_vals=self.congresses)
             filters.append(lambda record: record.get("congress") in congress)
         return filters

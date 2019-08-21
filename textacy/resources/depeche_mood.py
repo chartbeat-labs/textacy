@@ -35,7 +35,7 @@ from spacy.parts_of_speech import ADJ, ADV, NOUN, VERB
 from spacy.tokens import Doc, Span, Token
 
 from .. import constants, utils
-from ..datasets import utils as ds_utils  # TODO: move this functionality into io.utils?
+from .. import io as tio
 from .base import Resource
 
 
@@ -219,14 +219,14 @@ class DepecheMood(Resource):
             force (bool): If True, download the resource, even if it already
                 exists on disk under ``data_dir``.
         """
-        filepath = ds_utils.download_file(
+        filepath = tio.download_file(
             DOWNLOAD_URL,
             filename=None,
             dirpath=self.data_dir,
             force=force,
         )
         if filepath:
-            ds_utils.unpack_archive(filepath, extract_dir=None)
+            tio.unpack_archive(filepath, extract_dir=None)
 
     def get_emotional_valence(self, terms):
         """

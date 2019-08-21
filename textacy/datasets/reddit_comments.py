@@ -26,7 +26,6 @@ from datetime import datetime
 
 from .. import constants, utils
 from .. import io as tio
-from . import utils as ds_utils
 from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -138,11 +137,11 @@ class RedditComments(Dataset):
             force (bool): If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
-        date_range = ds_utils.validate_and_clip_range_filter(
+        date_range = utils.validate_and_clip_range(
             date_range, self.full_date_range, val_type=(str, bytes))
         filestubs = self._generate_filestubs(date_range)
         for filestub in filestubs:
-            ds_utils.download_file(
+            tio.download_file(
                 urllib.parse.urljoin(DOWNLOAD_ROOT, filestub),
                 filename=filestub,
                 dirpath=self.data_dir,
@@ -212,12 +211,12 @@ class RedditComments(Dataset):
                 lambda record: len(record.get("body", "")) >= min_len
             )
         if subreddit is not None:
-            subreddit = ds_utils.validate_set_member_filter(subreddit, (str, bytes))
+            subreddit = utils.validate_set_members(subreddit, (str, bytes))
             filters.append(
                 lambda record: record.get("subreddit") in subreddit
             )
         if date_range is not None:
-            date_range = ds_utils.validate_and_clip_range_filter(
+            date_range = utils.validate_and_clip_range(
                 date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: (
@@ -226,7 +225,7 @@ class RedditComments(Dataset):
                 )
             )
         if score_range is not None:
-            score_range = ds_utils.validate_and_clip_range_filter(
+            score_range = utils.validate_and_clip_range(
                 score_range, self._full_score_range, val_type=(int, float))
             filters.append(
                 lambda record: (

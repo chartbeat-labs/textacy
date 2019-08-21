@@ -53,7 +53,6 @@ import urllib.parse
 
 from .. import constants, utils
 from .. import io as tio
-from . import utils as ds_utils
 from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
@@ -571,7 +570,7 @@ class SupremeCourt(Dataset):
         """
         release_tag = "supreme_court_py3_v{data_version}".format(data_version=1.0)
         url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
-        ds_utils.download_file(
+        tio.download_file(
             url,
             filename=self._filename,
             dirpath=self.data_dir,
@@ -603,7 +602,7 @@ class SupremeCourt(Dataset):
                 lambda record: len(record.get("text", "")) >= min_len
             )
         if date_range is not None:
-            date_range = ds_utils.validate_and_clip_range_filter(
+            date_range = utils.validate_and_clip_range(
                 date_range, self.full_date_range, val_type=(str, bytes))
             filters.append(
                 lambda record: (
@@ -612,17 +611,17 @@ class SupremeCourt(Dataset):
                 )
             )
         if opinion_author is not None:
-            opinion_author = ds_utils.validate_set_member_filter(
+            opinion_author = utils.validate_set_members(
                 opinion_author, int, valid_vals=self.opinion_author_codes)
             filters.append(
                 lambda record: record.get("maj_opinion_author") in opinion_author)
         if decision_direction is not None:
-            decision_direction = ds_utils.validate_set_member_filter(
+            decision_direction = utils.validate_set_members(
                 decision_direction, (str, bytes), valid_vals=self.decision_directions)
             filters.append(
                 lambda record: record.get("decision_direction") in decision_direction)
         if issue_area is not None:
-            issue_area = ds_utils.validate_set_member_filter(
+            issue_area = utils.validate_set_members(
                 issue_area, int, valid_vals=self.issue_area_codes)
             filters.append(
                 lambda record: record.get("issue_area") in issue_area)

@@ -23,8 +23,8 @@ import logging
 from spacy.tokens import Span, Token
 from tqdm import tqdm
 
-from .. import constants, io, utils
-from ..datasets import utils as ds_utils  # TODO: move this functionality into io.utils?
+from .. import constants, utils
+from .. import io as tio
 from .base import Resource
 
 
@@ -125,7 +125,7 @@ class ConceptNet(Resource):
         """
         url = DOWNLOAD_ROOT.format(
             version=self.version, year=self._version_years[self.version])
-        ds_utils.download_file(
+        tio.download_file(
             url,
             filename=self._filename,
             dirpath=self.data_dir,
@@ -154,7 +154,7 @@ class ConceptNet(Resource):
         if rel_fpath.is_file():
             LOGGER.debug("loading data for '%s' relation from %s", relation, rel_fpath)
             return next(
-                io.read_json(rel_fpath, mode="rt", encoding="utf-8", lines=False)
+                tio.read_json(rel_fpath, mode="rt", encoding="utf-8", lines=False)
             )
         else:
             rel_data = collections.defaultdict(
@@ -164,7 +164,7 @@ class ConceptNet(Resource):
             )
             LOGGER.info(
                 "preparing data for '%s' relation; this may take a while...", relation)
-            rows = io.read_csv(self.filepath, delimiter="\t", quoting=1)
+            rows = tio.read_csv(self.filepath, delimiter="\t", quoting=1)
             with tqdm() as pbar:
                 for row in rows:
                     pbar.update(1)
@@ -185,7 +185,7 @@ class ConceptNet(Resource):
                     for sense, rel_terms in senses.items():
                         senses[sense] = list(rel_terms)
             LOGGER.info("saving data for '%s' relation to %s", relation, rel_fpath)
-            io.write_json(rel_data, rel_fpath, mode="wt", encoding="utf-8")
+            tio.write_json(rel_data, rel_fpath, mode="wt", encoding="utf-8")
             return rel_data
 
     def _get_relation_values(self, rel_data, term, lang=None, sense=None):
