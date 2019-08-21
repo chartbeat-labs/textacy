@@ -8,8 +8,8 @@ in numpy binary format.
 import numpy as np
 import scipy.sparse as sp
 
-from .utils import open_sesame, _make_dirs
 from .. import utils
+from . import utils as io_utils
 
 
 def read_sparse_matrix(filepath, *, kind="csc"):
@@ -71,7 +71,7 @@ def write_sparse_matrix(data, filepath, *, compressed=True, make_dirs=False):
         )
     filepath = utils.to_path(filepath).resolve()
     if make_dirs is True:
-        _make_dirs(filepath, "w")
+        io_utils._make_dirs(filepath, "w")
     if compressed is True:
         np.savez_compressed(
             str(filepath),

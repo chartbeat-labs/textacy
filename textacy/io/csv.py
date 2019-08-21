@@ -8,7 +8,7 @@ other valid one-char delimiters.
 """
 import csv
 
-from .utils import open_sesame
+from . import utils as io_utils
 
 
 def read_csv(
@@ -58,7 +58,7 @@ def read_csv(
         https://docs.python.org/3/library/csv.html#csv.reader
     """
     has_header = False
-    with open_sesame(filepath, mode="rt", encoding=encoding, newline="") as f:
+    with io_utils.open_sesame(filepath, mode="rt", encoding=encoding, newline="") as f:
         if dialect == "infer" or fieldnames == "infer":
             sniffer = csv.Sniffer()
             # add pipes to the list of preferred delimiters, and put spaces last
@@ -155,7 +155,7 @@ def write_csv(
     See Also:
         https://docs.python.org/3/library/csv.html#csv.writer
     """
-    with open_sesame(
+    with io_utils.open_sesame(
         filepath, mode="wt", newline="", encoding=encoding, make_dirs=make_dirs
     ) as f:
         if fieldnames:

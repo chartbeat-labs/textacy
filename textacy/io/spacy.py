@@ -13,7 +13,7 @@ from spacy.tokens import Doc
 
 from .. import cache
 from .. import utils
-from .utils import open_sesame
+from . import utils as io_utils
 
 
 def read_spacy_docs(filepath, *, format="pickle", lang=None):
@@ -53,7 +53,7 @@ def read_spacy_docs(filepath, *, format="pickle", lang=None):
             provided when ``format="binary"``
     """
     if format == "pickle":
-        with open_sesame(filepath, mode="rb") as f:
+        with io_utils.open_sesame(filepath, mode="rb") as f:
             for spacy_doc in pickle.load(f):
                 yield spacy_doc
     elif format == "binary":
@@ -72,7 +72,7 @@ def read_spacy_docs(filepath, *, format="pickle", lang=None):
             raise ValueError(
                 "lang = '{}' is invalid; must be a str or `spacy.Language`"
             )
-        with open_sesame(filepath, mode="rb") as f:
+        with io_utils.open_sesame(filepath, mode="rb") as f:
             unpacker = msgpack.Unpacker(f, raw=False, unicode_errors="strict")
             for msg in unpacker:
 
@@ -187,10 +187,10 @@ def write_spacy_docs(
     if isinstance(data, Doc):
         data = [data]
     if format == "pickle":
-        with open_sesame(filepath, mode="wb", make_dirs=make_dirs) as f:
+        with io_utils.open_sesame(filepath, mode="wb", make_dirs=make_dirs) as f:
             pickle.dump(list(data), f, protocol=-1)
     elif format == "binary":
-        with open_sesame(filepath, mode="wb", make_dirs=make_dirs) as f:
+        with io_utils.open_sesame(filepath, mode="wb", make_dirs=make_dirs) as f:
             for spacy_doc in data:
                 f.write(spacy_doc.to_bytes(exclude=exclude))
     else:

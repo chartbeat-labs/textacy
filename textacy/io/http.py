@@ -12,8 +12,8 @@ from contextlib import closing
 import requests
 from tqdm import tqdm
 
-from .utils import _make_dirs
 from .. import utils
+from . import utils as io_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ def write_http_stream(
     decode_unicode = True if "t" in mode else False
     filepath = utils.to_path(filepath).resolve()
     if make_dirs is True:
-        _make_dirs(filepath, mode)
+        io_utils._make_dirs(filepath, mode)
     # use `closing` to ensure connection and progress bar *always* close
     with closing(requests.get(url, stream=True, auth=auth)) as r:
         LOGGER.info("downloading data from %s ...", url)

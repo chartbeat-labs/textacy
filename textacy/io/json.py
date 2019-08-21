@@ -9,7 +9,7 @@ import datetime
 import functools
 import json
 
-from .utils import open_sesame, _validate_read_mode, _validate_write_mode
+from . import utils as io_utils
 
 
 def read_json(filepath, *, mode="rt", encoding=None, lines=False):
@@ -30,8 +30,8 @@ def read_json(filepath, *, mode="rt", encoding=None, lines=False):
         object: Next JSON item; could be a dict, list, int, float, str,
         depending on the value of ``lines``.
     """
-    _validate_read_mode(mode)
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+    io_utils._validate_read_mode(mode)
+    with io_utils.open_sesame(filepath, mode=mode, encoding=encoding) as f:
         if lines is False:
             yield json.load(f)
         else:
@@ -60,9 +60,9 @@ def read_json_mash(filepath, *, mode="rt", encoding=None, buffer_size=2048):
         this function is included for users' convenience, but note that
         there is no analogous ``write_json_mash()`` function. Don't do it.
     """
-    _validate_read_mode(mode)
+    io_utils._validate_read_mode(mode)
     json_decoder = json.JSONDecoder()
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+    with io_utils.open_sesame(filepath, mode=mode, encoding=encoding) as f:
         buffer_ = ""
         for chunk in iter(functools.partial(f.read, buffer_size), ""):
             buffer_ += chunk
@@ -130,8 +130,8 @@ def write_json(
     See Also:
         https://docs.python.org/3/library/json.html#json.dump
     """
-    _validate_write_mode(mode)
-    with open_sesame(filepath, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
+    io_utils._validate_write_mode(mode)
+    with io_utils.open_sesame(filepath, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
         if lines is False:
             f.write(
                 json.dumps(

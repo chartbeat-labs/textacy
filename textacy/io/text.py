@@ -5,7 +5,7 @@ Text
 Functions for reading from and writing to disk records in plain text format,
 either as one text per file or one text per *line* in a file.
 """
-from .utils import open_sesame, _validate_read_mode, _validate_write_mode
+from . import utils as io_utils
 
 
 def read_text(filepath, *, mode="rt", encoding=None, lines=False):
@@ -28,8 +28,8 @@ def read_text(filepath, *, mode="rt", encoding=None, lines=False):
         If ``lines`` is False, wrap this output in :func:`next()` to conveniently
         access the full text.
     """
-    _validate_read_mode(mode)
-    with open_sesame(filepath, mode=mode, encoding=encoding) as f:
+    io_utils._validate_read_mode(mode)
+    with io_utils.open_sesame(filepath, mode=mode, encoding=encoding) as f:
         if lines is False:
             yield f.read()
         else:
@@ -65,8 +65,8 @@ def write_text(data, filepath, *, mode="wt", encoding=None, make_dirs=False, lin
         lines (bool): If False, all data is written at once; otherwise, data is
             written to disk one line at a time.
     """
-    _validate_write_mode(mode)
-    with open_sesame(filepath, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
+    io_utils._validate_write_mode(mode)
+    with io_utils.open_sesame(filepath, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
         if lines is False:
             f.write(data)
         else:
