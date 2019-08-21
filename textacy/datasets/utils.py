@@ -12,112 +12,40 @@ import tarfile
 import urllib.parse
 import zipfile
 
-from .. import constants
-from ..utils import to_collection, to_path
-from ..io import write_http_stream
+from .. import constants, utils
+from ..io import utils as io_utils
 
 LOGGER = logging.getLogger(__name__)
 
 
 def download_file(url, *, filename=None, dirpath=constants.DEFAULT_DATA_DIR, force=False):
-    """
-    Download a file from ``url`` and save it to disk.
-
-    Args:
-        url (str): Web address from which to download data.
-        filename (str): Name of the file to which downloaded data is saved.
-            If None, a filename will be inferred from the ``url``.
-        dirpath (str or :class:`pathlib.Path`): Full path to the directory on disk
-            under which downloaded data will be saved as ``filename``.
-        force (bool): If True, download the data even if it already exists at
-            ``dirpath/filename``; otherwise, only download if the data doesn't
-            already exist on disk.
-
-    Returns:
-        str
-    """
-    if not filename:
-        filename = get_filename_from_url(url)
-    filepath = to_path(dirpath).resolve() / filename
-    if filepath.is_file() and force is False:
-        LOGGER.info(
-            "file '%s' already exists and force=False; skipping download...",
-            filepath,
-        )
-        return None
-    else:
-        write_http_stream(url, filepath, mode="wb", make_dirs=True)
-    return str(filepath)
+    utils.deprecated(
+        "This function has been moved to `textacy.io.utils.download_file()` "
+        "and is aliased here only for backwards compatibility. "
+        "This alias will be removed in v0.10.0.",
+        action="once",
+    )
+    return io_utils.download_file(url, filename=filename, dirpath=dirpath, force=force)
 
 
 def get_filename_from_url(url):
-    """
-    Derive a filename from a URL's path.
-
-    Args:
-        url (str): URL from which to extract a filename.
-
-    Returns:
-        str: Filename in URL.
-    """
-    return os.path.basename(urllib.parse.urlparse(urllib.parse.unquote_plus(url)).path)
+    utils.deprecated(
+        "This function has been moved to `textacy.io.utils.get_filename_from_url()` "
+        "and is aliased here only for backwards compatibility. "
+        "This alias will be removed in v0.10.0.",
+        action="once",
+    )
+    return io_utils.get_filename_from_url(url)
 
 
 def unpack_archive(filepath, *, extract_dir=None):
-    """
-    Extract data from a zip or tar archive file into a directory
-    (or do nothing if the file isn't an archive).
-
-    Args:
-        filepath (str or :class:`pathlib.Path`): Full path to file on disk
-            from which archived contents will be extracted.
-        extract_dir (str or :class:`pathlib.Path`): Full path of the directory
-            into which contents will be extracted. If not provided, the same directory
-            as ``filepath`` is used.
-
-    Returns:
-        str: Path to directory of extracted contents.
-    """
-    filepath = to_path(filepath).resolve()
-    if not extract_dir:
-        extract_dir = str(filepath.parent)
-    filepath = str(filepath)
-    os.makedirs(extract_dir, exist_ok=True)
-    is_zipfile = zipfile.is_zipfile(filepath)
-    is_tarfile = tarfile.is_tarfile(filepath)
-    if not is_zipfile and not is_tarfile:
-        LOGGER.debug("'%s' is not an archive", filepath)
-        return extract_dir
-    else:
-        LOGGER.info("extracting data from archive file '%s'", filepath)
-        shutil.unpack_archive(filepath, extract_dir=extract_dir, format=None)
-        # we want to rename the unpacked directory to a consistent value
-        # unfortunately, shutil doesn't pass this back to us
-        # so, we get the root path of all the constituent members
-        if is_zipfile:
-            with zipfile.ZipFile(filepath, mode="r") as f:
-                members = f.namelist()
-        else:
-            with tarfile.open(filepath, mode="r") as f:
-                members = f.getnames()
-        src_basename = os.path.commonpath(members)
-        dest_basename = os.path.basename(filepath)
-        if src_basename:
-            while True:
-                tmp, _ = os.path.splitext(dest_basename)
-                if tmp == dest_basename:
-                    break
-                else:
-                    dest_basename = tmp
-            if src_basename != dest_basename:
-                return shutil.move(
-                    os.path.join(extract_dir, src_basename),
-                    os.path.join(extract_dir, dest_basename),
-                )
-            else:
-                return os.path.join(extract_dir, src_basename)
-        else:
-            return extract_dir
+    utils.deprecated(
+        "This function has been moved to `textacy.io.utils.unpack_archive()` "
+        "and is aliased here only for backwards compatibility. "
+        "This alias will be removed in v0.10.0.",
+        action="once",
+    )
+    return io_utils.unpack_archive(filepath, extract_dir=extract_dir)
 
 
 def validate_set_member_filter(filter_vals, vals_type, valid_vals=None):
@@ -139,7 +67,7 @@ def validate_set_member_filter(filter_vals, vals_type, valid_vals=None):
         TypeError
         ValueError
     """
-    filter_vals = to_collection(filter_vals, vals_type, set)
+    filter_vals = utils.to_collection(filter_vals, vals_type, set)
     if valid_vals is not None:
         if not all(filter_val in valid_vals for filter_val in filter_vals):
             raise ValueError(
