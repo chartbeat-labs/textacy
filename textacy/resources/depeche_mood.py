@@ -144,6 +144,7 @@ class DepecheMood(Resource):
 
     _lang_map = {"en": "english", "it": "italian"}
     _pos_map = {NOUN: "n", VERB: "v", ADJ: "a", ADV: "r"}
+    _word_reps = ("token", "lemma", "lemmapos")
 
     def __init__(
         self,
@@ -153,6 +154,16 @@ class DepecheMood(Resource):
         min_freq=3,
     ):
         super().__init__(NAME, meta=META)
+        if lang not in self._lang_map:
+            raise ValueError(
+                "lang='{}' is invalid; valid options are {}".format(
+                    lang, sorted(self._lang_map.keys()))
+            )
+        if word_rep not in self._word_reps:
+            raise ValueError(
+                "word_rep='{}' is invalid; valid options are {}".format(
+                    word_rep, self._word_reps)
+            )
         self.lang = lang
         self.word_rep = word_rep
         self.min_freq = min_freq
