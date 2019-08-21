@@ -124,7 +124,7 @@ class CapitolWords(Dataset):
     congresses = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
 
     def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
-        super(CapitolWords, self).__init__(NAME, meta=META)
+        super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._filename = "capitol-words-py3.json.gz"
         self._filepath = self.data_dir.joinpath(self._filename)

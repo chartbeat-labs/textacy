@@ -98,7 +98,7 @@ class RedditComments(Dataset):
     _full_score_range = (-2147483647, 2147483647)
 
     def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
-        super(RedditComments, self).__init__(NAME, meta=META)
+        super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._date_range = None
 

@@ -94,7 +94,7 @@ class OxfordTextArchive(Dataset):
     full_date_range = ("0018-01-01", "1990-01-01")
 
     def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
-        super(OxfordTextArchive, self).__init__(NAME, meta=META)
+        super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._text_dirpath = self.data_dir.joinpath("master", "text")
         self._metadata_filepath = self.data_dir.joinpath("master", "metadata.tsv")

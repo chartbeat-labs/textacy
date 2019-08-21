@@ -94,7 +94,7 @@ class IMDB(Dataset):
     full_rating_range = (1, 10)
 
     def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
-        super(IMDB, self).__init__(NAME, meta=META)
+        super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._movie_ids = {"train": {}, "test": {}}
         self._subset_labels = {

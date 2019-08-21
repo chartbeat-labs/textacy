@@ -110,7 +110,7 @@ class Wikimedia(Dataset):
         self, name, meta, project, data_dir,
         lang="en", version="current", namespace=0,
     ):
-        super(Wikimedia, self).__init__(name, meta=meta)
+        super().__init__(name, meta=meta)
         self.lang = lang
         self.version = version
         self.project = project
@@ -409,7 +409,7 @@ class Wikipedia(Wikimedia):
         version="current",
         namespace=0,
     ):
-        super(Wikipedia, self).__init__(
+        super().__init__(
             "wikipedia", METAS["wikipedia"], "wiki", data_dir,
             lang=lang, version=version, namespace=namespace,
         )
@@ -472,7 +472,7 @@ class Wikinews(Wikimedia):
         version="current",
         namespace=0,
     ):
-        super(Wikinews, self).__init__(
+        super().__init__(
             "wikinews", METAS["wikinews"], "wikinews", data_dir,
             lang=lang, version=version, namespace=namespace,
         )

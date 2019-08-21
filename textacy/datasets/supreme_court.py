@@ -543,7 +543,7 @@ class SupremeCourt(Dataset):
     }
 
     def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
-        super(SupremeCourt, self).__init__(NAME, meta=META)
+        super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._filename = "supreme-court-py3.json.gz"
         self._filepath = self.data_dir.joinpath(self._filename)

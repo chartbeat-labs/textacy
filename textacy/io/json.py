@@ -172,4 +172,4 @@ class ExtendedJSONEncoder(json.JSONEncoder):
         if isinstance(obj, (datetime.datetime, datetime.date)):
             return obj.isoformat()
         else:
-            return super(ExtendedJSONEncoder, self).default(obj)
+            return super().default(obj)

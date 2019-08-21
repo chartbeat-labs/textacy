@@ -896,7 +896,7 @@ class GroupVectorizer(Vectorizer):
         vocabulary_terms=None,
         vocabulary_grps=None,
     ):
-        super(GroupVectorizer, self).__init__(
+        super().__init__(
             tf_type=tf_type,
             apply_idf=apply_idf,
             idf_type=idf_type,
