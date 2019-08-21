@@ -1,6 +1,9 @@
+import logging
 import pathlib
 import sys
 import warnings
+
+LOGGER = logging.getLogger(__name__)
 
 
 def deprecated(message, *, action="always"):
@@ -162,3 +165,91 @@ def to_path(path):
         raise TypeError(
             "`path` must be {}, not {}".format((str, pathlib.Path), type(path))
         )
+
+
+def validate_set_members(vals, val_type, valid_vals=None):
+    """
+    Validate values that must be of a certain type and (optionally) found among
+    a set of known valid values.
+
+    Args:
+        vals (obj or Set[obj]): Value or values to validate.
+        val_type (type or Tuple[type]): Type(s) of which all ``vals`` must be instances.
+        valid_vals (Set[obj]): Set of valid values in which all ``vals`` must be found.
+
+    Return:
+        Set[obj]: Validated values.
+
+    Raises:
+        TypeError
+        ValueError
+    """
+    vals = to_collection(vals, val_type, set)
+    if valid_vals is not None:
+        if not isinstance(valid_vals, set):
+            valid_vals = set(valid_vals)
+        if not all(val in valid_vals for val in vals):
+            raise ValueError(
+                "values {} are invalid; valid values are {}".format(
+                    vals.difference(valid_vals), valid_vals,
+                )
+            )
+    return vals
+
+
+def validate_and_clip_range(range_vals, full_range, val_type=None):
+    """
+    Validate and clip range values.
+
+    Args:
+        range_vals (list or tuple): Range values, i.e. [start_val, end_val), to validate
+            and, if necessary, clip. If None, the value is set to the corresponding
+            value in ``full_range``.
+        full_range (list or tuple): Full range of values, i.e. [min_val, max_val),
+            within which ``range_vals`` must lie.
+        val_type (type or Tuple[type]): Type(s) of which all ``range_vals``
+            must be instances (unless val is None).
+
+    Returns:
+        tuple: Range for which null or too-small/large values have been
+        clipped to the min/max valid values.
+
+    Raises:
+        TypeError
+        ValueError
+    """
+    for range_ in (range_vals, full_range):
+        if not isinstance(range_, (list, tuple)):
+            raise TypeError(
+                "range must be of type {}, not {}".format({list, tuple}, type(range_))
+            )
+        if len(range_) != 2:
+            raise ValueError(
+                "range must have 2 items -- (start, end) -- not {}".format(len(range_))
+            )
+    if val_type:
+        for range_ in (range_vals, full_range):
+            for val in range_:
+                if val is not None and not isinstance(val, val_type):
+                    raise TypeError(
+                        "range value={} must be of type {}, not {}".format(
+                            val, val_type, type(val)
+                        )
+                    )
+    if range_vals[0] is None:
+        range_vals = (full_range[0], range_vals[1])
+    elif range_vals[0] < full_range[0]:
+        LOGGER.info(
+            "start of range %s < minimum valid value %s; clipping...",
+            range_vals[0], full_range[0],
+        )
+        range_vals = (full_range[0], range_vals[1])
+    if range_vals[1] is None:
+        range_vals = (range_vals[0], full_range[1])
+    elif range_vals[1] > full_range[1]:
+        LOGGER.info(
+            "end of range %s > maximum valid value %s; clipping...",
+            range_vals[1], full_range[1],
+        )
+        range_vals = (range_vals[0], full_range[1])
+    return tuple(range_vals)
