@@ -3,6 +3,7 @@
 
 # macOS
 .DS_Store
+.vscode/
 
 # distribution / packaging
 build/
@@ -18,5 +19,4 @@ docs/build/*
 .pytest_cache/
 
 # textacy
-resources/
 data/
