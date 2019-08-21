@@ -19,5 +19,4 @@ docs/build/*
 .pytest_cache/
 
 # textacy
-resources/
 data/
