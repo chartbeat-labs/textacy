@@ -8,5 +8,3 @@ Miscellany
 .. automodule:: textacy.network
 
 .. automodule:: textacy.similarity
-
-.. automodule:: textacy.lexicon_methods

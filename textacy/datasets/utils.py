@@ -102,19 +102,22 @@ def unpack_archive(filepath, *, extract_dir=None):
                 members = f.getnames()
         src_basename = os.path.commonpath(members)
         dest_basename = os.path.basename(filepath)
-        while True:
-            tmp, _ = os.path.splitext(dest_basename)
-            if tmp == dest_basename:
-                break
+        if src_basename:
+            while True:
+                tmp, _ = os.path.splitext(dest_basename)
+                if tmp == dest_basename:
+                    break
+                else:
+                    dest_basename = tmp
+            if src_basename != dest_basename:
+                return shutil.move(
+                    os.path.join(extract_dir, src_basename),
+                    os.path.join(extract_dir, dest_basename),
+                )
             else:
-                dest_basename = tmp
-        if src_basename != dest_basename:
-            return shutil.move(
-                os.path.join(extract_dir, src_basename),
-                os.path.join(extract_dir, dest_basename),
-            )
+                return os.path.join(extract_dir, src_basename)
         else:
-            return os.path.join(extract_dir, src_basename)
+            return extract_dir
 
 
 def validate_set_member_filter(filter_vals, vals_type, valid_vals=None):

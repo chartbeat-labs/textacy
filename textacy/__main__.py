@@ -5,11 +5,12 @@ from pprint import pprint
 
 from . import datasets
 from . import lang_utils
-from . import lexicon_methods
+from . import resources
 from . import utils
 
 # let's cheat and add a handler to the datasets logger
 # whose messages we'll send to stdout
+# TODO: figure out if this no longer works bc of non-dataset items
 LOGGER = logging.getLogger("textacy.datasets")
 ch = logging.StreamHandler(sys.stdout)
 ch.setFormatter(
@@ -19,7 +20,7 @@ ch.setLevel(logging.INFO)
 LOGGER.addHandler(ch)
 LOGGER.setLevel(logging.INFO)
 
-RESOURCE_NAME_TO_CLASS = {
+NAME_TO_CLASS = {
     "lang_identifier": lang_utils.LangIdentifier,
     "capitol_words": datasets.CapitolWords,
     "imdb": datasets.IMDB,
@@ -28,7 +29,8 @@ RESOURCE_NAME_TO_CLASS = {
     "supreme_court": datasets.SupremeCourt,
     "wikinews": datasets.Wikinews,
     "wikipedia": datasets.Wikipedia,
-    "depechemood": lexicon_methods.download_depechemood,
+    "concept_net": resources.ConceptNet,
+    "depeche_mood": resources.DepecheMood,
 }
 
 if __name__ == "__main__":
@@ -43,26 +45,26 @@ if __name__ == "__main__":
     parser_download = subparsers.add_parser(
         "download",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        help="download datasets and such",
+        help="download datasets and resources",
     )
     parser_download.add_argument(
-        "resource_name",
+        "name",
         type=str,
-        choices=list(RESOURCE_NAME_TO_CLASS.keys()),
-        help="name of resource to download",
+        choices=list(NAME_TO_CLASS.keys()),
+        help="name of dataset or resource to download",
     )
     parser_download.add_argument(
         "--data_dir",
         type=str,
         required=False,
-        help="path on disk where dataaset will be saved on disk",
+        help="path on disk where dataaset/resource will be saved on disk",
     )
     parser_download.add_argument(
         "--date_range",
         nargs=2,
         type=str,
         required=False,
-        help='if `resource_name` is "reddit_comments", the [start, end) range '
+        help='if `name` is "reddit_comments", the [start, end) range '
         "of dates for which comments files will be downloaded, where each "
         "item is a string formatted as YYYY-MM or YYYY-MM-DD",
     )
@@ -70,49 +72,49 @@ if __name__ == "__main__":
         "--lang",
         type=str,
         required=False,
-        help='if `resource_name` is "wikipedia" or "wikinews", language of '
+        help='if `name` is "wikipedia" or "wikinews", language of '
         "the database dump to download",
     )
     parser_download.add_argument(
         "--version",
         type=str,
         required=False,
-        help='if `resource_name` is "wikipedia" or "wikinews", version of '
-        "the database dump to download",
+        help='if `name` is "wikipedia", "wikinews", or "concept_net", version of '
+        "the database to download",
     )
     parser_download.add_argument(
         "--force",
         default=False,
         action="store_true",
-        help="if specified, force a download of `resource_name` to `data_dir`, "
+        help="if specified, force a download of `name` to `data_dir`, "
         "whether or not that resource already exists in this directory",
     )
     # the "info" command
     parser_info = subparsers.add_parser(
         "info",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
-        help="get basic information about datasets and such",
+        help="get basic information about datasets and resources",
     )
     parser_info.add_argument(
-        "resource_name",
+        "name",
         type=str,
         nargs="?",
-        choices=list(RESOURCE_NAME_TO_CLASS.keys()),
-        help="name of resource to get basic information about",
+        choices=list(NAME_TO_CLASS.keys()),
+        help="name of dataset or resource to get basic information for",
     )
 
     args = vars(parser.parse_args())
 
     if args["subcommand"] == "download":
         # do we have a `Dataset` or similar resource class?
-        if hasattr(RESOURCE_NAME_TO_CLASS[args["resource_name"]], "download"):
+        if hasattr(NAME_TO_CLASS[args["name"]], "download"):
             # initialize resource
             kwargs_init = {
                 key: args[key]
                 for key in ["data_dir", "lang", "version"]
                 if args.get(key) is not None
             }
-            resource = RESOURCE_NAME_TO_CLASS[args["resource_name"]](**kwargs_init)
+            resource = NAME_TO_CLASS[args["name"]](**kwargs_init)
             # download data using the class method
             kwargs_dl = {
                 key: args[key]
@@ -127,20 +129,20 @@ if __name__ == "__main__":
                 for key in ["data_dir", "force"]
                 if args.get(key) is not None
             }
-            RESOURCE_NAME_TO_CLASS[args["resource_name"]](**kwargs_func)
+            NAME_TO_CLASS[args["name"]](**kwargs_func)
 
     if args["subcommand"] == "info":
-        if args.get("resource_name") is None:
+        if args.get("name") is None:
             pprint(utils.get_config())
         # do we have a `Dataset` or similar resource class?
-        elif hasattr(RESOURCE_NAME_TO_CLASS[args["resource_name"]], "info"):
+        elif hasattr(NAME_TO_CLASS[args["name"]], "info"):
             kwargs_init = {
                 key: args[key] for key in ["data_dir"] if args.get(key) is not None
             }
-            resource = RESOURCE_NAME_TO_CLASS[args["resource_name"]](**kwargs_init)
+            resource = NAME_TO_CLASS[args["name"]](**kwargs_init)
             pprint(resource.info)
         else:
-            LOGGER.info("no info available for resource %s", args["resource_name"])
+            LOGGER.info("no info available for %s", args["name"])
 
 # finally, remove the handler that we snuck in above
 LOGGER.removeHandler(ch)
