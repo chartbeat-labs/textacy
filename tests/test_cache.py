@@ -43,12 +43,6 @@ def test_load_pyphen():
         assert True
 
 
-@pytest.mark.skip(reason="We don't download DepecheMood for tests")
-def test_load_depechemood():
-    for weighting in ("freq", "normfreq", "tfidf"):
-        assert isinstance(cache.load_depechemood(weighting=weighting), dict)
-
-
 def test_cache_size():
     # check cache size; low thresh but still larger than if the size of
     # loaded data was not being correctly assessed

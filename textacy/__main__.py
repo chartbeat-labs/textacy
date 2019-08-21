@@ -5,7 +5,6 @@ from pprint import pprint
 
 from . import datasets
 from . import lang_utils
-from . import lexicon_methods
 from . import utils
 
 # let's cheat and add a handler to the datasets logger
@@ -28,7 +27,6 @@ RESOURCE_NAME_TO_CLASS = {
     "supreme_court": datasets.SupremeCourt,
     "wikinews": datasets.Wikinews,
     "wikipedia": datasets.Wikipedia,
-    "depechemood": lexicon_methods.download_depechemood,
 }
 
 if __name__ == "__main__":
