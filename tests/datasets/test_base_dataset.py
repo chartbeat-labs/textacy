@@ -3,10 +3,10 @@ import collections
 import pytest
 
 from textacy import utils
-from textacy.datasets import dataset
+from textacy.datasets import base
 
 
-DATASET = dataset.Dataset("foo", {"test": True})
+DATASET = base.Dataset("foo", {"test": True})
 
 
 def test_repr():

@@ -31,7 +31,7 @@ import urllib.parse
 from .. import constants, utils
 from .. import io as tio
 from . import utils as ds_utils
-from .dataset import Dataset
+from .base import Dataset
 
 LOGGER = logging.getLogger(__name__)
 

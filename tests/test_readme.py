@@ -47,7 +47,7 @@ def corpus():
 
 
 def test_streaming_functionality(corpus):
-    assert isinstance(DATASET, textacy.datasets.dataset.Dataset)
+    assert isinstance(DATASET, textacy.datasets.base.Dataset)
     assert isinstance(corpus, Corpus)
 
 
