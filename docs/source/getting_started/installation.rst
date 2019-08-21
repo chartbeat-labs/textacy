@@ -66,9 +66,10 @@ or directly from the command line.
     $ python -m textacy download capitol_words
     $ python -m textacy download depeche_mood
 
-will download and save a compressed json file with ~11k speeches given by the
-main protagonists of the 2016 U.S. Presidential election, then download and save
-a set of emotion lexicons in English and Italian. For more information, run
+These commands download and save a compressed json file with ~11k speeches given by the
+main protagonists of the 2016 U.S. Presidential election, followed by a set of emotion
+lexicons in English and Italian with various word representations. For more information
+about particular datasets/resources use the ``info`` subcommand, or just run
 
 .. code-block:: console
 
