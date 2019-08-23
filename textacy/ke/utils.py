@@ -10,8 +10,10 @@ from decimal import Decimal
 import numpy as np
 from cytoolz import itertoolz
 
-from .. import extract, similarity, vsm
-from .. import utils as t_utils
+from .. import extract
+from .. import similarity
+from .. import utils
+from .. import vsm
 
 
 def normalize_terms(terms, normalize):
@@ -193,8 +195,8 @@ def get_ngram_candidates(doc, ns, *, include_pos=("NOUN", "PROPN", "ADJ")):
     See Also:
         :func:`textacy.extract.ngrams()`
     """
-    ns = t_utils.to_collection(ns, int, tuple)
-    include_pos = t_utils.to_collection(include_pos, str, set)
+    ns = utils.to_collection(ns, int, tuple)
+    include_pos = utils.to_collection(include_pos, str, set)
     ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns)
     ngrams = (
         ngram

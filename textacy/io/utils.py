@@ -19,7 +19,8 @@ import zipfile
 
 from cytoolz import itertoolz
 
-from .. import constants, utils
+from .. import constants
+from .. import utils
 from .http import write_http_stream
 
 

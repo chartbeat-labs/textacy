@@ -23,8 +23,9 @@ import logging
 from spacy.tokens import Span, Token
 from tqdm import tqdm
 
-from .. import constants, utils
+from .. import constants
 from .. import io as tio
+from .. import utils
 from .base import Resource
 
 

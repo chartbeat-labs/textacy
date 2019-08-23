@@ -34,8 +34,9 @@ import statistics
 from spacy.parts_of_speech import ADJ, ADV, NOUN, VERB
 from spacy.tokens import Doc, Span, Token
 
-from .. import constants, utils
+from .. import constants
 from .. import io as tio
+from .. import utils
 from .base import Resource
 
 

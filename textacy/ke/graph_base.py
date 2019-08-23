@@ -8,7 +8,7 @@ import numpy as np
 from cytoolz import itertoolz
 from spacy.tokens import Span, Token
 
-from . import utils
+from . import utils as ke_utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -68,7 +68,7 @@ def build_graph_from_terms(
         windows = itertoolz.sliding_window(window_size, terms)
     elif isinstance(first_term, (Span, Token)):
         windows = itertoolz.sliding_window(
-            window_size, utils.normalize_terms(terms, normalize))
+            window_size, ke_utils.normalize_terms(terms, normalize))
     else:
         raise TypeError(
             "items in `terms` must be strings or spacy tokens, not {}".format(

@@ -5,9 +5,9 @@ TextRank
 import collections
 import operator
 
+from .. import utils
 from . import graph_base
 from . import utils as ke_utils
-from .. import utils
 
 
 def textrank(

@@ -10,8 +10,9 @@ import operator
 import networkx as nx
 from cytoolz import itertoolz
 
+from .. import extract
+from .. import utils
 from . import utils as ke_utils
-from .. import extract, utils
 
 
 def sgrank(
