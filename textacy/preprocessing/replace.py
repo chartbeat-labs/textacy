@@ -65,20 +65,6 @@ def replace_emojis(text, replace_with="_EMOJI_"):
     return RE_EMOJI.sub(replace_with, text)
 
 
-def replace_numbers(text, replace_with="_NUMBER_"):
-    """
-    Replace all numbers in ``text`` with ``replace_with``.
-
-    Args:
-        text (str)
-        replace_with (str)
-
-    Returns:
-        str
-    """
-    return RE_NUMBER.sub(replace_with, text)
-
-
 def replace_hashtags(text, replace_with="_TAG_"):
     """
     Replace all hashtags in ``text`` with ``replace_with``.
@@ -91,6 +77,20 @@ def replace_hashtags(text, replace_with="_TAG_"):
         str
     """
     return RE_HASHTAG.sub(replace_with, text)
+
+
+def replace_numbers(text, replace_with="_NUMBER_"):
+    """
+    Replace all numbers in ``text`` with ``replace_with``.
+
+    Args:
+        text (str)
+        replace_with (str)
+
+    Returns:
+        str
+    """
+    return RE_NUMBER.sub(replace_with, text)
 
 
 def replace_phone_numbers(text, replace_with="_PHONE_"):
