@@ -7,13 +7,13 @@ from .. import resources
 from ..doc import make_spacy_doc
 
 
-Item = collections.namedtuple("Item", ["tok", "text", "ws", "pos", "is_word"])
-
 rs = resources.ConceptNet()
 swap_pos = ["NOUN", "ADJ", "VERB"]
 
+Item = collections.namedtuple("Item", ["tok", "text", "ws", "pos", "is_word"])
 
-def augment(
+
+def apply(
     doc,
     n_replacements=1,
     n_insertions=1,
@@ -22,16 +22,27 @@ def augment(
     shuffle_sents=True,
 ):
     """
+    Apply a variety of transformations to the sentences in ``doc`` to generate
+    a similar-but-different document, suitable for improving performance
+    text classification tasks.
+
     Args:
-        doc (:class:`spacy.tokens.Doc`)
-        n_replacements (int)
-        n_insertions (int)
-        n_swaps (int)
-        delete_prob (float)
-        shuffle_sents (bool)
+        doc (:class:`spacy.tokens.Doc`): Text document to be augmented through
+            a variety of transformations.
+        n_replacements (int): Number of items to replace with synonyms.
+        n_insertions (int): Number of times to insert synonyms.
+        n_swaps (int): Number of times to swap items.
+        delete_prob (float): Probability that any given item is deleted.
+        shuffle_sents (bool): If True, shuffle the order of sentences in ``doc``;
+            otherwise, leave sentence order unchanged.
 
     Returns:
-        :class:`spacy.tokens.Doc`
+        :class:`spacy.tokens.Doc`: New, transformed document generated from ``doc``.
+
+    References:
+        Wei, Jason W., and Kai Zou. "Eda: Easy data augmentation techniques
+        for boosting performance on text classification tasks."
+        arXiv preprint arXiv:1901.11196 (2019).
     """
     lang = doc.vocab.lang
     doc_items = []
@@ -69,13 +80,17 @@ def augment(
 
 def replace_with_synonyms(items, synonyms, n):
     """
+    Randomly choose ``n`` items in ``items`` that aren't stop words and have synonyms,
+    then replace each with a randomly selected synonym.
+
     Args:
-        items (List[Item])
-        synonyms (Dict[str, List[str]])
-        n (int)
+        items (List[Item]): Sequence of items to augment through synonym replacement.
+        synonyms (Dict[Tuple[str, str], List[str]]): Mapping of item (text, POS) to
+            available synonyms' texts. Not all items in ``items`` have synonyms.
+        n (int): Number of items to replace with synonyms.
 
     Returns:
-        List[Item]
+        List[Item]: Input ``items``, modified *in-place*.
     """
     candidate_idx_syns = [
         (idx, synonyms[(item.text, item.pos)])
@@ -100,13 +115,17 @@ def replace_with_synonyms(items, synonyms, n):
 
 def insert_synonyms(items, synonyms, n):
     """
+    Randomly select a synonym of a random item in ``items`` that's not a stop word,
+    then randomly insert that synonym into ``items``, repeating the procedure ``n`` times.
+
     Args:
-        items (List[Item])
-        synonyms (Dict[str, List[str]])
-        n (int)
+        items (List[Item]): Sequence of items to augment through synonym insertion.
+        synonyms (Dict[Tuple[str, str], List[str]]): Mapping of item (text, POS) to
+            available synonyms' texts. Not all items in ``items`` have synonyms.
+        n (int): Number of times to insert synonyms.
 
     Returns:
-        List[Item]
+        List[Item]: Input ``items``, modified *in-place*.
     """
     random_synonyms = random.sample(synonyms.items(), min(n, len(synonyms)))
     if not random_synonyms or len(items) < 3:
@@ -138,12 +157,15 @@ def insert_synonyms(items, synonyms, n):
 
 def swap_items(items, n):
     """
+    Randomly swap the positions of two items in ``items`` with the same part-of-speech tag,
+    repeating the procedure ``n`` times.
+
     Args:
-        items (List[Item])
-        n (int)
+        items (List[Item]): Sequence of items to augment through item swapping.
+        n (int): Number of times to swap items.
 
     Returns:
-        List[Item]
+        List[Item]: Input ``items``, modified *in-place*.
     """
     for _ in range(n):
         random.shuffle(swap_pos)
@@ -176,12 +198,14 @@ def swap_items(items, n):
 
 def delete_items(items, prob):
     """
+    Randomly remove each item in ``items`` with probability ``prob``.
+
     Args:
-        items (List[Item])
-        prob (float)
+        items (List[Item]): Sequence of items to augment through item deletion.
+        prob (float): Probability that any given item is deleted.
 
     Returns:
-        List[Item]
+        List[Item]: Input ``items``, modified *in-place*.
     """
     delete_idxs = [
         idx for idx, item in enumerate(items) if random.random() < prob and item.is_word
