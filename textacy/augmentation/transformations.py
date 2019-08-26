@@ -24,14 +24,15 @@ def apply(
     """
     Apply a variety of transformations to the sentences in ``doc`` to generate
     a similar-but-different document, suitable for improving performance
-    text classification tasks.
+    on text classification tasks.
 
     Args:
         doc (:class:`spacy.tokens.Doc`): Text document to be augmented through
             a variety of transformations.
-        n_replacements (int): Number of items to replace with synonyms.
-        n_insertions (int): Number of times to insert synonyms.
-        n_swaps (int): Number of times to swap items.
+        n_replacements (int): Maximum number of items to replace with synonyms,
+            per sentence.
+        n_insertions (int): Maximum number of times to insert synonyms, per sentence.
+        n_swaps (int): Maximum number of times to swap items, per sentence.
         delete_prob (float): Probability that any given item is deleted.
         shuffle_sents (bool): If True, shuffle the order of sentences in ``doc``;
             otherwise, leave sentence order unchanged.
@@ -87,7 +88,7 @@ def replace_with_synonyms(items, synonyms, n):
         items (List[Item]): Sequence of items to augment through synonym replacement.
         synonyms (Dict[Tuple[str, str], List[str]]): Mapping of item (text, POS) to
             available synonyms' texts. Not all items in ``items`` have synonyms.
-        n (int): Number of items to replace with synonyms.
+        n (int): Maximum number of items to replace with synonyms.
 
     Returns:
         List[Item]: Input ``items``, modified *in-place*.
@@ -122,7 +123,7 @@ def insert_synonyms(items, synonyms, n):
         items (List[Item]): Sequence of items to augment through synonym insertion.
         synonyms (Dict[Tuple[str, str], List[str]]): Mapping of item (text, POS) to
             available synonyms' texts. Not all items in ``items`` have synonyms.
-        n (int): Number of times to insert synonyms.
+        n (int): Maximum number of times to insert synonyms.
 
     Returns:
         List[Item]: Input ``items``, modified *in-place*.
@@ -162,7 +163,7 @@ def swap_items(items, n):
 
     Args:
         items (List[Item]): Sequence of items to augment through item swapping.
-        n (int): Number of times to swap items.
+        n (int): Maximum number of times to swap items.
 
     Returns:
         List[Item]: Input ``items``, modified *in-place*.
