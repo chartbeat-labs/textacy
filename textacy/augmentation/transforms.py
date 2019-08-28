@@ -265,6 +265,216 @@ def delete_tokens(aug_toks, num):
     ]
 
 
+def substitute_chars(aug_toks, num, char_weights):
+    """
+    Randomly substitute a character with another in randomly selected tokens,
+    up to ``num`` times or with a probability of ``num``.
+
+    Args:
+        aug_toks (List[:class:`AugTok`]): Sequence of tokens to augment
+            through character substitution.
+        num (int or float): If int, maximum number of tokens to modify
+            with a random character substitution; if float, probability
+            that a given token will be modified.
+        char_weights (List[Tuple[str, int]]): Collection of (character, weight) pairs,
+            used to perform weighted random selection of characters to substitute
+            into selected tokens. Characters with higher weight are
+            more likely to be substituted.
+
+    Returns:
+        List[:class:`AugTok`]: New, augmented sequence of tokens.
+    """
+    _validate_aug_toks(aug_toks)
+    cand_idxs = [
+        idx for idx, aug_tok in enumerate(aug_toks)
+        if not (aug_tok.is_punct or len(aug_tok.text) < 3)
+    ]
+    if not cand_idxs:
+        return aug_toks[:]
+
+    rand_idxs = set(_get_random_candidates(cand_idxs, num))
+    if not rand_idxs:
+        return aug_toks[:]
+
+    rand_chars = iter(
+        random.choices(
+            [char for char, _ in char_weights],
+            weights=[weight for _, weight in char_weights],
+            k=len(rand_idxs),
+        )
+    )
+    new_aug_toks = []
+    for idx, aug_tok in enumerate(aug_toks):
+        if idx not in rand_idxs:
+            new_aug_toks.append(aug_tok)
+        else:
+            text = list(aug_tok.text)
+            rand_char_idx = random.choice(range(len(text)))
+            rand_char = next(rand_chars)
+            text[rand_char_idx] = rand_char
+            new_aug_toks.append(
+                AugTok(
+                    text="".join(text),
+                    ws=aug_tok.ws,
+                    pos=aug_tok.pos,
+                    syns=aug_tok.syns,
+                    is_punct=aug_tok.is_punct,
+                )
+            )
+    return new_aug_toks
+
+
+def insert_chars(aug_toks, num, char_weights):
+    """
+    Randomly insert a character into randomly selected tokens,
+    up to ``num`` times or with a probability of ``num``.
+
+    Args:
+        aug_toks (List[:class:`AugTok`]): Sequence of tokens to augment
+            through character insertion.
+        num (int or float): If int, maximum number of tokens to modify
+            with a random character insertion; if float, probability
+            that a given token will be modified.
+        char_weights (List[Tuple[str, int]]): Collection of (character, weight) pairs,
+            used to perform weighted random selection of characters to insert
+            into selected tokens. Characters with higher weight are
+            more likely to be inserted.
+
+    Returns:
+        List[:class:`AugTok`]: New, augmented sequence of tokens.
+    """
+    _validate_aug_toks(aug_toks)
+    cand_idxs = [
+        idx for idx, aug_tok in enumerate(aug_toks)
+        if not (aug_tok.is_punct or len(aug_tok.text) < 3)
+    ]
+    if not cand_idxs:
+        return aug_toks[:]
+
+    rand_idxs = set(_get_random_candidates(cand_idxs, num))
+    if not rand_idxs:
+        return aug_toks[:]
+
+    rand_chars = iter(
+        random.choices(
+            [char for char, _ in char_weights],
+            weights=[weight for _, weight in char_weights],
+            k=len(rand_idxs),
+        )
+    )
+    new_aug_toks = []
+    for idx, aug_tok in enumerate(aug_toks):
+        if idx not in rand_idxs:
+            new_aug_toks.append(aug_tok)
+        else:
+            text = list(aug_tok.text)
+            rand_char_idx = random.choice(range(len(text)))
+            rand_char = next(rand_chars)
+            text.insert(rand_char_idx, rand_char)
+            new_aug_toks.append(
+                AugTok(
+                    text="".join(text),
+                    ws=aug_tok.ws,
+                    pos=aug_tok.pos,
+                    syns=aug_tok.syns,
+                    is_punct=aug_tok.is_punct,
+                )
+            )
+    return new_aug_toks
+
+
+def swap_chars(aug_toks, num):
+    """
+    Randomly swap two *adjacent* characters in randomly-selected, non-punctuation tokens,
+    up to ``num`` times or with a probability of ``num``.
+
+    Args:
+        aug_toks (List[:class:`AugTok`]): Sequence of tokens to augment
+            through character swapping.
+        num (int or float): If int, maximum number of tokens to modify
+            with a random character swap; if float, probability
+            that a given token will be modified.
+
+    Returns:
+        List[:class:`AugTok`]: New, augmented sequence of tokens.
+    """
+    _validate_aug_toks(aug_toks)
+    cand_idxs = [
+        idx for idx, aug_tok in enumerate(aug_toks)
+        if not (aug_tok.is_punct or len(aug_tok.text) < 3)
+    ]
+    if not cand_idxs:
+        return aug_toks[:]
+
+    rand_idxs = set(_get_random_candidates(cand_idxs, num))
+    if not rand_idxs:
+        return aug_toks[:]
+
+    new_aug_toks = []
+    for idx, aug_tok in enumerate(aug_toks):
+        if idx not in rand_idxs:
+            new_aug_toks.append(aug_tok)
+        else:
+            text = list(aug_tok.text)
+            idx = random.choice(range(1, len(text)))
+            text[idx - 1], text[idx] = text[idx], text[idx - 1]
+            new_aug_toks.append(
+                AugTok(
+                    text="".join(text),
+                    ws=aug_tok.ws,
+                    pos=aug_tok.pos,
+                    syns=aug_tok.syns,
+                    is_punct=aug_tok.is_punct,
+                )
+            )
+    return new_aug_toks
+
+
+def delete_chars(aug_toks, num):
+    """
+    Randomly delete a character in randomly-selected, non-punctuation tokens,
+    up to ``num`` times or with a probability of ``num``.
+
+    Args:
+        aug_toks (List[:class:`AugTok`]): Sequence of tokens to augment
+            through character deletion.
+        num (int or float): If int, maximum number of tokens to modify
+            with a random character deletion; if float, probability
+            that a given token will be modified.
+
+    Returns:
+        List[:class:`AugTok`]: New, augmented sequence of tokens.
+    """
+    _validate_aug_toks(aug_toks)
+    cand_idxs = [
+        idx for idx, aug_tok in enumerate(aug_toks)
+        if not (aug_tok.is_punct or len(aug_tok.text) < 3)
+    ]
+    if not cand_idxs:
+        return aug_toks[:]
+
+    rand_idxs = set(_get_random_candidates(cand_idxs, num))
+    if not rand_idxs:
+        return aug_toks[:]
+
+    new_aug_toks = []
+    for idx, aug_tok in enumerate(aug_toks):
+        if idx not in rand_idxs:
+            new_aug_toks.append(aug_tok)
+        else:
+            rand_cidx = random.choice(range(len(aug_tok.text)))
+            new_aug_toks.append(
+                AugTok(
+                    text="".join(char for cidx, char in enumerate(aug_tok.text) if cidx != rand_cidx),
+                    ws=aug_tok.ws,
+                    pos=aug_tok.pos,
+                    syns=aug_tok.syns,
+                    is_punct=aug_tok.is_punct,
+                )
+            )
+    return new_aug_toks
+
+
 def to_aug_toks(spacy_obj):
     """
     Cast a sequence of spaCy ``Token`` s to a list of ``AugTok`` objects,
