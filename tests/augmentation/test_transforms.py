@@ -1,4 +1,4 @@
-# from spacy.tokens import Doc
+import collections
 
 from textacy import make_spacy_doc
 from textacy.augmentation import transforms
@@ -31,6 +31,18 @@ def doc_aug_toks(spacy_doc):
     return transforms.to_aug_toks(spacy_doc)
 
 
+@pytest.fixture(scope="module")
+def char_weights():
+    return list(
+        collections.Counter(
+            char
+            for key in RESOURCE.synonyms["en"].keys()
+            for char in key
+            if char.isalnum()
+        ).items()
+    )
+
+
 class TestSubstituteSynonyms:
 
     def test_noop(self, doc_aug_toks):
@@ -45,9 +57,7 @@ class TestSubstituteSynonyms:
             for aug_toks in doc_aug_toks:
                 new_aug_toks = transforms.substitute_synonyms(aug_toks, num)
                 assert isinstance(new_aug_toks, list)
-                # this should be about the same, depending on the substitute synonyms
-                # since some one-word tokens have two-word synonyms
-                assert len(new_aug_toks) == pytest.approx(len(aug_toks), rel=0.05)
+                assert len(new_aug_toks) == len(aug_toks)
                 assert all(
                     isinstance(aug_tok, transforms.AugTok)
                     for aug_tok in new_aug_toks
@@ -89,10 +99,6 @@ class TestInsertSynonyms:
                 assert all(
                     isinstance(aug_tok, transforms.AugTok)
                     for aug_tok in new_aug_toks
-                )
-                assert any(
-                    aug_tok.text != new_aug_tok.text
-                    for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
                 )
 
     def test_num_float(self, doc_aug_toks):
@@ -166,10 +172,6 @@ class TestDeleteTokens:
                     isinstance(aug_tok, transforms.AugTok)
                     for aug_tok in new_aug_toks
                 )
-                assert any(
-                    aug_tok.text != new_aug_tok.text
-                    for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
-                )
 
     def test_num_float(self, doc_aug_toks):
         for num in [0.1, 0.3]:
@@ -183,6 +185,172 @@ class TestDeleteTokens:
         for obj in [["foo", "bar"], "foo bar"]:
             with pytest.raises(TypeError):
                 _ = transforms.delete_tokens(obj, 1)
+
+
+class TestSubstituteChars:
+
+    def test_noop(self, doc_aug_toks, char_weights):
+        for num in [0, 0.0]:
+            for aug_toks in doc_aug_toks:
+                new_aug_toks = transforms.substitute_chars(aug_toks, num, char_weights)
+                for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks):
+                    assert aug_tok.text == new_aug_tok.text
+
+    def test_num_int(self, doc_aug_toks, char_weights):
+        for num in [1, 3]:
+            for aug_toks in doc_aug_toks:
+                new_aug_toks = transforms.substitute_chars(aug_toks, num, char_weights)
+                assert isinstance(new_aug_toks, list)
+                assert len(new_aug_toks) == len(aug_toks)
+                assert all(
+                    isinstance(aug_tok, transforms.AugTok)
+                    for aug_tok in new_aug_toks
+                )
+                assert any(
+                    aug_tok.text != new_aug_tok.text
+                    for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
+                )
+                assert all(
+                    len(aug_tok.text) == len(new_aug_tok.text)
+                    for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
+                )
+
+    def test_num_float(self, doc_aug_toks, char_weights):
+        for num in [0.1, 0.3]:
+            for aug_toks in doc_aug_toks:
+                _ = transforms.substitute_chars(aug_toks, num, char_weights)
+
+    def test_errors(self, doc_aug_toks, char_weights):
+        for num in [-1, 2.0]:
+            with pytest.raises(ValueError):
+                _ = transforms.substitute_chars(doc_aug_toks[0], num, char_weights)
+        for obj in [["foo", "bar"], "foo bar"]:
+            with pytest.raises(TypeError):
+                _ = transforms.substitute_chars(obj, 1, char_weights)
+
+
+class TestInsertChars:
+
+    def test_noop(self, doc_aug_toks, char_weights):
+        for num in [0, 0.0]:
+            for aug_toks in doc_aug_toks:
+                new_aug_toks = transforms.insert_chars(aug_toks, num, char_weights)
+                for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks):
+                    assert aug_tok.text == new_aug_tok.text
+
+    def test_num_int(self, doc_aug_toks, char_weights):
+        for num in [1, 3]:
+            for aug_toks in doc_aug_toks:
+                new_aug_toks = transforms.insert_chars(aug_toks, num, char_weights)
+                assert isinstance(new_aug_toks, list)
+                assert len(new_aug_toks) == len(aug_toks)
+                assert all(
+                    isinstance(aug_tok, transforms.AugTok)
+                    for aug_tok in new_aug_toks
+                )
+                assert all(
+                    (
+                        aug_tok.text == new_aug_tok.text or
+                        len(aug_tok.text) < len(new_aug_tok.text)
+                    )
+                    for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
+                )
+
+    def test_num_float(self, doc_aug_toks, char_weights):
+        for num in [0.1, 0.3]:
+            for aug_toks in doc_aug_toks:
+                _ = transforms.insert_chars(aug_toks, num, char_weights)
+
+    def test_errors(self, doc_aug_toks, char_weights):
+        for num in [-1, 2.0]:
+            with pytest.raises(ValueError):
+                _ = transforms.insert_chars(doc_aug_toks[0], num, char_weights)
+        for obj in [["foo", "bar"], "foo bar"]:
+            with pytest.raises(TypeError):
+                _ = transforms.insert_chars(obj, 1, char_weights)
+
+
+class TestSwapChars:
+
+    def test_noop(self, doc_aug_toks):
+        for num in [0, 0.0]:
+            for aug_toks in doc_aug_toks:
+                new_aug_toks = transforms.swap_chars(aug_toks, num)
+                for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks):
+                    assert aug_tok.text == new_aug_tok.text
+
+    def test_num_int(self, doc_aug_toks):
+        for num in [1, 3]:
+            for aug_toks in doc_aug_toks:
+                new_aug_toks = transforms.swap_chars(aug_toks, num)
+                assert isinstance(new_aug_toks, list)
+                assert len(new_aug_toks) == len(aug_toks)
+                assert all(
+                    isinstance(aug_tok, transforms.AugTok)
+                    for aug_tok in new_aug_toks
+                )
+                assert any(
+                    aug_tok.text != new_aug_tok.text
+                    for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
+                )
+                assert all(
+                    len(aug_tok.text) == len(new_aug_tok.text)
+                    for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
+                )
+
+    def test_num_float(self, doc_aug_toks):
+        for num in [0.1, 0.3]:
+            for aug_toks in doc_aug_toks:
+                _ = transforms.swap_chars(aug_toks, num)
+
+    def test_errors(self, doc_aug_toks):
+        for num in [-1, 2.0]:
+            with pytest.raises(ValueError):
+                _ = transforms.swap_chars(doc_aug_toks[0], num)
+        for obj in [["foo", "bar"], "foo bar"]:
+            with pytest.raises(TypeError):
+                _ = transforms.swap_chars(obj, 1)
+
+
+class TestDeleteChars:
+
+    def test_noop(self, doc_aug_toks):
+        for num in [0, 0.0]:
+            for aug_toks in doc_aug_toks:
+                new_aug_toks = transforms.delete_chars(aug_toks, num)
+                for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks):
+                    assert aug_tok.text == new_aug_tok.text
+
+    def test_num_int(self, doc_aug_toks):
+        for num in [1, 3]:
+            for aug_toks in doc_aug_toks:
+                new_aug_toks = transforms.delete_chars(aug_toks, num)
+                assert isinstance(new_aug_toks, list)
+                assert len(new_aug_toks) == len(aug_toks)
+                assert all(
+                    isinstance(aug_tok, transforms.AugTok)
+                    for aug_tok in new_aug_toks
+                )
+                assert all(
+                    (
+                        aug_tok.text == new_aug_tok.text or
+                        len(aug_tok.text) > len(new_aug_tok.text)
+                    )
+                    for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
+                )
+
+    def test_num_float(self, doc_aug_toks):
+        for num in [0.1, 0.3]:
+            for aug_toks in doc_aug_toks:
+                _ = transforms.delete_chars(aug_toks, num)
+
+    def test_errors(self, doc_aug_toks):
+        for num in [-1, 2.0]:
+            with pytest.raises(ValueError):
+                _ = transforms.delete_chars(doc_aug_toks[0], num)
+        for obj in [["foo", "bar"], "foo bar"]:
+            with pytest.raises(TypeError):
+                _ = transforms.delete_chars(obj, 1)
 
 # class TestApply:
 

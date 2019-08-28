@@ -267,7 +267,7 @@ def delete_tokens(aug_toks, num):
 
 def substitute_chars(aug_toks, num, char_weights):
     """
-    Randomly substitute a character with another in randomly selected tokens,
+    Randomly substitute a character with another in randomly-selected, non-punctuation tokens,
     up to ``num`` times or with a probability of ``num``.
 
     Args:
@@ -326,7 +326,7 @@ def substitute_chars(aug_toks, num, char_weights):
 
 def insert_chars(aug_toks, num, char_weights):
     """
-    Randomly insert a character into randomly selected tokens,
+    Randomly insert a character into randomly-selected, non-punctuation tokens,
     up to ``num`` times or with a probability of ``num``.
 
     Args:
