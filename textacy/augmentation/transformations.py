@@ -1,228 +1,330 @@
 import collections
+import itertools
 import random
 
-from cytoolz import dicttoolz
+# from cytoolz import dicttoolz
+from spacy.tokens import Doc, Span
 
 from .. import resources
-from ..doc import make_spacy_doc
+# from ..doc import make_spacy_doc
 
 
 rs = resources.ConceptNet()
-swap_pos = ["NOUN", "ADJ", "VERB"]
 
-Item = collections.namedtuple("Item", ["tok", "text", "ws", "pos", "is_word"])
+AugTok = collections.namedtuple("AugTok", ["text", "ws", "pos", "syns", "is_punct"])
 
 
-def apply(
-    doc,
-    n_replacements=1,
-    n_insertions=1,
-    n_swaps=1,
-    delete_prob=0.05,
-    shuffle_sents=True,
-):
+# TODO: replace this with something better, and maybe move it :)
+# def apply(
+#     doc,
+#     n_replacements=1,
+#     n_insertions=1,
+#     n_swaps=1,
+#     delete_prob=0.05,
+#     shuffle_sents=True,
+# ):
+#     """
+#     Apply a variety of transformations to the sentences in ``doc`` to generate
+#     a similar-but-different document, suitable for improving performance
+#     on text classification tasks.
+
+#     Args:
+#         doc (:class:`spacy.tokens.Doc`): Text document to be augmented through
+#             a variety of transformations.
+#         n_replacements (int): Maximum number of items to replace with synonyms,
+#             per sentence.
+#         n_insertions (int): Maximum number of times to insert synonyms, per sentence.
+#         n_swaps (int): Maximum number of times to swap items, per sentence.
+#         delete_prob (float): Probability that any given item is deleted.
+#         shuffle_sents (bool): If True, shuffle the order of sentences in ``doc``;
+#             otherwise, leave sentence order unchanged.
+
+#     Returns:
+#         :class:`spacy.tokens.Doc`: New, transformed document generated from ``doc``.
+
+#     References:
+#         Wei, Jason W., and Kai Zou. "Eda: Easy data augmentation techniques
+#         for boosting performance on text classification tasks."
+#         arXiv preprint arXiv:1901.11196 (2019).
+#     """
+#     lang = doc.vocab.lang
+#     doc_items = []
+#     for sent in doc.sents:
+#         sent_items = [
+#             Item(
+#                 tok=tok,
+#                 text=tok.text,
+#                 ws=tok.whitespace_,
+#                 pos=tok.pos_,
+#                 is_word=not (tok.is_stop or tok.is_punct),
+#             )
+#             for tok in sent
+#         ]
+#         synonyms = {
+#             (item.text, item.pos): rs.get_synonyms(item.text, lang=lang, sense=item.pos)
+#             for item in sent_items
+#             if item.is_word
+#         }
+#         # only keep items with non-empty synonym lists
+#         synonyms = dicttoolz.valfilter(lambda v: v, synonyms)
+#         sent_items = replace_with_synonyms(sent_items, synonyms, n_replacements)
+#         sent_items = insert_synonyms(sent_items, synonyms, n_insertions)
+#         sent_items = swap_items(sent_items, n_swaps)
+#         sent_items = delete_items(sent_items, delete_prob)
+#         doc_items.append(sent_items)
+#     if shuffle_sents is True:
+#         random.shuffle(doc_items)
+#     augmented_text = "".join(
+#         "".join(item.text + item.ws for item in sent_items)
+#         for sent_items in doc_items
+#     )
+#     return make_spacy_doc(augmented_text, lang=lang)
+
+
+def substitute_synonyms(aug_toks, num):
     """
-    Apply a variety of transformations to the sentences in ``doc`` to generate
-    a similar-but-different document, suitable for improving performance
-    on text classification tasks.
+    Randomly substitute tokens for which synonyms are available
+    with a randomly selected synonym, up to ``num`` times or
+    with a probability of ``num``.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`): Text document to be augmented through
-            a variety of transformations.
-        n_replacements (int): Maximum number of items to replace with synonyms,
-            per sentence.
-        n_insertions (int): Maximum number of times to insert synonyms, per sentence.
-        n_swaps (int): Maximum number of times to swap items, per sentence.
-        delete_prob (float): Probability that any given item is deleted.
-        shuffle_sents (bool): If True, shuffle the order of sentences in ``doc``;
-            otherwise, leave sentence order unchanged.
+        aug_toks (List[:class:`AugTok`]): Sequence of tokens to augment
+            through synonym substitution.
+        num (int or float): If int, maximum number of tokens with available synonyms
+            to substitute with a randomly selected synonym; if float, probability
+            that a given token with synonyms will be substituted.
 
     Returns:
-        :class:`spacy.tokens.Doc`: New, transformed document generated from ``doc``.
-
-    References:
-        Wei, Jason W., and Kai Zou. "Eda: Easy data augmentation techniques
-        for boosting performance on text classification tasks."
-        arXiv preprint arXiv:1901.11196 (2019).
+        List[:class:`AugTok`]: New, augmented sequence of tokens.
     """
-    lang = doc.vocab.lang
-    doc_items = []
-    for sent in doc.sents:
-        sent_items = [
-            Item(
-                tok=tok,
-                text=tok.text,
-                ws=tok.whitespace_,
-                pos=tok.pos_,
-                is_word=not (tok.is_stop or tok.is_punct),
+    _validate_aug_toks(aug_toks)
+    cand_idxs = [
+        idx for idx, aug_tok in enumerate(aug_toks)
+        if aug_tok.syns
+    ]
+    if not cand_idxs:
+        return aug_toks[:]
+
+    rand_idxs = set(_get_random_candidates(cand_idxs, num))
+    new_aug_toks = []
+    for idx, aug_tok in enumerate(aug_toks):
+        if idx not in rand_idxs:
+            new_aug_toks.append(aug_tok)
+        else:
+            new_aug_toks.append(
+                AugTok(
+                    text=random.choice(aug_tok.syns),
+                    ws=aug_tok.ws,
+                    pos=aug_tok.pos,
+                    syns=aug_tok.syns,  # TODO: re-fetch syns? use []?
+                    is_punct=aug_tok.is_punct,
+                )
             )
-            for tok in sent
-        ]
-        synonyms = {
-            (item.text, item.pos): rs.get_synonyms(item.text, lang=lang, sense=item.pos)
-            for item in sent_items
-            if item.is_word
-        }
-        # only keep items with non-empty synonym lists
-        synonyms = dicttoolz.valfilter(lambda v: v, synonyms)
-        sent_items = replace_with_synonyms(sent_items, synonyms, n_replacements)
-        sent_items = insert_synonyms(sent_items, synonyms, n_insertions)
-        sent_items = swap_items(sent_items, n_swaps)
-        sent_items = delete_items(sent_items, delete_prob)
-        doc_items.append(sent_items)
-    if shuffle_sents is True:
-        random.shuffle(doc_items)
-    augmented_text = "".join(
-        "".join(item.text + item.ws for item in sent_items)
-        for sent_items in doc_items
-    )
-    return make_spacy_doc(augmented_text, lang=lang)
+    return new_aug_toks
 
 
-def replace_with_synonyms(items, synonyms, n):
+def insert_synonyms(aug_toks, num):
     """
-    Randomly choose ``n`` items in ``items`` that aren't stop words and have synonyms,
-    then replace each with a randomly selected synonym.
+    Randomly insert random synonyms of tokens for which synonyms are available,
+    up to ``num`` times or with a probability of ``num``.
 
     Args:
-        items (List[Item]): Sequence of items to augment through synonym replacement.
-        synonyms (Dict[Tuple[str, str], List[str]]): Mapping of item (text, POS) to
-            available synonyms' texts. Not all items in ``items`` have synonyms.
-        n (int): Maximum number of items to replace with synonyms.
+        aug_toks (List[:class:`AugTok`]): Sequence of tokens to augment
+            through synonym insertion.
+        num (int or float): If int, maximum number of tokens with available synonyms
+            for which a random synonym is inserted; if float, probability
+            that a given token with synonyms will provide a synonym for insertion.
 
     Returns:
-        List[Item]: Input ``items``, modified *in-place*.
+        List[:class:`AugTok`]: New, augmented sequence of tokens.
     """
-    candidate_idx_syns = [
-        (idx, synonyms[(item.text, item.pos)])
-        for idx, item in enumerate(items)
-        if item.is_word and (item.text, item.pos) in synonyms
-    ]
-    if not candidate_idx_syns:
-        return items
+    _validate_aug_toks(aug_toks)
+    # if sentence too short, bail
+    if len(aug_toks) < 3:
+        return aug_toks[:]
 
-    random_idx_syns = random.sample(candidate_idx_syns, min(n, len(candidate_idx_syns)))
-    for idx, syns in random_idx_syns:
-        curr_item = items[idx]
-        items[idx] = Item(
-            tok=None,
-            text=random.choice(syns),
-            ws=curr_item.ws,
-            pos=curr_item.pos,
-            is_word=True,
-        )
-    return items
+    cand_aug_toks = [aug_tok for aug_tok in aug_toks if aug_tok.syns]
+    if not cand_aug_toks:
+        return aug_toks[:]
 
-
-def insert_synonyms(items, synonyms, n):
-    """
-    Randomly select a synonym of a random item in ``items`` that's not a stop word,
-    then randomly insert that synonym into ``items``, repeating the procedure ``n`` times.
-
-    Args:
-        items (List[Item]): Sequence of items to augment through synonym insertion.
-        synonyms (Dict[Tuple[str, str], List[str]]): Mapping of item (text, POS) to
-            available synonyms' texts. Not all items in ``items`` have synonyms.
-        n (int): Maximum number of times to insert synonyms.
-
-    Returns:
-        List[Item]: Input ``items``, modified *in-place*.
-    """
-    random_synonyms = random.sample(synonyms.items(), min(n, len(synonyms)))
-    if not random_synonyms or len(items) < 3:
-        return items
-
-    for (_, pos), syns in random_synonyms:
-        random_syn = random.choice(syns)
-        random_idx = random.randint(0, len(items) - 1)
-        ws = items[random_idx - 1].ws
-        # insert synonym into the list
-        items.insert(
-            random_idx,
-            Item(tok=None, text=random_syn, ws=ws, pos=pos, is_word=True),
-        )
-        # we almost always want whitespace between this and the previous item
-        # so fix it if we have to
-        if random_idx > 0:
-            prev_item = items[random_idx - 1]
-            if not prev_item.ws:
-                items[random_idx - 1] = Item(
-                    tok=prev_item.tok,
-                    text=prev_item.text,
+    rand_aug_toks = _get_random_candidates(cand_aug_toks, num)
+    rand_idxs = random.sample(range(len(aug_toks)), len(rand_aug_toks))
+    rand_idx_aug_toks = {
+        rand_idx: rand_aug_tok
+        for rand_idx, rand_aug_tok in zip(rand_idxs, rand_aug_toks)
+    }
+    new_aug_toks = []
+    for idx, aug_tok in enumerate(aug_toks):
+        if idx not in rand_idx_aug_toks:
+            new_aug_toks.append(aug_tok)
+        else:
+            rand_aug_tok = rand_idx_aug_toks[idx]
+            new_aug_toks.append(
+                AugTok(
+                    text=random.choice(rand_aug_tok.syns),
                     ws=" ",
-                    pos=prev_item.pos,
-                    is_word=True,
+                    pos=rand_aug_tok.pos,
+                    syns=rand_aug_tok.syns, # TODO: re-fetch syns? use []?
+                    is_punct=aug_tok.is_punct,
                 )
-    return items
+            )
+            new_aug_toks.append(aug_tok)
+    return new_aug_toks
 
 
-def swap_items(items, n):
+def swap_tokens(aug_toks, num):
     """
-    Randomly swap the positions of two items in ``items`` with the same part-of-speech tag,
-    repeating the procedure ``n`` times.
+    Randomly swap the positions of two tokens with the same part-of-speech tag,
+    up to ``num`` times or with a probability of ``num``.
 
     Args:
-        items (List[Item]): Sequence of items to augment through item swapping.
-        n (int): Maximum number of times to swap items.
+        aug_toks (List[:class:`AugTok`]): Sequence of tokens to augment
+            through swapping tokens with the same part of speech.
+        num (int or float): If int, maximum number of same-POS token pairs to swap;
+            if float, probability that a given token pair will be swapped.
 
     Returns:
-        List[Item]: Input ``items``, modified *in-place*.
+        List[:class:`AugTok`]: New, augmented sequence of tokens.
     """
-    for _ in range(n):
-        random.shuffle(swap_pos)
-        # only swap items of the same part-of-speech, to minimize ungrammatical results
-        for pos in swap_pos:
-            idxs = [idx for idx, item in enumerate(items) if item.pos == pos]
-            if len(idxs) >= 2:
-                idx1, idx2 = random.sample(idxs, 2)
-                # can't do this, bc whitespace should not be swapped :/
-                # items[idx2], items[idx1] = items[idx1], items[idx2]
-                item1 = items[idx1]
-                item2 = items[idx2]
-                items[idx1] = Item(
-                    tok=item2.tok,
-                    text=item2.text,
-                    ws=item1.ws,
-                    pos=item2.pos,
-                    is_word=item2.is_word,
-                )
-                items[idx2] = Item(
-                    tok=item1.tok,
-                    text=item1.text,
-                    ws=item2.ws,
-                    pos=item1.pos,
-                    is_word=item1.is_word,
-                )
-                break
-    return items
+    _validate_aug_toks(aug_toks)
+    cand_swaps = list(
+        itertools.chain.from_iterable(
+            itertools.combinations(
+                (
+                    idx for idx, aug_tok in enumerate(aug_toks)
+                    if aug_tok.pos == pos
+                ),
+                2,
+            )
+            for pos in ("NOUN", "VERB", "ADJ", "ADV")
+        )
+    )
+    if not cand_swaps:
+        return aug_toks[:]
+
+    rand_swaps = _get_random_candidates(cand_swaps, num)
+    new_aug_toks = aug_toks[:]
+    for idx1, idx2 in rand_swaps:
+        at1 = new_aug_toks[idx1]
+        at2 = new_aug_toks[idx2]
+        new_aug_toks[idx1] = AugTok(
+            text=at2.text,
+            ws=at1.ws,
+            pos=at2.pos,
+            syns=at2.syns,
+            is_punct=at2.is_punct,
+        )
+        new_aug_toks[idx2] = AugTok(
+            text=at1.text,
+            ws=at2.ws,
+            pos=at1.pos,
+            syns=at1.syns,
+            is_punct=at1.is_punct,
+        )
+    return new_aug_toks
 
 
-def delete_items(items, prob):
+def delete_tokens(aug_toks, num):
     """
-    Randomly remove each item in ``items`` with probability ``prob``.
+    Randomly delete non-punctuation tokens, up to ``num`` times
+    or with a probability of ``num``.
 
     Args:
-        items (List[Item]): Sequence of items to augment through item deletion.
-        prob (float): Probability that any given item is deleted.
+        aug_toks (List[:class:`AugTok`]): Sequence of tokens to augment
+            through token deletion.
+        num (int or float): If int, maximum number of non-punctuation tokens
+            to delete; if float, probability that a given token will be deleted.
 
     Returns:
-        List[Item]: Input ``items``, modified *in-place*.
+        List[:class:`AugTok`]: New, augmented sequence of tokens.
     """
-    delete_idxs = [
-        idx for idx, item in enumerate(items) if random.random() < prob and item.is_word
+    _validate_aug_toks(aug_toks)
+    cand_idxs = [
+        idx for idx, aug_tok in enumerate(aug_toks)
+        if not aug_tok.is_punct
     ]
-    for idx in sorted(delete_idxs, reverse=True):
-        # TODO: determine if we want to adjust whitespace here
-        # if idx > 0:
-        #     prev_item = items[idx - 1]
-        #     curr_item = items[idx]
-        #     if prev_item.ws != curr_item.ws:
-        #         items[idx - 1] = Item(
-        #             tok=prev_item.tok,
-        #             text=prev_item.text,
-        #             ws=curr_item.ws,
-        #             pos=prev_item.pos,
-        #             is_word=prev_item.is_word,
-        #         )
-        del items[idx]
-    return items
+    if not cand_idxs:
+        return aug_toks[:]
+
+    rand_idxs = set(_get_random_candidates(cand_idxs, num))
+    return [
+        aug_tok for idx, aug_tok in enumerate(aug_toks)
+        if idx not in rand_idxs
+    ]
+
+
+def to_aug_toks(spacy_obj):
+    """
+    Cast a sequence of spaCy ``Token`` s to a list of ``AugTok`` objects,
+    suitable for use in data augmentation transform functions.
+
+    Args:
+        spacy_obj (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
+
+    Returns:
+        List[List[:class:`AugTok`]]
+    """
+    if not isinstance(spacy_obj, (Doc, Span)):
+        raise TypeError(
+            "`spacy_obj` must be of type {}, not {}".format((Doc, Span), type(spacy_obj))
+        )
+    if isinstance(spacy_obj, Doc) and spacy_obj.is_sentenced:
+        return [_to_flat_aug_toks(sent) for sent in spacy_obj.sents]
+    else:
+        return [_to_flat_aug_toks(spacy_obj)]
+
+
+def _to_flat_aug_toks(spacy_obj):
+    """
+    Args:
+        spacy_obj (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
+
+    Returns:
+        List[:class:`AugTok`]
+    """
+    if not isinstance(spacy_obj, (Doc, Span)):
+        raise TypeError(
+            "`spacy_obj` must be of type {}, not {}".format((Doc, Span), type(spacy_obj)))
+    lang = spacy_obj.vocab.lang
+    return [
+        AugTok(
+            text=tok.text,
+            ws=tok.whitespace_,
+            pos=tok.pos_,
+            syns=(
+                rs.get_synonyms(tok.text, lang=lang, sense=tok.pos_)
+                if not (tok.is_stop or tok.is_punct)
+                else []
+            ),
+            is_punct=tok.is_punct,
+        )
+        for tok in spacy_obj
+    ]
+
+
+def _validate_aug_toks(aug_toks):
+    if not (isinstance(aug_toks, list) and isinstance(aug_toks[0], AugTok)):
+        raise TypeError(
+            "aug_toks must be of type List[AugTok], not {}[{}]".format(
+                type(aug_toks), type(aug_toks[0]))
+        )
+
+
+def _get_random_candidates(cands, num):
+    """
+    Args:
+        cands (List[obj])
+        num (int or float)
+
+    Returns:
+        List[obj]
+    """
+    if isinstance(num, int) and num >= 0:
+        rand_cands = random.sample(cands, min(num, len(cands)))
+    elif isinstance(num, float) and 0.0 <= num <= 1.0:
+        rand_cands = [cand for cand in cands if random.random() < num]
+    else:
+        raise ValueError(
+            "num={} is invalid; must be an int >= 0 or a float in [0.0, 1.0]".format(num)
+        )
+    return rand_cands
