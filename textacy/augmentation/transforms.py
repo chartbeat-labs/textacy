@@ -106,6 +106,9 @@ def substitute_synonyms(aug_toks, num):
         return aug_toks[:]
 
     rand_idxs = set(_get_random_candidates(cand_idxs, num))
+    if not rand_idxs:
+        return aug_toks[:]
+
     new_aug_toks = []
     for idx, aug_tok in enumerate(aug_toks):
         if idx not in rand_idxs:
@@ -139,7 +142,7 @@ def insert_synonyms(aug_toks, num):
         List[:class:`AugTok`]: New, augmented sequence of tokens.
     """
     _validate_aug_toks(aug_toks)
-    # if sentence too short, bail
+    # bail out on very short sentences to avoid clobbering their meaning
     if len(aug_toks) < 3:
         return aug_toks[:]
 
@@ -149,6 +152,9 @@ def insert_synonyms(aug_toks, num):
 
     rand_aug_toks = _get_random_candidates(cand_aug_toks, num)
     rand_idxs = random.sample(range(len(aug_toks)), len(rand_aug_toks))
+    if not rand_idxs:
+        return aug_toks[:]
+
     rand_idx_aug_toks = {
         rand_idx: rand_aug_tok
         for rand_idx, rand_aug_tok in zip(rand_idxs, rand_aug_toks)
@@ -187,7 +193,7 @@ def swap_tokens(aug_toks, num):
         List[:class:`AugTok`]: New, augmented sequence of tokens.
     """
     _validate_aug_toks(aug_toks)
-    cand_swaps = list(
+    cand_idx_pairs = list(
         itertools.chain.from_iterable(
             itertools.combinations(
                 (
@@ -199,12 +205,15 @@ def swap_tokens(aug_toks, num):
             for pos in ("NOUN", "VERB", "ADJ", "ADV")
         )
     )
-    if not cand_swaps:
+    if not cand_idx_pairs:
         return aug_toks[:]
 
-    rand_swaps = _get_random_candidates(cand_swaps, num)
+    rand_idx_pairs = _get_random_candidates(cand_idx_pairs, num)
+    if not rand_idx_pairs:
+        return aug_toks[:]
+
     new_aug_toks = aug_toks[:]
-    for idx1, idx2 in rand_swaps:
+    for idx1, idx2 in rand_idx_pairs:
         at1 = new_aug_toks[idx1]
         at2 = new_aug_toks[idx2]
         new_aug_toks[idx1] = AugTok(
@@ -247,6 +256,9 @@ def delete_tokens(aug_toks, num):
         return aug_toks[:]
 
     rand_idxs = set(_get_random_candidates(cand_idxs, num))
+    if not rand_idxs:
+        return aug_toks[:]
+
     return [
         aug_tok for idx, aug_tok in enumerate(aug_toks)
         if idx not in rand_idxs
