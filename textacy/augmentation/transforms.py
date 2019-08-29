@@ -25,6 +25,7 @@ def substitute_word_synonyms(aug_toks, *, num=1, pos=None):
     Returns:
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
     """
+    _validate_aug_toks(aug_toks)
     pos = utils.to_collection(pos, str, set)
     cand_idxs = [
         idx for idx, aug_tok in enumerate(aug_toks)
@@ -69,6 +70,7 @@ def insert_word_synonyms(aug_toks, *, num=1, pos=None):
     Returns:
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
     """
+    _validate_aug_toks(aug_toks)
     pos = utils.to_collection(pos, str, set)
     # bail out on very short sentences to avoid clobbering meaning
     if len(aug_toks) < 3:
@@ -131,6 +133,7 @@ def swap_words(aug_toks, *, num=1, pos=None):
     Returns:
         List[:class:`AugTok`]: New, augmented sequence of tokens.
     """
+    _validate_aug_toks(aug_toks)
     pos = utils.to_collection(pos, str, set)
     # if we don't require _adjacent_ words, this does the trick
     # if not pos:
@@ -193,6 +196,7 @@ def delete_words(aug_toks, *, num=1, pos=None):
     Returns:
         List[:class:`AugTok`]: New, augmented sequence of tokens.
     """
+    _validate_aug_toks(aug_toks)
     pos = utils.to_collection(pos, str, set)
     # bail out on very short sentences to avoid clobbering meaning
     if len(aug_toks) < 3:
@@ -244,6 +248,7 @@ def substitute_chars(aug_toks, *, num=1, char_weights=None):
     Returns:
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
     """
+    _validate_aug_toks(aug_toks)
     if not char_weights:
         char_weights = aug_utils.get_char_weights("xx")
     cand_idxs = [
@@ -300,6 +305,7 @@ def insert_chars(aug_toks, *, num=1, char_weights=None):
     Returns:
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
     """
+    _validate_aug_toks(aug_toks)
     if not char_weights:
         char_weights = aug_utils.get_char_weights("xx")
     cand_idxs = [
@@ -352,6 +358,7 @@ def swap_chars(aug_toks, *, num=1):
     Returns:
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
     """
+    _validate_aug_toks(aug_toks)
     cand_idxs = [
         idx for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.is_word and len(aug_tok.text) >= 3
@@ -395,6 +402,7 @@ def delete_chars(aug_toks, *, num=1):
     Returns:
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
     """
+    _validate_aug_toks(aug_toks)
     cand_idxs = [
         idx for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.is_word and len(aug_tok.text) >= 3
@@ -423,6 +431,14 @@ def delete_chars(aug_toks, *, num=1):
         else:
             new_aug_toks.append(aug_tok)
     return new_aug_toks
+
+
+def _validate_aug_toks(aug_toks):
+    if not (isinstance(aug_toks, list) and isinstance(aug_toks[0], aug_utils.AugTok)):
+        raise TypeError(
+            "aug_toks must be of type List[:obj:`AugTok`], not {}[{}]".format(
+                type(aug_toks), type(aug_toks[0]))
+        )
 
 
 def _select_random_candidates(cands, num):
