@@ -8,7 +8,6 @@ from cachetools.keys import hashkey
 from spacy.tokens import Doc, Span
 
 from .. import cache, datasets, resources
-from ..doc import make_spacy_doc
 
 
 concept_net = resources.ConceptNet()

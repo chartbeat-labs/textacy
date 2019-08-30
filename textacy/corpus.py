@@ -14,9 +14,8 @@ import srsly
 from cytoolz import itertoolz
 from thinc.neural.ops import NumpyOps
 
-from . import cache
 from . import io as tio
-from . import utils
+from . import spacier, utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -627,7 +626,7 @@ class Corpus:
 
 def _get_spacy_lang(lang):
     if isinstance(lang, str):
-        return cache.load_spacy_lang(lang)
+        return spacier.core.load_spacy_lang(lang)
     elif isinstance(lang, spacy.language.Language):
         return lang
     else:

@@ -3,7 +3,7 @@ import random
 
 from spacy.tokens import Doc, Span
 
-from ..doc import make_spacy_doc
+from .. import spacier
 from . import utils as aug_utils
 
 
@@ -159,4 +159,4 @@ class Augmenter:
             for aug_toks in nested_aug_tokens
             for aug_tok in aug_toks
         )
-        return make_spacy_doc(new_text, lang=lang)
+        return spacier.core.make_spacy_doc(new_text, lang=lang)

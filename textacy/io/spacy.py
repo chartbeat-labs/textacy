@@ -11,8 +11,7 @@ from srsly import msgpack
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from .. import cache
-from .. import utils
+from .. import spacier, utils
 from . import utils as io_utils
 
 
@@ -67,7 +66,7 @@ def read_spacy_docs(filepath, *, format="pickle", lang=None):
         elif isinstance(lang, Language):
             vocab = lang.vocab
         elif isinstance(lang, str):
-            vocab = cache.load_spacy_lang(lang).vocab
+            vocab = spacier.core.load_spacy_lang(lang).vocab
         else:
             raise ValueError(
                 "lang = '{}' is invalid; must be a str or `spacy.Language`"

@@ -12,9 +12,8 @@ from spacy.language import Language
 from spacy.symbols import NOUN, PROPN, VERB
 from spacy.tokens import Doc, Span, Token
 
-from .. import cache
-from .. import constants
-from .. import text_utils
+from .. import constants, text_utils
+from . import core
 
 
 def make_doc_from_text_chunks(text, lang, chunk_size=100000):
@@ -47,7 +46,7 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
         components accumulated chunk by chunk.
     """
     if isinstance(lang, str):
-        lang = cache.load_spacy_lang(lang)
+        lang = core.load_spacy_lang(lang)
     elif not isinstance(lang, Language):
         raise TypeError(
             "`lang` must be {}, not {}".format({str, Language}, type(lang))
