@@ -1,11 +1,70 @@
-"""A convenient and flexible entry point for making spaCy docs, one at a time."""
+"""
+Convenient entry points for making spaCy docs and loading spaCy language pipelines.
+"""
+import functools
+import logging
 import types
 
 import spacy
+from cachetools import cached
+from cachetools.keys import hashkey
 
-from . import cache
-from . import lang_utils
-from . import utils
+from .. import cache, lang_utils, utils
+
+
+LOGGER = logging.getLogger(__name__)
+
+
+@cached(cache.LRU_CACHE, key=functools.partial(hashkey, "spacy_lang"))
+def load_spacy_lang(name, disable=None, allow_blank=False):
+    """
+    Load a spaCy ``Language``: a shared vocabulary and language-specific data
+    for tokenizing text, and (if available) model data and a processing pipeline
+    containing a sequence of components for annotating a document.
+    An LRU cache saves languages in memory.
+
+    Args:
+        name (str or :class:`pathlib.Path`): spaCy language to load.
+            Could be a shortcut link, full package name, or path to model directory,
+            or a 2-letter ISO language code for which spaCy has language data.
+        disable (Tuple[str]): Names of pipeline components to disable, if any.
+
+            .. note:: Although spaCy's API specifies this argument as a list,
+               here we require a tuple. Pipelines are stored in the LRU cache
+               with unique identifiers generated from the hash of the function
+               name and args --- and lists aren't hashable.
+
+        allow_blank (bool): If True, allow loading of blank spaCy ``Language`` s;
+            if False, raise an OSError if a full processing pipeline isn't available.
+            Note that spaCy ``Doc`` s produced by blank languages are missing
+            key functionality, e.g. POS tags, entities, sentences.
+
+    Returns:
+        :class:`spacy.language.Language`: A loaded spaCy ``Language``.
+
+    Raises:
+        OSError
+        ImportError
+
+    See Also:
+        * https://spacy.io/api/top-level#spacy.load
+        * https://spacy.io/api/top-level#spacy.blank
+    """
+    if disable is None:
+        disable = []
+    # load a full spacy lang processing pipeline
+    try:
+        spacy_lang = spacy.load(name, disable=disable)
+        LOGGER.info("loaded '%s' spaCy language pipeline", name)
+        return spacy_lang
+    except OSError as e:
+        # fall back to a blank spacy lang
+        if allow_blank is True and isinstance(name, str) and len(name) == 2:
+            spacy_lang = spacy.blank(name)
+            LOGGER.warning("loaded '%s' spaCy language blank", name)
+            return spacy_lang
+        else:
+            raise e
 
 
 def make_spacy_doc(data, lang=lang_utils.identify_lang):
@@ -95,14 +154,14 @@ def make_spacy_doc(data, lang=lang_utils.identify_lang):
 
 def _make_spacy_doc_from_text(text, lang):
     if isinstance(lang, str):
-        spacy_lang = cache.load_spacy_lang(lang)
+        spacy_lang = load_spacy_lang(lang)
         langstr = spacy_lang.lang
     elif isinstance(lang, spacy.language.Language):
         spacy_lang = lang
         langstr = spacy_lang.lang
     elif callable(lang):
         langstr = lang(text)
-        spacy_lang = cache.load_spacy_lang(langstr)
+        spacy_lang = load_spacy_lang(langstr)
     else:
         raise TypeError(
             "`lang` must be {}, not {}".format(
@@ -115,14 +174,14 @@ def _make_spacy_doc_from_text(text, lang):
 
 def _make_spacy_doc_from_record(record, lang):
     if isinstance(lang, str):
-        spacy_lang = cache.load_spacy_lang(lang)
+        spacy_lang = load_spacy_lang(lang)
         langstr = spacy_lang.lang
     elif isinstance(lang, spacy.language.Language):
         spacy_lang = lang
         langstr = spacy_lang.lang
     elif callable(lang):
         langstr = lang(record[0])
-        spacy_lang = cache.load_spacy_lang(langstr)
+        spacy_lang = load_spacy_lang(langstr)
     else:
         raise TypeError(
             "`lang` must be {}, not {}".format(
