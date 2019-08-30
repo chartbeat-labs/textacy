@@ -1,8 +1,7 @@
 import pytest
 import spacy
 
-from textacy import cache
-from textacy.doc import make_spacy_doc
+from textacy import load_spacy_lang, make_spacy_doc
 from textacy.spacier.doc_extensions import (
     remove_doc_extensions,
     set_doc_extensions,
@@ -77,7 +76,7 @@ class TestDocExtensions:
         assert len(tokenized_text) == doc._.n_sents
 
     def test_to_tokenized_text_nosents(self):
-        spacy_lang = cache.load_spacy_lang("en")
+        spacy_lang = load_spacy_lang("en")
         with spacy_lang.disable_pipes("parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tokenized_text = doc._.to_tokenized_text()
@@ -95,7 +94,7 @@ class TestDocExtensions:
         assert len(tagged_text) == doc._.n_sents
 
     def test_to_tagged_text_nosents(self):
-        spacy_lang = cache.load_spacy_lang("en")
+        spacy_lang = load_spacy_lang("en")
         with spacy_lang.disable_pipes("parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tagged_text = doc._.to_tagged_text()

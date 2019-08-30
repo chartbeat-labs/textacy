@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from textacy import cache
+from textacy import load_spacy_lang
 from textacy.spacier import components
 
 TEXT = (
@@ -14,7 +14,7 @@ TEXT = (
 
 @pytest.fixture(scope="module")
 def spacy_lang():
-    spacy_lang = cache.load_spacy_lang("en")
+    spacy_lang = load_spacy_lang("en")
     text_stats_component = components.TextStatsComponent()
     spacy_lang.add_pipe(text_stats_component, after="parser")
 

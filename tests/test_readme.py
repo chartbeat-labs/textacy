@@ -9,14 +9,13 @@ import textacy.datasets
 import textacy.ke
 from textacy import Corpus, TextStats
 from textacy import (
-    cache,
     constants,
     extract,
     io,
     preprocessing,
     text_utils,
 )
-from textacy.doc import make_spacy_doc
+from textacy import load_spacy_lang, make_spacy_doc
 from textacy.tm import TopicModel
 from textacy.vsm import Vectorizer
 
@@ -35,7 +34,7 @@ def text():
 
 @pytest.fixture(scope="module")
 def doc(text):
-    spacy_lang = cache.load_spacy_lang("en")
+    spacy_lang = load_spacy_lang("en")
     return make_spacy_doc(text, lang=spacy_lang)
 
 

@@ -4,12 +4,13 @@ import re
 import pytest
 from spacy.tokens import Span, Token
 
-from textacy import cache, constants, extract
+from textacy import load_spacy_lang
+from textacy import constants, extract
 
 
 @pytest.fixture(scope="module")
 def spacy_doc():
-    spacy_lang = cache.load_spacy_lang("en")
+    spacy_lang = load_spacy_lang("en")
     text = (
         "Two weeks ago, I was in Kuwait participating in an I.M.F. (International Monetary Fund) seminar for Arab educators. "
         "For 30 minutes, we discussed the impact of technology trends on education in the Middle East. "

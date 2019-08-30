@@ -1,7 +1,7 @@
 import pytest
 
 from textacy import similarity
-from textacy.doc import make_spacy_doc
+from textacy import make_spacy_doc
 
 
 @pytest.fixture(scope="module")

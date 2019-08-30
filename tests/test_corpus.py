@@ -5,7 +5,7 @@ import pytest
 import spacy
 
 from textacy import Corpus
-from textacy import cache
+from textacy import load_spacy_lang
 from textacy.datasets.capitol_words import CapitolWords
 
 DATASET = CapitolWords()
@@ -25,7 +25,7 @@ class TestCorpusInit:
 
     def test_corpus_init_lang(self):
         assert isinstance(Corpus("en"), Corpus)
-        assert isinstance(Corpus(cache.load_spacy_lang("en")), Corpus)
+        assert isinstance(Corpus(load_spacy_lang("en")), Corpus)
         for bad_lang in (b"en", None):
             with pytest.raises(TypeError):
                 Corpus(bad_lang)
@@ -49,7 +49,7 @@ class TestCorpusInit:
 
     def test_corpus_init_docs(self):
         limit = 3
-        spacy_lang = cache.load_spacy_lang("en")
+        spacy_lang = load_spacy_lang("en")
         texts = DATASET.texts(limit=limit)
         docs = [spacy_lang(text) for text in texts]
         corpus = Corpus("en", data=docs)
@@ -58,7 +58,7 @@ class TestCorpusInit:
         assert all(doc1 is doc2 for doc1, doc2 in zip(docs, corpus))
 
     def test_corpus_init_no_parser(self):
-        spacy_lang = cache.load_spacy_lang("en", disable=("parser",))
+        spacy_lang = load_spacy_lang("en", disable=("parser",))
         corpus = Corpus(spacy_lang, data=(spacy_lang("This is a sentence in a doc."),))
         assert len(corpus) == 1
         assert corpus.n_sents == 0
@@ -107,7 +107,7 @@ class TestCorpusProperties:
 class TestCorpusMethods:
 
     def test_corpus_add(self, corpus):
-        spacy_lang = cache.load_spacy_lang("en")
+        spacy_lang = load_spacy_lang("en")
         datas = (
             "This is an english sentence.",
             ("This is an english sentence.", {"foo": "bar"}),

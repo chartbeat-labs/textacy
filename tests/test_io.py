@@ -4,7 +4,8 @@ import numpy as np
 import pytest
 from scipy import sparse as sp
 
-from textacy import cache, io, utils
+from textacy import load_spacy_lang
+from textacy import io, utils
 
 TEXT = (
     "The year was 2081, and everybody was finally equal. "
@@ -16,7 +17,7 @@ TESTS_DIR = os.path.split(__file__)[0]
 
 @pytest.fixture(scope="module")
 def spacy_doc():
-    spacy_lang = cache.load_spacy_lang("en")
+    spacy_lang = load_spacy_lang("en")
     spacy_doc = spacy_lang(TEXT)
     return spacy_doc
 
