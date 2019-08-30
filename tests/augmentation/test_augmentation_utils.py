@@ -28,8 +28,14 @@ def test_to_aug_toks(spacy_doc):
     assert isinstance(aug_toks, list)
     assert all(isinstance(aug_tok, utils.AugTok) for aug_tok in aug_toks)
     assert len(aug_toks) == len(spacy_doc)
+    for obj in ["foo bar bat baz", ["foo", "bar", "bat", "baz"]]:
+        with pytest.raises(TypeError):
+            _ = utils.to_aug_toks(obj)
 
 
+@pytest.mark.skipif(
+    utils.concept_net.filepath is None,
+    reason="ConceptNet resource must be downloaded before running tests")
 def test_get_char_weights():
     for lang in ("en", "es", "xx"):
         char_weights = utils.get_char_weights(lang)

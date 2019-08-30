@@ -20,6 +20,8 @@ class Augmenter:
             If float, probability that any given transform will be selected.
             If List[float], the probability that the corresponding transform
             in ``transforms`` will be selected (these must be the same length).
+            If None (default), num is set to ``len(transforms)``, which means that
+            every transform is applied each time.
 
     See Also:
         A collection of good, general-purpose transforms are implemented in
@@ -80,7 +82,7 @@ class Augmenter:
     def _validate_num(self, num):
         if num is None:
             return len(self._tfs)
-        elif isinstance(num, int) and num >= 0:
+        elif isinstance(num, int) and 0 <= num <= len(self._tfs):
             return num
         elif isinstance(num, float) and 0.0 <= num <= 1.0:
             return num
