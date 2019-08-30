@@ -192,3 +192,9 @@ def test_flesch_reading_ease_langs(ts):
 def test_flesch_reading_ease_bad_lang(ts):
     with pytest.raises(ValueError):
         _ = text_stats.flesch_reading_ease(1, 1, 1, lang="foo")
+
+
+def test_load_hyphenator():
+    for lang in ("en", "es"):
+        _ = text_stats.load_hyphenator(lang=lang)
+        assert True
