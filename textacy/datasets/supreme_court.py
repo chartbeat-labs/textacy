@@ -1,5 +1,5 @@
 """
-Supreme Court Decisions
+Supreme Court decisions
 -----------------------
 
 A collection of ~8.4k (almost all) decisions issued by the U.S. Supreme Court

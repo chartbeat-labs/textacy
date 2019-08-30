@@ -1,6 +1,6 @@
 """
-IMDB Reviews
-------------
+IMDB movie reviews
+------------------
 
 A collection of 50k highly polar movie reviews posted to IMDB, split evenly
 into training and testing sets, with 25k positive and 25k negative sentiment labels,

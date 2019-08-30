@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Capitol Words
--------------
+Capitol Words Congressional speeches
+------------------------------------
 
 A collection of ~11k (almost all) speeches given by the main protagonists of the
 2016 U.S. Presidential election that had previously served in the U.S. Congress --

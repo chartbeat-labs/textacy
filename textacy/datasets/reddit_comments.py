@@ -1,5 +1,5 @@
 """
-Reddit Comments
+Reddit comments
 ---------------
 
 A collection of up to ~1.5 billion Reddit comments posted from

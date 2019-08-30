@@ -1,6 +1,6 @@
 """
-Wikimedia
----------
+Wikimedia articles
+------------------
 
 All articles for a given Wikimedia project, specified by language and version.
 
