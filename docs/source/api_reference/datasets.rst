@@ -15,4 +15,6 @@ Datasets
 
 .. automodule:: textacy.datasets.imdb
 
+.. automodule:: textacy.datasets.udhr
+
 .. automodule:: textacy.datasets.utils

@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
-Capitol Words
--------------
+Capitol Words Congressional speeches
+------------------------------------
 
 A collection of ~11k (almost all) speeches given by the main protagonists of the
 2016 U.S. Presidential election that had previously served in the U.S. Congress --
@@ -53,31 +53,31 @@ class CapitolWords(Dataset):
     Download the data (one time only!) from the textacy-data repo
     (https://github.com/bdewilde/textacy-data), and save its contents to disk::
 
-        >>> cw = CapitolWords()
-        >>> cw.download()
-        >>> cw.info
+        >>> ds = CapitolWords()
+        >>> ds.download()
+        >>> ds.info
         {'name': 'capitol_words',
          'site_url': 'http://sunlightlabs.github.io/Capitol-Words/',
          'description': 'Collection of ~11k speeches in the Congressional Record given by notable U.S. politicians between Jan 1996 and Jun 2016.'}
 
     Iterate over speeches as texts or records with both text and metadata::
 
-        >>> for text in cw.texts(limit=3):
+        >>> for text in ds.texts(limit=3):
         ...     print(text, end="\\n\\n")
-        >>> for text, meta in cw.records(limit=3):
+        >>> for text, meta in ds.records(limit=3):
         ...     print("\\n{} ({})\\n{}".format(meta["title"], meta["speaker_name"], text))
 
     Filter speeches by a variety of metadata fields and text length::
 
-        >>> for text, meta in cw.records(speaker_name="Bernie Sanders", limit=3):
+        >>> for text, meta in ds.records(speaker_name="Bernie Sanders", limit=3):
         ...     print("\\n{}, {}\\n{}".format(meta["title"], meta["date"], text))
-        >>> for text, meta in cw.records(speaker_party="D", congress={110, 111, 112},
+        >>> for text, meta in ds.records(speaker_party="D", congress={110, 111, 112},
         ...                          chamber="Senate", limit=3):
         ...     print(meta["title"], meta["speaker_name"], meta["date"])
-        >>> for text, meta in cw.records(speaker_name={"Barack Obama", "Hillary Clinton"},
+        >>> for text, meta in ds.records(speaker_name={"Barack Obama", "Hillary Clinton"},
         ...                              date_range=("2005-01-01", "2005-12-31")):
         ...     print(meta["title"], meta["speaker_name"], meta["date"])
-        >>> for text in cw.texts(min_len=50000):
+        >>> for text in ds.texts(min_len=50000):
         ...     print(len(text))
 
     Stream speeches into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::

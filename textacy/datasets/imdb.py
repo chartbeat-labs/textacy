@@ -1,6 +1,6 @@
 """
-IMDB Reviews
-------------
+IMDB movie reviews
+------------------
 
 A collection of 50k highly polar movie reviews posted to IMDB, split evenly
 into training and testing sets, with 25k positive and 25k negative sentiment labels,
@@ -54,9 +54,9 @@ class IMDB(Dataset):
 
     Download the data (one time only!), saving and extracting its contents to disk::
 
-        >>> imdb = IMDB()
-        >>> imdb.download()
-        >>> imdb.info
+        >>> ds = IMDB()
+        >>> ds.download()
+        >>> ds.info
         {'name': 'imdb',
          'site_url': 'http://ai.stanford.edu/~amaas/data/sentiment',
          'description': 'Collection of 50k highly polar movie reviews split evenly into train and test sets, with 25k positive and 25k negative labels. Also includes some unlabeled reviews.'}

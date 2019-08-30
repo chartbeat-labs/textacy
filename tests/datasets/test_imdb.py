@@ -26,7 +26,7 @@ pytestmark = pytest.mark.skipif(
 def test_download(tmpdir):
     dataset = IMDB(data_dir=str(tmpdir))
     dataset.download()
-    assert all(os.path.isfile(filepath) for filepath in dataset.filepaths)
+    assert dataset.data_dir.joinpath("aclImdb").is_dir()
 
 
 def test_oserror(tmpdir):
