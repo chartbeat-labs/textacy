@@ -1,0 +1,93 @@
+import collections
+import functools
+import itertools
+import string
+
+from cachetools import cached
+from cachetools.keys import hashkey
+from spacy.tokens import Doc, Span
+
+from .. import cache, resources
+from ..doc import make_spacy_doc
+
+
+concept_net = resources.ConceptNet()
+
+AugTok = collections.namedtuple("AugTok", ["text", "ws", "pos", "is_word", "syns"])
+"""tuple: Minimal token data required for data augmentation transforms."""
+
+
+def to_aug_toks(spacy_obj):
+    """
+    Transform a spaCy ``Doc`` or ``Span`` into a list of ``AugTok`` objects,
+    suitable for use in data augmentation transform functions.
+
+    Args:
+        spacy_obj (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
+
+    Returns:
+        List[AugTok]
+    """
+    if not isinstance(spacy_obj, (Doc, Span)):
+        raise TypeError(
+            "`spacy_obj` must be of type {}, not {}".format((Doc, Span), type(spacy_obj))
+        )
+    lang = spacy_obj.vocab.lang
+    if concept_net.filepath is None:
+        return [
+            AugTok(
+                text=tok.text,
+                ws=tok.whitespace_,
+                pos=tok.pos_,
+                is_word=(not (tok.is_punct or tok.is_space)),
+                syns=[],
+            )
+            for tok in spacy_obj
+        ]
+    else:
+        return [
+            AugTok(
+                text=tok.text,
+                ws=tok.whitespace_,
+                pos=tok.pos_,
+                is_word=(not (tok.is_punct or tok.is_space)),
+                syns=(
+                    concept_net.get_synonyms(tok.text, lang=lang, sense=tok.pos_)
+                    if not (tok.is_punct or tok.is_space)
+                    else []
+                ),
+            )
+            for tok in spacy_obj
+        ]
+
+
+@cached(cache.LRU_CACHE, key=functools.partial(hashkey, "char_weights"))
+def get_char_weights(lang):
+    """
+    Get lang-specific character weights for use in char-level data augmentation transforms,
+    based on data in :class:`textacy.resources.ConceptNet`. For uncovered langs,
+    falls back to just a uniform distribution over ascii letters and numbers.
+
+    Args:
+        lang (str): Standard two-letter language code.
+
+    Returns:
+        List[Tuple[str, int]]: Collection of (character, weight) pairs, based on
+        the distribution of characters found in data source.
+    """
+    # TODO: find a better data source :)
+    # for example, the united nations declaration of human rights in _all_ languages
+    try:
+        char_weights = list(
+            collections.Counter(
+                char
+                for key in concept_net.synonyms[lang].keys()
+                for char in key
+                if char.isalnum()
+            ).items()
+        )
+    except KeyError:
+        char_weights = list(
+            zip(string.ascii_lowercase + string.digits, itertools.repeat(1))
+        )
+    return char_weights
