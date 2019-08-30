@@ -27,6 +27,7 @@ NAME_TO_CLASS = {
     "oxford_text_archive": datasets.OxfordTextArchive,
     "reddit_comments": datasets.RedditComments,
     "supreme_court": datasets.SupremeCourt,
+    "udhr": datasets.UDHR,
     "wikinews": datasets.Wikinews,
     "wikipedia": datasets.Wikipedia,
     "concept_net": resources.ConceptNet,
