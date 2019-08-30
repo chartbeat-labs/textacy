@@ -2,21 +2,14 @@
 Cache
 -----
 
-Functions to load and cache language data and other NLP resources. Loading data
+Functionality for caching language data and other NLP resources. Loading data
 from disk can be slow; let's just do it once and forget about it. :)
 """
-import functools
 import inspect
-import logging
 import os
 import sys
 
 from cachetools import cached, LRUCache
-from cachetools.keys import hashkey
-
-from . import constants
-
-LOGGER = logging.getLogger(__name__)
 
 
 def _get_size(obj, seen=None):
@@ -63,27 +56,3 @@ def clear():
     """Clear textacy's cache of loaded data."""
     global LRU_CACHE
     LRU_CACHE.clear()
-
-
-@cached(LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
-def load_hyphenator(lang):
-    """
-    Load an object that hyphenates words at valid points, as used in LaTex typesetting.
-
-    Args:
-        lang (str): Standard 2-letter language abbreviation. To get a list of
-            valid values::
-
-                >>> import pyphen; pyphen.LANGUAGES
-
-    Returns:
-        :class:`pyphen.Pyphen()`
-
-    Note:
-        While hyphenation points always fall on syllable divisions,
-        not all syllable divisions are valid hyphenation points. But it's decent.
-    """
-    import pyphen
-
-    LOGGER.debug('Loading "%s" language hyphenator', lang)
-    return pyphen.Pyphen(lang=lang)

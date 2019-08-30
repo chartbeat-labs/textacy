@@ -4,13 +4,16 @@ Text Statistics
 
 Compute a variety of basic counts and readability statistics for documents.
 """
+import functools
 import logging
 from math import sqrt
 
+from cachetools import cached
+from cachetools.keys import hashkey
 from cytoolz import itertoolz
 
-from . import cache
-from . import extract
+from . import cache, extract
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -90,7 +93,7 @@ class TextStats:
         self.lang = doc.vocab.lang
         self.n_sents = itertoolz.count(doc.sents) if doc.is_sentenced else None
         # get objs for basic count computations
-        hyphenator = cache.load_hyphenator(lang=self.lang)
+        hyphenator = load_hyphenator(lang=self.lang)
         words = tuple(
             extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False)
         )
@@ -351,3 +354,27 @@ def gulpease_index(n_chars, n_words, n_sents):
         https://it.wikipedia.org/wiki/Indice_Gulpease
     """
     return (300 * n_sents / n_words) - (10 * n_chars / n_words) + 89
+
+
+@cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
+def load_hyphenator(lang):
+    """
+    Load an object that hyphenates words at valid points, as used in LaTex typesetting.
+
+    Args:
+        lang (str): Standard 2-letter language abbreviation. To get a list of
+            valid values::
+
+                >>> import pyphen; pyphen.LANGUAGES
+
+    Returns:
+        :class:`pyphen.Pyphen()`
+
+    Note:
+        While hyphenation points always fall on syllable divisions,
+        not all syllable divisions are valid hyphenation points. But it's decent.
+    """
+    import pyphen
+
+    LOGGER.debug('Loading "%s" language hyphenator', lang)
+    return pyphen.Pyphen(lang=lang)
