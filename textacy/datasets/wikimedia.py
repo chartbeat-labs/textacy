@@ -359,32 +359,32 @@ class Wikipedia(Wikimedia):
 
     Download a database dump (one time only!) and save its contents to disk::
 
-        >>> wp = Wikipedia(lang="en", version="current")
-        >>> wp.download()
-        >>> wp.info
+        >>> ds = Wikipedia(lang="en", version="current")
+        >>> ds.download()
+        >>> ds.info
         {'name': 'wikipedia',
          'site_url': 'https://en.wikipedia.org/wiki/Main_Page',
          'description': 'All pages for a given language- and version-specific Wikipedia site snapshot.'}
 
     Iterate over wiki pages as texts or records with both text and metadata::
 
-        >>> for text in wp.texts(limit=5):
+        >>> for text in ds.texts(limit=5):
         ...     print(text[:500])
-        >>> for text, meta in wp.records(limit=5):
+        >>> for text, meta in ds.records(limit=5):
         ...     print(meta["page_id"], meta["title"])
 
     Filter wiki pages by a variety of metadata fields and text length::
 
-        >>> for text, meta in wp.records(category="Living people", limit=5):
+        >>> for text, meta in ds.records(category="Living people", limit=5):
         ...     print(meta["title"], meta["categories"])
-        >>> for text, meta in wp.records(wiki_link="United_States", limit=5):
+        >>> for text, meta in ds.records(wiki_link="United_States", limit=5):
         ...     print(meta["title"], meta["wiki_links"])
-        >>> for text in wp.texts(min_len=10000, limit=5):
+        >>> for text in ds.texts(min_len=10000, limit=5):
         ...     print(len(text))
 
     Stream wiki pages into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=wp.records(min_len=2000, limit=50))
+        >>> textacy.Corpus("en", data=ds.records(min_len=2000, limit=50))
         Corpus(50 docs; 72368 tokens)
 
     Args:
@@ -422,32 +422,32 @@ class Wikinews(Wikimedia):
 
     Download a database dump (one time only!) and save its contents to disk::
 
-        >>> wn = Wikinews(lang="en", version="current")
-        >>> wn.download()
-        >>> wn.info
+        >>> ds = Wikinews(lang="en", version="current")
+        >>> ds.download()
+        >>> ds.info
         {'name': 'wikinews',
          'site_url': 'https://en.wikinews.org/wiki/Main_Page',
          'description': 'All pages for a given language- and version-specific Wikinews site snapshot.'}
 
     Iterate over wiki pages as texts or records with both text and metadata::
 
-        >>> for text in wn.texts(limit=5):
+        >>> for text in ds.texts(limit=5):
         ...     print(text[:500])
-        >>> for text, meta in wn.records(limit=5):
+        >>> for text, meta in ds.records(limit=5):
         ...     print(meta["page_id"], meta["title"])
 
     Filter wiki pages by a variety of metadata fields and text length::
 
-        >>> for text, meta in wn.records(category="Politics and conflicts", limit=5):
+        >>> for text, meta in ds.records(category="Politics and conflicts", limit=5):
         ...     print(meta["title"], meta["categories"])
-        >>> for text, meta in wn.records(wiki_link="Reuters", limit=5):
+        >>> for text, meta in ds.records(wiki_link="Reuters", limit=5):
         ...     print(meta["title"], meta["wiki_links"])
-        >>> for text in wn.texts(min_len=5000, limit=5):
+        >>> for text in ds.texts(min_len=5000, limit=5):
         ...     print(len(text))
 
     Stream wiki pages into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=wn.records(limit=100))
+        >>> textacy.Corpus("en", data=ds.records(limit=100))
         Corpus(100 docs; 33092 tokens)
 
     Args:

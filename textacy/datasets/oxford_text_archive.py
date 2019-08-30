@@ -51,33 +51,33 @@ class OxfordTextArchive(Dataset):
 
     Download the data (one time only!), saving and extracting its contents to disk::
 
-        >>> ota = OxfordTextArchive()
-        >>> ota.download()
-        >>> ota.info
+        >>> ds = OxfordTextArchive()
+        >>> ds.download()
+        >>> ds.info
         {'name': 'oxford_text_archive',
          'site_url': 'https://ota.ox.ac.uk/',
          'description': 'Collection of ~2.7k Creative Commons texts from the Oxford Text Archive, containing primarily English-language 16th-20th century literature and history.'}
 
     Iterate over literary works as texts or records with both text and metadata::
 
-        >>> for text in ota.texts(limit=3):
+        >>> for text in ds.texts(limit=3):
         ...     print(text[:200])
-        >>> for text, meta in ota.records(limit=3):
+        >>> for text, meta in ds.records(limit=3):
         ...     print("\\n{}, {}".format(meta["title"], meta["year"]))
         ...     print(text[:300])
 
     Filter literary works by a variety of metadata fields and text length::
 
-        >>> for text, meta in ota.records(author="Shakespeare, William", limit=1):
+        >>> for text, meta in ds.records(author="Shakespeare, William", limit=1):
         ...     print("{}\\n{}".format(meta["title"], text[:500]))
-        >>> for text, meta in ota.records(date_range=("1900-01-01", "1990-01-01"), limit=5):
+        >>> for text, meta in ds.records(date_range=("1900-01-01", "1990-01-01"), limit=5):
         ...     print(meta["year"], meta["author"])
-        >>> for text in ota.texts(min_len=4000000):
+        >>> for text in ds.texts(min_len=4000000):
         ...     print(len(text))
 
     Stream literary works into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=ota.records(limit=5))
+        >>> textacy.Corpus("en", data=ds.records(limit=5))
         Corpus(5 docs; 182289 tokens)
 
     Args:

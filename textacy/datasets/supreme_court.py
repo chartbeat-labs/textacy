@@ -76,36 +76,36 @@ class SupremeCourt(Dataset):
     Download the data (one time only!) from the textacy-data repo
     (https://github.com/bdewilde/textacy-data), and save its contents to disk::
 
-        >>> sc = SupremeCourt()
-        >>> sc.download()
-        >>> sc.info
+        >>> ds = SupremeCourt()
+        >>> ds.download()
+        >>> ds.info
         {'name': 'supreme_court',
          'site_url': 'http://caselaw.findlaw.com/court/us-supreme-court',
          'description': 'Collection of ~8.4k decisions issued by the U.S. Supreme Court between November 1946 and June 2016.'}
 
     Iterate over decisions as texts or records with both text and metadata::
 
-        >>> for text in sc.texts(limit=3):
+        >>> for text in ds.texts(limit=3):
         ...     print(text[:500], end="\\n\\n")
-        >>> for text, meta in sc.records(limit=3):
+        >>> for text, meta in ds.records(limit=3):
         ...     print("\\n{} ({})\\n{}".format(meta["case_name"], meta["decision_date"], text[:500]))
 
     Filter decisions by a variety of metadata fields and text length::
 
-        >>> for text, meta in sc.records(opinion_author=109, limit=3):  # Notorious RBG!
+        >>> for text, meta in ds.records(opinion_author=109, limit=3):  # Notorious RBG!
         ...     print(meta["case_name"], meta["decision_direction"], meta["n_maj_votes"])
-        >>> for text, meta in sc.records(decision_direction="liberal",
+        >>> for text, meta in ds.records(decision_direction="liberal",
         ...                              issue_area={1, 9, 10}, limit=3):
         ...     print(meta["case_name"], meta["maj_opinion_author"], meta["n_maj_votes"])
-        >>> for text, meta in sc.records(opinion_author=102, date_range=('1985-02-11', '1986-02-11')):
+        >>> for text, meta in ds.records(opinion_author=102, date_range=('1985-02-11', '1986-02-11')):
         ...     print("\\n{} ({})".format(meta["case_name"], meta["decision_date"]))
-        ...     print(sc.issue_codes[meta["issue"]], "=>", meta["decision_direction"])
-        >>> for text in sc.texts(min_len=250000):
+        ...     print(ds.issue_codes[meta["issue"]], "=>", meta["decision_direction"])
+        >>> for text in ds.texts(min_len=250000):
         ...     print(len(text))
 
     Stream decisions into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=sc.records(limit=25))
+        >>> textacy.Corpus("en", data=ds.records(limit=25))
         Corpus(25 docs; 136696 tokens)
 
     Args:

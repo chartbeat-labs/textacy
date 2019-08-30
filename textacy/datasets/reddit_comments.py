@@ -50,34 +50,34 @@ class RedditComments(Dataset):
 
     Download the data (one time only!) or subsets thereof by specifying a date range::
 
-        >>> rc = RedditComments()
-        >>> rc.download(date_range=("2007-10", "2008-03"))
-        >>> rc.info
+        >>> ds = RedditComments()
+        >>> ds.download(date_range=("2007-10", "2008-03"))
+        >>> ds.info
         {'name': 'reddit_comments',
          'site_url': 'https://archive.org/details/2015_reddit_comments_corpus',
          'description': 'Collection of ~1.5 billion publicly available Reddit comments from October 2007 through May 2015.'}
 
     Iterate over comments as texts or records with both text and metadata::
 
-        >>> for text in rc.texts(limit=5):
+        >>> for text in ds.texts(limit=5):
         ...     print(text)
-        >>> for text, meta in rc.records(limit=5):
+        >>> for text, meta in ds.records(limit=5):
         ...     print("\\n{} {}\\n{}".format(meta["author"], meta["created_utc"], text))
 
     Filter comments by a variety of metadata fields and text length::
 
-        >>> for text, meta in rc.records(subreddit="politics", limit=5):
+        >>> for text, meta in ds.records(subreddit="politics", limit=5):
         ...     print(meta["score"], ":", text)
-        >>> for text, meta in rc.records(date_range=("2008-01", "2008-03"), limit=5):
+        >>> for text, meta in ds.records(date_range=("2008-01", "2008-03"), limit=5):
         ...     print(meta["created_utc"])
-        >>> for text, meta in rc.records(score_range=(10, None), limit=5):
+        >>> for text, meta in ds.records(score_range=(10, None), limit=5):
         ...     print(meta["score"], ":", text)
-        >>> for text in rc.texts(min_len=2000, limit=5):
+        >>> for text in ds.texts(min_len=2000, limit=5):
         ...     print(len(text))
 
     Stream comments into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=rc.records(limit=1000))
+        >>> textacy.Corpus("en", data=ds.records(limit=1000))
         Corpus(1000 docs; 27582 tokens)
 
     Args:
