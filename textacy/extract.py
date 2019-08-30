@@ -67,25 +67,11 @@ def words(
     if filter_nums is True:
         words_ = (w for w in words_ if not w.like_num)
     if include_pos:
-        if isinstance(include_pos, str):
-            include_pos = include_pos.upper()
-            words_ = (w for w in words_ if w.pos_ == include_pos)
-        elif isinstance(include_pos, (set, frozenset, list, tuple)):
-            include_pos = {pos.upper() for pos in include_pos}
-            words_ = (w for w in words_ if w.pos_ in include_pos)
-        else:
-            msg = 'invalid `include_pos` type: "{}"'.format(type(include_pos))
-            raise TypeError(msg)
+        include_pos = {pos.upper() for pos in utils.to_collection(include_pos, str, set)}
+        words_ = (w for w in words_ if w.pos_ in include_pos)
     if exclude_pos:
-        if isinstance(exclude_pos, str):
-            exclude_pos = exclude_pos.upper()
-            words_ = (w for w in words_ if w.pos_ != exclude_pos)
-        elif isinstance(exclude_pos, (set, frozenset, list, tuple)):
-            exclude_pos = {pos.upper() for pos in exclude_pos}
-            words_ = (w for w in words_ if w.pos_ not in exclude_pos)
-        else:
-            msg = 'invalid `exclude_pos` type: "{}"'.format(type(exclude_pos))
-            raise TypeError(msg)
+        exclude_pos = {pos.upper() for pos in utils.to_collection(exclude_pos, str, set)}
+        words_ = (w for w in words_ if w.pos_ not in exclude_pos)
     if min_freq > 1:
         words_ = list(words_)
         freqs = itertoolz.frequencies(w.lower_ for w in words_)
@@ -154,35 +140,17 @@ def ngrams(
     if filter_nums is True:
         ngrams_ = (ngram for ngram in ngrams_ if not any(w.like_num for w in ngram))
     if include_pos:
-        if isinstance(include_pos, str):
-            include_pos = include_pos.upper()
-            ngrams_ = (
-                ngram for ngram in ngrams_ if all(w.pos_ == include_pos for w in ngram)
-            )
-        elif isinstance(include_pos, (set, frozenset, list, tuple)):
-            include_pos = {pos.upper() for pos in include_pos}
-            ngrams_ = (
-                ngram for ngram in ngrams_ if all(w.pos_ in include_pos for w in ngram)
-            )
-        else:
-            msg = 'invalid `include_pos` type: "{}"'.format(type(include_pos))
-            raise TypeError(msg)
+        include_pos = {pos.upper() for pos in utils.to_collection(include_pos, str, set)}
+        ngrams_ = (
+            ngram for ngram in ngrams_ if all(w.pos_ in include_pos for w in ngram)
+        )
     if exclude_pos:
-        if isinstance(exclude_pos, str):
-            exclude_pos = exclude_pos.upper()
-            ngrams_ = (
-                ngram for ngram in ngrams_ if all(w.pos_ != exclude_pos for w in ngram)
-            )
-        elif isinstance(exclude_pos, (set, frozenset, list, tuple)):
-            exclude_pos = {pos.upper() for pos in exclude_pos}
-            ngrams_ = (
-                ngram
-                for ngram in ngrams_
-                if all(w.pos_ not in exclude_pos for w in ngram)
-            )
-        else:
-            msg = 'invalid `exclude_pos` type: "{}"'.format(type(exclude_pos))
-            raise TypeError(msg)
+        exclude_pos = {pos.upper() for pos in utils.to_collection(exclude_pos, str, set)}
+        ngrams_ = (
+            ngram
+            for ngram in ngrams_
+            if not any(w.pos_ in exclude_pos for w in ngram)
+        )
     if min_freq > 1:
         ngrams_ = list(ngrams_)
         freqs = itertoolz.frequencies(ngram.lower_ for ngram in ngrams_)
