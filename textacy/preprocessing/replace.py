@@ -118,7 +118,7 @@ def replace_urls(text, replace_with="_URL_"):
     Returns:
         str
     """
-    return RE_URL.sub(replace_with, RE_SHORT_URL.sub(replace_with, text))
+    return RE_SHORT_URL.sub(replace_with, RE_URL.sub(replace_with, text))
 
 
 def replace_user_handles(text, replace_with="_USER_"):
