@@ -15,7 +15,7 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.mark.skip("No need to download a new dataset every time")
 def test_download(tmpdir):
-    dataset = OxfordTextArchive(data_dir=str(tempdir))
+    dataset = OxfordTextArchive(data_dir=str(tmpdir))
     dataset.download()
     assert os.path.isfile(dataset._metadata_filepath)
     assert os.path.isdir(dataset._text_dirpath)
