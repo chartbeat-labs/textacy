@@ -1,8 +1,8 @@
 .. _api-reference-doc-and-corpus:
 
-Doc and Corpus
-==============
+Lang, Doc, and Corpus
+=====================
 
-.. automodule:: textacy.doc
+.. automodule:: textacy.spacier.core
 
 .. automodule:: textacy.corpus
