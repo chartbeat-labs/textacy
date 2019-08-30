@@ -50,3 +50,10 @@ def test_empty_doc(empty_spacy_doc):
     result = ke.scake(empty_spacy_doc)
     assert isinstance(result, list)
     assert len(result) == 0
+
+
+def test_single_sentence_doc():
+    doc = textacy.make_spacy_doc("This is a document with a single sentence.", lang="en")
+    result = ke.scake(doc)
+    assert isinstance(result, list)
+    assert len(result) > 0

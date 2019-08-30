@@ -62,11 +62,14 @@ def scake(
 
     # build up a graph of good words, edges weighting by adjacent sentence co-occurrence
     cooc_mat = collections.Counter()
-    n_sents = itertoolz.count(doc.sents)  # in case doc only has 1 sentence
-    for sent1, sent2 in itertoolz.sliding_window(min(2, n_sents), doc.sents):
+    # handle edge case where doc only has 1 sentence
+    n_sents = itertoolz.count(doc.sents)
+    for window_sents in itertoolz.sliding_window(min(2, n_sents), doc.sents):
+        if n_sents == 1:
+            window_sents = (window_sents[0], [])
         window_words = (
             word
-            for word in itertoolz.concatv(sent1, sent2)
+            for word in itertoolz.concat(window_sents)
             if not (word.is_stop or word.is_punct or word.is_space)
             and (not include_pos or word.pos_ in include_pos)
         )
@@ -87,6 +90,8 @@ def scake(
     )
 
     word_scores = _compute_word_scores(doc, graph, cooc_mat, normalize)
+    if not word_scores:
+        return []
 
     # generate a list of candidate terms
     candidates = _get_candidates(doc, normalize, include_pos)
@@ -118,6 +123,10 @@ def _compute_word_scores(doc, graph, cooc_mat, normalize):
     # "level of hierarchy" component
     max_truss_levels = _compute_node_truss_levels(graph)
     max_truss_level = max(max_truss_levels.values())
+    # check for edge case when all word scores would be zero / undefined
+    if not max_truss_level:
+        return {}
+
     # "semantic strength of a word" component
     sem_strengths = {
         w: sum(cooc_mat[tuple(sorted([w, nbr]))] * max_truss_levels[nbr] for nbr in graph.neighbors(w))
