@@ -2,15 +2,25 @@
 UDHR
 ----
 
-BRIEF DESCRIPTION
+A collection of translations of the Universal Declaration of Human Rights (UDHR),
+a milestone document in the history of human rights that first, formally established
+fundamental human rights to be universally protected.
 
-Records include the following key fields (plus a few others):
+Records include the following fields:
 
-    - FIELD 1, etc.
+    - ``text``: Full text of the translated UDHR document.
+    - ``lang``: ISO-639-1 language code of the text.
+    - ``lang_name``: Ethnologue entry for the language (see https://www.ethnologue.com).
 
-DETAILS
+The source dataset was compiled and is updated by the Unicode Consortium
+as a way to demonstrate the use of unicode in representing a wide variety of languages.
+In fact, the UDHR was chosen because it's been translated into more languages
+than any other document! However, this dataset only provides access to records
+translated into ISO-639-1 languages — that is, major living languages *only*,
+rather than every language, major or minor, that has ever existed. If you need access
+to texts in those other languages, you can find them at :attr:`UDHR._texts_dirpath`.
 
-REFERENCE
+For more details, go to https://unicode.org/udhr.
 """
 import io
 import itertools
@@ -25,9 +35,11 @@ LOGGER = logging.getLogger(__name__)
 
 NAME = "udhr"
 META = {
-    "site_url": "http://www.unicode.org/udhr",
+    "site_url": "http://www.ohchr.org/EN/UDHR",
     "description": (
-        "BRIEF DESCRIPTION"
+        "A collection of translations of the Universal Declaration of Human Rights (UDHR), "
+        "a milestone document in the history of human rights that first, formally established "
+        "fundamental human rights to be universally protected."
     )
 }
 DOWNLOAD_URL = "https://unicode.org/udhr/assemblies/udhr_txt.zip"
@@ -35,7 +47,34 @@ DOWNLOAD_URL = "https://unicode.org/udhr/assemblies/udhr_txt.zip"
 
 class UDHR(Dataset):
     """
-    USAGE EXAMPLE
+    Stream a collection of UDHR translations from disk, either as texts or
+    text + metadata pairs.
+
+    Download the data (one time only!), saving and extracting its contents to disk::
+
+        >>> ds = UDHR()
+        >>> ds.download()
+        >>> ds.info
+        {'name': 'udhr',
+         'site_url': 'http://www.ohchr.org/EN/UDHR',
+         'description': 'A collection of translations of the Universal Declaration of Human Rights (UDHR), a milestone document in the history of human rights that first, formally established fundamental human rights to be universally protected.'}
+
+    Iterate over translations as texts or records with both text and metadata::
+
+        >>> for text in ds.texts(limit=5):
+        ...     print(text[:500])
+        >>> for text, meta in ds.records(limit=5):
+        ...     print("\\n{} ({})\\n{}".format(meta["lang_name"], meta["lang"], text[:500]))
+
+    Filter translations by language, and note that some languages have multiple translations::
+
+        >>> for text, meta in ds.records(lang="en"):
+        ...     print("\\n{} ({})\\n{}".format(meta["lang_name"], meta["lang"], text[:500]))
+        >>> for text, meta in ds.records(lang="zh"):
+        ...     print("\\n{} ({})\\n{}".format(meta["lang_name"], meta["lang"], text[:500]))
+
+    Note: Streaming translations into a :class:`textacy.Corpus <textacy.corpus.Corpus>`
+    doesn't work as for other available datasets, since this dataset is multilingual.
 
     Args:
         data_dir (str or :class:`pathlib.Path`): Path to directory on disk
@@ -118,7 +157,6 @@ class UDHR(Dataset):
                         "filename": "udhr_{}.txt".format(ele.get("f")),
                         "lang": iso_lang_code,
                         "lang_name": ele.get("n"),
-                        "stage": stage,
                     }
                 )
         # get set of all available langs, so users can filter on it
