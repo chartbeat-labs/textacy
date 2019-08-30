@@ -24,6 +24,10 @@ def substitute_word_synonyms(aug_toks, *, num=1, pos=None):
 
     Returns:
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
+
+    Note:
+        This transform requires :class:`textacy.resources.ConceptNet` to be downloaded
+        to work properly, since this is the data source for word synonyms to be substituted.
     """
     _validate_aug_toks(aug_toks)
     pos = utils.to_collection(pos, str, set)
@@ -69,6 +73,10 @@ def insert_word_synonyms(aug_toks, *, num=1, pos=None):
 
     Returns:
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
+
+    Note:
+        This transform requires :class:`textacy.resources.ConceptNet` to be downloaded
+        to work properly, since this is the data source for word synonyms to be inserted.
     """
     _validate_aug_toks(aug_toks)
     pos = utils.to_collection(pos, str, set)
@@ -229,7 +237,7 @@ def delete_words(aug_toks, *, num=1, pos=None):
     return new_aug_toks
 
 
-def substitute_chars(aug_toks, *, num=1, char_weights=None):
+def substitute_chars(aug_toks, *, num=1, lang=None):
     """
     Randomly substitute a single character in randomly-selected words with another,
     up to ``num`` times or with a probability of ``num``.
@@ -240,17 +248,23 @@ def substitute_chars(aug_toks, *, num=1, char_weights=None):
         num (int or float): If int, maximum number of words to modify
             with a random character substitution; if float, probability
             that a given word will be modified.
-        char_weights (List[Tuple[str, int]]): Collection of (character, weight) pairs,
-            used to perform weighted random selection of characters to substitute
-            into selected words. Characters with higher weight are
-            more likely to be substituted.
+        lang (str): Standard, two-letter language code corresponding to ``aug_toks``.
+            Used to load a weighted distribution of language-appropriate characters
+            that are randomly selected for substitution. More common characters
+            are more likely to be substituted. If not specified, ascii letters and
+            digits are randomly selected with equal probability.
 
     Returns:
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
+
+    Note:
+        This transform requires :class:`textacy.resources.ConceptNet` to be downloaded
+        to work properly, since this is the data source for character weights when
+        deciding which char(s) to insert. In a future release, a smaller / more convenient
+        data source may be substituted in under the hood.
     """
     _validate_aug_toks(aug_toks)
-    if not char_weights:
-        char_weights = aug_utils.get_char_weights("xx")
+    char_weights = aug_utils.get_char_weights(lang or "xx")
     cand_idxs = [
         idx for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.is_word and len(aug_tok.text) >= 3
@@ -286,7 +300,7 @@ def substitute_chars(aug_toks, *, num=1, char_weights=None):
     return new_aug_toks
 
 
-def insert_chars(aug_toks, *, num=1, char_weights=None):
+def insert_chars(aug_toks, *, num=1, lang=None):
     """
     Randomly insert a character into randomly-selected words,
     up to ``num`` times or with a probability of ``num``.
@@ -297,17 +311,23 @@ def insert_chars(aug_toks, *, num=1, char_weights=None):
         num (int or float): If int, maximum number of words to modify
             with a random character insertion; if float, probability
             that a given word will be modified.
-        char_weights (List[Tuple[str, int]]): Collection of (character, weight) pairs,
-            used to perform weighted random selection of characters to substitute
-            into selected words. Characters with higher weight are
-            more likely to be substituted.
+        lang (str): Standard, two-letter language code corresponding to ``aug_toks``.
+            Used to load a weighted distribution of language-appropriate characters
+            that are randomly selected for substitution. More common characters
+            are more likely to be substituted. If not specified, ascii letters and
+            digits are randomly selected with equal probability.
 
     Returns:
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
+
+    Note:
+        This transform requires :class:`textacy.resources.ConceptNet` to be downloaded
+        to work properly, since this is the data source for character weights when
+        deciding which char(s) to insert. In a future release, a smaller / more convenient
+        data source may be substituted in under the hood.
     """
     _validate_aug_toks(aug_toks)
-    if not char_weights:
-        char_weights = aug_utils.get_char_weights("xx")
+    char_weights = aug_utils.get_char_weights(lang or "xx")
     cand_idxs = [
         idx for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.is_word and len(aug_tok.text) >= 3

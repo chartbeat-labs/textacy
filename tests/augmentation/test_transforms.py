@@ -222,8 +222,7 @@ class TestSubstituteChars:
 
     def test_noop(self, aug_toks):
         for num in [0, 0.0]:
-            new_aug_toks = transforms.substitute_chars(
-                aug_toks, num=num, char_weights=aug_utils.get_char_weights("en"))
+            new_aug_toks = transforms.substitute_chars(aug_toks, num=num, lang="en")
             for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks):
                 assert aug_tok.text == new_aug_tok.text
 
@@ -231,8 +230,7 @@ class TestSubstituteChars:
         # using higher nums here to prevent the very unlikely case
         # that all characters are substituted by the same character
         for num in [3, 5]:
-            new_aug_toks = transforms.substitute_chars(
-                aug_toks, num=num, char_weights=aug_utils.get_char_weights("en"))
+            new_aug_toks = transforms.substitute_chars(aug_toks, num=num, lang="en")
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) == len(aug_toks)
             assert all(
@@ -250,18 +248,15 @@ class TestSubstituteChars:
 
     def test_num_float(self, aug_toks):
         for num in [0.1, 0.3]:
-            _ = transforms.substitute_chars(
-                aug_toks, num=num, char_weights=aug_utils.get_char_weights("en"))
+            _ = transforms.substitute_chars(aug_toks, num=num, lang="en")
 
     def test_errors(self, aug_toks):
         for num in [-1, 2.0]:
             with pytest.raises(ValueError):
-                _ = transforms.substitute_chars(
-                    aug_toks, num=num, char_weights=aug_utils.get_char_weights("en"))
+                _ = transforms.substitute_chars(aug_toks, num=num, lang="en")
         for obj in [["foo", "bar"], "foo bar"]:
             with pytest.raises(TypeError):
-                _ = transforms.substitute_chars(
-                    obj, num=1, char_weights=aug_utils.get_char_weights("en"))
+                _ = transforms.substitute_chars(obj, num=1, lang="en")
 
 
 @pytest.mark.skipif(
@@ -272,15 +267,13 @@ class TestInsertChars:
 
     def test_noop(self, aug_toks):
         for num in [0, 0.0]:
-            new_aug_toks = transforms.insert_chars(
-                aug_toks, num=num, char_weights=aug_utils.get_char_weights("en"))
+            new_aug_toks = transforms.insert_chars(aug_toks, num=num, lang="en")
             for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks):
                 assert aug_tok.text == new_aug_tok.text
 
     def test_num_int(self, aug_toks):
         for num in [1, 3]:
-            new_aug_toks = transforms.insert_chars(
-                aug_toks, num=num, char_weights=aug_utils.get_char_weights("en"))
+            new_aug_toks = transforms.insert_chars(aug_toks, num=num, lang="en")
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) == len(aug_toks)
             assert all(
@@ -297,18 +290,15 @@ class TestInsertChars:
 
     def test_num_float(self, aug_toks):
         for num in [0.1, 0.3]:
-            _ = transforms.insert_chars(
-                aug_toks, num=num, char_weights=aug_utils.get_char_weights("en"))
+            _ = transforms.insert_chars(aug_toks, num=num, lang="en")
 
     def test_errors(self, aug_toks):
         for num in [-1, 2.0]:
             with pytest.raises(ValueError):
-                _ = transforms.insert_chars(
-                    aug_toks, num=num, char_weights=aug_utils.get_char_weights("en"))
+                _ = transforms.insert_chars(aug_toks, num=num, lang="en")
         for obj in [["foo", "bar"], "foo bar"]:
             with pytest.raises(TypeError):
-                _ = transforms.insert_chars(
-                    obj, num=1, char_weights=aug_utils.get_char_weights("en"))
+                _ = transforms.insert_chars(obj, num=1, lang="en")
 
 
 class TestSwapChars:
