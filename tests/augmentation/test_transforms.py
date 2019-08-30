@@ -215,8 +215,8 @@ class TestDeleteWords:
 
 
 @pytest.mark.skipif(
-    aug_utils.concept_net.filepath is None,
-    reason="ConceptNet resource must be downloaded before running tests",
+    aug_utils.udhr.index is None,
+    reason="UDHR dataset must be downloaded before running tests",
 )
 class TestSubstituteChars:
 
@@ -260,8 +260,8 @@ class TestSubstituteChars:
 
 
 @pytest.mark.skipif(
-    aug_utils.concept_net.filepath is None,
-    reason="ConceptNet resource must be downloaded before running tests",
+    aug_utils.udhr.index is None,
+    reason="UDHR dataset must be downloaded before running tests",
 )
 class TestInsertChars:
 

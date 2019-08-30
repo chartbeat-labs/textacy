@@ -34,8 +34,8 @@ def test_to_aug_toks(spacy_doc):
 
 
 @pytest.mark.skipif(
-    utils.concept_net.filepath is None,
-    reason="ConceptNet resource must be downloaded before running tests")
+    utils.udhr.index is None,
+    reason="UDHR dataset must be downloaded before running this test")
 def test_get_char_weights():
     for lang in ("en", "es", "xx"):
         char_weights = utils.get_char_weights(lang)

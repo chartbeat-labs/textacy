@@ -258,10 +258,9 @@ def substitute_chars(aug_toks, *, num=1, lang=None):
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
 
     Note:
-        This transform requires :class:`textacy.resources.ConceptNet` to be downloaded
+        This transform requires :class:`textacy.datasets.UDHR` to be downloaded
         to work properly, since this is the data source for character weights when
-        deciding which char(s) to insert. In a future release, a smaller / more convenient
-        data source may be substituted in under the hood.
+        deciding which char(s) to insert.
     """
     _validate_aug_toks(aug_toks)
     char_weights = aug_utils.get_char_weights(lang or "xx")
@@ -321,10 +320,9 @@ def insert_chars(aug_toks, *, num=1, lang=None):
         List[:obj:`AugTok`]: New, augmented sequence of tokens.
 
     Note:
-        This transform requires :class:`textacy.resources.ConceptNet` to be downloaded
+        This transform requires :class:`textacy.datasets.UDHR` to be downloaded
         to work properly, since this is the data source for character weights when
-        deciding which char(s) to insert. In a future release, a smaller / more convenient
-        data source may be substituted in under the hood.
+        deciding which char(s) to insert.
     """
     _validate_aug_toks(aug_toks)
     char_weights = aug_utils.get_char_weights(lang or "xx")

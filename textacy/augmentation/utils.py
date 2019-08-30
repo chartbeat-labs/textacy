@@ -7,11 +7,12 @@ from cachetools import cached
 from cachetools.keys import hashkey
 from spacy.tokens import Doc, Span
 
-from .. import cache, resources
+from .. import cache, datasets, resources
 from ..doc import make_spacy_doc
 
 
 concept_net = resources.ConceptNet()
+udhr = datasets.UDHR()
 
 AugTok = collections.namedtuple("AugTok", ["text", "ws", "pos", "is_word", "syns"])
 """tuple: Minimal token data required for data augmentation transforms."""
@@ -64,29 +65,26 @@ def to_aug_toks(spacy_obj):
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "char_weights"))
 def get_char_weights(lang):
     """
-    Get lang-specific character weights for use in char-level data augmentation transforms,
-    based on data in :class:`textacy.resources.ConceptNet`. For uncovered langs,
-    falls back to just a uniform distribution over ascii letters and numbers.
+    Get lang-specific character weights for use in certain data augmentation transforms,
+    based on texts in :class:`textacy.datasets.UDHR`.
 
     Args:
         lang (str): Standard two-letter language code.
 
     Returns:
         List[Tuple[str, int]]: Collection of (character, weight) pairs, based on
-        the distribution of characters found in data source.
+        the distribution of characters found in the source text.
     """
-    # TODO: find a better data source :)
-    # for example, the united nations declaration of human rights in _all_ languages
     try:
         char_weights = list(
             collections.Counter(
                 char
-                for key in concept_net.synonyms[lang].keys()
-                for char in key
+                for text in udhr.texts(lang=lang)
+                for char in text
                 if char.isalnum()
             ).items()
         )
-    except KeyError:
+    except ValueError:
         char_weights = list(
             zip(string.ascii_lowercase + string.digits, itertools.repeat(1))
         )
