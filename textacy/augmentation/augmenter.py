@@ -9,12 +9,50 @@ from . import utils as aug_utils
 
 class Augmenter:
     """
-    TODO: DOCS
+    Randomly apply one or many data augmentation transforms to spaCy ``Doc`` s
+    to produce new docs with additional variety and/or noise in the data.
+
+    Initialize an ``Augmenter`` with multiple transforms, and customize the randomization
+    of their selection when applying to a document::
+
+        >>> tfs = [transforms.delete_words, transforms.swap_chars, transforms.delete_chars]
+        >>> Augmenter(tfs, num=None)  # all tfs applied each time
+        >>> Augmenter(tfs, num=1)  # one randomly-selected tf applied each time
+        >>> Augmenter(tfs, num=0.5)  # tfs randomly selected with 50% prob each time
+        >>> augmenter = Augmenter(tfs, num=[0.4, 0.8, 0.6])  # tfs randomly selected with 40%, 80%, 60% probs, respectively, each time
+
+    Apply transforms to a given ``Doc`` to produce new documents::
+
+        >>> text = "The quick brown fox jumps over the lazy dog."
+        >>> doc = textacy.make_spacy_doc(text, lang="en")
+        >>> augmenter.apply_transforms(doc)
+        The quick brown ox jupms over the lazy dog.
+        >>> augmenter.apply_transforms(doc)
+        The quikc brown fox over the lazy dog.
+        >>> augmenter.apply_transforms(doc)
+        quick brown fox jumps over teh lazy dog.
+
+    Parameters for individual transforms may be specified when initializing ``Augmenter``
+    or, if necessary, when applying to individual documents::
+
+        >>> from functools import partial
+        >>> tfs = [partial(transforms.delete_words, num=3), transforms.swap_chars]
+        >>> augmenter = Augmenter(tfs)
+        >>> augmenter.apply_transforms(doc)
+        brown fox jumps over layz dog.
+        >>> augmenter.apply_transforms(doc, lang=doc.lang)  # (not actually needed for these tfs)
+        quick brown fox over teh lazy.
 
     Args:
         transforms (Sequence[Callable]): Ordered sequence of callables that must take
-            a List[:obj:`AugTok`] as their first positional argument and return
-            a List[:obj:`AugTok`].
+            List[:obj:`AugTok`] as their first positional argument and return another
+            List[:obj:`AugTok`].
+
+            .. note:: Although the particular transforms applied may vary doc-by-doc,
+               they are applied *in order* as listed here. Since some transforms may
+               clobber text in a way that makes other transforms less effective,
+               a stable ordering can improve the quality of augmented data.
+
         num (int or float or List[float]): If int, number of transforms to randomly select
             from ``transforms`` each time :meth:`Augmenter.apply_tranforms()` is called.
             If float, probability that any given transform will be selected.
@@ -29,8 +67,8 @@ class Augmenter:
     """
 
     def __init__(self, transforms, *, num=None):
-        self._tfs = self._validate_transforms(transforms)
-        self._num = self._validate_num(num)
+        self.tfs = self._validate_transforms(transforms)
+        self.num = self._validate_num(num)
 
     def apply_transforms(self, doc, **kwargs):
         """
@@ -81,14 +119,14 @@ class Augmenter:
 
     def _validate_num(self, num):
         if num is None:
-            return len(self._tfs)
-        elif isinstance(num, int) and 0 <= num <= len(self._tfs):
+            return len(self.tfs)
+        elif isinstance(num, int) and 0 <= num <= len(self.tfs):
             return num
         elif isinstance(num, float) and 0.0 <= num <= 1.0:
             return num
         elif (
             isinstance(num, (tuple, list)) and
-            len(num) == len(self._tfs) and
+            len(num) == len(self.tfs) and
             all(isinstance(n, float) and 0.0 <= n <= 1.0 for n in num)
         ):
             return tuple(num)
@@ -99,15 +137,15 @@ class Augmenter:
             )
 
     def _get_random_transforms(self):
-        num = self._num
+        num = self.num
         if isinstance(num, int):
-            rand_idxs = random.sample(range(len(self._tfs)), min(num, len(self._tfs)))
-            rand_tfs = [self._tfs[idx] for idx in sorted(rand_idxs)]
+            rand_idxs = random.sample(range(len(self.tfs)), min(num, len(self.tfs)))
+            rand_tfs = [self.tfs[idx] for idx in sorted(rand_idxs)]
         elif isinstance(num, float):
-            rand_tfs = [tf for tf in self._tfs if random.random() < num]
+            rand_tfs = [tf for tf in self.tfs if random.random() < num]
         else:
             rand_tfs = [
-                tf for tf, tf_num in zip(self._tfs, self._num)
+                tf for tf, tf_num in zip(self.tfs, self.num)
                 if random.random() < tf_num
             ]
         return rand_tfs
