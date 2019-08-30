@@ -3,17 +3,9 @@ import collections
 from textacy import make_spacy_doc
 from textacy.augmentation import transforms
 from textacy.augmentation import utils as aug_utils
-from textacy.resources import ConceptNet
 
 import pytest
 
-
-RESOURCE = ConceptNet()
-
-pytestmark = pytest.mark.skipif(
-    RESOURCE.filepath is None,
-    reason="ConceptNet resource must be downloaded before running tests",
-)
 
 @pytest.fixture(scope="module")
 def spacy_doc():
@@ -32,6 +24,10 @@ def aug_toks(spacy_doc):
     return aug_utils.to_aug_toks(spacy_doc)
 
 
+@pytest.mark.skipif(
+    aug_utils.concept_net.filepath is None,
+    reason="ConceptNet resource must be downloaded before running tests",
+)
 class TestSubstituteWordSynonyms:
 
     def test_noop(self, aug_toks):
@@ -82,6 +78,10 @@ class TestSubstituteWordSynonyms:
                 _ = transforms.substitute_word_synonyms(obj, num=1)
 
 
+@pytest.mark.skipif(
+    aug_utils.concept_net.filepath is None,
+    reason="ConceptNet resource must be downloaded before running tests",
+)
 class TestInsertWordSynonyms:
 
     def test_noop(self, aug_toks):
@@ -214,6 +214,10 @@ class TestDeleteWords:
                 _ = transforms.delete_words(obj, num=1)
 
 
+@pytest.mark.skipif(
+    aug_utils.concept_net.filepath is None,
+    reason="ConceptNet resource must be downloaded before running tests",
+)
 class TestSubstituteChars:
 
     def test_noop(self, aug_toks):
@@ -260,6 +264,10 @@ class TestSubstituteChars:
                     obj, num=1, char_weights=aug_utils.get_char_weights("en"))
 
 
+@pytest.mark.skipif(
+    aug_utils.concept_net.filepath is None,
+    reason="ConceptNet resource must be downloaded before running tests",
+)
 class TestInsertChars:
 
     def test_noop(self, aug_toks):
