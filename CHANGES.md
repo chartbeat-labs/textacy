@@ -1,5 +1,47 @@
 ## Changes
 
+### 0.9.0 (in development)
+
+Note: `textacy` is now PY3-only! 🎉 Specifically, support for PY2.7 has been dropped, and the minimum PY3 version has been bumped to 3.6 (PR #261). See below for related changes.
+
+#### New:
+
+- **Added `augmentation` subpackage for basic text data augmentation** (PR #268, #269)
+  - implemented several transformer functions for substituting, inserting, swapping, and deleting elements of text at both the word- and character-level
+  - implemented an `Augmenter` class for combining multiple transforms and applying them to spaCy `Doc`s in a randomized but configurable manner
+  - **Note:** This API is provisional, and subject to change in future releases.
+- **Added `resources` subpackage for standardized access to linguistic resources** (PR #265)
+  - **DepecheMood++:** high-coverage emotion lexicons for understanding the emotions evoked by a text. Updated from a previous version, and now features better English data and Italian data with expanded, consistent functionality.
+    - removed `lexicon_methods.py` module with previous implementation
+  - **ConceptNet:** multilingual knowledge base for representing relationships between words, similar to WordNet. Currently supports getting word antonyms, hyponyms, meronyms, and synonyms in dozens of languages.
+- **Added `UDHR` dataset, a collection of translations of the Universal Declaration of Human Rights** (PR #271)
+
+#### Changed:
+
+- Updated and extended functionality previously blocked by PY2 compatibility while reducing code bloat / complexity
+  - made many args keyword-only, to prevent user error
+  - args accepting strings for directory / file paths now also accept `pathlib.Path` objects, with `pathlib` adopted widely under the hood
+  - increased minimum versions and/or uncapped maximum versions of several dependencies, including `jellyfish`, `networkx`, and `numpy`
+- Added a Portuguese-specific formulation of Flesch Reading Ease score to `text_stats` (PR #263)
+- Reorganized and grouped together some like functionality
+  - moved core functionality for loading spaCy langs and making spaCy docs into `spacier.core`, out of `cache.py` and `doc.py`
+  - moved some general-purpose functionality from `dataset.utils` to `io.utils` and `utils.py`
+  - moved function for loading "hyphenator" out of `cache.py` and into `text_stats.py`, where it's used
+- Changed API Reference docs to show items in source code rather than alphabetical order, which should make the ordering more human-friendly
+- Updated repo README and PyPi metadata to be more consistent and representative of current functionality
+- Removed previously deprecated `textacy.io.split_record_fields()` function
+
+#### Fixed:
+
+- Fixed a regex for cleaning up crufty terms to prevent catastrophic backtracking in certain edge cases (true story: this bug was encountered in _production code_, and ruined my day)
+- Fixed bad handling of edge cases in sCAKE keyterm extraction (Issue #270)
+- Changed order in which URL regexes are applied in `preprocessing.replace_urls()` to properly handle certain edge case URLs (Issue #267)
+
+#### Contributors:
+
+Thanks much to @hugoabonizio for the contribution. 🤝
+
+
 ### 0.8.0 (2019-07-14)
 
 #### New and Changed:
