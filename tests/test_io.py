@@ -1,4 +1,6 @@
 import os
+import tarfile
+import zipfile
 
 import numpy as np
 import pytest
@@ -285,3 +287,28 @@ class TestIOUtils:
         assert (
             len(list(io.get_filepaths(TESTS_DIR, match_regex="io", extension=".py"))) == 1
         )
+
+    def test_get_filename_from_url(self):
+        url_fnames = [
+            ["http://www.foo.bar/bat.zip", "bat.zip"],
+            ["www.foo.bar/bat.tar.gz", "bat.tar.gz"],
+            ["foo.bar/bat.zip?q=test", "bat.zip"],
+            ["http%3A%2F%2Fwww.foo.bar%2Fbat.tar.gz", "bat.tar.gz"]
+        ]
+        for url, fname in url_fnames:
+            assert io.get_filename_from_url(url) == fname
+
+    def test_unpack_archive(self, tmpdir):
+        data = "Here's some text data to pack and unpack."
+        fpath_txt = str(tmpdir.join("test_unpack_archive.txt"))
+        with io.open_sesame(fpath_txt, mode="wt") as f:
+            f.write(data)
+        fpath_zip = str(tmpdir.join("test_unpack_archive.zip"))
+        with zipfile.ZipFile(fpath_zip, "w") as f:
+            f.write(fpath_txt)
+        io.unpack_archive(fpath_zip, extract_dir=tmpdir)
+        fpath_tar = str(tmpdir.join("test_unpack_archive.tar"))
+        with tarfile.TarFile(fpath_tar, "w") as f:
+            f.add(fpath_txt)
+        io.unpack_archive(fpath_tar, extract_dir=tmpdir)
+        io.unpack_archive(fpath_txt, extract_dir=tmpdir)
