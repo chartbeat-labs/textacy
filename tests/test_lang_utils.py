@@ -1,9 +1,9 @@
 from textacy import lang_utils
 
 GOOD_LANG_SENTS = [
-    ("en", "This sentence is in English."),
-    ("es", "Esta oración es en Español."),
-    ("fr", "Cette phrase est en français."),
+    ("en", "This is a short example sentence in English."),
+    ("es", "Esta es una breve oración de ejemplo en español."),
+    ("fr", "Ceci est un exemple court phrase en français."),
 ]
 
 BAD_LANG_SENTS = [

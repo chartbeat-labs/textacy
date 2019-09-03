@@ -1,10 +1,10 @@
 """
-Language Identification
+Language identification
 -----------------------
 
-Functionality for identifying the language of a text, using a model inspired by
+Pipeline for identifying the language of a text, using a model inspired by
 Google's Compact Language Detector v3 (https://github.com/google/cld3) and
-implemented with ``scikit-learn``.
+implemented with ``scikit-learn>=0.20``.
 
 Model
 ^^^^^
@@ -14,7 +14,7 @@ their frequencies of occurence within the text are counted. The full set of ngra
 are then hashed into a 4096-dimensional feature vector with values given by
 the L2 norm of the counts. These features are passed into a Multi-layer Perceptron
 with a single hidden layer of 512 rectified linear units and a softmax output layer
-giving probabilities for ~130 different languages as ISO 639-1 language codes.
+giving probabilities for ~140 different languages as ISO 639-1 language codes.
 
 Technically, the model was implemented as a :class:`sklearn.pipeline.Pipeline`
 with two steps: a :class:`sklearn.feature_extraction.text.HashingVectorizer`
@@ -24,28 +24,39 @@ for multi-class language classification.
 Dataset
 ^^^^^^^
 
-The pipeline was trained on a randomized, stratified subset of ~1.5M texts
+The pipeline was trained on a randomized, stratified subset of ~750k texts
 drawn from several sources:
 
-- **Tatoeba:** A crowd-sourced collection of ~5M sentences and their translations
-  into many languages. Style is relatively informal; subject matter is a variety
-  of everyday things and goings-on.
+- **Tatoeba:** A crowd-sourced collection of sentences and their translations into
+  many languages. Style is relatively informal; subject matter is a variety of
+  everyday things and goings-on.
   Source: https://tatoeba.org/eng/downloads.
-- **Leipzig Corpora:** A collection of corpora for many languages in the same format
-  and pulling from comparable sources -- specifically, 10k Wikipedia articles from
-  official database dumps and 10k news articles from either RSS feeds or web scrapes.
-  Only the most recently updated version was used, when available. Style is
-  relatively formal; subject matter is a variety of notable things and goings-on.
+- **Leipzig Corpora:** A collection of corpora for many languages pulling from
+  comparable sources -- specifically, 10k Wikipedia articles from official database dumps
+  and 10k news articles from either RSS feeds or web scrapes, when available.
+  Style is relatively formal; subject matter is a variety of notable things and goings-on.
   Source: http://wortschatz.uni-leipzig.de/en/download
-- **UDHR:** The UN's Universal Declaration of Human Rights document, translated
-  into hundreds of languages and split into paragraphs. Style is formal;
-  subject matter is fundamental human rights to be universally protected.
+- **UDHR:** The UN's Universal Declaration of Human Rights document, translated into
+  hundreds of languages and split into paragraphs. Style is formal; subject matter is
+  fundamental human rights to be universally protected.
   Source: https://unicode.org/udhr/index.html
-- **Twitter:** A collection of ~1.5k tweets in each of ~70 languages, posted in
-  July 2014, with languages assigned through a combination of models and human
-  annotators. Style is informal; subject matter is whatever Twitter was going on
-  about back then, who could say.
+- **Twitter:** A collection of tweets in each of ~70 languages, posted in July 2014,
+  with languages assigned through a combination of models and human annotators.
+  Style is informal; subject matter is whatever Twitter was going on about back then.
   Source: https://blog.twitter.com/engineering/en_us/a/2015/evaluating-language-identification-performance.html
+- **DSLCC**: Two collections of short excerpts of journalistic texts in a handful
+  of language groups that are highly similar to each other. Style is relatively formal;
+  subject matter is current events.
+  Source: http://ttg.uni-saarland.de/resources/DSLCC/
+
+Performance
+^^^^^^^^^^^
+
+The trained model achieved F1 = 0.96 when (macro and micro) averaged over all languages.
+A few languages have worse performance; for example, the two Norwegians ("nb" and "no"),
+Bosnian ("bs") and Serbian ("sr"), and Bashkir ("ba") and Tatar ("tt") are
+often confused with each other. See the textacy-data releases for more details:
+https://github.com/bdewilde/textacy-data/releases/tag/lang_identifier_v1.1_sklearn_v21
 """
 import io
 import logging
@@ -55,9 +66,8 @@ import urllib.parse
 
 import joblib
 
-from . import cache
-from . import constants
-from . import utils
+from . import cache, constants, utils
+from . import io as tio
 
 LOGGER = logging.getLogger(__name__)
 
@@ -74,14 +84,15 @@ class LangIdentifier:
 
     def __init__(
         self,
-        data_dir=os.path.join(constants.DEFAULT_DATA_DIR, "lang_identifier"),
+        data_dir=constants.DEFAULT_DATA_DIR.joinpath("lang_identifier"),
         max_text_len=1000
     ):
-        self.data_dir = data_dir
-        self.filename = "textacy-lang-identifier-py3.pkl.gz"
+        self._version = 1.1
+        self._model_id = self._get_model_id()
+        self.data_dir = utils.to_path(data_dir).resolve()
+        self.filename = self._model_id + ".pkl.gz"
         self.max_text_len = max_text_len
         self._pipeline = None
-        return
 
     @property
     def pipeline(self):
@@ -90,12 +101,25 @@ class LangIdentifier:
         return self._pipeline
 
     def _load_pipeline(self):
-        filepath = os.path.join(self.data_dir, self.filename)
-        if not os.path.isfile(filepath):
+        filepath = self.data_dir.joinpath(self.filename)
+        if not filepath.is_file():
             self.download()
-        with io.open(filepath, mode="rb") as f:
+        with filepath.open(mode="rb") as f:
             pipeline = joblib.load(f)
         return pipeline
+
+    def _get_model_id(self):
+        fstub = "lang-identifier-v{}-sklearn-v{}"
+        try:
+            import pkg_resources
+            filename = fstub.format(
+                self._version,
+                pkg_resources.get_distribution("scikit-learn").version[:4]
+            )
+        except ImportError:
+            import sklearn
+            filename = fstub.format(self._version, sklearn.__version__[:4])
+        return filename
 
     def download(self, force=False):
         """
@@ -106,12 +130,11 @@ class LangIdentifier:
             force (bool): If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
-        from .datasets.utils import download_file
-        release_tag = "lang_identifier_py3_v{data_version}".format(data_version=1.0)
+        release_tag = self._model_id.replace("-", "_")
         url = urllib.parse.urljoin(
             "https://github.com/bdewilde/textacy-data/releases/download/",
             release_tag + "/" + self.filename)
-        filepath = download_file(
+        tio.utils.download_file(
             url,
             filename=self.filename,
             dirpath=self.data_dir,
