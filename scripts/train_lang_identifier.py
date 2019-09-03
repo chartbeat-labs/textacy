@@ -26,6 +26,8 @@ import tarfile
 from pprint import pprint
 
 import joblib
+import matplotlib.pyplot as plt
+import numpy as np
 import sklearn
 import sklearn.metrics
 import sklearn.model_selection
@@ -165,18 +167,23 @@ def main():
     # fit and validate a model
     model_id = "lang-identifier-v{}-sklearn-v{}".format(
         args.version, sklearn.__version__[:4])
+    print("training model {} ...".format(model_id))
     lid = textacy.lang_utils.LangIdentifier(data_dir=models_dirpath)
     lid.init_pipeline()
     print(lid.pipeline.steps)
     lid.pipeline.fit(
         [text for text, _ in train_items],
-        y=[lang for _, lang in train_items]
+        y=[lang for _, lang in train_items],
     )
-    true, preds = test_model(lid.pipeline, test_items)
-    ax = plot_confusion_matrix(
-        true, preds, normalize=True, title=None, cmap=plt.cm.Blues, annotate=False)
-    ax.get_figure().savefig(
-        models_dirpath.joinpath(model_id + "-confusion-matrix.png"))
+    true, preds = test_model(
+        lid.pipeline, test_items, filepath=models_dirpath.joinpath(model_id + ".txt"))
+    try:
+        ax = plot_confusion_matrix(
+            true, preds, normalize=True, title=None, cmap=plt.cm.Blues, annotate=False)
+        ax.get_figure().savefig(
+            models_dirpath.joinpath(model_id + "-confusion-matrix.png"))
+    except Exception:
+        pass  # well, at least we tried
     joblib.dump(
         lid.pipeline, models_dirpath.joinpath(model_id + ".pkl.gz"), compress=3)
 
@@ -606,7 +613,7 @@ def get_random_sample(seq, n, stratify=True, random_state=None):
         return random.sample(seq, min(len(seq), n))
 
 
-def test_model(model, ds_test):
+def test_model(model, ds_test, filepath=None):
     exceptions = collections.Counter()
     true = []
     preds = []
@@ -623,7 +630,12 @@ def test_model(model, ds_test):
     print("# exceptions :", len(exceptions))
     if len(exceptions):
         print(exceptions.most_common())
-    print(sklearn.metrics.classification_report(true, preds))
+    classification_report = sklearn.metrics.classification_report(true, preds)
+    print(classification_report)
+    if filepath:
+        filepath = textacy.utils.to_path(filepath).resolve()
+        with filepath.open(mode="wt", encoding="utf-8") as f:
+            f.write(classification_report)
     return true, preds
 
 
