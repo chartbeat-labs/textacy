@@ -29,7 +29,9 @@ source_suffix = [".rst", ".md"]
 master_doc = "index"
 
 # autodoc extension configuration
-autodoc_default_flags = ["members"]
+autodoc_default_options = {
+    "members": True,
+}
 autodoc_member_order = "bysource"
 
 # General information about the project.
