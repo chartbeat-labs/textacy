@@ -164,7 +164,7 @@ class TopicModel:
     @classmethod
     def load(cls, filepath):
         model = joblib.load(filepath)
-        n_topics = model.n_topics if hasattr(model, "n_topics") else model.n_components
+        n_topics = model.n_components if hasattr(model, "n_components") else model.n_topics
         return cls(model, n_topics=n_topics)
 
     def fit(self, doc_term_matrix):
@@ -182,9 +182,9 @@ class TopicModel:
     @property
     def n_topics(self):
         try:
-            return self.model.n_topics
-        except AttributeError:
             return self.model.n_components
+        except AttributeError:
+            return self.model.n_topics
 
     def get_doc_topic_matrix(self, doc_term_matrix, *, normalize=True):
         """
