@@ -34,10 +34,10 @@ install:
 
 script:
   - set -e
+  - "python -m pytest -vv --cov=textacy --cov-report=term-missing"
   - if [[ $BUILD_DOCS = true ]]; then
       cd docs;
       make clean html;
       cd ..;
       doctr deploy . --built-docs docs/build/html/;
     fi
-  - "python -m pytest -vv --cov=textacy --cov-report=term-missing"
