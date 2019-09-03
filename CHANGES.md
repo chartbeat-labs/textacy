@@ -1,5 +1,16 @@
 ## Changes
 
+### 0.9.1 (2019-09-03)
+
+#### Changed:
+
+- Tweaked `TopicModel` class to work with newer versions of `scikit-learn`, and updated version requirements accordingly from `>=0.18.0,<0.21.0` to `>=0.19`
+
+#### Fixed:
+
+- Fixed residual bugs in the script for training language identification pipelines, then trained and released one using `scikit-learn==0.19` to prevent errors for users on that version
+
+
 ### 0.9.0 (2019-09-03)
 
 Note: `textacy` is now PY3-only! 🎉 Specifically, support for PY2.7 has been dropped, and the minimum PY3 version has been bumped to 3.6 (PR #261). See below for related changes.
