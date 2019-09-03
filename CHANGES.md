@@ -1,6 +1,6 @@
 ## Changes
 
-### 0.9.0 (in development)
+### 0.9.0 (2019-09-03)
 
 Note: `textacy` is now PY3-only! 🎉 Specifically, support for PY2.7 has been dropped, and the minimum PY3 version has been bumped to 3.6 (PR #261). See below for related changes.
 
@@ -27,6 +27,7 @@ Note: `textacy` is now PY3-only! 🎉 Specifically, support for PY2.7 has been d
   - moved core functionality for loading spaCy langs and making spaCy docs into `spacier.core`, out of `cache.py` and `doc.py`
   - moved some general-purpose functionality from `dataset.utils` to `io.utils` and `utils.py`
   - moved function for loading "hyphenator" out of `cache.py` and into `text_stats.py`, where it's used
+- Re-trained and released language identification pipelines using a better mix of training data, for slightly improved performance; also added the script used to train the pipeline
 - Changed API Reference docs to show items in source code rather than alphabetical order, which should make the ordering more human-friendly
 - Updated repo README and PyPi metadata to be more consistent and representative of current functionality
 - Removed previously deprecated `textacy.io.split_record_fields()` function
