@@ -65,6 +65,10 @@ def main():
         "for it to be included in the training dataset",
     )
     parser.add_argument(
+        "--version", type=str, required=True,
+        help="semantic version number to assign to trained model, e.g. '1.0'",
+    )
+    parser.add_argument(
         "--force", action="store_true", default=False,
         help="if specified, force downloads of all datasets, "
         "even if they already exist on disk under ``root_dirpath``"
@@ -159,7 +163,8 @@ def main():
     print("# test items:", len(test_items))
 
     # fit and validate a model
-    model_name = "textacy-lang-identifier-sklearn-{}".format(sklearn.__version__[:4])
+    model_id = "lang-identifier-v{}-sklearn-v{}".format(
+        args.version, sklearn.__version__[:4])
     lid = textacy.lang_utils.LangIdentifier(data_dir=models_dirpath)
     lid.init_pipeline()
     print(lid.pipeline.steps)
@@ -171,9 +176,9 @@ def main():
     ax = plot_confusion_matrix(
         true, preds, normalize=True, title=None, cmap=plt.cm.Blues, annotate=False)
     ax.get_figure().savefig(
-        models_dirpath.joinpath(model_name + "-confusion-matrix.png"))
+        models_dirpath.joinpath(model_id + "-confusion-matrix.png"))
     joblib.dump(
-        lid.pipeline, models_dirpath.joinpath(model_name + ".pkl.gz"), compress=3)
+        lid.pipeline, models_dirpath.joinpath(model_id + ".pkl.gz"), compress=3)
 
 
 def download_iso_639_data(dirpath, force=False):
