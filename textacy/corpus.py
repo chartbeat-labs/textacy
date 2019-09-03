@@ -386,12 +386,12 @@ class Corpus:
     @property
     def vectors(self):
         """Constituent docs' word vectors stacked in a 2d array."""
-        return np.vstack((doc.vector for doc in self))
+        return np.vstack([doc.vector for doc in self])
 
     @property
     def vector_norms(self):
         """Constituent docs' L2-normalized word vectors stacked in a 2d array."""
-        return np.vstack((doc.vector_norm for doc in self))
+        return np.vstack([doc.vector_norm for doc in self])
 
     # useful methods
 

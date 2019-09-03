@@ -299,7 +299,7 @@ class Vectorizer:
             bool
         """
         if vocabulary is not None:
-            if not isinstance(vocabulary, collections.Mapping):
+            if not isinstance(vocabulary, collections.abc.Mapping):
                 vocab = {}
                 for i, term in enumerate(sorted(vocabulary)):
                     if vocab.setdefault(term, i) != i:
@@ -340,7 +340,7 @@ class Vectorizer:
         Check that instance has a valid vocabulary mapping;
         if not, raise a ValueError.
         """
-        if not isinstance(self.vocabulary_terms, collections.Mapping):
+        if not isinstance(self.vocabulary_terms, collections.abc.Mapping):
             raise ValueError("vocabulary hasn't been built; call `Vectorizer.fit()`")
         if len(self.vocabulary_terms) == 0:
             raise ValueError("vocabulary is empty")
