@@ -133,7 +133,7 @@ class TopicModel:
             )
         elif model == "lda":
             self.model = LatentDirichletAllocation(
-                n_topics=n_topics,
+                n_components=n_topics,
                 max_iter=kwargs.get("max_iter", 10),
                 random_state=kwargs.get("random_state", 1),
                 learning_method=kwargs.get("learning_method", "online"),
