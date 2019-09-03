@@ -33,32 +33,24 @@ def to_aug_toks(spacy_obj):
             "`spacy_obj` must be of type {}, not {}".format((Doc, Span), type(spacy_obj))
         )
     lang = spacy_obj.vocab.lang
-    if concept_net.filepath is None:
-        return [
-            AugTok(
-                text=tok.text,
-                ws=tok.whitespace_,
-                pos=tok.pos_,
-                is_word=(not (tok.is_punct or tok.is_space)),
-                syns=[],
-            )
-            for tok in spacy_obj
-        ]
+    if concept_net.filepath is None or lang not in concept_net.synonyms:
+        toks_syns = ([] for _ in spacy_obj)
     else:
-        return [
-            AugTok(
-                text=tok.text,
-                ws=tok.whitespace_,
-                pos=tok.pos_,
-                is_word=(not (tok.is_punct or tok.is_space)),
-                syns=(
-                    concept_net.get_synonyms(tok.text, lang=lang, sense=tok.pos_)
-                    if not (tok.is_punct or tok.is_space)
-                    else []
-                ),
-            )
+        toks_syns = (
+            concept_net.get_synonyms(tok.text, lang=lang, sense=tok.pos_)
+            if not (tok.is_punct or tok.is_space) else []
             for tok in spacy_obj
-        ]
+        )
+    return [
+        AugTok(
+            text=tok.text,
+            ws=tok.whitespace_,
+            pos=tok.pos_,
+            is_word=(not (tok.is_punct or tok.is_space)),
+            syns=syns,
+        )
+        for tok, syns in zip(spacy_obj, toks_syns)
+    ]
 
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "char_weights"))

@@ -89,7 +89,7 @@ class Augmenter:
             nested_aug_toks = [aug_utils.to_aug_toks(sent) for sent in doc.sents]
         else:
             nested_aug_toks = [aug_utils.to_aug_toks(doc)]
-        lang = doc.vocab.lang
+        lang = kwargs.get("lang") or doc.vocab.lang
         tfs = self._get_random_transforms()
         new_nested_aug_toks = []
         for aug_toks in nested_aug_toks:
