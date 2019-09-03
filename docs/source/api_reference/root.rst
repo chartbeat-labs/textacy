@@ -10,7 +10,6 @@ API Reference
    lang_doc_corpus
    spacier
    datasets
-   resources
    text_processing
    information_extraction
    vsm_and_tm
