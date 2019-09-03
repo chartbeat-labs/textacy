@@ -185,8 +185,8 @@ class LangIdentifier:
                     sklearn.neural_network.MLPClassifier(
                         activation="relu", solver="adam",
                         hidden_layer_sizes=(512,), alpha=0.0001, batch_size=512,
-                        learning_rate_init=0.01, learning_rate="adaptive",
-                        max_iter=20, early_stopping=True, tol=0.001,
+                        learning_rate_init=0.001, learning_rate="constant",
+                        max_iter=15, early_stopping=True, tol=0.001,
                         shuffle=True, random_state=42,
                         verbose=True,
                     )
