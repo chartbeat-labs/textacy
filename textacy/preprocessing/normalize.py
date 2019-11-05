@@ -45,6 +45,24 @@ def normalize_quotation_marks(text):
     return text.translate(QUOTE_TRANSLATION_TABLE)
 
 
+def normalize_repeating_chars(text, *, chars, maxn=1):
+    """
+    Normalize repeating characters in ``text`` by truncating their number of consecutive
+    repetitions to ``maxn``.
+
+    Args:
+        text (str)
+        chars (str): One or more characters whose consecutive repetitions are to be
+            normalized, e.g. "." or "?!".
+        maxn (int): Maximum number of consecutive repetitions of ``chars`` to which
+            longer repetitions will be truncated.
+
+    Returns:
+        str
+    """
+    return re.sub(r"({}){{{},}}".format(re.escape(chars), maxn + 1), chars * maxn, text)
+
+
 def normalize_unicode(text, *, form="NFC"):
     """
     Normalize unicode characters in ``text`` into canonical forms.
