@@ -47,6 +47,10 @@ def test_normalize_repeating_chars():
             dict(chars="ol", maxn=2),
             "**Hello**, world!!! I wonder....... How are *you* doing?!?! lolol",
         ),
+        (
+            dict(chars="*", maxn=0),
+            "Hello, world!!! I wonder....... How are you doing?!?! lololol",
+        ),
     ]
     for kwargs, output in kwargs_outputs:
         assert preprocessing.normalize_repeating_chars(text, **kwargs) == output
