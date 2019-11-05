@@ -28,6 +28,30 @@ def test_normalize_quotation_marks():
         assert preprocessing.normalize_quotation_marks(in_) == out_
 
 
+def test_normalize_repeating_chars():
+    text = "**Hello**, world!!! I wonder....... How are *you* doing?!?! lololol"
+    kwargs_outputs = [
+        (
+            dict(chars=".", maxn=3),
+            "**Hello**, world!!! I wonder... How are *you* doing?!?! lololol",
+        ),
+        (
+            dict(chars="*", maxn=1),
+            "*Hello*, world!!! I wonder....... How are *you* doing?!?! lololol",
+        ),
+        (
+            dict(chars="?!", maxn=1),
+            "**Hello**, world!!! I wonder....... How are *you* doing?! lololol",
+        ),
+        (
+            dict(chars="ol", maxn=2),
+            "**Hello**, world!!! I wonder....... How are *you* doing?!?! lolol",
+        ),
+    ]
+    for kwargs, output in kwargs_outputs:
+        assert preprocessing.normalize_repeating_chars(text, **kwargs) == output
+
+
 def test_normalize_unicode():
     text = "Well… That's a long story."
     proc_text = "Well... That's a long story."

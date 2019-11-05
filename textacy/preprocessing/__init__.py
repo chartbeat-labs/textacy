@@ -1,6 +1,7 @@
 from .normalize import (
     normalize_hyphenated_words,
     normalize_quotation_marks,
+    normalize_repeating_chars,
     normalize_unicode,
     normalize_whitespace,
 )
