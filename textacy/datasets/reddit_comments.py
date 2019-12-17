@@ -50,7 +50,8 @@ class RedditComments(Dataset):
 
     Download the data (one time only!) or subsets thereof by specifying a date range::
 
-        >>> ds = RedditComments()
+        >>> import textacy.datasets
+        >>> ds = textacy.datasets.RedditComments()
         >>> ds.download(date_range=("2007-10", "2008-03"))
         >>> ds.info
         {'name': 'reddit_comments',

@@ -76,7 +76,8 @@ class SupremeCourt(Dataset):
     Download the data (one time only!) from the textacy-data repo
     (https://github.com/bdewilde/textacy-data), and save its contents to disk::
 
-        >>> ds = SupremeCourt()
+        >>> import textacy.datasets
+        >>> ds = textacy.datasets.SupremeCourt()
         >>> ds.download()
         >>> ds.info
         {'name': 'supreme_court',

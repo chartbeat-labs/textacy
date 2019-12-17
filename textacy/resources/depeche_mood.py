@@ -55,6 +55,7 @@ class DepecheMood(Resource):
 
     Download the data (one time only!), and save its contents to disk::
 
+        >>> import textacy.resources
         >>> rs = textacy.resources.DepecheMood(lang="en", word_rep="lemmapos")
         >>> rs.download()
         >>> rs.info

@@ -54,7 +54,8 @@ class IMDB(Dataset):
 
     Download the data (one time only!), saving and extracting its contents to disk::
 
-        >>> ds = IMDB()
+        >>> import textacy.datasets
+        >>> ds = textacy.datasets.IMDB()
         >>> ds.download()
         >>> ds.info
         {'name': 'imdb',

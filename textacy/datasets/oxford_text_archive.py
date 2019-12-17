@@ -51,7 +51,8 @@ class OxfordTextArchive(Dataset):
 
     Download the data (one time only!), saving and extracting its contents to disk::
 
-        >>> ds = OxfordTextArchive()
+        >>> import textacy.datasets
+        >>> ds = textacy.datasets.OxfordTextArchive()
         >>> ds.download()
         >>> ds.info
         {'name': 'oxford_text_archive',
