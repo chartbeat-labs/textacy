@@ -359,7 +359,8 @@ class Wikipedia(Wikimedia):
 
     Download a database dump (one time only!) and save its contents to disk::
 
-        >>> ds = Wikipedia(lang="en", version="current")
+        >>> import textacy.datasets
+        >>> ds = textacy.datasets.Wikipedia(lang="en", version="current")
         >>> ds.download()
         >>> ds.info
         {'name': 'wikipedia',
@@ -422,7 +423,8 @@ class Wikinews(Wikimedia):
 
     Download a database dump (one time only!) and save its contents to disk::
 
-        >>> ds = Wikinews(lang="en", version="current")
+        >>> import textacy.datasets
+        >>> ds = textacy.datasets.Wikinews(lang="en", version="current")
         >>> ds.download()
         >>> ds.info
         {'name': 'wikinews',

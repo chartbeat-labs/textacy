@@ -53,7 +53,8 @@ class CapitolWords(Dataset):
     Download the data (one time only!) from the textacy-data repo
     (https://github.com/bdewilde/textacy-data), and save its contents to disk::
 
-        >>> ds = CapitolWords()
+        >>> import textacy.datasets
+        >>> ds = textacy.datasets.CapitolWords()
         >>> ds.download()
         >>> ds.info
         {'name': 'capitol_words',

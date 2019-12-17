@@ -50,6 +50,7 @@ class ConceptNet(Resource):
 
     Download the data (one time only!), and save its contents to disk::
 
+        >>> import textacy.resources
         >>> rs = textacy.resources.ConceptNet()
         >>> rs.download()
         >>> rs.info

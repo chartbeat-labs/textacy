@@ -52,7 +52,8 @@ class UDHR(Dataset):
 
     Download the data (one time only!), saving and extracting its contents to disk::
 
-        >>> ds = UDHR()
+        >>> import textacy.datasets
+        >>> ds = textacy.datasets.UDHR()
         >>> ds.download()
         >>> ds.info
         {'name': 'udhr',
