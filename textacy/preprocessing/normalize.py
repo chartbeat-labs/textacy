@@ -12,6 +12,7 @@ from .resources import (
     RE_HYPHENATED_WORD,
     RE_LINEBREAK,
     RE_NONBREAKING_SPACE,
+    RE_ZWSP,
 )
 
 
@@ -85,8 +86,8 @@ def normalize_unicode(text, *, form="NFC"):
 
 def normalize_whitespace(text):
     """
-    Replace all contiguous line-breaking whitespaces with a single newline and
-    all contiguous non-breaking whitespaces with a single space, then
+    Replace all contiguous zero-width spaces with an empty string, line-breaking spaces
+    with a single newline, and non-breaking spaces with a single space, then
     strip any leading/trailing whitespace.
 
     Args:
@@ -95,4 +96,7 @@ def normalize_whitespace(text):
     Returns:
         str
     """
-    return RE_NONBREAKING_SPACE.sub(" ", RE_LINEBREAK.sub(r"\n", text)).strip()
+    text = RE_ZWSP.sub("", text)
+    text = RE_LINEBREAK.sub(r"\n", text)
+    text = RE_NONBREAKING_SPACE.sub(" ", text)
+    return text.strip()
