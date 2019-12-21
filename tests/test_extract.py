@@ -2,6 +2,7 @@ import collections
 import re
 
 import pytest
+import spacy
 from spacy.tokens import Span, Token
 
 from textacy import load_spacy_lang
@@ -220,10 +221,16 @@ class TestMatches:
         assert all(len(span) >= 1 for span in matches)
         assert all(tok.pos_ == "NOUN" for span in matches for tok in span)
 
-    def test_patstr_bool_int(self, spacy_doc):
+    def test_patstr_bool(self, spacy_doc):
         matches = list(extract.matches(spacy_doc, "IS_DIGIT:bool(True)"))[:5]
         assert matches
         assert all(span[0].is_digit is True for span in matches)
+
+    @pytest.mark.xfail(
+        spacy.__version__.startswith("2.2."),
+        reason="https://github.com/explosion/spaCy/pull/4749",
+    )
+    def test_patstr_int(self, spacy_doc):
         matches = list(extract.matches(spacy_doc, "LENGTH:int(5)"))[:5]
         assert matches
         assert all(len(span[0]) == 5 for span in matches)
@@ -240,10 +247,16 @@ class TestMatches:
         assert all(len(span) >= 1 for span in matches)
         assert all(tok.pos_ == "NOUN" for span in matches for tok in span)
 
-    def test_patdict_bool_int(self, spacy_doc):
+    def test_patdict_bool(self, spacy_doc):
         matches = list(extract.matches(spacy_doc, [{"IS_DIGIT": True}]))[:5]
         assert matches
         assert all(span[0].is_digit is True for span in matches)
+
+    @pytest.mark.xfail(
+        spacy.__version__.startswith("2.2."),
+        reason="https://github.com/explosion/spaCy/pull/4749",
+    )
+    def test_patdict_int(self, spacy_doc):
         matches = list(extract.matches(spacy_doc, [{"LENGTH": 5}]))[:5]
         assert matches
         assert all(len(span[0]) == 5 for span in matches)
