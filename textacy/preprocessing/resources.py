@@ -6,6 +6,7 @@ import unicodedata
 
 RE_LINEBREAK = re.compile(r"(\r\n|[\n\v])+")
 RE_NONBREAKING_SPACE = re.compile(r"[^\S\n\v]+", flags=re.UNICODE)
+RE_ZWSP = re.compile(r"[\u200B\u2060\uFEFF]+")
 
 # source: https://gist.github.com/dperini/729294
 RE_URL = re.compile(
