@@ -48,7 +48,7 @@ def test_preserve_case(spacy_doc):
         0,
         0,
         0,
-        0,
+        1,
         0,
         0,
         0,
