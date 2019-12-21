@@ -62,7 +62,19 @@ def test_normalize_unicode():
     assert preprocessing.normalize_unicode(text, form="NFKC") == proc_text
 
 
-def test_normalize_whitespace():
-    text = "Hello, world!  Hello...\t \tworld?\n\nHello:\r\n\n\nWorld. "
-    proc_text = "Hello, world! Hello... world?\nHello:\nWorld."
-    assert preprocessing.normalize_whitespace(text) == proc_text
+@pytest.mark.parametrize(
+    "test_input,expected_result",
+    [
+        ("Hello,  world!", "Hello, world!"),
+        ("Hello,     world!", "Hello, world!"),
+        ("Hello,\tworld!", "Hello, world!"),
+        ("Hello,\t\t  world!", "Hello, world!"),
+        ("Hello,\n\nworld!", "Hello,\nworld!"),
+        ("Hello,\r\nworld!", "Hello,\nworld!"),
+        ("Hello\uFEFF, world!", "Hello, world!"),
+        ("Hello\u200B\u200B, world!", "Hello, world!"),
+        ("Hello\uFEFF,\n\n\nworld   !  ", "Hello,\nworld !"),
+    ]
+)
+def test_normalize_whitespace(test_input, expected_result):
+    assert preprocessing.normalize_whitespace(test_input) == expected_result
