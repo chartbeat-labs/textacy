@@ -9,6 +9,6 @@ pyphen>=0.9.4
 requests>=2.10.0
 scipy>=0.17.0
 scikit-learn>=0.19.0
-spacy>=2.0.12
+spacy>=2.2.0
 srsly>=0.0.5
 tqdm>=4.19.6
