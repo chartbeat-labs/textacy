@@ -529,55 +529,44 @@ class Corpus:
 
     # file io
 
-    def save(self, filepath):
+    def save(self, filepath, store_user_data=True):
         """
         Save :class:`Corpus` to disk as binary data.
 
         Args:
             filepath (str): Full path to file on disk where :class:`Corpus` data
                 will be saved as a binary file.
+            store_user_data (bool): If True, store user data and values of
+                custom extension attributes along with core spaCy attributes.
 
         See Also:
-            :meth:`Corpus.load()`
+            - :meth:`Corpus.load()`
+            - :class:`spacy.tokens.DocBin`
         """
         attrs = [
             spacy.attrs.ORTH,
             spacy.attrs.SPACY,
-            spacy.attrs.LEMMA,
-            spacy.attrs.ENT_IOB,
-            spacy.attrs.ENT_TYPE,
         ]
         if self[0].is_tagged:
             attrs.append(spacy.attrs.TAG)
         if self[0].is_parsed:
             attrs.append(spacy.attrs.HEAD)
             attrs.append(spacy.attrs.DEP)
-        else:
+        # NOTE: HEAD sets sentence boundaries implicitly based on tree structure, so
+        # also setting SENT_START would potentially conflict with existing annotations.
+        elif self[0].is_sentenced:
             attrs.append(spacy.attrs.SENT_START)
-
-        tokens = []
-        lengths = []
-        strings = set()
-        user_datas = []
+        if self[0].is_nered:
+            attrs.append(spacy.attrs.ENT_IOB)
+            attrs.append(spacy.attrs.ENT_TYPE)
+        doc_bin = spacy.tokens.DocBin(attrs=attrs, store_user_data=store_user_data)
         for doc in self:
-            tokens.append(doc.to_array(attrs))
-            lengths.append(len(doc))
-            strings.update(tok.text for tok in doc)
-            user_datas.append(doc.user_data)
-
-        msg = {
-            "meta": self.spacy_lang.meta,
-            "attrs": attrs,
-            "tokens": np.vstack(tokens).tobytes("C"),
-            "lengths": np.asarray(lengths, dtype="int32").tobytes("C"),
-            "strings": list(strings),
-            "user_datas": user_datas,
-        }
+            doc_bin.add(doc)
         with tio.open_sesame(filepath, mode="wb") as f:
-            f.write(srsly.msgpack_dumps(msg))
+            f.write(doc_bin.to_bytes())
 
     @classmethod
-    def load(cls, lang, filepath):
+    def load(cls, lang, filepath, store_user_data=True):
         """
         Load previously saved :class:`Corpus` binary data, reproduce the original
         `:class:`spacy.tokens.Doc`s tokens and annotations, and instantiate
@@ -587,41 +576,21 @@ class Corpus:
             lang (str or :class:`spacy.language.Language`)
             filepath (str): Full path to file on disk where :class:`Corpus` data
                 was previously saved as a binary file.
+            store_user_data (bool): If True, load stored user data and values of
+                custom extension attributes along with core spaCy attributes.
 
         Returns:
             :class:`Corpus`
 
         See Also:
-            :meth:`Corpus.save()`
+            - :meth:`Corpus.save()`
+            - :class:`spacy.tokens.DocBin`
         """
         spacy_lang = _get_spacy_lang(lang)
         with tio.open_sesame(filepath, mode="rb") as f:
-            msg = srsly.msgpack_loads(f.read())
-        if spacy_lang.meta != msg["meta"]:
-            LOGGER.warning("the spacy langs are different!")
-        for string in msg["strings"]:
-            spacy_lang.vocab[string]
-        attrs = msg["attrs"]
-        lengths = np.frombuffer(msg["lengths"], dtype="int32")
-        flat_tokens = np.frombuffer(msg["tokens"], dtype="uint64")
-        flat_tokens = flat_tokens.reshape(
-            (flat_tokens.size // len(attrs), len(attrs))
-        )
-        tokens = np.asarray(NumpyOps().unflatten(flat_tokens, lengths))
-        user_datas = msg["user_datas"]
-
-        def _make_spacy_docs(tokens, user_datas):
-            for toks, user_data in zip(tokens, user_datas):
-                doc = spacy.tokens.Doc(
-                    spacy_lang.vocab,
-                    words=[spacy_lang.vocab.strings[orth] for orth in toks[:, 0]],
-                    spaces=np.ndarray.tolist(toks[:, 1]),
-                )
-                doc = doc.from_array(attrs[2:], toks[:, 2:])
-                doc.user_data = user_data
-                yield doc
-
-        return cls(spacy_lang, data=_make_spacy_docs(tokens, user_datas))
+            bytes_data = f.read()
+        doc_bin = spacy.tokens.DocBin(store_user_data=store_user_data).from_bytes(bytes_data)
+        return cls(spacy_lang, data=doc_bin.get_docs(spacy_lang.vocab))
 
 
 def _get_spacy_lang(lang):
