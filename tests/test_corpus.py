@@ -184,7 +184,7 @@ class TestCorpusMethods:
             corpus.word_doc_counts(weighting="foo")
 
     def test_corpus_save_and_load(self, corpus, tmpdir):
-        filepath = str(tmpdir.join("test_corpus_save_and_load.pkl"))
+        filepath = str(tmpdir.join("test_corpus_save_and_load.bin"))
         corpus.save(filepath)
         loaded_corpus = Corpus.load("en", filepath)
         assert isinstance(loaded_corpus, Corpus)
