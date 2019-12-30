@@ -12,7 +12,6 @@ import numpy as np
 import spacy
 import srsly
 from cytoolz import itertoolz
-from thinc.neural.ops import NumpyOps
 
 from . import io as tio
 from . import spacier, utils
@@ -169,7 +168,7 @@ class Corpus:
 
     # add documents
 
-    def add(self, data, batch_size=1000):
+    def add(self, data, batch_size=1000, n_process=1):
         """
         Add one or a stream of texts, records, or :class:`spacy.tokens.Doc` s
         to the corpus, ensuring that all processing is or has already been done
@@ -180,7 +179,12 @@ class Corpus:
                 str or Iterable[str]
                 Tuple[str, dict] or Iterable[Tuple[str, dict]]
                 :class:`spacy.tokens.Doc` or Iterable[:class:`spacy.tokens.Doc`]
-            batch_size (int)
+            batch_size (int): Number of texts to buffer when processing with spaCy.
+            n_process (int): Number of parallel processors to run when processing.
+                If -1, this is set to ``multiprocessing.cpu_count()``.
+
+                .. note:: This feature is only available in spaCy 2.2.2+, and only applies
+                   when ``data`` is a sequence of texts or records.
 
         See Also:
             * :meth:`Corpus.add_text()`
@@ -199,11 +203,11 @@ class Corpus:
         elif isinstance(data, collections.abc.Iterable):
             first, data = itertoolz.peek(data)
             if isinstance(first, str):
-                self.add_texts(data, batch_size=batch_size)
+                self.add_texts(data, batch_size=batch_size, n_process=n_process)
             elif isinstance(first, spacy.tokens.Doc):
                 self.add_docs(data)
             elif utils.is_record(first):
-                self.add_records(data, batch_size=batch_size)
+                self.add_records(data, batch_size=batch_size, n_process=n_process)
             else:
                 raise TypeError(
                     "data must be one of {} or an interable thereof, not {}".format(
@@ -229,17 +233,31 @@ class Corpus:
         """
         self._add_valid_doc(self.spacy_lang(text))
 
-    def add_texts(self, texts, batch_size=1000):
+    def add_texts(self, texts, batch_size=1000, n_process=1):
         """
         Add a stream of texts to the corpus, efficiently processing them into
         :class:`spacy.tokens.Doc` s using the :attr:`Corpus.spacy_lang` pipeline.
 
         Args:
-            texts (Iterable[str])
-            batch_size (int)
+            texts (Iterable[str]): Sequence of texts to process and add to corpus.
+            batch_size (int): Number of texts to buffer when processing with spaCy.
+            n_process (int): Number of parallel processors to run when processing.
+                If -1, this is set to ``multiprocessing.cpu_count()``.
+
+                .. note:: This feature is only available in spaCy 2.2.2+.
         """
-        for doc in self.spacy_lang.pipe(texts, as_tuples=False, batch_size=batch_size):
-            self._add_valid_doc(doc)
+        if spacy.__version__ >= "2.2.2":
+            for doc in self.spacy_lang.pipe(
+                texts, as_tuples=False, batch_size=batch_size, n_process=n_process,
+            ):
+                self._add_valid_doc(doc)
+        else:
+            if n_process != 1:
+                LOGGER.warning("`n_process` is not available with spacy < 2.2.2")
+            for doc in self.spacy_lang.pipe(
+                texts, as_tuples=False, batch_size=batch_size,
+            ):
+                self._add_valid_doc(doc)
 
     def add_record(self, record):
         """
@@ -253,18 +271,33 @@ class Corpus:
         doc._.meta = record[1]
         self._add_valid_doc(doc)
 
-    def add_records(self, records, batch_size=1000):
+    def add_records(self, records, batch_size=1000, n_process=1):
         """
         Add a stream of records to the corpus, efficiently processing them into
         :class:`spacy.tokens.Doc` s using the :attr:`Corpus.spacy_lang` pipeline.
 
         Args:
-            records (Iterable[Tuple[str, dict]])
-            batch_size (int)
+            records (Iterable[Tuple[str, dict]]): Sequence of records to process and add to corpus.
+            batch_size (int): Number of texts to buffer when processing with spaCy.
+            n_process (int): Number of parallel processors to run when processing.
+                If -1, this is set to ``multiprocessing.cpu_count()``.
+
+                .. note:: This feature is only available in spaCy 2.2.2+.
         """
-        for doc, meta in self.spacy_lang.pipe(records, as_tuples=True, batch_size=batch_size):
-            doc._.meta = meta
-            self._add_valid_doc(doc)
+        if spacy.__version__ >= "2.2.2":
+            for doc, meta in self.spacy_lang.pipe(
+                records, as_tuples=True, batch_size=batch_size, n_process=n_process,
+            ):
+                doc._.meta = meta
+                self._add_valid_doc(doc)
+        else:
+            if n_process != 1:
+                LOGGER.warning("`n_process` is not available with spacy < 2.2.2")
+            for doc, meta in self.spacy_lang.pipe(
+                records, as_tuples=True, batch_size=batch_size,
+            ):
+                doc._.meta = meta
+                self._add_valid_doc(doc)
 
     def add_doc(self, doc):
         """
