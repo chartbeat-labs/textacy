@@ -66,10 +66,10 @@ class TestCorpusInit:
 
 class TestCorpusDunder:
 
-    def test_repr(self, corpus):
-        repr = str(corpus)
-        assert repr.startswith("Corpus")
-        assert all("{}".format(n) in repr for n in [corpus.n_docs, corpus.n_tokens])
+    def test_str(self, corpus):
+        cstr = str(corpus)
+        assert cstr.startswith("Corpus")
+        assert all("{}".format(n) in cstr for n in [corpus.n_docs, corpus.n_tokens])
 
     def test_len(self, corpus):
         assert isinstance(len(corpus), int)

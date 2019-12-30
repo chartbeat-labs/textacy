@@ -10,7 +10,6 @@ import math
 
 import numpy as np
 import spacy
-import srsly
 from cytoolz import itertoolz
 
 from . import io as tio
@@ -33,7 +32,7 @@ class Corpus:
         >>> ds = textacy.datasets.CapitolWords()
         >>> records = ds.records(limit=50)
         >>> corpus = textacy.Corpus("en", data=records)
-        >>> corpus
+        >>> print(corpus)
         Corpus(50 docs, 32175 tokens)
 
     Add or remove documents, with automatic updating of corpus statistics:
@@ -43,10 +42,10 @@ class Corpus:
         >>> texts = ds.texts(congress=114, limit=25)
         >>> corpus.add(texts)
         >>> corpus.add("If Burton were a member of Congress, here's what he'd say.")
-        >>> corpus
+        >>> print(corpus)
         Corpus(76 docs, 55906 tokens)
         >>> corpus.remove(lambda doc: doc._.meta.get("speaker_name") == "Rick Santorum")
-        >>> corpus
+        >>> print(corpus)
         Corpus(61 docs, 48567 tokens)
 
     Get subsets of documents matching your particular use case:
@@ -71,7 +70,7 @@ class Corpus:
          'Doc(219 tokens: "Mr. Speaker, a relationship, to work and surviv...")',
          'Doc(336 tokens: "Mr. Speaker, I thank the gentleman for yielding...")']
         >>> del corpus[:5]
-        >>> corpus
+        >>> print(corpus)
         Corpus(56 docs, 41573 tokens)
 
     Compute basic corpus statistics:
@@ -97,7 +96,7 @@ class Corpus:
 
         >>> corpus.save("~/Desktop/capitol_words_sample.bin.gz")
         >>> corpus = textacy.Corpus.load("en", "~/Desktop/capitol_words_sample.bin.gz")
-        >>> corpus
+        >>> print(corpus)
         Corpus(56 docs, 41573 tokens)
 
     Args:
@@ -138,7 +137,7 @@ class Corpus:
 
     # dunder
 
-    def __repr__(self):
+    def __str__(self):
         return "Corpus({} docs, {} tokens)".format(self.n_docs, self.n_tokens)
 
     def __len__(self):
@@ -544,7 +543,7 @@ class Corpus:
             n_docs = self.n_docs
             if smooth_idf is True:
                 word_doc_counts_ = {
-                    word: math.log(1 + (n_docs / count))
+                    word: math.log1p(n_docs / count)
                     for word, count in word_doc_counts_.items()
                 }
             else:
