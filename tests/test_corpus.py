@@ -122,6 +122,17 @@ class TestCorpusMethods:
             assert corpus.n_docs > n_docs
             n_docs = corpus.n_docs
 
+    def test_corpus_add_nprocess(self, corpus):
+        datas = (
+            ["This is one sentence.", "This is another sentence."],
+            [("This is sentence #1.", {"foo": "bar"}), ("This is sentence #2.", {"bat": "baz"})],
+        )
+        n_docs = corpus.n_docs
+        for data in datas:
+            corpus.add(data, n_process=2)
+            assert corpus.n_docs > n_docs
+            n_docs = corpus.n_docs
+
     def test_corpus_add_typeerror(self, corpus):
         datas = (
             b"This is a byte string.",
@@ -184,7 +195,7 @@ class TestCorpusMethods:
             corpus.word_doc_counts(weighting="foo")
 
     def test_corpus_save_and_load(self, corpus, tmpdir):
-        filepath = str(tmpdir.join("test_corpus_save_and_load.pkl"))
+        filepath = str(tmpdir.join("test_corpus_save_and_load.bin"))
         corpus.save(filepath)
         loaded_corpus = Corpus.load("en", filepath)
         assert isinstance(loaded_corpus, Corpus)
