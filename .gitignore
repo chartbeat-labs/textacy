@@ -9,6 +9,7 @@
 build/
 dist/
 *.egg-info/
+.mypy_cache/
 
 # documentation
 docs/build/*
