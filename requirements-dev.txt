@@ -1,5 +1,6 @@
 -r requirements.txt
 m2r>=0.2.0
+mypy>=0.600
 sphinx>=2.0.0
 pytest>=4.0.0
 pytest-cov>=2.6.0
