@@ -8,20 +8,20 @@ import itertools
 import logging
 import math
 import pathlib
-from typing import Callable, Counter, Dict, Iterable, Iterator, List, Optional, Tuple, Union
+from typing import Any, Callable, Counter, Dict, Iterable, Iterator, List, Optional, Tuple, Union
 
 import numpy as np
 import spacy
 from cytoolz import itertoolz
+from spacy.language import Language
+from spacy.tokens import Doc
 
 from . import io as tio
 from . import spacier, utils
 
 LOGGER = logging.getLogger(__name__)
 
-SpacyDoc = spacy.tokens.Doc
-SpacyLang = spacy.language.Language
-CorpusData = Union[str, SpacyDoc, Tuple[str, dict], Iterable[str], Iterable[SpacyDoc], Iterable[Tuple[str, dict]]]
+CorpusData = Union[str, Doc, Tuple[str, dict], Iterable[str], Iterable[Doc], Iterable[Tuple[str, dict]]]
 
 
 class Corpus:
@@ -131,8 +131,8 @@ class Corpus:
     """
 
     lang: str
-    spacy_lang: SpacyLang
-    docs: List[SpacyDoc]
+    spacy_lang: Language
+    docs: List[Doc]
     _doc_ids: List[int]
     n_docs: int
     n_sents: int
@@ -140,7 +140,7 @@ class Corpus:
 
     def __init__(
         self,
-        lang: Union[str, SpacyLang],
+        lang: Union[str, Language],
         data: Optional[CorpusData] = None,
     ) -> None:
         self.spacy_lang = _get_spacy_lang(lang)
@@ -283,7 +283,7 @@ class Corpus:
             ):
                 self._add_valid_doc(doc)
 
-    def add_record(self, record: Tuple[str, dict]) -> None:
+    def add_record(self, record: Tuple[str, Dict[Any, Any]]) -> None:
         """
         Add one record to the corpus, processing it into a :class:`spacy.tokens.Doc`
         using the :attr:`Corpus.spacy_lang` pipeline.
@@ -328,7 +328,7 @@ class Corpus:
                 doc._.meta = meta
                 self._add_valid_doc(doc)
 
-    def add_doc(self, doc: SpacyDoc) -> None:
+    def add_doc(self, doc: Doc) -> None:
         """
         Add one :class:`spacy.tokens.Doc` to the corpus, provided it was processed
         using the :attr:`Corpus.spacy_lang` pipeline.
@@ -348,7 +348,7 @@ class Corpus:
             )
         self._add_valid_doc(doc)
 
-    def add_docs(self, docs: Iterable[SpacyDoc]) -> None:
+    def add_docs(self, docs: Iterable[Doc]) -> None:
         """
         Add a stream of :class:`spacy.tokens.Doc` s to the corpus, provided
         they were processed using the :attr:`Corpus.spacy_lang` pipeline.
@@ -359,7 +359,7 @@ class Corpus:
         for doc in docs:
             self.add_doc(doc)
 
-    def _add_valid_doc(self, doc: SpacyDoc) -> None:
+    def _add_valid_doc(self, doc: Doc) -> None:
         self.docs.append(doc)
         self._doc_ids.append(id(doc))
         self.n_docs += 1
@@ -371,9 +371,9 @@ class Corpus:
 
     def get(
         self,
-        match_func: Callable[[SpacyDoc], bool],
+        match_func: Callable[[Doc], bool],
         limit: Optional[int] = None,
-    ) -> Iterator[SpacyDoc]:
+    ) -> Iterator[Doc]:
         """
         Get all (or N <= ``limit``) docs in :class:`Corpus` for which
         ``match_func(doc)`` is True.
@@ -406,7 +406,7 @@ class Corpus:
 
     def remove(
         self,
-        match_func: Callable[[SpacyDoc], bool],
+        match_func: Callable[[Doc], bool],
         limit: Optional[int] = None,
     ) -> None:
         """
@@ -509,6 +509,7 @@ class Corpus:
         See Also:
             :func:`textacy.vsm.get_term_freqs() <textacy.vsm.matrix_utils.get_term_freqs>`
         """
+        word_counts_: Union[Counter[Any], Dict[Any, Union[int, float]]]
         word_counts_ = collections.Counter()
         for doc in self:
             word_counts_.update(
@@ -577,6 +578,7 @@ class Corpus:
         See Also:
             :func:`textacy.vsm.get_doc_freqs() <textacy.vsm.matrix_utils.get_doc_freqs>`
         """
+        word_doc_counts_: Union[Counter[Any], Dict[Any, Union[int, float]]]
         word_doc_counts_ = collections.Counter()
         for doc in self:
             word_doc_counts_.update(
@@ -658,7 +660,7 @@ class Corpus:
     @classmethod
     def load(
         cls,
-        lang: Union[str, SpacyLang],
+        lang: Union[str, Language],
         filepath: Union[str, pathlib.Path],
         store_user_data: bool = True,
     ) -> "Corpus":
@@ -688,10 +690,10 @@ class Corpus:
         return cls(spacy_lang, data=doc_bin.get_docs(spacy_lang.vocab))
 
 
-def _get_spacy_lang(lang: Union[str, SpacyLang]) -> SpacyLang:
+def _get_spacy_lang(lang: Union[str, Language]) -> Language:
     if isinstance(lang, str):
         return spacier.core.load_spacy_lang(lang)
-    elif isinstance(lang, SpacyLang):
+    elif isinstance(lang, Language):
         return lang
     else:
-        raise TypeError("`lang` must be {}, not {}".format({str, SpacyLang}, type(lang)))
+        raise TypeError("`lang` must be {}, not {}".format({str, Language}, type(lang)))
