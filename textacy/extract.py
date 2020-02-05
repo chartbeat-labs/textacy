@@ -7,12 +7,13 @@ import collections
 import itertools
 import operator
 import re
+from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
 from cytoolz import itertoolz
 from spacy.parts_of_speech import CONJ, DET, NOUN, VERB
 from spacy.matcher import Matcher
-from spacy.tokens import Span
+from spacy.tokens import Doc, Span, Token
 
 from . import constants
 from . import text_utils
@@ -21,35 +22,32 @@ from .spacier import utils as spacy_utils
 
 
 def words(
-    doc,
+    doc: Union[Doc, Span],
     *,
-    filter_stops=True,
-    filter_punct=True,
-    filter_nums=False,
-    include_pos=None,
-    exclude_pos=None,
-    min_freq=1,
-):
+    filter_stops: bool = True,
+    filter_punct: bool = True,
+    filter_nums: bool = False,
+    include_pos: Optional[Union[str, Set[str]]] = None,
+    exclude_pos: Optional[Union[str, Set[str]]] = None,
+    min_freq: int = 1,
+) -> Iterable[Token]:
     """
     Extract an ordered sequence of words from a document processed by spaCy,
     optionally filtering words by part-of-speech tag and frequency.
 
     Args:
-        doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
-        filter_stops (bool): If True, remove stop words from word list.
-        filter_punct (bool): If True, remove punctuation from word list.
-        filter_nums (bool): If True, remove number-like words (e.g. 10, "ten")
+        doc
+        filter_stops: If True, remove stop words from word list.
+        filter_punct: If True, remove punctuation from word list.
+        filter_nums: If True, remove number-like words (e.g. 10, "ten")
             from word list.
-        include_pos (str or Set[str]): Remove words whose part-of-speech tag
-            IS NOT included in this param.
-        exclude_pos (str or Set[str]): Remove words whose part-of-speech tag
-            IS in the specified tags.
-        min_freq (int): Remove words that occur in ``doc`` fewer than
-            ``min_freq`` times.
+        include_pos: Remove words whose part-of-speech tag IS NOT in the specified tags.
+        exclude_pos: Remove words whose part-of-speech tag IS in the specified tags.
+        min_freq: Remove words that occur in ``doc`` fewer than ``min_freq`` times.
 
     Yields:
-        :class:`spacy.tokens.Token`: Next token from ``doc`` passing specified filters
-        in order of appearance in the document.
+        Next token from ``doc`` passing specified filters in order of appearance
+        in the document.
 
     Raises:
         TypeError: if ``include_pos`` or ``exclude_pos`` is not a str, a set of str,
@@ -82,40 +80,37 @@ def words(
 
 
 def ngrams(
-    doc,
-    n,
+    doc: Union[Doc, Span],
+    n: int,
     *,
-    filter_stops=True,
-    filter_punct=True,
-    filter_nums=False,
-    include_pos=None,
-    exclude_pos=None,
-    min_freq=1,
-):
+    filter_stops: bool = True,
+    filter_punct: bool = True,
+    filter_nums: bool = False,
+    include_pos: Optional[Union[str, Set[str]]] = None,
+    exclude_pos: Optional[Union[str, Set[str]]] = None,
+    min_freq: int = 1,
+) -> Iterable[Span]:
     """
     Extract an ordered sequence of n-grams (``n`` consecutive words) from a
     spacy-parsed doc, optionally filtering n-grams by the types and
     parts-of-speech of the constituent words.
 
     Args:
-        doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
-        n (int): number of tokens per n-gram; 2 => bigrams, 3 => trigrams, etc.
-        filter_stops (bool): if True, remove ngrams that start or end
-            with a stop word
-        filter_punct (bool): if True, remove ngrams that contain
-            any punctuation-only tokens
-        filter_nums (bool): if True, remove ngrams that contain
-            any numbers or number-like tokens (e.g. 10, 'ten')
-        include_pos (str or Set[str]): remove ngrams if any of their constituent
-            tokens' part-of-speech tags ARE NOT included in this param
-        exclude_pos (str or Set[str]): remove ngrams if any of their constituent
-            tokens' part-of-speech tags ARE included in this param
-        min_freq (int): remove ngrams that occur in ``doc`` fewer than
-            ``min_freq`` times
+        doc
+        n: Number of tokens per n-gram; 2 => bigrams, 3 => trigrams, etc.
+        filter_stops: If True, remove ngrams that start or end with a stop word
+        filter_punct: If True, remove ngrams that contain any punctuation-only tokens
+        filter_nums: If True, remove ngrams that contain any numbers
+            or number-like tokens (e.g. 10, 'ten')
+        include_pos: Remove ngrams if any of their constituent tokens' part-of-speech tags
+            ARE NOT included in this param
+        exclude_pos: Remove ngrams if any of their constituent tokens' part-of-speech tags
+            ARE included in this param
+        min_freq: Remove ngrams that occur in ``doc`` fewer than ``min_freq`` times
 
     Yields:
-        :class:`spacy.tokens.Span`: the next ngram from ``doc`` passing all specified
-        filters, in order of appearance in the document
+        Next ngram from ``doc`` passing all specified filters, in order of appearance
+        in the document
 
     Raises:
         ValueError: if ``n`` < 1
@@ -161,26 +156,26 @@ def ngrams(
 
 
 def entities(
-    doc,
+    doc: Doc,
     *,
-    include_types=None,
-    exclude_types=None,
-    drop_determiners=True,
-    min_freq=1,
-):
+    include_types: Optional[Union[str, Set[str]]] = None,
+    exclude_types: Optional[Union[str, Set[str]]] = None,
+    drop_determiners: bool = True,
+    min_freq: int = 1,
+) -> Iterable[Span]:
     """
     Extract an ordered sequence of named entities (PERSON, ORG, LOC, etc.) from
     a ``Doc``, optionally filtering by entity types and frequencies.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`)
-        include_types (str or Set[str]): remove entities whose type IS NOT
+        doc
+        include_types: Remove entities whose type IS NOT
             in this param; if "NUMERIC", all numeric entity types ("DATE",
             "MONEY", "ORDINAL", etc.) are included
-        exclude_types (str or Set[str]): remove entities whose type IS
+        exclude_types: Remove entities whose type IS
             in this param; if "NUMERIC", all numeric entity types ("DATE",
             "MONEY", "ORDINAL", etc.) are excluded
-        drop_determiners (bool): Remove leading determiners (e.g. "the")
+        drop_determiners: Remove leading determiners (e.g. "the")
             from entities (e.g. "the United States" => "United States").
 
             .. note:: Entities from which a leading determiner has been removed
@@ -191,12 +186,12 @@ def entities(
                big deal, but watch out if you're counting on determiner-less
                entities associated with the doc downstream.
 
-        min_freq (int): remove entities that occur in ``doc`` fewer
+        min_freq: Remove entities that occur in ``doc`` fewer
             than ``min_freq`` times
 
     Yields:
-        :class:`spacy.tokens.Span`: the next entity from ``doc`` passing
-        all specified filters in order of appearance in the document
+        Next entity from ``doc`` passing all specified filters in order of appearance
+        in the document
 
     Raises:
         TypeError: if ``include_types`` or ``exclude_types`` is not a str, a set of
@@ -236,7 +231,10 @@ def entities(
         yield ent
 
 
-def _parse_ent_types(ent_types, which):
+def _parse_ent_types(
+    ent_types: Optional[Union[str, Set[str]]],
+    which: str,
+) -> Optional[Union[str, Set[str]]]:
     if not ent_types:
         return None
     elif isinstance(ent_types, str):
@@ -263,21 +261,24 @@ def _parse_ent_types(ent_types, which):
         )
 
 
-def noun_chunks(doc, *, drop_determiners=True, min_freq=1):
+def noun_chunks(
+    doc: Doc,
+    *,
+    drop_determiners: bool = True,
+    min_freq: int = 1,
+) -> Iterable[Span]:
     """
     Extract an ordered sequence of noun chunks from a spacy-parsed doc, optionally
     filtering by frequency and dropping leading determiners.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`)
-        drop_determiners (bool): remove leading determiners (e.g. "the")
+        doc
+        drop_determiners: Remove leading determiners (e.g. "the")
             from phrases (e.g. "the quick brown fox" => "quick brown fox")
-        min_freq (int): remove chunks that occur in ``doc`` fewer than
-            ``min_freq`` times
+        min_freq: Remove chunks that occur in ``doc`` fewer than ``min_freq`` times
 
     Yields:
-        :class:`spacy.tokens.Span`: the next noun chunk from ``doc`` in order of appearance
-        in the document
+        Next noun chunk from ``doc`` in order of appearance in the document
     """
     ncs = doc.noun_chunks
     if drop_determiners is True:
@@ -291,14 +292,14 @@ def noun_chunks(doc, *, drop_determiners=True, min_freq=1):
         yield nc
 
 
-def pos_regex_matches(doc, pattern):
+def pos_regex_matches(doc: Union[Doc, Span], pattern: str) -> Iterable[Span]:
     """
     Extract sequences of consecutive tokens from a spacy-parsed doc whose
     part-of-speech tags match the specified regex pattern.
 
     Args:
-        doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
-        pattern (str): Pattern of consecutive POS tags whose corresponding words
+        doc
+        pattern: Pattern of consecutive POS tags whose corresponding words
             are to be extracted, inspired by the regex patterns used in NLTK's
             `nltk.chunk.regexp`. Tags are uppercase, from the universal tag set;
             delimited by < and >, which are basically converted to parentheses
@@ -313,8 +314,8 @@ def pos_regex_matches(doc, pattern):
             * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
 
     Yields:
-        :class:`spacy.tokens.Span`: the next span of consecutive tokens from ``doc`` whose
-        parts-of-speech match ``pattern``, in order of apperance
+        Next span of consecutive tokens from ``doc`` whose parts-of-speech match ``pattern``,
+        in order of appearance
 
     Warning:
         *DEPRECATED!* For similar but more powerful and performant functionality,
@@ -337,14 +338,19 @@ def pos_regex_matches(doc, pattern):
         yield doc[tags[0 : m.start()].count(" ") : tags[0 : m.end()].count(" ")]
 
 
-def matches(doc, patterns, *, on_match=None):
+def matches(
+    doc: Doc,
+    patterns: Union[str, List[str], List[dict], List[List[dict]]],
+    *,
+    on_match: Callable = None,
+) -> Iterable[Span]:
     """
     Extract ``Span`` s from a ``Doc`` matching one or more patterns
     of per-token attr:value pairs, with optional quantity qualifiers.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`)
-        patterns (str or List[str] or List[dict] or List[List[dict]]):
+        doc
+        patterns:
             One or multiple patterns to match against ``doc``
             using a :class:`spacy.matcher.Matcher`.
 
@@ -376,12 +382,11 @@ def matches(doc, patterns, *, on_match=None):
             "extended" pattern syntax; if you need such complex patterns, it's
             probably better to use a List[dict] or List[List[dict]], anyway.
 
-        on_match (callable): Callback function to act on matches.
+        on_match: Callback function to act on matches.
             Takes the arguments ``matcher``, ``doc``, ``i`` and ``matches``.
 
     Yields:
-        :class:`spacy.tokens.Span`: Next matching ``Span`` in ``doc``,
-        in order of appearance
+        Next matching ``Span`` in ``doc``, in order of appearance
 
     Raises:
         TypeError
@@ -416,7 +421,7 @@ def matches(doc, patterns, *, on_match=None):
         yield doc[start:end]
 
 
-def _make_pattern_from_string(patstr):
+def _make_pattern_from_string(patstr: str) -> List[dict]:
     """
     Args:
         patstr (str)
@@ -462,17 +467,17 @@ def _make_pattern_from_string(patstr):
     return pattern
 
 
-def subject_verb_object_triples(doc):
+def subject_verb_object_triples(doc: Union[Doc, Span]) -> Iterable[Tuple[Span, Span, Span]]:
     """
     Extract an ordered sequence of subject-verb-object (SVO) triples from a
     spacy-parsed doc. Note that this only works for SVO languages.
 
     Args:
-        doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
+        doc
 
     Yields:
-        Tuple[:class:`spacy.tokens.Span`]: The next 3-tuple of spans from ``doc``
-        representing a (subject, verb, object) triple, in order of appearance.
+        Next 3-tuple of spans from ``doc`` representing a (subject, verb, object) triple,
+        in order of appearance
     """
     # TODO: What to do about questions, where it may be VSO instead of SVO?
     # TODO: What about non-adjacent verb negations?
@@ -517,27 +522,30 @@ def subject_verb_object_triples(doc):
                     yield (subj, verb, obj)
 
 
-def acronyms_and_definitions(doc, known_acro_defs=None):
+def acronyms_and_definitions(
+    doc: Union[Doc, Span],
+    known_acro_defs: Optional[Dict[str, str]] = None,
+) -> Dict[str, List[str]]:
     """
     Extract a collection of acronyms and their most likely definitions, if available,
     from a spacy-parsed doc. If multiple definitions are found for a given acronym,
     only the most frequently occurring definition is returned.
 
     Args:
-        doc (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
-        known_acro_defs (dict): if certain acronym/definition pairs
+        doc
+        known_acro_defs: If certain acronym/definition pairs
             are known, pass them in as {acronym (str): definition (str)};
             algorithm will not attempt to find new definitions
 
     Returns:
-        dict: unique acronyms (keys) with matched definitions (values)
+        Unique acronyms (keys) with matched definitions (values)
 
     References:
         Taghva, Kazem, and Jeff Gilbreth. "Recognizing acronyms and their definitions."
         International Journal on Document Analysis and Recognition 1.4 (1999): 191-198.
     """
     # process function arguments
-    acro_defs = collections.defaultdict(list)
+    acro_defs: Dict[str, List[Tuple[str, float]]] = collections.defaultdict(list)
     if not known_acro_defs:
         known_acronyms = set()
     else:
@@ -609,19 +617,22 @@ def acronyms_and_definitions(doc, known_acro_defs=None):
     return dict(acro_defs)
 
 
-def _get_acronym_definition(acronym, window, threshold=0.8):
+def _get_acronym_definition(
+    acronym: str,
+    window: Span,
+    threshold: float = 0.8,
+) -> Tuple[str, float]:
     """
     Identify most likely definition for an acronym given a list of tokens.
 
     Args:
-        acronym (str): acronym for which definition is sought
-        window (:class:`spacy.tokens.Span`): a span of tokens from which definition
-            extraction will be attempted
-        threshold (float): minimum "confidence" in definition required
-            for acceptance; valid values in [0.0, 1.0]; higher value => stricter threshold
+        acronym: acronym for which definition is sought
+        window: a span of tokens from which definition extraction will be attempted
+        threshold: minimum "confidence" in definition required for acceptance;
+            valid values in [0.0, 1.0]; higher value => stricter threshold
 
     Returns:
-        Tuple[str, float]: most likely definition for given acronym ('' if none found),
+        Most likely definition for given acronym ('' if none found),
         along with the confidence assigned to it
 
     References:
@@ -769,21 +780,27 @@ def _get_acronym_definition(acronym, window, threshold=0.8):
 
 
 def semistructured_statements(
-    doc, entity, *, cue="be", ignore_entity_case=True, min_n_words=1, max_n_words=20
+    doc: Doc,
+    entity: str,
+    *,
+    cue: str = "be",
+    ignore_entity_case: bool = True,
+    min_n_words: int = 1,
+    max_n_words: int = 20,
 ):
     """
     Extract "semi-structured statements" from a spacy-parsed doc, each as a
     (entity, cue, fragment) triple. This is similar to subject-verb-object triples.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`)
-        entity (str): a noun or noun phrase of some sort (e.g. "President Obama",
+        doc
+        entity: a noun or noun phrase of some sort (e.g. "President Obama",
             "global warming", "Python")
-        cue (str): verb lemma with which ``entity`` is associated
+        cue: verb lemma with which ``entity`` is associated
             (e.g. "talk about", "have", "write")
-        ignore_entity_case (bool): if True, entity matching is case-independent
-        min_n_words (int): min number of tokens allowed in a matching fragment
-        max_n_words (int): max number of tokens allowed in a matching fragment
+        ignore_entity_case: If True, entity matching is case-independent
+        min_n_words: Min number of tokens allowed in a matching fragment
+        max_n_words: Max number of tokens allowed in a matching fragment
 
     Yields:
         (:class:`spacy.tokens.Span` or :class:`spacy.tokens.Token`, :class:`spacy.tokens.Span` or :class:`spacy.tokens.Token`, :class:`spacy.tokens.Span`):
@@ -904,7 +921,7 @@ def semistructured_statements(
             yield (the_entity, the_cue, the_fragment)
 
 
-def direct_quotations(doc):
+def direct_quotations(doc: Doc) -> Iterable[Tuple[Span, Token, Span]]:
     """
     Baseline, not-great attempt at direction quotation extraction (no indirect
     or mixed quotations) using rules and patterns. English only.
@@ -913,8 +930,7 @@ def direct_quotations(doc):
         doc (:class:`spacy.tokens.Doc`)
 
     Yields:
-        (:class:`spacy.tokens.Span`, :class:`spacy.tokens.Token`, :class:`spacy.tokens.Span`): next quotation in ``doc``
-        represented as a (speaker, reporting verb, quotation) 3-tuple
+        Next quotation in ``doc`` represented as a (speaker, reporting verb, quotation) 3-tuple
 
     Notes:
         Loosely inspired by Krestel, Bergler, Witte. "Minding the Source: Automatic
