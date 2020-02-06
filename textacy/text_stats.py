@@ -7,6 +7,7 @@ Compute a variety of basic counts and readability statistics for documents.
 import functools
 import logging
 from math import sqrt
+from typing import Dict, Optional
 
 from cachetools import cached
 from cachetools.keys import hashkey
@@ -156,7 +157,7 @@ class TextStats:
         )
 
     @property
-    def basic_counts(self):
+    def basic_counts(self) -> Dict[str, int]:
         return {
             "n_sents": self.n_sents,
             "n_words": self.n_words,
@@ -169,7 +170,7 @@ class TextStats:
         }
 
     @property
-    def readability_stats(self):
+    def readability_stats(self) -> Optional[Dict[str, float]]:
         if self.n_words == 0:
             LOGGER.warning(
                 "readability stats can't be computed because doc has 0 words"
@@ -194,7 +195,7 @@ class TextStats:
         }
 
 
-def flesch_kincaid_grade_level(n_syllables, n_words, n_sents):
+def flesch_kincaid_grade_level(n_syllables: int, n_words: int, n_sents: int) -> float:
     """
     Readability score used widely in education, whose value estimates the U.S.
     grade level / number of years of education required to understand a text.
@@ -206,7 +207,13 @@ def flesch_kincaid_grade_level(n_syllables, n_words, n_sents):
     return (11.8 * n_syllables / n_words) + (0.39 * n_words / n_sents) - 15.59
 
 
-def flesch_reading_ease(n_syllables, n_words, n_sents, *, lang=None):
+def flesch_reading_ease(
+    n_syllables: int,
+    n_words: int,
+    n_sents: int,
+    *,
+    lang: Optional[str] = None,
+) -> float:
     """
     Readability score usually in the range [0, 100], related (inversely) to
     :func:`flesch_kincaid_grade_level()`. Higher value => easier text.
@@ -249,7 +256,7 @@ def flesch_reading_ease(n_syllables, n_words, n_sents, *, lang=None):
         )
 
 
-def smog_index(n_polysyllable_words, n_sents):
+def smog_index(n_polysyllable_words: int, n_sents: int) -> float:
     """
     Readability score commonly used in healthcare, whose value estimates the
     number of years of education required to understand a text, similar to
@@ -264,7 +271,7 @@ def smog_index(n_polysyllable_words, n_sents):
     return (1.0430 * sqrt(30 * n_polysyllable_words / n_sents)) + 3.1291
 
 
-def gunning_fog_index(n_words, n_polysyllable_words, n_sents):
+def gunning_fog_index(n_words: int, n_polysyllable_words: int, n_sents: int) -> float:
     """
     Readability score whose value estimates the number of years of education
     required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
@@ -276,7 +283,7 @@ def gunning_fog_index(n_words, n_polysyllable_words, n_sents):
     return 0.4 * ((n_words / n_sents) + (100 * n_polysyllable_words / n_words))
 
 
-def coleman_liau_index(n_chars, n_words, n_sents):
+def coleman_liau_index(n_chars: int, n_words: int, n_sents: int) -> float:
     """
     Readability score whose value estimates the number of years of education
     required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
@@ -288,7 +295,7 @@ def coleman_liau_index(n_chars, n_words, n_sents):
     return (5.879851 * n_chars / n_words) - (29.587280 * n_sents / n_words) - 15.800804
 
 
-def automated_readability_index(n_chars, n_words, n_sents):
+def automated_readability_index(n_chars: int, n_words: int, n_sents: int) -> float:
     """
     Readability score whose value estimates the U.S. grade level required to
     understand a text, most similarly to :func:`flesch_kincaid_grade_level()`,
@@ -301,7 +308,7 @@ def automated_readability_index(n_chars, n_words, n_sents):
     return (4.71 * n_chars / n_words) + (0.5 * n_words / n_sents) - 21.43
 
 
-def lix(n_words, n_long_words, n_sents):
+def lix(n_words: int, n_long_words: int, n_sents: int) -> float:
     """
     Readability score commonly used in Sweden, whose value estimates the
     difficulty of reading a foreign text. Higher value => more difficult text.
@@ -313,14 +320,14 @@ def lix(n_words, n_long_words, n_sents):
 
 
 def wiener_sachtextformel(
-    n_words,
-    n_polysyllable_words,
-    n_monosyllable_words,
-    n_long_words,
-    n_sents,
+    n_words: int,
+    n_polysyllable_words: int,
+    n_monosyllable_words: int,
+    n_long_words: int,
+    n_sents: int,
     *,
-    variant=1,
-):
+    variant: int = 1,
+) -> float:
     """
     Readability score for German-language texts, whose value estimates the grade
     level required to understand a text. Higher value => more difficult text.
@@ -344,7 +351,7 @@ def wiener_sachtextformel(
         raise ValueError("``variant`` value invalid; must be 1, 2, 3, or 4")
 
 
-def gulpease_index(n_chars, n_words, n_sents):
+def gulpease_index(n_chars: int, n_words: int, n_sents: int) -> float:
     """
     Readability score for Italian-language texts, whose value is in the range
     [0, 100] similar to :func:`flesch_reading_ease()`. Higher value =>
@@ -357,7 +364,7 @@ def gulpease_index(n_chars, n_words, n_sents):
 
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
-def load_hyphenator(lang):
+def load_hyphenator(lang: str):
     """
     Load an object that hyphenates words at valid points, as used in LaTex typesetting.
 
