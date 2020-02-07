@@ -9,6 +9,7 @@ similarity, respectively.
 import collections
 import itertools
 import logging
+from typing import Callable, Sequence, Union
 
 import networkx as nx
 from cytoolz import itertoolz
@@ -21,24 +22,28 @@ LOGGER = logging.getLogger(__name__)
 
 
 def terms_to_semantic_network(
-    terms, *, normalize="lemma", window_width=10, edge_weighting="cooc_freq",
-):
+    terms: Union[Sequence[str], Sequence[Token]],
+    *,
+    normalize: Union[str, bool, Callable[[Token], str]] = "lemma",
+    window_width: int = 10,
+    edge_weighting: str = "cooc_freq",
+) -> nx.Graph:
     """
     Transform an ordered list of non-overlapping terms into a semantic network,
     where each term is represented by a node with weighted edges linking it to
     other terms that co-occur within ``window_width`` terms of itself.
 
     Args:
-        terms (List[str] or List[:class:`spacy.tokens.Token`])
-        normalize (str or Callable): If "lemma", lemmatize terms; if "lower",
-            lowercase terms; if falsy, use the form of terms as they appear
-            in ``terms``; if a callable, must accept a ``Token`` and return
-            a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
+        terms
+        normalize: If "lemma", lemmatize terms; if "lower", lowercase terms;
+            if falsy, use the form of terms as they appear in ``terms``;
+            if a callable, must accept a ``Token`` and return a str,
+            e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
 
             .. note:: This is applied to the elements of ``terms`` *only* if
                it's a list of ``Token``.
 
-        window_width (int): Size of sliding window over ``terms`` that determines
+        window_width: Size of sliding window over ``terms`` that determines
             which are said to co-occur. If 2, only immediately adjacent terms
             have edges in the returned network.
         edge_weighting ({'cooc_freq', 'binary'}): If 'cooc_freq', the nodes for
@@ -47,9 +52,8 @@ def terms_to_semantic_network(
             if 'binary', all such edges have weight = 1.
 
     Returns:
-        :class:`networkx.Graph`: Nodes in this network correspond to individual terms;
-        those that co-occur are connected by edges with weights determined
-        by ``edge_weighting``.
+        Networkx graph whose nodes represent individual terms, connected by edges
+        based on term co-occurrence with weights determined by ``edge_weighting``.
 
     Note:
         - Be sure to filter out stopwords, punctuation, certain parts of speech, etc.
@@ -130,18 +134,23 @@ def terms_to_semantic_network(
     return graph
 
 
-def sents_to_semantic_network(sents, *, normalize="lemma", edge_weighting="cosine"):
+def sents_to_semantic_network(
+    sents: Union[Sequence[str], Sequence[Span]],
+    *,
+    normalize: Union[str, bool, Callable[[Token], str]] = "lemma",
+    edge_weighting: str = "cosine",
+) -> nx.Graph:
     """
     Transform a list of sentences into a semantic network, where each sentence is
     represented by a node with edges linking it to other sentences weighted by
     the (cosine or jaccard) similarity of their constituent words.
 
     Args:
-        sents (List[str] or List[:class:`spacy.tokens.Span`])
-        normalize (str or Callable): If 'lemma', lemmatize words in sents;
-            if 'lower', lowercase word in sents; if false-y, use the form of words
-            as they appear in sents; if a callable, must accept a :class:`spacy.tokens.Token` .
-            and return a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
+        sents
+        normalize: If 'lemma', lemmatize words in sents; if 'lower', lowercase words
+        in sents; if false-y, use the form of words as they appear in sents; if a callable,
+        must accept a :class:`spacy.tokens.Token` and return a str,
+        e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
 
             .. note:: This is applied to the elements of ``sents`` *only* if
                it's a list of ``Span`` s.
@@ -153,9 +162,9 @@ def sents_to_semantic_network(sents, *, normalize="lemma", edge_weighting="cosin
             all words in a given sentence pair.
 
     Returns:
-        :class:`networkx.Graph`: Nodes are the integer indexes of the sentences
-        in ``sents``, *not* the actual text of the sentences! Edges connect
-        every node, with weights determined by ``edge_weighting``.
+        Networkx graph whose nodes are the integer indexes of the sentences in ``sents``,
+        *not* the actual text of the sentences. Edges connect every node,
+        with weights determined by ``edge_weighting``.
 
     Note:
         - If passing sentences as strings, be sure to filter out stopwords, punctuation,
