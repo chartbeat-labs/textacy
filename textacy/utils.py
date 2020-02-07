@@ -2,17 +2,18 @@ import logging
 import pathlib
 import sys
 import warnings
+from typing import Any, Collection, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, Union
 
 LOGGER = logging.getLogger(__name__)
 
 
-def deprecated(message, *, action="always"):
+def deprecated(message: str, *, action: str = "always"):
     """
     Show a deprecation warning, optionally filtered.
 
     Args:
-        message (str): Message to display with ``DeprecationWarning``.
-        action (str): Filter controlling whether warning is ignored, displayed, or
+        message: Message to display with ``DeprecationWarning``.
+        action: Filter controlling whether warning is ignored, displayed, or
             turned into an error. https://docs.python.org/3/library/warnings.html#the-warnings-filter
     """
     with warnings.catch_warnings():
@@ -20,7 +21,7 @@ def deprecated(message, *, action="always"):
         warnings.warn(message, DeprecationWarning, stacklevel=2)
 
 
-def get_config():
+def get_config() -> Dict[str, Any]:
     """
     Get key configuration info about dev environment: OS, python, spacy, and textacy.
 
@@ -45,13 +46,13 @@ def get_config():
     }
 
 
-def print_markdown(items):
+def print_markdown(items: Union[Dict[Any, Any], Iterable[Tuple[Any, Any]]]):
     """
     Print ``items`` as a markdown-formatted list.
     Specifically useful when submitting config info on GitHub issues.
 
     Args:
-        items (dict or Sequence[tuple])
+        items
     """
     if isinstance(items, dict):
         items = list(items.items())
@@ -64,7 +65,7 @@ def print_markdown(items):
     print("{}".format("\n".join(md_items)))
 
 
-def is_record(obj):
+def is_record(obj: Any) -> bool:
     """Check whether ``obj`` is a "record" -- that is, a (text, metadata) 2-tuple."""
     if (
         isinstance(obj, (tuple, list))
@@ -77,7 +78,11 @@ def is_record(obj):
         return False
 
 
-def to_collection(val, val_type, col_type):
+def to_collection(
+    val: Any,
+    val_type: Union[Type[Any], Tuple[Type[Any], ...]],
+    col_type: Type[Any],
+) -> Optional[Collection[Any]]:
     """
     Validate and cast a value or values to a collection.
 
@@ -87,7 +92,7 @@ def to_collection(val, val_type, col_type):
         col_type (type): Type of collection to return, e.g. ``tuple`` or ``set``.
 
     Returns:
-        object: Collection of type ``col_type`` with values all of type ``val_type``.
+        Collection of type ``col_type`` with values all of type ``val_type``.
 
     Raises:
         TypeError
@@ -108,17 +113,13 @@ def to_collection(val, val_type, col_type):
         )
 
 
-def to_bytes(s, *, encoding="utf-8", errors="strict"):
-    """Coerce ``s`` to bytes.
-
-    Args:
-        s (str or bytes)
-        encoding (str)
-        errors (str)
-
-    Returns:
-        bytes
-    """
+def to_bytes(
+    s: Union[str, bytes],
+    *,
+    encoding: str = "utf-8",
+    errors: str = "strict",
+    ) -> bytes:
+    """Coerce string ``s`` to bytes."""
     if isinstance(s, str):
         return s.encode(encoding, errors)
     elif isinstance(s, bytes):
@@ -127,18 +128,13 @@ def to_bytes(s, *, encoding="utf-8", errors="strict"):
         raise TypeError("`s` must be {}, not {}".format((str, bytes), type(s)))
 
 
-def to_unicode(s, *, encoding="utf-8", errors="strict"):
-    """
-    Coerce ``s`` to unicode.
-
-    Args:
-        s (str or bytes)
-        encoding (str)
-        errors (str)
-
-    Returns:
-        str
-    """
+def to_unicode(
+    s: Union[str, bytes],
+    *,
+    encoding: str = "utf-8",
+    errors: str = "strict",
+) -> str:
+    """Coerce string ``s`` to unicode."""
     if isinstance(s, bytes):
         return s.decode(encoding, errors)
     elif isinstance(s, str):
@@ -147,12 +143,12 @@ def to_unicode(s, *, encoding="utf-8", errors="strict"):
         raise TypeError("`s` must be {}, not {}".format((str, bytes), type(s)))
 
 
-def to_path(path):
+def to_path(path: Union[str, pathlib.Path]) -> pathlib.Path:
     """
     Coerce ``path`` to a ``pathlib.Path``.
 
     Args:
-        path (str or :class:`pathlib.Path`)
+        path
 
     Returns:
         :class:`pathlib.Path`
@@ -167,15 +163,19 @@ def to_path(path):
         )
 
 
-def validate_set_members(vals, val_type, valid_vals=None):
+def validate_set_members(
+    vals: Union[Any, Set[Any]],
+    val_type: Union[Type[Any], Tuple[Type[Any], ...]],
+    valid_vals: Optional[Set[Any]] = None,
+) -> Set[Any]:
     """
     Validate values that must be of a certain type and (optionally) found among
     a set of known valid values.
 
     Args:
-        vals (obj or Set[obj]): Value or values to validate.
-        val_type (type or Tuple[type]): Type(s) of which all ``vals`` must be instances.
-        valid_vals (Set[obj]): Set of valid values in which all ``vals`` must be found.
+        vals: Value or values to validate.
+        val_type: Type(s) of which all ``vals`` must be instances.
+        valid_vals: Set of valid values in which all ``vals`` must be found.
 
     Return:
         Set[obj]: Validated values.
@@ -197,22 +197,25 @@ def validate_set_members(vals, val_type, valid_vals=None):
     return vals
 
 
-def validate_and_clip_range(range_vals, full_range, val_type=None):
+def validate_and_clip_range(
+    range_vals: Sequence[Any],
+    full_range: Sequence[Any],
+    val_type: Optional[Union[Type[Any], Tuple[Type[Any], ...]]] = None,
+) -> Tuple[Any, Any]:
     """
     Validate and clip range values.
 
     Args:
-        range_vals (list or tuple): Range values, i.e. [start_val, end_val), to validate
+        range_vals: Range values, i.e. [start_val, end_val), to validate
             and, if necessary, clip. If None, the value is set to the corresponding
             value in ``full_range``.
-        full_range (list or tuple): Full range of values, i.e. [min_val, max_val),
+        full_range: Full range of values, i.e. [min_val, max_val),
             within which ``range_vals`` must lie.
-        val_type (type or Tuple[type]): Type(s) of which all ``range_vals``
-            must be instances (unless val is None).
+        val_type: Type(s) of which all ``range_vals`` must be instances (unless val is None).
 
     Returns:
-        tuple: Range for which null or too-small/large values have been
-        clipped to the min/max valid values.
+        Range for which null or too-small/large values have been clipped
+        to the min/max valid values.
 
     Raises:
         TypeError
