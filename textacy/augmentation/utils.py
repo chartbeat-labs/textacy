@@ -2,6 +2,7 @@ import collections
 import functools
 import itertools
 import string
+from typing import Iterable, List, NamedTuple, Tuple, Union
 
 from cachetools import cached
 from cachetools.keys import hashkey
@@ -17,22 +18,17 @@ AugTok = collections.namedtuple("AugTok", ["text", "ws", "pos", "is_word", "syns
 """tuple: Minimal token data required for data augmentation transforms."""
 
 
-def to_aug_toks(spacy_obj):
+def to_aug_toks(spacy_obj: Union[Doc, Span]) -> List[AugTok]:
     """
     Transform a spaCy ``Doc`` or ``Span`` into a list of ``AugTok`` objects,
     suitable for use in data augmentation transform functions.
-
-    Args:
-        spacy_obj (:class:`spacy.tokens.Doc` or :class:`spacy.tokens.Span`)
-
-    Returns:
-        List[AugTok]
     """
     if not isinstance(spacy_obj, (Doc, Span)):
         raise TypeError(
             "`spacy_obj` must be of type {}, not {}".format((Doc, Span), type(spacy_obj))
         )
     lang = spacy_obj.vocab.lang
+    toks_syns: Iterable[List[str]]
     if concept_net.filepath is None or lang not in concept_net.synonyms:
         toks_syns = ([] for _ in spacy_obj)
     else:
@@ -54,17 +50,17 @@ def to_aug_toks(spacy_obj):
 
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "char_weights"))
-def get_char_weights(lang):
+def get_char_weights(lang: str) -> List[Tuple[str, int]]:
     """
     Get lang-specific character weights for use in certain data augmentation transforms,
     based on texts in :class:`textacy.datasets.UDHR`.
 
     Args:
-        lang (str): Standard two-letter language code.
+        lang: Standard two-letter language code.
 
     Returns:
-        List[Tuple[str, int]]: Collection of (character, weight) pairs, based on
-        the distribution of characters found in the source text.
+        Collection of (character, weight) pairs, based on the distribution of characters
+        found in the source text.
     """
     try:
         char_weights = list(

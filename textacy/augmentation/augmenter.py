@@ -1,5 +1,6 @@
 import inspect
 import random
+from typing import Callable, Optional, Sequence, Union
 
 from spacy.tokens import Doc, Span
 
@@ -44,39 +45,43 @@ class Augmenter:
         quick brown fox over teh lazy.
 
     Args:
-        transforms (Sequence[Callable]): Ordered sequence of callables that must take
-            List[:obj:`AugTok`] as their first positional argument and return another
-            List[:obj:`AugTok`].
+        transforms: Ordered sequence of callables that must take List[:obj:`AugTok`]
+            as their first positional argument and return another List[:obj:`AugTok`].
 
             .. note:: Although the particular transforms applied may vary doc-by-doc,
                they are applied *in order* as listed here. Since some transforms may
                clobber text in a way that makes other transforms less effective,
                a stable ordering can improve the quality of augmented data.
 
-        num (int or float or List[float]): If int, number of transforms to randomly select
-            from ``transforms`` each time :meth:`Augmenter.apply_tranforms()` is called.
+        num: If int, number of transforms to randomly select from ``transforms`` each time
+            :meth:`Augmenter.apply_tranforms()` is called.
             If float, probability that any given transform will be selected.
-            If List[float], the probability that the corresponding transform
+            If Sequence[float], the probability that the corresponding transform
             in ``transforms`` will be selected (these must be the same length).
             If None (default), num is set to ``len(transforms)``, which means that
             every transform is applied each time.
 
     See Also:
-        A collection of good, general-purpose transforms are implemented in
+        A collection of general-purpose transforms are implemented in
         :mod:`textacy.augmentation.transforms`.
     """
 
-    def __init__(self, transforms, *, num=None):
+    def __init__(
+        self,
+        transforms: Sequence[Callable],
+        *,
+        num: Optional[Union[int, float, Sequence[float]]] = None,
+    ):
         self.tfs = self._validate_transforms(transforms)
         self.num = self._validate_num(num)
 
-    def apply_transforms(self, doc, **kwargs):
+    def apply_transforms(self, doc: Doc, **kwargs) -> Doc:
         """
         Sequentially apply some subset of data augmentation transforms to ``doc``,
         then return a new ``Doc`` created from the augmented text.
 
         Args:
-            doc (:class:`spacy.tokens.Doc`)
+            doc
             **kwargs: If, for whatever reason, you have to pass keyword argument values
                 into transforms that vary or depend on characteristics of ``doc``,
                 specify them here. The transforms' call signatures will be inspected,
