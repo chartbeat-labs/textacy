@@ -16,46 +16,34 @@ from .resources import (
 )
 
 
-def normalize_hyphenated_words(text):
+def normalize_hyphenated_words(text: str) -> str:
     """
     Normalize words in ``text`` that have been split across lines by a hyphen
     for visual consistency (aka hyphenated) by joining the pieces back together,
     sans hyphen and whitespace.
-
-    Args:
-        text (str)
-
-    Returns:
-        str
     """
     return RE_HYPHENATED_WORD.sub(r"\1\2", text)
 
 
-def normalize_quotation_marks(text):
+def normalize_quotation_marks(text: str) -> str:
     """
     Normalize all "fancy" single- and double-quotation marks in ``text``
     to just the basic ASCII equivalents. Note that this will also normalize fancy
     apostrophes, which are typically represented as single quotation marks.
-
-    Args:
-        text (str)
-
-    Returns:
-        str
     """
     return text.translate(QUOTE_TRANSLATION_TABLE)
 
 
-def normalize_repeating_chars(text, *, chars, maxn=1):
+def normalize_repeating_chars(text: str, *, chars: str, maxn: int = 1) -> str:
     """
     Normalize repeating characters in ``text`` by truncating their number of consecutive
     repetitions to ``maxn``.
 
     Args:
-        text (str)
-        chars (str): One or more characters whose consecutive repetitions are to be
-            normalized, e.g. "." or "?!".
-        maxn (int): Maximum number of consecutive repetitions of ``chars`` to which
+        text
+        chars: One or more characters whose consecutive repetitions are to be normalized,
+            e.g. "." or "?!".
+        maxn: Maximum number of consecutive repetitions of ``chars`` to which
             longer repetitions will be truncated.
 
     Returns:
@@ -64,12 +52,12 @@ def normalize_repeating_chars(text, *, chars, maxn=1):
     return re.sub(r"({}){{{},}}".format(re.escape(chars), maxn + 1), chars * maxn, text)
 
 
-def normalize_unicode(text, *, form="NFC"):
+def normalize_unicode(text: str, *, form: str = "NFC") -> str:
     """
     Normalize unicode characters in ``text`` into canonical forms.
 
     Args:
-        text (str)
+        text
         form ({"NFC", "NFD", "NFKC", "NFKD"}): Form of normalization applied to
             unicode characters. For example, an "e" with accute accent "´" can be
             written as "e´" (canonical decomposition, "NFD") or "é" (canonical
@@ -84,17 +72,11 @@ def normalize_unicode(text, *, form="NFC"):
     return unicodedata.normalize(form, text)
 
 
-def normalize_whitespace(text):
+def normalize_whitespace(text: str) -> str:
     """
     Replace all contiguous zero-width spaces with an empty string, line-breaking spaces
     with a single newline, and non-breaking spaces with a single space, then
     strip any leading/trailing whitespace.
-
-    Args:
-        text (str)
-
-    Returns:
-        str
     """
     text = RE_ZWSP.sub("", text)
     text = RE_LINEBREAK.sub(r"\n", text)
