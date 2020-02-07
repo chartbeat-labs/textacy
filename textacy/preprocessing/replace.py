@@ -18,44 +18,19 @@ from .resources import (
 )
 
 
-def replace_currency_symbols(text, replace_with="_CUR_"):
-    """
-    Replace all currency symbols in ``text`` with ``replace_with``.
-
-    Args:
-        text (str)
-        replace_with (str)
-
-    Returns:
-        str
-    """
+def replace_currency_symbols(text: str, replace_with: str = "_CUR_") -> str:
+    """Replace all currency symbols in ``text`` with ``replace_with``."""
     return RE_CURRENCY_SYMBOL.sub(replace_with, text)
 
 
-def replace_emails(text, replace_with="_EMAIL_"):
-    """
-    Replace all email addresses in ``text`` with ``replace_with``.
-
-    Args:
-        text (str)
-        replace_with (str)
-
-    Returns:
-        str
-    """
+def replace_emails(text: str, replace_with: str = "_EMAIL_") -> str:
+    """Replace all email addresses in ``text`` with ``replace_with``."""
     return RE_EMAIL.sub(replace_with, text)
 
 
-def replace_emojis(text, replace_with="_EMOJI_"):
+def replace_emojis(text: str, replace_with: str = "_EMOJI_") -> str:
     """
     Replace all emoji and pictographs in ``text`` with ``replace_with``.
-
-    Args:
-        text (str)
-        replace_with (str)
-
-    Returns:
-        str
 
     Note:
         If your Python has a narrow unicode build ("USC-2"), only dingbats
@@ -65,71 +40,26 @@ def replace_emojis(text, replace_with="_EMOJI_"):
     return RE_EMOJI.sub(replace_with, text)
 
 
-def replace_hashtags(text, replace_with="_TAG_"):
-    """
-    Replace all hashtags in ``text`` with ``replace_with``.
-
-    Args:
-        text (str)
-        replace_with (str)
-
-    Returns:
-        str
-    """
+def replace_hashtags(text: str, replace_with: str = "_TAG_") -> str:
+    """Replace all hashtags in ``text`` with ``replace_with``."""
     return RE_HASHTAG.sub(replace_with, text)
 
 
-def replace_numbers(text, replace_with="_NUMBER_"):
-    """
-    Replace all numbers in ``text`` with ``replace_with``.
-
-    Args:
-        text (str)
-        replace_with (str)
-
-    Returns:
-        str
-    """
+def replace_numbers(text: str, replace_with: str = "_NUMBER_") -> str:
+    """Replace all numbers in ``text`` with ``replace_with``."""
     return RE_NUMBER.sub(replace_with, text)
 
 
-def replace_phone_numbers(text, replace_with="_PHONE_"):
-    """
-    Replace all phone numbers in ``text`` with ``replace_with``.
-
-    Args:
-        text (str)
-        replace_with (str)
-
-    Returns:
-        str
-    """
+def replace_phone_numbers(text: str, replace_with: str = "_PHONE_") -> str:
+    """Replace all phone numbers in ``text`` with ``replace_with``."""
     return RE_PHONE_NUMBER.sub(replace_with, text)
 
 
-def replace_urls(text, replace_with="_URL_"):
-    """
-    Replace all URLs in ``text`` with ``replace_with``.
-
-    Args:
-        text (str)
-        replace_with (str)
-
-    Returns:
-        str
-    """
+def replace_urls(text: str, replace_with: str = "_URL_") -> str:
+    """Replace all URLs in ``text`` with ``replace_with``."""
     return RE_SHORT_URL.sub(replace_with, RE_URL.sub(replace_with, text))
 
 
-def replace_user_handles(text, replace_with="_USER_"):
-    """
-    Replace all user handles in ``text`` with ``replace_with``.
-
-    Args:
-        text (str)
-        replace_with (str)
-
-    Returns:
-        str
-    """
+def replace_user_handles(text: str, replace_with: str = "_USER_") -> str:
+    """Replace all user handles in ``text`` with ``replace_with``."""
     return RE_USER_HANDLE.sub(replace_with, text)

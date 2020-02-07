@@ -6,19 +6,20 @@ Remove aspects of raw text that may be unwanted for certain use cases.
 """
 import re
 import unicodedata
+from typing import Optional
 
 from .resources import _get_punct_translation_table
 
 
-def remove_accents(text, *, fast=False):
+def remove_accents(text: str, *, fast: bool = False) -> str:
     """
     Remove accents from any accented unicode characters in ``text``, either by
     replacing them with ASCII equivalents or removing them entirely.
 
     Args:
-        text (str)
-        fast (bool): If False, accents are removed from any unicode symbol
-            with a direct ASCII equivalent ; if True, accented chars
+        text
+        fast: If False, accents are removed from any unicode symbol
+            with a direct ASCII equivalent; if True, accented chars
             for all unicode symbols are removed, regardless.
 
             .. note:: ``fast=True`` can be significantly faster than ``fast=False``,
@@ -49,14 +50,14 @@ def remove_accents(text, *, fast=False):
         )
 
 
-def remove_punctuation(text, *, marks=None):
+def remove_punctuation(text: str, *, marks: Optional[str] = None) -> str:
     """
     Remove punctuation from ``text`` by replacing all instances of ``marks``
     with whitespace.
 
     Args:
-        text (str)
-        marks (str): Remove only those punctuation marks specified here.
+        text
+        marks: Remove only those punctuation marks specified here.
             For example, ",;:" removes commas, semi-colons, and colons.
             If None, *all* unicode punctuation marks are removed.
 
