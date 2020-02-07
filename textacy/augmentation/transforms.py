@@ -1,5 +1,6 @@
 import itertools
 import random
+from typing import List, Optional, Set, Union
 
 from cytoolz import itertoolz
 
@@ -7,23 +8,27 @@ from .. import utils
 from . import utils as aug_utils
 
 
-def substitute_word_synonyms(aug_toks, *, num=1, pos=None):
+def substitute_word_synonyms(
+    aug_toks: List[aug_utils.AugTok],
+    *,
+    num: Union[int, float] = 1,
+    pos: Optional[Union[str, Set[str]]] = None,
+) -> List[aug_utils.AugTok]:
     """
     Randomly substitute words for which synonyms are available
     with a randomly selected synonym,
     up to ``num`` times or with a probability of ``num``.
 
     Args:
-        aug_toks (List[:obj:`AugTok`]): Sequence of tokens to augment
-            through synonym substitution.
-        num (int or float): If int, maximum number of words with available synonyms
+        aug_toks: Sequence of tokens to augment through synonym substitution.
+        num: If int, maximum number of words with available synonyms
             to substitute with a randomly selected synonym; if float, probability
             that a given word with synonyms will be substituted.
-        pos (str or Set[str]): Part of speech tag(s) of words to be considered
-            for augmentation. If None, all words with synonyms are considered.
+        pos: Part of speech tag(s) of words to be considered for augmentation.
+            If None, all words with synonyms are considered.
 
     Returns:
-        List[:obj:`AugTok`]: New, augmented sequence of tokens.
+        New, augmented sequence of tokens.
 
     Note:
         This transform requires :class:`textacy.resources.ConceptNet` to be downloaded
@@ -56,23 +61,27 @@ def substitute_word_synonyms(aug_toks, *, num=1, pos=None):
     return new_aug_toks
 
 
-def insert_word_synonyms(aug_toks, *, num=1, pos=None):
+def insert_word_synonyms(
+    aug_toks: List[aug_utils.AugTok],
+    *,
+    num: Union[int, float] = 1,
+    pos: Optional[Union[str, Set[str]]] = None,
+) -> List[aug_utils.AugTok]:
     """
     Randomly insert random synonyms of tokens for which synonyms are available,
     up to ``num`` times or with a probability of ``num``.
 
     Args:
-        aug_toks (List[:obj:`AugTok`]): Sequence of tokens to augment
-            through synonym insertion.
-        num (int or float): If int, maximum number of words with available synonyms
+        aug_toks: Sequence of tokens to augment through synonym insertion.
+        num: If int, maximum number of words with available synonyms
             from which a random synonym is selected and randomly inserted; if float,
             probability that a given word with synonyms will provide a synonym
             to be inserted.
-        pos (str or Set[str]): Part of speech tag(s) of words to be considered
-            for augmentation. If None, all words with synonyms are considered.
+        pos: Part of speech tag(s) of words to be considered for augmentation.
+            If None, all words with synonyms are considered.
 
     Returns:
-        List[:obj:`AugTok`]: New, augmented sequence of tokens.
+        New, augmented sequence of tokens.
 
     Note:
         This transform requires :class:`textacy.resources.ConceptNet` to be downloaded
@@ -94,7 +103,7 @@ def insert_word_synonyms(aug_toks, *, num=1, pos=None):
         return aug_toks[:]
 
     rand_aug_toks = iter(rand_aug_toks)
-    new_aug_toks = []
+    new_aug_toks: List[aug_utils.AugTok] = []
     for idx, (prev_tok, curr_tok) in enumerate(itertoolz.sliding_window(2, [None] + aug_toks)):
         if idx in rand_idxs:
             rand_aug_tok = next(rand_aug_toks)
@@ -125,21 +134,25 @@ def insert_word_synonyms(aug_toks, *, num=1, pos=None):
     return new_aug_toks
 
 
-def swap_words(aug_toks, *, num=1, pos=None):
+def swap_words(
+    aug_toks: List[aug_utils.AugTok],
+    *,
+    num: Union[int, float] = 1,
+    pos: Optional[Union[str, Set[str]]] = None,
+) -> List[aug_utils.AugTok]:
     """
     Randomly swap the positions of two *adjacent* words,
     up to ``num`` times or with a probability of ``num``.
 
     Args:
-        aug_toks (List[:class:`AugTok`]): Sequence of tokens to augment
-            through position swapping.
-        num (int or float): If int, maximum number of adjacent word pairs to swap;
+        aug_toks: Sequence of tokens to augment through position swapping.
+        num: If int, maximum number of adjacent word pairs to swap;
             if float, probability that a given word pair will be swapped.
-        pos (str or Set[str]): Part of speech tag(s) of words to be considered
-            for augmentation. If None, all words are considered.
+        pos: Part of speech tag(s) of words to be considered for augmentation.
+            If None, all words are considered.
 
     Returns:
-        List[:class:`AugTok`]: New, augmented sequence of tokens.
+        New, augmented sequence of tokens.
     """
     _validate_aug_toks(aug_toks)
     pos = utils.to_collection(pos, str, set)
@@ -188,21 +201,25 @@ def swap_words(aug_toks, *, num=1, pos=None):
     return new_aug_toks
 
 
-def delete_words(aug_toks, *, num=1, pos=None):
+def delete_words(
+    aug_toks: List[aug_utils.AugTok],
+    *,
+    num: Union[int, float] = 1,
+    pos: Optional[Union[str, Set[str]]] = None,
+) -> List[aug_utils.AugTok]:
     """
     Randomly delete words,
     up to ``num`` times or with a probability of ``num``.
 
     Args:
-        aug_toks (List[:class:`AugTok`]): Sequence of tokens to augment
-            through word deletion.
-        num (int or float): If int, maximum number of words to delete;
+        aug_toks: Sequence of tokens to augment through word deletion.
+        num: If int, maximum number of words to delete;
             if float, probability that a given word will be deleted.
-        pos (str or Set[str]): Part of speech tag(s) of words to be considered
-            for augmentation. If None, all words are considered.
+        pos: Part of speech tag(s) of words to be considered for augmentation.
+            If None, all words are considered.
 
     Returns:
-        List[:class:`AugTok`]: New, augmented sequence of tokens.
+        New, augmented sequence of tokens.
     """
     _validate_aug_toks(aug_toks)
     pos = utils.to_collection(pos, str, set)
@@ -218,7 +235,7 @@ def delete_words(aug_toks, *, num=1, pos=None):
     if not rand_idxs:
         return aug_toks[:]
 
-    new_aug_toks = []
+    new_aug_toks: List[aug_utils.AugTok] = []
     padded_triplets = itertoolz.sliding_window(3, [None] + aug_toks + [None])
     for idx, (prev_tok, curr_tok, next_tok) in enumerate(padded_triplets):
         if idx in rand_idxs:
@@ -237,25 +254,28 @@ def delete_words(aug_toks, *, num=1, pos=None):
     return new_aug_toks
 
 
-def substitute_chars(aug_toks, *, num=1, lang=None):
+def substitute_chars(
+    aug_toks: List[aug_utils.AugTok],
+    *,
+    num: Union[int, float] = 1,
+    lang: Optional[str] = None,
+) -> List[aug_utils.AugTok]:
     """
     Randomly substitute a single character in randomly-selected words with another,
     up to ``num`` times or with a probability of ``num``.
 
     Args:
-        aug_toks (List[:obj:`AugTok`]): Sequence of tokens to augment
-            through character substitution.
-        num (int or float): If int, maximum number of words to modify
-            with a random character substitution; if float, probability
-            that a given word will be modified.
-        lang (str): Standard, two-letter language code corresponding to ``aug_toks``.
+        aug_toks: Sequence of tokens to augment through character substitution.
+        num: If int, maximum number of words to modify with a random character substitution;
+            if float, probability that a given word will be modified.
+        lang: Standard, two-letter language code corresponding to ``aug_toks``.
             Used to load a weighted distribution of language-appropriate characters
             that are randomly selected for substitution. More common characters
             are more likely to be substituted. If not specified, ascii letters and
             digits are randomly selected with equal probability.
 
     Returns:
-        List[:obj:`AugTok`]: New, augmented sequence of tokens.
+        New, augmented sequence of tokens.
 
     Note:
         This transform requires :class:`textacy.datasets.UDHR` to be downloaded
@@ -299,25 +319,28 @@ def substitute_chars(aug_toks, *, num=1, lang=None):
     return new_aug_toks
 
 
-def insert_chars(aug_toks, *, num=1, lang=None):
+def insert_chars(
+    aug_toks: List[aug_utils.AugTok],
+    *,
+    num: Union[int, float] = 1,
+    lang: Optional[str] = None,
+) -> List[aug_utils.AugTok]:
     """
     Randomly insert a character into randomly-selected words,
     up to ``num`` times or with a probability of ``num``.
 
     Args:
-        aug_toks (List[:obj:`AugTok`]): Sequence of tokens to augment
-            through character insertion.
-        num (int or float): If int, maximum number of words to modify
-            with a random character insertion; if float, probability
-            that a given word will be modified.
-        lang (str): Standard, two-letter language code corresponding to ``aug_toks``.
+        aug_toks: Sequence of tokens to augment through character insertion.
+        num: If int, maximum number of words to modify with a random character insertion;
+            if float, probability that a given word will be modified.
+        lang: Standard, two-letter language code corresponding to ``aug_toks``.
             Used to load a weighted distribution of language-appropriate characters
             that are randomly selected for substitution. More common characters
             are more likely to be substituted. If not specified, ascii letters and
             digits are randomly selected with equal probability.
 
     Returns:
-        List[:obj:`AugTok`]: New, augmented sequence of tokens.
+        New, augmented sequence of tokens.
 
     Note:
         This transform requires :class:`textacy.datasets.UDHR` to be downloaded
@@ -361,20 +384,22 @@ def insert_chars(aug_toks, *, num=1, lang=None):
     return new_aug_toks
 
 
-def swap_chars(aug_toks, *, num=1):
+def swap_chars(
+    aug_toks: List[aug_utils.AugTok],
+    *,
+    num: Union[int, float] = 1,
+) -> List[aug_utils.AugTok]:
     """
     Randomly swap two *adjacent* characters in randomly-selected words,
     up to ``num`` times or with a probability of ``num``.
 
     Args:
-        aug_toks (List[:obj:`AugTok`]): Sequence of tokens to augment
-            through character swapping.
-        num (int or float): If int, maximum number of words to modify
-            with a random character swap; if float, probability
-            that a given word will be modified.
+        aug_toks: Sequence of tokens to augment through character swapping.
+        num: If int, maximum number of words to modify with a random character swap;
+            if float, probability that a given word will be modified.
 
     Returns:
-        List[:obj:`AugTok`]: New, augmented sequence of tokens.
+        New, augmented sequence of tokens.
     """
     _validate_aug_toks(aug_toks)
     cand_idxs = [
@@ -405,20 +430,22 @@ def swap_chars(aug_toks, *, num=1):
     return new_aug_toks
 
 
-def delete_chars(aug_toks, *, num=1):
+def delete_chars(
+    aug_toks: List[aug_utils.AugTok],
+    *,
+    num: Union[int, float] = 1,
+) -> List[aug_utils.AugTok]:
     """
     Randomly delete a character in randomly-selected words,
     up to ``num`` times or with a probability of ``num``.
 
     Args:
-        aug_toks (List[:obj:`AugTok`]): Sequence of tokens to augment
-            through character deletion.
-        num (int or float): If int, maximum number of words to modify
-            with a random character deletion; if float, probability
-            that a given word will be modified.
+        aug_toks: Sequence of tokens to augment through character deletion.
+        num: If int, maximum number of words to modify with a random character deletion;
+            if float, probability that a given word will be modified.
 
     Returns:
-        List[:obj:`AugTok`]: New, augmented sequence of tokens.
+        New, augmented sequence of tokens.
     """
     _validate_aug_toks(aug_toks)
     cand_idxs = [
