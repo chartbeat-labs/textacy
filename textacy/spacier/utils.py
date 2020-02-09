@@ -5,6 +5,7 @@ spaCy Utils
 Helper functions for working with / extending spaCy's core functionality.
 """
 import itertools
+from typing import Iterable, List, Tuple, Union
 
 import numpy as np
 from spacy import attrs
@@ -16,7 +17,11 @@ from .. import constants, text_utils
 from . import core
 
 
-def make_doc_from_text_chunks(text, lang, chunk_size=100000):
+def make_doc_from_text_chunks(
+    text: str,
+    lang: Union[str, Language],
+    chunk_size: int = 100000,
+) -> Doc:
     """
     Make a single spaCy-processed document from 1 or more chunks of ``text``.
     This is a workaround for processing very long texts, for which spaCy
@@ -27,13 +32,13 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
     Only use it if necessary!
 
     Args:
-        text (str): Text document to be chunked and processed by spaCy.
-        lang (str or ``spacy.Language``): A 2-letter language code (e.g. "en"),
+        text: Text document to be chunked and processed by spaCy.
+        lang: A 2-letter language code (e.g. "en"),
             the name of a spaCy model for the desired language, or
             an already-instantiated spaCy language pipeline.
-        chunk_size (int): Number of characters comprising each text chunk
-            (excluding the last chunk, which is probably smaller). For best
-            performance, value should be somewhere between 1e3 and 1e7,
+        chunk_size: Number of characters comprising each text chunk
+            (excluding the last chunk, which is probably smaller).
+            For best performance, value should be somewhere between 1e3 and 1e7,
             depending on how much RAM you have available.
 
             .. note:: Since chunking is done by character, chunks edges' probably
@@ -42,8 +47,7 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
                make weird parsing errors.
 
     Returns:
-        :class:`spacy.tokens.Doc`: A single processed document, initialized from
-        components accumulated chunk by chunk.
+        A single processed document, initialized from components accumulated chunk by chunk.
     """
     if isinstance(lang, str):
         lang = core.load_spacy_lang(lang)
@@ -52,8 +56,8 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
             "`lang` must be {}, not {}".format({str, Language}, type(lang))
         )
 
-    words = []
-    spaces = []
+    words: List[str] = []
+    spaces: List[bool] = []
     np_arrays = []
     cols = [attrs.POS, attrs.TAG, attrs.DEP, attrs.HEAD, attrs.ENT_IOB, attrs.ENT_TYPE]
     text_len = len(text)
@@ -73,7 +77,7 @@ def make_doc_from_text_chunks(text, lang, chunk_size=100000):
     return doc
 
 
-def merge_spans(spans, doc):
+def merge_spans(spans: Iterable[Span], doc: Doc) -> None:
     """
     Merge spans into single tokens in ``doc``, *in-place*.
 
@@ -95,15 +99,9 @@ def merge_spans(spans, doc):
             doc.merge(start_char, end_char, ent_type=label)
 
 
-def preserve_case(token):
+def preserve_case(token: Token) -> bool:
     """
     Return True if ``token`` is a proper noun or acronym; otherwise, False.
-
-    Args:
-        token (:class:`spacy.tokens.Token`)
-
-    Returns:
-        bool
 
     Raises:
         ValueError: If parent document has not been POS-tagged.
@@ -118,17 +116,11 @@ def preserve_case(token):
         return False
 
 
-def get_normalized_text(span_or_token):
+def get_normalized_text(span_or_token: Union[Span, Token]) -> str:
     """
     Get the text of a spaCy span or token, normalized depending on its characteristics.
     For proper nouns and acronyms, text is returned as-is; for everything else,
     text is lemmatized.
-
-    Args:
-        span_or_token (:class:`spacy.tokens.Span` or :class:`spacy.tokens.Token`)
-
-    Returns:
-        str
     """
     if isinstance(span_or_token, Token):
         return (
@@ -145,14 +137,14 @@ def get_normalized_text(span_or_token):
         )
 
 
-def get_main_verbs_of_sent(sent):
+def get_main_verbs_of_sent(sent: Span) -> List[Token]:
     """Return the main (non-auxiliary) verbs in a sentence."""
     return [
         tok for tok in sent if tok.pos == VERB and tok.dep_ not in constants.AUX_DEPS
     ]
 
 
-def get_subjects_of_verb(verb):
+def get_subjects_of_verb(verb: Token) -> List[Token]:
     """Return all subjects of a verb according to the dependency parse."""
     subjs = [tok for tok in verb.lefts if tok.dep_ in constants.SUBJ_DEPS]
     # get additional conjunct subjects
@@ -160,7 +152,7 @@ def get_subjects_of_verb(verb):
     return subjs
 
 
-def get_objects_of_verb(verb):
+def get_objects_of_verb(verb: Token) -> List[Token]:
     """
     Return all objects of a verb according to the dependency parse,
     including open clausal complements.
@@ -173,7 +165,7 @@ def get_objects_of_verb(verb):
     return objs
 
 
-def _get_conjuncts(tok):
+def _get_conjuncts(tok: Token) -> List[Token]:
     """
     Return conjunct dependents of the leftmost conjunct in a coordinated phrase,
     e.g. "Burton, [Dan], and [Josh] ...".
@@ -181,11 +173,8 @@ def _get_conjuncts(tok):
     return [right for right in tok.rights if right.dep_ == "conj"]
 
 
-def get_span_for_compound_noun(noun):
-    """
-    Return document indexes spanning all (adjacent) tokens
-    in a compound noun.
-    """
+def get_span_for_compound_noun(noun: Token) -> Tuple[int, int]:
+    """Return document indexes spanning all (adjacent) tokens in a compound noun."""
     min_i = noun.i - sum(
         1
         for _ in itertools.takewhile(
@@ -195,7 +184,7 @@ def get_span_for_compound_noun(noun):
     return (min_i, noun.i)
 
 
-def get_span_for_verb_auxiliaries(verb):
+def get_span_for_verb_auxiliaries(verb: Token) -> Tuple[int, int]:
     """
     Return document indexes spanning all (adjacent) tokens
     around a verb that are auxiliary verbs or negations.
