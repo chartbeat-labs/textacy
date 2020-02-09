@@ -4,6 +4,9 @@ TextRank
 """
 import collections
 import operator
+from typing import cast, Callable, Collection, Dict, List, Optional, Set, Tuple, Union
+
+from spacy.tokens import Doc, Token
 
 from .. import utils
 from . import graph_base
@@ -11,15 +14,15 @@ from . import utils as ke_utils
 
 
 def textrank(
-    doc,
+    doc: Doc,
     *,
-    normalize="lemma",
-    include_pos=("NOUN", "PROPN", "ADJ"),
-    window_size=2,
-    edge_weighting="binary",
-    position_bias=False,
-    topn=10,
-):
+    normalize: Optional[Union[str, Callable[[Token], str]]] = "lemma",
+    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+    window_size: int = 2,
+    edge_weighting: str = "binary",
+    position_bias: bool = False,
+    topn: Union[int, float] = 10,
+) -> List[Tuple[str, float]]:
     """
     Extract key terms from a document using the TextRank algorithm, or
     a variation thereof. For example:
@@ -29,31 +32,29 @@ def textrank(
     - PositionRank: ``window_size=10, edge_weighting="count", position_bias=True``
 
     Args:
-        doc (:class:`spacy.tokens.Doc`): spaCy ``Doc`` from which to extract keyterms.
-        normalize (str or callable): If "lemma", lemmatize terms; if "lower",
-            lowercase terms; if None, use the form of terms as they appeared in
-            ``doc``; if a callable, must accept a ``Token`` and return a str,
+        doc: spaCy ``Doc`` from which to extract keyterms.
+        normalize: If "lemma", lemmatize terms; if "lower", lowercase terms; if None,
+            use the form of terms as they appeared in ``doc``; if a callable,
+            must accept a ``Token`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
-        include_pos (str or Set[str]): One or more POS tags with which to filter
-            for good candidate keyterms. If None, include tokens of all POS tags
+        include_pos: One or more POS tags with which to filter for good candidate keyterms.
+            If None, include tokens of all POS tags
             (which also allows keyterm extraction from docs without POS-tagging.)
-        window_size (int): Size of sliding window in which term co-occurrences
-            are determined.
+        window_size: Size of sliding window in which term co-occurrences are determined.
         edge_weighting ({"count", "binary"}): : If "count", the nodes for
             all co-occurring terms are connected by edges with weight equal to
             the number of times they co-occurred within a sliding window;
             if "binary", all such edges have weight = 1.
-        position_bias (bool): If True, bias the PageRank algorithm for weighting
+        position_bias: If True, bias the PageRank algorithm for weighting
             nodes in the word graph, such that words appearing earlier and more
             frequently in ``doc`` tend to get larger weights.
-        topn (int or float): Number of top-ranked terms to return as key terms.
+        topn: Number of top-ranked terms to return as key terms.
             If an integer, represents the absolute number; if a float, value
             must be in the interval (0.0, 1.0], which is converted to an int by
             ``int(round(len(set(candidates)) * topn))``.
 
     Returns:
-        List[Tuple[str, float]]: Sorted list of top ``topn`` key terms and
-        their corresponding TextRank ranking scores.
+        Sorted list of top ``topn`` key terms and their corresponding TextRank ranking scores.
 
     References:
         - Mihalcea, R., & Tarau, P. (2004, July). TextRank: Bringing order into texts.
@@ -66,7 +67,7 @@ def textrank(
           pages 1105-1115.
     """
     # validate / transform args
-    include_pos = utils.to_collection(include_pos, str, set)
+    include_pos = cast(Set[str], utils.to_collection(include_pos, str, set))
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -78,6 +79,7 @@ def textrank(
     if not doc:
         return []
 
+    word_pos: Optional[Dict[str, float]]
     if position_bias is True:
         word_pos = collections.defaultdict(float)
         for word, norm_word in zip(doc, ke_utils.normalize_terms(doc, normalize)):
@@ -110,20 +112,16 @@ def textrank(
         sorted_candidate_scores, topn, match_threshold=0.8)
 
 
-def _get_candidates(doc, normalize, include_pos):
+def _get_candidates(
+    doc: Doc,
+    normalize: Optional[Union[str, Callable]],
+    include_pos: Optional[Set[str]],
+) -> Set[Tuple[str, ...]]:
     """
     Get a set of candidate terms to be scored by joining the longest
     subsequences of valid words -- non-stopword and non-punct, filtered to
     nouns, proper nouns, and adjectives if ``doc`` is POS-tagged -- then
     normalized into strings.
-
-    Args:
-        doc (:class:`spacy.tokens.Doc`)
-        normalize (str or callable)
-        include_pos (Set[str])
-
-    Returns:
-        Set[Tuple[str]]
     """
     def _is_valid_tok(tok):
         return (

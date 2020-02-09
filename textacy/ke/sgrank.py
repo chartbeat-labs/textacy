@@ -6,9 +6,11 @@ import collections
 import itertools
 import math
 import operator
+from typing import cast, Callable, Collection, Counter, DefaultDict, Dict, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 from cytoolz import itertoolz
+from spacy.tokens import Doc, Span
 
 from .. import extract
 from .. import utils
@@ -16,48 +18,44 @@ from . import utils as ke_utils
 
 
 def sgrank(
-    doc,
+    doc: Doc,
     *,
-    normalize="lemma",
-    ngrams=(1, 2, 3, 4, 5, 6),
-    include_pos=("NOUN", "PROPN", "ADJ"),
-    window_size=1500,
-    topn=10,
-    idf=None,
-):
+    normalize: Optional[Union[str, Callable[[Span], str]]] = "lemma",
+    ngrams: Union[int, Collection[int]] = (1, 2, 3, 4, 5, 6),
+    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+    window_size: int = 1500,
+    topn: Union[int, float] = 10,
+    idf: Dict[str, float] = None,
+) -> List[Tuple[str, float]]:
     """
     Extract key terms from a document using the SGRank algorithm.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`): spaCy ``Doc`` from which to extract keyterms.
-        normalize (str or callable): If "lemma", lemmatize terms; if "lower",
-            lowercase terms; if None, use the form of terms as they appeared in
-            ``doc``; if a callable, must accept a ``Span`` and return a str,
+        doc: spaCy ``Doc`` from which to extract keyterms.
+        normalize: If "lemma", lemmatize terms; if "lower", lowercase terms; if None,
+            use the form of terms as they appeared in ``doc``; if a callable,
+            must accept a ``Span`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`
-        ngrams (int or Set[int]): n of which n-grams to include; ``(1, 2, 3, 4, 5, 6)``
-            (default) includes all ngrams from 1 to 6; `2` if only bigrams are wanted
-        include_pos (str or Set[str]): One or more POS tags with which to filter
-            for good candidate keyterms. If None, include tokens of all POS tags
+        ngrams: n of which n-grams to include. For example, ``(1, 2, 3, 4, 5, 6)`` (default)
+            includes all ngrams from 1 to 6; `2` if only bigrams are wanted
+        include_pos: One or more POS tags with which to filter for good candidate keyterms.
+            If None, include tokens of all POS tags
             (which also allows keyterm extraction from docs without POS-tagging.)
-        window_size (int): Size of sliding window in which term
-            co-occurrences are determined to occur. Note: Larger values may
-            dramatically increase runtime, owing to the larger number of
-            co-occurrence combinations that must be counted.
-        topn (int or float): Number of top-ranked terms to return as
-            keyterms. If int, represents the absolute number; if float, must be
-            in the open interval (0.0, 1.0), and is converted to an integer by
-            ``int(round(len(candidates) * topn))``
-        idf (dict): Mapping of ``normalize(term)`` to inverse document frequency
+        window_size: Size of sliding window in which term co-occurrences are determined
+            to occur. Note: Larger values may dramatically increase runtime, owing to
+            the larger number of co-occurrence combinations that must be counted.
+        topn: Number of top-ranked terms to return as keyterms.
+            If int, represents the absolute number; if float, must be in the open interval
+            (0.0, 1.0), and is converted to an integer by ``int(round(len(candidates) * topn))``
+        idf: Mapping of ``normalize(term)`` to inverse document frequency
             for re-weighting of unigrams (n-grams with n > 1 have df assumed = 1).
             Results are typically better with idf information.
 
     Returns:
-        List[Tuple[str, float]]: Sorted list of top ``topn`` key terms and
-        their corresponding SGRank scores
+        Sorted list of top ``topn`` key terms and their corresponding SGRank scores
 
     Raises:
-        ValueError: if ``topn`` is a float but not in (0.0, 1.0] or
-            ``window_size`` < 2
+        ValueError: if ``topn`` is a float but not in (0.0, 1.0] or ``window_size`` < 2
 
     References:
         Danesh, Sumner, and Martin. "SGRank: Combining Statistical and Graphical
@@ -65,8 +63,8 @@ def sgrank(
         Lexical and Computational Semantics (* SEM 2015) (2015): 117.
     """
     # validate / transform args
-    ngrams = utils.to_collection(ngrams, int, tuple)
-    include_pos = utils.to_collection(include_pos, str, set)
+    ngrams = cast(Tuple[int, ...], utils.to_collection(ngrams, int, tuple))
+    include_pos = cast(Set[str], utils.to_collection(include_pos, str, set))
     if window_size < 2:
         raise ValueError("`window_size` must be >= 2")
     if isinstance(topn, float):
@@ -105,21 +103,16 @@ def sgrank(
         sorted_term_ranks, topn, match_threshold=0.8)
 
 
-def _get_candidates(doc, normalize, ngrams, include_pos):
+def _get_candidates(
+    doc: Doc,
+    normalize: Optional[Union[str, Callable[[Span], str]]],
+    ngrams: Tuple[int, ...],
+    include_pos: Set[str],
+) -> Tuple[List[Tuple[str, int, int, int]], Counter[str]]:
     """
     Get n-gram candidate keyterms from ``doc``, with key information for each:
     its normalized text string, position within the doc, number of constituent words,
     and frequency of occurrence.
-
-    Args:
-        doc (:class:`spacy.tokens.Doc`)
-        normalize (str)
-        ngrams (Tuple[int])
-        include_pos (Set[str])
-
-    Returns:
-        List[Tuple[str, int, int, int]]
-        Dict[str, int]
     """
     min_term_freq = min(max(len(doc) // 1000, 1), 4)
     candidates_tuples = list(
@@ -143,20 +136,15 @@ def _get_candidates(doc, normalize, ngrams, include_pos):
     return candidates, candidate_counts
 
 
-def _prefilter_candidates(candidates, candidate_counts, topn, idf):
+def _prefilter_candidates(
+    candidates: List[Tuple[str, int, int, int]],
+    candidate_counts: Counter[str],
+    topn: int,
+    idf: Optional[Dict[str, float]],
+) -> Tuple[List[Tuple[str, int, int, int]], Set[str]]:
     """
     Filter initial set of candidates to only those with sufficiently high TF or
     (if available) modified TF*IDF.
-
-    Args:
-        candidates (List[Tuple[str, int, int, int]])
-        candidate_counts (Dict[str, int])
-        topn (int)
-        idf (Dict[str, float])
-
-    Returns:
-        List[Tuple[str, int, int, int]]
-        Set[str]
     """
     topn_prefilter = max(3 * topn, 100)
     if idf:
@@ -177,23 +165,19 @@ def _prefilter_candidates(candidates, candidate_counts, topn, idf):
     return candidates, unique_candidates
 
 
-def _compute_term_weights(candidates, candidate_counts, unique_candidates, n_toks, idf):
+def _compute_term_weights(
+    candidates: List[Tuple[str, int, int, int]],
+    candidate_counts: Dict[str, int],
+    unique_candidates: Set[str],
+    n_toks: int,
+    idf: Optional[Dict[str, float]],
+) -> Dict[str, float]:
     """
     Compute term weights from statistical attributes: position of first occurrence,
     not subsumed frequency, and number of constituent words.
-
-    Args:
-        candidates (List[Tuple[str, int, int, int]])
-        candidate_counts (Dict[str, int])
-        unique_candidates (Set[str])
-        n_toks (int)
-        idf (Dict[str, float])
-
-    Returns:
-        Dict[str, float]
     """
     term_weights = {}
-    seen_terms = set()
+    seen_terms: Set[str] = set()
     n_toks_p1 = n_toks + 1
     for ctext, cpos, clen, ccount in candidates:
         # we only want the *first* occurrence of a unique term (by its text)
@@ -210,30 +194,26 @@ def _compute_term_weights(candidates, candidate_counts, unique_candidates, n_tok
             for ctext2 in unique_candidates
             if ctext in ctext2
         ) - ccount
-        term_freq_factor = ccount - subsum_count
+        term_freq_factor: Union[int, float] = ccount - subsum_count
         if idf and clen == 1:
             term_freq_factor *= idf.get(ctext, 1)
         term_weights[ctext] = term_freq_factor * pos_first_occ * clen
     return term_weights
 
 
-def _compute_edge_weights(candidates, term_weights, window_size, n_toks):
+def _compute_edge_weights(
+    candidates: List[Tuple[str, int, int, int]],
+    term_weights: Dict[str, float],
+    window_size: int,
+    n_toks: int,
+) -> List[Tuple[str, str, Dict[str, float]]]:
     """
     Compute weights between candidates that occur within a sliding window(s) of
     each other, then combine with statistical ``term_weights`` and normalize
     by the total number of outgoing edge weights.
-
-    Args:
-        candidates (List[Tuple[str, int, int, int]])
-        term_weights (Dict[str, float])
-        window_size (int)
-        n_toks (int)
-
-    Returns:
-        Dict[str, float]
     """
-    n_coocs = collections.defaultdict(lambda: collections.defaultdict(int))
-    sum_logdists = collections.defaultdict(lambda: collections.defaultdict(float))
+    n_coocs: DefaultDict[str, DefaultDict[str, int]] = collections.defaultdict(lambda: collections.defaultdict(int))
+    sum_logdists: DefaultDict[str, DefaultDict[str, float]] = collections.defaultdict(lambda: collections.defaultdict(float))
     # iterate over windows
     log_ = math.log  # localize this, for performance
     for start_ind in range(n_toks):
@@ -249,7 +229,7 @@ def _compute_edge_weights(candidates, term_weights, window_size, n_toks):
         if end_ind >= n_toks:
             break
     # compute edge weights between co-occurring terms (nodes)
-    edge_weights = collections.defaultdict(lambda: collections.defaultdict(float))
+    edge_weights: DefaultDict[str, DefaultDict[str, float]] = collections.defaultdict(lambda: collections.defaultdict(float))
     for c1, c2s in sum_logdists.items():
         for c2 in c2s:
             edge_weights[c1][c2] = (
@@ -258,7 +238,7 @@ def _compute_edge_weights(candidates, term_weights, window_size, n_toks):
                 * term_weights[c2]
             )
     # normalize edge weights by sum of outgoing edge weights per term (node)
-    norm_edge_weights = []
+    norm_edge_weights: List[Tuple[str, str, Dict[str, float]]] = []
     for c1, c2s in edge_weights.items():
         sum_edge_weights = sum(c2s.values())
         norm_edge_weights.extend(

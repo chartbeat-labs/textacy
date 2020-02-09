@@ -7,52 +7,53 @@ import functools
 import math
 import operator
 import statistics
+from typing import cast, Collection, DefaultDict, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from cytoolz import itertoolz
+from spacy.tokens import Doc, Token
 
 from . import utils as ke_utils
 from .. import utils
 
 
 def yake(
-    doc,
+    doc: Doc,
     *,
-    normalize="lemma",
-    ngrams=(1, 2, 3),
-    include_pos=("NOUN", "PROPN", "ADJ"),
-    window_size=2,
-    topn=10,
-):
+    normalize: Optional[str] = "lemma",
+    ngrams: Union[int, Collection[int]] = (1, 2, 3),
+    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+    window_size: int = 2,
+    topn: Union[int, float] = 10,
+) -> List[Tuple[str, float]]:
     """
     Extract key terms from a document using the YAKE algorithm.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`): spaCy ``Doc`` from which to extract keyterms.
+        doc: spaCy ``Doc`` from which to extract keyterms.
             Must be sentence-segmented; optionally POS-tagged.
-        normalize (str): If "lemma", lemmatize terms; if "lower", lowercase terms;
+        normalize: If "lemma", lemmatize terms; if "lower", lowercase terms;
             if None, use the form of terms as they appeared in ``doc``.
 
             .. note:: Unlike the other keyterm extraction functions, this one
                doesn't accept a callable for ``normalize``.
 
-        ngrams (int or Set[int]): n of which n-grams to consider as keyterm candidates.
+        ngrams: n of which n-grams to consider as keyterm candidates.
             For example, `(1, 2, 3)`` includes all unigrams, bigrams, and trigrams,
             while ``2`` includes bigrams only.
-        include_pos (str or Set[str]): One or more POS tags with which to filter
-            for good candidate keyterms. If None, include tokens of all POS tags
+        include_pos: One or more POS tags with which to filter for good candidate keyterms.
+            If None, include tokens of all POS tags
             (which also allows keyterm extraction from docs without POS-tagging.)
-        window_size (int): Number of words to the right and left of a given word
+        window_size: Number of words to the right and left of a given word
             to use as context when computing the "relatedness to context"
             component of its score. Note that the resulting sliding window's
             full width is ``1 + (2 * window_size)``.
-        topn (int or float): Number of top-ranked terms to return as key terms.
+        topn: Number of top-ranked terms to return as key terms.
             If an integer, represents the absolute number; if a float, value
             must be in the interval (0.0, 1.0], which is converted to an int by
             ``int(round(len(candidates) * topn))``
 
     Returns:
-        List[Tuple[str, float]]: Sorted list of top ``topn`` key terms and
-        their corresponding scores.
+        Sorted list of top ``topn`` key terms and their corresponding YAKE scores.
 
     References:
         Campos, Mangaravite, Pasquali, Jorge, Nunes, and Jatowt. (2018).
@@ -61,8 +62,8 @@ def yake(
         Lecture Notes in Computer Science, vol 10772, pp. 684-691.
     """
     # validate / transform args
-    ngrams = utils.to_collection(ngrams, int, tuple)
-    include_pos = utils.to_collection(include_pos, str, set)
+    ngrams = cast(Tuple[int, ...], utils.to_collection(ngrams, int, tuple))
+    include_pos = cast(Set[str], utils.to_collection(include_pos, str, set))
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -74,8 +75,8 @@ def yake(
     if not doc:
         return []
 
-    stop_words = set()
-    seen_candidates = set()
+    stop_words: Set[str] = set()
+    seen_candidates: Set[str] = set()
     # compute key values on a per-word basis
     word_occ_vals = _get_per_word_occurrence_values(doc, normalize, stop_words, window_size)
     # doc doesn't have any words...
@@ -85,7 +86,7 @@ def yake(
     word_freqs = {w_id: len(vals["is_uc"]) for w_id, vals in word_occ_vals.items()}
     word_scores = _compute_word_scores(doc, word_occ_vals, word_freqs, stop_words)
     # compute scores for candidate terms based on scores of constituent words
-    term_scores = {}
+    term_scores: Dict[str, float] = {}
     # do single-word candidates separately; it's faster and simpler
     if 1 in ngrams:
         candidates = _get_unigram_candidates(doc, include_pos)
@@ -123,15 +124,7 @@ def yake(
         sorted_term_scores, topn, match_threshold=0.8)
 
 
-def _get_attr_name(normalize, as_strings):
-    """
-    Args:
-        normalize (str)
-        as_strings (bool)
-
-    Returns:
-        str
-    """
+def _get_attr_name(normalize: Optional[str], as_strings: bool) -> str:
     if normalize is None:
         attr_name = "norm"
     elif normalize in ("lemma", "lower"):
@@ -146,21 +139,17 @@ def _get_attr_name(normalize, as_strings):
     return attr_name
 
 
-def _get_per_word_occurrence_values(doc, normalize, stop_words, window_size):
+def _get_per_word_occurrence_values(
+    doc: Doc,
+    normalize: Optional[str],
+    stop_words: Set[str],
+    window_size: int,
+) -> Dict[int, Dict[str, list]]:
     """
     Get base values for each individual occurrence of a word, to be aggregated
     and combined into a per-word score.
-
-    Args:
-        doc (:class:`spacy.tokens.Doc`)
-        normalize (str)
-        stop_words (Set[str])
-        window_size (int)
-
-    Returns:
-        Dict[int, Dict[str, list]]
     """
-    word_occ_vals = collections.defaultdict(lambda: collections.defaultdict(list))
+    word_occ_vals: DefaultDict = collections.defaultdict(lambda: collections.defaultdict(list))
 
     def _is_upper_cased(tok):
         return tok.is_upper or (tok.is_title and not tok.is_sent_start)
@@ -187,21 +176,17 @@ def _get_per_word_occurrence_values(doc, normalize, stop_words, window_size):
     return word_occ_vals
 
 
-def _compute_word_scores(doc, word_occ_vals, word_freqs, stop_words):
+def _compute_word_scores(
+    doc: Doc,
+    word_occ_vals: Dict[int, Dict[str, list]],
+    word_freqs: Dict[int, int],
+    stop_words: Set[str],
+) -> Dict[int, float]:
     """
     Aggregate values from per-word occurrence values, compute per-word weights
     of several components, then combine components into per-word scores.
-
-    Args:
-        doc (:class:`spacy.tokens.Doc`)
-        word_occ_vals (Dict[int, Dict[str, list]])
-        word_freqs (Dict[int, int])
-        stop_words (Set[str])
-
-    Returns:
-        Dict[int, float]
     """
-    word_weights = collections.defaultdict(dict)
+    word_weights: DefaultDict[int, dict] = collections.defaultdict(dict)
     # compute summary stats for word frequencies
     freqs_nsw = [freq for w_id, freq in word_freqs.items() if w_id not in stop_words]
     freq_max = max(word_freqs.values())
@@ -235,15 +220,7 @@ def _compute_word_scores(doc, word_occ_vals, word_freqs, stop_words):
     return word_scores
 
 
-def _get_unigram_candidates(doc, include_pos):
-    """
-    Args:
-        doc (:class:`spacy.tokens.Doc`)
-        include_pos (Set[str])
-
-    Returns:
-        List[:class:`spacy.tokens.Token`]
-    """
+def _get_unigram_candidates(doc: Doc, include_pos: Set[str]) -> Iterable[Token]:
     candidates = (
         word for word in doc
         if not (word.is_stop or word.is_punct or word.is_space)
@@ -257,24 +234,14 @@ def _get_unigram_candidates(doc, include_pos):
 
 
 def _score_unigram_candidates(
-    candidates,
-    word_freqs,
-    word_scores,
-    term_scores,
-    stop_words,
-    seen_candidates,
-    normalize,
+    candidates: List[Token],
+    word_freqs: Dict[int, float],
+    word_scores: Dict[int, float],
+    term_scores: Dict[str, float],
+    stop_words: Set[str],
+    seen_candidates: Set[str],
+    normalize: Optional[str],
 ):
-    """
-    Args:
-        candidates (List[:class:`spacy.tokens.Token`])
-        word_freqs (Dict[int, float])
-        word_scores (Dict[int, float])
-        term_scores (Dict[str, float])
-        stop_words (Set[str])
-        seen_candidates (Set[str])
-        normalize (str)
-    """
     attr_name = _get_attr_name(normalize, False)
     attr_name_str = _get_attr_name(normalize, True)
     for word in candidates:
@@ -291,20 +258,13 @@ def _score_unigram_candidates(
 
 
 def _score_ngram_candidates(
-    candidates,
-    ngram_freqs, word_scores, term_scores,
-    seen_candidates,
-    normalize,
+    candidates: List[Tuple[Token, ...]],
+    ngram_freqs: Dict[str, int],
+    word_scores: Dict[int, float],
+    term_scores: Dict[str, float],
+    seen_candidates: Set[str],
+    normalize: Optional[str],
 ):
-    """
-    Args:
-        candidates (List[Tuple[:class:`spacy.tokens.Token`]])
-        ngram_freqs (Dict[str, int])
-        word_scores (Dict[int, float])
-        term_scores (Dict[str, float])
-        seen_candidates (Set[str])
-        normalize (str)
-    """
     attr_name = _get_attr_name(normalize, False)
     attr_name_str = _get_attr_name(normalize, True)
     for ngram in candidates:

@@ -5,42 +5,43 @@ sCAKE
 import collections
 import itertools
 import operator
+from typing import cast, Callable, Collection, Counter, DefaultDict, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import networkx as nx
 from cytoolz import itertoolz
+from spacy.tokens import Doc, Token
 
 from .. import utils
 from . import utils as ke_utils
 
 
 def scake(
-    doc,
+    doc: Doc,
     *,
-    normalize="lemma",
-    include_pos=("NOUN", "PROPN", "ADJ"),
-    topn=10,
-):
+    normalize: Optional[Union[str, Callable[[Token], str]]] = "lemma",
+    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+    topn: Union[int, float] = 10,
+) -> List[Tuple[str, float]]:
     """
     Extract key terms from a document using the sCAKE algorithm.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`): spaCy ``Doc`` from which to extract keyterms.
-            Must be sentence-segmented; optionally POS-tagged.
-        normalize (str or callable): If "lemma", lemmatize terms; if "lower",
-            lowercase terms; if None, use the form of terms as they appeared in
-            ``doc``; if a callable, must accept a ``Token`` and return a str,
+        doc: spaCy ``Doc`` from which to extract keyterms. Must be sentence-segmented;
+            optionally POS-tagged.
+        normalize: If "lemma", lemmatize terms; if "lower", lowercase terms; if None,
+            use the form of terms as they appeared in ``doc``; if a callable,
+            must accept a ``Token`` and return a str,
             e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
-        include_pos (str or Set[str]): One or more POS tags with which to filter
-            for good candidate keyterms. If None, include tokens of all POS tags
+        include_pos: One or more POS tags with which to filter for good candidate keyterms.
+            If None, include tokens of all POS tags
             (which also allows keyterm extraction from docs without POS-tagging.)
-        topn (int or float): Number of top-ranked terms to return as key terms.
+        topn: Number of top-ranked terms to return as key terms.
             If an integer, represents the absolute number; if a float, value
             must be in the interval (0.0, 1.0], which is converted to an int by
             ``int(round(len(candidates) * topn))``
 
     Returns:
-        List[Tuple[str, float]]: Sorted list of top ``topn`` key terms and
-        their corresponding scores.
+        Sorted list of top ``topn`` key terms and their corresponding scores.
 
     References:
         Duari, Swagata & Bhatnagar, Vasudha. (2018). sCAKE: Semantic Connectivity
@@ -48,7 +49,7 @@ def scake(
         https://arxiv.org/abs/1811.10831v1
     """
     # validate / transform args
-    include_pos = utils.to_collection(include_pos, str, set)
+    include_pos = cast(Set[str], utils.to_collection(include_pos, str, set))
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -61,13 +62,13 @@ def scake(
         return []
 
     # build up a graph of good words, edges weighting by adjacent sentence co-occurrence
-    cooc_mat = collections.Counter()
+    cooc_mat: Counter[Tuple[str, str]] = collections.Counter()
     # handle edge case where doc only has 1 sentence
     n_sents = itertoolz.count(doc.sents)
     for window_sents in itertoolz.sliding_window(min(2, n_sents), doc.sents):
         if n_sents == 1:
             window_sents = (window_sents[0], [])
-        window_words = (
+        window_words: Iterable[str] = (
             word
             for word in itertoolz.concat(window_sents)
             if not (word.is_stop or word.is_punct or word.is_space)
@@ -108,17 +109,12 @@ def scake(
         sorted_candidate_scores, topn, match_threshold=0.8)
 
 
-def _compute_word_scores(doc, graph, cooc_mat, normalize):
-    """
-    Args:
-        doc (:class:`spacy.tokens.Doc`)
-        graph (:class:`networkx.Graph`)
-        cooc_mat (Dict[Tuple[str, str], int])
-        normalize (str)
-
-    Returns:
-        Dict[str, float]
-    """
+def _compute_word_scores(
+    doc: Doc,
+    graph: nx.Graph,
+    cooc_mat: Dict[Tuple[str, str], int],
+    normalize: Optional[Union[str, Callable[[Token], str]]],
+) -> Dict[str, float]:
     word_strs = list(graph.nodes())
     # "level of hierarchy" component
     max_truss_levels = _compute_node_truss_levels(graph)
@@ -138,7 +134,7 @@ def _compute_word_scores(doc, graph, cooc_mat, normalize):
         for w in word_strs
     }
     # "positional weight" component
-    word_pos = collections.defaultdict(float)
+    word_pos: DefaultDict[str, float] = collections.defaultdict(float)
     for word, word_str in zip(doc, ke_utils.normalize_terms(doc, normalize)):
         word_pos[word_str] += 1 / (word.i + 1)
     return {
@@ -147,20 +143,16 @@ def _compute_word_scores(doc, graph, cooc_mat, normalize):
     }
 
 
-def _get_candidates(doc, normalize, include_pos):
+def _get_candidates(
+    doc: Doc,
+    normalize: Optional[Union[str, Callable[[Token], str]]],
+    include_pos: Set[str],
+) -> Set[Tuple[str, ...]]:
     """
     Get a set of candidate terms to be scored by joining the longest
     subsequences of valid words -- non-stopword and non-punct, filtered to
     nouns, proper nouns, and adjectives if ``doc`` is POS-tagged -- then
     normalized into strings.
-
-    Args:
-        doc (:class:`spacy.tokens.Doc`)
-        normalize (str or callable)
-        include_pos (Set[str])
-
-    Returns:
-        Set[Tuple[str]]
     """
     def _is_valid_tok(tok):
         return (
@@ -175,21 +167,15 @@ def _get_candidates(doc, normalize, include_pos):
     }
 
 
-def _compute_node_truss_levels(graph):
+def _compute_node_truss_levels(graph: nx.Graph) -> Dict[str, int]:
     """
-    Args:
-        graph (:class:`networkx.Graph`)
-
-    Returns:
-        Dict[str, int]
-
     Reference:
         Burkhardt, Paul & Faber, Vance & G. Harris, David. (2018).
         Bounds and algorithms for $k$-truss.
         https://arxiv.org/abs/1806.05523v1
     """
     max_edge_ks = {}
-    is_removed = collections.defaultdict(int)
+    is_removed: DefaultDict[tuple, int] = collections.defaultdict(int)
     triangle_counts = {
         edge: len(set(graph.neighbors(edge[0])) & set(graph.neighbors(edge[1])))
         for edge in graph.edges()}
