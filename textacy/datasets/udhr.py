@@ -25,7 +25,9 @@ For more details, go to https://unicode.org/udhr.
 import io
 import itertools
 import logging
+import pathlib
 import xml
+from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 from .. import constants, preprocessing, utils
 from .. import io as tio
@@ -86,7 +88,10 @@ class UDHR(Dataset):
             e.g. "en" for English.
     """
 
-    def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
+    def __init__(
+        self,
+        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+    ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._texts_dirpath = self.data_dir.joinpath("udhr_txt")
@@ -94,14 +99,14 @@ class UDHR(Dataset):
         self._index = None
         self.langs = None
 
-    def download(self, *, force=False):
+    def download(self, *, force: bool = False) -> None:
         """
         Download the data as a zipped archive of language-specific text files,
         then save it to disk and extract its contents under the ``data_dir`` directory.
 
         Args:
-            force (bool): If True, always download the dataset even if
-                it already exists.
+            force: If True, download the dataset, even if it already exists
+                on disk under ``data_dir``.
         """
         filepath = tio.download_file(
             DOWNLOAD_URL,
@@ -127,10 +132,7 @@ class UDHR(Dataset):
             )
 
     @property
-    def index(self):
-        """
-        List[Dict[str, obj]]
-        """
+    def index(self) -> Optional[List[Dict[str, Any]]]:
         if not self._index:
             try:
                 self._index = self._load_and_parse_index()
@@ -199,18 +201,23 @@ class UDHR(Dataset):
             for record in self:
                 yield record
 
-    def texts(self, *, lang=None, limit=None):
+    def texts(
+        self,
+        *,
+        lang: Optional[Union[str, Set[str]]] = None,
+        limit: Optional[int] = None,
+    ) -> Iterable[str]:
         """
         Iterate over records in this dataset, optionally filtering by language,
         and yield texts only.
 
         Args:
-            lang (str or Set[str]): Filter records by the language
-                in which they're written; see :attr:`UDHR.langs`.
-            limit (int): Return no more than ``limit`` texts.
+            lang: Filter records by the language in which they're written;
+                see :attr:`UDHR.langs`.
+            limit: Yield no more than ``limit`` texts that match specified filter.
 
         Yields:
-            str: Text of the next record in dataset passing filters.
+            Text of the next record in dataset passing filters.
 
         Raises:
             ValueError: If any filtering options are invalid.
@@ -218,19 +225,24 @@ class UDHR(Dataset):
         for record in itertools.islice(self._filtered_iter(lang), limit):
             yield record["text"]
 
-    def records(self, *, lang=None, limit=None):
+    def records(
+        self,
+        *,
+        lang: Optional[Union[str, Set[str]]] = None,
+        limit: Optional[int] = None,
+    ) -> Iterable[Tuple[str, dict]]:
         """
         Iterate over reocrds in this dataset, optionally filtering by a language,
         and yield text + metadata pairs.
 
         Args:
-            lang (str or Set[str]): Filter records by the language
-                in which they're written; see :attr:`UDHR.langs`.
-            limit (int): Yield no more than ``limit`` records.
+            lang: Filter records by the language in which they're written;
+                see :attr:`UDHR.langs`.
+            limit: Yield no more than ``limit`` texts that match specified filter.
 
         Yields:
-            str: Text of the next record in dataset passing filters.
-            dict: Metadata of the next record in dataset passing filters.
+            Text of the next record in dataset passing filters,
+            and its corresponding metadata.
 
         Raises:
             ValueError: If any filtering options are invalid.

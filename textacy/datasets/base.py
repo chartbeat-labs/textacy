@@ -11,7 +11,7 @@ class Dataset:
         meta (dict)
     """
 
-    def __init__(self, name, meta=None):
+    def __init__(self, name: str, meta: dict = None):
         self.name = name
         self.meta = meta or {}
 

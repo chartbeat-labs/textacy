@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 """
 Capitol Words Congressional speeches
 ------------------------------------
@@ -10,15 +9,15 @@ from January 1996 through June 2016.
 
 Records include the following data:
 
-    * ``text``: Full text of the Congressperson's remarks.
-    * ``title``: Title of the speech, in all caps.
-    * ``date``: Date on which the speech was given, as an ISO-standard string.
-    * ``speaker_name``: First and last name of the speaker.
-    * ``speaker_party``: Political party of the speaker: "R" for Republican,
+    - ``text``: Full text of the Congressperson's remarks.
+    - ``title``: Title of the speech, in all caps.
+    - ``date``: Date on which the speech was given, as an ISO-standard string.
+    - ``speaker_name``: First and last name of the speaker.
+    - ``speaker_party``: Political party of the speaker: "R" for Republican,
       "D" for Democrat, "I" for Independent.
-    * ``congress``: Number of the Congress in which the speech was given: ranges
+    - ``congress``: Number of the Congress in which the speech was given: ranges
       continuously between 104 and 114.
-    * ``chamber``: Chamber of Congress in which the speech was given: almost all
+    - ``chamber``: Chamber of Congress in which the speech was given: almost all
       are either "House" or "Senate", with a small number of "Extensions".
 
 This dataset was derived from data provided by the (now defunct) Sunlight
@@ -26,7 +25,9 @@ Foundation's `Capitol Words API <http://sunlightlabs.github.io/Capitol-Words/>`_
 """
 import itertools
 import logging
+import pathlib
 import urllib.parse
+from typing import Iterable, Optional, Set, Tuple, Union
 
 from .. import constants, utils
 from .. import io as tio
@@ -87,24 +88,20 @@ class CapitolWords(Dataset):
         Corpus(100 docs; 70496 tokens)
 
     Args:
-        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
-            under which dataset is stored, i.e. ``/path/to/data_dir/capitol_words``.
+        data_dir: Path to directory on disk under which dataset is stored,
+            i.e. ``/path/to/data_dir/capitol_words``.
 
     Attributes:
-        full_date_range (Tuple[str]): First and last dates for which speeches
-            are available, each as an ISO-formatted string (YYYY-MM-DD).
-        speaker_names (Set[str]): Full names of all speakers included in corpus,
-            e.g. "Bernie Sanders".
-        speaker_parties (Set[str]): All distinct political parties of speakers,
-            e.g. "R".
-        chambers (Set[str]): All distinct chambers in which speeches were given,
-            e.g. "House".
-        congresses (Set[int]): All distinct numbers of the congresses in which
-            speeches were given, e.g. 114.
+        full_date_range: First and last dates for which speeches are available,
+            each as an ISO-formatted string (YYYY-MM-DD).
+        speaker_names: Full names of all speakers included in corpus, e.g. "Bernie Sanders".
+        speaker_parties: All distinct political parties of speakers, e.g. "R".
+        chambers: All distinct chambers in which speeches were given, e.g. "House".
+        congresses: All distinct numbers of the congresses in which speeches were given, e.g. 114.
     """
 
-    full_date_range = ("1996-01-01", "2016-06-30")
-    speaker_names = {
+    full_date_range: Tuple[str, str] = ("1996-01-01", "2016-06-30")
+    speaker_names: Set[str] = {
         "Barack Obama",
         "Bernie Sanders",
         "Hillary Clinton",
@@ -120,20 +117,23 @@ class CapitolWords(Dataset):
         "Rick Santorum",
         "Ted Cruz",
     }
-    speaker_parties = {"D", "I", "R"}
-    chambers = {"Extensions", "House", "Senate"}
-    congresses = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
+    speaker_parties: Set[str] = {"D", "I", "R"}
+    chambers: Set[str] = {"Extensions", "House", "Senate"}
+    congresses: Set[int] = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
 
-    def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
+    def __init__(
+        self,
+        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+    ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._filename = "capitol-words-py3.json.gz"
         self._filepath = self.data_dir.joinpath(self._filename)
 
     @property
-    def filepath(self):
+    def filepath(self) -> Optional[str]:
         """
-        str: Full path on disk for CapitolWords data as compressed json file.
+        Full path on disk for CapitolWords data as compressed json file.
         ``None`` if file is not found, e.g. has not yet been downloaded.
         """
         if self._filepath.is_file():
@@ -141,14 +141,14 @@ class CapitolWords(Dataset):
         else:
             return None
 
-    def download(self, *, force=False):
+    def download(self, *, force: bool = False) -> None:
         """
         Download the data as a Python version-specific compressed json file and
         save it to disk under the ``data_dir`` directory.
 
         Args:
-            force (bool): If True, download the dataset, even if it already
-                exists on disk under ``data_dir``.
+            force: If True, download the dataset, even if it already exists
+                on disk under ``data_dir``.
         """
         release_tag = "capitol_words_py3_v{data_version}".format(data_version=1.0)
         url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
@@ -170,12 +170,12 @@ class CapitolWords(Dataset):
 
     def _get_filters(
         self,
-        speaker_name,
-        speaker_party,
-        chamber,
-        congress,
-        date_range,
-        min_len,
+        speaker_name: Optional[Union[str, Set[str]]] = None,
+        speaker_party: Optional[Union[str, Set[str]]] = None,
+        chamber: Optional[Union[str, Set[str]]] = None,
+        congress: Optional[Union[int, Set[int]]] = None,
+        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        min_len: Optional[int] = None,
     ):
         filters = []
         if min_len is not None:
@@ -223,39 +223,36 @@ class CapitolWords(Dataset):
     def texts(
         self,
         *,
-        speaker_name=None,
-        speaker_party=None,
-        chamber=None,
-        congress=None,
-        date_range=None,
-        min_len=None,
-        limit=None,
-    ):
+        speaker_name: Optional[Union[str, Set[str]]] = None,
+        speaker_party: Optional[Union[str, Set[str]]] = None,
+        chamber: Optional[Union[str, Set[str]]] = None,
+        congress: Optional[Union[int, Set[int]]] = None,
+        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        min_len: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Iterable[str]:
         """
         Iterate over speeches in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield texts only,
         in chronological order.
 
         Args:
-            speaker_name (str or Set[str]): Filter speeches by the speakers' name;
+            speaker_name: Filter speeches by the speakers' name;
                 see :attr:`CapitolWords.speaker_names`.
-            speaker_party (str or Set[str]): Filter speeches by the speakers'
-                party; see :attr:`CapitolWords.speaker_parties`.
-            chamber (str or Set[str]): Filter speeches by the chamber in which
-                they were given; see :attr:`CapitolWords.chambers`.
-            congress (int or Set[int]): Filter speeches by the congress in which
-                they were given; see :attr:`CapitolWords.congresses`.
-            date_range (List[str] or Tuple[str]): Filter speeches by the date on
-                which they were given. Both start and end date must be specified,
-                but a null value for either will be replaced by the min/max date
-                available for the dataset.
-            min_len (int): Filter speeches by the length (number of characters)
-                of their text content.
-            limit (int): Yield no more than ``limit`` speeches that match all
-                specified filters.
+            speaker_party: Filter speeches by the speakers' party;
+                see :attr:`CapitolWords.speaker_parties`.
+            chamber: Filter speeches by the chamber in which they were given;
+                see :attr:`CapitolWords.chambers`.
+            congress: Filter speeches by the congress in which they were given;
+                see :attr:`CapitolWords.congresses`.
+            date_range: Filter speeches by the date on which they were given.
+                Both start and end date must be specified, but a null value for either
+                will be replaced by the min/max date available for the dataset.
+            min_len: Filter texts by the length (# characters) of their text content.
+            limit: Yield no more than ``limit`` texts that match all specified filters.
 
         Yields:
-            str: Full text of next (by chronological order) speech in dataset
+            Full text of next (by chronological order) speech in dataset
             passing all filter params.
 
         Raises:
@@ -269,40 +266,37 @@ class CapitolWords(Dataset):
     def records(
         self,
         *,
-        speaker_name=None,
-        speaker_party=None,
-        chamber=None,
-        congress=None,
-        date_range=None,
-        min_len=None,
-        limit=None,
-    ):
+        speaker_name: Optional[Union[str, Set[str]]] = None,
+        speaker_party: Optional[Union[str, Set[str]]] = None,
+        chamber: Optional[Union[str, Set[str]]] = None,
+        congress: Optional[Union[int, Set[int]]] = None,
+        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        min_len: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Iterable[Tuple[str, dict]]:
         """
         Iterate over speeches in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield text + metadata pairs,
         in chronological order.
 
         Args:
-            speaker_name (str or Set[str]): Filter speeches by the speakers' name;
+            speaker_name: Filter speeches by the speakers' name;
                 see :attr:`CapitolWords.speaker_names`.
-            speaker_party (str or Set[str]): Filter speeches by the speakers'
-                party; see :attr:`CapitolWords.speaker_parties`.
-            chamber (str or Set[str]): Filter speeches by the chamber in which
-                they were given; see :attr:`CapitolWords.chambers`.
-            congress (int or Set[int]): Filter speeches by the congress in which
-                they were given; see :attr:`CapitolWords.congresses`.
-            date_range (List[str] or Tuple[str]): Filter speeches by the date on
-                which they were given. Both start and end date must be specified,
-                but a null value for either will be replaced by the min/max date
-                available for the dataset.
-            min_len (int): Filter speeches by the length (number of characters)
-                of their text content.
-            limit (int): Yield no more than ``limit`` speeches that match all
-                specified filters.
+            speaker_party: Filter speeches by the speakers' party;
+                see :attr:`CapitolWords.speaker_parties`.
+            chamber: Filter speeches by the chamber in which they were given;
+                see :attr:`CapitolWords.chambers`.
+            congress: Filter speeches by the congress in which they were given;
+                see :attr:`CapitolWords.congresses`.
+            date_range: Filter speeches by the date on which they were given.
+                Both start and end date must be specified, but a null value for either
+                will be replaced by the min/max date available for the dataset.
+            min_len: Filter speeches by the length (# characters) of their text content.
+            limit: Yield no more than ``limit`` speeches that match all specified filters.
 
         Yields:
-            str: Text of the next speech in dataset passing all filters.
-            dict: Metadata of the next speech in dataset passing all filters.
+            Full text of the next (by chronological order) speech in dataset
+            passing all filters, and its corresponding metadata.
 
         Raises:
             ValueError: If any filtering options are invalid.

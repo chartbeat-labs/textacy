@@ -7,12 +7,12 @@ October 2007 through May 2015.
 
 Records include the following key fields (plus a few others):
 
-    * ``body``: Full text of the comment.
-    * ``created_utc``: Date on which the comment was posted.
-    * ``subreddit``: Sub-reddit in which the comment was posted, excluding the
+    - ``body``: Full text of the comment.
+    - ``created_utc``: Date on which the comment was posted.
+    - ``subreddit``: Sub-reddit in which the comment was posted, excluding the
       familiar "/r/" prefix.
-    * ``score``: Net score (upvotes - downvotes) on the comment.
-    * ``gilded``: Number of times this comment received reddit gold.
+    - ``score``: Net score (upvotes - downvotes) on the comment.
+    - ``gilded``: Number of times this comment received reddit gold.
 
 The raw data was originally collected by /u/Stuck_In_the_Matrix via Reddit's
 APIS, and stored for posterity by the `Internet Archive <https://archive.org>`_.
@@ -20,9 +20,11 @@ For more details, refer to https://archive.org/details/2015_reddit_comments_corp
 """
 import itertools
 import logging
+import pathlib
 import re
 import urllib.parse
 from datetime import datetime
+from typing import Iterable, Optional, Set, Tuple, Union
 
 from .. import constants, utils
 from .. import io as tio
@@ -82,31 +84,33 @@ class RedditComments(Dataset):
         Corpus(1000 docs; 27582 tokens)
 
     Args:
-        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
-            under which the data is stored, i.e. ``/path/to/data_dir/reddit_comments``.
-            Each file covers a given month, as indicated in the filename like
-            "YYYY/RC_YYYY-MM.bz2".
+        data_dir: Path to directory on disk under which the data is stored,
+            i.e. ``/path/to/data_dir/reddit_comments``. Each file covers a given month,
+            as indicated in the filename like "YYYY/RC_YYYY-MM.bz2".
 
     Attributes:
-        full_date_range (Tuple[str]): First and last dates for which comments
+        full_date_range: First and last dates for which comments
             are available, each as an ISO-formatted string (YYYY-MM-DD).
-        filepaths (Tuple[str]): Full paths on disk for all Reddit comments files
+        filepaths: Full paths on disk for all Reddit comments files
             found under :attr:`ReddictComments.data_dir` directory, sorted
             in chronological order.
     """
 
-    full_date_range = ("2007-10-01", "2015-06-01")
-    _full_score_range = (-2147483647, 2147483647)
+    full_date_range: Tuple[str, str] = ("2007-10-01", "2015-06-01")
+    _full_score_range: Tuple[int, int] = (-2147483647, 2147483647)
 
-    def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
+    def __init__(
+        self,
+        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+    ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
-        self._date_range = None
+        self._date_range: Optional[Tuple[Optional[str], Optional[str]]] = None
 
     @property
-    def filepaths(self):
+    def filepaths(self) -> Tuple[str, ...]:
         """
-        Tuple[str]: Full paths on disk for all Reddit comments files found under
+        Full paths on disk for all Reddit comments files found under
         the ``data_dir`` directory, sorted chronologically.
         """
         if self.data_dir.is_dir():
@@ -123,19 +127,24 @@ class RedditComments(Dataset):
         else:
             return tuple()
 
-    def download(self, *, date_range=(None, None), force=False):
+    def download(
+        self,
+        *,
+        date_range: Tuple[Optional[str], Optional[str]] = (None, None),
+        force: bool = False,
+    ) -> None:
         """
         Download 1 or more monthly Reddit comments files from archive.org
         and save them to disk under the ``data_dir`` directory.
 
         Args:
-            date_range (Tuple[str]): Interval specifying the [start, end) dates
-                for which comments files will be downloaded. Each item must be
-                a str formatted as YYYY-MM or YYYY-MM-DD (the latter is converted
+            date_range: Interval specifying the [start, end) dates for which
+                comments files will be downloaded. Each item must be a str
+                formatted as YYYY-MM or YYYY-MM-DD (the latter is converted
                 to the corresponding YYYY-MM value). Both start and end values
                 must be specified, but a null value for either is automatically
                 replaced by the minimum or maximum valid values, respectively.
-            force (bool): If True, download the dataset, even if it already
+            force: If True, download the dataset, even if it already
                 exists on disk under ``data_dir``.
         """
         date_range = utils.validate_and_clip_range(
@@ -246,34 +255,40 @@ class RedditComments(Dataset):
                 yield record
 
     def texts(
-        self, *, subreddit=None, date_range=None, score_range=None, min_len=None, limit=None
-    ):
+        self,
+        *,
+        subreddit: Optional[Union[str, Set[str]]] = None,
+        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        score_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
+        min_len: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Iterable[str]:
         """
         Iterate over comments (text-only) in 1 or more files of this dataset,
         optionally filtering by a variety of metadata and/or text length,
         in chronological order.
 
         Args:
-            subreddit (str or Set[str]): Filter comments for those which were
-                posted in the specified subreddit(s).
-            date_range (Tuple[str]): Filter comments for those which were posted
+            subreddit: Filter comments for those which were posted
+                in the specified subreddit(s).
+            date_range: Filter comments for those which were posted
                 within the interval [start, end). Each item must be a str in
                 ISO-standard format, i.e. some amount of YYYY-MM-DDTHH:mm:ss.
                 Both start and end values must be specified, but a null value
                 for either is automatically replaced by the minimum or maximum
                 valid values, respectively.
-            score_range (Tuple[int]): Filter comments for those whose score
+            score_range: Filter comments for those whose score
                 (# upvotes minus # downvotes) is within the interval [low, high).
                 Both start and end values must be specified, but a null value
                 for either is automatically replaced by the minimum or maximum
                 valid values, respectively.
-            min_len (int): Filter comments for those whose body length in chars
-                is at least this long.
-            limit (int): Maximum number of comments passing all filters to yield.
+            min_len: Filter comments for those whose body length in chars is
+                at least this long.
+            limit: Maximum number of comments passing all filters to yield.
                 If None, all comments are iterated over.
 
         Yields:
-            str: Text of the next comment in dataset passing all filters.
+            Text of the next comment in dataset passing all filters.
 
         Raises:
             ValueError: If any filtering options are invalid.
@@ -287,35 +302,41 @@ class RedditComments(Dataset):
             self._date_range = None
 
     def records(
-        self, *, subreddit=None, date_range=None, score_range=None, min_len=None, limit=None
-    ):
+        self,
+        *,
+        subreddit: Optional[Union[str, Set[str]]] = None,
+        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        score_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
+        min_len: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Iterable[Tuple[str, dict]]:
         """
         Iterate over comments (including text and metadata) in 1 or more files
         of this dataset, optionally filtering by a variety of metadata and/or
         text length, in chronological order.
 
         Args:
-            subreddit (str or Set[str]): Filter comments for those which were
-                posted in the specified subreddit(s).
-            date_range (Tuple[str]): Filter comments for those which were posted
+            subreddit: Filter comments for those which were posted
+                in the specified subreddit(s).
+            date_range: Filter comments for those which were posted
                 within the interval [start, end). Each item must be a str in
                 ISO-standard format, i.e. some amount of YYYY-MM-DDTHH:mm:ss.
                 Both start and end values must be specified, but a null value
                 for either is automatically replaced by the minimum or maximum
                 valid values, respectively.
-            score_range (Tuple[int]): Filter comments for those whose score
+            score_range: Filter comments for those whose score
                 (# upvotes minus # downvotes) is within the interval [low, high).
                 Both start and end values must be specified, but a null value
                 for either is automatically replaced by the minimum or maximum
                 valid values, respectively.
-            min_len (int): Filter comments for those whose body length in chars
-                is at least this long.
-            limit (int): Maximum number of comments passing all filters to yield.
+            min_len: Filter comments for those whose body length in chars is
+                at least this long.
+            limit: Maximum number of comments passing all filters to yield.
                 If None, all comments are iterated over.
 
         Yields:
-            str: Text of the next comment in dataset passing all filters.
-            dict: Metadata of the next comment in dataset passing all filters.
+            Text of the next comment in dataset passing all filters,
+            and its corresponding metadata.
 
         Raises:
             ValueError: If any filtering options are invalid.
