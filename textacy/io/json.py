@@ -8,27 +8,34 @@ as one record per file or one record per *line* in a file.
 import datetime
 import functools
 import json
+import pathlib
+from typing import Any, Iterable, Optional, Tuple, Union
 
 from . import utils as io_utils
 
 
-def read_json(filepath, *, mode="rt", encoding=None, lines=False):
+def read_json(
+    filepath: Union[str, pathlib.Path],
+    *,
+    mode: str = "rt",
+    encoding: Optional[str] = None,
+    lines: bool = False,
+) -> Iterable:
     """
     Read the contents of a JSON file at ``filepath``, either all at once
     or streaming item-by-item.
 
     Args:
-        filepath (str or :class:`pathlib.Path`): Path to file on disk
-            from which data will be read.
-        mode (str): Mode with which ``filepath`` is opened.
-        encoding (str): Name of the encoding used to decode or encode the data
+        filepath: Path to file on disk from which data will be read.
+        mode: Mode with which ``filepath`` is opened.
+        encoding: Name of the encoding used to decode or encode the data
             in ``filepath``. Only applicable in text mode.
-        lines (bool): If False, all data is read in at once; otherwise, data is
-            read in one line at a time.
+        lines: If False, all data is read in at once; otherwise, data is read in
+            one line at a time.
 
     Yields:
-        object: Next JSON item; could be a dict, list, int, float, str,
-        depending on the value of ``lines``.
+        Next JSON item; could be a dict, list, int, float, str,
+        depending on the data and the value of ``lines``.
     """
     io_utils._validate_read_mode(mode)
     with io_utils.open_sesame(filepath, mode=mode, encoding=encoding) as f:
@@ -39,21 +46,26 @@ def read_json(filepath, *, mode="rt", encoding=None, lines=False):
                 yield json.loads(line)
 
 
-def read_json_mash(filepath, *, mode="rt", encoding=None, buffer_size=2048):
+def read_json_mash(
+    filepath: Union[str, pathlib.Path],
+    *,
+    mode: str = "rt",
+    encoding: Optional[str] = None,
+    buffer_size: int = 2048,
+) -> Iterable:
     """
     Read the contents of a JSON file at ``filepath`` one item at a time,
     where all of the items have been mashed together, end-to-end, on a single line.
 
     Args:
-        filepath (str or :class:`pathlib.Path`): Path to file on disk
-            to which data will be written.
-        mode (str): Mode with which ``filepath`` is opened.
-        encoding (str): Name of the encoding used to decode or encode the data
+        filepath: Path to file on disk to which data will be written.
+        mode: Mode with which ``filepath`` is opened.
+        encoding: Name of the encoding used to decode or encode the data
             in ``filepath``. Only applicable in text mode.
-        buffer_size (int): Number of bytes to read in as a chunk.
+        buffer_size: Number of bytes to read in as a chunk.
 
     Yields:
-        object: Next valid JSON object, converted to native Python equivalent.
+        Next valid JSON object, converted to native Python equivalent.
 
     Note:
         Storing JSON data in this format is Not Good. Reading it is doable, so
@@ -77,24 +89,24 @@ def read_json_mash(filepath, *, mode="rt", encoding=None, buffer_size=2048):
 
 
 def write_json(
-    data,
-    filepath,
+    data: Any,
+    filepath: Union[str, pathlib.Path],
     *,
-    mode="wt",
-    encoding=None,
-    make_dirs=False,
-    lines=False,
-    ensure_ascii=False,
-    separators=(",", ":"),
-    sort_keys=False,
-    indent=None,
-):
+    mode: str = "wt",
+    encoding: Optional[str] = None,
+    make_dirs: bool = False,
+    lines: bool = False,
+    ensure_ascii: bool = False,
+    separators: Tuple[str, str] = (",", ":"),
+    sort_keys: bool = False,
+    indent: Optional[Union[int, str]] = None,
+) -> None:
     """
     Write JSON ``data`` to disk at ``filepath``, either all at once
     or streaming item-by-item.
 
     Args:
-        data (JSON): JSON data to write to disk, including any Python objects
+        data: JSON data to write to disk, including any Python objects
             encodable by default in :mod:`json`, as well as dates and datetimes.
             For example::
 
@@ -107,25 +119,24 @@ def write_json(
             If ``lines`` is False, all of ``data`` is written as a single object;
             if True, each item is written to a separate line in ``filepath``.
 
-        filepath (str or :class:`pathlib.Path`): Path to file on disk
-            to which data will be written.
-        mode (str): Mode with which ``filepath`` is opened.
-        encoding (str): Name of the encoding used to decode or encode the data
+        filepath: Path to file on disk to which data will be written.
+        mode: Mode with which ``filepath`` is opened.
+        encoding: Name of the encoding used to decode or encode the data
             in ``filepath``. Only applicable in text mode.
-        make_dirs (bool): If True, automatically create (sub)directories if
+        make_dirs: If True, automatically create (sub)directories if
             not already present in order to write ``filepath``.
-        lines (bool): If False, all data is written at once; otherwise, data is
-            written to disk one item at a time.
-        ensure_ascii (bool): If True, all non-ASCII characters are escaped;
+        lines: If False, all data is written at once;
+            otherwise, data is written to disk one item at a time.
+        ensure_ascii: If True, all non-ASCII characters are escaped;
             otherwise, non-ASCII characters are output as-is.
-        separators (Tuple[str, str]): An (item_separator, key_separator) pair
+        separators: An (item_separator, key_separator) pair
             specifying how items and keys are separated in output.
-        sort_keys (bool): If True, each output dictionary is sorted by key;
+        sort_keys: If True, each output dictionary is sorted by key;
             otherwise, dictionary ordering is taken as-is.
-        indent (int or str): If a non-negative integer or string, items are
-            pretty-printed with the specified indent level; if 0, negative, or "",
-            items are separated by newlines; if None, the most compact representation
-            is used when storing ``data``.
+        indent: If a non-negative integer or string, items are pretty-printed
+            with the specified indent level; if 0, negative, or "", items are separated
+            by newlines; if None, the most compact representation is used
+            when storing ``data``.
 
     See Also:
         https://docs.python.org/3/library/json.html#json.dump

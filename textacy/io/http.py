@@ -7,7 +7,9 @@ reading it into memory or writing it directly to disk.
 """
 import io
 import logging
+import pathlib
 from contextlib import closing
+from typing import Iterable, Optional, Tuple, Union
 
 import requests
 from tqdm import tqdm
@@ -19,26 +21,30 @@ LOGGER = logging.getLogger(__name__)
 
 
 def read_http_stream(
-    url, *, lines=False, decode_unicode=False, chunk_size=1024, auth=None,
-):
+    url: str,
+    *,
+    lines: bool = False,
+    decode_unicode: bool = False,
+    chunk_size: int = 1024,
+    auth: Optional[Tuple[str, str]] = None,
+) -> Union[Iterable[str], Iterable[bytes]]:
     """
     Read data from ``url`` in a stream, either all at once or line-by-line.
 
     Args:
-        url (str): URL to which a GET request is made for data.
-        lines (bool): If False, yield all of the data at once; otherwise, yield
-            data line-by-line.
-        decode_unicode (bool): If True, yield data as unicode, where the encoding
+        url: URL to which a GET request is made for data.
+        lines: If False, yield all of the data at once; otherwise, yield data line-by-line.
+        decode_unicode: If True, yield data as unicode, where the encoding
             is taken from the HTTP response headers; otherwise, yield bytes.
-        chunk_size (int): Number of bytes read into memory per chunk. Because
-            decoding may occur, this is not necessarily the length of each chunk.
-        auth (Tuple[str, str]): (username, password) pair for simple HTTP
-            authentication required (if at all) to access the data at ``url``.
+        chunk_size: Number of bytes read into memory per chunk.
+            Because decoding may occur, this is not necessarily the length of each chunk.
+        auth: (username, password) pair for simple HTTP authentication required (if at all)
+            to access the data at ``url``.
 
             .. seealso:: http://docs.python-requests.org/en/master/user/authentication/
 
     Yields:
-        str or bytes: If ``lines`` is True, the next line in the response data,
+        If ``lines`` is True, the next line in the response data,
         which is bytes if ``decode_unicode`` is False or unicode otherwise.
         If ``lines`` is False, yields the full response content, either as bytes
         or unicode.
@@ -54,37 +60,43 @@ def read_http_stream(
             else:
                 yield r.content
         else:
-            lines = r.iter_lines(chunk_size=chunk_size, decode_unicode=decode_unicode)
-            for line in lines:
+            lines_ = r.iter_lines(chunk_size=chunk_size, decode_unicode=decode_unicode)
+            for line in lines_:
                 if line:
                     yield line
 
 
 def write_http_stream(
-    url, filepath, *, mode="wt", encoding=None, make_dirs=False, chunk_size=1024, auth=None,
-):
+    url: str,
+    filepath: Union[str, pathlib.Path],
+    *,
+    mode: str = "wt",
+    encoding: Optional[str] = None,
+    make_dirs: bool = False,
+    chunk_size: int = 1024,
+    auth: Optional[Tuple[str, str]] = None,
+) -> None:
     """
     Download data from ``url`` in a stream, and write successive chunks
     to disk at ``filepath``.
 
     Args:
-        url (str): URL to which a GET request is made for data.
-        filepath (str or :class:`pathlib.Path`): Path to file on disk
-            to which data will be written.
-        mode (str): Mode with which ``filepath`` is opened.
-        encoding (str): Name of the encoding used to decode or encode the data
+        url: URL to which a GET request is made for data.
+        filepath: Path to file on disk to which data will be written.
+        mode: Mode with which ``filepath`` is opened.
+        encoding: Name of the encoding used to decode or encode the data
             in ``filepath``. Only applicable in text mode.
 
             .. note:: The encoding on the HTTP response is inferred from its
                headers, or set to 'utf-8' as a fall-back in the case that no
                encoding is detected. It is *not* set by ``encoding``.
 
-        make_dirs (bool): If True, automatically create (sub)directories if
+        make_dirs: If True, automatically create (sub)directories if
             not already present in order to write ``filepath``.
-        chunk_size (int): Number of bytes read into memory per chunk. Because
-            decoding may occur, this is not necessarily the length of each chunk.
-        auth (Tuple[str, str]): (username, password) pair for simple HTTP
-            authentication required (if at all) to access the data at ``url``.
+        chunk_size: Number of bytes read into memory per chunk.
+            Because decoding may occur, this is not necessarily the length of each chunk.
+        auth: (username, password) pair for simple HTTP authentication required (if at all)
+            to access the data at ``url``.
 
             .. seealso:: http://docs.python-requests.org/en/master/user/authentication/
     """

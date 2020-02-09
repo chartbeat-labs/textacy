@@ -5,7 +5,9 @@ spaCy
 Functions for reading from and writing to disk spacy documents in either
 pickle or binary format. Be warned: Both formats have pros and cons.
 """
+import pathlib
 import pickle
+from typing import Iterable, Optional, Sequence, Union
 
 from srsly import msgpack
 from spacy.language import Language
@@ -15,14 +17,18 @@ from .. import spacier, utils
 from . import utils as io_utils
 
 
-def read_spacy_docs(filepath, *, format="pickle", lang=None):
+def read_spacy_docs(
+    filepath: Union[str, pathlib.Path],
+    *,
+    format: str = "pickle",
+    lang: Optional[Union[str, Language]] = None,
+) -> Iterable[Doc]:
     """
     Read the contents of a file at ``filepath``, written either in pickle or binary
     format.
 
     Args:
-        filepath (str or :class:`pathlib.Path`): Path to file on disk
-            from which data will be read.
+        filepath: Path to file on disk from which data will be read.
         format ({"pickle", "binary"}): Format of the data that was written to disk.
             If 'pickle', use ``pickle`` in python's stdlib; if 'binary', use
             the 3rd-party ``msgpack`` library.
@@ -39,13 +45,12 @@ def read_spacy_docs(filepath, *, format="pickle", lang=None):
                read from the same file. If spaCy changes, this code could break,
                so use this functionality at your own risk!
 
-        lang (str or ``spacy.Language``): Already-instantiated ``spacy.Language``
-            object, or the string name by which it can be loaded, used to process
-            the docs written to disk at ``filepath``. Note that this is only applicable
-            when ``format="binary"``.
+        lang: Already-instantiated ``spacy.Language`` object, or the string name
+            by which it can be loaded, used to process the docs written to disk
+            at ``filepath``. Note that this is only applicable when ``format="binary"``.
 
     Yields:
-        :class:`spacy.tokens.Doc`: Next deserialized document.
+        Next deserialized document.
 
     Raises:
         ValueError: if format is not "pickle" or "binary", or if ``lang`` is not
@@ -125,25 +130,22 @@ def read_spacy_docs(filepath, *, format="pickle", lang=None):
 
 
 def write_spacy_docs(
-    data,
-    filepath,
+    data: Union[Doc, Iterable[Doc]],
+    filepath: Union[str, pathlib.Path],
     *,
-    make_dirs=False,
-    format="pickle",
-    exclude=("tensor",),
-    include_tensor=None,
-):
+    make_dirs: bool = False,
+    format: str = "pickle",
+    exclude: Sequence[str] = ("tensor",),
+    include_tensor: Optional[bool] = None,
+) -> None:
     """
-    Write one or more ``Doc`` s to disk at ``filepath`` in either pickle or
-    binary format.
+    Write one or more ``Doc`` s to disk at ``filepath`` in either pickle or binary format.
 
     Args:
-        data (:class:`spacy.tokens.Doc` or Iterable[:class:`spacy.tokens.Doc`]):
-            A single ``Doc`` or a sequence of ``Doc`` s to write to disk.
-        filepath (str or :class:`pathlib.Path`): Path to file on disk
-            to which data will be written.
-        make_dirs (bool): If True, automatically create (sub)directories if
-            not already present in order to write ``filepath``.
+        data: A single ``Doc`` or a sequence of ``Doc`` s to write to disk.
+        filepath: Path to file on disk to which data will be written.
+        make_dirs: If True, automatically create (sub)directories
+            if not already present in order to write ``filepath``.
         format ({"pickle", "binary"}): Format of the data written to disk.
             If "pickle", use python's stdlib ``pickle``; if "binary", use
             the 3rd-party ``msgpack`` library.

@@ -5,6 +5,9 @@ Matrix
 Functions for reading from and writing to disk CSC and CSR sparse matrices
 in numpy binary format.
 """
+import pathlib
+from typing import Union
+
 import numpy as np
 import scipy.sparse as sp
 
@@ -12,19 +15,21 @@ from .. import utils
 from . import utils as io_utils
 
 
-def read_sparse_matrix(filepath, *, kind="csc"):
+def read_sparse_matrix(
+    filepath: Union[str, pathlib.Path],
+    *,
+    kind: str = "csc",
+) -> Union[sp.csc_matrix, sp.csr_matrix]:
     """
     Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
     at ``filepath``, and return an instantiated sparse matrix.
 
     Args:
-        filepath (str or :class:`pathlib.Path`): Path to file on disk
-            from which data will be read.
+        filepath: Path to file on disk from which data will be read.
         kind ({'csc', 'csr'}): Kind of sparse matrix to instantiate.
 
     Returns:
-        :class:`scipy.sparse.csc_matrix` or :class:`scipy.sparse.csr_matrix`:
-        An instantiated sparse matrix, depending on the value of ``kind``.
+        An instantiated sparse matrix, whose type depends on the value of ``kind``.
 
     See Also:
         https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.io.html#numpy-binary-files-npy-npz
@@ -46,20 +51,24 @@ def read_sparse_matrix(filepath, *, kind="csc"):
         )
 
 
-def write_sparse_matrix(data, filepath, *, compressed=True, make_dirs=False):
+def write_sparse_matrix(
+    data: Union[sp.csc_matrix, sp.csr_matrix],
+    filepath: Union[str, pathlib.Path],
+    *,
+    compressed: bool = True,
+    make_dirs: bool = False,
+) -> None:
     """
     Write sparse matrix ``data`` to disk at ``filepath``, optionally compressed,
     into a single ``.npz`` file.
 
     Args:
-        data (:class:`scipy.sparse.csc_matrix` or :class:`scipy.sparse.csr_matrix`)
-        filepath (str or :class:`pathlib.Path`): Path to file on disk
-            to which data will be written. If ``filepath`` does not end in ``.npz``,
-            that extension is automatically appended to the name.
-        compressed (bool): If True, save arrays into a single file in compressed
-            numpy binary format.
-        make_dirs (bool): If True, automatically create (sub)directories if
-            not already present in order to write ``filepath``.
+        data
+        filepath: Path to file on disk to which data will be written. If ``filepath``
+            does not end in ``.npz``, that extension is automatically appended to the name.
+        compressed: If True, save arrays into a single file in compressed numpy binary format.
+        make_dirs: If True, automatically create (sub)directories
+            if not already present in order to write ``filepath``.
 
     See Also:
         https://docs.scipy.org/doc/numpy-1.13.0/reference/routines.io.html#numpy-binary-files-npy-npz

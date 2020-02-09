@@ -7,40 +7,40 @@ CSVs may be delimited not only by commas (the default) but tabs, pipes, and
 other valid one-char delimiters.
 """
 import csv
+import pathlib
+from typing import Any, Dict, Iterable, Iterator, Optional, Sequence, Type, Union
 
 from . import utils as io_utils
 
 
 def read_csv(
-    filepath,
+    filepath: Union[str, pathlib.Path],
     *,
-    encoding=None,
-    fieldnames=None,
-    dialect="excel",
-    delimiter=",",
-    quoting=csv.QUOTE_NONNUMERIC,
-):
+    encoding: Optional[str] = None,
+    fieldnames: Optional[Union[str, Sequence[str]]] = None,
+    dialect: Union[str, Type[csv.Dialect]] = "excel",
+    delimiter: str = ",",
+    quoting: int = csv.QUOTE_NONNUMERIC,
+) -> Iterable[Union[list, dict]]:
     """
     Read the contents of a CSV file at ``filepath``, streaming line-by-line,
     where each line is a list of strings and/or floats whose values
     are separated by ``delimiter``.
 
     Args:
-        filepath (str or :class:`pathlib.Path`): Path to file on disk
-            from which data will be read.
-        encoding (str): Name of the encoding used to decode or encode the data
-            in ``filepath``.
-        fieldnames (List[str] or 'infer'): If specified, gives names for columns
-            of values, which are used as keys in an ordered dictionary representation
+        filepath: Path to file on disk from which data will be read.
+        encoding: Name of the encoding used to decode or encode the data in ``filepath``.
+        fieldnames: If specified, gives names for columns of values,
+            which are used as keys in an ordered dictionary representation
             of each line's data. If 'infer', the first kB of data is analyzed
             to make a guess about whether the first row is a header of column
             names, and if so, those names are used as keys. If None, no column
             names are used, and each line is returned as a list of strings/floats.
-        dialect (str): Grouping of formatting parameters that determine how
+        dialect: Grouping of formatting parameters that determine how
             the data is parsed when reading/writing. If 'infer', the first kB
             of data is analyzed to get a best guess for the correct dialect.
-        delimiter (str): 1-character string used to separate fields in a row.
-        quoting (int): Type of quoting to apply to field values. See:
+        delimiter: 1-character string used to separate fields in a row.
+        quoting: Type of quoting to apply to field values. See:
             https://docs.python.org/3/library/csv.html#csv.QUOTE_NONNUMERIC
 
     Yields:
@@ -70,6 +70,7 @@ def read_csv(
             if fieldnames == "infer":
                 has_header = sniffer.has_header(sample)
             f.seek(0)
+        csv_reader: Union[csv.DictReader, Iterator]
         if has_header is True:
             csv_reader = csv.DictReader(
                 f,
@@ -103,25 +104,24 @@ def read_csv(
 
 
 def write_csv(
-    data,
-    filepath,
+    data: Union[Iterable[Dict[str, Any]], Iterable[Iterable]],
+    filepath: Union[str, pathlib.Path],
     *,
-    encoding=None,
-    make_dirs=False,
-    fieldnames=None,
-    dialect="excel",
-    delimiter=",",
-    quoting=csv.QUOTE_NONNUMERIC,
-):
+    encoding: Optional[str] = None,
+    make_dirs: bool = False,
+    fieldnames: Optional[Sequence[str]] = None,
+    dialect: str = "excel",
+    delimiter: str = ",",
+    quoting: int = csv.QUOTE_NONNUMERIC,
+) -> None:
     """
     Write rows of ``data`` to disk at ``filepath``, where each row is an iterable
     or a dictionary of strings and/or numbers, written to one line with values
     separated by ``delimiter``.
 
     Args:
-        data (Iterable[Iterable] or Iterable[dict]): If ``fieldnames`` is None,
-            an iterable of iterables of strings and/or numbers to write to disk;
-            for example::
+        data: If ``fieldnames`` is None, an iterable of iterables of strings
+            and/or numbers to write to disk; for example::
 
                 [['That was a great movie!', 0.9],
                  ['The movie was okay, I guess.', 0.2],
@@ -134,22 +134,20 @@ def write_csv(
                  {'text': 'The movie was okay, I guess.', 'score': 0.2},
                  {'text': 'Worst. Movie. Ever.', 'score': -1.0}]
 
-        filepath (str or :class:`pathlib.Path`): Path to file on disk
-            to which data will be written.
-        encoding (str): Name of the encoding used to decode or encode the data
-            in ``filepath``.
-        make_dirs (bool): If True, automatically create (sub)directories if
-            not already present in order to write ``filepath``.
-        fieldnames (List[str]): Sequence of keys that identify the order in which
+        filepath: Path to file on disk to which data will be written.
+        encoding: Name of the encoding used to decode or encode the data in ``filepath``.
+        make_dirs: If True, automatically create (sub)directories if not already present
+            in order to write ``filepath``.
+        fieldnames: Sequence of keys that identify the order in which
             values in each rows' dictionary is written to ``filepath``. These are
             included in ``filepath`` as a header row of column names.
 
             .. note:: Only specify this if ``data`` is an iterable of dictionaries.
 
-        dialect (str): Grouping of formatting parameters that determine how
+        dialect: Grouping of formatting parameters that determine how
             the data is parsed when reading/writing.
-        delimiter (str): 1-character string used to separate fields in a row.
-        quoting (int): Type of quoting to apply to field values. See:
+        delimiter: 1-character string used to separate fields in a row.
+        quoting: Type of quoting to apply to field values. See:
             https://docs.python.org/3/library/csv.html#csv.QUOTE_NONNUMERIC
 
     See Also:
@@ -158,6 +156,7 @@ def write_csv(
     with io_utils.open_sesame(
         filepath, mode="wt", newline="", encoding=encoding, make_dirs=make_dirs
     ) as f:
+        csv_writer: Union[csv.DictWriter, Any]
         if fieldnames:
             csv_writer = csv.DictWriter(
                 f,
