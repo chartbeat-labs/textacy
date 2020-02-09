@@ -8,13 +8,13 @@ as well as some unlabeled reviews.
 
 Records include the following key fields (plus a few others):
 
-    * ``text``: Full text of the review.
-    * ``subset``: Subset of the dataset ("train" or "test") into which
+    - ``text``: Full text of the review.
+    - ``subset``: Subset of the dataset ("train" or "test") into which
       the review has been split.
-    * ``label``: Sentiment label ("pos" or "neg") assigned to the review.
-    * ``rating``: Numeric rating assigned by the original reviewer, ranging from
+    - ``label``: Sentiment label ("pos" or "neg") assigned to the review.
+    - ``rating``: Numeric rating assigned by the original reviewer, ranging from
       1 to 10. Reviews with a rating <= 5 are "neg"; the rest are "pos".
-    * ``movie_id``: Unique identifier for the movie under review within IMDB,
+    - ``movie_id``: Unique identifier for the movie under review within IMDB,
       useful for grouping reviews or joining with an external movie dataset.
 
 Reference: Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan Huang, Andrew Y. Ng,
@@ -26,6 +26,7 @@ import itertools
 import logging
 import os
 import re
+from typing import Any, Dict, Iterable, Optional, Tuple, Union
 
 from .. import constants, utils
 from .. import io as tio
@@ -84,17 +85,19 @@ class IMDB(Dataset):
         Corpus(100 docs; 24340 tokens)
 
     Args:
-        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
-            under which the data is stored, i.e. ``/path/to/data_dir/imdb``.
+        data_dir: Path to directory on disk under which the data is stored,
+            i.e. ``/path/to/data_dir/imdb``.
 
     Attributes:
-        full_rating_range (Tuple[int]): Lowest and highest ratings for which
-            movie reviews are available.
+        full_rating_range: Lowest and highest ratings for which movie reviews are available.
     """
 
-    full_rating_range = (1, 10)
+    full_rating_range: Tuple[int, int] = (1, 10)
 
-    def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
+    def __init__(
+        self,
+        data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME),
+    ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._movie_ids = {"train": {}, "test": {}}
@@ -105,14 +108,14 @@ class IMDB(Dataset):
         self._subset = None
         self._label = None
 
-    def download(self, *, force=False):
+    def download(self, *, force: bool = False) -> None:
         """
         Download the data as a compressed tar archive file, then save it to disk and
         extract its contents under the ``data_dir`` directory.
 
         Args:
-            force (bool): If True, always download the dataset even if
-                it already exists.
+            force: If True, always download the dataset even if it already exists
+                on disk under ``data_dir``.
         """
         filepath = tio.download_file(
             DOWNLOAD_URL,
@@ -160,7 +163,7 @@ class IMDB(Dataset):
             for filepath in tio.get_filepaths(dirpath, match_regex=r"^\d+_\d+\.txt$"):
                 yield self._load_record(filepath)
 
-    def _load_record(self, filepath):
+    def _load_record(self, filepath: str) -> Dict[str, Any]:
         dirpath, filename = os.path.split(filepath)
         dirpath, label = os.path.split(dirpath)
         _, subset = os.path.split(dirpath)
@@ -215,29 +218,33 @@ class IMDB(Dataset):
                 yield record
 
     def texts(
-        self, *, subset=None, label=None, rating_range=None, min_len=None, limit=None
-    ):
+        self,
+        *,
+        subset: Optional[str] = None,
+        label: Optional[str] = None,
+        rating_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
+        min_len: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Iterable[str]:
         """
         Iterate over movie reviews in this dataset, optionally filtering by
         a variety of metadata and/or text length, and yield texts only.
 
         Args:
-            subset (str, {"train", "test"}): Filter movie reviews by
-                the dataset subset into which they've already been split.
-            label (str, {"pos", "neg", "unsup"}): Filter movie reviews by
-                the assigned sentiment label (or lack thereof, for "unsup").
-            rating_range (Tuple[int, int]): Filter movie reviews by the rating assigned
-                by the reviewer. Only those with ratings in the interval [low, high)
-                are included. Both low and high values must be specified, but a null value
+            subset ({"train", "test"}): Filter movie reviews
+                by the dataset subset into which they've already been split.
+            label ({"pos", "neg", "unsup"}): Filter movie reviews
+                by the assigned sentiment label (or lack thereof, for "unsup").
+            rating_range: Filter movie reviews by the rating assigned by the reviewer.
+                Only those with ratings in the interval [low, high) are included.
+                Both low and high values must be specified, but a null value
                 for either is automatically replaced by the minimum or maximum
                 valid values, respectively.
-            min_len (int): Filter movie reviews by the length (number of characters)
-                of their text content.
-            limit (int): Yield no more than ``limit`` movie reviews that match all
-                specified filters.
+            min_len: Filter reviews by the length (# characters) of their text content.
+            limit: Yield no more than ``limit`` reviews that match all specified filters.
 
         Yields:
-            str: Text of the next movie review in dataset passing all filters.
+            Text of the next movie review in dataset passing all filters.
 
         Raises:
             ValueError: If any filtering options are invalid.
@@ -253,30 +260,34 @@ class IMDB(Dataset):
             self._label = None
 
     def records(
-        self, *, subset=None, label=None, rating_range=None, min_len=None, limit=None
-    ):
+        self,
+        *,
+        subset: Optional[str] = None,
+        label: Optional[str] = None,
+        rating_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
+        min_len: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Iterable[Tuple[str, dict]]:
         """
         Iterate over movie reviews in this dataset, optionally filtering by
         a variety of metadata and/or text length, and yield text + metadata pairs.
 
         Args:
-            subset (str, {"train", "test"}): Filter movie reviews by
-                the dataset subset into which they've already been split.
-            label (str, {"pos", "neg", "unsup"}): Filter movie reviews by
-                the assigned sentiment label (or lack thereof, for "unsup").
-            rating_range (Tuple[int, int]): Filter movie reviews by the rating assigned
-                by the reviewer. Only those with ratings in the interval [low, high)
-                are included. Both low and high values must be specified, but a null value
+            subset ({"train", "test"}): Filter movie reviews
+                by the dataset subset into which they've already been split.
+            label ({"pos", "neg", "unsup"}): Filter movie reviews
+                by the assigned sentiment label (or lack thereof, for "unsup").
+            rating_range: Filter movie reviews by the rating assigned by the reviewer.
+                Only those with ratings in the interval [low, high) are included.
+                Both low and high values must be specified, but a null value
                 for either is automatically replaced by the minimum or maximum
                 valid values, respectively.
-            min_len (int): Filter movie reviews by the length (number of characters)
-                of their text content.
-            limit (int): Yield no more than ``limit`` movie reviews that match all
-                specified filters.
+            min_len: Filter reviews by the length (# characters) of their text content.
+            limit: Yield no more than ``limit`` reviews that match all specified filters.
 
         Yields:
-            str: Text of the next movie review in dataset passing all filters.
-            dict: Metadata of the next movie review in dataset passing all filters.
+            Text of the next movie review in dataset passing all filters,
+            and its corresponding metadata.
 
         Raises:
             ValueError: If any filtering options are invalid.

@@ -7,12 +7,12 @@ containing primarily English-language 16th-20th century literature and history.
 
 Records include the following data:
 
-    * ``text``: Full text of the literary work.
-    * ``title``: Title of the literary work.
-    * ``author``: Author(s) of the literary work.
-    * ``year``: Year that the literary work was published.
-    * ``url``: URL at which literary work can be found online via the OTA.
-    * ``id``: Unique identifier of the literary work within the OTA.
+    - ``text``: Full text of the literary work.
+    - ``title``: Title of the literary work.
+    - ``author``: Author(s) of the literary work.
+    - ``year``: Year that the literary work was published.
+    - ``url``: URL at which literary work can be found online via the OTA.
+    - ``id``: Unique identifier of the literary work within the OTA.
 
 This dataset was compiled by David Mimno from the Oxford Text Archive and
 stored in his GitHub repo to avoid unnecessary scraping of the OTA site. It is
@@ -23,8 +23,10 @@ import csv
 import io
 import itertools
 import logging
+import pathlib
 import os
 import re
+from typing import Iterable, Optional, Set, Tuple, Union
 
 from .. import constants, utils
 from .. import io as tio
@@ -86,29 +88,32 @@ class OxfordTextArchive(Dataset):
             under which dataset is stored, i.e. ``/path/to/data_dir/oxford_text_archive``.
 
     Attributes:
-        full_date_range (Tuple[str]): First and last dates for which works
-            are available, each as an ISO-formatted string (YYYY-MM-DD).
+        full_date_range: First and last dates for which works are available,
+            each as an ISO-formatted string (YYYY-MM-DD).
         authors (Set[str]): Full names of all distinct authors included in this
             dataset, e.g. "Shakespeare, William".
     """
 
-    full_date_range = ("0018-01-01", "1990-01-01")
+    full_date_range: Tuple[str, str] = ("0018-01-01", "1990-01-01")
 
-    def __init__(self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME)):
+    def __init__(
+        self,
+        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+    ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._text_dirpath = self.data_dir.joinpath("master", "text")
         self._metadata_filepath = self.data_dir.joinpath("master", "metadata.tsv")
         self._metadata = None
 
-    def download(self, *, force=False):
+    def download(self, *, force: bool = False) -> None:
         """
         Download the data as a zip archive file, then save it to disk and
         extract its contents under the :attr:`OxfordTextArchive.data_dir` directory.
 
         Args:
-            force (bool): If True, always download the dataset even if
-                it already exists.
+            force: If True, download the dataset, even if it already exists
+                on disk under ``data_dir``.
         """
         filepath = tio.download_file(
             DOWNLOAD_URL,
@@ -121,9 +126,7 @@ class OxfordTextArchive(Dataset):
 
     @property
     def metadata(self):
-        """
-        Dict[str, dict]
-        """
+        """Dict[str, dict]"""
         if not self._metadata:
             try:
                 self._metadata = self._load_and_parse_metadata()
@@ -231,25 +234,29 @@ class OxfordTextArchive(Dataset):
             for record in self:
                 yield record
 
-    def texts(self, *, author=None, date_range=None, min_len=None, limit=None):
+    def texts(
+        self,
+        *,
+        author: Optional[Union[str, Set[str]]] = None,
+        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        min_len: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Iterable[str]:
         """
         Iterate over works in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield texts only.
 
         Args:
-            author (str or Set[str]): Filter texts by the authors' name.
-                For multiple values (Set[str]), ANY rather than ALL of the authors
-                must be found among a given works's authors.
-            date_range (List[str] or Tuple[str]): Filter texts by the date on
-                which it was published; both start and end date must be specified,
-                but a null value for either will be replaced by the min/max date
-                available in the dataset.
-            min_len (int): Filter texts by the length (number of characters)
-                of their text content.
-            limit (int): Return no more than ``limit`` texts.
+            author: Filter texts by the authors' name. For multiple values (Set[str]),
+                ANY rather than ALL of the authors must be found among a given works's authors.
+            date_range: Filter texts by the date on which it was published;
+                both start and end date must be specified, but a null value for either
+                will be replaced by the min/max date available in the dataset.
+            min_len: Filter texts by the length (# characters) of their text content.
+            limit: Yield no more than ``limit`` texts that match all specified filters.
 
         Yields:
-            str: Text of the next work in dataset passing all filters.
+            Text of the next work in dataset passing all filters.
 
         Raises:
             ValueError: If any filtering options are invalid.
@@ -258,25 +265,30 @@ class OxfordTextArchive(Dataset):
         for record in itertools.islice(self._filtered_iter(filters), limit):
             yield record["text"]
 
-    def records(self, *, author=None, date_range=None, min_len=None, limit=None):
+    def records(
+        self,
+        *,
+        author: Optional[Union[str, Set[str]]] = None,
+        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        min_len: Optional[int] = None,
+        limit: Optional[int] = None,
+    ) -> Iterable[Tuple[str, dict]]:
         """
         Iterate over works in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield text + metadata pairs.
 
         Args:
-            author (str or Set[str]): Filter records by the authors' name;
-                see :attr:`OxfordTextArchive.authors`.
-            date_range (List[str] or Tuple[str]): Filter records by the date on
-                which it was published; both start and end date must be specified,
-                but a null value for either will be replaced by the min/max date
-                available in the dataset.
-            min_len (int): Filter records by the length (number of characters)
-                of their text content.
-            limit (int): Yield no more than ``limit`` records.
+            author: Filter texts by the authors' name. For multiple values (Set[str]),
+                ANY rather than ALL of the authors must be found among a given works's authors.
+            date_range: Filter texts by the date on which it was published;
+                both start and end date must be specified, but a null value for either
+                will be replaced by the min/max date available in the dataset.
+            min_len: Filter texts by the length (# characters) of their text content.
+            limit: Yield no more than ``limit`` texts that match all specified filters.
 
         Yields:
-            str: Text of the next work in dataset passing all filters.
-            dict: Metadata of the next work in dataset passing all filters.
+            Text of the next work in dataset passing all filters,
+            and its corresponding metadata.
 
         Raises:
             ValueError: If any filtering options are invalid.
