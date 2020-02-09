@@ -6,9 +6,11 @@ import itertools
 import math
 import operator
 from decimal import Decimal
+from typing import cast, Callable, Collection, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
 from cytoolz import itertoolz
+from spacy.tokens import Doc, Span, Token
 
 from .. import extract
 from .. import similarity
@@ -16,17 +18,20 @@ from .. import utils
 from .. import vsm
 
 
-def normalize_terms(terms, normalize):
+def normalize_terms(
+    terms: Union[Iterable[Span], Iterable[Token]],
+    normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]],
+) -> Iterable[str]:
     """
     Transform a sequence of terms from spaCy ``Token`` or ``Span`` s into
     strings, normalized by ``normalize``.
 
     Args:
-        terms (Sequence[:class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`])
-        normalize (str or Callable): If "lemma", lemmatize terms; if "lower",
-            lowercase terms; if falsy, use the form of terms as they appear
-            in ``terms``; if a callable, must accept a ``Token`` or ``Span``
-            and return a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
+        terms
+        normalize: If "lemma", lemmatize terms; if "lower", lowercase terms;
+            if None, use the form of terms as they appear in ``terms``;
+            if a callable, must accept a ``Token`` or ``Span`` and return a str,
+            e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
 
     Yields:
         str
@@ -48,21 +53,26 @@ def normalize_terms(terms, normalize):
         yield term
 
 
-def aggregate_term_variants(terms, *, acro_defs=None, fuzzy_dedupe=True):
+def aggregate_term_variants(
+    terms: Set[str],
+    *,
+    acro_defs: Optional[Dict[str, str]] = None,
+    fuzzy_dedupe: bool = True,
+) -> List[Set[str]]:
     """
     Take a set of unique terms and aggregate terms that are symbolic, lexical,
     and ordering variants of each other, as well as acronyms and fuzzy string matches.
 
     Args:
-        terms (Set[str]): set of unique terms with potential duplicates
-        acro_defs (dict): if not None, terms that are acronyms will be
-            aggregated with their definitions and terms that are definitions will
-            be aggregated with their acronyms
-        fuzzy_dedupe (bool): if True, fuzzy string matching will be used
+        terms: Set of unique terms with potential duplicates
+        acro_defs: If not None, terms that are acronyms will be aggregated
+            with their definitions and terms that are definitions will be aggregated
+            with their acronyms
+        fuzzy_dedupe: If True, fuzzy string matching will be used
             to aggregate similar terms of a sufficient length
 
     Returns:
-        List[Set[str]]: each item is a set of aggregated terms
+        Each item is a set of aggregated terms.
 
     Notes:
         Partly inspired by aggregation of variants discussed in
@@ -72,7 +82,7 @@ def aggregate_term_variants(terms, *, acro_defs=None, fuzzy_dedupe=True):
         Association for Computational Linguistics, 2002.
     """
     agg_terms = []
-    seen_terms = set()
+    seen_terms: Set[str] = set()
     for term in sorted(terms, key=len, reverse=True):
         if term in seen_terms:
             continue
@@ -156,46 +166,52 @@ def aggregate_term_variants(terms, *, acro_defs=None, fuzzy_dedupe=True):
     return agg_terms
 
 
-def get_longest_subsequence_candidates(doc, match_func):
+def get_longest_subsequence_candidates(
+    doc: Doc,
+    match_func: Callable[[Token], bool],
+) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are longest consecutive
     subsequences of tokens for which all ``match_func(token)`` is True.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`)
-        match_func (callable): Function applied sequentially to each ``Token``
-            in ``doc`` that returns True for matching ("good") tokens, False otherwise.
+        doc
+        match_func: Function applied sequentially to each ``Token`` in ``doc``
+            that returns True for matching ("good") tokens, False otherwise.
 
     Yields:
-        Tuple[:class:`spacy.tokens.Token`]: Next longest consecutive subsequence candidate,
-        as a tuple of constituent tokens.
+        Next longest consecutive subsequence candidate, as a tuple of constituent tokens.
     """
     for key, words_grp in itertools.groupby(doc, key=match_func):
         if key is True:
             yield tuple(words_grp)
 
 
-def get_ngram_candidates(doc, ns, *, include_pos=("NOUN", "PROPN", "ADJ")):
+def get_ngram_candidates(
+    doc: Doc,
+    ns: Union[int, Collection[int]],
+    *,
+    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are n-length sequences
     of tokens (for all n in ``ns``) that don't start/end with a stop word or
     contain punctuation tokens, and whose constituent tokens are filtered by POS tag.
 
     Args:
-        doc (:class:`spacy.tokens.Doc`)
-        ns (int or Tuple[int]): One or more n values for which to generate n-grams.
-            For example, ``2`` gets bigrams; ``(2, 3)`` gets bigrams and trigrams.
-        include_pos (str or Set[str]): One or more POS tags with which to filter ngrams.
+        doc
+        ns: One or more n values for which to generate n-grams. For example,
+            ``2`` gets bigrams; ``(2, 3)`` gets bigrams and trigrams.
+        include_pos: One or more POS tags with which to filter ngrams.
             If None, include tokens of all POS tags.
 
     Yields:
-        Tuple[:class:`spacy.tokens.Token`]: Next ngram candidate,
-        as a tuple of constituent Tokens.
+        Next ngram candidate, as a tuple of constituent Tokens.
 
     See Also:
         :func:`textacy.extract.ngrams()`
     """
-    ns = utils.to_collection(ns, int, tuple)
+    ns = cast(Tuple[int, ...], utils.to_collection(ns, int, tuple))
     include_pos = utils.to_collection(include_pos, str, set)
     ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns)
     ngrams = (
@@ -214,16 +230,18 @@ def get_ngram_candidates(doc, ns, *, include_pos=("NOUN", "PROPN", "ADJ")):
         yield ngram
 
 
-def get_pattern_matching_candidates(doc, patterns):
+def get_pattern_matching_candidates(
+    doc: Doc,
+    patterns: Union[str, List[str], List[dict], List[List[dict]]],
+) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are sequences of tokens
     that match any pattern in ``patterns``
 
     Args:
-        doc (:class:`spacy.tokens.Doc`)
-        patterns (str or List[str] or List[dict] or List[List[dict]]):
-            One or multiple patterns to match against ``doc``
-            using a :class:`spacy.matcher.Matcher`.
+        doc
+        patterns: One or multiple patterns to match against ``doc`` using
+            a :class:`spacy.matcher.Matcher`.
 
     Yields:
         Tuple[:class:`spacy.tokens.Token`]: Next pattern-matching candidate,
@@ -236,26 +254,28 @@ def get_pattern_matching_candidates(doc, patterns):
         yield tuple(match)
 
 
-def get_filtered_topn_terms(term_scores, topn, *, match_threshold=None):
+def get_filtered_topn_terms(
+    term_scores: Iterable[Tuple[str, float]],
+    topn: int,
+    *,
+    match_threshold: Optional[float] = None,
+) -> List[Tuple[str, float]]:
     """
     Build up a list of the ``topn`` terms, filtering out any that are substrings
     of better-scoring terms and optionally filtering out any that are sufficiently
     similar to better-scoring terms.
 
     Args:
-        term_scores (List[Tuple[str, float]]): List of (term, score) pairs,
-            sorted in order from best score to worst. Note that this may be
-            from high to low value or low to high, depending on the algorithm.
-        topn (int): Maximum number of top-scoring terms to get.
-        match_threshold (float): Minimal edit distance between a term and previously
-            seen terms, used to filter out terms that are sufficiently similar
+        term_scores: Iterable of (term, score) pairs, sorted in order of score
+            from best to worst. Note that this may be from high to low value or low to high,
+            depending on the scoring algorithm.
+        topn: Maximum number of top-scoring terms to get.
+        match_threshold: Minimal edit distance between a term and previously seen terms,
+            used to filter out terms that are sufficiently similar
             to higher-scoring terms. Uses :func:`textacy.similarity.token_sort_ratio()`.
-
-    Returns:
-        List[Tuple[str, float]]
     """
     topn_terms = []
-    seen_terms = set()
+    seen_terms: Set[str] = set()
     sim_func = similarity.token_sort_ratio
     for term, score in term_scores:
         # skip terms that are substrings of any higher-scoring term
@@ -275,28 +295,32 @@ def get_filtered_topn_terms(term_scores, topn, *, match_threshold=None):
 
 
 def most_discriminating_terms(
-    terms_lists, bool_array_grp1, *, max_n_terms=1000, top_n_terms=25
-):
+    terms_lists: Iterable[Iterable[str]],
+    bool_array_grp1: Iterable[bool],
+    *,
+    max_n_terms: int = 1000,
+    top_n_terms: Union[int, float] = 25,
+) -> Tuple[List[str], List[str]]:
     """
     Given a collection of documents assigned to 1 of 2 exclusive groups, get the
     ``top_n_terms`` most discriminating terms for group1-and-not-group2 and
     group2-and-not-group1.
 
     Args:
-        terms_lists (Iterable[Iterable[str]]): Sequence of documents, each as a
-            sequence of (str) terms; used as input to :func:`doc_term_matrix()`
-        bool_array_grp1 (Iterable[bool]): Ordered sequence of True/False values,
+        terms_lists: Sequence of documents, each as a sequence of (str) terms;
+            used as input to :func:`doc_term_matrix()`
+        bool_array_grp1: Ordered sequence of True/False values,
             where True corresponds to documents falling into "group 1" and False
             corresponds to those in "group 2".
-        max_n_terms (int): Only consider terms whose document frequency is within
+        max_n_terms: Only consider terms whose document frequency is within
             the top ``max_n_terms`` out of all distinct terms; must be > 0.
-        top_n_terms (int or float): If int (must be > 0), the total number of most
-            discriminating terms to return for each group; if float (must be in
-            the interval (0, 1)), the fraction of ``max_n_terms`` to return for each group.
+        top_n_terms: If int (must be > 0), the total number of most discriminating terms
+            to return for each group; if float (must be in the interval (0, 1)),
+            the fraction of ``max_n_terms`` to return for each group.
 
     Returns:
-        List[str]: Top ``top_n_terms`` most discriminating terms for grp1-not-grp2
-        List[str]: Top ``top_n_terms`` most discriminating terms for grp2-not-grp1
+        List of the top ``top_n_terms`` most discriminating terms for grp1-not-grp2, and
+        list of the top ``top_n_terms`` most discriminating terms for grp2-not-grp1.
 
     References:
         King, Gary, Patrick Lam, and Margaret Roberts. "Computer-Assisted Keyword
@@ -306,7 +330,7 @@ def most_discriminating_terms(
     alpha_grp1 = 1
     alpha_grp2 = 1
     if isinstance(top_n_terms, float):
-        top_n_terms = top_n_terms * max_n_terms
+        top_n_terms = int(round(top_n_terms * max_n_terms))
     bool_array_grp1 = np.array(bool_array_grp1)
     bool_array_grp2 = np.invert(bool_array_grp1)
 

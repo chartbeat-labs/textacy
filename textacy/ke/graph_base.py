@@ -2,6 +2,7 @@ import collections
 import itertools
 import logging
 import operator
+from typing import Any, Callable, DefaultDict, Dict, List, Optional, Sequence, Tuple, Union
 
 import networkx as nx
 import numpy as np
@@ -14,24 +15,28 @@ LOGGER = logging.getLogger(__name__)
 
 
 def build_graph_from_terms(
-    terms, *, normalize="lemma", window_size=10, edge_weighting="count"
-):
+    terms: Union[Sequence[str], Sequence[Token], Sequence[Span]],
+    *,
+    normalize: Optional[Union[str, Callable[[Token], str]]] = "lemma",
+    window_size: int = 10,
+    edge_weighting: str = "count",
+) -> nx.Graph:
     """
     Transform an ordered list of non-overlapping terms into a graph,
     where each term is represented by a node with weighted edges linking it to
     other terms that co-occur within ``window_size`` terms of itself.
 
     Args:
-        terms (List[str] or List[:class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`])
-        normalize (str or Callable): If "lemma", lemmatize terms; if "lower",
-            lowercase terms; if falsy, use the form of terms as they appear
-            in ``terms``; if a callable, must accept a ``Token`` and return
-            a str, e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
+        terms
+        normalize: If "lemma", lemmatize terms; if "lower", lowercase terms;
+            if falsy, use the form of terms as they appear in ``terms``;
+            if a callable, must accept a ``Token`` and return a str,
+            e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
 
             .. note:: This is applied to the elements of ``terms`` *only* if
                it's a list of ``Token`` or ``Span``.
 
-        window_size (int): Size of sliding window over ``terms`` that determines
+        window_size: Size of sliding window over ``terms`` that determines
             which are said to co-occur. If 2, only immediately adjacent terms
             have edges in the returned network.
         edge_weighting ({"count", "binary"}): If "count", the nodes for
@@ -40,7 +45,7 @@ def build_graph_from_terms(
             if "binary", all such edges have weight = 1.
 
     Returns:
-        :class:`networkx.Graph`: Nodes in this network correspond to individual terms;
+        Networkx Graph whose nodes correspond to individual terms;
         those that co-occur are connected by edges with weights determined
         by ``edge_weighting``.
     """
@@ -100,13 +105,17 @@ def build_graph_from_terms(
     return graph
 
 
-def rank_nodes_by_pagerank(graph, weight="weight", **kwargs):
+def rank_nodes_by_pagerank(
+    graph: nx.Graph,
+    weight: str = "weight",
+    **kwargs,
+) -> Dict[Any, float]:
     """
     Rank nodes in graph using the Pagegrank algorithm.
 
     Args:
-        graph (:class:`networkx.Graph`)
-        weight (str)
+        graph
+        weight
         **kwargs
 
     Returns:
@@ -115,22 +124,28 @@ def rank_nodes_by_pagerank(graph, weight="weight", **kwargs):
     return nx.pagerank_scipy(graph, weight=weight, **kwargs)
 
 
-def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0, weight="weight"):
+def rank_nodes_by_bestcoverage(
+    graph: nx.Graph,
+    k: int,
+    c: int = 1,
+    alpha: float = 1.0,
+    weight: str = "weight",
+) -> Dict[Any, float]:
     """
     Rank nodes in a network using the BestCoverage algorithm that attempts to
     balance between node centrality and diversity.
 
     Args:
-        graph (:class:`networkx.Graph`)
-        k (int): Number of results to return for top-k search.
-        c (int): *l* parameter for *l*-step expansion; best if 1 or 2
-        alpha (float): float in [0.0, 1.0] specifying how much of
-            central vertex's score to remove from its *l*-step neighbors;
-            smaller value puts more emphasis on centrality, larger value puts
-            more emphasis on diversity
+        graph
+        k: Number of results to return for top-k search.
+        c: *l* parameter for *l*-step expansion; best if 1 or 2
+        alpha: Float in [0.0, 1.0] specifying how much of central vertex's score
+            to remove from its *l*-step neighbors; smaller value puts more emphasis
+            on centrality, larger value puts more emphasis on diversity
+        weight: Key in edge data that holds weights.
 
     Returns:
-        dict: Top ``k`` nodes as ranked by bestcoverage algorithm; keys as node
+        Top ``k`` nodes as ranked by bestcoverage algorithm; keys as node
         identifiers, values as corresponding ranking scores
 
     References:
@@ -187,7 +202,7 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0, weight="weight"):
     )
 
     # compute initial exprel contribution
-    taken = collections.defaultdict(bool)
+    taken: DefaultDict = collections.defaultdict(bool)
     contrib = {}
     for vertex in nodes_list:
         # get l-step expanded set
@@ -229,21 +244,24 @@ def rank_nodes_by_bestcoverage(graph, k, c=1, alpha=1.0, weight="weight"):
     return results
 
 
-def rank_nodes_by_divrank(graph, r=None, lambda_=0.5, alpha=0.5):
+def rank_nodes_by_divrank(
+    graph: nx.Graph,
+    r: Optional[np.ndarray] = None,
+    lambda_: float = 0.5,
+    alpha: float = 0.5,
+) -> Dict[str, float]:
     """
     Rank nodes in a network using the DivRank algorithm that attempts to
     balance between node centrality and diversity.
 
     Args:
-        graph (:class:`networkx.Graph`):
-        r (:class:`numpy.ndarray`): the "personalization vector";
-            by default, ``r = ones(1, n)/n``
-        lambda_ (float): must be in [0.0, 1.0]
-        alpha (float): controls the strength of self-links;
-            must be in [0.0, 1.0]
+        graph
+        r: The "personalization vector"; by default, ``r = ones(1, n)/n``
+        lambda_: Float in [0.0, 1.0]
+        alpha: Float in [0.0, 1.0] that controls the strength of self-links.
 
     Returns:
-        List[Tuple[str, float]]: list of (node, score) tuples ordered by desc. divrank score
+        Mapping of node to score ordered by descending divrank score
 
     References:
         Mei, Q., Guo, J., & Radev, D. (2010, July). Divrank: the interplay of
