@@ -2,7 +2,7 @@ import logging
 import pathlib
 import sys
 import warnings
-from typing import Any, Collection, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, Union
+from typing import cast, Any, Collection, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, Union
 
 LOGGER = logging.getLogger(__name__)
 
@@ -184,7 +184,7 @@ def validate_set_members(
         TypeError
         ValueError
     """
-    vals = to_collection(vals, val_type, set)
+    vals = cast(Set, to_collection(vals, val_type, set))
     if valid_vals is not None:
         if not isinstance(valid_vals, set):
             valid_vals = set(valid_vals)
@@ -198,8 +198,8 @@ def validate_set_members(
 
 
 def validate_and_clip_range(
-    range_vals: Sequence[Any],
-    full_range: Sequence[Any],
+    range_vals: Tuple[Any, Any],
+    full_range: Tuple[Any, Any],
     val_type: Optional[Union[Type[Any], Tuple[Type[Any], ...]]] = None,
 ) -> Tuple[Any, Any]:
     """
@@ -255,4 +255,4 @@ def validate_and_clip_range(
             range_vals[1], full_range[1],
         )
         range_vals = (range_vals[0], full_range[1])
-    return tuple(range_vals)
+    return cast(Tuple[Any, Any], tuple(range_vals))
