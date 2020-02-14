@@ -234,8 +234,8 @@ def _get_unigram_candidates(doc: Doc, include_pos: Set[str]) -> Iterable[Token]:
 
 
 def _score_unigram_candidates(
-    candidates: List[Token],
-    word_freqs: Dict[int, float],
+    candidates: Iterable[Token],
+    word_freqs: Dict[int, int],
     word_scores: Dict[int, float],
     term_scores: Dict[str, float],
     stop_words: Set[str],

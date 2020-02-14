@@ -17,6 +17,9 @@ from .. import utils
 from . import utils as ke_utils
 
 
+Candidate = collections.namedtuple("Candidate", ["text", "idx", "length", "count"])
+
+
 def sgrank(
     doc: Doc,
     *,
@@ -89,7 +92,7 @@ def sgrank(
     term_weights = _compute_term_weights(
         candidates, candidate_counts, unique_candidates, n_toks, idf)
     # filter terms to only those with positive weights
-    candidates = [cand for cand in candidates if term_weights[cand[0]] > 0]
+    candidates = [cand for cand in candidates if term_weights[cand.text] > 0]
     edge_weights = _compute_edge_weights(candidates, term_weights, window_size, n_toks)
 
     # build the weighted directed graph from edges, rank nodes by pagerank
@@ -108,40 +111,37 @@ def _get_candidates(
     normalize: Optional[Union[str, Callable[[Span], str]]],
     ngrams: Tuple[int, ...],
     include_pos: Set[str],
-) -> Tuple[List[Tuple[str, int, int, int]], Counter[str]]:
+) -> Tuple[List[Candidate], Counter[str]]:
     """
     Get n-gram candidate keyterms from ``doc``, with key information for each:
     its normalized text string, position within the doc, number of constituent words,
     and frequency of occurrence.
     """
     min_term_freq = min(max(len(doc) // 1000, 1), 4)
-    candidates_tuples = list(
+    cand_tuples = list(
         ke_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos))
-    candidate_texts = [
+    cand_texts = [
         " ".join(ke_utils.normalize_terms(ctup, normalize))
-        for ctup in candidates_tuples
+        for ctup in cand_tuples
     ]
-    candidate_counts = collections.Counter(candidate_texts)
+    cand_counts = collections.Counter(cand_texts)
+    candidates = [
+        Candidate(text=ctext, idx=ctup[0].i, length=len(ctup), count=cand_counts[ctext])
+        for ctup, ctext in zip(cand_tuples, cand_texts)
+    ]
     if min_term_freq > 1:
         candidates = [
-            (ctext, ctup[0].i, len(ctup), candidate_counts[ctext])
-            for ctup, ctext in zip(candidates_tuples, candidate_texts)
-            if candidate_counts[ctext] >= min_term_freq
+            candidate for candidate in candidates if candidate.count >= min_term_freq
         ]
-    else:
-        candidates = [
-            (ctext, ctup[0].i, len(ctup), candidate_counts[ctext])
-            for ctup, ctext in zip(candidates_tuples, candidate_texts)
-        ]
-    return candidates, candidate_counts
+    return candidates, cand_counts
 
 
 def _prefilter_candidates(
-    candidates: List[Tuple[str, int, int, int]],
+    candidates: List[Candidate],
     candidate_counts: Counter[str],
     topn: int,
     idf: Optional[Dict[str, float]],
-) -> Tuple[List[Tuple[str, int, int, int]], Set[str]]:
+) -> Tuple[List[Candidate], Set[str]]:
     """
     Filter initial set of candidates to only those with sufficiently high TF or
     (if available) modified TF*IDF.
@@ -149,8 +149,8 @@ def _prefilter_candidates(
     topn_prefilter = max(3 * topn, 100)
     if idf:
         mod_tfidfs = {
-            ctext: ccount * idf.get(ctext, 1) if " " not in ctext else ccount
-            for ctext, _, _, ccount in candidates
+            c.text: c.count * idf.get(c.text, 1) if " " not in c.text else c.count
+            for c in candidates
         }
         unique_candidates = {
             ctext
@@ -161,12 +161,12 @@ def _prefilter_candidates(
     else:
         unique_candidates = {
             ctext for ctext, _ in candidate_counts.most_common(topn_prefilter)}
-    candidates = [cand for cand in candidates if cand[0] in unique_candidates]
+    candidates = [cand for cand in candidates if cand.text in unique_candidates]
     return candidates, unique_candidates
 
 
 def _compute_term_weights(
-    candidates: List[Tuple[str, int, int, int]],
+    candidates: List[Candidate],
     candidate_counts: Dict[str, int],
     unique_candidates: Set[str],
     n_toks: int,
@@ -176,33 +176,34 @@ def _compute_term_weights(
     Compute term weights from statistical attributes: position of first occurrence,
     not subsumed frequency, and number of constituent words.
     """
+    clen: float
     term_weights = {}
     seen_terms: Set[str] = set()
     n_toks_p1 = n_toks + 1
-    for ctext, cpos, clen, ccount in candidates:
+    for cand in candidates:
         # we only want the *first* occurrence of a unique term (by its text)
-        if ctext in seen_terms:
+        if cand.text in seen_terms:
             continue
         else:
-            seen_terms.add(ctext)
-        pos_first_occ = math.log(n_toks_p1 / (cpos + 1))
+            seen_terms.add(cand.text)
+        pos_first_occ = math.log(n_toks_p1 / (cand.idx + 1))
         # TODO: do we want to sub-linear scale term len or not?
-        clen = math.sqrt(clen)
+        clen = math.sqrt(cand.length)
         # subtract from subsum_count for the case when ctext == ctext2
         subsum_count = sum(
             candidate_counts[ctext2]
             for ctext2 in unique_candidates
-            if ctext in ctext2
-        ) - ccount
-        term_freq_factor: Union[int, float] = ccount - subsum_count
+            if cand.text in ctext2
+        ) - cand.count
+        term_freq_factor: Union[int, float] = cand.count - subsum_count
         if idf and clen == 1:
-            term_freq_factor *= idf.get(ctext, 1)
-        term_weights[ctext] = term_freq_factor * pos_first_occ * clen
+            term_freq_factor *= idf.get(cand.text, 1)
+        term_weights[cand.text] = term_freq_factor * pos_first_occ * clen
     return term_weights
 
 
 def _compute_edge_weights(
-    candidates: List[Tuple[str, int, int, int]],
+    candidates: List[Candidate],
     term_weights: Dict[str, float],
     window_size: int,
     n_toks: int,
@@ -212,28 +213,31 @@ def _compute_edge_weights(
     each other, then combine with statistical ``term_weights`` and normalize
     by the total number of outgoing edge weights.
     """
-    n_coocs: DefaultDict[str, DefaultDict[str, int]] = collections.defaultdict(lambda: collections.defaultdict(int))
-    sum_logdists: DefaultDict[str, DefaultDict[str, float]] = collections.defaultdict(lambda: collections.defaultdict(float))
+    n_coocs: DefaultDict[str, DefaultDict[str, int]]
+    n_coocs = collections.defaultdict(lambda: collections.defaultdict(int))
+    sum_logdists: DefaultDict[str, DefaultDict[str, float]]
+    sum_logdists = collections.defaultdict(lambda: collections.defaultdict(float))
     # iterate over windows
     log_ = math.log  # localize this, for performance
-    for start_ind in range(n_toks):
-        end_ind = start_ind + window_size
-        window_cands = (cand for cand in candidates if start_ind <= cand[1] < end_ind)
+    for start_idx in range(n_toks):
+        end_idx = start_idx + window_size
+        window_cands = (cand for cand in candidates if start_idx <= cand.idx < end_idx)
         # get all token combinations within window
         for c1, c2 in itertools.combinations(window_cands, 2):
-            n_coocs[c1[0]][c2[0]] += 1
+            n_coocs[c1.text][c2.text] += 1
             try:
-                sum_logdists[c1[0]][c2[0]] += log_(window_size / abs(c1[1] - c2[1]))
+                sum_logdists[c1.text][c2.text] += log_(window_size / abs(c1.idx - c2.idx))
             except ZeroDivisionError:
-                sum_logdists[c1[0]][c2[0]] += log_(window_size)
-        if end_ind >= n_toks:
+                sum_logdists[c1.text][c2.text] += log_(window_size)
+        if end_idx >= n_toks:
             break
     # compute edge weights between co-occurring terms (nodes)
-    edge_weights: DefaultDict[str, DefaultDict[str, float]] = collections.defaultdict(lambda: collections.defaultdict(float))
-    for c1, c2s in sum_logdists.items():
-        for c2 in c2s:
+    edge_weights: DefaultDict[str, DefaultDict[str, float]]
+    edge_weights = collections.defaultdict(lambda: collections.defaultdict(float))
+    for c1, c2_dict in sum_logdists.items():
+        for c2, sum_logdist in c2_dict.items():
             edge_weights[c1][c2] = (
-                ((1.0 + sum_logdists[c1][c2]) / n_coocs[c1][c2])
+                ((1.0 + sum_logdist) / n_coocs[c1][c2])
                 * term_weights[c1]
                 * term_weights[c2]
             )

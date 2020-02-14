@@ -9,7 +9,7 @@ similarity, respectively.
 import collections
 import itertools
 import logging
-from typing import Callable, Sequence, Union
+from typing import Callable, DefaultDict, Sequence, Union
 
 import networkx as nx
 from cytoolz import itertoolz
@@ -117,6 +117,7 @@ def terms_to_semantic_network(
     graph = nx.Graph()
 
     if edge_weighting == "cooc_freq":
+        cooc_mat: DefaultDict[str, DefaultDict[str, int]]
         cooc_mat = collections.defaultdict(lambda: collections.defaultdict(int))
         for window in windows:
             for w1, w2 in itertools.combinations(sorted(window), 2):

@@ -124,7 +124,7 @@ def _compute_word_scores(
         return {}
 
     # "semantic strength of a word" component
-    sem_strengths = {
+    sem_strengths: Dict[str, int] = {
         w: sum(cooc_mat[tuple(sorted([w, nbr]))] * max_truss_levels[nbr] for nbr in graph.neighbors(w))
         for w in word_strs
     }

@@ -1,6 +1,6 @@
 import itertools
 import random
-from typing import List, Optional, Set, Union
+from typing import cast, List, Optional, Set, Union
 
 from cytoolz import itertoolz
 
@@ -35,7 +35,7 @@ def substitute_word_synonyms(
         to work properly, since this is the data source for word synonyms to be substituted.
     """
     _validate_aug_toks(aug_toks)
-    pos = utils.to_collection(pos, str, set)
+    pos = cast(Set[str], utils.to_collection(pos, str, set))
     cand_idxs = [
         idx for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.syns and (pos is None or aug_tok.pos in pos)
@@ -88,7 +88,7 @@ def insert_word_synonyms(
         to work properly, since this is the data source for word synonyms to be inserted.
     """
     _validate_aug_toks(aug_toks)
-    pos = utils.to_collection(pos, str, set)
+    pos = cast(Set[str], utils.to_collection(pos, str, set))
     # bail out on very short sentences to avoid clobbering meaning
     if len(aug_toks) < 3:
         return aug_toks[:]
@@ -155,7 +155,7 @@ def swap_words(
         New, augmented sequence of tokens.
     """
     _validate_aug_toks(aug_toks)
-    pos = utils.to_collection(pos, str, set)
+    pos = cast(Set[str], utils.to_collection(pos, str, set))
     # if we don't require _adjacent_ words, this does the trick
     # if not pos:
     #     pos = set(aug_tok.pos for aug_tok in aug_toks if aug_tok.is_word)
@@ -222,7 +222,7 @@ def delete_words(
         New, augmented sequence of tokens.
     """
     _validate_aug_toks(aug_toks)
-    pos = utils.to_collection(pos, str, set)
+    pos = cast(Set[str], utils.to_collection(pos, str, set))
     # bail out on very short sentences to avoid clobbering meaning
     if len(aug_toks) < 3:
         return aug_toks[:]

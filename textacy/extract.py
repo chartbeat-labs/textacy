@@ -7,7 +7,7 @@ import collections
 import itertools
 import operator
 import re
-from typing import Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import cast, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
 
 import numpy as np
 from cytoolz import itertoolz
@@ -65,10 +65,12 @@ def words(
     if filter_nums is True:
         words_ = (w for w in words_ if not w.like_num)
     if include_pos:
-        include_pos = {pos.upper() for pos in utils.to_collection(include_pos, str, set)}
+        include_pos = cast(Set[str], utils.to_collection(include_pos, str, set))
+        include_pos = {pos.upper() for pos in include_pos}
         words_ = (w for w in words_ if w.pos_ in include_pos)
     if exclude_pos:
-        exclude_pos = {pos.upper() for pos in utils.to_collection(exclude_pos, str, set)}
+        exclude_pos = cast(Set[str], utils.to_collection(exclude_pos, str, set))
+        exclude_pos = {pos.upper() for pos in exclude_pos}
         words_ = (w for w in words_ if w.pos_ not in exclude_pos)
     if min_freq > 1:
         words_ = list(words_)
@@ -135,12 +137,14 @@ def ngrams(
     if filter_nums is True:
         ngrams_ = (ngram for ngram in ngrams_ if not any(w.like_num for w in ngram))
     if include_pos:
-        include_pos = {pos.upper() for pos in utils.to_collection(include_pos, str, set)}
+        include_pos = cast(Set[str], utils.to_collection(include_pos, str, set))
+        include_pos = {pos.upper() for pos in include_pos}
         ngrams_ = (
             ngram for ngram in ngrams_ if all(w.pos_ in include_pos for w in ngram)
         )
     if exclude_pos:
-        exclude_pos = {pos.upper() for pos in utils.to_collection(exclude_pos, str, set)}
+        exclude_pos = cast(Set[str], utils.to_collection(exclude_pos, str, set))
+        exclude_pos = {pos.upper() for pos in exclude_pos}
         ngrams_ = (
             ngram
             for ngram in ngrams_
