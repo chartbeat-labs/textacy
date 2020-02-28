@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime
+import os
 import sys
 
 import textacy
@@ -69,7 +70,10 @@ todo_include_todos = False
 # -- Options for HTML output ----------------------------------------------
 
 html_theme = "alabaster"
+html_static_path = [os.path.join("..", "_static")]
 html_theme_options = {
+    "logo": "textacy_logo.png",
+    "logo_name": False,
     "github_button": True,
     "github_count": False,
     "github_user": "chartbeat-labs",
