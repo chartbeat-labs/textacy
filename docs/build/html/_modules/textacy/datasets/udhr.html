@@ -1,0 +1,366 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.datasets.udhr &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.datasets.udhr</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">UDHR translations</span>
+<span class="sd">-----------------</span>
+
+<span class="sd">A collection of translations of the Universal Declaration of Human Rights (UDHR),</span>
+<span class="sd">a milestone document in the history of human rights that first, formally established</span>
+<span class="sd">fundamental human rights to be universally protected.</span>
+
+<span class="sd">Records include the following fields:</span>
+
+<span class="sd">    - ``text``: Full text of the translated UDHR document.</span>
+<span class="sd">    - ``lang``: ISO-639-1 language code of the text.</span>
+<span class="sd">    - ``lang_name``: Ethnologue entry for the language (see https://www.ethnologue.com).</span>
+
+<span class="sd">The source dataset was compiled and is updated by the Unicode Consortium</span>
+<span class="sd">as a way to demonstrate the use of unicode in representing a wide variety of languages.</span>
+<span class="sd">In fact, the UDHR was chosen because it&#39;s been translated into more languages</span>
+<span class="sd">than any other document! However, this dataset only provides access to records</span>
+<span class="sd">translated into ISO-639-1 languages — that is, major living languages *only*,</span>
+<span class="sd">rather than every language, major or minor, that has ever existed. If you need access</span>
+<span class="sd">to texts in those other languages, you can find them at :attr:`UDHR._texts_dirpath`.</span>
+
+<span class="sd">For more details, go to https://unicode.org/udhr.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">import</span> <span class="nn">xml</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">preprocessing</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">io</span> <span class="k">as</span> <span class="n">tio</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">Dataset</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">NAME</span> <span class="o">=</span> <span class="s2">&quot;udhr&quot;</span>
+<span class="n">META</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;site_url&quot;</span><span class="p">:</span> <span class="s2">&quot;http://www.ohchr.org/EN/UDHR&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;A collection of translations of the Universal Declaration of Human Rights (UDHR), &quot;</span>
+        <span class="s2">&quot;a milestone document in the history of human rights that first, formally established &quot;</span>
+        <span class="s2">&quot;fundamental human rights to be universally protected.&quot;</span>
+    <span class="p">)</span>
+<span class="p">}</span>
+<span class="n">DOWNLOAD_URL</span> <span class="o">=</span> <span class="s2">&quot;https://unicode.org/udhr/assemblies/udhr_txt.zip&quot;</span>
+
+
+<div class="viewcode-block" id="UDHR"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.udhr.UDHR">[docs]</a><span class="k">class</span> <span class="nc">UDHR</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stream a collection of UDHR translations from disk, either as texts or</span>
+<span class="sd">    text + metadata pairs.</span>
+
+<span class="sd">    Download the data (one time only!), saving and extracting its contents to disk::</span>
+
+<span class="sd">        &gt;&gt;&gt; import textacy.datasets</span>
+<span class="sd">        &gt;&gt;&gt; ds = textacy.datasets.UDHR()</span>
+<span class="sd">        &gt;&gt;&gt; ds.download()</span>
+<span class="sd">        &gt;&gt;&gt; ds.info</span>
+<span class="sd">        {&#39;name&#39;: &#39;udhr&#39;,</span>
+<span class="sd">         &#39;site_url&#39;: &#39;http://www.ohchr.org/EN/UDHR&#39;,</span>
+<span class="sd">         &#39;description&#39;: &#39;A collection of translations of the Universal Declaration of Human Rights (UDHR), a milestone document in the history of human rights that first, formally established fundamental human rights to be universally protected.&#39;}</span>
+
+<span class="sd">    Iterate over translations as texts or records with both text and metadata::</span>
+
+<span class="sd">        &gt;&gt;&gt; for text in ds.texts(limit=5):</span>
+<span class="sd">        ...     print(text[:500])</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(limit=5):</span>
+<span class="sd">        ...     print(&quot;\\n{} ({})\\n{}&quot;.format(meta[&quot;lang_name&quot;], meta[&quot;lang&quot;], text[:500]))</span>
+
+<span class="sd">    Filter translations by language, and note that some languages have multiple translations::</span>
+
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(lang=&quot;en&quot;):</span>
+<span class="sd">        ...     print(&quot;\\n{} ({})\\n{}&quot;.format(meta[&quot;lang_name&quot;], meta[&quot;lang&quot;], text[:500]))</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(lang=&quot;zh&quot;):</span>
+<span class="sd">        ...     print(&quot;\\n{} ({})\\n{}&quot;.format(meta[&quot;lang_name&quot;], meta[&quot;lang&quot;], text[:500]))</span>
+
+<span class="sd">    Note: Streaming translations into a :class:`textacy.Corpus &lt;textacy.corpus.Corpus&gt;`</span>
+<span class="sd">    doesn&#39;t work as for other available datasets, since this dataset is multilingual.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_dir (str or :class:`pathlib.Path`): Path to directory on disk</span>
+<span class="sd">            under which the data is stored, i.e. ``/path/to/data_dir/udhr``.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        langs (Set[str]): All distinct language codes with texts in this dataset,</span>
+<span class="sd">            e.g. &quot;en&quot; for English.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">DEFAULT_DATA_DIR</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">NAME</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">META</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">to_path</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_texts_dirpath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">&quot;udhr_txt&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index_filepath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_texts_dirpath</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">&quot;index.xml&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">langs</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="UDHR.download"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.udhr.UDHR.download">[docs]</a>    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download the data as a zipped archive of language-specific text files,</span>
+<span class="sd">        then save it to disk and extract its contents under the ``data_dir`` directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            force: If True, download the dataset, even if it already exists</span>
+<span class="sd">                on disk under ``data_dir``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filepath</span> <span class="o">=</span> <span class="n">tio</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span>
+            <span class="n">DOWNLOAD_URL</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="s2">&quot;udhr_txt.zip&quot;</span><span class="p">,</span>
+            <span class="n">dirpath</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">if</span> <span class="n">filepath</span><span class="p">:</span>
+            <span class="n">tio</span><span class="o">.</span><span class="n">unpack_archive</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">extract_dir</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">&quot;udhr_txt&quot;</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_data</span><span class="p">()</span></div>
+
+    <span class="k">def</span> <span class="nf">_check_data</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check that necessary data is found on disk, or raise an OSError.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_texts_dirpath</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
+                <span class="s2">&quot;data directory </span><span class="si">{}</span><span class="s2"> not found; &quot;</span>
+                <span class="s2">&quot;has the dataset been downloaded?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_texts_dirpath</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index_filepath</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
+                <span class="s2">&quot;data index file </span><span class="si">{}</span><span class="s2"> not found; &quot;</span>
+                <span class="s2">&quot;has the dataset been downloaded?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_index_filepath</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">index</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]]:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_and_parse_index</span><span class="p">()</span>
+            <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_index</span>
+
+    <span class="k">def</span> <span class="nf">_load_and_parse_index</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Read in index xml file from :attr:`UDHR._index_filepath`; skip elements</span>
+<span class="sd">        without valid ISO-639-1 language code or sufficient translation quality,</span>
+<span class="sd">        then convert into a list of dicts with key metadata, including filenames.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">index</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">tree</span> <span class="o">=</span> <span class="n">xml</span><span class="o">.</span><span class="n">etree</span><span class="o">.</span><span class="n">ElementTree</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_index_filepath</span><span class="p">)</span>
+        <span class="n">root</span> <span class="o">=</span> <span class="n">tree</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">ele</span> <span class="ow">in</span> <span class="n">root</span><span class="o">.</span><span class="n">iterfind</span><span class="p">(</span><span class="s2">&quot;udhr&quot;</span><span class="p">):</span>
+            <span class="n">iso_lang_code</span> <span class="o">=</span> <span class="n">ele</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;bcp47&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">stage</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">ele</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;stage&quot;</span><span class="p">))</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">iso_lang_code</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">2</span> <span class="ow">or</span> <span class="n">stage</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">index</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="p">{</span>
+                        <span class="s2">&quot;filename&quot;</span><span class="p">:</span> <span class="s2">&quot;udhr_</span><span class="si">{}</span><span class="s2">.txt&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ele</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;f&quot;</span><span class="p">)),</span>
+                        <span class="s2">&quot;lang&quot;</span><span class="p">:</span> <span class="n">iso_lang_code</span><span class="p">,</span>
+                        <span class="s2">&quot;lang_name&quot;</span><span class="p">:</span> <span class="n">ele</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;n&quot;</span><span class="p">),</span>
+                    <span class="p">}</span>
+                <span class="p">)</span>
+        <span class="c1"># get set of all available langs, so users can filter on it</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">langs</span> <span class="o">=</span> <span class="p">{</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;lang&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="n">index</span><span class="p">}</span>
+        <span class="k">return</span> <span class="n">index</span>
+
+    <span class="k">def</span> <span class="nf">_load_and_parse_text_file</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filepath</span><span class="p">):</span>
+        <span class="k">with</span> <span class="n">io</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;rt&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">text_lines</span> <span class="o">=</span> <span class="p">[</span><span class="n">line</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span> <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">f</span><span class="o">.</span><span class="n">readlines</span><span class="p">()]</span>
+        <span class="c1"># chop off the header, if it exists</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">header_idx</span> <span class="o">=</span> <span class="n">text_lines</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s2">&quot;---&quot;</span><span class="p">)</span>
+            <span class="n">text_lines</span> <span class="o">=</span> <span class="n">text_lines</span><span class="p">[</span><span class="n">header_idx</span> <span class="o">+</span> <span class="mi">1</span><span class="p">:]</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">pass</span>
+        <span class="k">return</span> <span class="n">preprocessing</span><span class="o">.</span><span class="n">normalize_whitespace</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">text_lines</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_data</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+            <span class="n">filepath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_texts_dirpath</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">])</span>
+            <span class="n">record</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">record</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_and_parse_text_file</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="n">record</span>
+
+    <span class="k">def</span> <span class="nf">_filtered_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
+        <span class="c1"># this dataset is unusual in that the only filter we can really offer is lang</span>
+        <span class="c1"># so we might as well avoid loading texts in unwanted languages</span>
+        <span class="k">if</span> <span class="n">lang</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_check_data</span><span class="p">()</span>
+            <span class="n">lang</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_set_members</span><span class="p">(</span><span class="n">lang</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">valid_vals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">langs</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">item</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">index</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">item</span><span class="p">[</span><span class="s2">&quot;lang&quot;</span><span class="p">]</span> <span class="ow">in</span> <span class="n">lang</span><span class="p">:</span>
+                    <span class="n">filepath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_texts_dirpath</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="s2">&quot;filename&quot;</span><span class="p">])</span>
+                    <span class="n">record</span> <span class="o">=</span> <span class="n">item</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="n">record</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_and_parse_text_file</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+                    <span class="k">yield</span> <span class="n">record</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">record</span>
+
+<div class="viewcode-block" id="UDHR.texts"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.udhr.UDHR.texts">[docs]</a>    <span class="k">def</span> <span class="nf">texts</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">lang</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over records in this dataset, optionally filtering by language,</span>
+<span class="sd">        and yield texts only.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lang: Filter records by the language in which they&#39;re written;</span>
+<span class="sd">                see :attr:`UDHR.langs`.</span>
+<span class="sd">            limit: Yield no more than ``limit`` texts that match specified filter.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Text of the next record in dataset passing filters.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any filtering options are invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered_iter</span><span class="p">(</span><span class="n">lang</span><span class="p">),</span> <span class="n">limit</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="UDHR.records"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.udhr.UDHR.records">[docs]</a>    <span class="k">def</span> <span class="nf">records</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">lang</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over reocrds in this dataset, optionally filtering by a language,</span>
+<span class="sd">        and yield text + metadata pairs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            lang: Filter records by the language in which they&#39;re written;</span>
+<span class="sd">                see :attr:`UDHR.langs`.</span>
+<span class="sd">            limit: Yield no more than ``limit`` texts that match specified filter.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Text of the next record in dataset passing filters,</span>
+<span class="sd">            and its corresponding metadata.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any filtering options are invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered_iter</span><span class="p">(</span><span class="n">lang</span><span class="p">),</span> <span class="n">limit</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">record</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">),</span> <span class="n">record</span></div></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

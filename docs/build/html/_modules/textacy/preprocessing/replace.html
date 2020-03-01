@@ -1,0 +1,180 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.preprocessing.replace &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.preprocessing.replace</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Replace</span>
+<span class="sd">-------</span>
+
+<span class="sd">Replace parts of raw text that are semantically important as members of a group</span>
+<span class="sd">but not so much in the individual instances.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">.resources</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">RE_CURRENCY_SYMBOL</span><span class="p">,</span>
+    <span class="n">RE_EMAIL</span><span class="p">,</span>
+    <span class="n">RE_EMOJI</span><span class="p">,</span>
+    <span class="n">RE_HASHTAG</span><span class="p">,</span>
+    <span class="n">RE_NUMBER</span><span class="p">,</span>
+    <span class="n">RE_PHONE_NUMBER</span><span class="p">,</span>
+    <span class="n">RE_SHORT_URL</span><span class="p">,</span>
+    <span class="n">RE_URL</span><span class="p">,</span>
+    <span class="n">RE_USER_HANDLE</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="replace_currency_symbols"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.replace.replace_currency_symbols">[docs]</a><span class="k">def</span> <span class="nf">replace_currency_symbols</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">replace_with</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_CUR_&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Replace all currency symbols in ``text`` with ``replace_with``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RE_CURRENCY_SYMBOL</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">replace_with</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="replace_emails"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.replace.replace_emails">[docs]</a><span class="k">def</span> <span class="nf">replace_emails</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">replace_with</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_EMAIL_&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Replace all email addresses in ``text`` with ``replace_with``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RE_EMAIL</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">replace_with</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="replace_emojis"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.replace.replace_emojis">[docs]</a><span class="k">def</span> <span class="nf">replace_emojis</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">replace_with</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_EMOJI_&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replace all emoji and pictographs in ``text`` with ``replace_with``.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        If your Python has a narrow unicode build (&quot;USC-2&quot;), only dingbats</span>
+<span class="sd">        and miscellaneous symbols are replaced because Python isn&#39;t able</span>
+<span class="sd">        to represent the unicode data for things like emoticons. Sorry!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RE_EMOJI</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">replace_with</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="replace_hashtags"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.replace.replace_hashtags">[docs]</a><span class="k">def</span> <span class="nf">replace_hashtags</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">replace_with</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_TAG_&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Replace all hashtags in ``text`` with ``replace_with``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RE_HASHTAG</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">replace_with</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="replace_numbers"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.replace.replace_numbers">[docs]</a><span class="k">def</span> <span class="nf">replace_numbers</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">replace_with</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_NUMBER_&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Replace all numbers in ``text`` with ``replace_with``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RE_NUMBER</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">replace_with</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="replace_phone_numbers"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.replace.replace_phone_numbers">[docs]</a><span class="k">def</span> <span class="nf">replace_phone_numbers</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">replace_with</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_PHONE_&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Replace all phone numbers in ``text`` with ``replace_with``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RE_PHONE_NUMBER</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">replace_with</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="replace_urls"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.replace.replace_urls">[docs]</a><span class="k">def</span> <span class="nf">replace_urls</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">replace_with</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_URL_&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Replace all URLs in ``text`` with ``replace_with``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RE_SHORT_URL</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">replace_with</span><span class="p">,</span> <span class="n">RE_URL</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">replace_with</span><span class="p">,</span> <span class="n">text</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="replace_user_handles"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.replace.replace_user_handles">[docs]</a><span class="k">def</span> <span class="nf">replace_user_handles</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">replace_with</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;_USER_&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;Replace all user handles in ``text`` with ``replace_with``.&quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RE_USER_HANDLE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="n">replace_with</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

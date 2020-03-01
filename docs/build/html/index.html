@@ -1,0 +1,223 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy: NLP, before and after spaCy &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Installation" href="getting_started/installation.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="textacy-nlp-before-and-after-spacy">
+<h1>textacy: NLP, before and after spaCy<a class="headerlink" href="#textacy-nlp-before-and-after-spacy" title="Permalink to this headline">¶</a></h1>
+<p>textacy is a Python library for performing a variety of natural language processing (NLP) tasks, built on the high-performance spaCy library. With the fundamentals — tokenization, part-of-speech tagging, dependency parsing, etc. — delegated to another library, textacy focuses primarily on the tasks that come before and follow after.</p>
+<a class="reference external image-reference" href="https://travis-ci.org/chartbeat-labs/textacy"><img alt="build status" src="https://img.shields.io/travis/chartbeat-labs/textacy/master.svg?style=flat-square" /></a>
+<a class="reference external image-reference" href="https://github.com/chartbeat-labs/textacy/releases"><img alt="current release version" src="https://img.shields.io/github/release/chartbeat-labs/textacy.svg?style=flat-square" /></a>
+<a class="reference external image-reference" href="https://pypi.python.org/pypi/textacy"><img alt="pypi version" src="https://img.shields.io/pypi/v/textacy.svg?style=flat-square" /></a>
+<a class="reference external image-reference" href="https://anaconda.org/conda-forge/textacy"><img alt="conda version" src="https://anaconda.org/conda-forge/textacy/badges/version.svg" /></a>
+<div class="section" id="features">
+<h2>Features<a class="headerlink" href="#features" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Convenient entry points to working with one or many documents processed by spaCy, with functionality added via custom extensions and automatic language identification for applying the right spaCy pipeline</p></li>
+<li><p>Variety of downloadable datasets with both text content and metadata, from Congressional speeches to historical literature to Reddit comments</p></li>
+<li><p>Easy file I/O for streaming data to and from disk</p></li>
+<li><p>Cleaning, normalization, and exploration of raw text — before processing</p></li>
+<li><p>Flexible extraction of words, ngrams, noun chunks, entities, acronyms, key terms, and other elements of interest</p></li>
+<li><p>Tokenization and vectorization of documents, with functionality for training, interpreting, and visualizing topic models</p></li>
+<li><p>String, set, and document similarity comparison by a variety of metrics</p></li>
+<li><p>Calculations for common text statistics, including Flesch-Kincaid Grade Level and multilingual Flesch Reading Ease</p></li>
+</ul>
+<p>… <em>and more!</em></p>
+</div>
+<div class="section" id="links">
+<h2>Links<a class="headerlink" href="#links" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><p>Download: <a class="reference external" href="https://pypi.org/project/textacy">https://pypi.org/project/textacy</a></p></li>
+<li><p>Documentation: <a class="reference external" href="https://chartbeat-labs.github.io/textacy">https://chartbeat-labs.github.io/textacy</a></p></li>
+<li><p>Source code: <a class="reference external" href="https://github.com/chartbeat-labs/textacy">https://github.com/chartbeat-labs/textacy</a></p></li>
+<li><p>Bug Tracker: <a class="reference external" href="https://github.com/chartbeat-labs/textacy/issues">https://github.com/chartbeat-labs/textacy/issues</a></p></li>
+</ul>
+</div>
+<div class="section" id="maintainer">
+<h2>Maintainer<a class="headerlink" href="#maintainer" title="Permalink to this headline">¶</a></h2>
+<p>Howdy, y’all. 👋</p>
+<ul class="simple">
+<li><p>Burton DeWilde (<a class="reference external" href="mailto:burton&#37;&#52;&#48;chartbeat&#46;com">burton<span>&#64;</span>chartbeat<span>&#46;</span>com</a>)</p></li>
+</ul>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/installation.html#downloading-data">Downloading Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/quickstart.html">Quickstart</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/quickstart.html#working-with-text">Working with Text</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/quickstart.html#make-a-doc">Make a Doc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/quickstart.html#analyze-a-doc">Analyze a Doc</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/quickstart.html#working-with-many-texts">Working with Many Texts</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/quickstart.html#make-a-corpus">Make a Corpus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/quickstart.html#analyze-a-corpus">Analyze a Corpus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="getting_started/quickstart.html#working-with-many-languages">Working with Many Languages</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference/root.html">API Reference</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/lang_doc_corpus.html">Lang, Doc, Corpus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/spacier.html">spaCy extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/datasets.html">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/resources.html">Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/text_processing.html">Text (Pre-)Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/information_extraction.html">Information Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/vsm_and_tm.html">Vectorization &amp; Topic Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/io.html">IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/viz.html">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/augmentation.html">Data Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/utils.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="api_reference/misc.html">Miscellany</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="changes.html">Changes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id1">0.9.1 (2019-09-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id2">0.9.0 (2019-09-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id5">0.8.0 (2019-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id7">0.7.1 (2019-06-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id11">0.7.0 (2019-05-13)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id14">0.6.3 (2019-03-23)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id19">0.6.2 (2018-07-19)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id22">0.6.1 (2018-04-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id27">0.6.0 (2018-02-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id30">0.5.0 (2017-12-04)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id33">0.4.2 (2017-11-28)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id38">0.4.1 (2017-07-27)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id42">0.4.0 (2017-06-21)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id46">0.3.4 (2017-04-17)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id50">0.3.3 (2017-02-10)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id53">0.3.2 (2016-11-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id55">0.3.1 (2016-10-19)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id58">0.3.0 (2016-08-23)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id60">0.2.8 (2016-08-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id64">0.2.5 (2016-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id66">0.2.4 (2016-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id69">0.2.3 (2016-06-20)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id72">0.2.2 (2016-05-05)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id75">0.2.0 (2016-04-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id78">0.1.4 (2016-02-26)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="changes.html#id80">0.1.3 (2016-02-22)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+        <li>
+          <a href="getting_started/installation.html" title="Next document">Installation</a>
+          &rarr;
+        </li>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="#">
+    <img class="logo" src="_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="getting_started/installation.html" title="next chapter">Installation</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

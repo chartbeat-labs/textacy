@@ -1,0 +1,842 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.datasets.supreme_court &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.datasets.supreme_court</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Supreme Court decisions</span>
+<span class="sd">-----------------------</span>
+
+<span class="sd">A collection of ~8.4k (almost all) decisions issued by the U.S. Supreme Court</span>
+<span class="sd">from November 1946 through June 2016 -- the &quot;modern&quot; era.</span>
+
+<span class="sd">Records include the following data:</span>
+
+<span class="sd">    - ``text``: Full text of the Court&#39;s decision.</span>
+<span class="sd">    - ``case_name``: Name of the court case, in all caps.</span>
+<span class="sd">    - ``argument_date``: Date on which the case was argued before the Court, as</span>
+<span class="sd">      an ISO-formatted string (&quot;YYYY-MM-DD&quot;).</span>
+<span class="sd">    - ``decision_date``: Date on which the Court&#39;s decision was announced, as</span>
+<span class="sd">      an ISO-formatted string (&quot;YYYY-MM-DD&quot;).</span>
+<span class="sd">    - ``decision_direction``: Ideological direction of the majority&#39;s decision:</span>
+<span class="sd">      one of &quot;conservative&quot;, &quot;liberal&quot;, or &quot;unspecifiable&quot;.</span>
+<span class="sd">    - ``maj_opinion_author``: Name of the majority opinion&#39;s author, if available</span>
+<span class="sd">      and identifiable, as an integer code whose mapping is given in</span>
+<span class="sd">      :attr:`SupremeCourt.opinion_author_codes`.</span>
+<span class="sd">    - ``n_maj_votes``: Number of justices voting in the majority.</span>
+<span class="sd">    - ``n_min_votes``: Number of justices voting in the minority.</span>
+<span class="sd">    - ``issue``: Subject matter of the case&#39;s core disagreement (e.g. &quot;affirmative</span>
+<span class="sd">      action&quot;) rather than its legal basis (e.g. &quot;the equal protection clause&quot;),</span>
+<span class="sd">      as a string code whose mapping is given in :attr:`SupremeCourt.issue_codes`.</span>
+<span class="sd">    - ``issue_area``: Higher-level categorization of the issue (e.g. &quot;Civil Rights&quot;),</span>
+<span class="sd">      as an integer code whose mapping is given in :attr:`SupremeCourt.issue_area_codes`.</span>
+<span class="sd">    - ``us_cite_id``: Citation identifier for each case according to the official</span>
+<span class="sd">      United States Reports. Note: There are ~300 cases with duplicate ids,</span>
+<span class="sd">      and it&#39;s not clear if that&#39;s &quot;correct&quot; or a data quality problem.</span>
+
+<span class="sd">The text in this dataset was derived from FindLaw&#39;s searchable database of court</span>
+<span class="sd">cases: http://caselaw.findlaw.com/court/us-supreme-court.</span>
+
+<span class="sd">The metadata was extracted without modification from the Supreme Court Database:</span>
+<span class="sd">Harold J. Spaeth, Lee Epstein, et al. 2016 Supreme Court Database, Version 2016</span>
+<span class="sd">Release 1. http://supremecourtdatabase.org. Its license is CC BY-NC 3.0 US:</span>
+<span class="sd">https://creativecommons.org/licenses/by-nc/3.0/us/.</span>
+
+<span class="sd">This dataset&#39;s creation was inspired by a blog post by Emily Barry:</span>
+<span class="sd">http://www.emilyinamillion.me/blog/2016/7/13/visualizing-supreme-court-topics-over-time.</span>
+
+<span class="sd">The two datasets were merged through much munging and a carefully</span>
+<span class="sd">trained model using the ``dedupe`` package. The model&#39;s duplicate threshold</span>
+<span class="sd">was set so as to maximize the F-score where precision had twice as much</span>
+<span class="sd">weight as recall. Still, given occasionally baffling inconsistencies in case</span>
+<span class="sd">naming, citation ids, and decision dates, a very small percentage of texts</span>
+<span class="sd">may be incorrectly matched to metadata. (Sorry.)</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">import</span> <span class="nn">urllib.parse</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">io</span> <span class="k">as</span> <span class="n">tio</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">Dataset</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">NAME</span> <span class="o">=</span> <span class="s2">&quot;supreme_court&quot;</span>
+<span class="n">META</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;site_url&quot;</span><span class="p">:</span> <span class="s2">&quot;http://caselaw.findlaw.com/court/us-supreme-court&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;Collection of ~8.4k decisions issued by the U.S. Supreme Court &quot;</span>
+        <span class="s2">&quot;between November 1946 and June 2016.&quot;</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+<span class="n">DOWNLOAD_ROOT</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/bdewilde/textacy-data/releases/download/&quot;</span>
+
+
+<div class="viewcode-block" id="SupremeCourt"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.supreme_court.SupremeCourt">[docs]</a><span class="k">class</span> <span class="nc">SupremeCourt</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stream a collection of U.S. Supreme Court decisions from a compressed json file on disk,</span>
+<span class="sd">    either as texts or text + metadata pairs.</span>
+
+<span class="sd">    Download the data (one time only!) from the textacy-data repo</span>
+<span class="sd">    (https://github.com/bdewilde/textacy-data), and save its contents to disk::</span>
+
+<span class="sd">        &gt;&gt;&gt; import textacy.datasets</span>
+<span class="sd">        &gt;&gt;&gt; ds = textacy.datasets.SupremeCourt()</span>
+<span class="sd">        &gt;&gt;&gt; ds.download()</span>
+<span class="sd">        &gt;&gt;&gt; ds.info</span>
+<span class="sd">        {&#39;name&#39;: &#39;supreme_court&#39;,</span>
+<span class="sd">         &#39;site_url&#39;: &#39;http://caselaw.findlaw.com/court/us-supreme-court&#39;,</span>
+<span class="sd">         &#39;description&#39;: &#39;Collection of ~8.4k decisions issued by the U.S. Supreme Court between November 1946 and June 2016.&#39;}</span>
+
+<span class="sd">    Iterate over decisions as texts or records with both text and metadata::</span>
+
+<span class="sd">        &gt;&gt;&gt; for text in ds.texts(limit=3):</span>
+<span class="sd">        ...     print(text[:500], end=&quot;\\n\\n&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(limit=3):</span>
+<span class="sd">        ...     print(&quot;\\n{} ({})\\n{}&quot;.format(meta[&quot;case_name&quot;], meta[&quot;decision_date&quot;], text[:500]))</span>
+
+<span class="sd">    Filter decisions by a variety of metadata fields and text length::</span>
+
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(opinion_author=109, limit=3):  # Notorious RBG!</span>
+<span class="sd">        ...     print(meta[&quot;case_name&quot;], meta[&quot;decision_direction&quot;], meta[&quot;n_maj_votes&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(decision_direction=&quot;liberal&quot;,</span>
+<span class="sd">        ...                              issue_area={1, 9, 10}, limit=3):</span>
+<span class="sd">        ...     print(meta[&quot;case_name&quot;], meta[&quot;maj_opinion_author&quot;], meta[&quot;n_maj_votes&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(opinion_author=102, date_range=(&#39;1985-02-11&#39;, &#39;1986-02-11&#39;)):</span>
+<span class="sd">        ...     print(&quot;\\n{} ({})&quot;.format(meta[&quot;case_name&quot;], meta[&quot;decision_date&quot;]))</span>
+<span class="sd">        ...     print(ds.issue_codes[meta[&quot;issue&quot;]], &quot;=&gt;&quot;, meta[&quot;decision_direction&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; for text in ds.texts(min_len=250000):</span>
+<span class="sd">        ...     print(len(text))</span>
+
+<span class="sd">    Stream decisions into a :class:`textacy.Corpus &lt;textacy.corpus.Corpus&gt;`::</span>
+
+<span class="sd">        &gt;&gt;&gt; textacy.Corpus(&quot;en&quot;, data=ds.records(limit=25))</span>
+<span class="sd">        Corpus(25 docs; 136696 tokens)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_dir (str or :class:`pathlib.Path`): Path to directory on disk</span>
+<span class="sd">            under which the data is stored, i.e. ``/path/to/data_dir/supreme_court``.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        full_date_range: First and last dates for which decisions are available,</span>
+<span class="sd">            each as an ISO-formatted string (YYYY-MM-DD).</span>
+<span class="sd">        decision_directions: All distinct decision directions, e.g. &quot;liberal&quot;.</span>
+<span class="sd">        opinion_author_codes: Mapping of majority opinion authors,</span>
+<span class="sd">            from id code to full name.</span>
+<span class="sd">        issue_area_codes: Mapping of high-level issue area of the case&#39;s core disagreement,</span>
+<span class="sd">            from id code to description.</span>
+<span class="sd">        issue_codes: Mapping of the specific issue of the case&#39;s core disagreement,</span>
+<span class="sd">            from id code to description.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">full_date_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;1946-11-18&quot;</span><span class="p">,</span> <span class="s2">&quot;2016-06-27&quot;</span><span class="p">)</span>
+    <span class="n">decision_directions</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;conservative&quot;</span><span class="p">,</span> <span class="s2">&quot;liberal&quot;</span><span class="p">,</span> <span class="s2">&quot;unspecifiable&quot;</span><span class="p">}</span>
+    <span class="n">opinion_author_codes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;Jay, John&quot;</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;Rutledge, John&quot;</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">:</span> <span class="s2">&quot;Cushing, William&quot;</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">:</span> <span class="s2">&quot;Wilson, James&quot;</span><span class="p">,</span>
+        <span class="mi">5</span><span class="p">:</span> <span class="s2">&quot;Blair,  John&quot;</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">:</span> <span class="s2">&quot;Iredell, James&quot;</span><span class="p">,</span>
+        <span class="mi">7</span><span class="p">:</span> <span class="s2">&quot;Johnson, Thomas&quot;</span><span class="p">,</span>
+        <span class="mi">8</span><span class="p">:</span> <span class="s2">&quot;Paterson, William&quot;</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">:</span> <span class="s2">&quot;Rutledge, John&quot;</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">:</span> <span class="s2">&quot;Chase, Samuel&quot;</span><span class="p">,</span>
+        <span class="mi">11</span><span class="p">:</span> <span class="s2">&quot;Ellsworth, Oliver&quot;</span><span class="p">,</span>
+        <span class="mi">12</span><span class="p">:</span> <span class="s2">&quot;Washington, Bushrod&quot;</span><span class="p">,</span>
+        <span class="mi">13</span><span class="p">:</span> <span class="s2">&quot;Moore, Alfred&quot;</span><span class="p">,</span>
+        <span class="mi">14</span><span class="p">:</span> <span class="s2">&quot;Marshall, John&quot;</span><span class="p">,</span>
+        <span class="mi">15</span><span class="p">:</span> <span class="s2">&quot;Johnson, William&quot;</span><span class="p">,</span>
+        <span class="mi">16</span><span class="p">:</span> <span class="s2">&quot;Livingston, Henry&quot;</span><span class="p">,</span>
+        <span class="mi">17</span><span class="p">:</span> <span class="s2">&quot;Todd, Thomas&quot;</span><span class="p">,</span>
+        <span class="mi">18</span><span class="p">:</span> <span class="s2">&quot;Duvall, Gabriel&quot;</span><span class="p">,</span>
+        <span class="mi">19</span><span class="p">:</span> <span class="s2">&quot;Story, Joseph&quot;</span><span class="p">,</span>
+        <span class="mi">20</span><span class="p">:</span> <span class="s2">&quot;Thompson, Smith&quot;</span><span class="p">,</span>
+        <span class="mi">21</span><span class="p">:</span> <span class="s2">&quot;Trimble, Robert&quot;</span><span class="p">,</span>
+        <span class="mi">22</span><span class="p">:</span> <span class="s2">&quot;McLean, John&quot;</span><span class="p">,</span>
+        <span class="mi">23</span><span class="p">:</span> <span class="s2">&quot;Baldwin, Henry&quot;</span><span class="p">,</span>
+        <span class="mi">24</span><span class="p">:</span> <span class="s2">&quot;Wayne, James&quot;</span><span class="p">,</span>
+        <span class="mi">25</span><span class="p">:</span> <span class="s2">&quot;Taney, Roger&quot;</span><span class="p">,</span>
+        <span class="mi">26</span><span class="p">:</span> <span class="s2">&quot;Barbour, Philip&quot;</span><span class="p">,</span>
+        <span class="mi">27</span><span class="p">:</span> <span class="s2">&quot;Catron, John&quot;</span><span class="p">,</span>
+        <span class="mi">28</span><span class="p">:</span> <span class="s2">&quot;McKinley, John&quot;</span><span class="p">,</span>
+        <span class="mi">29</span><span class="p">:</span> <span class="s2">&quot;Daniel, Peter&quot;</span><span class="p">,</span>
+        <span class="mi">30</span><span class="p">:</span> <span class="s2">&quot;Nelson, Samuel&quot;</span><span class="p">,</span>
+        <span class="mi">31</span><span class="p">:</span> <span class="s2">&quot;Woodbury, Levi&quot;</span><span class="p">,</span>
+        <span class="mi">32</span><span class="p">:</span> <span class="s2">&quot;Grier, Robert&quot;</span><span class="p">,</span>
+        <span class="mi">33</span><span class="p">:</span> <span class="s2">&quot;Curtis, Benjamin&quot;</span><span class="p">,</span>
+        <span class="mi">34</span><span class="p">:</span> <span class="s2">&quot;Campbell, John&quot;</span><span class="p">,</span>
+        <span class="mi">35</span><span class="p">:</span> <span class="s2">&quot;Clifford, Nathan&quot;</span><span class="p">,</span>
+        <span class="mi">36</span><span class="p">:</span> <span class="s2">&quot;Swayne, Noah&quot;</span><span class="p">,</span>
+        <span class="mi">37</span><span class="p">:</span> <span class="s2">&quot;Miller, Samuel&quot;</span><span class="p">,</span>
+        <span class="mi">38</span><span class="p">:</span> <span class="s2">&quot;Davis, David&quot;</span><span class="p">,</span>
+        <span class="mi">39</span><span class="p">:</span> <span class="s2">&quot;Field, Stephen&quot;</span><span class="p">,</span>
+        <span class="mi">40</span><span class="p">:</span> <span class="s2">&quot;Chase, Salmon&quot;</span><span class="p">,</span>
+        <span class="mi">41</span><span class="p">:</span> <span class="s2">&quot;Strong, William&quot;</span><span class="p">,</span>
+        <span class="mi">42</span><span class="p">:</span> <span class="s2">&quot;Bradley, Joseph&quot;</span><span class="p">,</span>
+        <span class="mi">43</span><span class="p">:</span> <span class="s2">&quot;Hunt, Ward&quot;</span><span class="p">,</span>
+        <span class="mi">44</span><span class="p">:</span> <span class="s2">&quot;Waite, Morrison&quot;</span><span class="p">,</span>
+        <span class="mi">45</span><span class="p">:</span> <span class="s2">&quot;Harlan, John&quot;</span><span class="p">,</span>
+        <span class="mi">46</span><span class="p">:</span> <span class="s2">&quot;Woods, William&quot;</span><span class="p">,</span>
+        <span class="mi">47</span><span class="p">:</span> <span class="s2">&quot;Matthews, Stanley&quot;</span><span class="p">,</span>
+        <span class="mi">48</span><span class="p">:</span> <span class="s2">&quot;Gray, Horace&quot;</span><span class="p">,</span>
+        <span class="mi">49</span><span class="p">:</span> <span class="s2">&quot;Blatchford, Samuel&quot;</span><span class="p">,</span>
+        <span class="mi">50</span><span class="p">:</span> <span class="s2">&quot;Lamar, Lucius&quot;</span><span class="p">,</span>
+        <span class="mi">51</span><span class="p">:</span> <span class="s2">&quot;Fuller, Melville&quot;</span><span class="p">,</span>
+        <span class="mi">52</span><span class="p">:</span> <span class="s2">&quot;Brewer, David&quot;</span><span class="p">,</span>
+        <span class="mi">53</span><span class="p">:</span> <span class="s2">&quot;Brown, Henry&quot;</span><span class="p">,</span>
+        <span class="mi">54</span><span class="p">:</span> <span class="s2">&quot;Shiras,  George&quot;</span><span class="p">,</span>
+        <span class="mi">55</span><span class="p">:</span> <span class="s2">&quot;Jackson, Howell&quot;</span><span class="p">,</span>
+        <span class="mi">56</span><span class="p">:</span> <span class="s2">&quot;White, Edward&quot;</span><span class="p">,</span>
+        <span class="mi">57</span><span class="p">:</span> <span class="s2">&quot;Peckham, Rufus&quot;</span><span class="p">,</span>
+        <span class="mi">58</span><span class="p">:</span> <span class="s2">&quot;McKenna, Joseph&quot;</span><span class="p">,</span>
+        <span class="mi">59</span><span class="p">:</span> <span class="s2">&quot;Holmes, Oliver&quot;</span><span class="p">,</span>
+        <span class="mi">60</span><span class="p">:</span> <span class="s2">&quot;Day, William&quot;</span><span class="p">,</span>
+        <span class="mi">61</span><span class="p">:</span> <span class="s2">&quot;Moody, William&quot;</span><span class="p">,</span>
+        <span class="mi">62</span><span class="p">:</span> <span class="s2">&quot;Lurton, Horace&quot;</span><span class="p">,</span>
+        <span class="mi">63</span><span class="p">:</span> <span class="s2">&quot;Hughes, Charles&quot;</span><span class="p">,</span>
+        <span class="mi">64</span><span class="p">:</span> <span class="s2">&quot;Van Devanter, Willis&quot;</span><span class="p">,</span>
+        <span class="mi">65</span><span class="p">:</span> <span class="s2">&quot;Lamar, Joseph&quot;</span><span class="p">,</span>
+        <span class="mi">66</span><span class="p">:</span> <span class="s2">&quot;Pitney, Mahlon&quot;</span><span class="p">,</span>
+        <span class="mi">67</span><span class="p">:</span> <span class="s2">&quot;McReynolds, James&quot;</span><span class="p">,</span>
+        <span class="mi">68</span><span class="p">:</span> <span class="s2">&quot;Brandeis, Louis&quot;</span><span class="p">,</span>
+        <span class="mi">69</span><span class="p">:</span> <span class="s2">&quot;Clarke, John&quot;</span><span class="p">,</span>
+        <span class="mi">70</span><span class="p">:</span> <span class="s2">&quot;Taft, William&quot;</span><span class="p">,</span>
+        <span class="mi">71</span><span class="p">:</span> <span class="s2">&quot;Sutherland, George&quot;</span><span class="p">,</span>
+        <span class="mi">72</span><span class="p">:</span> <span class="s2">&quot;Butler, Pierce&quot;</span><span class="p">,</span>
+        <span class="mi">73</span><span class="p">:</span> <span class="s2">&quot;Sanford, Edward&quot;</span><span class="p">,</span>
+        <span class="mi">74</span><span class="p">:</span> <span class="s2">&quot;Stone, Harlan&quot;</span><span class="p">,</span>
+        <span class="mi">75</span><span class="p">:</span> <span class="s2">&quot;Hughes, Charles&quot;</span><span class="p">,</span>
+        <span class="mi">76</span><span class="p">:</span> <span class="s2">&quot;Roberts, Owen&quot;</span><span class="p">,</span>
+        <span class="mi">77</span><span class="p">:</span> <span class="s2">&quot;Cardozo, Benjamin&quot;</span><span class="p">,</span>
+        <span class="mi">78</span><span class="p">:</span> <span class="s2">&quot;Black, Hugo&quot;</span><span class="p">,</span>
+        <span class="mi">79</span><span class="p">:</span> <span class="s2">&quot;Reed, Stanley&quot;</span><span class="p">,</span>
+        <span class="mi">80</span><span class="p">:</span> <span class="s2">&quot;Frankfurter, Felix&quot;</span><span class="p">,</span>
+        <span class="mi">81</span><span class="p">:</span> <span class="s2">&quot;Douglas, William&quot;</span><span class="p">,</span>
+        <span class="mi">82</span><span class="p">:</span> <span class="s2">&quot;Murphy, Francis&quot;</span><span class="p">,</span>
+        <span class="mi">83</span><span class="p">:</span> <span class="s2">&quot;Byrnes, James&quot;</span><span class="p">,</span>
+        <span class="mi">84</span><span class="p">:</span> <span class="s2">&quot;Jackson, Robert&quot;</span><span class="p">,</span>
+        <span class="mi">85</span><span class="p">:</span> <span class="s2">&quot;Rutledge, Wiley&quot;</span><span class="p">,</span>
+        <span class="mi">86</span><span class="p">:</span> <span class="s2">&quot;Burton, Harold&quot;</span><span class="p">,</span>
+        <span class="mi">87</span><span class="p">:</span> <span class="s2">&quot;Vinson, Fred&quot;</span><span class="p">,</span>
+        <span class="mi">88</span><span class="p">:</span> <span class="s2">&quot;Clark, Tom&quot;</span><span class="p">,</span>
+        <span class="mi">89</span><span class="p">:</span> <span class="s2">&quot;Minton, Sherman&quot;</span><span class="p">,</span>
+        <span class="mi">90</span><span class="p">:</span> <span class="s2">&quot;Warren, Earl&quot;</span><span class="p">,</span>
+        <span class="mi">91</span><span class="p">:</span> <span class="s2">&quot;Harlan, John&quot;</span><span class="p">,</span>
+        <span class="mi">92</span><span class="p">:</span> <span class="s2">&quot;Brennan, William&quot;</span><span class="p">,</span>
+        <span class="mi">93</span><span class="p">:</span> <span class="s2">&quot;Whittaker, Charles&quot;</span><span class="p">,</span>
+        <span class="mi">94</span><span class="p">:</span> <span class="s2">&quot;Stewart, Potter&quot;</span><span class="p">,</span>
+        <span class="mi">95</span><span class="p">:</span> <span class="s2">&quot;White, Byron&quot;</span><span class="p">,</span>
+        <span class="mi">96</span><span class="p">:</span> <span class="s2">&quot;Goldberg, Arthur&quot;</span><span class="p">,</span>
+        <span class="mi">97</span><span class="p">:</span> <span class="s2">&quot;Fortas, Abe&quot;</span><span class="p">,</span>
+        <span class="mi">98</span><span class="p">:</span> <span class="s2">&quot;Marshall, Thurgood&quot;</span><span class="p">,</span>
+        <span class="mi">99</span><span class="p">:</span> <span class="s2">&quot;Burger, Warren&quot;</span><span class="p">,</span>
+        <span class="mi">100</span><span class="p">:</span> <span class="s2">&quot;Blackmun, Harry&quot;</span><span class="p">,</span>
+        <span class="mi">101</span><span class="p">:</span> <span class="s2">&quot;Powell, Lewis&quot;</span><span class="p">,</span>
+        <span class="mi">102</span><span class="p">:</span> <span class="s2">&quot;Rehnquist, William&quot;</span><span class="p">,</span>
+        <span class="mi">103</span><span class="p">:</span> <span class="s2">&quot;Stevens, John&quot;</span><span class="p">,</span>
+        <span class="mi">104</span><span class="p">:</span> <span class="s2">&quot;O&#39;Connor, Sandra&quot;</span><span class="p">,</span>
+        <span class="mi">105</span><span class="p">:</span> <span class="s2">&quot;Scalia, Antonin&quot;</span><span class="p">,</span>
+        <span class="mi">106</span><span class="p">:</span> <span class="s2">&quot;Kennedy, Anthony&quot;</span><span class="p">,</span>
+        <span class="mi">107</span><span class="p">:</span> <span class="s2">&quot;Souter, David&quot;</span><span class="p">,</span>
+        <span class="mi">108</span><span class="p">:</span> <span class="s2">&quot;Thomas, Clarence&quot;</span><span class="p">,</span>
+        <span class="mi">109</span><span class="p">:</span> <span class="s2">&quot;Ginsburg, Ruth&quot;</span><span class="p">,</span>
+        <span class="mi">110</span><span class="p">:</span> <span class="s2">&quot;Breyer, Stephen&quot;</span><span class="p">,</span>
+        <span class="mi">111</span><span class="p">:</span> <span class="s2">&quot;Roberts, John&quot;</span><span class="p">,</span>
+        <span class="mi">112</span><span class="p">:</span> <span class="s2">&quot;Alito, Samuel&quot;</span><span class="p">,</span>
+        <span class="mi">113</span><span class="p">:</span> <span class="s2">&quot;Sotomayor, Sonia&quot;</span><span class="p">,</span>
+        <span class="mi">114</span><span class="p">:</span> <span class="s2">&quot;Kagan, Elena&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">issue_area_codes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="o">-</span><span class="mi">1</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="mi">1</span><span class="p">:</span> <span class="s2">&quot;Criminal Procedure&quot;</span><span class="p">,</span>
+        <span class="mi">2</span><span class="p">:</span> <span class="s2">&quot;Civil Rights&quot;</span><span class="p">,</span>
+        <span class="mi">3</span><span class="p">:</span> <span class="s2">&quot;First Amendment&quot;</span><span class="p">,</span>
+        <span class="mi">4</span><span class="p">:</span> <span class="s2">&quot;Due Process&quot;</span><span class="p">,</span>
+        <span class="mi">5</span><span class="p">:</span> <span class="s2">&quot;Privacy&quot;</span><span class="p">,</span>
+        <span class="mi">6</span><span class="p">:</span> <span class="s2">&quot;Attorneys&quot;</span><span class="p">,</span>
+        <span class="mi">7</span><span class="p">:</span> <span class="s2">&quot;Unions&quot;</span><span class="p">,</span>
+        <span class="mi">8</span><span class="p">:</span> <span class="s2">&quot;Economic Activity&quot;</span><span class="p">,</span>
+        <span class="mi">9</span><span class="p">:</span> <span class="s2">&quot;Judicial Power&quot;</span><span class="p">,</span>
+        <span class="mi">10</span><span class="p">:</span> <span class="s2">&quot;Federalism&quot;</span><span class="p">,</span>
+        <span class="mi">11</span><span class="p">:</span> <span class="s2">&quot;Interstate Relations&quot;</span><span class="p">,</span>
+        <span class="mi">12</span><span class="p">:</span> <span class="s2">&quot;Federal Taxation&quot;</span><span class="p">,</span>
+        <span class="mi">13</span><span class="p">:</span> <span class="s2">&quot;Miscellaneous&quot;</span><span class="p">,</span>
+        <span class="mi">14</span><span class="p">:</span> <span class="s2">&quot;Private Action&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">issue_codes</span><span class="p">:</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;100010&quot;</span><span class="p">:</span> <span class="s2">&quot;federal-state ownership dispute (cf. Submerged Lands Act)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100020&quot;</span><span class="p">:</span> <span class="s2">&quot;federal pre-emption of state court jurisdiction&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100030&quot;</span><span class="p">:</span> <span class="s2">&quot;federal pre-emption of state legislation or regulation. cf. state regulation of business. rarely involves union activity. Does not involve constitutional interpretation unless the Court says it does.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100040&quot;</span><span class="p">:</span> <span class="s2">&quot;Submerged Lands Act (cf. federal-state ownership dispute)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100050&quot;</span><span class="p">:</span> <span class="s2">&quot;national supremacy: commodities&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100060&quot;</span><span class="p">:</span> <span class="s2">&quot;national supremacy: intergovernmental tax immunity&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100070&quot;</span><span class="p">:</span> <span class="s2">&quot;national supremacy: marital and family relationships and property, including obligation of child support&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100080&quot;</span><span class="p">:</span> <span class="s2">&quot;national supremacy: natural resources (cf. natural resources - environmental protection)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100090&quot;</span><span class="p">:</span> <span class="s2">&quot;national supremacy: pollution, air or water (cf. natural resources - environmental protection)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10010&quot;</span><span class="p">:</span> <span class="s2">&quot;involuntary confession&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100100&quot;</span><span class="p">:</span> <span class="s2">&quot;national supremacy: public utilities (cf. federal public utilities regulation)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100110&quot;</span><span class="p">:</span> <span class="s2">&quot;national supremacy: state tax (cf. state tax)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100120&quot;</span><span class="p">:</span> <span class="s2">&quot;national supremacy: miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;100130&quot;</span><span class="p">:</span> <span class="s2">&quot;miscellaneous federalism&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10020&quot;</span><span class="p">:</span> <span class="s2">&quot;habeas corpus&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10030&quot;</span><span class="p">:</span> <span class="s2">&quot;plea bargaining: the constitutionality of and/or the circumstances of its exercise&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10040&quot;</span><span class="p">:</span> <span class="s2">&quot;retroactivity (of newly announced or newly enacted constitutional or statutory rights)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10050&quot;</span><span class="p">:</span> <span class="s2">&quot;search and seizure (other than as pertains to vehicles or Crime Control Act)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10060&quot;</span><span class="p">:</span> <span class="s2">&quot;search and seizure, vehicles&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10070&quot;</span><span class="p">:</span> <span class="s2">&quot;search and seizure, Crime Control Act&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10080&quot;</span><span class="p">:</span> <span class="s2">&quot;contempt of court or congress&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10090&quot;</span><span class="p">:</span> <span class="s2">&quot;self-incrimination (other than as pertains to Miranda or immunity from prosecution)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10100&quot;</span><span class="p">:</span> <span class="s2">&quot;Miranda warnings&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10110&quot;</span><span class="p">:</span> <span class="s2">&quot;self-incrimination, immunity from prosecution&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10120&quot;</span><span class="p">:</span> <span class="s2">&quot;right to counsel (cf. indigents appointment of counsel or inadequate representation)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10130&quot;</span><span class="p">:</span> <span class="s2">&quot;cruel and unusual punishment, death penalty (cf. extra legal jury influence, death penalty)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10140&quot;</span><span class="p">:</span> <span class="s2">&quot;cruel and unusual punishment, non-death penalty (cf. liability, civil rights acts)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10150&quot;</span><span class="p">:</span> <span class="s2">&quot;line-up&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10160&quot;</span><span class="p">:</span> <span class="s2">&quot;discovery and inspection (in the context of criminal litigation only, otherwise Freedom of Information Act and related federal or state statutes or regulations)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10170&quot;</span><span class="p">:</span> <span class="s2">&quot;double jeopardy&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10180&quot;</span><span class="p">:</span> <span class="s2">&quot;ex post facto (state)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10190&quot;</span><span class="p">:</span> <span class="s2">&quot;extra-legal jury influences: miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10200&quot;</span><span class="p">:</span> <span class="s2">&quot;extra-legal jury influences: prejudicial statements or evidence&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10210&quot;</span><span class="p">:</span> <span class="s2">&quot;extra-legal jury influences: contact with jurors outside courtroom&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10220&quot;</span><span class="p">:</span> <span class="s2">&quot;extra-legal jury influences: jury instructions (not necessarily in criminal cases)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10230&quot;</span><span class="p">:</span> <span class="s2">&quot;extra-legal jury influences: voir dire (not necessarily a criminal case)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10240&quot;</span><span class="p">:</span> <span class="s2">&quot;extra-legal jury influences: prison garb or appearance&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10250&quot;</span><span class="p">:</span> <span class="s2">&quot;extra-legal jury influences: jurors and death penalty (cf. cruel and unusual punishment)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10260&quot;</span><span class="p">:</span> <span class="s2">&quot;extra-legal jury influences: pretrial publicity&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10270&quot;</span><span class="p">:</span> <span class="s2">&quot;confrontation (right to confront accuser, call and cross-examine witnesses)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10280&quot;</span><span class="p">:</span> <span class="s2">&quot;subconstitutional fair procedure: confession of error&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10290&quot;</span><span class="p">:</span> <span class="s2">&quot;subconstitutional fair procedure: conspiracy (cf. Federal Rules of Criminal Procedure: conspiracy)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10300&quot;</span><span class="p">:</span> <span class="s2">&quot;subconstitutional fair procedure: entrapment&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10310&quot;</span><span class="p">:</span> <span class="s2">&quot;subconstitutional fair procedure: exhaustion of remedies&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10320&quot;</span><span class="p">:</span> <span class="s2">&quot;subconstitutional fair procedure: fugitive from justice&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10330&quot;</span><span class="p">:</span> <span class="s2">&quot;subconstitutional fair procedure: presentation, admissibility, or sufficiency of evidence (not necessarily a criminal case)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10340&quot;</span><span class="p">:</span> <span class="s2">&quot;subconstitutional fair procedure: stay of execution&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10350&quot;</span><span class="p">:</span> <span class="s2">&quot;subconstitutional fair procedure: timeliness&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10360&quot;</span><span class="p">:</span> <span class="s2">&quot;subconstitutional fair procedure: miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10370&quot;</span><span class="p">:</span> <span class="s2">&quot;Federal Rules of Criminal Procedure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10380&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: assault&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10390&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: bank robbery&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10400&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: conspiracy (cf. subconstitutional fair procedure: conspiracy)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10410&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: escape from custody&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10420&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: false statements (cf. statutory construction of criminal laws: perjury)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10430&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: financial (other than in fraud or internal revenue)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10440&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: firearms&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10450&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: fraud&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10460&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: gambling&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10470&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: Hobbs Act; i.e., 18 USC 1951&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10480&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: immigration (cf. immigration and naturalization)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10490&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: internal revenue (cf. Federal Taxation)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10500&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: Mann Act and related statutes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10510&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: narcotics includes regulation and prohibition of alcohol&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10520&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: obstruction of justice&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10530&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: perjury (other than as pertains to statutory construction of criminal laws: false statements)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10540&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: Travel Act, 18 USC 1952&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10550&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: war crimes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10560&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: sentencing guidelines&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10570&quot;</span><span class="p">:</span> <span class="s2">&quot;statutory construction of criminal laws: miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10580&quot;</span><span class="p">:</span> <span class="s2">&quot;jury trial (right to, as distinct from extra-legal jury influences)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10590&quot;</span><span class="p">:</span> <span class="s2">&quot;speedy trial&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;10600&quot;</span><span class="p">:</span> <span class="s2">&quot;miscellaneous criminal procedure (cf. due process, prisoners&#39; rights, comity: criminal procedure)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;110010&quot;</span><span class="p">:</span> <span class="s2">&quot;boundary dispute between states&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;110020&quot;</span><span class="p">:</span> <span class="s2">&quot;non-real property dispute between states&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;110030&quot;</span><span class="p">:</span> <span class="s2">&quot;miscellaneous interstate relations conflict&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;110033&quot;</span><span class="p">:</span> <span class="s2">&quot;incorporation of foreign territories&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;120010&quot;</span><span class="p">:</span> <span class="s2">&quot;federal taxation, typically under provisions of the Internal Revenue Code&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;120020&quot;</span><span class="p">:</span> <span class="s2">&quot;federal taxation of gifts, personal, business, or professional expenses&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;120030&quot;</span><span class="p">:</span> <span class="s2">&quot;priority of federal fiscal claims: over those of the states or private entities&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;120040&quot;</span><span class="p">:</span> <span class="s2">&quot;miscellaneous federal taxation (cf. national supremacy: state tax)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;130010&quot;</span><span class="p">:</span> <span class="s2">&quot;legislative veto&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;130015&quot;</span><span class="p">:</span> <span class="s2">&quot;executive authority vis-a-vis congress or the states&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;130020&quot;</span><span class="p">:</span> <span class="s2">&quot;miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;140010&quot;</span><span class="p">:</span> <span class="s2">&quot;real property&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;140020&quot;</span><span class="p">:</span> <span class="s2">&quot;personal property&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;140030&quot;</span><span class="p">:</span> <span class="s2">&quot;contracts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;140040&quot;</span><span class="p">:</span> <span class="s2">&quot;evidence&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;140050&quot;</span><span class="p">:</span> <span class="s2">&quot;civil procedure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;140060&quot;</span><span class="p">:</span> <span class="s2">&quot;torts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;140070&quot;</span><span class="p">:</span> <span class="s2">&quot;wills and trusts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;140080&quot;</span><span class="p">:</span> <span class="s2">&quot;commercial transactions&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20010&quot;</span><span class="p">:</span> <span class="s2">&quot;voting&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20020&quot;</span><span class="p">:</span> <span class="s2">&quot;Voting Rights Act of 1965, plus amendments&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20030&quot;</span><span class="p">:</span> <span class="s2">&quot;ballot access (of candidates and political parties)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20040&quot;</span><span class="p">:</span> <span class="s2">&quot;desegregation (other than as pertains to school desegregation, employment discrimination, and affirmative action)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20050&quot;</span><span class="p">:</span> <span class="s2">&quot;desegregation, schools&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20060&quot;</span><span class="p">:</span> <span class="s2">&quot;employment discrimination: on basis of race, age, religion, illegitimacy, national origin, or working conditions.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20070&quot;</span><span class="p">:</span> <span class="s2">&quot;affirmative action&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20075&quot;</span><span class="p">:</span> <span class="s2">&quot;slavery or indenture&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20080&quot;</span><span class="p">:</span> <span class="s2">&quot;sit-in demonstrations (protests against racial discrimination in places of public accommodation)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20090&quot;</span><span class="p">:</span> <span class="s2">&quot;reapportionment: other than plans governed by the Voting Rights Act&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20100&quot;</span><span class="p">:</span> <span class="s2">&quot;debtors&#39; rights&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20110&quot;</span><span class="p">:</span> <span class="s2">&quot;deportation (cf. immigration and naturalization)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20120&quot;</span><span class="p">:</span> <span class="s2">&quot;employability of aliens (cf. immigration and naturalization)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20130&quot;</span><span class="p">:</span> <span class="s2">&quot;sex discrimination (excluding sex discrimination in employment)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20140&quot;</span><span class="p">:</span> <span class="s2">&quot;sex discrimination in employment (cf. sex discrimination)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20150&quot;</span><span class="p">:</span> <span class="s2">&quot;Indians (other than pertains to state jurisdiction over)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20160&quot;</span><span class="p">:</span> <span class="s2">&quot;Indians, state jurisdiction over&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20170&quot;</span><span class="p">:</span> <span class="s2">&quot;juveniles (cf. rights of illegitimates)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20180&quot;</span><span class="p">:</span> <span class="s2">&quot;poverty law, constitutional&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20190&quot;</span><span class="p">:</span> <span class="s2">&quot;poverty law, statutory: welfare benefits, typically under some Social Security Act provision.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20200&quot;</span><span class="p">:</span> <span class="s2">&quot;illegitimates, rights of (cf. juveniles): typically inheritance and survivor&#39;s benefits, and paternity suits&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20210&quot;</span><span class="p">:</span> <span class="s2">&quot;handicapped, rights of: under Rehabilitation, Americans with Disabilities Act, and related statutes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20220&quot;</span><span class="p">:</span> <span class="s2">&quot;residency requirements: durational, plus discrimination against nonresidents&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20230&quot;</span><span class="p">:</span> <span class="s2">&quot;military: draftee, or person subject to induction&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20240&quot;</span><span class="p">:</span> <span class="s2">&quot;military: active duty&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20250&quot;</span><span class="p">:</span> <span class="s2">&quot;military: veteran&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20260&quot;</span><span class="p">:</span> <span class="s2">&quot;immigration and naturalization: permanent residence&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20270&quot;</span><span class="p">:</span> <span class="s2">&quot;immigration and naturalization: citizenship&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20280&quot;</span><span class="p">:</span> <span class="s2">&quot;immigration and naturalization: loss of citizenship, denaturalization&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20290&quot;</span><span class="p">:</span> <span class="s2">&quot;immigration and naturalization: access to public education&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20300&quot;</span><span class="p">:</span> <span class="s2">&quot;immigration and naturalization: welfare benefits&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20310&quot;</span><span class="p">:</span> <span class="s2">&quot;immigration and naturalization: miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20320&quot;</span><span class="p">:</span> <span class="s2">&quot;indigents: appointment of counsel (cf. right to counsel)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20330&quot;</span><span class="p">:</span> <span class="s2">&quot;indigents: inadequate representation by counsel (cf. right to counsel)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20340&quot;</span><span class="p">:</span> <span class="s2">&quot;indigents: payment of fine&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20350&quot;</span><span class="p">:</span> <span class="s2">&quot;indigents: costs or filing fees&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20360&quot;</span><span class="p">:</span> <span class="s2">&quot;indigents: U.S. Supreme Court docketing fee&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20370&quot;</span><span class="p">:</span> <span class="s2">&quot;indigents: transcript&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20380&quot;</span><span class="p">:</span> <span class="s2">&quot;indigents: assistance of psychiatrist&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20390&quot;</span><span class="p">:</span> <span class="s2">&quot;indigents: miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20400&quot;</span><span class="p">:</span> <span class="s2">&quot;liability, civil rights acts (cf. liability, governmental and liability, nongovernmental; cruel and unusual punishment, non-death penalty)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;20410&quot;</span><span class="p">:</span> <span class="s2">&quot;miscellaneous civil rights (cf. comity: civil rights)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30010&quot;</span><span class="p">:</span> <span class="s2">&quot;First Amendment, miscellaneous (cf. comity: First Amendment)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30020&quot;</span><span class="p">:</span> <span class="s2">&quot;commercial speech, excluding attorneys&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30030&quot;</span><span class="p">:</span> <span class="s2">&quot;libel, defamation: defamation of public officials and public and private persons&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30040&quot;</span><span class="p">:</span> <span class="s2">&quot;libel, privacy: true and false light invasions of privacy&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30050&quot;</span><span class="p">:</span> <span class="s2">&quot;legislative investigations: concerning internal security only&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30060&quot;</span><span class="p">:</span> <span class="s2">&quot;federal or state internal security legislation: Smith, Internal Security, and related federal statutes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30070&quot;</span><span class="p">:</span> <span class="s2">&quot;loyalty oath or non-Communist affidavit (other than bar applicants, government employees, political party, or teacher)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30080&quot;</span><span class="p">:</span> <span class="s2">&quot;loyalty oath: bar applicants (cf. admission to bar, state or federal or U.S. Supreme Court)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30090&quot;</span><span class="p">:</span> <span class="s2">&quot;loyalty oath: government employees&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30100&quot;</span><span class="p">:</span> <span class="s2">&quot;loyalty oath: political party&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30110&quot;</span><span class="p">:</span> <span class="s2">&quot;loyalty oath: teachers&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30120&quot;</span><span class="p">:</span> <span class="s2">&quot;security risks: denial of benefits or dismissal of employees for reasons other than failure to meet loyalty oath requirements&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30130&quot;</span><span class="p">:</span> <span class="s2">&quot;conscientious objectors (cf. military draftee or military active duty) to military service&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30140&quot;</span><span class="p">:</span> <span class="s2">&quot;campaign spending (cf. governmental corruption):&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30150&quot;</span><span class="p">:</span> <span class="s2">&quot;protest demonstrations (other than as pertains to sit-in demonstrations): demonstrations and other forms of protest based on First Amendment guarantees&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30160&quot;</span><span class="p">:</span> <span class="s2">&quot;free exercise of religion&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30170&quot;</span><span class="p">:</span> <span class="s2">&quot;establishment of religion (other than as pertains to parochiaid:)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30180&quot;</span><span class="p">:</span> <span class="s2">&quot;parochiaid: government aid to religious schools, or religious requirements in public schools&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30190&quot;</span><span class="p">:</span> <span class="s2">&quot;obscenity, state (cf. comity: privacy): including the regulation of sexually explicit material under the 21st Amendment&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;30200&quot;</span><span class="p">:</span> <span class="s2">&quot;obscenity, federal&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;40010&quot;</span><span class="p">:</span> <span class="s2">&quot;due process: miscellaneous (cf. loyalty oath), the residual code&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;40020&quot;</span><span class="p">:</span> <span class="s2">&quot;due process: hearing or notice (other than as pertains to government employees or prisoners&#39; rights)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;40030&quot;</span><span class="p">:</span> <span class="s2">&quot;due process: hearing, government employees&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;40040&quot;</span><span class="p">:</span> <span class="s2">&quot;due process: prisoners&#39; rights and defendants&#39; rights&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;40050&quot;</span><span class="p">:</span> <span class="s2">&quot;due process: impartial decision maker&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;40060&quot;</span><span class="p">:</span> <span class="s2">&quot;due process: jurisdiction (jurisdiction over non-resident litigants)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;40070&quot;</span><span class="p">:</span> <span class="s2">&quot;due process: takings clause, or other non-constitutional governmental taking of property&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;50010&quot;</span><span class="p">:</span> <span class="s2">&quot;privacy (cf. libel, comity: privacy)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;50020&quot;</span><span class="p">:</span> <span class="s2">&quot;abortion: including contraceptives&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;50030&quot;</span><span class="p">:</span> <span class="s2">&quot;right to die&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;50040&quot;</span><span class="p">:</span> <span class="s2">&quot;Freedom of Information Act and related federal or state statutes or regulations&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;60010&quot;</span><span class="p">:</span> <span class="s2">&quot;attorneys&#39; and governmental employees&#39; or officials&#39; fees or compensation or licenses&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;60020&quot;</span><span class="p">:</span> <span class="s2">&quot;commercial speech, attorneys (cf. commercial speech)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;60030&quot;</span><span class="p">:</span> <span class="s2">&quot;admission to a state or federal bar, disbarment, and attorney discipline (cf. loyalty oath: bar applicants)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;60040&quot;</span><span class="p">:</span> <span class="s2">&quot;admission to, or disbarment from, Bar of the U.S. Supreme Court&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70010&quot;</span><span class="p">:</span> <span class="s2">&quot;arbitration (in the context of labor-management or employer-employee relations) (cf. arbitration)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70020&quot;</span><span class="p">:</span> <span class="s2">&quot;union antitrust: legality of anticompetitive union activity&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70030&quot;</span><span class="p">:</span> <span class="s2">&quot;union or closed shop: includes agency shop litigation&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70040&quot;</span><span class="p">:</span> <span class="s2">&quot;Fair Labor Standards Act&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70050&quot;</span><span class="p">:</span> <span class="s2">&quot;Occupational Safety and Health Act&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70060&quot;</span><span class="p">:</span> <span class="s2">&quot;union-union member dispute (except as pertains to union or closed shop)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70070&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: bargaining&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70080&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: employee discharge&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70090&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: distribution of union literature&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70100&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: representative election&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70110&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: antistrike injunction&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70120&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: jurisdictional dispute&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70130&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: right to organize&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70140&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: picketing&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70150&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: secondary activity&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70160&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: no-strike clause&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70170&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: union representatives&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70180&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: union trust funds (cf. ERISA)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70190&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: working conditions&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70200&quot;</span><span class="p">:</span> <span class="s2">&quot;labor-management disputes: miscellaneous dispute&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;70210&quot;</span><span class="p">:</span> <span class="s2">&quot;miscellaneous union&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80010&quot;</span><span class="p">:</span> <span class="s2">&quot;antitrust (except in the context of mergers and union antitrust)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80020&quot;</span><span class="p">:</span> <span class="s2">&quot;mergers&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80030&quot;</span><span class="p">:</span> <span class="s2">&quot;bankruptcy (except in the context of priority of federal fiscal claims)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80040&quot;</span><span class="p">:</span> <span class="s2">&quot;sufficiency of evidence: typically in the context of a jury&#39;s determination of compensation for injury or death&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80050&quot;</span><span class="p">:</span> <span class="s2">&quot;election of remedies: legal remedies available to injured persons or things&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80060&quot;</span><span class="p">:</span> <span class="s2">&quot;liability, governmental: tort or contract actions by or against government or governmental officials other than defense of criminal actions brought under a civil rights action.&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80070&quot;</span><span class="p">:</span> <span class="s2">&quot;liability, other than as in sufficiency of evidence, election of remedies, punitive damages&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80080&quot;</span><span class="p">:</span> <span class="s2">&quot;liability, punitive damages&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80090&quot;</span><span class="p">:</span> <span class="s2">&quot;Employee Retirement Income Security Act (cf. union trust funds)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80100&quot;</span><span class="p">:</span> <span class="s2">&quot;state or local government tax&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80105&quot;</span><span class="p">:</span> <span class="s2">&quot;state and territorial land claims&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80110&quot;</span><span class="p">:</span> <span class="s2">&quot;state or local government regulation, especially of business (cf. federal pre-emption of state court jurisdiction, federal pre-emption of state legislation or regulation)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80120&quot;</span><span class="p">:</span> <span class="s2">&quot;federal or state regulation of securities&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80130&quot;</span><span class="p">:</span> <span class="s2">&quot;natural resources - environmental protection (cf. national supremacy: natural resources, national supremacy: pollution)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80140&quot;</span><span class="p">:</span> <span class="s2">&quot;corruption, governmental or governmental regulation of other than as in campaign spending&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80150&quot;</span><span class="p">:</span> <span class="s2">&quot;zoning: constitutionality of such ordinances, or restrictions on owners&#39; or lessors&#39; use of real property&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80160&quot;</span><span class="p">:</span> <span class="s2">&quot;arbitration (other than as pertains to labor-management or employer-employee relations (cf. union arbitration)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80170&quot;</span><span class="p">:</span> <span class="s2">&quot;federal or state consumer protection: typically under the Truth in Lending; Food, Drug and Cosmetic; and Consumer Protection Credit Acts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80180&quot;</span><span class="p">:</span> <span class="s2">&quot;patents and copyrights: patent&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80190&quot;</span><span class="p">:</span> <span class="s2">&quot;patents and copyrights: copyright&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80200&quot;</span><span class="p">:</span> <span class="s2">&quot;patents and copyrights: trademark&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80210&quot;</span><span class="p">:</span> <span class="s2">&quot;patents and copyrights: patentability of computer processes&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80220&quot;</span><span class="p">:</span> <span class="s2">&quot;federal or state regulation of transportation regulation: railroad&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80230&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulations of transportation regulation: boat&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80240&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulation of transportation regulation:truck, or motor carrier&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80250&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulation of transportation regulation: pipeline (cf. federal public utilities regulation: gas pipeline)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80260&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulation of transportation regulation: airline&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80270&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulation of public utilities regulation: electric power&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80280&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulation of public utilities regulation: nuclear power&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80290&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulation of public utilities regulation: oil producer&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80300&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulation of public utilities regulation: gas producer&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80310&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulation of public utilities regulation: gas pipeline (cf. federal transportation regulation: pipeline)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80320&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulation of public utilities regulation: radio and television (cf. cable television)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80330&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulation of public utilities regulation: cable television (cf. radio and television)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80340&quot;</span><span class="p">:</span> <span class="s2">&quot;federal and some few state regulations of public utilities regulation: telephone or telegraph company&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;80350&quot;</span><span class="p">:</span> <span class="s2">&quot;miscellaneous economic regulation&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90010&quot;</span><span class="p">:</span> <span class="s2">&quot;comity: civil rights&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90020&quot;</span><span class="p">:</span> <span class="s2">&quot;comity: criminal procedure&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90030&quot;</span><span class="p">:</span> <span class="s2">&quot;comity: First Amendment&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90040&quot;</span><span class="p">:</span> <span class="s2">&quot;comity: habeas corpus&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90050&quot;</span><span class="p">:</span> <span class="s2">&quot;comity: military&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90060&quot;</span><span class="p">:</span> <span class="s2">&quot;comity: obscenity&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90070&quot;</span><span class="p">:</span> <span class="s2">&quot;comity: privacy&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90080&quot;</span><span class="p">:</span> <span class="s2">&quot;comity: miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90090&quot;</span><span class="p">:</span> <span class="s2">&quot;comity primarily removal cases, civil procedure (cf. comity, criminal and First Amendment); deference to foreign judicial tribunals&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90100&quot;</span><span class="p">:</span> <span class="s2">&quot;assessment of costs or damages: as part of a court order&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90110&quot;</span><span class="p">:</span> <span class="s2">&quot;Federal Rules of Civil Procedure including Supreme Court Rules, application of the Federal Rules of Evidence, Federal Rules of Appellate Procedure in civil litigation, Circuit Court Rules, and state rules and admiralty rules&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90120&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial review of administrative agency&#39;s or administrative official&#39;s actions and procedures&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90130&quot;</span><span class="p">:</span> <span class="s2">&quot;mootness (cf. standing to sue: live dispute)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90140&quot;</span><span class="p">:</span> <span class="s2">&quot;venue&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90150&quot;</span><span class="p">:</span> <span class="s2">&quot;no merits: writ improvidently granted&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90160&quot;</span><span class="p">:</span> <span class="s2">&quot;no merits: dismissed or affirmed for want of a substantial or properly presented federal question, or a nonsuit&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90170&quot;</span><span class="p">:</span> <span class="s2">&quot;no merits: dismissed or affirmed for want of jurisdiction (cf. judicial administration: Supreme Court jurisdiction or authority on appeal from federal district courts or courts of appeals)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90180&quot;</span><span class="p">:</span> <span class="s2">&quot;no merits: adequate non-federal grounds for decision&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90190&quot;</span><span class="p">:</span> <span class="s2">&quot;no merits: remand to determine basis of state or federal court decision (cf. judicial administration: state law)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90200&quot;</span><span class="p">:</span> <span class="s2">&quot;no merits: miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90210&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: adversary parties&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90220&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: direct injury&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90230&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: legal injury&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90240&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: personal injury&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90250&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: justiciable question&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90260&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: live dispute&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90270&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: parens patriae standing&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90280&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: statutory standing&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90290&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: private or implied cause of action&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90300&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: taxpayer&#39;s suit&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90310&quot;</span><span class="p">:</span> <span class="s2">&quot;standing to sue: miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90320&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: jurisdiction or authority of federal district courts or territorial courts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90330&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: jurisdiction or authority of federal courts of appeals&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90340&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: Supreme Court jurisdiction or authority on appeal or writ of error, from federal district courts or courts of appeals (cf. 753)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90350&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: Supreme Court jurisdiction or authority on appeal or writ of error, from highest state court&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90360&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: jurisdiction or authority of the Court of Claims&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90370&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: Supreme Court&#39;s original jurisdiction&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90380&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: review of non-final order&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90390&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: change in state law (cf. no merits: remand to determine basis of state court decision)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90400&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: federal question (cf. no merits: dismissed for want of a substantial or properly presented federal question)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90410&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: ancillary or pendent jurisdiction&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90420&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: extraordinary relief (e.g., mandamus, injunction)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90430&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: certification (cf. objection to reason for denial of certiorari or appeal)&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90440&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: resolution of circuit conflict, or conflict between or among other courts&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90450&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: objection to reason for denial of certiorari or appeal&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90460&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: collateral estoppel or res judicata&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90470&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: interpleader&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90480&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: untimely filing&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90490&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: Act of State doctrine&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90500&quot;</span><span class="p">:</span> <span class="s2">&quot;judicial administration: miscellaneous&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90510&quot;</span><span class="p">:</span> <span class="s2">&quot;Supreme Court&#39;s certiorari, writ of error, or appeals jurisdiction&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;90520&quot;</span><span class="p">:</span> <span class="s2">&quot;miscellaneous judicial power, especially diversity jurisdiction&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">DEFAULT_DATA_DIR</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">NAME</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">META</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">to_path</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="s2">&quot;supreme-court-py3.json.gz&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filepath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Full path on disk for SupremeCourt data as compressed json file.</span>
+<span class="sd">        ``None`` if file is not found, e.g. has not yet been downloaded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="SupremeCourt.download"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.supreme_court.SupremeCourt.download">[docs]</a>    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download the data as a Python version-specific compressed json file and</span>
+<span class="sd">        save it to disk under the ``data_dir`` directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            force: If True, download the dataset, even if it already exists</span>
+<span class="sd">                on disk under ``data_dir``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">release_tag</span> <span class="o">=</span> <span class="s2">&quot;supreme_court_py3_v</span><span class="si">{data_version}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_version</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span><span class="n">DOWNLOAD_ROOT</span><span class="p">,</span> <span class="n">release_tag</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span>
+        <span class="n">tio</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">,</span>
+            <span class="n">dirpath</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
+                <span class="s2">&quot;dataset file </span><span class="si">{}</span><span class="s2"> not found;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;has the dataset been downloaded yet?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">tio</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;rt&quot;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">record</span>
+
+    <span class="k">def</span> <span class="nf">_get_filters</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">opinion_author</span><span class="p">,</span>
+        <span class="n">decision_direction</span><span class="p">,</span>
+        <span class="n">issue_area</span><span class="p">,</span>
+        <span class="n">date_range</span><span class="p">,</span>
+        <span class="n">min_len</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">min_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">min_len</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`min_len` must be at least 1&quot;</span><span class="p">)</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="n">min_len</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">date_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">date_range</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_and_clip_range</span><span class="p">(</span>
+                <span class="n">date_range</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_date_range</span><span class="p">,</span> <span class="n">val_type</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;decision_date&quot;</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">date_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;decision_date&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">date_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">opinion_author</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">opinion_author</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_set_members</span><span class="p">(</span>
+                <span class="n">opinion_author</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">valid_vals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">opinion_author_codes</span><span class="p">)</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;maj_opinion_author&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">opinion_author</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">decision_direction</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">decision_direction</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_set_members</span><span class="p">(</span>
+                <span class="n">decision_direction</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">),</span> <span class="n">valid_vals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">decision_directions</span><span class="p">)</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;decision_direction&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">decision_direction</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">issue_area</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">issue_area</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_set_members</span><span class="p">(</span>
+                <span class="n">issue_area</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">valid_vals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">issue_area_codes</span><span class="p">)</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;issue_area&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">issue_area</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filters</span>
+
+    <span class="k">def</span> <span class="nf">_filtered_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">filters</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">filter_</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="k">for</span> <span class="n">filter_</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">record</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">record</span>
+
+<div class="viewcode-block" id="SupremeCourt.texts"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.supreme_court.SupremeCourt.texts">[docs]</a>    <span class="k">def</span> <span class="nf">texts</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">opinion_author</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">decision_direction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">issue_area</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">date_range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over decisions in this dataset, optionally filtering by a variety</span>
+<span class="sd">        of metadata and/or text length, and yield texts only,</span>
+<span class="sd">        in chronological order by decision date.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            opinion_author: Filter decisions by the name(s) of the majority opinion&#39;s author,</span>
+<span class="sd">                coded as an integer whose mapping is given in</span>
+<span class="sd">                :attr:`SupremeCourt.opinion_author_codes`.</span>
+<span class="sd">            decision_direction: Filter decisions by the ideological direction</span>
+<span class="sd">                of the majority&#39;s decision; see</span>
+<span class="sd">                :attr:`SupremeCourt.decision_directions`.</span>
+<span class="sd">            issue_area: Filter decisions by the issue area of the case&#39;s subject matter,</span>
+<span class="sd">                coded as an integer whose mapping is given in</span>
+<span class="sd">                :attr:`SupremeCourt.issue_area_codes`.</span>
+<span class="sd">            date_range: Filter decisions by the date on which they were decided;</span>
+<span class="sd">                both start and end date must be specified, but a null value for either</span>
+<span class="sd">                will be replaced by the min/max date available for the dataset.</span>
+<span class="sd">            min_len: Filter decisions by the length (# characters) of their text content.</span>
+<span class="sd">            limit: Yield no more than ``limit`` decisions that match all specified filters.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Text of the next decision in dataset passing all filters.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any filtering options are invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_filters</span><span class="p">(</span>
+            <span class="n">opinion_author</span><span class="p">,</span> <span class="n">decision_direction</span><span class="p">,</span> <span class="n">issue_area</span><span class="p">,</span> <span class="n">date_range</span><span class="p">,</span> <span class="n">min_len</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered_iter</span><span class="p">(</span><span class="n">filters</span><span class="p">),</span> <span class="n">limit</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="SupremeCourt.records"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.supreme_court.SupremeCourt.records">[docs]</a>    <span class="k">def</span> <span class="nf">records</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">opinion_author</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">decision_direction</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">issue_area</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">date_range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over decisions in this dataset, optionally filtering by a variety</span>
+<span class="sd">        of metadata and/or text length, and yield text + metadata pairs,</span>
+<span class="sd">        in chronological order by decision date.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            opinion_author: Filter decisions by the name(s) of the majority opinion&#39;s author,</span>
+<span class="sd">                coded as an integer whose mapping is given in</span>
+<span class="sd">                :attr:`SupremeCourt.opinion_author_codes`.</span>
+<span class="sd">            decision_direction: Filter decisions by the ideological direction</span>
+<span class="sd">                of the majority&#39;s decision; see</span>
+<span class="sd">                :attr:`SupremeCourt.decision_directions`.</span>
+<span class="sd">            issue_area: Filter decisions by the issue area of the case&#39;s subject matter,</span>
+<span class="sd">                coded as an integer whose mapping is given in</span>
+<span class="sd">                :attr:`SupremeCourt.issue_area_codes`.</span>
+<span class="sd">            date_range: Filter decisions by the date on which they were decided;</span>
+<span class="sd">                both start and end date must be specified, but a null value for either</span>
+<span class="sd">                will be replaced by the min/max date available for the dataset.</span>
+<span class="sd">            min_len: Filter decisions by the length (# characters) of their text content.</span>
+<span class="sd">            limit: Yield no more than ``limit`` decisions that match all specified filters.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Text of the next decision in dataset passing all filters,</span>
+<span class="sd">            and its corresponding metadata.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any filtering options are invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_filters</span><span class="p">(</span>
+            <span class="n">opinion_author</span><span class="p">,</span> <span class="n">decision_direction</span><span class="p">,</span> <span class="n">issue_area</span><span class="p">,</span> <span class="n">date_range</span><span class="p">,</span> <span class="n">min_len</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered_iter</span><span class="p">(</span><span class="n">filters</span><span class="p">),</span> <span class="n">limit</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">record</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">),</span> <span class="n">record</span></div></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,199 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.preprocessing.normalize &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.preprocessing.normalize</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Normalize</span>
+<span class="sd">---------</span>
+
+<span class="sd">Normalize aspects of raw text that may vary in problematic ways.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">unicodedata</span>
+
+<span class="kn">from</span> <span class="nn">.resources</span> <span class="k">import</span> <span class="p">(</span>
+    <span class="n">QUOTE_TRANSLATION_TABLE</span><span class="p">,</span>
+    <span class="n">RE_HYPHENATED_WORD</span><span class="p">,</span>
+    <span class="n">RE_LINEBREAK</span><span class="p">,</span>
+    <span class="n">RE_NONBREAKING_SPACE</span><span class="p">,</span>
+    <span class="n">RE_ZWSP</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="normalize_hyphenated_words"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.normalize.normalize_hyphenated_words">[docs]</a><span class="k">def</span> <span class="nf">normalize_hyphenated_words</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalize words in ``text`` that have been split across lines by a hyphen</span>
+<span class="sd">    for visual consistency (aka hyphenated) by joining the pieces back together,</span>
+<span class="sd">    sans hyphen and whitespace.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">RE_HYPHENATED_WORD</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\1\2&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="normalize_quotation_marks"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.normalize.normalize_quotation_marks">[docs]</a><span class="k">def</span> <span class="nf">normalize_quotation_marks</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalize all &quot;fancy&quot; single- and double-quotation marks in ``text``</span>
+<span class="sd">    to just the basic ASCII equivalents. Note that this will also normalize fancy</span>
+<span class="sd">    apostrophes, which are typically represented as single quotation marks.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">translate</span><span class="p">(</span><span class="n">QUOTE_TRANSLATION_TABLE</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="normalize_repeating_chars"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.normalize.normalize_repeating_chars">[docs]</a><span class="k">def</span> <span class="nf">normalize_repeating_chars</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">chars</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">maxn</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalize repeating characters in ``text`` by truncating their number of consecutive</span>
+<span class="sd">    repetitions to ``maxn``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        text</span>
+<span class="sd">        chars: One or more characters whose consecutive repetitions are to be normalized,</span>
+<span class="sd">            e.g. &quot;.&quot; or &quot;?!&quot;.</span>
+<span class="sd">        maxn: Maximum number of consecutive repetitions of ``chars`` to which</span>
+<span class="sd">            longer repetitions will be truncated.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        str</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">re</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;(</span><span class="si">{}</span><span class="s2">){{</span><span class="si">{}</span><span class="s2">,}}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">re</span><span class="o">.</span><span class="n">escape</span><span class="p">(</span><span class="n">chars</span><span class="p">),</span> <span class="n">maxn</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span> <span class="n">chars</span> <span class="o">*</span> <span class="n">maxn</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="normalize_unicode"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.normalize.normalize_unicode">[docs]</a><span class="k">def</span> <span class="nf">normalize_unicode</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">form</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;NFC&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Normalize unicode characters in ``text`` into canonical forms.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        text</span>
+<span class="sd">        form ({&quot;NFC&quot;, &quot;NFD&quot;, &quot;NFKC&quot;, &quot;NFKD&quot;}): Form of normalization applied to</span>
+<span class="sd">            unicode characters. For example, an &quot;e&quot; with accute accent &quot;´&quot; can be</span>
+<span class="sd">            written as &quot;e´&quot; (canonical decomposition, &quot;NFD&quot;) or &quot;é&quot; (canonical</span>
+<span class="sd">            composition, &quot;NFC&quot;). Unicode can be normalized to NFC form</span>
+<span class="sd">            without any change in meaning, so it&#39;s usually a safe bet. If &quot;NFKC&quot;,</span>
+<span class="sd">            additional normalizations are applied that can change characters&#39; meanings,</span>
+<span class="sd">            e.g. ellipsis characters are replaced with three periods.</span>
+
+<span class="sd">    See Also:</span>
+<span class="sd">        https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">unicodedata</span><span class="o">.</span><span class="n">normalize</span><span class="p">(</span><span class="n">form</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="normalize_whitespace"><a class="viewcode-back" href="../../../api_reference/text_processing.html#textacy.preprocessing.normalize.normalize_whitespace">[docs]</a><span class="k">def</span> <span class="nf">normalize_whitespace</span><span class="p">(</span><span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Replace all contiguous zero-width spaces with an empty string, line-breaking spaces</span>
+<span class="sd">    with a single newline, and non-breaking spaces with a single space, then</span>
+<span class="sd">    strip any leading/trailing whitespace.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">RE_ZWSP</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">RE_LINEBREAK</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\n&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="n">text</span> <span class="o">=</span> <span class="n">RE_NONBREAKING_SPACE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">text</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

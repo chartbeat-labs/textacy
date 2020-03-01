@@ -1,0 +1,359 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.spacier.core &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.spacier.core</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Convenient entry points for making spaCy docs and loading spaCy language pipelines.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">import</span> <span class="nn">types</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">spacy</span>
+<span class="kn">from</span> <span class="nn">cachetools</span> <span class="k">import</span> <span class="n">cached</span>
+<span class="kn">from</span> <span class="nn">cachetools.keys</span> <span class="k">import</span> <span class="n">hashkey</span>
+<span class="kn">from</span> <span class="nn">spacy.language</span> <span class="k">import</span> <span class="n">Language</span>
+<span class="kn">from</span> <span class="nn">spacy.tokens</span> <span class="k">import</span> <span class="n">Doc</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">cache</span><span class="p">,</span> <span class="n">lang_utils</span><span class="p">,</span> <span class="n">utils</span>
+
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="load_spacy_lang"><a class="viewcode-back" href="../../../api_reference/lang_doc_corpus.html#textacy.spacier.core.load_spacy_lang">[docs]</a><span class="nd">@cached</span><span class="p">(</span><span class="n">cache</span><span class="o">.</span><span class="n">LRU_CACHE</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">hashkey</span><span class="p">,</span> <span class="s2">&quot;spacy_lang&quot;</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">load_spacy_lang</span><span class="p">(</span>
+    <span class="n">name</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">],</span>
+    <span class="n">disable</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">allow_blank</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Language</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Load a spaCy ``Language``: a shared vocabulary and language-specific data</span>
+<span class="sd">    for tokenizing text, and (if available) model data and a processing pipeline</span>
+<span class="sd">    containing a sequence of components for annotating a document.</span>
+<span class="sd">    An LRU cache saves languages in memory.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        name: spaCy language to load.</span>
+<span class="sd">            Could be a shortcut link, full package name, or path to model directory,</span>
+<span class="sd">            or a 2-letter ISO language code for which spaCy has language data.</span>
+<span class="sd">        disable: Names of pipeline components to disable, if any.</span>
+
+<span class="sd">            .. note:: Although spaCy&#39;s API specifies this argument as a list,</span>
+<span class="sd">               here we require a tuple. Pipelines are stored in the LRU cache</span>
+<span class="sd">               with unique identifiers generated from the hash of the function</span>
+<span class="sd">               name and args --- and lists aren&#39;t hashable.</span>
+
+<span class="sd">        allow_blank: If True, allow loading of blank spaCy ``Language`` s;</span>
+<span class="sd">            if False, raise an OSError if a full processing pipeline isn&#39;t available.</span>
+<span class="sd">            Note that spaCy ``Doc`` s produced by blank languages are missing</span>
+<span class="sd">            key functionality, e.g. POS tags, entities, sentences.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        A loaded spaCy ``Language``.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        OSError</span>
+<span class="sd">        ImportError</span>
+
+<span class="sd">    See Also:</span>
+<span class="sd">        * https://spacy.io/api/top-level#spacy.load</span>
+<span class="sd">        * https://spacy.io/api/top-level#spacy.blank</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">disable</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">disable</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="c1"># load a full spacy lang processing pipeline</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">spacy_lang</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">disable</span><span class="o">=</span><span class="n">disable</span><span class="p">)</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;loaded &#39;</span><span class="si">%s</span><span class="s2">&#39; spaCy language pipeline&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">spacy_lang</span>
+    <span class="k">except</span> <span class="ne">OSError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="c1"># fall back to a blank spacy lang</span>
+        <span class="k">if</span> <span class="n">allow_blank</span> <span class="ow">is</span> <span class="kc">True</span> <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">spacy_lang</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">blank</span><span class="p">(</span><span class="n">name</span><span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;loaded &#39;</span><span class="si">%s</span><span class="s2">&#39; spaCy language blank&quot;</span><span class="p">,</span> <span class="n">name</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">spacy_lang</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">e</span></div>
+
+
+<div class="viewcode-block" id="make_spacy_doc"><a class="viewcode-back" href="../../../api_reference/lang_doc_corpus.html#textacy.spacier.core.make_spacy_doc">[docs]</a><span class="k">def</span> <span class="nf">make_spacy_doc</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">],</span> <span class="n">Doc</span><span class="p">],</span>
+    <span class="n">lang</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Language</span><span class="p">]</span> <span class="o">=</span> <span class="n">lang_utils</span><span class="o">.</span><span class="n">identify_lang</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Doc</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Make a :class:`spacy.tokens.Doc` from valid inputs, and automatically</span>
+<span class="sd">    load/validate :class:`spacy.language.Language` pipelines to process ``data``.</span>
+
+<span class="sd">    Make a ``Doc`` from text:</span>
+
+<span class="sd">    .. code-block:: pycon</span>
+
+<span class="sd">        &gt;&gt;&gt; text = &quot;To be, or not to be, that is the question.&quot;</span>
+<span class="sd">        &gt;&gt;&gt; doc = make_spacy_doc(text)</span>
+<span class="sd">        &gt;&gt;&gt; doc._.preview</span>
+<span class="sd">        &#39;Doc(13 tokens: &quot;To be, or not to be, that is the question.&quot;)&#39;</span>
+
+<span class="sd">    Make a ``Doc`` from a (text, metadata) pair, aka a &quot;record&quot;:</span>
+
+<span class="sd">    .. code-block:: pycon</span>
+
+<span class="sd">        &gt;&gt;&gt; record = (text, {&quot;author&quot;: &quot;Shakespeare, William&quot;})</span>
+<span class="sd">        &gt;&gt;&gt; doc = make_spacy_doc(record)</span>
+<span class="sd">        &gt;&gt;&gt; doc._.preview</span>
+<span class="sd">        &#39;Doc(13 tokens: &quot;To be, or not to be, that is the question.&quot;)&#39;</span>
+<span class="sd">        &gt;&gt;&gt; doc._.meta</span>
+<span class="sd">        {&#39;author&#39;: &#39;Shakespeare, William&#39;}</span>
+
+<span class="sd">    Specify the language / ``Language`` pipeline used to process the text --- or don&#39;t:</span>
+
+<span class="sd">    .. code-block:: pycon</span>
+
+<span class="sd">        &gt;&gt;&gt; make_spacy_doc(text)</span>
+<span class="sd">        &gt;&gt;&gt; make_spacy_doc(text, lang=&quot;en&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; make_spacy_doc(text, lang=&quot;en_core_web_sm&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; make_spacy_doc(text, lang=textacy.load_spacy_lang(&quot;en&quot;))</span>
+<span class="sd">        &gt;&gt;&gt; make_spacy_doc(text, lang=textacy.lang_utils.identify_lang)</span>
+
+<span class="sd">    Ensure that an already-processed ``Doc`` is compatible with ``lang``:</span>
+
+<span class="sd">    .. code-block:: pycon</span>
+
+<span class="sd">        &gt;&gt;&gt; spacy_lang = textacy.load_spacy_lang(&quot;en&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; doc = spacy_lang(text)</span>
+<span class="sd">        &gt;&gt;&gt; make_spacy_doc(doc, lang=&quot;en&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; make_spacy_doc(doc, lang=&quot;es&quot;)</span>
+<span class="sd">        ...</span>
+<span class="sd">        ValueError: lang of spacy pipeline used to process document (&#39;en&#39;) must be the same as `lang` (&#39;es&#39;)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: Make a :class:`spacy.tokens.Doc` from a text or (text, metadata) pair.</span>
+<span class="sd">            If already a ``Doc``, ensure that it&#39;s compatible with ``lang``</span>
+<span class="sd">            to avoid surprises downstream, and return it as-is.</span>
+<span class="sd">        lang: Language with which spaCy processes (or processed) ``data``.</span>
+
+<span class="sd">            *If known*, pass a standard 2-letter language code (e.g. &quot;en&quot;),</span>
+<span class="sd">            or the name of a spacy language pipeline (e.g. &quot;en_core_web_md&quot;),</span>
+<span class="sd">            or an already-instantiated :class:`spacy.language.Language` object.</span>
+<span class="sd">            *If not known*, pass a function that takes unicode text as input</span>
+<span class="sd">            and outputs a standard 2-letter language code.</span>
+
+<span class="sd">            A given / detected language string is then used to instantiate</span>
+<span class="sd">            a corresponding ``Language`` with all default components enabled.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Processed spaCy Doc.</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        TypeError</span>
+<span class="sd">        ValueError</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_make_spacy_doc_from_text</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">spacy</span><span class="o">.</span><span class="n">tokens</span><span class="o">.</span><span class="n">Doc</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_make_spacy_doc_from_doc</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">utils</span><span class="o">.</span><span class="n">is_record</span><span class="p">(</span><span class="n">data</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">_make_spacy_doc_from_record</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;`data` must be </span><span class="si">{}</span><span class="s2">, not </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="p">{</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">},</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">data</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">_make_spacy_doc_from_text</span><span class="p">(</span>
+    <span class="n">text</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">lang</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Language</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Doc</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lang</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">spacy_lang</span> <span class="o">=</span> <span class="n">load_spacy_lang</span><span class="p">(</span><span class="n">lang</span><span class="p">)</span>
+        <span class="n">langstr</span> <span class="o">=</span> <span class="n">spacy_lang</span><span class="o">.</span><span class="n">lang</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lang</span><span class="p">,</span> <span class="n">spacy</span><span class="o">.</span><span class="n">language</span><span class="o">.</span><span class="n">Language</span><span class="p">):</span>
+        <span class="n">spacy_lang</span> <span class="o">=</span> <span class="n">lang</span>
+        <span class="n">langstr</span> <span class="o">=</span> <span class="n">spacy_lang</span><span class="o">.</span><span class="n">lang</span>
+    <span class="k">elif</span> <span class="n">callable</span><span class="p">(</span><span class="n">lang</span><span class="p">):</span>
+        <span class="n">langstr</span> <span class="o">=</span> <span class="n">lang</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+        <span class="n">spacy_lang</span> <span class="o">=</span> <span class="n">load_spacy_lang</span><span class="p">(</span><span class="n">langstr</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;`lang` must be </span><span class="si">{}</span><span class="s2">, not </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="p">{</span><span class="nb">str</span><span class="p">,</span> <span class="n">spacy</span><span class="o">.</span><span class="n">language</span><span class="o">.</span><span class="n">Language</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">},</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">lang</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">spacy_lang</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_make_spacy_doc_from_record</span><span class="p">(</span>
+    <span class="n">record</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">],</span>
+    <span class="n">lang</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Language</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Doc</span><span class="p">:</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lang</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">spacy_lang</span> <span class="o">=</span> <span class="n">load_spacy_lang</span><span class="p">(</span><span class="n">lang</span><span class="p">)</span>
+        <span class="n">langstr</span> <span class="o">=</span> <span class="n">spacy_lang</span><span class="o">.</span><span class="n">lang</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lang</span><span class="p">,</span> <span class="n">spacy</span><span class="o">.</span><span class="n">language</span><span class="o">.</span><span class="n">Language</span><span class="p">):</span>
+        <span class="n">spacy_lang</span> <span class="o">=</span> <span class="n">lang</span>
+        <span class="n">langstr</span> <span class="o">=</span> <span class="n">spacy_lang</span><span class="o">.</span><span class="n">lang</span>
+    <span class="k">elif</span> <span class="n">callable</span><span class="p">(</span><span class="n">lang</span><span class="p">):</span>
+        <span class="n">langstr</span> <span class="o">=</span> <span class="n">lang</span><span class="p">(</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">spacy_lang</span> <span class="o">=</span> <span class="n">load_spacy_lang</span><span class="p">(</span><span class="n">langstr</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;`lang` must be </span><span class="si">{}</span><span class="s2">, not </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="p">{</span><span class="nb">str</span><span class="p">,</span> <span class="n">spacy</span><span class="o">.</span><span class="n">language</span><span class="o">.</span><span class="n">Language</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">},</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">lang</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="n">doc</span> <span class="o">=</span> <span class="n">spacy_lang</span><span class="p">(</span><span class="n">record</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">meta</span> <span class="o">=</span> <span class="n">record</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">doc</span>
+
+
+<span class="k">def</span> <span class="nf">_make_spacy_doc_from_doc</span><span class="p">(</span>
+    <span class="n">doc</span><span class="p">:</span> <span class="n">Doc</span><span class="p">,</span>
+    <span class="n">lang</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">str</span><span class="p">],</span> <span class="n">Language</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Doc</span><span class="p">:</span>
+    <span class="c1"># these checks are probably unnecessary, but in case a user</span>
+    <span class="c1"># has done something strange, we should complain...</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lang</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="c1"># a `lang` as str could be a specific spacy model name,</span>
+        <span class="c1"># e.g. &quot;en_core_web_sm&quot;, while `langstr` would only be &quot;en&quot;</span>
+        <span class="n">langstr</span> <span class="o">=</span> <span class="n">doc</span><span class="o">.</span><span class="n">vocab</span><span class="o">.</span><span class="n">lang</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">lang</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="n">langstr</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;lang of spacy pipeline used to process document (&#39;</span><span class="si">{}</span><span class="s2">&#39;) &quot;</span>
+                <span class="s2">&quot;must be the same as `lang` (&#39;</span><span class="si">{}</span><span class="s2">&#39;)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">langstr</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">lang</span><span class="p">,</span> <span class="n">spacy</span><span class="o">.</span><span class="n">language</span><span class="o">.</span><span class="n">Language</span><span class="p">):</span>
+        <span class="c1"># just want to make sure that doc and lang share the same vocabulary</span>
+        <span class="k">if</span> <span class="n">doc</span><span class="o">.</span><span class="n">vocab</span> <span class="ow">is</span> <span class="ow">not</span> <span class="n">lang</span><span class="o">.</span><span class="n">vocab</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;`spacy.vocab.Vocab` used to process document (&#39;</span><span class="si">{}</span><span class="s2">&#39;) &quot;</span>
+                <span class="s2">&quot;must be the same as that used by the `lang` pipeline (&#39;</span><span class="si">{}</span><span class="s2">&#39;)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">doc</span><span class="o">.</span><span class="n">vocab</span><span class="p">,</span> <span class="n">lang</span><span class="o">.</span><span class="n">vocab</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">callable</span><span class="p">(</span><span class="n">lang</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">False</span><span class="p">:</span>
+        <span class="c1"># there&#39;s nothing to be done with a callable lang, since we already have</span>
+        <span class="c1"># the doc, and checking the text lang is an unnecessary performance hit</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;`lang` must be </span><span class="si">{}</span><span class="s2">, not </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="p">{</span><span class="nb">str</span><span class="p">,</span> <span class="n">spacy</span><span class="o">.</span><span class="n">language</span><span class="o">.</span><span class="n">Language</span><span class="p">,</span> <span class="n">types</span><span class="o">.</span><span class="n">FunctionType</span><span class="p">},</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">lang</span><span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">doc</span>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

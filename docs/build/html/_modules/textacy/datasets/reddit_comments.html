@@ -1,0 +1,485 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.datasets.reddit_comments &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.datasets.reddit_comments</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Reddit comments</span>
+<span class="sd">---------------</span>
+
+<span class="sd">A collection of up to ~1.5 billion Reddit comments posted from</span>
+<span class="sd">October 2007 through May 2015.</span>
+
+<span class="sd">Records include the following key fields (plus a few others):</span>
+
+<span class="sd">    - ``body``: Full text of the comment.</span>
+<span class="sd">    - ``created_utc``: Date on which the comment was posted.</span>
+<span class="sd">    - ``subreddit``: Sub-reddit in which the comment was posted, excluding the</span>
+<span class="sd">      familiar &quot;/r/&quot; prefix.</span>
+<span class="sd">    - ``score``: Net score (upvotes - downvotes) on the comment.</span>
+<span class="sd">    - ``gilded``: Number of times this comment received reddit gold.</span>
+
+<span class="sd">The raw data was originally collected by /u/Stuck_In_the_Matrix via Reddit&#39;s</span>
+<span class="sd">APIS, and stored for posterity by the `Internet Archive &lt;https://archive.org&gt;`_.</span>
+<span class="sd">For more details, refer to https://archive.org/details/2015_reddit_comments_corpus.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">import</span> <span class="nn">re</span>
+<span class="kn">import</span> <span class="nn">urllib.parse</span>
+<span class="kn">from</span> <span class="nn">datetime</span> <span class="k">import</span> <span class="n">datetime</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">io</span> <span class="k">as</span> <span class="n">tio</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">Dataset</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">NAME</span> <span class="o">=</span> <span class="s2">&quot;reddit_comments&quot;</span>
+<span class="n">META</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;site_url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://archive.org/details/2015_reddit_comments_corpus&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;Collection of ~1.5 billion publicly available Reddit comments &quot;</span>
+        <span class="s2">&quot;from October 2007 through May 2015.&quot;</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+<span class="n">DOWNLOAD_ROOT</span> <span class="o">=</span> <span class="s2">&quot;https://archive.org/download/2015_reddit_comments_corpus/reddit_data/&quot;</span>
+
+<span class="n">RE_REDDIT_LINK</span> <span class="o">=</span> <span class="n">re</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\[([^]]+)\]\(https?://[^\)]+\)&quot;</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RedditComments"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.reddit_comments.RedditComments">[docs]</a><span class="k">class</span> <span class="nc">RedditComments</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stream a collection of Reddit comments from 1 or more compressed files on disk,</span>
+<span class="sd">    either as texts or text + metadata pairs.</span>
+
+<span class="sd">    Download the data (one time only!) or subsets thereof by specifying a date range::</span>
+
+<span class="sd">        &gt;&gt;&gt; import textacy.datasets</span>
+<span class="sd">        &gt;&gt;&gt; ds = textacy.datasets.RedditComments()</span>
+<span class="sd">        &gt;&gt;&gt; ds.download(date_range=(&quot;2007-10&quot;, &quot;2008-03&quot;))</span>
+<span class="sd">        &gt;&gt;&gt; ds.info</span>
+<span class="sd">        {&#39;name&#39;: &#39;reddit_comments&#39;,</span>
+<span class="sd">         &#39;site_url&#39;: &#39;https://archive.org/details/2015_reddit_comments_corpus&#39;,</span>
+<span class="sd">         &#39;description&#39;: &#39;Collection of ~1.5 billion publicly available Reddit comments from October 2007 through May 2015.&#39;}</span>
+
+<span class="sd">    Iterate over comments as texts or records with both text and metadata::</span>
+
+<span class="sd">        &gt;&gt;&gt; for text in ds.texts(limit=5):</span>
+<span class="sd">        ...     print(text)</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(limit=5):</span>
+<span class="sd">        ...     print(&quot;\\n{} {}\\n{}&quot;.format(meta[&quot;author&quot;], meta[&quot;created_utc&quot;], text))</span>
+
+<span class="sd">    Filter comments by a variety of metadata fields and text length::</span>
+
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(subreddit=&quot;politics&quot;, limit=5):</span>
+<span class="sd">        ...     print(meta[&quot;score&quot;], &quot;:&quot;, text)</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(date_range=(&quot;2008-01&quot;, &quot;2008-03&quot;), limit=5):</span>
+<span class="sd">        ...     print(meta[&quot;created_utc&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(score_range=(10, None), limit=5):</span>
+<span class="sd">        ...     print(meta[&quot;score&quot;], &quot;:&quot;, text)</span>
+<span class="sd">        &gt;&gt;&gt; for text in ds.texts(min_len=2000, limit=5):</span>
+<span class="sd">        ...     print(len(text))</span>
+
+<span class="sd">    Stream comments into a :class:`textacy.Corpus &lt;textacy.corpus.Corpus&gt;`::</span>
+
+<span class="sd">        &gt;&gt;&gt; textacy.Corpus(&quot;en&quot;, data=ds.records(limit=1000))</span>
+<span class="sd">        Corpus(1000 docs; 27582 tokens)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_dir: Path to directory on disk under which the data is stored,</span>
+<span class="sd">            i.e. ``/path/to/data_dir/reddit_comments``. Each file covers a given month,</span>
+<span class="sd">            as indicated in the filename like &quot;YYYY/RC_YYYY-MM.bz2&quot;.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        full_date_range: First and last dates for which comments</span>
+<span class="sd">            are available, each as an ISO-formatted string (YYYY-MM-DD).</span>
+<span class="sd">        filepaths: Full paths on disk for all Reddit comments files</span>
+<span class="sd">            found under :attr:`ReddictComments.data_dir` directory, sorted</span>
+<span class="sd">            in chronological order.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">full_date_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;2007-10-01&quot;</span><span class="p">,</span> <span class="s2">&quot;2015-06-01&quot;</span><span class="p">)</span>
+    <span class="n">_full_score_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mi">2147483647</span><span class="p">,</span> <span class="mi">2147483647</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">DEFAULT_DATA_DIR</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">NAME</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">META</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">to_path</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_date_range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filepaths</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="o">...</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Full paths on disk for all Reddit comments files found under</span>
+<span class="sd">        the ``data_dir`` directory, sorted chronologically.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="o">.</span><span class="n">is_dir</span><span class="p">():</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span>
+                <span class="nb">sorted</span><span class="p">(</span>
+                    <span class="n">tio</span><span class="o">.</span><span class="n">get_filepaths</span><span class="p">(</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span>
+                        <span class="n">match_regex</span><span class="o">=</span><span class="sa">r</span><span class="s2">&quot;RC_\d</span><span class="si">{4}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">extension</span><span class="o">=</span><span class="s2">&quot;.bz2&quot;</span><span class="p">,</span>
+                        <span class="n">recursive</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">()</span>
+
+<div class="viewcode-block" id="RedditComments.download"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.reddit_comments.RedditComments.download">[docs]</a>    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">date_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+        <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download 1 or more monthly Reddit comments files from archive.org</span>
+<span class="sd">        and save them to disk under the ``data_dir`` directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            date_range: Interval specifying the [start, end) dates for which</span>
+<span class="sd">                comments files will be downloaded. Each item must be a str</span>
+<span class="sd">                formatted as YYYY-MM or YYYY-MM-DD (the latter is converted</span>
+<span class="sd">                to the corresponding YYYY-MM value). Both start and end values</span>
+<span class="sd">                must be specified, but a null value for either is automatically</span>
+<span class="sd">                replaced by the minimum or maximum valid values, respectively.</span>
+<span class="sd">            force: If True, download the dataset, even if it already</span>
+<span class="sd">                exists on disk under ``data_dir``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">date_range</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_and_clip_range</span><span class="p">(</span>
+            <span class="n">date_range</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_date_range</span><span class="p">,</span> <span class="n">val_type</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span>
+        <span class="n">filestubs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_filestubs</span><span class="p">(</span><span class="n">date_range</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">filestub</span> <span class="ow">in</span> <span class="n">filestubs</span><span class="p">:</span>
+            <span class="n">tio</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span>
+                <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span><span class="n">DOWNLOAD_ROOT</span><span class="p">,</span> <span class="n">filestub</span><span class="p">),</span>
+                <span class="n">filename</span><span class="o">=</span><span class="n">filestub</span><span class="p">,</span>
+                <span class="n">dirpath</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span>
+                <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_generate_filestubs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">date_range</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Generate a list of monthly filepath stubs in the interval [start, end),</span>
+<span class="sd">        each with format &quot;YYYY/RC_YYYY-MM.bz2&quot;.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">fstubs</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_date</span><span class="p">(</span><span class="n">date_range</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="n">end</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_parse_date</span><span class="p">(</span><span class="n">date_range</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">tot_mo</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_total_mos</span><span class="p">(</span><span class="n">start</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_total_mos</span><span class="p">(</span><span class="n">end</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">yr</span><span class="p">,</span> <span class="n">mo</span> <span class="o">=</span> <span class="nb">divmod</span><span class="p">(</span><span class="n">tot_mo</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+            <span class="n">fstubs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">datetime</span><span class="p">(</span><span class="n">yr</span><span class="p">,</span> <span class="n">mo</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span><span class="s2">&quot;%Y/RC_%Y-%m.bz2&quot;</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">fstubs</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_parse_date</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;dt (str) =&gt; datetime&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;%Y-%m&quot;</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">strptime</span><span class="p">(</span><span class="n">dt</span><span class="p">,</span> <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_total_mos</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;dt (datetime) =&gt; int&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">dt</span><span class="o">.</span><span class="n">month</span> <span class="o">+</span> <span class="mi">12</span> <span class="o">*</span> <span class="n">dt</span><span class="o">.</span><span class="n">year</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="c1"># for performance reasons, only iterate over files that are requested</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_date_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">filepaths</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">filestub</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">filestub</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_filestubs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_date_range</span><span class="p">)</span>
+            <span class="p">]</span>
+            <span class="k">for</span> <span class="n">filepath</span> <span class="ow">in</span> <span class="n">filepaths</span><span class="p">:</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">filepath</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+                    <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
+                        <span class="s2">&quot;requested comments file </span><span class="si">{}</span><span class="s2"> not found;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                        <span class="s2">&quot;has the dataset been downloaded yet?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">filepath</span><span class="p">)</span>
+                    <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">filepaths</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filepaths</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">filepaths</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
+                    <span class="s2">&quot;no comments files found in </span><span class="si">{}</span><span class="s2"> directory;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                    <span class="s2">&quot;has the dataset been downloaded yet?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">)</span>
+                <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">filepath</span> <span class="ow">in</span> <span class="n">filepaths</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">tio</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;rb&quot;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+                <span class="n">line</span><span class="p">[</span><span class="s2">&quot;created_utc&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_timestamp</span><span class="p">(</span>
+                    <span class="n">line</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;created_utc&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+                <span class="n">line</span><span class="p">[</span><span class="s2">&quot;retrieved_on&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_convert_timestamp</span><span class="p">(</span>
+                    <span class="n">line</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;retrieved_on&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
+                <span class="n">line</span><span class="p">[</span><span class="s2">&quot;body&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_clean_content</span><span class="p">(</span><span class="n">line</span><span class="p">[</span><span class="s2">&quot;body&quot;</span><span class="p">])</span>
+                <span class="k">yield</span> <span class="n">line</span>
+
+    <span class="k">def</span> <span class="nf">_get_filters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subreddit</span><span class="p">,</span> <span class="n">date_range</span><span class="p">,</span> <span class="n">score_range</span><span class="p">,</span> <span class="n">min_len</span><span class="p">):</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">min_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">min_len</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`min_len` must be at least 1&quot;</span><span class="p">)</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;body&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="n">min_len</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">subreddit</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">subreddit</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_set_members</span><span class="p">(</span><span class="n">subreddit</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;subreddit&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">subreddit</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">date_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">date_range</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_and_clip_range</span><span class="p">(</span>
+                <span class="n">date_range</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_date_range</span><span class="p">,</span> <span class="n">val_type</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;created_utc&quot;</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">date_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;created_utc&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">date_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">score_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">score_range</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_and_clip_range</span><span class="p">(</span>
+                <span class="n">score_range</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_full_score_range</span><span class="p">,</span> <span class="n">val_type</span><span class="o">=</span><span class="p">(</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">))</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;score&quot;</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">score_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">score_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">filters</span>
+
+    <span class="k">def</span> <span class="nf">_filtered_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">filters</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">filter_</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="k">for</span> <span class="n">filter_</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">record</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">record</span>
+
+<div class="viewcode-block" id="RedditComments.texts"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.reddit_comments.RedditComments.texts">[docs]</a>    <span class="k">def</span> <span class="nf">texts</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">subreddit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">date_range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">score_range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over comments (text-only) in 1 or more files of this dataset,</span>
+<span class="sd">        optionally filtering by a variety of metadata and/or text length,</span>
+<span class="sd">        in chronological order.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            subreddit: Filter comments for those which were posted</span>
+<span class="sd">                in the specified subreddit(s).</span>
+<span class="sd">            date_range: Filter comments for those which were posted</span>
+<span class="sd">                within the interval [start, end). Each item must be a str in</span>
+<span class="sd">                ISO-standard format, i.e. some amount of YYYY-MM-DDTHH:mm:ss.</span>
+<span class="sd">                Both start and end values must be specified, but a null value</span>
+<span class="sd">                for either is automatically replaced by the minimum or maximum</span>
+<span class="sd">                valid values, respectively.</span>
+<span class="sd">            score_range: Filter comments for those whose score</span>
+<span class="sd">                (# upvotes minus # downvotes) is within the interval [low, high).</span>
+<span class="sd">                Both start and end values must be specified, but a null value</span>
+<span class="sd">                for either is automatically replaced by the minimum or maximum</span>
+<span class="sd">                valid values, respectively.</span>
+<span class="sd">            min_len: Filter comments for those whose body length in chars is</span>
+<span class="sd">                at least this long.</span>
+<span class="sd">            limit: Maximum number of comments passing all filters to yield.</span>
+<span class="sd">                If None, all comments are iterated over.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Text of the next comment in dataset passing all filters.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any filtering options are invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_date_range</span> <span class="o">=</span> <span class="n">date_range</span>  <span class="c1"># used to limit files iterated</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_filters</span><span class="p">(</span><span class="n">subreddit</span><span class="p">,</span> <span class="n">date_range</span><span class="p">,</span> <span class="n">score_range</span><span class="p">,</span> <span class="n">min_len</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered_iter</span><span class="p">(</span><span class="n">filters</span><span class="p">),</span> <span class="n">limit</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;body&quot;</span><span class="p">]</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_date_range</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="RedditComments.records"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.reddit_comments.RedditComments.records">[docs]</a>    <span class="k">def</span> <span class="nf">records</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">subreddit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">date_range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">score_range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over comments (including text and metadata) in 1 or more files</span>
+<span class="sd">        of this dataset, optionally filtering by a variety of metadata and/or</span>
+<span class="sd">        text length, in chronological order.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            subreddit: Filter comments for those which were posted</span>
+<span class="sd">                in the specified subreddit(s).</span>
+<span class="sd">            date_range: Filter comments for those which were posted</span>
+<span class="sd">                within the interval [start, end). Each item must be a str in</span>
+<span class="sd">                ISO-standard format, i.e. some amount of YYYY-MM-DDTHH:mm:ss.</span>
+<span class="sd">                Both start and end values must be specified, but a null value</span>
+<span class="sd">                for either is automatically replaced by the minimum or maximum</span>
+<span class="sd">                valid values, respectively.</span>
+<span class="sd">            score_range: Filter comments for those whose score</span>
+<span class="sd">                (# upvotes minus # downvotes) is within the interval [low, high).</span>
+<span class="sd">                Both start and end values must be specified, but a null value</span>
+<span class="sd">                for either is automatically replaced by the minimum or maximum</span>
+<span class="sd">                valid values, respectively.</span>
+<span class="sd">            min_len: Filter comments for those whose body length in chars is</span>
+<span class="sd">                at least this long.</span>
+<span class="sd">            limit: Maximum number of comments passing all filters to yield.</span>
+<span class="sd">                If None, all comments are iterated over.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Text of the next comment in dataset passing all filters,</span>
+<span class="sd">            and its corresponding metadata.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any filtering options are invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_date_range</span> <span class="o">=</span> <span class="n">date_range</span>  <span class="c1"># used to limit files iterated</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_filters</span><span class="p">(</span><span class="n">subreddit</span><span class="p">,</span> <span class="n">date_range</span><span class="p">,</span> <span class="n">score_range</span><span class="p">,</span> <span class="n">min_len</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered_iter</span><span class="p">(</span><span class="n">filters</span><span class="p">),</span> <span class="n">limit</span><span class="p">):</span>
+                <span class="k">yield</span> <span class="n">record</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;body&quot;</span><span class="p">),</span> <span class="n">record</span>
+        <span class="k">finally</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_date_range</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+    <span class="k">def</span> <span class="nf">_convert_timestamp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">):</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">utcfromtimestamp</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">timestamp</span><span class="p">))</span><span class="o">.</span><span class="n">strftime</span><span class="p">(</span>
+                <span class="s2">&quot;%Y-%m-</span><span class="si">%d</span><span class="s2">T%H:%M:%S&quot;</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="k">return</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_clean_content</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">content</span><span class="p">):</span>
+        <span class="c1"># strip out link markup, e.g. [foo](http://foo.com)</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">RE_REDDIT_LINK</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\1&quot;</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+        <span class="c1"># clean up basic HTML cruft</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&amp;gt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&gt;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;&amp;lt;&quot;</span><span class="p">,</span> <span class="s2">&quot;&lt;&quot;</span><span class="p">)</span>
+        <span class="c1"># strip out text markup, e.g. * for bold text</span>
+        <span class="n">content</span> <span class="o">=</span> <span class="n">content</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;`&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;*&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;~&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+        <span class="c1"># normalize whitespace</span>
+        <span class="k">return</span> <span class="n">constants</span><span class="o">.</span><span class="n">RE_NONBREAKING_SPACE</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span>
+            <span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="n">constants</span><span class="o">.</span><span class="n">RE_LINEBREAK</span><span class="o">.</span><span class="n">sub</span><span class="p">(</span><span class="sa">r</span><span class="s2">&quot;\n&quot;</span><span class="p">,</span> <span class="n">content</span><span class="p">)</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

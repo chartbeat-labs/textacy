@@ -1,0 +1,291 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.io.csv &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.io.csv</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">CSV</span>
+<span class="sd">---</span>
+
+<span class="sd">Functions for reading from and writing to disk records in CSV format, where</span>
+<span class="sd">CSVs may be delimited not only by commas (the default) but tabs, pipes, and</span>
+<span class="sd">other valid one-char delimiters.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">csv</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Dict</span><span class="p">,</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Type</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">utils</span> <span class="k">as</span> <span class="n">io_utils</span>
+
+
+<div class="viewcode-block" id="read_csv"><a class="viewcode-back" href="../../../api_reference/io.html#textacy.io.csv.read_csv">[docs]</a><span class="k">def</span> <span class="nf">read_csv</span><span class="p">(</span>
+    <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">encoding</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">fieldnames</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">dialect</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Type</span><span class="p">[</span><span class="n">csv</span><span class="o">.</span><span class="n">Dialect</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;excel&quot;</span><span class="p">,</span>
+    <span class="n">delimiter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span>
+    <span class="n">quoting</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">QUOTE_NONNUMERIC</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">list</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Read the contents of a CSV file at ``filepath``, streaming line-by-line,</span>
+<span class="sd">    where each line is a list of strings and/or floats whose values</span>
+<span class="sd">    are separated by ``delimiter``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        filepath: Path to file on disk from which data will be read.</span>
+<span class="sd">        encoding: Name of the encoding used to decode or encode the data in ``filepath``.</span>
+<span class="sd">        fieldnames: If specified, gives names for columns of values,</span>
+<span class="sd">            which are used as keys in an ordered dictionary representation</span>
+<span class="sd">            of each line&#39;s data. If &#39;infer&#39;, the first kB of data is analyzed</span>
+<span class="sd">            to make a guess about whether the first row is a header of column</span>
+<span class="sd">            names, and if so, those names are used as keys. If None, no column</span>
+<span class="sd">            names are used, and each line is returned as a list of strings/floats.</span>
+<span class="sd">        dialect: Grouping of formatting parameters that determine how</span>
+<span class="sd">            the data is parsed when reading/writing. If &#39;infer&#39;, the first kB</span>
+<span class="sd">            of data is analyzed to get a best guess for the correct dialect.</span>
+<span class="sd">        delimiter: 1-character string used to separate fields in a row.</span>
+<span class="sd">        quoting: Type of quoting to apply to field values. See:</span>
+<span class="sd">            https://docs.python.org/3/library/csv.html#csv.QUOTE_NONNUMERIC</span>
+
+<span class="sd">    Yields:</span>
+<span class="sd">        List[obj]: Next row, whose elements are strings and/or floats.</span>
+<span class="sd">        If ``fieldnames`` is None or &#39;infer&#39; doesn&#39;t detect a header row.</span>
+
+<span class="sd">        *or*</span>
+
+<span class="sd">        Dict[str, obj]: Next row, as an ordered dictionary of (key, value) pairs,</span>
+<span class="sd">        where keys are column names and values are the corresponding strings</span>
+<span class="sd">        and/or floats. If ``fieldnames`` is a list of column names or &#39;infer&#39;</span>
+<span class="sd">        detects a header row.</span>
+
+<span class="sd">    See Also:</span>
+<span class="sd">        https://docs.python.org/3/library/csv.html#csv.reader</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">has_header</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="k">with</span> <span class="n">io_utils</span><span class="o">.</span><span class="n">open_sesame</span><span class="p">(</span><span class="n">filepath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;rt&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">dialect</span> <span class="o">==</span> <span class="s2">&quot;infer&quot;</span> <span class="ow">or</span> <span class="n">fieldnames</span> <span class="o">==</span> <span class="s2">&quot;infer&quot;</span><span class="p">:</span>
+            <span class="n">sniffer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">Sniffer</span><span class="p">()</span>
+            <span class="c1"># add pipes to the list of preferred delimiters, and put spaces last</span>
+            <span class="n">sniffer</span><span class="o">.</span><span class="n">preferred</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;,&quot;</span><span class="p">,</span> <span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="s2">&quot;|&quot;</span><span class="p">,</span> <span class="s2">&quot;;&quot;</span><span class="p">,</span> <span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">]</span>
+            <span class="c1"># sample = &quot;&quot;.join(f.readline() for _ in range(5))  # f.read(1024)</span>
+            <span class="n">sample</span> <span class="o">=</span> <span class="n">f</span><span class="o">.</span><span class="n">read</span><span class="p">(</span><span class="mi">1024</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">dialect</span> <span class="o">==</span> <span class="s2">&quot;infer&quot;</span><span class="p">:</span>
+                <span class="n">dialect</span> <span class="o">=</span> <span class="n">sniffer</span><span class="o">.</span><span class="n">sniff</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fieldnames</span> <span class="o">==</span> <span class="s2">&quot;infer&quot;</span><span class="p">:</span>
+                <span class="n">has_header</span> <span class="o">=</span> <span class="n">sniffer</span><span class="o">.</span><span class="n">has_header</span><span class="p">(</span><span class="n">sample</span><span class="p">)</span>
+            <span class="n">f</span><span class="o">.</span><span class="n">seek</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">csv_reader</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">,</span> <span class="n">Iterator</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">has_header</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">csv_reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span>
+                <span class="n">f</span><span class="p">,</span>
+                <span class="n">fieldnames</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span>
+                <span class="n">delimiter</span><span class="o">=</span><span class="n">delimiter</span><span class="p">,</span>
+                <span class="n">quoting</span><span class="o">=</span><span class="n">quoting</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">fieldnames</span><span class="p">:</span>
+            <span class="n">csv_reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictReader</span><span class="p">(</span>
+                <span class="n">f</span><span class="p">,</span>
+                <span class="n">fieldnames</span><span class="o">=</span><span class="n">fieldnames</span><span class="p">,</span>
+                <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span>
+                <span class="n">delimiter</span><span class="o">=</span><span class="n">delimiter</span><span class="p">,</span>
+                <span class="n">quoting</span><span class="o">=</span><span class="n">quoting</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">first_row</span> <span class="o">=</span> <span class="nb">next</span><span class="p">(</span><span class="n">csv_reader</span><span class="p">)</span>
+            <span class="c1"># is the first row a header with same values as fieldnames?</span>
+            <span class="c1"># if not, we should yield the row as usual</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">key</span> <span class="o">==</span> <span class="n">value</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">first_row</span><span class="o">.</span><span class="n">items</span><span class="p">()):</span>
+                <span class="k">yield</span> <span class="n">first_row</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">csv_reader</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">reader</span><span class="p">(</span>
+                <span class="n">f</span><span class="p">,</span>
+                <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span>
+                <span class="n">delimiter</span><span class="o">=</span><span class="n">delimiter</span><span class="p">,</span>
+                <span class="n">quoting</span><span class="o">=</span><span class="n">quoting</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">csv_reader</span><span class="p">:</span>
+            <span class="k">yield</span> <span class="n">row</span></div>
+
+
+<div class="viewcode-block" id="write_csv"><a class="viewcode-back" href="../../../api_reference/io.html#textacy.io.csv.write_csv">[docs]</a><span class="k">def</span> <span class="nf">write_csv</span><span class="p">(</span>
+    <span class="n">data</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Iterable</span><span class="p">[</span><span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Iterable</span><span class="p">]],</span>
+    <span class="n">filepath</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">encoding</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">make_dirs</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+    <span class="n">fieldnames</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">dialect</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;excel&quot;</span><span class="p">,</span>
+    <span class="n">delimiter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;,&quot;</span><span class="p">,</span>
+    <span class="n">quoting</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">QUOTE_NONNUMERIC</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Write rows of ``data`` to disk at ``filepath``, where each row is an iterable</span>
+<span class="sd">    or a dictionary of strings and/or numbers, written to one line with values</span>
+<span class="sd">    separated by ``delimiter``.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data: If ``fieldnames`` is None, an iterable of iterables of strings</span>
+<span class="sd">            and/or numbers to write to disk; for example::</span>
+
+<span class="sd">                [[&#39;That was a great movie!&#39;, 0.9],</span>
+<span class="sd">                 [&#39;The movie was okay, I guess.&#39;, 0.2],</span>
+<span class="sd">                 [&#39;Worst. Movie. Ever.&#39;, -1.0]]</span>
+
+<span class="sd">            If ``fieldnames`` is specified, an iterable of dictionaries with</span>
+<span class="sd">            string and/or number values to write to disk; for example::</span>
+
+<span class="sd">                [{&#39;text&#39;: &#39;That was a great movie!&#39;, &#39;score&#39;: 0.9},</span>
+<span class="sd">                 {&#39;text&#39;: &#39;The movie was okay, I guess.&#39;, &#39;score&#39;: 0.2},</span>
+<span class="sd">                 {&#39;text&#39;: &#39;Worst. Movie. Ever.&#39;, &#39;score&#39;: -1.0}]</span>
+
+<span class="sd">        filepath: Path to file on disk to which data will be written.</span>
+<span class="sd">        encoding: Name of the encoding used to decode or encode the data in ``filepath``.</span>
+<span class="sd">        make_dirs: If True, automatically create (sub)directories if not already present</span>
+<span class="sd">            in order to write ``filepath``.</span>
+<span class="sd">        fieldnames: Sequence of keys that identify the order in which</span>
+<span class="sd">            values in each rows&#39; dictionary is written to ``filepath``. These are</span>
+<span class="sd">            included in ``filepath`` as a header row of column names.</span>
+
+<span class="sd">            .. note:: Only specify this if ``data`` is an iterable of dictionaries.</span>
+
+<span class="sd">        dialect: Grouping of formatting parameters that determine how</span>
+<span class="sd">            the data is parsed when reading/writing.</span>
+<span class="sd">        delimiter: 1-character string used to separate fields in a row.</span>
+<span class="sd">        quoting: Type of quoting to apply to field values. See:</span>
+<span class="sd">            https://docs.python.org/3/library/csv.html#csv.QUOTE_NONNUMERIC</span>
+
+<span class="sd">    See Also:</span>
+<span class="sd">        https://docs.python.org/3/library/csv.html#csv.writer</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">with</span> <span class="n">io_utils</span><span class="o">.</span><span class="n">open_sesame</span><span class="p">(</span>
+        <span class="n">filepath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;wt&quot;</span><span class="p">,</span> <span class="n">newline</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="n">encoding</span><span class="p">,</span> <span class="n">make_dirs</span><span class="o">=</span><span class="n">make_dirs</span>
+    <span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+        <span class="n">csv_writer</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">fieldnames</span><span class="p">:</span>
+            <span class="n">csv_writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">DictWriter</span><span class="p">(</span>
+                <span class="n">f</span><span class="p">,</span>
+                <span class="n">fieldnames</span><span class="p">,</span>
+                <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span>
+                <span class="n">delimiter</span><span class="o">=</span><span class="n">delimiter</span><span class="p">,</span>
+                <span class="n">quoting</span><span class="o">=</span><span class="n">quoting</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="n">csv_writer</span><span class="o">.</span><span class="n">writeheader</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">csv_writer</span> <span class="o">=</span> <span class="n">csv</span><span class="o">.</span><span class="n">writer</span><span class="p">(</span>
+                <span class="n">f</span><span class="p">,</span>
+                <span class="n">dialect</span><span class="o">=</span><span class="n">dialect</span><span class="p">,</span>
+                <span class="n">delimiter</span><span class="o">=</span><span class="n">delimiter</span><span class="p">,</span>
+                <span class="n">quoting</span><span class="o">=</span><span class="n">quoting</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="n">csv_writer</span><span class="o">.</span><span class="n">writerows</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

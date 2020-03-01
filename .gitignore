@@ -6,13 +6,13 @@
 .vscode/
 
 # distribution / packaging
-build/
+build/*
 dist/
 *.egg-info/
 .mypy_cache/
 
 # documentation
-docs/build/*
+# docs/build/*
 
 # testing
 .cache

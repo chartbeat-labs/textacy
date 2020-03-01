@@ -1,0 +1,225 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.spacier.components &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.spacier.components</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Pipeline Components</span>
+<span class="sd">-------------------</span>
+
+<span class="sd">Custom components to add to a spaCy language pipeline.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">spacy.tokens</span> <span class="k">import</span> <span class="n">Doc</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">text_stats</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="TextStatsComponent"><a class="viewcode-back" href="../../../api_reference/spacier.html#textacy.spacier.components.TextStatsComponent">[docs]</a><span class="k">class</span> <span class="nc">TextStatsComponent</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    A custom component to be added to a spaCy language pipeline that computes</span>
+<span class="sd">    one, some, or all text stats for a parsed doc and sets the values</span>
+<span class="sd">    as custom attributes on a :class:`spacy.tokens.Doc`.</span>
+
+<span class="sd">    Add the component to a pipeline, *after* the parser (as well as any</span>
+<span class="sd">    subsequent components that modify the tokens/sentences of the doc)::</span>
+
+<span class="sd">        &gt;&gt;&gt; en = spacy.load(&#39;en&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; text_stats_component = TextStatsComponent()</span>
+<span class="sd">        &gt;&gt;&gt; en.add_pipe(text_stats_component, after=&#39;parser&#39;)</span>
+
+<span class="sd">    Process a text with the pipeline and access the custom attributes via</span>
+<span class="sd">    spaCy&#39;s underscore syntax::</span>
+
+<span class="sd">        &gt;&gt;&gt; doc = en(u&quot;This is a test test someverylongword.&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; doc._.n_words</span>
+<span class="sd">        6</span>
+<span class="sd">        &gt;&gt;&gt; doc._.flesch_reading_ease</span>
+<span class="sd">        73.84500000000001</span>
+
+<span class="sd">    Specify which attributes of the :class:`textacy.text_stats.TextStats()`</span>
+<span class="sd">    to add to processed documents::</span>
+
+<span class="sd">        &gt;&gt;&gt; en = spacy.load(&#39;en&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; text_stats_component = TextStatsComponent(attrs=&#39;n_words&#39;)</span>
+<span class="sd">        &gt;&gt;&gt; en.add_pipe(text_stats_component, last=True)</span>
+<span class="sd">        &gt;&gt;&gt; doc = en(u&quot;This is a test test someverylongword.&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; doc._.n_words</span>
+<span class="sd">        6</span>
+<span class="sd">        &gt;&gt;&gt; doc._.flesch_reading_ease</span>
+<span class="sd">        AttributeError: [E046] Can&#39;t retrieve unregistered extension attribute &#39;flesch_reading_ease&#39;. Did you forget to call the `set_extension` method?</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        attrs (str or Iterable[str] or None): If str, a single text stat</span>
+<span class="sd">            to compute and set on a :obj:`Doc`. If Iterable[str], multiple</span>
+<span class="sd">            text stats. If None, *all* text stats are computed and set as extensions.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        name (str): Default name of this component in a spaCy language pipeline,</span>
+<span class="sd">            used to get and modify the component via various ``spacy.Language``</span>
+<span class="sd">            methods, e.g. https://spacy.io/api/language#get_pipe.</span>
+
+<span class="sd">    See Also:</span>
+<span class="sd">        :class:`textacy.text_stats.TextStats`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">name</span> <span class="o">=</span> <span class="s2">&quot;textacy_text_stats&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">attrs</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">attrs</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;n_sents&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;n_words&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;n_chars&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;n_syllables&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;n_unique_words&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;n_long_words&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;n_monosyllable_words&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;n_polysyllable_words&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;flesch_kincaid_grade_level&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;flesch_reading_ease&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;smog_index&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gunning_fog_index&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;coleman_liau_index&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;automated_readability_index&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;lix&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;gulpease_index&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;wiener_sachtextformel&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">attrs</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="p">(</span><span class="n">attrs</span><span class="p">,)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">attrs</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+            <span class="c1"># TODO: see if there&#39;s a better way to handle this</span>
+            <span class="c1"># that doesn&#39;t involve clobbering existing property extensions</span>
+            <span class="n">Doc</span><span class="o">.</span><span class="n">set_extension</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;&quot;</span><span class="si">%s</span><span class="s1">&quot; custom attribute added to `spacy.tokens.Doc`&#39;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">):</span>
+        <span class="n">ts</span> <span class="o">=</span> <span class="n">text_stats</span><span class="o">.</span><span class="n">TextStats</span><span class="p">(</span><span class="n">doc</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">attr</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">attrs</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">attr</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">ts</span><span class="p">,</span> <span class="n">attr</span><span class="p">))</span>
+            <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                <span class="n">LOGGER</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
+                    <span class="s2">&quot;`TextStats` class doesn&#39;t have &#39;</span><span class="si">%s</span><span class="s2">&#39; attribute, so it can&#39;t &quot;</span>
+                    <span class="s2">&quot;be set on this `Doc`. Check the attrs used to initialize &quot;</span>
+                    <span class="s2">&quot;the `TextStatsComponent` in this pipeline for errors.&quot;</span><span class="p">,</span>
+                    <span class="n">attr</span><span class="p">,</span>
+                <span class="p">)</span>
+                <span class="k">raise</span>
+        <span class="k">return</span> <span class="n">doc</span></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

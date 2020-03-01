@@ -1,0 +1,1408 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Datasets &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Resources" href="resources.html" />
+    <link rel="prev" title="spaCy extensions" href="spacier.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-textacy.datasets.capitol_words">
+<span id="datasets"></span><span id="api-reference-datasets"></span><h1>Datasets<a class="headerlink" href="#module-textacy.datasets.capitol_words" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="capitol-words-congressional-speeches">
+<h2>Capitol Words Congressional speeches<a class="headerlink" href="#capitol-words-congressional-speeches" title="Permalink to this headline">¶</a></h2>
+<p>A collection of ~11k (almost all) speeches given by the main protagonists of the
+2016 U.S. Presidential election that had previously served in the U.S. Congress –
+including Hillary Clinton, Bernie Sanders, Barack Obama, Ted Cruz, and John Kasich –
+from January 1996 through June 2016.</p>
+<p>Records include the following data:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">text</span></code>: Full text of the Congressperson’s remarks.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">title</span></code>: Title of the speech, in all caps.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">date</span></code>: Date on which the speech was given, as an ISO-standard string.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">speaker_name</span></code>: First and last name of the speaker.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">speaker_party</span></code>: Political party of the speaker: “R” for Republican,
+“D” for Democrat, “I” for Independent.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">congress</span></code>: Number of the Congress in which the speech was given: ranges
+continuously between 104 and 114.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">chamber</span></code>: Chamber of Congress in which the speech was given: almost all
+are either “House” or “Senate”, with a small number of “Extensions”.</p></li>
+</ul>
+</div></blockquote>
+<p>This dataset was derived from data provided by the (now defunct) Sunlight
+Foundation’s <a class="reference external" href="http://sunlightlabs.github.io/Capitol-Words/">Capitol Words API</a>.</p>
+<dl class="class">
+<dt id="textacy.datasets.capitol_words.CapitolWords">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.datasets.capitol_words.</code><code class="sig-name descname">CapitolWords</code><span class="sig-paren">(</span><em class="sig-param">data_dir: Union[str</em>, <em class="sig-param">pathlib.Path] = PosixPath('/Users/burtondewilde/chartbeat/github/textacy/textacy/data/capitol_words')</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/datasets/capitol_words.html#CapitolWords"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.capitol_words.CapitolWords" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stream a collection of Congressional speeches from a compressed json file on disk,
+either as texts or text + metadata pairs.</p>
+<p>Download the data (one time only!) from the textacy-data repo
+(<a class="reference external" href="https://github.com/bdewilde/textacy-data">https://github.com/bdewilde/textacy-data</a>), and save its contents to disk:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">textacy.datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">textacy</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">CapitolWords</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">info</span>
+<span class="go">{&#39;name&#39;: &#39;capitol_words&#39;,</span>
+<span class="go"> &#39;site_url&#39;: &#39;http://sunlightlabs.github.io/Capitol-Words/&#39;,</span>
+<span class="go"> &#39;description&#39;: &#39;Collection of ~11k speeches in the Congressional Record given by notable U.S. politicians between Jan 1996 and Jun 2016.&#39;}</span>
+</pre></div>
+</div>
+<p>Iterate over speeches as texts or records with both text and metadata:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2">)</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;speaker_name&quot;</span><span class="p">],</span> <span class="n">text</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Filter speeches by a variety of metadata fields and text length:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">speaker_name</span><span class="o">=</span><span class="s2">&quot;Bernie Sanders&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">],</span> <span class="n">text</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">speaker_party</span><span class="o">=</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="n">congress</span><span class="o">=</span><span class="p">{</span><span class="mi">110</span><span class="p">,</span> <span class="mi">111</span><span class="p">,</span> <span class="mi">112</span><span class="p">},</span>
+<span class="gp">... </span>                         <span class="n">chamber</span><span class="o">=</span><span class="s2">&quot;Senate&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;speaker_name&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">speaker_name</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Barack Obama&quot;</span><span class="p">,</span> <span class="s2">&quot;Hillary Clinton&quot;</span><span class="p">},</span>
+<span class="gp">... </span>                             <span class="n">date_range</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;2005-01-01&quot;</span><span class="p">,</span> <span class="s2">&quot;2005-12-31&quot;</span><span class="p">)):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;speaker_name&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">min_len</span><span class="o">=</span><span class="mi">50000</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Stream speeches into a <a class="reference internal" href="lang_doc_corpus.html#textacy.corpus.Corpus" title="textacy.corpus.Corpus"><code class="xref py py-class docutils literal notranslate"><span class="pre">textacy.Corpus</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">textacy</span><span class="o">.</span><span class="n">Corpus</span><span class="p">(</span><span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">ota</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
+<span class="go">Corpus(100 docs; 70496 tokens)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_dir</strong> – Path to directory on disk under which dataset is stored,
+i.e. <code class="docutils literal notranslate"><span class="pre">/path/to/data_dir/capitol_words</span></code>.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="textacy.datasets.capitol_words.CapitolWords.full_date_range">
+<code class="sig-name descname">full_date_range</code><a class="headerlink" href="#textacy.datasets.capitol_words.CapitolWords.full_date_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>First and last dates for which speeches are available,
+each as an ISO-formatted string (YYYY-MM-DD).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="textacy.datasets.capitol_words.CapitolWords.speaker_names">
+<code class="sig-name descname">speaker_names</code><a class="headerlink" href="#textacy.datasets.capitol_words.CapitolWords.speaker_names" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full names of all speakers included in corpus, e.g. “Bernie Sanders”.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="textacy.datasets.capitol_words.CapitolWords.speaker_parties">
+<code class="sig-name descname">speaker_parties</code><a class="headerlink" href="#textacy.datasets.capitol_words.CapitolWords.speaker_parties" title="Permalink to this definition">¶</a></dt>
+<dd><p>All distinct political parties of speakers, e.g. “R”.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="textacy.datasets.capitol_words.CapitolWords.chambers">
+<code class="sig-name descname">chambers</code><a class="headerlink" href="#textacy.datasets.capitol_words.CapitolWords.chambers" title="Permalink to this definition">¶</a></dt>
+<dd><p>All distinct chambers in which speeches were given, e.g. “House”.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="textacy.datasets.capitol_words.CapitolWords.congresses">
+<code class="sig-name descname">congresses</code><a class="headerlink" href="#textacy.datasets.capitol_words.CapitolWords.congresses" title="Permalink to this definition">¶</a></dt>
+<dd><p>All distinct numbers of the congresses in which speeches were given, e.g. 114.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.capitol_words.CapitolWords.filepath">
+<em class="property">property </em><code class="sig-name descname">filepath</code><a class="headerlink" href="#textacy.datasets.capitol_words.CapitolWords.filepath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full path on disk for CapitolWords data as compressed json file.
+<code class="docutils literal notranslate"><span class="pre">None</span></code> if file is not found, e.g. has not yet been downloaded.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.capitol_words.CapitolWords.download">
+<code class="sig-name descname">download</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">force: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/textacy/datasets/capitol_words.html#CapitolWords.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.capitol_words.CapitolWords.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the data as a Python version-specific compressed json file and
+save it to disk under the <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>force</strong> – If True, download the dataset, even if it already exists
+on disk under <code class="docutils literal notranslate"><span class="pre">data_dir</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.capitol_words.CapitolWords.texts">
+<code class="sig-name descname">texts</code><span class="sig-paren">(</span><em class="sig-param">*, speaker_name: Union[str, Set[str], None] = None, speaker_party: Union[str, Set[str], None] = None, chamber: Union[str, Set[str], None] = None, congress: Union[int, Set[int], None] = None, date_range: Optional[Tuple[Optional[str], Optional[str]]] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[str]<a class="reference internal" href="../_modules/textacy/datasets/capitol_words.html#CapitolWords.texts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.capitol_words.CapitolWords.texts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over speeches in this dataset, optionally filtering by a variety
+of metadata and/or text length, and yield texts only,
+in chronological order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>speaker_name</strong> – Filter speeches by the speakers’ name;
+see <a class="reference internal" href="#textacy.datasets.capitol_words.CapitolWords.speaker_names" title="textacy.datasets.capitol_words.CapitolWords.speaker_names"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CapitolWords.speaker_names</span></code></a>.</p></li>
+<li><p><strong>speaker_party</strong> – Filter speeches by the speakers’ party;
+see <a class="reference internal" href="#textacy.datasets.capitol_words.CapitolWords.speaker_parties" title="textacy.datasets.capitol_words.CapitolWords.speaker_parties"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CapitolWords.speaker_parties</span></code></a>.</p></li>
+<li><p><strong>chamber</strong> – Filter speeches by the chamber in which they were given;
+see <a class="reference internal" href="#textacy.datasets.capitol_words.CapitolWords.chambers" title="textacy.datasets.capitol_words.CapitolWords.chambers"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CapitolWords.chambers</span></code></a>.</p></li>
+<li><p><strong>congress</strong> – Filter speeches by the congress in which they were given;
+see <a class="reference internal" href="#textacy.datasets.capitol_words.CapitolWords.congresses" title="textacy.datasets.capitol_words.CapitolWords.congresses"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CapitolWords.congresses</span></code></a>.</p></li>
+<li><p><strong>date_range</strong> – Filter speeches by the date on which they were given.
+Both start and end date must be specified, but a null value for either
+will be replaced by the min/max date available for the dataset.</p></li>
+<li><p><strong>min_len</strong> – Filter texts by the length (# characters) of their text content.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> texts that match all specified filters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Full text of next (by chronological order) speech in dataset
+passing all filter params.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.capitol_words.CapitolWords.records">
+<code class="sig-name descname">records</code><span class="sig-paren">(</span><em class="sig-param">*, speaker_name: Union[str, Set[str], None] = None, speaker_party: Union[str, Set[str], None] = None, chamber: Union[str, Set[str], None] = None, congress: Union[int, Set[int], None] = None, date_range: Optional[Tuple[Optional[str], Optional[str]]] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[str, dict]]<a class="reference internal" href="../_modules/textacy/datasets/capitol_words.html#CapitolWords.records"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.capitol_words.CapitolWords.records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over speeches in this dataset, optionally filtering by a variety
+of metadata and/or text length, and yield text + metadata pairs,
+in chronological order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>speaker_name</strong> – Filter speeches by the speakers’ name;
+see <a class="reference internal" href="#textacy.datasets.capitol_words.CapitolWords.speaker_names" title="textacy.datasets.capitol_words.CapitolWords.speaker_names"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CapitolWords.speaker_names</span></code></a>.</p></li>
+<li><p><strong>speaker_party</strong> – Filter speeches by the speakers’ party;
+see <a class="reference internal" href="#textacy.datasets.capitol_words.CapitolWords.speaker_parties" title="textacy.datasets.capitol_words.CapitolWords.speaker_parties"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CapitolWords.speaker_parties</span></code></a>.</p></li>
+<li><p><strong>chamber</strong> – Filter speeches by the chamber in which they were given;
+see <a class="reference internal" href="#textacy.datasets.capitol_words.CapitolWords.chambers" title="textacy.datasets.capitol_words.CapitolWords.chambers"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CapitolWords.chambers</span></code></a>.</p></li>
+<li><p><strong>congress</strong> – Filter speeches by the congress in which they were given;
+see <a class="reference internal" href="#textacy.datasets.capitol_words.CapitolWords.congresses" title="textacy.datasets.capitol_words.CapitolWords.congresses"><code class="xref py py-attr docutils literal notranslate"><span class="pre">CapitolWords.congresses</span></code></a>.</p></li>
+<li><p><strong>date_range</strong> – Filter speeches by the date on which they were given.
+Both start and end date must be specified, but a null value for either
+will be replaced by the min/max date available for the dataset.</p></li>
+<li><p><strong>min_len</strong> – Filter speeches by the length (# characters) of their text content.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> speeches that match all specified filters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Full text of the next (by chronological order) speech in dataset
+passing all filters, and its corresponding metadata.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.datasets.supreme_court"></span><div class="section" id="supreme-court-decisions">
+<h2>Supreme Court decisions<a class="headerlink" href="#supreme-court-decisions" title="Permalink to this headline">¶</a></h2>
+<p>A collection of ~8.4k (almost all) decisions issued by the U.S. Supreme Court
+from November 1946 through June 2016 – the “modern” era.</p>
+<p>Records include the following data:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">text</span></code>: Full text of the Court’s decision.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">case_name</span></code>: Name of the court case, in all caps.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">argument_date</span></code>: Date on which the case was argued before the Court, as
+an ISO-formatted string (“YYYY-MM-DD”).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">decision_date</span></code>: Date on which the Court’s decision was announced, as
+an ISO-formatted string (“YYYY-MM-DD”).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">decision_direction</span></code>: Ideological direction of the majority’s decision:
+one of “conservative”, “liberal”, or “unspecifiable”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">maj_opinion_author</span></code>: Name of the majority opinion’s author, if available
+and identifiable, as an integer code whose mapping is given in
+<a class="reference internal" href="#textacy.datasets.supreme_court.SupremeCourt.opinion_author_codes" title="textacy.datasets.supreme_court.SupremeCourt.opinion_author_codes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SupremeCourt.opinion_author_codes</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_maj_votes</span></code>: Number of justices voting in the majority.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">n_min_votes</span></code>: Number of justices voting in the minority.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">issue</span></code>: Subject matter of the case’s core disagreement (e.g. “affirmative
+action”) rather than its legal basis (e.g. “the equal protection clause”),
+as a string code whose mapping is given in <a class="reference internal" href="#textacy.datasets.supreme_court.SupremeCourt.issue_codes" title="textacy.datasets.supreme_court.SupremeCourt.issue_codes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SupremeCourt.issue_codes</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">issue_area</span></code>: Higher-level categorization of the issue (e.g. “Civil Rights”),
+as an integer code whose mapping is given in <a class="reference internal" href="#textacy.datasets.supreme_court.SupremeCourt.issue_area_codes" title="textacy.datasets.supreme_court.SupremeCourt.issue_area_codes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SupremeCourt.issue_area_codes</span></code></a>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">us_cite_id</span></code>: Citation identifier for each case according to the official
+United States Reports. Note: There are ~300 cases with duplicate ids,
+and it’s not clear if that’s “correct” or a data quality problem.</p></li>
+</ul>
+</div></blockquote>
+<p>The text in this dataset was derived from FindLaw’s searchable database of court
+cases: <a class="reference external" href="http://caselaw.findlaw.com/court/us-supreme-court">http://caselaw.findlaw.com/court/us-supreme-court</a>.</p>
+<p>The metadata was extracted without modification from the Supreme Court Database:
+Harold J. Spaeth, Lee Epstein, et al. 2016 Supreme Court Database, Version 2016
+Release 1. <a class="reference external" href="http://supremecourtdatabase.org">http://supremecourtdatabase.org</a>. Its license is CC BY-NC 3.0 US:
+<a class="reference external" href="https://creativecommons.org/licenses/by-nc/3.0/us/">https://creativecommons.org/licenses/by-nc/3.0/us/</a>.</p>
+<p>This dataset’s creation was inspired by a blog post by Emily Barry:
+<a class="reference external" href="http://www.emilyinamillion.me/blog/2016/7/13/visualizing-supreme-court-topics-over-time">http://www.emilyinamillion.me/blog/2016/7/13/visualizing-supreme-court-topics-over-time</a>.</p>
+<p>The two datasets were merged through much munging and a carefully
+trained model using the <code class="docutils literal notranslate"><span class="pre">dedupe</span></code> package. The model’s duplicate threshold
+was set so as to maximize the F-score where precision had twice as much
+weight as recall. Still, given occasionally baffling inconsistencies in case
+naming, citation ids, and decision dates, a very small percentage of texts
+may be incorrectly matched to metadata. (Sorry.)</p>
+<dl class="class">
+<dt id="textacy.datasets.supreme_court.SupremeCourt">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.datasets.supreme_court.</code><code class="sig-name descname">SupremeCourt</code><span class="sig-paren">(</span><em class="sig-param">data_dir: Union[str</em>, <em class="sig-param">pathlib.Path] = PosixPath('/Users/burtondewilde/chartbeat/github/textacy/textacy/data/supreme_court')</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/datasets/supreme_court.html#SupremeCourt"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.supreme_court.SupremeCourt" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stream a collection of U.S. Supreme Court decisions from a compressed json file on disk,
+either as texts or text + metadata pairs.</p>
+<p>Download the data (one time only!) from the textacy-data repo
+(<a class="reference external" href="https://github.com/bdewilde/textacy-data">https://github.com/bdewilde/textacy-data</a>), and save its contents to disk:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">textacy.datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">textacy</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">SupremeCourt</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">info</span>
+<span class="go">{&#39;name&#39;: &#39;supreme_court&#39;,</span>
+<span class="go"> &#39;site_url&#39;: &#39;http://caselaw.findlaw.com/court/us-supreme-court&#39;,</span>
+<span class="go"> &#39;description&#39;: &#39;Collection of ~8.4k decisions issued by the U.S. Supreme Court between November 1946 and June 2016.&#39;}</span>
+</pre></div>
+</div>
+<p>Iterate over decisions as texts or records with both text and metadata:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">[:</span><span class="mi">500</span><span class="p">],</span> <span class="n">end</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\n\n</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2">)</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;case_name&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;decision_date&quot;</span><span class="p">],</span> <span class="n">text</span><span class="p">[:</span><span class="mi">500</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>Filter decisions by a variety of metadata fields and text length:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">opinion_author</span><span class="o">=</span><span class="mi">109</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>  <span class="c1"># Notorious RBG!</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;case_name&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;decision_direction&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;n_maj_votes&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">decision_direction</span><span class="o">=</span><span class="s2">&quot;liberal&quot;</span><span class="p">,</span>
+<span class="gp">... </span>                             <span class="n">issue_area</span><span class="o">=</span><span class="p">{</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">10</span><span class="p">},</span> <span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;case_name&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;maj_opinion_author&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;n_maj_votes&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">opinion_author</span><span class="o">=</span><span class="mi">102</span><span class="p">,</span> <span class="n">date_range</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;1985-02-11&#39;</span><span class="p">,</span> <span class="s1">&#39;1986-02-11&#39;</span><span class="p">)):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2">)&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;case_name&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;decision_date&quot;</span><span class="p">]))</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">ds</span><span class="o">.</span><span class="n">issue_codes</span><span class="p">[</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;issue&quot;</span><span class="p">]],</span> <span class="s2">&quot;=&gt;&quot;</span><span class="p">,</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;decision_direction&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">min_len</span><span class="o">=</span><span class="mi">250000</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Stream decisions into a <a class="reference internal" href="lang_doc_corpus.html#textacy.corpus.Corpus" title="textacy.corpus.Corpus"><code class="xref py py-class docutils literal notranslate"><span class="pre">textacy.Corpus</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">textacy</span><span class="o">.</span><span class="n">Corpus</span><span class="p">(</span><span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">25</span><span class="p">))</span>
+<span class="go">Corpus(25 docs; 136696 tokens)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_dir</strong> (str or <a class="reference external" href="https://docs.python.org/3.6/library/pathlib.html#pathlib.Path" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to directory on disk
+under which the data is stored, i.e. <code class="docutils literal notranslate"><span class="pre">/path/to/data_dir/supreme_court</span></code>.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="textacy.datasets.supreme_court.SupremeCourt.full_date_range">
+<code class="sig-name descname">full_date_range</code><a class="headerlink" href="#textacy.datasets.supreme_court.SupremeCourt.full_date_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>First and last dates for which decisions are available,
+each as an ISO-formatted string (YYYY-MM-DD).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="textacy.datasets.supreme_court.SupremeCourt.decision_directions">
+<code class="sig-name descname">decision_directions</code><a class="headerlink" href="#textacy.datasets.supreme_court.SupremeCourt.decision_directions" title="Permalink to this definition">¶</a></dt>
+<dd><p>All distinct decision directions, e.g. “liberal”.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="textacy.datasets.supreme_court.SupremeCourt.opinion_author_codes">
+<code class="sig-name descname">opinion_author_codes</code><a class="headerlink" href="#textacy.datasets.supreme_court.SupremeCourt.opinion_author_codes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of majority opinion authors,
+from id code to full name.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="textacy.datasets.supreme_court.SupremeCourt.issue_area_codes">
+<code class="sig-name descname">issue_area_codes</code><a class="headerlink" href="#textacy.datasets.supreme_court.SupremeCourt.issue_area_codes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of high-level issue area of the case’s core disagreement,
+from id code to description.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="textacy.datasets.supreme_court.SupremeCourt.issue_codes">
+<code class="sig-name descname">issue_codes</code><a class="headerlink" href="#textacy.datasets.supreme_court.SupremeCourt.issue_codes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Mapping of the specific issue of the case’s core disagreement,
+from id code to description.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.supreme_court.SupremeCourt.filepath">
+<em class="property">property </em><code class="sig-name descname">filepath</code><a class="headerlink" href="#textacy.datasets.supreme_court.SupremeCourt.filepath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full path on disk for SupremeCourt data as compressed json file.
+<code class="docutils literal notranslate"><span class="pre">None</span></code> if file is not found, e.g. has not yet been downloaded.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.supreme_court.SupremeCourt.download">
+<code class="sig-name descname">download</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">force: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/textacy/datasets/supreme_court.html#SupremeCourt.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.supreme_court.SupremeCourt.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the data as a Python version-specific compressed json file and
+save it to disk under the <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>force</strong> – If True, download the dataset, even if it already exists
+on disk under <code class="docutils literal notranslate"><span class="pre">data_dir</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.supreme_court.SupremeCourt.texts">
+<code class="sig-name descname">texts</code><span class="sig-paren">(</span><em class="sig-param">*, opinion_author: Union[int, Set[int], None] = None, decision_direction: Union[str, Set[str], None] = None, issue_area: Union[int, Set[int], None] = None, date_range: Optional[Tuple[Optional[str], Optional[str]]] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[str]<a class="reference internal" href="../_modules/textacy/datasets/supreme_court.html#SupremeCourt.texts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.supreme_court.SupremeCourt.texts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over decisions in this dataset, optionally filtering by a variety
+of metadata and/or text length, and yield texts only,
+in chronological order by decision date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>opinion_author</strong> – Filter decisions by the name(s) of the majority opinion’s author,
+coded as an integer whose mapping is given in
+<a class="reference internal" href="#textacy.datasets.supreme_court.SupremeCourt.opinion_author_codes" title="textacy.datasets.supreme_court.SupremeCourt.opinion_author_codes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SupremeCourt.opinion_author_codes</span></code></a>.</p></li>
+<li><p><strong>decision_direction</strong> – Filter decisions by the ideological direction
+of the majority’s decision; see
+<a class="reference internal" href="#textacy.datasets.supreme_court.SupremeCourt.decision_directions" title="textacy.datasets.supreme_court.SupremeCourt.decision_directions"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SupremeCourt.decision_directions</span></code></a>.</p></li>
+<li><p><strong>issue_area</strong> – Filter decisions by the issue area of the case’s subject matter,
+coded as an integer whose mapping is given in
+<a class="reference internal" href="#textacy.datasets.supreme_court.SupremeCourt.issue_area_codes" title="textacy.datasets.supreme_court.SupremeCourt.issue_area_codes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SupremeCourt.issue_area_codes</span></code></a>.</p></li>
+<li><p><strong>date_range</strong> – Filter decisions by the date on which they were decided;
+both start and end date must be specified, but a null value for either
+will be replaced by the min/max date available for the dataset.</p></li>
+<li><p><strong>min_len</strong> – Filter decisions by the length (# characters) of their text content.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> decisions that match all specified filters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next decision in dataset passing all filters.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.supreme_court.SupremeCourt.records">
+<code class="sig-name descname">records</code><span class="sig-paren">(</span><em class="sig-param">*, opinion_author: Union[int, Set[int], None] = None, decision_direction: Union[str, Set[str], None] = None, issue_area: Union[int, Set[int], None] = None, date_range: Optional[Tuple[Optional[str], Optional[str]]] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[str, dict]]<a class="reference internal" href="../_modules/textacy/datasets/supreme_court.html#SupremeCourt.records"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.supreme_court.SupremeCourt.records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over decisions in this dataset, optionally filtering by a variety
+of metadata and/or text length, and yield text + metadata pairs,
+in chronological order by decision date.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>opinion_author</strong> – Filter decisions by the name(s) of the majority opinion’s author,
+coded as an integer whose mapping is given in
+<a class="reference internal" href="#textacy.datasets.supreme_court.SupremeCourt.opinion_author_codes" title="textacy.datasets.supreme_court.SupremeCourt.opinion_author_codes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SupremeCourt.opinion_author_codes</span></code></a>.</p></li>
+<li><p><strong>decision_direction</strong> – Filter decisions by the ideological direction
+of the majority’s decision; see
+<a class="reference internal" href="#textacy.datasets.supreme_court.SupremeCourt.decision_directions" title="textacy.datasets.supreme_court.SupremeCourt.decision_directions"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SupremeCourt.decision_directions</span></code></a>.</p></li>
+<li><p><strong>issue_area</strong> – Filter decisions by the issue area of the case’s subject matter,
+coded as an integer whose mapping is given in
+<a class="reference internal" href="#textacy.datasets.supreme_court.SupremeCourt.issue_area_codes" title="textacy.datasets.supreme_court.SupremeCourt.issue_area_codes"><code class="xref py py-attr docutils literal notranslate"><span class="pre">SupremeCourt.issue_area_codes</span></code></a>.</p></li>
+<li><p><strong>date_range</strong> – Filter decisions by the date on which they were decided;
+both start and end date must be specified, but a null value for either
+will be replaced by the min/max date available for the dataset.</p></li>
+<li><p><strong>min_len</strong> – Filter decisions by the length (# characters) of their text content.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> decisions that match all specified filters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next decision in dataset passing all filters,
+and its corresponding metadata.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.datasets.wikimedia"></span><div class="section" id="wikimedia-articles">
+<h2>Wikimedia articles<a class="headerlink" href="#wikimedia-articles" title="Permalink to this headline">¶</a></h2>
+<p>All articles for a given Wikimedia project, specified by language and version.</p>
+<p>Records include the following key fields (plus a few others):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">text</span></code>: Plain text content of the wiki page – no wiki markup!</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">title</span></code>: Title of the wiki page.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">wiki_links</span></code>: A list of other wiki pages linked to from this page.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ext_links</span></code>: A list of external URLs linked to from this page.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">categories</span></code>: A list of categories to which this wiki page belongs.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dt_created</span></code>: Date on which the wiki page was first created.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">page_id</span></code>: Unique identifier of the wiki page, usable in Wikimedia APIs.</p></li>
+</ul>
+</div></blockquote>
+<p>Datasets are generated by the Wikimedia Foundation for a variety of projects,
+such as Wikipedia and Wikinews. The source files are meant for search indexes,
+so they’re dumped in Elasticsearch bulk insert format – basically, a compressed
+JSON file with one record per line. For more information, refer to
+<a class="reference external" href="https://meta.wikimedia.org/wiki/Data_dumps">https://meta.wikimedia.org/wiki/Data_dumps</a>.</p>
+<dl class="class">
+<dt id="textacy.datasets.wikimedia.Wikimedia">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.datasets.wikimedia.</code><code class="sig-name descname">Wikimedia</code><span class="sig-paren">(</span><em class="sig-param">name</em>, <em class="sig-param">meta</em>, <em class="sig-param">project</em>, <em class="sig-param">data_dir</em>, <em class="sig-param">lang='en'</em>, <em class="sig-param">version='current'</em>, <em class="sig-param">namespace=0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/datasets/wikimedia.html#Wikimedia"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.wikimedia.Wikimedia" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for project-specific Wikimedia datasets. See:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#textacy.datasets.wikimedia.Wikipedia" title="textacy.datasets.wikimedia.Wikipedia"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wikipedia</span></code></a></p></li>
+<li><p><a class="reference internal" href="#textacy.datasets.wikimedia.Wikinews" title="textacy.datasets.wikimedia.Wikinews"><code class="xref py py-class docutils literal notranslate"><span class="pre">Wikinews</span></code></a></p></li>
+</ul>
+<dl class="method">
+<dt id="textacy.datasets.wikimedia.Wikimedia.filepath">
+<em class="property">property </em><code class="sig-name descname">filepath</code><a class="headerlink" href="#textacy.datasets.wikimedia.Wikimedia.filepath" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full path on disk for the Wikimedia CirrusSearch db dump
+corresponding to the <code class="docutils literal notranslate"><span class="pre">project</span></code>, <code class="docutils literal notranslate"><span class="pre">lang</span></code>, and <code class="docutils literal notranslate"><span class="pre">version</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.wikimedia.Wikimedia.download">
+<code class="sig-name descname">download</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">force: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/textacy/datasets/wikimedia.html#Wikimedia.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.wikimedia.Wikimedia.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the Wikimedia CirrusSearch db dump corresponding to the given
+<code class="docutils literal notranslate"><span class="pre">project</span></code>, <code class="docutils literal notranslate"><span class="pre">lang</span></code>, and <code class="docutils literal notranslate"><span class="pre">version</span></code> as a compressed JSON file,
+and save it to disk under the <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>force</strong> – If True, download the dataset, even if it already exists
+on disk under <code class="docutils literal notranslate"><span class="pre">data_dir</span></code>.</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Some datasets are quite large (e.g. English Wikipedia is ~28GB)
+and can take hours to fully download.</p>
+</div>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.wikimedia.Wikimedia.texts">
+<code class="sig-name descname">texts</code><span class="sig-paren">(</span><em class="sig-param">*, category: Union[str, Set[str], None] = None, wiki_link: Union[str, Set[str], None] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[str]<a class="reference internal" href="../_modules/textacy/datasets/wikimedia.html#Wikimedia.texts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.wikimedia.Wikimedia.texts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over wiki pages in this dataset, optionally filtering by a variety
+of metadata and/or text length, and yield texts only,
+in order of appearance in the db dump file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>category</strong> – Filter wiki pages by the categories to which they’ve been assigned.
+For multiple values (Set[str]), ANY rather than ALL of the values
+must be found among a given page’s categories.</p></li>
+<li><p><strong>wiki_link</strong> – Filter wiki pages by the other wiki pages to which they’ve been linked.
+For multiple values (Set[str]), ANY rather than ALL of the values
+must be found among a given page’s wiki links.</p></li>
+<li><p><strong>min_len</strong> – Filter wiki pages by the length (# characters) of their text content.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> wiki pages that match all specified filters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next wiki page in dataset passing all filters.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.wikimedia.Wikimedia.records">
+<code class="sig-name descname">records</code><span class="sig-paren">(</span><em class="sig-param">*, category: Union[str, Set[str], None] = None, wiki_link: Union[str, Set[str], None] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[str, dict]]<a class="reference internal" href="../_modules/textacy/datasets/wikimedia.html#Wikimedia.records"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.wikimedia.Wikimedia.records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over wiki pages in this dataset, optionally filtering by a variety
+of metadata and/or text length, and yield text + metadata pairs,
+in order of appearance in the db dump file.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>category</strong> – Filter wiki pages by the categories to which they’ve been assigned.
+For multiple values (Set[str]), ANY rather than ALL of the values
+must be found among a given page’s categories.</p></li>
+<li><p><strong>wiki_link</strong> – Filter wiki pages by the other wiki pages to which they’ve been linked.
+For multiple values (Set[str]), ANY rather than ALL of the values
+must be found among a given page’s wiki links.</p></li>
+<li><p><strong>min_len</strong> – Filter wiki pages by the length (# characters) of their text content.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> wiki pages that match all specified filters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next wiki page in dataset passing all filters,
+and its corresponding metadata.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="textacy.datasets.wikimedia.Wikipedia">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.datasets.wikimedia.</code><code class="sig-name descname">Wikipedia</code><span class="sig-paren">(</span><em class="sig-param">data_dir: Union[str</em>, <em class="sig-param">pathlib.Path] = PosixPath('/Users/burtondewilde/chartbeat/github/textacy/textacy/data/wikipedia')</em>, <em class="sig-param">lang: str = 'en'</em>, <em class="sig-param">version: str = 'current'</em>, <em class="sig-param">namespace: int = 0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/datasets/wikimedia.html#Wikipedia"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.wikimedia.Wikipedia" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stream a collection of Wikipedia pages from a version- and language-specific
+database dump, either as texts or text + metadata pairs.</p>
+<p>Download a database dump (one time only!) and save its contents to disk:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">textacy.datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">textacy</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">Wikipedia</span><span class="p">(</span><span class="n">lang</span><span class="o">=</span><span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;current&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">info</span>
+<span class="go">{&#39;name&#39;: &#39;wikipedia&#39;,</span>
+<span class="go"> &#39;site_url&#39;: &#39;https://en.wikipedia.org/wiki/Main_Page&#39;,</span>
+<span class="go"> &#39;description&#39;: &#39;All pages for a given language- and version-specific Wikipedia site snapshot.&#39;}</span>
+</pre></div>
+</div>
+<p>Iterate over wiki pages as texts or records with both text and metadata:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">[:</span><span class="mi">500</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;page_id&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Filter wiki pages by a variety of metadata fields and text length:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="s2">&quot;Living people&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;categories&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">wiki_link</span><span class="o">=</span><span class="s2">&quot;United_States&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;wiki_links&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">min_len</span><span class="o">=</span><span class="mi">10000</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Stream wiki pages into a <a class="reference internal" href="lang_doc_corpus.html#textacy.corpus.Corpus" title="textacy.corpus.Corpus"><code class="xref py py-class docutils literal notranslate"><span class="pre">textacy.Corpus</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">textacy</span><span class="o">.</span><span class="n">Corpus</span><span class="p">(</span><span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">min_len</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">50</span><span class="p">))</span>
+<span class="go">Corpus(50 docs; 72368 tokens)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_dir</strong> – Path to directory on disk under which database dump files are stored.
+Each file is expected as
+<code class="docutils literal notranslate"><span class="pre">{lang}{project}/{version}/{lang}{project}-{version}-cirrussearch-content.json.gz</span></code>
+immediately under this directory.</p></li>
+<li><p><strong>lang</strong> – Standard two-letter language code, e.g. “en” =&gt; “English”, “de” =&gt; “German”.
+<a class="reference external" href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes">https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes</a></p></li>
+<li><p><strong>version</strong> – Database dump version to use. Either “current” for the most recently
+available version or a date formatted as “YYYYMMDD”.
+Dumps are produced weekly; check for available versions at
+<a class="reference external" href="https://dumps.wikimedia.org/other/cirrussearch/">https://dumps.wikimedia.org/other/cirrussearch/</a>.</p></li>
+<li><p><strong>namespace</strong> – Namespace of the wiki pages to include. Typical, public-
+facing content is in the 0 (default) namespace.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="class">
+<dt id="textacy.datasets.wikimedia.Wikinews">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.datasets.wikimedia.</code><code class="sig-name descname">Wikinews</code><span class="sig-paren">(</span><em class="sig-param">data_dir: Union[str</em>, <em class="sig-param">pathlib.Path] = PosixPath('/Users/burtondewilde/chartbeat/github/textacy/textacy/data/wikinews')</em>, <em class="sig-param">lang: str = 'en'</em>, <em class="sig-param">version: str = 'current'</em>, <em class="sig-param">namespace: int = 0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/datasets/wikimedia.html#Wikinews"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.wikimedia.Wikinews" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stream a collection of Wikinews pages from a version- and language-specific
+database dump, either as texts or text + metadata pairs.</p>
+<p>Download a database dump (one time only!) and save its contents to disk:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">textacy.datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">textacy</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">Wikinews</span><span class="p">(</span><span class="n">lang</span><span class="o">=</span><span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="n">version</span><span class="o">=</span><span class="s2">&quot;current&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">info</span>
+<span class="go">{&#39;name&#39;: &#39;wikinews&#39;,</span>
+<span class="go"> &#39;site_url&#39;: &#39;https://en.wikinews.org/wiki/Main_Page&#39;,</span>
+<span class="go"> &#39;description&#39;: &#39;All pages for a given language- and version-specific Wikinews site snapshot.&#39;}</span>
+</pre></div>
+</div>
+<p>Iterate over wiki pages as texts or records with both text and metadata:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">[:</span><span class="mi">500</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;page_id&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Filter wiki pages by a variety of metadata fields and text length:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">category</span><span class="o">=</span><span class="s2">&quot;Politics and conflicts&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;categories&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">wiki_link</span><span class="o">=</span><span class="s2">&quot;Reuters&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;wiki_links&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">min_len</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Stream wiki pages into a <a class="reference internal" href="lang_doc_corpus.html#textacy.corpus.Corpus" title="textacy.corpus.Corpus"><code class="xref py py-class docutils literal notranslate"><span class="pre">textacy.Corpus</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">textacy</span><span class="o">.</span><span class="n">Corpus</span><span class="p">(</span><span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
+<span class="go">Corpus(100 docs; 33092 tokens)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>data_dir</strong> – Path to directory on disk under which database dump files are stored.
+Each file is expected as
+<code class="docutils literal notranslate"><span class="pre">{lang}{project}/{version}/{lang}{project}-{version}-cirrussearch-content.json.gz</span></code>
+immediately under this directory.</p></li>
+<li><p><strong>lang</strong> – Standard two-letter language code, e.g. “en” =&gt; “English”, “de” =&gt; “German”.
+<a class="reference external" href="https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes">https://en.wikipedia.org/wiki/List_of_ISO_639-1_codes</a></p></li>
+<li><p><strong>version</strong> – Database dump version to use. Either “current” for the most recently
+available version or a date formatted as “YYYYMMDD”.
+Dumps are produced weekly; check for available versions at
+<a class="reference external" href="https://dumps.wikimedia.org/other/cirrussearch/">https://dumps.wikimedia.org/other/cirrussearch/</a>.</p></li>
+<li><p><strong>namespace</strong> – Namespace of the wiki pages to include. Typical, public-
+facing content is in the 0 (default) namespace.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.datasets.reddit_comments"></span><div class="section" id="reddit-comments">
+<h2>Reddit comments<a class="headerlink" href="#reddit-comments" title="Permalink to this headline">¶</a></h2>
+<p>A collection of up to ~1.5 billion Reddit comments posted from
+October 2007 through May 2015.</p>
+<p>Records include the following key fields (plus a few others):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">body</span></code>: Full text of the comment.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">created_utc</span></code>: Date on which the comment was posted.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">subreddit</span></code>: Sub-reddit in which the comment was posted, excluding the
+familiar “/r/” prefix.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">score</span></code>: Net score (upvotes - downvotes) on the comment.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">gilded</span></code>: Number of times this comment received reddit gold.</p></li>
+</ul>
+</div></blockquote>
+<p>The raw data was originally collected by /u/Stuck_In_the_Matrix via Reddit’s
+APIS, and stored for posterity by the <a class="reference external" href="https://archive.org">Internet Archive</a>.
+For more details, refer to <a class="reference external" href="https://archive.org/details/2015_reddit_comments_corpus">https://archive.org/details/2015_reddit_comments_corpus</a>.</p>
+<dl class="class">
+<dt id="textacy.datasets.reddit_comments.RedditComments">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.datasets.reddit_comments.</code><code class="sig-name descname">RedditComments</code><span class="sig-paren">(</span><em class="sig-param">data_dir: Union[str</em>, <em class="sig-param">pathlib.Path] = PosixPath('/Users/burtondewilde/chartbeat/github/textacy/textacy/data/reddit_comments')</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/datasets/reddit_comments.html#RedditComments"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.reddit_comments.RedditComments" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stream a collection of Reddit comments from 1 or more compressed files on disk,
+either as texts or text + metadata pairs.</p>
+<p>Download the data (one time only!) or subsets thereof by specifying a date range:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">textacy.datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">textacy</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">RedditComments</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">download</span><span class="p">(</span><span class="n">date_range</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;2007-10&quot;</span><span class="p">,</span> <span class="s2">&quot;2008-03&quot;</span><span class="p">))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">info</span>
+<span class="go">{&#39;name&#39;: &#39;reddit_comments&#39;,</span>
+<span class="go"> &#39;site_url&#39;: &#39;https://archive.org/details/2015_reddit_comments_corpus&#39;,</span>
+<span class="go"> &#39;description&#39;: &#39;Collection of ~1.5 billion publicly available Reddit comments from October 2007 through May 2015.&#39;}</span>
+</pre></div>
+</div>
+<p>Iterate over comments as texts or records with both text and metadata:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;author&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;created_utc&quot;</span><span class="p">],</span> <span class="n">text</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Filter comments by a variety of metadata fields and text length:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">subreddit</span><span class="o">=</span><span class="s2">&quot;politics&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">],</span> <span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">date_range</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;2008-01&quot;</span><span class="p">,</span> <span class="s2">&quot;2008-03&quot;</span><span class="p">),</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;created_utc&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">score_range</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;score&quot;</span><span class="p">],</span> <span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">min_len</span><span class="o">=</span><span class="mi">2000</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Stream comments into a <a class="reference internal" href="lang_doc_corpus.html#textacy.corpus.Corpus" title="textacy.corpus.Corpus"><code class="xref py py-class docutils literal notranslate"><span class="pre">textacy.Corpus</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">textacy</span><span class="o">.</span><span class="n">Corpus</span><span class="p">(</span><span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">1000</span><span class="p">))</span>
+<span class="go">Corpus(1000 docs; 27582 tokens)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_dir</strong> – Path to directory on disk under which the data is stored,
+i.e. <code class="docutils literal notranslate"><span class="pre">/path/to/data_dir/reddit_comments</span></code>. Each file covers a given month,
+as indicated in the filename like “YYYY/RC_YYYY-MM.bz2”.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="textacy.datasets.reddit_comments.RedditComments.full_date_range">
+<code class="sig-name descname">full_date_range</code><a class="headerlink" href="#textacy.datasets.reddit_comments.RedditComments.full_date_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>First and last dates for which comments
+are available, each as an ISO-formatted string (YYYY-MM-DD).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="textacy.datasets.reddit_comments.RedditComments.filepaths">
+<code class="sig-name descname">filepaths</code><a class="headerlink" href="#textacy.datasets.reddit_comments.RedditComments.filepaths" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full paths on disk for all Reddit comments files
+found under <code class="xref py py-attr docutils literal notranslate"><span class="pre">ReddictComments.data_dir</span></code> directory, sorted
+in chronological order.</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<em class="property">property </em><code class="sig-name descname">filepaths</code></dt>
+<dd><p>Full paths on disk for all Reddit comments files found under
+the <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> directory, sorted chronologically.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.reddit_comments.RedditComments.download">
+<code class="sig-name descname">download</code><span class="sig-paren">(</span><em class="sig-param">*, date_range: Tuple[Optional[str], Optional[str]] = (None, None), force: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/textacy/datasets/reddit_comments.html#RedditComments.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.reddit_comments.RedditComments.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download 1 or more monthly Reddit comments files from archive.org
+and save them to disk under the <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>date_range</strong> – Interval specifying the [start, end) dates for which
+comments files will be downloaded. Each item must be a str
+formatted as YYYY-MM or YYYY-MM-DD (the latter is converted
+to the corresponding YYYY-MM value). Both start and end values
+must be specified, but a null value for either is automatically
+replaced by the minimum or maximum valid values, respectively.</p></li>
+<li><p><strong>force</strong> – If True, download the dataset, even if it already
+exists on disk under <code class="docutils literal notranslate"><span class="pre">data_dir</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.reddit_comments.RedditComments.texts">
+<code class="sig-name descname">texts</code><span class="sig-paren">(</span><em class="sig-param">*, subreddit: Union[str, Set[str], None] = None, date_range: Optional[Tuple[Optional[str], Optional[str]]] = None, score_range: Optional[Tuple[Optional[int], Optional[int]]] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[str]<a class="reference internal" href="../_modules/textacy/datasets/reddit_comments.html#RedditComments.texts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.reddit_comments.RedditComments.texts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over comments (text-only) in 1 or more files of this dataset,
+optionally filtering by a variety of metadata and/or text length,
+in chronological order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subreddit</strong> – Filter comments for those which were posted
+in the specified subreddit(s).</p></li>
+<li><p><strong>date_range</strong> – Filter comments for those which were posted
+within the interval [start, end). Each item must be a str in
+ISO-standard format, i.e. some amount of YYYY-MM-DDTHH:mm:ss.
+Both start and end values must be specified, but a null value
+for either is automatically replaced by the minimum or maximum
+valid values, respectively.</p></li>
+<li><p><strong>score_range</strong> – Filter comments for those whose score
+(# upvotes minus # downvotes) is within the interval [low, high).
+Both start and end values must be specified, but a null value
+for either is automatically replaced by the minimum or maximum
+valid values, respectively.</p></li>
+<li><p><strong>min_len</strong> – Filter comments for those whose body length in chars is
+at least this long.</p></li>
+<li><p><strong>limit</strong> – Maximum number of comments passing all filters to yield.
+If None, all comments are iterated over.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next comment in dataset passing all filters.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.reddit_comments.RedditComments.records">
+<code class="sig-name descname">records</code><span class="sig-paren">(</span><em class="sig-param">*, subreddit: Union[str, Set[str], None] = None, date_range: Optional[Tuple[Optional[str], Optional[str]]] = None, score_range: Optional[Tuple[Optional[int], Optional[int]]] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[str, dict]]<a class="reference internal" href="../_modules/textacy/datasets/reddit_comments.html#RedditComments.records"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.reddit_comments.RedditComments.records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over comments (including text and metadata) in 1 or more files
+of this dataset, optionally filtering by a variety of metadata and/or
+text length, in chronological order.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subreddit</strong> – Filter comments for those which were posted
+in the specified subreddit(s).</p></li>
+<li><p><strong>date_range</strong> – Filter comments for those which were posted
+within the interval [start, end). Each item must be a str in
+ISO-standard format, i.e. some amount of YYYY-MM-DDTHH:mm:ss.
+Both start and end values must be specified, but a null value
+for either is automatically replaced by the minimum or maximum
+valid values, respectively.</p></li>
+<li><p><strong>score_range</strong> – Filter comments for those whose score
+(# upvotes minus # downvotes) is within the interval [low, high).
+Both start and end values must be specified, but a null value
+for either is automatically replaced by the minimum or maximum
+valid values, respectively.</p></li>
+<li><p><strong>min_len</strong> – Filter comments for those whose body length in chars is
+at least this long.</p></li>
+<li><p><strong>limit</strong> – Maximum number of comments passing all filters to yield.
+If None, all comments are iterated over.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next comment in dataset passing all filters,
+and its corresponding metadata.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.datasets.oxford_text_archive"></span><div class="section" id="oxford-text-archive-literary-works">
+<h2>Oxford Text Archive literary works<a class="headerlink" href="#oxford-text-archive-literary-works" title="Permalink to this headline">¶</a></h2>
+<p>A collection of ~2.7k Creative Commons literary works from the Oxford Text Archive,
+containing primarily English-language 16th-20th century literature and history.</p>
+<p>Records include the following data:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">text</span></code>: Full text of the literary work.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">title</span></code>: Title of the literary work.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">author</span></code>: Author(s) of the literary work.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">year</span></code>: Year that the literary work was published.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">url</span></code>: URL at which literary work can be found online via the OTA.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">id</span></code>: Unique identifier of the literary work within the OTA.</p></li>
+</ul>
+</div></blockquote>
+<p>This dataset was compiled by David Mimno from the Oxford Text Archive and
+stored in his GitHub repo to avoid unnecessary scraping of the OTA site. It is
+downloaded from that repo, and excluding some light cleaning of its metadata,
+is reproduced exactly here.</p>
+<dl class="class">
+<dt id="textacy.datasets.oxford_text_archive.OxfordTextArchive">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.datasets.oxford_text_archive.</code><code class="sig-name descname">OxfordTextArchive</code><span class="sig-paren">(</span><em class="sig-param">data_dir: Union[str</em>, <em class="sig-param">pathlib.Path] = PosixPath('/Users/burtondewilde/chartbeat/github/textacy/textacy/data/oxford_text_archive')</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/datasets/oxford_text_archive.html#OxfordTextArchive"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.oxford_text_archive.OxfordTextArchive" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stream a collection of English-language literary works from text files on disk,
+either as texts or text + metadata pairs.</p>
+<p>Download the data (one time only!), saving and extracting its contents to disk:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">textacy.datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">textacy</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">OxfordTextArchive</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">info</span>
+<span class="go">{&#39;name&#39;: &#39;oxford_text_archive&#39;,</span>
+<span class="go"> &#39;site_url&#39;: &#39;https://ota.ox.ac.uk/&#39;,</span>
+<span class="go"> &#39;description&#39;: &#39;Collection of ~2.7k Creative Commons texts from the Oxford Text Archive, containing primarily English-language 16th-20th century literature and history.&#39;}</span>
+</pre></div>
+</div>
+<p>Iterate over literary works as texts or records with both text and metadata:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">[:</span><span class="mi">200</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2">, </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">]))</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">[:</span><span class="mi">300</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>Filter literary works by a variety of metadata fields and text length:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">author</span><span class="o">=</span><span class="s2">&quot;Shakespeare, William&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;title&quot;</span><span class="p">],</span> <span class="n">text</span><span class="p">[:</span><span class="mi">500</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">date_range</span><span class="o">=</span><span class="p">(</span><span class="s2">&quot;1900-01-01&quot;</span><span class="p">,</span> <span class="s2">&quot;1990-01-01&quot;</span><span class="p">),</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;year&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;author&quot;</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">min_len</span><span class="o">=</span><span class="mi">4000000</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Stream literary works into a <a class="reference internal" href="lang_doc_corpus.html#textacy.corpus.Corpus" title="textacy.corpus.Corpus"><code class="xref py py-class docutils literal notranslate"><span class="pre">textacy.Corpus</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">textacy</span><span class="o">.</span><span class="n">Corpus</span><span class="p">(</span><span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">))</span>
+<span class="go">Corpus(5 docs; 182289 tokens)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_dir</strong> (str or <a class="reference external" href="https://docs.python.org/3.6/library/pathlib.html#pathlib.Path" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to directory on disk
+under which dataset is stored, i.e. <code class="docutils literal notranslate"><span class="pre">/path/to/data_dir/oxford_text_archive</span></code>.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="textacy.datasets.oxford_text_archive.OxfordTextArchive.full_date_range">
+<code class="sig-name descname">full_date_range</code><a class="headerlink" href="#textacy.datasets.oxford_text_archive.OxfordTextArchive.full_date_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>First and last dates for which works are available,
+each as an ISO-formatted string (YYYY-MM-DD).</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="textacy.datasets.oxford_text_archive.OxfordTextArchive.authors">
+<code class="sig-name descname">authors</code><a class="headerlink" href="#textacy.datasets.oxford_text_archive.OxfordTextArchive.authors" title="Permalink to this definition">¶</a></dt>
+<dd><p>Full names of all distinct authors included in this
+dataset, e.g. “Shakespeare, William”.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Set[<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.oxford_text_archive.OxfordTextArchive.download">
+<code class="sig-name descname">download</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">force: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/textacy/datasets/oxford_text_archive.html#OxfordTextArchive.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.oxford_text_archive.OxfordTextArchive.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the data as a zip archive file, then save it to disk and
+extract its contents under the <code class="xref py py-attr docutils literal notranslate"><span class="pre">OxfordTextArchive.data_dir</span></code> directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>force</strong> – If True, download the dataset, even if it already exists
+on disk under <code class="docutils literal notranslate"><span class="pre">data_dir</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.oxford_text_archive.OxfordTextArchive.metadata">
+<em class="property">property </em><code class="sig-name descname">metadata</code><a class="headerlink" href="#textacy.datasets.oxford_text_archive.OxfordTextArchive.metadata" title="Permalink to this definition">¶</a></dt>
+<dd><p>Dict[str, dict]</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.oxford_text_archive.OxfordTextArchive.texts">
+<code class="sig-name descname">texts</code><span class="sig-paren">(</span><em class="sig-param">*, author: Union[str, Set[str], None] = None, date_range: Optional[Tuple[Optional[str], Optional[str]]] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[str]<a class="reference internal" href="../_modules/textacy/datasets/oxford_text_archive.html#OxfordTextArchive.texts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.oxford_text_archive.OxfordTextArchive.texts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over works in this dataset, optionally filtering by a variety
+of metadata and/or text length, and yield texts only.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>author</strong> – Filter texts by the authors’ name. For multiple values (Set[str]),
+ANY rather than ALL of the authors must be found among a given works’s authors.</p></li>
+<li><p><strong>date_range</strong> – Filter texts by the date on which it was published;
+both start and end date must be specified, but a null value for either
+will be replaced by the min/max date available in the dataset.</p></li>
+<li><p><strong>min_len</strong> – Filter texts by the length (# characters) of their text content.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> texts that match all specified filters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next work in dataset passing all filters.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.oxford_text_archive.OxfordTextArchive.records">
+<code class="sig-name descname">records</code><span class="sig-paren">(</span><em class="sig-param">*, author: Union[str, Set[str], None] = None, date_range: Optional[Tuple[Optional[str], Optional[str]]] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[str, dict]]<a class="reference internal" href="../_modules/textacy/datasets/oxford_text_archive.html#OxfordTextArchive.records"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.oxford_text_archive.OxfordTextArchive.records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over works in this dataset, optionally filtering by a variety
+of metadata and/or text length, and yield text + metadata pairs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>author</strong> – Filter texts by the authors’ name. For multiple values (Set[str]),
+ANY rather than ALL of the authors must be found among a given works’s authors.</p></li>
+<li><p><strong>date_range</strong> – Filter texts by the date on which it was published;
+both start and end date must be specified, but a null value for either
+will be replaced by the min/max date available in the dataset.</p></li>
+<li><p><strong>min_len</strong> – Filter texts by the length (# characters) of their text content.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> texts that match all specified filters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next work in dataset passing all filters,
+and its corresponding metadata.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.datasets.imdb"></span><div class="section" id="imdb-movie-reviews">
+<h2>IMDB movie reviews<a class="headerlink" href="#imdb-movie-reviews" title="Permalink to this headline">¶</a></h2>
+<p>A collection of 50k highly polar movie reviews posted to IMDB, split evenly
+into training and testing sets, with 25k positive and 25k negative sentiment labels,
+as well as some unlabeled reviews.</p>
+<p>Records include the following key fields (plus a few others):</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">text</span></code>: Full text of the review.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">subset</span></code>: Subset of the dataset (“train” or “test”) into which
+the review has been split.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">label</span></code>: Sentiment label (“pos” or “neg”) assigned to the review.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">rating</span></code>: Numeric rating assigned by the original reviewer, ranging from
+1 to 10. Reviews with a rating &lt;= 5 are “neg”; the rest are “pos”.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">movie_id</span></code>: Unique identifier for the movie under review within IMDB,
+useful for grouping reviews or joining with an external movie dataset.</p></li>
+</ul>
+</div></blockquote>
+<p>Reference: Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan Huang, Andrew Y. Ng,
+and Christopher Potts. (2011). Learning Word Vectors for Sentiment Analysis.
+The 49th Annual Meeting of the Association for Computational Linguistics (ACL 2011).</p>
+<dl class="class">
+<dt id="textacy.datasets.imdb.IMDB">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.datasets.imdb.</code><code class="sig-name descname">IMDB</code><span class="sig-paren">(</span><em class="sig-param">data_dir=PosixPath('/Users/burtondewilde/chartbeat/github/textacy/textacy/data/imdb')</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/datasets/imdb.html#IMDB"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.imdb.IMDB" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stream a collection of IMDB movie reviews from text files on disk,
+either as texts or text + metadata pairs.</p>
+<p>Download the data (one time only!), saving and extracting its contents to disk:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">textacy.datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">textacy</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">IMDB</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">info</span>
+<span class="go">{&#39;name&#39;: &#39;imdb&#39;,</span>
+<span class="go"> &#39;site_url&#39;: &#39;http://ai.stanford.edu/~amaas/data/sentiment&#39;,</span>
+<span class="go"> &#39;description&#39;: &#39;Collection of 50k highly polar movie reviews split evenly into train and test sets, with 25k positive and 25k negative labels. Also includes some unlabeled reviews.&#39;}</span>
+</pre></div>
+</div>
+<p>Iterate over movie reviews as texts or records with both text and metadata:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2"> </span><span class="si">{}</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;label&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;rating&quot;</span><span class="p">],</span> <span class="n">text</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Filter movie reviews by a variety of metadata fields and text length:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="s2">&quot;pos&quot;</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;rating&quot;</span><span class="p">],</span> <span class="s2">&quot;:&quot;</span><span class="p">,</span> <span class="n">text</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">rating_range</span><span class="o">=</span><span class="p">(</span><span class="mi">9</span><span class="p">,</span> <span class="mi">11</span><span class="p">),</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;rating&quot;</span><span class="p">],</span> <span class="n">text</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">min_len</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">text</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>Stream movie reviews into a <a class="reference internal" href="lang_doc_corpus.html#textacy.corpus.Corpus" title="textacy.corpus.Corpus"><code class="xref py py-class docutils literal notranslate"><span class="pre">textacy.Corpus</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">textacy</span><span class="o">.</span><span class="n">Corpus</span><span class="p">(</span><span class="s2">&quot;en&quot;</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">100</span><span class="p">))</span>
+<span class="go">Corpus(100 docs; 24340 tokens)</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_dir</strong> – Path to directory on disk under which the data is stored,
+i.e. <code class="docutils literal notranslate"><span class="pre">/path/to/data_dir/imdb</span></code>.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="textacy.datasets.imdb.IMDB.full_rating_range">
+<code class="sig-name descname">full_rating_range</code><a class="headerlink" href="#textacy.datasets.imdb.IMDB.full_rating_range" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lowest and highest ratings for which movie reviews are available.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.imdb.IMDB.download">
+<code class="sig-name descname">download</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">force: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/textacy/datasets/imdb.html#IMDB.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.imdb.IMDB.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the data as a compressed tar archive file, then save it to disk and
+extract its contents under the <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>force</strong> – If True, always download the dataset even if it already exists
+on disk under <code class="docutils literal notranslate"><span class="pre">data_dir</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.imdb.IMDB.texts">
+<code class="sig-name descname">texts</code><span class="sig-paren">(</span><em class="sig-param">*, subset: Optional[str] = None, label: Optional[str] = None, rating_range: Optional[Tuple[Optional[int], Optional[int]]] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[str]<a class="reference internal" href="../_modules/textacy/datasets/imdb.html#IMDB.texts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.imdb.IMDB.texts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over movie reviews in this dataset, optionally filtering by
+a variety of metadata and/or text length, and yield texts only.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subset</strong> (<em>{&quot;train&quot;</em><em>, </em><em>&quot;test&quot;}</em>) – Filter movie reviews
+by the dataset subset into which they’ve already been split.</p></li>
+<li><p><strong>label</strong> (<em>{&quot;pos&quot;</em><em>, </em><em>&quot;neg&quot;</em><em>, </em><em>&quot;unsup&quot;}</em>) – Filter movie reviews
+by the assigned sentiment label (or lack thereof, for “unsup”).</p></li>
+<li><p><strong>rating_range</strong> – Filter movie reviews by the rating assigned by the reviewer.
+Only those with ratings in the interval [low, high) are included.
+Both low and high values must be specified, but a null value
+for either is automatically replaced by the minimum or maximum
+valid values, respectively.</p></li>
+<li><p><strong>min_len</strong> – Filter reviews by the length (# characters) of their text content.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> reviews that match all specified filters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next movie review in dataset passing all filters.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.imdb.IMDB.records">
+<code class="sig-name descname">records</code><span class="sig-paren">(</span><em class="sig-param">*, subset: Optional[str] = None, label: Optional[str] = None, rating_range: Optional[Tuple[Optional[int], Optional[int]]] = None, min_len: Optional[int] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[str, dict]]<a class="reference internal" href="../_modules/textacy/datasets/imdb.html#IMDB.records"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.imdb.IMDB.records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over movie reviews in this dataset, optionally filtering by
+a variety of metadata and/or text length, and yield text + metadata pairs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>subset</strong> (<em>{&quot;train&quot;</em><em>, </em><em>&quot;test&quot;}</em>) – Filter movie reviews
+by the dataset subset into which they’ve already been split.</p></li>
+<li><p><strong>label</strong> (<em>{&quot;pos&quot;</em><em>, </em><em>&quot;neg&quot;</em><em>, </em><em>&quot;unsup&quot;}</em>) – Filter movie reviews
+by the assigned sentiment label (or lack thereof, for “unsup”).</p></li>
+<li><p><strong>rating_range</strong> – Filter movie reviews by the rating assigned by the reviewer.
+Only those with ratings in the interval [low, high) are included.
+Both low and high values must be specified, but a null value
+for either is automatically replaced by the minimum or maximum
+valid values, respectively.</p></li>
+<li><p><strong>min_len</strong> – Filter reviews by the length (# characters) of their text content.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> reviews that match all specified filters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next movie review in dataset passing all filters,
+and its corresponding metadata.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.datasets.udhr"></span><div class="section" id="udhr-translations">
+<h2>UDHR translations<a class="headerlink" href="#udhr-translations" title="Permalink to this headline">¶</a></h2>
+<p>A collection of translations of the Universal Declaration of Human Rights (UDHR),
+a milestone document in the history of human rights that first, formally established
+fundamental human rights to be universally protected.</p>
+<p>Records include the following fields:</p>
+<blockquote>
+<div><ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">text</span></code>: Full text of the translated UDHR document.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lang</span></code>: ISO-639-1 language code of the text.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lang_name</span></code>: Ethnologue entry for the language (see <a class="reference external" href="https://www.ethnologue.com">https://www.ethnologue.com</a>).</p></li>
+</ul>
+</div></blockquote>
+<p>The source dataset was compiled and is updated by the Unicode Consortium
+as a way to demonstrate the use of unicode in representing a wide variety of languages.
+In fact, the UDHR was chosen because it’s been translated into more languages
+than any other document! However, this dataset only provides access to records
+translated into ISO-639-1 languages — that is, major living languages <em>only</em>,
+rather than every language, major or minor, that has ever existed. If you need access
+to texts in those other languages, you can find them at <code class="xref py py-attr docutils literal notranslate"><span class="pre">UDHR._texts_dirpath</span></code>.</p>
+<p>For more details, go to <a class="reference external" href="https://unicode.org/udhr">https://unicode.org/udhr</a>.</p>
+<dl class="class">
+<dt id="textacy.datasets.udhr.UDHR">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.datasets.udhr.</code><code class="sig-name descname">UDHR</code><span class="sig-paren">(</span><em class="sig-param">data_dir: Union[str</em>, <em class="sig-param">pathlib.Path] = PosixPath('/Users/burtondewilde/chartbeat/github/textacy/textacy/data/udhr')</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/datasets/udhr.html#UDHR"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.udhr.UDHR" title="Permalink to this definition">¶</a></dt>
+<dd><p>Stream a collection of UDHR translations from disk, either as texts or
+text + metadata pairs.</p>
+<p>Download the data (one time only!), saving and extracting its contents to disk:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">import</span> <span class="nn">textacy.datasets</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span> <span class="o">=</span> <span class="n">textacy</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">UDHR</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">ds</span><span class="o">.</span><span class="n">info</span>
+<span class="go">{&#39;name&#39;: &#39;udhr&#39;,</span>
+<span class="go"> &#39;site_url&#39;: &#39;http://www.ohchr.org/EN/UDHR&#39;,</span>
+<span class="go"> &#39;description&#39;: &#39;A collection of translations of the Universal Declaration of Human Rights (UDHR), a milestone document in the history of human rights that first, formally established fundamental human rights to be universally protected.&#39;}</span>
+</pre></div>
+</div>
+<p>Iterate over translations as texts or records with both text and metadata:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="n">text</span><span class="p">[:</span><span class="mi">500</span><span class="p">])</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">limit</span><span class="o">=</span><span class="mi">5</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2">)</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;lang_name&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;lang&quot;</span><span class="p">],</span> <span class="n">text</span><span class="p">[:</span><span class="mi">500</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>Filter translations by language, and note that some languages have multiple translations:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">lang</span><span class="o">=</span><span class="s2">&quot;en&quot;</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2">)</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;lang_name&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;lang&quot;</span><span class="p">],</span> <span class="n">text</span><span class="p">[:</span><span class="mi">500</span><span class="p">]))</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">for</span> <span class="n">text</span><span class="p">,</span> <span class="n">meta</span> <span class="ow">in</span> <span class="n">ds</span><span class="o">.</span><span class="n">records</span><span class="p">(</span><span class="n">lang</span><span class="o">=</span><span class="s2">&quot;zh&quot;</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2">)</span><span class="se">\n</span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">meta</span><span class="p">[</span><span class="s2">&quot;lang_name&quot;</span><span class="p">],</span> <span class="n">meta</span><span class="p">[</span><span class="s2">&quot;lang&quot;</span><span class="p">],</span> <span class="n">text</span><span class="p">[:</span><span class="mi">500</span><span class="p">]))</span>
+</pre></div>
+</div>
+<p>Note: Streaming translations into a <a class="reference internal" href="lang_doc_corpus.html#textacy.corpus.Corpus" title="textacy.corpus.Corpus"><code class="xref py py-class docutils literal notranslate"><span class="pre">textacy.Corpus</span></code></a>
+doesn’t work as for other available datasets, since this dataset is multilingual.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>data_dir</strong> (str or <a class="reference external" href="https://docs.python.org/3.6/library/pathlib.html#pathlib.Path" title="(in Python v3.6)"><code class="xref py py-class docutils literal notranslate"><span class="pre">pathlib.Path</span></code></a>) – Path to directory on disk
+under which the data is stored, i.e. <code class="docutils literal notranslate"><span class="pre">/path/to/data_dir/udhr</span></code>.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="textacy.datasets.udhr.UDHR.langs">
+<code class="sig-name descname">langs</code><a class="headerlink" href="#textacy.datasets.udhr.UDHR.langs" title="Permalink to this definition">¶</a></dt>
+<dd><p>All distinct language codes with texts in this dataset,
+e.g. “en” for English.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p>Set[<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)">str</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.udhr.UDHR.download">
+<code class="sig-name descname">download</code><span class="sig-paren">(</span><em class="sig-param">*</em>, <em class="sig-param">force: bool = False</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/textacy/datasets/udhr.html#UDHR.download"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.udhr.UDHR.download" title="Permalink to this definition">¶</a></dt>
+<dd><p>Download the data as a zipped archive of language-specific text files,
+then save it to disk and extract its contents under the <code class="docutils literal notranslate"><span class="pre">data_dir</span></code> directory.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>force</strong> – If True, download the dataset, even if it already exists
+on disk under <code class="docutils literal notranslate"><span class="pre">data_dir</span></code>.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.udhr.UDHR.texts">
+<code class="sig-name descname">texts</code><span class="sig-paren">(</span><em class="sig-param">*, lang: Union[str, Set[str], None] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[str]<a class="reference internal" href="../_modules/textacy/datasets/udhr.html#UDHR.texts"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.udhr.UDHR.texts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over records in this dataset, optionally filtering by language,
+and yield texts only.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lang</strong> – Filter records by the language in which they’re written;
+see <a class="reference internal" href="#textacy.datasets.udhr.UDHR.langs" title="textacy.datasets.udhr.UDHR.langs"><code class="xref py py-attr docutils literal notranslate"><span class="pre">UDHR.langs</span></code></a>.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> texts that match specified filter.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next record in dataset passing filters.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.datasets.udhr.UDHR.records">
+<code class="sig-name descname">records</code><span class="sig-paren">(</span><em class="sig-param">*, lang: Union[str, Set[str], None] = None, limit: Optional[int] = None</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[str, dict]]<a class="reference internal" href="../_modules/textacy/datasets/udhr.html#UDHR.records"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.datasets.udhr.UDHR.records" title="Permalink to this definition">¶</a></dt>
+<dd><p>Iterate over reocrds in this dataset, optionally filtering by a language,
+and yield text + metadata pairs.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>lang</strong> – Filter records by the language in which they’re written;
+see <a class="reference internal" href="#textacy.datasets.udhr.UDHR.langs" title="textacy.datasets.udhr.UDHR.langs"><code class="xref py py-attr docutils literal notranslate"><span class="pre">UDHR.langs</span></code></a>.</p></li>
+<li><p><strong>limit</strong> – Yield no more than <code class="docutils literal notranslate"><span class="pre">limit</span></code> texts that match specified filter.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Text of the next record in dataset passing filters,
+and its corresponding metadata.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If any filtering options are invalid.</p>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.datasets.utils"></span><div class="section" id="dataset-utils">
+<h2>Dataset Utils<a class="headerlink" href="#dataset-utils" title="Permalink to this headline">¶</a></h2>
+<p>Shared functionality for downloading, naming, and extracting the contents
+of datasets, as well as filtering for particular subsets.</p>
+</div>
+</div>
+
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+        <li>
+          &larr;
+          <a href="spacier.html" title="Previous document">spaCy extensions</a>
+        </li>
+        <li>
+          <a href="resources.html" title="Next document">Resources</a>
+          &rarr;
+        </li>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="root.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="lang_doc_corpus.html">Lang, Doc, Corpus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spacier.html">spaCy extensions</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="resources.html">Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="text_processing.html">Text (Pre-)Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="information_extraction.html">Information Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vsm_and_tm.html">Vectorization &amp; Topic Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="viz.html">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="augmentation.html">Data Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="misc.html">Miscellany</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="root.html">API Reference</a><ul>
+      <li>Previous: <a href="spacier.html" title="previous chapter">spaCy extensions</a></li>
+      <li>Next: <a href="resources.html" title="next chapter">Resources</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/api_reference/datasets.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

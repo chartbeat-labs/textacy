@@ -1,0 +1,863 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Information Extraction &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Vectorization &amp; Topic Modeling" href="vsm_and_tm.html" />
+    <link rel="prev" title="Text (Pre-)Processing" href="text_processing.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-textacy.extract">
+<span id="information-extraction"></span><span id="ref-api-reference-information-extraction"></span><h1>Information Extraction<a class="headerlink" href="#module-textacy.extract" title="Permalink to this headline">¶</a></h1>
+<p>Functions to extract various elements of interest from documents already parsed
+by spaCy, such as n-grams, named entities, subject-verb-object triples, and
+acronyms.</p>
+<dl class="function">
+<dt id="textacy.extract.words">
+<code class="sig-prename descclassname">textacy.extract.</code><code class="sig-name descname">words</code><span class="sig-paren">(</span><em class="sig-param">doc: Union[spacy.tokens.doc.Doc, spacy.tokens.span.Span], *, filter_stops: bool = True, filter_punct: bool = True, filter_nums: bool = False, include_pos: Union[str, Set[str], None] = None, exclude_pos: Union[str, Set[str], None] = None, min_freq: int = 1</em><span class="sig-paren">)</span> &#x2192; Iterable[spacy.tokens.token.Token]<a class="reference internal" href="../_modules/textacy/extract.html#words"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.extract.words" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract an ordered sequence of words from a document processed by spaCy,
+optionally filtering words by part-of-speech tag and frequency.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>filter_stops</strong> – If True, remove stop words from word list.</p></li>
+<li><p><strong>filter_punct</strong> – If True, remove punctuation from word list.</p></li>
+<li><p><strong>filter_nums</strong> – If True, remove number-like words (e.g. 10, “ten”)
+from word list.</p></li>
+<li><p><strong>include_pos</strong> – Remove words whose part-of-speech tag IS NOT in the specified tags.</p></li>
+<li><p><strong>exclude_pos</strong> – Remove words whose part-of-speech tag IS in the specified tags.</p></li>
+<li><p><strong>min_freq</strong> – Remove words that occur in <code class="docutils literal notranslate"><span class="pre">doc</span></code> fewer than <code class="docutils literal notranslate"><span class="pre">min_freq</span></code> times.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Next token from <code class="docutils literal notranslate"><span class="pre">doc</span></code> passing specified filters in order of appearance
+in the document.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#TypeError" title="(in Python v3.6)"><strong>TypeError</strong></a> – if <code class="docutils literal notranslate"><span class="pre">include_pos</span></code> or <code class="docutils literal notranslate"><span class="pre">exclude_pos</span></code> is not a str, a set of str,
+    or a falsy value</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Filtering by part-of-speech tag uses the universal POS tag set; for details,
+check spaCy’s docs: <a class="reference external" href="https://spacy.io/api/annotation#pos-tagging">https://spacy.io/api/annotation#pos-tagging</a></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.extract.ngrams">
+<code class="sig-prename descclassname">textacy.extract.</code><code class="sig-name descname">ngrams</code><span class="sig-paren">(</span><em class="sig-param">doc: Union[spacy.tokens.doc.Doc, spacy.tokens.span.Span], n: int, *, filter_stops: bool = True, filter_punct: bool = True, filter_nums: bool = False, include_pos: Union[str, Set[str], None] = None, exclude_pos: Union[str, Set[str], None] = None, min_freq: int = 1</em><span class="sig-paren">)</span> &#x2192; Iterable[spacy.tokens.span.Span]<a class="reference internal" href="../_modules/textacy/extract.html#ngrams"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.extract.ngrams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract an ordered sequence of n-grams (<code class="docutils literal notranslate"><span class="pre">n</span></code> consecutive words) from a
+spacy-parsed doc, optionally filtering n-grams by the types and
+parts-of-speech of the constituent words.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>n</strong> – Number of tokens per n-gram; 2 =&gt; bigrams, 3 =&gt; trigrams, etc.</p></li>
+<li><p><strong>filter_stops</strong> – If True, remove ngrams that start or end with a stop word</p></li>
+<li><p><strong>filter_punct</strong> – If True, remove ngrams that contain any punctuation-only tokens</p></li>
+<li><p><strong>filter_nums</strong> – If True, remove ngrams that contain any numbers
+or number-like tokens (e.g. 10, ‘ten’)</p></li>
+<li><p><strong>include_pos</strong> – Remove ngrams if any of their constituent tokens’ part-of-speech tags
+ARE NOT included in this param</p></li>
+<li><p><strong>exclude_pos</strong> – Remove ngrams if any of their constituent tokens’ part-of-speech tags
+ARE included in this param</p></li>
+<li><p><strong>min_freq</strong> – Remove ngrams that occur in <code class="docutils literal notranslate"><span class="pre">doc</span></code> fewer than <code class="docutils literal notranslate"><span class="pre">min_freq</span></code> times</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Next ngram from <code class="docutils literal notranslate"><span class="pre">doc</span></code> passing all specified filters, in order of appearance
+in the document</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – if <code class="docutils literal notranslate"><span class="pre">n</span></code> &lt; 1</p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#TypeError" title="(in Python v3.6)"><strong>TypeError</strong></a> – if <code class="docutils literal notranslate"><span class="pre">include_pos</span></code> or <code class="docutils literal notranslate"><span class="pre">exclude_pos</span></code> is not a str, a set of str,
+    or a falsy value</p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Filtering by part-of-speech tag uses the universal POS tag set; for details,
+check spaCy’s docs: <a class="reference external" href="https://spacy.io/api/annotation#pos-tagging">https://spacy.io/api/annotation#pos-tagging</a></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.extract.entities">
+<code class="sig-prename descclassname">textacy.extract.</code><code class="sig-name descname">entities</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, *, include_types: Union[str, Set[str], None] = None, exclude_types: Union[str, Set[str], None] = None, drop_determiners: bool = True, min_freq: int = 1</em><span class="sig-paren">)</span> &#x2192; Iterable[spacy.tokens.span.Span]<a class="reference internal" href="../_modules/textacy/extract.html#entities"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.extract.entities" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract an ordered sequence of named entities (PERSON, ORG, LOC, etc.) from
+a <code class="docutils literal notranslate"><span class="pre">Doc</span></code>, optionally filtering by entity types and frequencies.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>include_types</strong> – Remove entities whose type IS NOT
+in this param; if “NUMERIC”, all numeric entity types (“DATE”,
+“MONEY”, “ORDINAL”, etc.) are included</p></li>
+<li><p><strong>exclude_types</strong> – Remove entities whose type IS
+in this param; if “NUMERIC”, all numeric entity types (“DATE”,
+“MONEY”, “ORDINAL”, etc.) are excluded</p></li>
+<li><p><strong>drop_determiners</strong> – <p>Remove leading determiners (e.g. “the”)
+from entities (e.g. “the United States” =&gt; “United States”).</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Entities from which a leading determiner has been removed
+are, effectively, <em>new</em> entities, and not saved to the <code class="docutils literal notranslate"><span class="pre">Doc</span></code>
+from which they came. This is irritating but unavoidable, since
+this function is not meant to have side-effects on document state.
+If you’re only using the text of the returned spans, this is no
+big deal, but watch out if you’re counting on determiner-less
+entities associated with the doc downstream.</p>
+</div>
+</p></li>
+<li><p><strong>min_freq</strong> – Remove entities that occur in <code class="docutils literal notranslate"><span class="pre">doc</span></code> fewer
+than <code class="docutils literal notranslate"><span class="pre">min_freq</span></code> times</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Next entity from <code class="docutils literal notranslate"><span class="pre">doc</span></code> passing all specified filters in order of appearance
+in the document</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#TypeError" title="(in Python v3.6)"><strong>TypeError</strong></a> – if <code class="docutils literal notranslate"><span class="pre">include_types</span></code> or <code class="docutils literal notranslate"><span class="pre">exclude_types</span></code> is not a str, a set of
+    str, or a falsy value</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.extract.noun_chunks">
+<code class="sig-prename descclassname">textacy.extract.</code><code class="sig-name descname">noun_chunks</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em>, <em class="sig-param">*</em>, <em class="sig-param">drop_determiners: bool = True</em>, <em class="sig-param">min_freq: int = 1</em><span class="sig-paren">)</span> &#x2192; Iterable[spacy.tokens.span.Span]<a class="reference internal" href="../_modules/textacy/extract.html#noun_chunks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.extract.noun_chunks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract an ordered sequence of noun chunks from a spacy-parsed doc, optionally
+filtering by frequency and dropping leading determiners.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>drop_determiners</strong> – Remove leading determiners (e.g. “the”)
+from phrases (e.g. “the quick brown fox” =&gt; “quick brown fox”)</p></li>
+<li><p><strong>min_freq</strong> – Remove chunks that occur in <code class="docutils literal notranslate"><span class="pre">doc</span></code> fewer than <code class="docutils literal notranslate"><span class="pre">min_freq</span></code> times</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Next noun chunk from <code class="docutils literal notranslate"><span class="pre">doc</span></code> in order of appearance in the document</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.extract.pos_regex_matches">
+<code class="sig-prename descclassname">textacy.extract.</code><code class="sig-name descname">pos_regex_matches</code><span class="sig-paren">(</span><em class="sig-param">doc: Union[spacy.tokens.doc.Doc, spacy.tokens.span.Span], pattern: str</em><span class="sig-paren">)</span> &#x2192; Iterable[spacy.tokens.span.Span]<a class="reference internal" href="../_modules/textacy/extract.html#pos_regex_matches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.extract.pos_regex_matches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract sequences of consecutive tokens from a spacy-parsed doc whose
+part-of-speech tags match the specified regex pattern.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>pattern</strong> – <p>Pattern of consecutive POS tags whose corresponding words
+are to be extracted, inspired by the regex patterns used in NLTK’s
+<cite>nltk.chunk.regexp</cite>. Tags are uppercase, from the universal tag set;
+delimited by &lt; and &gt;, which are basically converted to parentheses
+with spaces as needed to correctly extract matching word sequences;
+white space in the input doesn’t matter.</p>
+<p>Examples (see <code class="docutils literal notranslate"><span class="pre">constants.POS_REGEX_PATTERNS</span></code>):</p>
+<ul>
+<li><p>noun phrase: r’&lt;DET&gt;? (&lt;NOUN&gt;+ &lt;ADP|CONJ&gt;)* &lt;NOUN&gt;+’</p></li>
+<li><p>compound nouns: r’&lt;NOUN&gt;+’</p></li>
+<li><p>verb phrase: r’&lt;VERB&gt;?&lt;ADV&gt;*&lt;VERB&gt;+’</p></li>
+<li><p>prepositional phrase: r’&lt;PREP&gt; &lt;DET&gt;? (&lt;NOUN&gt;+&lt;ADP&gt;)* &lt;NOUN&gt;+’</p></li>
+</ul>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Next span of consecutive tokens from <code class="docutils literal notranslate"><span class="pre">doc</span></code> whose parts-of-speech match <code class="docutils literal notranslate"><span class="pre">pattern</span></code>,
+in order of appearance</p>
+</dd>
+</dl>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p><em>DEPRECATED!</em> For similar but more powerful and performant functionality,
+use <a class="reference internal" href="#textacy.extract.matches" title="textacy.extract.matches"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.extract.matches()</span></code></a> instead.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.extract.matches">
+<code class="sig-prename descclassname">textacy.extract.</code><code class="sig-name descname">matches</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, patterns: Union[str, List[str], List[dict], List[List[dict]]], *, on_match: Callable = None</em><span class="sig-paren">)</span> &#x2192; Iterable[spacy.tokens.span.Span]<a class="reference internal" href="../_modules/textacy/extract.html#matches"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.extract.matches" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract <code class="docutils literal notranslate"><span class="pre">Span</span></code> s from a <code class="docutils literal notranslate"><span class="pre">Doc</span></code> matching one or more patterns
+of per-token attr:value pairs, with optional quantity qualifiers.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>patterns</strong> – <p>One or multiple patterns to match against <code class="docutils literal notranslate"><span class="pre">doc</span></code>
+using a <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.matcher.Matcher</span></code>.</p>
+<p>If List[dict] or List[List[dict]], each pattern is specified
+as attr: value pairs per token, with optional quantity qualifiers:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">[{&quot;POS&quot;:</span> <span class="pre">&quot;NOUN&quot;}]</span></code> matches singular or plural nouns,
+like “friend” or “enemies”</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[{&quot;POS&quot;:</span> <span class="pre">&quot;PREP&quot;},</span> <span class="pre">{&quot;POS&quot;:</span> <span class="pre">&quot;DET&quot;,</span> <span class="pre">&quot;OP&quot;:</span> <span class="pre">&quot;?&quot;},</span> <span class="pre">{&quot;POS&quot;:</span> <span class="pre">&quot;ADJ&quot;,</span> <span class="pre">&quot;OP&quot;:</span> <span class="pre">&quot;?&quot;},</span> <span class="pre">{&quot;POS&quot;:</span> <span class="pre">&quot;NOUN&quot;,</span> <span class="pre">&quot;OP&quot;:</span> <span class="pre">&quot;+&quot;}]</span></code>
+matches prepositional phrases, like “in the future” or “from the distant past”</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[{&quot;IS_DIGIT&quot;:</span> <span class="pre">True},</span> <span class="pre">{&quot;TAG&quot;:</span> <span class="pre">&quot;NNS&quot;}]</span></code> matches numbered plural nouns,
+like “60 seconds” or “2 beers”</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">[{&quot;POS&quot;:</span> <span class="pre">&quot;PROPN&quot;,</span> <span class="pre">&quot;OP&quot;:</span> <span class="pre">&quot;+&quot;},</span> <span class="pre">{}]</span></code> matches proper nouns and
+whatever word follows them, like “Burton DeWilde yaaasss”</p></li>
+</ul>
+<p>If str or List[str], each pattern is specified as one or more
+per-token patterns separated by whitespace where attribute, value,
+and optional quantity qualifiers are delimited by colons. Note that
+boolean and integer values have special syntax — “bool(val)” and
+“int(val)”, respectively — and that wildcard tokens still need
+a colon between the (empty) attribute and value strings.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;POS:NOUN&quot;</span></code> matches singular or plural nouns</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;POS:PREP</span> <span class="pre">POS:DET:?</span> <span class="pre">POS:ADJ:?</span> <span class="pre">POS:NOUN:+&quot;</span></code> matches prepositional phrases</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;IS_DIGIT:bool(True)</span> <span class="pre">TAG:NNS&quot;</span></code> matches numbered plural nouns</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">&quot;POS:PROPN:+</span> <span class="pre">:&quot;</span></code> matches proper nouns and whatever word follows them</p></li>
+</ul>
+<p>Also note that these pattern strings don’t support spaCy v2.1’s
+“extended” pattern syntax; if you need such complex patterns, it’s
+probably better to use a List[dict] or List[List[dict]], anyway.</p>
+</p></li>
+<li><p><strong>on_match</strong> – Callback function to act on matches.
+Takes the arguments <code class="docutils literal notranslate"><span class="pre">matcher</span></code>, <code class="docutils literal notranslate"><span class="pre">doc</span></code>, <code class="docutils literal notranslate"><span class="pre">i</span></code> and <code class="docutils literal notranslate"><span class="pre">matches</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Next matching <code class="docutils literal notranslate"><span class="pre">Span</span></code> in <code class="docutils literal notranslate"><span class="pre">doc</span></code>, in order of appearance</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#TypeError" title="(in Python v3.6)"><strong>TypeError</strong></a> – </p></li>
+<li><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – </p></li>
+</ul>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference external" href="https://spacy.io/usage/rule-based-matching">https://spacy.io/usage/rule-based-matching</a></p></li>
+<li><p><a class="reference external" href="https://spacy.io/api/matcher">https://spacy.io/api/matcher</a></p></li>
+</ul>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.extract.subject_verb_object_triples">
+<code class="sig-prename descclassname">textacy.extract.</code><code class="sig-name descname">subject_verb_object_triples</code><span class="sig-paren">(</span><em class="sig-param">doc: Union[spacy.tokens.doc.Doc, spacy.tokens.span.Span]</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[spacy.tokens.span.Span, spacy.tokens.span.Span, spacy.tokens.span.Span]]<a class="reference internal" href="../_modules/textacy/extract.html#subject_verb_object_triples"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.extract.subject_verb_object_triples" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract an ordered sequence of subject-verb-object (SVO) triples from a
+spacy-parsed doc. Note that this only works for SVO languages.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>doc</strong> – </p>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Next 3-tuple of spans from <code class="docutils literal notranslate"><span class="pre">doc</span></code> representing a (subject, verb, object) triple,
+in order of appearance</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.extract.acronyms_and_definitions">
+<code class="sig-prename descclassname">textacy.extract.</code><code class="sig-name descname">acronyms_and_definitions</code><span class="sig-paren">(</span><em class="sig-param">doc: Union[spacy.tokens.doc.Doc, spacy.tokens.span.Span], known_acro_defs: Optional[Dict[str, str]] = None</em><span class="sig-paren">)</span> &#x2192; Dict[str, List[str]]<a class="reference internal" href="../_modules/textacy/extract.html#acronyms_and_definitions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.extract.acronyms_and_definitions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract a collection of acronyms and their most likely definitions, if available,
+from a spacy-parsed doc. If multiple definitions are found for a given acronym,
+only the most frequently occurring definition is returned.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>known_acro_defs</strong> – If certain acronym/definition pairs
+are known, pass them in as {acronym (str): definition (str)};
+algorithm will not attempt to find new definitions</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Unique acronyms (keys) with matched definitions (values)</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Taghva, Kazem, and Jeff Gilbreth. “Recognizing acronyms and their definitions.”
+International Journal on Document Analysis and Recognition 1.4 (1999): 191-198.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.extract.semistructured_statements">
+<code class="sig-prename descclassname">textacy.extract.</code><code class="sig-name descname">semistructured_statements</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em>, <em class="sig-param">entity: str</em>, <em class="sig-param">*</em>, <em class="sig-param">cue: str = 'be'</em>, <em class="sig-param">ignore_entity_case: bool = True</em>, <em class="sig-param">min_n_words: int = 1</em>, <em class="sig-param">max_n_words: int = 20</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/extract.html#semistructured_statements"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.extract.semistructured_statements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract “semi-structured statements” from a spacy-parsed doc, each as a
+(entity, cue, fragment) triple. This is similar to subject-verb-object triples.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>entity</strong> – a noun or noun phrase of some sort (e.g. “President Obama”,
+“global warming”, “Python”)</p></li>
+<li><p><strong>cue</strong> – verb lemma with which <code class="docutils literal notranslate"><span class="pre">entity</span></code> is associated
+(e.g. “talk about”, “have”, “write”)</p></li>
+<li><p><strong>ignore_entity_case</strong> – If True, entity matching is case-independent</p></li>
+<li><p><strong>min_n_words</strong> – Min number of tokens allowed in a matching fragment</p></li>
+<li><p><strong>max_n_words</strong> – Max number of tokens allowed in a matching fragment</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>(<code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Span</span></code> or <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Token</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Span</span></code> or <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Token</span></code>, <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Span</span></code>) – where each element is a matching (entity, cue, fragment) triple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Inspired by N. Diakopoulos, A. Zhang, A. Salway. Visual Analytics of
+Media Frames in Online News and Blogs. IEEE InfoVis Workshop on Text
+Visualization. October, 2013.</p>
+<p>Which itself was inspired by by Salway, A.; Kelly, L.; Skadiņa, I.; and
+Jones, G. 2010. Portable Extraction of Partially Structured Facts from
+the Web. In Proc. ICETAL 2010, LNAI 6233, 345-356. Heidelberg, Springer.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.extract.direct_quotations">
+<code class="sig-prename descclassname">textacy.extract.</code><code class="sig-name descname">direct_quotations</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[spacy.tokens.span.Span, spacy.tokens.token.Token, spacy.tokens.span.Span]]<a class="reference internal" href="../_modules/textacy/extract.html#direct_quotations"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.extract.direct_quotations" title="Permalink to this definition">¶</a></dt>
+<dd><p>Baseline, not-great attempt at direction quotation extraction (no indirect
+or mixed quotations) using rules and patterns. English only.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>doc</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Doc</span></code>) – </p>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Next quotation in <code class="docutils literal notranslate"><span class="pre">doc</span></code> represented as a (speaker, reporting verb, quotation) 3-tuple</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Loosely inspired by Krestel, Bergler, Witte. “Minding the Source: Automatic
+Tagging of Reported Speech in Newspaper Articles”.</p>
+<p>TODO: Better approach would use ML, but needs a training dataset.</p>
+</dd></dl>
+
+<div class="section" id="module-textacy.ke.textrank">
+<span id="keyterm-extraction"></span><h2>Keyterm Extraction<a class="headerlink" href="#module-textacy.ke.textrank" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="textrank">
+<h3>TextRank<a class="headerlink" href="#textrank" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="textacy.ke.textrank.textrank">
+<code class="sig-prename descclassname">textacy.ke.textrank.</code><code class="sig-name descname">textrank</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, *, normalize: Union[str, Callable[[spacy.tokens.token.Token], str], None] = 'lemma', include_pos: Union[str, Collection[str], None] = ('NOUN', 'PROPN', 'ADJ'), window_size: int = 2, edge_weighting: str = 'binary', position_bias: bool = False, topn: Union[int, float] = 10</em><span class="sig-paren">)</span> &#x2192; List[Tuple[str, float]]<a class="reference internal" href="../_modules/textacy/ke/textrank.html#textrank"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.textrank.textrank" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract key terms from a document using the TextRank algorithm, or
+a variation thereof. For example:</p>
+<ul class="simple">
+<li><p>TextRank: <code class="docutils literal notranslate"><span class="pre">window_size=2,</span> <span class="pre">edge_weighting=&quot;binary&quot;,</span> <span class="pre">position_bias=False</span></code></p></li>
+<li><p>SingleRank: <code class="docutils literal notranslate"><span class="pre">window_size=10,</span> <span class="pre">edge_weighting=&quot;count&quot;,</span> <span class="pre">position_bias=False</span></code></p></li>
+<li><p>PositionRank: <code class="docutils literal notranslate"><span class="pre">window_size=10,</span> <span class="pre">edge_weighting=&quot;count&quot;,</span> <span class="pre">position_bias=True</span></code></p></li>
+</ul>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – spaCy <code class="docutils literal notranslate"><span class="pre">Doc</span></code> from which to extract keyterms.</p></li>
+<li><p><strong>normalize</strong> – If “lemma”, lemmatize terms; if “lower”, lowercase terms; if None,
+use the form of terms as they appeared in <code class="docutils literal notranslate"><span class="pre">doc</span></code>; if a callable,
+must accept a <code class="docutils literal notranslate"><span class="pre">Token</span></code> and return a str,
+e.g. <a class="reference internal" href="spacier.html#textacy.spacier.utils.get_normalized_text" title="textacy.spacier.utils.get_normalized_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.spacier.utils.get_normalized_text()</span></code></a>.</p></li>
+<li><p><strong>include_pos</strong> – One or more POS tags with which to filter for good candidate keyterms.
+If None, include tokens of all POS tags
+(which also allows keyterm extraction from docs without POS-tagging.)</p></li>
+<li><p><strong>window_size</strong> – Size of sliding window in which term co-occurrences are determined.</p></li>
+<li><p><strong>edge_weighting</strong> (<em>{&quot;count&quot;</em><em>, </em><em>&quot;binary&quot;}</em>) – : If “count”, the nodes for
+all co-occurring terms are connected by edges with weight equal to
+the number of times they co-occurred within a sliding window;
+if “binary”, all such edges have weight = 1.</p></li>
+<li><p><strong>position_bias</strong> – If True, bias the PageRank algorithm for weighting
+nodes in the word graph, such that words appearing earlier and more
+frequently in <code class="docutils literal notranslate"><span class="pre">doc</span></code> tend to get larger weights.</p></li>
+<li><p><strong>topn</strong> – Number of top-ranked terms to return as key terms.
+If an integer, represents the absolute number; if a float, value
+must be in the interval (0.0, 1.0], which is converted to an int by
+<code class="docutils literal notranslate"><span class="pre">int(round(len(set(candidates))</span> <span class="pre">*</span> <span class="pre">topn))</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Sorted list of top <code class="docutils literal notranslate"><span class="pre">topn</span></code> key terms and their corresponding TextRank ranking scores.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<ul class="simple">
+<li><p>Mihalcea, R., &amp; Tarau, P. (2004, July). TextRank: Bringing order into texts.
+Association for Computational Linguistics.</p></li>
+<li><p>Wan, Xiaojun and Jianguo Xiao. 2008. Single document keyphrase extraction
+using neighborhood knowledge. In Proceedings of the 23rd AAAI Conference
+on Artificial Intelligence, pages 855–860.</p></li>
+<li><p>Florescu, C. and Cornelia, C. (2017). PositionRank: An Unsupervised Approach
+to Keyphrase Extraction from Scholarly Documents. In proceedings of ACL*,
+pages 1105-1115.</p></li>
+</ul>
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.ke.yake"></span><div class="section" id="yake">
+<h3>YAKE<a class="headerlink" href="#yake" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="textacy.ke.yake.yake">
+<code class="sig-prename descclassname">textacy.ke.yake.</code><code class="sig-name descname">yake</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, *, normalize: Optional[str] = 'lemma', ngrams: Union[int, Collection[int]] = (1, 2, 3), include_pos: Union[str, Collection[str], None] = ('NOUN', 'PROPN', 'ADJ'), window_size: int = 2, topn: Union[int, float] = 10</em><span class="sig-paren">)</span> &#x2192; List[Tuple[str, float]]<a class="reference internal" href="../_modules/textacy/ke/yake.html#yake"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.yake.yake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract key terms from a document using the YAKE algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – spaCy <code class="docutils literal notranslate"><span class="pre">Doc</span></code> from which to extract keyterms.
+Must be sentence-segmented; optionally POS-tagged.</p></li>
+<li><p><strong>normalize</strong> – <p>If “lemma”, lemmatize terms; if “lower”, lowercase terms;
+if None, use the form of terms as they appeared in <code class="docutils literal notranslate"><span class="pre">doc</span></code>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Unlike the other keyterm extraction functions, this one
+doesn’t accept a callable for <code class="docutils literal notranslate"><span class="pre">normalize</span></code>.</p>
+</div>
+</p></li>
+<li><p><strong>ngrams</strong> – n of which n-grams to consider as keyterm candidates.
+For example, <cite>(1, 2, 3)`</cite> includes all unigrams, bigrams, and trigrams,
+while <code class="docutils literal notranslate"><span class="pre">2</span></code> includes bigrams only.</p></li>
+<li><p><strong>include_pos</strong> – One or more POS tags with which to filter for good candidate keyterms.
+If None, include tokens of all POS tags
+(which also allows keyterm extraction from docs without POS-tagging.)</p></li>
+<li><p><strong>window_size</strong> – Number of words to the right and left of a given word
+to use as context when computing the “relatedness to context”
+component of its score. Note that the resulting sliding window’s
+full width is <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">+</span> <span class="pre">(2</span> <span class="pre">*</span> <span class="pre">window_size)</span></code>.</p></li>
+<li><p><strong>topn</strong> – Number of top-ranked terms to return as key terms.
+If an integer, represents the absolute number; if a float, value
+must be in the interval (0.0, 1.0], which is converted to an int by
+<code class="docutils literal notranslate"><span class="pre">int(round(len(candidates)</span> <span class="pre">*</span> <span class="pre">topn))</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Sorted list of top <code class="docutils literal notranslate"><span class="pre">topn</span></code> key terms and their corresponding YAKE scores.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Campos, Mangaravite, Pasquali, Jorge, Nunes, and Jatowt. (2018).
+A Text Feature Based Automatic Keyword Extraction Method for Single Documents.
+Advances in Information Retrieval. ECIR 2018.
+Lecture Notes in Computer Science, vol 10772, pp. 684-691.</p>
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.ke.scake"></span><div class="section" id="scake">
+<h3>sCAKE<a class="headerlink" href="#scake" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="textacy.ke.scake.scake">
+<code class="sig-prename descclassname">textacy.ke.scake.</code><code class="sig-name descname">scake</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, *, normalize: Union[str, Callable[[spacy.tokens.token.Token], str], None] = 'lemma', include_pos: Union[str, Collection[str], None] = ('NOUN', 'PROPN', 'ADJ'), topn: Union[int, float] = 10</em><span class="sig-paren">)</span> &#x2192; List[Tuple[str, float]]<a class="reference internal" href="../_modules/textacy/ke/scake.html#scake"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.scake.scake" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract key terms from a document using the sCAKE algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – spaCy <code class="docutils literal notranslate"><span class="pre">Doc</span></code> from which to extract keyterms. Must be sentence-segmented;
+optionally POS-tagged.</p></li>
+<li><p><strong>normalize</strong> – If “lemma”, lemmatize terms; if “lower”, lowercase terms; if None,
+use the form of terms as they appeared in <code class="docutils literal notranslate"><span class="pre">doc</span></code>; if a callable,
+must accept a <code class="docutils literal notranslate"><span class="pre">Token</span></code> and return a str,
+e.g. <a class="reference internal" href="spacier.html#textacy.spacier.utils.get_normalized_text" title="textacy.spacier.utils.get_normalized_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.spacier.utils.get_normalized_text()</span></code></a>.</p></li>
+<li><p><strong>include_pos</strong> – One or more POS tags with which to filter for good candidate keyterms.
+If None, include tokens of all POS tags
+(which also allows keyterm extraction from docs without POS-tagging.)</p></li>
+<li><p><strong>topn</strong> – Number of top-ranked terms to return as key terms.
+If an integer, represents the absolute number; if a float, value
+must be in the interval (0.0, 1.0], which is converted to an int by
+<code class="docutils literal notranslate"><span class="pre">int(round(len(candidates)</span> <span class="pre">*</span> <span class="pre">topn))</span></code></p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Sorted list of top <code class="docutils literal notranslate"><span class="pre">topn</span></code> key terms and their corresponding scores.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Duari, Swagata &amp; Bhatnagar, Vasudha. (2018). sCAKE: Semantic Connectivity
+Aware Keyword Extraction. Information Sciences. 477.
+<a class="reference external" href="https://arxiv.org/abs/1811.10831v1">https://arxiv.org/abs/1811.10831v1</a></p>
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.ke.sgrank"></span><div class="section" id="sgrank">
+<h3>SGRank<a class="headerlink" href="#sgrank" title="Permalink to this headline">¶</a></h3>
+<dl class="class">
+<dt id="textacy.ke.sgrank.Candidate">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.ke.sgrank.</code><code class="sig-name descname">Candidate</code><span class="sig-paren">(</span><em class="sig-param">text</em>, <em class="sig-param">idx</em>, <em class="sig-param">length</em>, <em class="sig-param">count</em><span class="sig-paren">)</span><a class="headerlink" href="#textacy.ke.sgrank.Candidate" title="Permalink to this definition">¶</a></dt>
+<dd><dl class="method">
+<dt id="textacy.ke.sgrank.Candidate.count">
+<em class="property">property </em><code class="sig-name descname">count</code><a class="headerlink" href="#textacy.ke.sgrank.Candidate.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 3</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.ke.sgrank.Candidate.idx">
+<em class="property">property </em><code class="sig-name descname">idx</code><a class="headerlink" href="#textacy.ke.sgrank.Candidate.idx" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.ke.sgrank.Candidate.length">
+<em class="property">property </em><code class="sig-name descname">length</code><a class="headerlink" href="#textacy.ke.sgrank.Candidate.length" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="textacy.ke.sgrank.Candidate.text">
+<em class="property">property </em><code class="sig-name descname">text</code><a class="headerlink" href="#textacy.ke.sgrank.Candidate.text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.ke.sgrank.sgrank">
+<code class="sig-prename descclassname">textacy.ke.sgrank.</code><code class="sig-name descname">sgrank</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, *, normalize: Union[str, Callable[[spacy.tokens.span.Span], str], None] = 'lemma', ngrams: Union[int, Collection[int]] = (1, 2, 3, 4, 5, 6), include_pos: Union[str, Collection[str], None] = ('NOUN', 'PROPN', 'ADJ'), window_size: int = 1500, topn: Union[int, float] = 10, idf: Dict[str, float] = None</em><span class="sig-paren">)</span> &#x2192; List[Tuple[str, float]]<a class="reference internal" href="../_modules/textacy/ke/sgrank.html#sgrank"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.sgrank.sgrank" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract key terms from a document using the SGRank algorithm.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – spaCy <code class="docutils literal notranslate"><span class="pre">Doc</span></code> from which to extract keyterms.</p></li>
+<li><p><strong>normalize</strong> – If “lemma”, lemmatize terms; if “lower”, lowercase terms; if None,
+use the form of terms as they appeared in <code class="docutils literal notranslate"><span class="pre">doc</span></code>; if a callable,
+must accept a <code class="docutils literal notranslate"><span class="pre">Span</span></code> and return a str,
+e.g. <a class="reference internal" href="spacier.html#textacy.spacier.utils.get_normalized_text" title="textacy.spacier.utils.get_normalized_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.spacier.utils.get_normalized_text()</span></code></a></p></li>
+<li><p><strong>ngrams</strong> – n of which n-grams to include. For example, <code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">2,</span> <span class="pre">3,</span> <span class="pre">4,</span> <span class="pre">5,</span> <span class="pre">6)</span></code> (default)
+includes all ngrams from 1 to 6; <cite>2</cite> if only bigrams are wanted</p></li>
+<li><p><strong>include_pos</strong> – One or more POS tags with which to filter for good candidate keyterms.
+If None, include tokens of all POS tags
+(which also allows keyterm extraction from docs without POS-tagging.)</p></li>
+<li><p><strong>window_size</strong> – Size of sliding window in which term co-occurrences are determined
+to occur. Note: Larger values may dramatically increase runtime, owing to
+the larger number of co-occurrence combinations that must be counted.</p></li>
+<li><p><strong>topn</strong> – Number of top-ranked terms to return as keyterms.
+If int, represents the absolute number; if float, must be in the open interval
+(0.0, 1.0), and is converted to an integer by <code class="docutils literal notranslate"><span class="pre">int(round(len(candidates)</span> <span class="pre">*</span> <span class="pre">topn))</span></code></p></li>
+<li><p><strong>idf</strong> – Mapping of <code class="docutils literal notranslate"><span class="pre">normalize(term)</span></code> to inverse document frequency
+for re-weighting of unigrams (n-grams with n &gt; 1 have df assumed = 1).
+Results are typically better with idf information.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Sorted list of top <code class="docutils literal notranslate"><span class="pre">topn</span></code> key terms and their corresponding SGRank scores</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – if <code class="docutils literal notranslate"><span class="pre">topn</span></code> is a float but not in (0.0, 1.0] or <code class="docutils literal notranslate"><span class="pre">window_size</span></code> &lt; 2</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>Danesh, Sumner, and Martin. “SGRank: Combining Statistical and Graphical
+Methods to Improve the State of the Art in Unsupervised Keyphrase Extraction.”
+Lexical and Computational Semantics (* SEM 2015) (2015): 117.</p>
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.ke.utils"></span><div class="section" id="keyterm-extraction-utils">
+<h3>Keyterm Extraction Utils<a class="headerlink" href="#keyterm-extraction-utils" title="Permalink to this headline">¶</a></h3>
+<dl class="function">
+<dt id="textacy.ke.utils.normalize_terms">
+<code class="sig-prename descclassname">textacy.ke.utils.</code><code class="sig-name descname">normalize_terms</code><span class="sig-paren">(</span><em class="sig-param">terms: Union[Iterable[spacy.tokens.span.Span], Iterable[spacy.tokens.token.Token]], normalize: Union[str, Callable[[Union[spacy.tokens.span.Span, spacy.tokens.token.Token]], str], None]</em><span class="sig-paren">)</span> &#x2192; Iterable[str]<a class="reference internal" href="../_modules/textacy/ke/utils.html#normalize_terms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.utils.normalize_terms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform a sequence of terms from spaCy <code class="docutils literal notranslate"><span class="pre">Token</span></code> or <code class="docutils literal notranslate"><span class="pre">Span</span></code> s into
+strings, normalized by <code class="docutils literal notranslate"><span class="pre">normalize</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>terms</strong> – </p></li>
+<li><p><strong>normalize</strong> – If “lemma”, lemmatize terms; if “lower”, lowercase terms;
+if None, use the form of terms as they appear in <code class="docutils literal notranslate"><span class="pre">terms</span></code>;
+if a callable, must accept a <code class="docutils literal notranslate"><span class="pre">Token</span></code> or <code class="docutils literal notranslate"><span class="pre">Span</span></code> and return a str,
+e.g. <a class="reference internal" href="spacier.html#textacy.spacier.utils.get_normalized_text" title="textacy.spacier.utils.get_normalized_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.spacier.utils.get_normalized_text()</span></code></a>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.ke.utils.aggregate_term_variants">
+<code class="sig-prename descclassname">textacy.ke.utils.</code><code class="sig-name descname">aggregate_term_variants</code><span class="sig-paren">(</span><em class="sig-param">terms: Set[str], *, acro_defs: Optional[Dict[str, str]] = None, fuzzy_dedupe: bool = True</em><span class="sig-paren">)</span> &#x2192; List[Set[str]]<a class="reference internal" href="../_modules/textacy/ke/utils.html#aggregate_term_variants"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.utils.aggregate_term_variants" title="Permalink to this definition">¶</a></dt>
+<dd><p>Take a set of unique terms and aggregate terms that are symbolic, lexical,
+and ordering variants of each other, as well as acronyms and fuzzy string matches.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>terms</strong> – Set of unique terms with potential duplicates</p></li>
+<li><p><strong>acro_defs</strong> – If not None, terms that are acronyms will be aggregated
+with their definitions and terms that are definitions will be aggregated
+with their acronyms</p></li>
+<li><p><strong>fuzzy_dedupe</strong> – If True, fuzzy string matching will be used
+to aggregate similar terms of a sufficient length</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Each item is a set of aggregated terms.</p>
+</dd>
+</dl>
+<p class="rubric">Notes</p>
+<p>Partly inspired by aggregation of variants discussed in
+Park, Youngja, Roy J. Byrd, and Branimir K. Boguraev.
+“Automatic glossary extraction: beyond terminology identification.”
+Proceedings of the 19th international conference on Computational linguistics-Volume 1.
+Association for Computational Linguistics, 2002.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.ke.utils.get_longest_subsequence_candidates">
+<code class="sig-prename descclassname">textacy.ke.utils.</code><code class="sig-name descname">get_longest_subsequence_candidates</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, match_func: Callable[[spacy.tokens.token.Token], bool]</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[spacy.tokens.token.Token, ...]]<a class="reference internal" href="../_modules/textacy/ke/utils.html#get_longest_subsequence_candidates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.utils.get_longest_subsequence_candidates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get candidate keyterms from <code class="docutils literal notranslate"><span class="pre">doc</span></code>, where candidates are longest consecutive
+subsequences of tokens for which all <code class="docutils literal notranslate"><span class="pre">match_func(token)</span></code> is True.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>match_func</strong> – Function applied sequentially to each <code class="docutils literal notranslate"><span class="pre">Token</span></code> in <code class="docutils literal notranslate"><span class="pre">doc</span></code>
+that returns True for matching (“good”) tokens, False otherwise.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Next longest consecutive subsequence candidate, as a tuple of constituent tokens.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.ke.utils.get_ngram_candidates">
+<code class="sig-prename descclassname">textacy.ke.utils.</code><code class="sig-name descname">get_ngram_candidates</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, ns: Union[int, Collection[int]], *, include_pos: Union[str, Collection[str], None] = ('NOUN', 'PROPN', 'ADJ')</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[spacy.tokens.token.Token, ...]]<a class="reference internal" href="../_modules/textacy/ke/utils.html#get_ngram_candidates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.utils.get_ngram_candidates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get candidate keyterms from <code class="docutils literal notranslate"><span class="pre">doc</span></code>, where candidates are n-length sequences
+of tokens (for all n in <code class="docutils literal notranslate"><span class="pre">ns</span></code>) that don’t start/end with a stop word or
+contain punctuation tokens, and whose constituent tokens are filtered by POS tag.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>ns</strong> – One or more n values for which to generate n-grams. For example,
+<code class="docutils literal notranslate"><span class="pre">2</span></code> gets bigrams; <code class="docutils literal notranslate"><span class="pre">(2,</span> <span class="pre">3)</span></code> gets bigrams and trigrams.</p></li>
+<li><p><strong>include_pos</strong> – One or more POS tags with which to filter ngrams.
+If None, include tokens of all POS tags.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Next ngram candidate, as a tuple of constituent Tokens.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#textacy.extract.ngrams" title="textacy.extract.ngrams"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.extract.ngrams()</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.ke.utils.get_pattern_matching_candidates">
+<code class="sig-prename descclassname">textacy.ke.utils.</code><code class="sig-name descname">get_pattern_matching_candidates</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, patterns: Union[str, List[str], List[dict], List[List[dict]]]</em><span class="sig-paren">)</span> &#x2192; Iterable[Tuple[spacy.tokens.token.Token, ...]]<a class="reference internal" href="../_modules/textacy/ke/utils.html#get_pattern_matching_candidates"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.utils.get_pattern_matching_candidates" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get candidate keyterms from <code class="docutils literal notranslate"><span class="pre">doc</span></code>, where candidates are sequences of tokens
+that match any pattern in <code class="docutils literal notranslate"><span class="pre">patterns</span></code></p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>patterns</strong> – One or multiple patterns to match against <code class="docutils literal notranslate"><span class="pre">doc</span></code> using
+a <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.matcher.Matcher</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>Tuple[<code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Token</span></code>] – Next pattern-matching candidate,
+as a tuple of constituent Tokens.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#textacy.extract.matches" title="textacy.extract.matches"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.extract.matches()</span></code></a></p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.ke.utils.get_filtered_topn_terms">
+<code class="sig-prename descclassname">textacy.ke.utils.</code><code class="sig-name descname">get_filtered_topn_terms</code><span class="sig-paren">(</span><em class="sig-param">term_scores: Iterable[Tuple[str, float]], topn: int, *, match_threshold: Optional[float] = None</em><span class="sig-paren">)</span> &#x2192; List[Tuple[str, float]]<a class="reference internal" href="../_modules/textacy/ke/utils.html#get_filtered_topn_terms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.utils.get_filtered_topn_terms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Build up a list of the <code class="docutils literal notranslate"><span class="pre">topn</span></code> terms, filtering out any that are substrings
+of better-scoring terms and optionally filtering out any that are sufficiently
+similar to better-scoring terms.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>term_scores</strong> – Iterable of (term, score) pairs, sorted in order of score
+from best to worst. Note that this may be from high to low value or low to high,
+depending on the scoring algorithm.</p></li>
+<li><p><strong>topn</strong> – Maximum number of top-scoring terms to get.</p></li>
+<li><p><strong>match_threshold</strong> – Minimal edit distance between a term and previously seen terms,
+used to filter out terms that are sufficiently similar
+to higher-scoring terms. Uses <a class="reference internal" href="misc.html#textacy.similarity.token_sort_ratio" title="textacy.similarity.token_sort_ratio"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.similarity.token_sort_ratio()</span></code></a>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.ke.utils.most_discriminating_terms">
+<code class="sig-prename descclassname">textacy.ke.utils.</code><code class="sig-name descname">most_discriminating_terms</code><span class="sig-paren">(</span><em class="sig-param">terms_lists: Iterable[Iterable[str]], bool_array_grp1: Iterable[bool], *, max_n_terms: int = 1000, top_n_terms: Union[int, float] = 25</em><span class="sig-paren">)</span> &#x2192; Tuple[List[str], List[str]]<a class="reference internal" href="../_modules/textacy/ke/utils.html#most_discriminating_terms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.ke.utils.most_discriminating_terms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Given a collection of documents assigned to 1 of 2 exclusive groups, get the
+<code class="docutils literal notranslate"><span class="pre">top_n_terms</span></code> most discriminating terms for group1-and-not-group2 and
+group2-and-not-group1.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>terms_lists</strong> – Sequence of documents, each as a sequence of (str) terms;
+used as input to <code class="xref py py-func docutils literal notranslate"><span class="pre">doc_term_matrix()</span></code></p></li>
+<li><p><strong>bool_array_grp1</strong> – Ordered sequence of True/False values,
+where True corresponds to documents falling into “group 1” and False
+corresponds to those in “group 2”.</p></li>
+<li><p><strong>max_n_terms</strong> – Only consider terms whose document frequency is within
+the top <code class="docutils literal notranslate"><span class="pre">max_n_terms</span></code> out of all distinct terms; must be &gt; 0.</p></li>
+<li><p><strong>top_n_terms</strong> – If int (must be &gt; 0), the total number of most discriminating terms
+to return for each group; if float (must be in the interval (0, 1)),
+the fraction of <code class="docutils literal notranslate"><span class="pre">max_n_terms</span></code> to return for each group.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>List of the top <code class="docutils literal notranslate"><span class="pre">top_n_terms</span></code> most discriminating terms for grp1-not-grp2, and
+list of the top <code class="docutils literal notranslate"><span class="pre">top_n_terms</span></code> most discriminating terms for grp2-not-grp1.</p>
+</dd>
+</dl>
+<p class="rubric">References</p>
+<p>King, Gary, Patrick Lam, and Margaret Roberts. “Computer-Assisted Keyword
+and Document Set Discovery from Unstructured Text.” (2014).
+<a class="reference external" href="http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.458.1445&amp;rep=rep1&amp;type=pdf">http://citeseerx.ist.psu.edu/viewdoc/download?doi=10.1.1.458.1445&amp;rep=rep1&amp;type=pdf</a></p>
+</dd></dl>
+
+</div>
+</div>
+</div>
+
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+        <li>
+          &larr;
+          <a href="text_processing.html" title="Previous document">Text (Pre-)Processing</a>
+        </li>
+        <li>
+          <a href="vsm_and_tm.html" title="Next document">Vectorization &amp; Topic Modeling</a>
+          &rarr;
+        </li>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="root.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="lang_doc_corpus.html">Lang, Doc, Corpus</a></li>
+<li class="toctree-l2"><a class="reference internal" href="spacier.html">spaCy extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="resources.html">Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="text_processing.html">Text (Pre-)Processing</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">Information Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vsm_and_tm.html">Vectorization &amp; Topic Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="viz.html">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="augmentation.html">Data Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="misc.html">Miscellany</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="root.html">API Reference</a><ul>
+      <li>Previous: <a href="text_processing.html" title="previous chapter">Text (Pre-)Processing</a></li>
+      <li>Next: <a href="vsm_and_tm.html" title="next chapter">Vectorization &amp; Topic Modeling</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/api_reference/information_extraction.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

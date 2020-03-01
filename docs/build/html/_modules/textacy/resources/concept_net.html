@@ -1,0 +1,520 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.resources.concept_net &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.resources.concept_net</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">ConceptNet</span>
+<span class="sd">----------</span>
+
+<span class="sd">ConceptNet is a multilingual knowledge base, representing common words and phrases</span>
+<span class="sd">and the common-sense relationships between them. This information is collected from</span>
+<span class="sd">a variety of sources, including crowd-sourced resources (e.g. Wiktionary, Open Mind</span>
+<span class="sd">Common Sense), games with a purpose (e.g. Verbosity, nadya.jp), and expert-created</span>
+<span class="sd">resources (e.g. WordNet, JMDict).</span>
+
+<span class="sd">The interface in textacy gives access to several key relationships between terms</span>
+<span class="sd">that are useful in a variety of NLP tasks:</span>
+
+<span class="sd">    - antonyms: terms that are opposites of each other in some relevant way</span>
+<span class="sd">    - hyponyms: terms that are subtypes or specific instances of other terms</span>
+<span class="sd">    - meronyms: terms that are parts of other terms</span>
+<span class="sd">    - synonyms: terms that are sufficiently similar that they may be used interchangeably</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="kn">from</span> <span class="nn">spacy.tokens</span> <span class="k">import</span> <span class="n">Span</span><span class="p">,</span> <span class="n">Token</span>
+<span class="kn">from</span> <span class="nn">tqdm</span> <span class="k">import</span> <span class="n">tqdm</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">constants</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">io</span> <span class="k">as</span> <span class="n">tio</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">Resource</span>
+
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">NAME</span> <span class="o">=</span> <span class="s2">&quot;concept_net&quot;</span>
+<span class="n">META</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;site_url&quot;</span><span class="p">:</span> <span class="s2">&quot;http://conceptnet.io&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;publication_url&quot;</span><span class="p">:</span> <span class="s2">&quot;https://arxiv.org/abs/1612.03975&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;An open, multilingual semantic network of general knowledge, &quot;</span>
+        <span class="s2">&quot;designed to help computers understand the meanings of words.&quot;</span>
+    <span class="p">)</span>
+<span class="p">}</span>
+<span class="n">DOWNLOAD_ROOT</span> <span class="o">=</span> <span class="s2">&quot;https://s3.amazonaws.com/conceptnet/downloads/</span><span class="si">{year}</span><span class="s2">/edges/conceptnet-assertions-</span><span class="si">{version}</span><span class="s2">.csv.gz&quot;</span>
+
+
+<div class="viewcode-block" id="ConceptNet"><a class="viewcode-back" href="../../../api_reference/resources.html#textacy.resources.concept_net.ConceptNet">[docs]</a><span class="k">class</span> <span class="nc">ConceptNet</span><span class="p">(</span><span class="n">Resource</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Interface to ConceptNet, a multilingual knowledge base representing common words</span>
+<span class="sd">    and phrases and the common-sense relationships between them.</span>
+
+<span class="sd">    Download the data (one time only!), and save its contents to disk::</span>
+
+<span class="sd">        &gt;&gt;&gt; import textacy.resources</span>
+<span class="sd">        &gt;&gt;&gt; rs = textacy.resources.ConceptNet()</span>
+<span class="sd">        &gt;&gt;&gt; rs.download()</span>
+<span class="sd">        &gt;&gt;&gt; rs.info</span>
+<span class="sd">        {&#39;name&#39;: &#39;concept_net&#39;,</span>
+<span class="sd">         &#39;site_url&#39;: &#39;http://conceptnet.io&#39;,</span>
+<span class="sd">         &#39;publication_url&#39;: &#39;https://arxiv.org/abs/1612.03975&#39;,</span>
+<span class="sd">         &#39;description&#39;: &#39;An open, multilingual semantic network of general knowledge, designed to help computers understand the meanings of words.&#39;}</span>
+
+<span class="sd">    Access other same-language terms related to a given term in a variety of ways::</span>
+
+<span class="sd">        &gt;&gt;&gt; rs.get_synonyms(&quot;spouse&quot;, lang=&quot;en&quot;, sense=&quot;n&quot;)</span>
+<span class="sd">        [&#39;mate&#39;, &#39;married person&#39;, &#39;better half&#39;, &#39;partner&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; rs.get_antonyms(&quot;love&quot;, lang=&quot;en&quot;, sense=&quot;v&quot;)</span>
+<span class="sd">        [&#39;detest&#39;, &#39;hate&#39;, &#39;loathe&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; rs.get_hyponyms(&quot;marriage&quot;, lang=&quot;en&quot;, sense=&quot;n&quot;)</span>
+<span class="sd">        [&#39;cohabitation situation&#39;, &#39;union&#39;, &#39;legal agreement&#39;, &#39;ritual&#39;, &#39;family&#39;, &#39;marital status&#39;]</span>
+
+<span class="sd">    **Note:** The very first time a given relationship is accessed, the full ConceptNet db</span>
+<span class="sd">    must be parsed and split for fast future access. This can take a couple minutes;</span>
+<span class="sd">    be patient.</span>
+
+<span class="sd">    When passing a spaCy ``Token`` or ``Span``, the corresponding ``lang`` and ``sense``</span>
+<span class="sd">    are inferred automatically from the object::</span>
+
+<span class="sd">        &gt;&gt;&gt; text = &quot;The quick brown fox jumps over the lazy dog.&quot;</span>
+<span class="sd">        &gt;&gt;&gt; doc = textacy.make_spacy_doc(text, lang=&quot;en&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; rs.get_synonyms(doc[1])  # quick</span>
+<span class="sd">        [&#39;flying&#39;, &#39;fast&#39;, &#39;rapid&#39;, &#39;ready&#39;, &#39;straightaway&#39;, &#39;nimble&#39;, &#39;speedy&#39;, &#39;warm&#39;]</span>
+<span class="sd">        &gt;&gt;&gt; rs.get_synonyms(doc[4:5])  # jumps over</span>
+<span class="sd">        [&#39;leap&#39;, &#39;startle&#39;, &#39;hump&#39;, &#39;flinch&#39;, &#39;jump off&#39;, &#39;skydive&#39;, &#39;jumpstart&#39;, ...]</span>
+
+<span class="sd">    Many terms won&#39;t have entries, for actual linguistic reasons or because the db&#39;s</span>
+<span class="sd">    coverage of a given language&#39;s vocabulary isn&#39;t comprehensive::</span>
+
+<span class="sd">        &gt;&gt;&gt; rs.get_meronyms(doc[3])  # fox</span>
+<span class="sd">        []</span>
+<span class="sd">        &gt;&gt;&gt; rs.get_antonyms(doc[7])  # lazy</span>
+<span class="sd">        []</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_dir (str or :class:`pathlib.Path`): Path to directory on disk</span>
+<span class="sd">            under which resource data is stored, i.e. ``/path/to/data_dir/concept_net``.</span>
+<span class="sd">        version ({&quot;5.7.0&quot;, &quot;5.6.0&quot;, &quot;5.5.5&quot;}): Version string of the ConceptNet db</span>
+<span class="sd">            to use. Since newer versions typically represent improvements over earlier</span>
+<span class="sd">            versions, you&#39;ll probably want &quot;5.7.0&quot; (the default value).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">_version_years</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;5.7.0&quot;</span><span class="p">:</span> <span class="mi">2019</span><span class="p">,</span> <span class="s2">&quot;5.6.0&quot;</span><span class="p">:</span> <span class="mi">2018</span><span class="p">,</span> <span class="s2">&quot;5.5.5&quot;</span><span class="p">:</span> <span class="mi">2017</span><span class="p">}</span>
+    <span class="n">_pos_map</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;NOUN&quot;</span><span class="p">:</span> <span class="s2">&quot;n&quot;</span><span class="p">,</span> <span class="s2">&quot;VERB&quot;</span><span class="p">:</span> <span class="s2">&quot;v&quot;</span><span class="p">,</span> <span class="s2">&quot;ADJ&quot;</span><span class="p">:</span> <span class="s2">&quot;a&quot;</span><span class="p">,</span> <span class="s2">&quot;ADV&quot;</span><span class="p">:</span> <span class="s2">&quot;r&quot;</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_dir</span><span class="o">=</span><span class="n">constants</span><span class="o">.</span><span class="n">DEFAULT_DATA_DIR</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">NAME</span><span class="p">),</span>
+        <span class="n">version</span><span class="o">=</span><span class="s2">&quot;5.7.0&quot;</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">META</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">version</span> <span class="o">=</span> <span class="n">version</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">to_path</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="s2">&quot;conceptnet-assertions-</span><span class="si">{}</span><span class="s2">.csv.gz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_antonyms</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_hyponyms</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_meronyms</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_synonyms</span> <span class="o">=</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="ConceptNet.download"><a class="viewcode-back" href="../../../api_reference/resources.html#textacy.resources.concept_net.ConceptNet.download">[docs]</a>    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download resource data as a gzipped csv file,</span>
+<span class="sd">        then save it to disk under the :attr:`ConceptNet.data_dir` directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            force (bool): If True, download resource data, even if it already</span>
+<span class="sd">                exists on disk; otherwise, don&#39;t re-download the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">DOWNLOAD_ROOT</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+            <span class="n">version</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">,</span> <span class="n">year</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_version_years</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">version</span><span class="p">])</span>
+        <span class="n">tio</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">,</span>
+            <span class="n">dirpath</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filepath</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        str: Full path on disk for the ConceptNet gzipped csv file</span>
+<span class="sd">        corresponding to the given :attr:`ConceptNet.data_dir`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_relation_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">is_symmetric</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
+                <span class="s2">&quot;resource file </span><span class="si">{}</span><span class="s2"> not found;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;has the data been downloaded yet?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="n">rel_fname</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.json.gz&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">_split_uri</span><span class="p">(</span><span class="n">relation</span><span class="p">)[</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">lower</span><span class="p">())</span>
+        <span class="n">rel_fpath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">rel_fname</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">rel_fpath</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s2">&quot;loading data for &#39;</span><span class="si">%s</span><span class="s2">&#39; relation from </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">rel_fpath</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">next</span><span class="p">(</span>
+                <span class="n">tio</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="n">rel_fpath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;rt&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rel_data</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span>
+                <span class="k">lambda</span><span class="p">:</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span>
+                    <span class="k">lambda</span><span class="p">:</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="nb">set</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                <span class="s2">&quot;preparing data for &#39;</span><span class="si">%s</span><span class="s2">&#39; relation; this may take a while...&quot;</span><span class="p">,</span> <span class="n">relation</span><span class="p">)</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">tio</span><span class="o">.</span><span class="n">read_csv</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filepath</span><span class="p">,</span> <span class="n">delimiter</span><span class="o">=</span><span class="s2">&quot;</span><span class="se">\t</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">quoting</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">with</span> <span class="n">tqdm</span><span class="p">()</span> <span class="k">as</span> <span class="n">pbar</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">:</span>
+                    <span class="n">pbar</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+                    <span class="n">_</span><span class="p">,</span> <span class="n">rel_type</span><span class="p">,</span> <span class="n">start_uri</span><span class="p">,</span> <span class="n">end_uri</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">row</span>
+                    <span class="k">if</span> <span class="n">rel_type</span> <span class="o">&lt;</span> <span class="n">relation</span><span class="p">:</span>
+                        <span class="k">continue</span>
+                    <span class="k">elif</span> <span class="n">rel_type</span> <span class="o">&gt;</span> <span class="n">relation</span><span class="p">:</span>
+                        <span class="k">break</span>
+                    <span class="n">start_lang</span><span class="p">,</span> <span class="n">start_term</span><span class="p">,</span> <span class="n">start_sense</span> <span class="o">=</span> <span class="n">_parse_concept_uri</span><span class="p">(</span><span class="n">start_uri</span><span class="p">)</span>
+                    <span class="n">end_lang</span><span class="p">,</span> <span class="n">end_term</span><span class="p">,</span> <span class="n">end_sense</span> <span class="o">=</span> <span class="n">_parse_concept_uri</span><span class="p">(</span><span class="n">end_uri</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">start_lang</span> <span class="o">==</span> <span class="n">end_lang</span> <span class="ow">and</span> <span class="n">start_term</span> <span class="o">!=</span> <span class="n">end_term</span><span class="p">:</span>
+                        <span class="n">rel_data</span><span class="p">[</span><span class="n">start_lang</span><span class="p">][</span><span class="n">start_term</span><span class="p">][</span><span class="n">start_sense</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">end_term</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="n">is_symmetric</span><span class="p">:</span>
+                            <span class="n">rel_data</span><span class="p">[</span><span class="n">start_lang</span><span class="p">][</span><span class="n">end_term</span><span class="p">][</span><span class="n">end_sense</span><span class="p">]</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">start_term</span><span class="p">)</span>
+            <span class="c1"># make relation data json-able (i.e. cast set =&gt; list)</span>
+            <span class="k">for</span> <span class="n">terms</span> <span class="ow">in</span> <span class="n">rel_data</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">for</span> <span class="n">senses</span> <span class="ow">in</span> <span class="n">terms</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                    <span class="k">for</span> <span class="n">sense</span><span class="p">,</span> <span class="n">rel_terms</span> <span class="ow">in</span> <span class="n">senses</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                        <span class="n">senses</span><span class="p">[</span><span class="n">sense</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">rel_terms</span><span class="p">)</span>
+            <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;saving data for &#39;</span><span class="si">%s</span><span class="s2">&#39; relation to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">relation</span><span class="p">,</span> <span class="n">rel_fpath</span><span class="p">)</span>
+            <span class="n">tio</span><span class="o">.</span><span class="n">write_json</span><span class="p">(</span><span class="n">rel_data</span><span class="p">,</span> <span class="n">rel_fpath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;wt&quot;</span><span class="p">,</span> <span class="n">encoding</span><span class="o">=</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">rel_data</span>
+
+    <span class="k">def</span> <span class="nf">_get_relation_values</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rel_data</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)</span>
+<span class="sd">            lang (str)</span>
+<span class="sd">            sense (str)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">lang</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">lang</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">rel_data</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;lang=&#39;</span><span class="si">{}</span><span class="s2">&#39; is invalid; valid langs are </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="n">lang</span><span class="p">,</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rel_data</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">sense</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># let&#39;s be kind and automatically convert standard POS strings</span>
+            <span class="k">if</span> <span class="n">sense</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos_map</span><span class="o">.</span><span class="n">keys</span><span class="p">():</span>
+                <span class="n">sense</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos_map</span><span class="p">[</span><span class="n">sense</span><span class="p">]</span>
+            <span class="c1"># otherwise, return no results as is done when auto-inferrence of sense</span>
+            <span class="c1"># results in an invalid value</span>
+            <span class="k">elif</span> <span class="n">sense</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos_map</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">lang</span> <span class="ow">and</span> <span class="n">sense</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="s2">&quot;if `term` is a string, both `lang` and `sense` must be specified&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">norm_terms</span> <span class="o">=</span> <span class="p">[</span><span class="n">term</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">term</span><span class="p">,</span> <span class="p">(</span><span class="n">Span</span><span class="p">,</span> <span class="n">Token</span><span class="p">)):</span>
+            <span class="n">norm_terms</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">term</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+                <span class="n">term</span><span class="o">.</span><span class="n">lemma_</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot; &quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">lang</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">lang</span> <span class="o">=</span> <span class="n">term</span><span class="o">.</span><span class="n">lang_</span>  <span class="c1"># token</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="n">lang</span> <span class="o">=</span> <span class="n">term</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">lang_</span>  <span class="c1"># span</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">sense</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">sense</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos_map</span><span class="p">[</span><span class="n">term</span><span class="o">.</span><span class="n">pos_</span><span class="p">]</span>  <span class="c1"># token</span>
+                <span class="k">except</span> <span class="ne">AttributeError</span><span class="p">:</span>
+                    <span class="n">sense</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pos_map</span><span class="p">[</span><span class="n">term</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">pos_</span><span class="p">]</span>  <span class="c1"># span</span>
+                <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="p">[]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="s2">&quot;`term` must be one of </span><span class="si">{}</span><span class="s2">, not </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                    <span class="p">{</span><span class="nb">str</span><span class="p">,</span> <span class="n">Span</span><span class="p">,</span> <span class="n">Token</span><span class="p">},</span> <span class="nb">type</span><span class="p">(</span><span class="n">term</span><span class="p">)</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="c1"># TODO: implement an out-of-vocabulary strategy? for example,</span>
+        <span class="c1"># https://github.com/commonsense/conceptnet-numberbatch#out-of-vocabulary-strategy</span>
+        <span class="k">for</span> <span class="n">norm_term</span> <span class="ow">in</span> <span class="n">norm_terms</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">rel_data</span><span class="p">[</span><span class="n">lang</span><span class="p">][</span><span class="n">norm_term</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sense</span><span class="p">,</span> <span class="p">[])</span>
+            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+                <span class="k">pass</span>
+        <span class="k">return</span> <span class="p">[]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">antonyms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to</span>
+<span class="sd">        sense to set of term&#39;s antonyms -- opposites of the term in some relevant way,</span>
+<span class="sd">        like being at opposite ends of a scale or fundamentally similar but with</span>
+<span class="sd">        a key difference between them -- such as black &lt;=&gt; white or hot &lt;=&gt; cold. Note</span>
+<span class="sd">        that this relationship is symmetric.</span>
+
+<span class="sd">        Based on the &quot;/r/Antonym&quot; relation in ConceptNet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_antonyms</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_antonyms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_relation_data</span><span class="p">(</span><span class="s2">&quot;/r/Antonym&quot;</span><span class="p">,</span> <span class="n">is_symmetric</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_antonyms</span>
+
+<div class="viewcode-block" id="ConceptNet.get_antonyms"><a class="viewcode-back" href="../../../api_reference/resources.html#textacy.resources.concept_net.ConceptNet.get_antonyms">[docs]</a>    <span class="k">def</span> <span class="nf">get_antonyms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)</span>
+<span class="sd">            lang (str): Standard code for the language of ``term``.</span>
+<span class="sd">            sense (str): Sense in which ``term`` is used in context, which in practice</span>
+<span class="sd">                is just its part of speech. Valid values: &quot;n&quot; or &quot;NOUN&quot;, &quot;v&quot; or &quot;VERB&quot;,</span>
+<span class="sd">                &quot;a&quot; or &quot;ADJ&quot;, &quot;r&quot; or &quot;ADV&quot;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_relation_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">antonyms</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="n">lang</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">sense</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">hyponyms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to</span>
+<span class="sd">        sense to set of term&#39;s hyponyms -- subtypes or specific instances of the term --</span>
+<span class="sd">        such as car =&gt; vehicle or Chicago =&gt; city. Every A is a B.</span>
+
+<span class="sd">        Based on the &quot;/r/IsA&quot; relation in ConceptNet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyponyms</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_hyponyms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_relation_data</span><span class="p">(</span><span class="s2">&quot;/r/IsA&quot;</span><span class="p">,</span> <span class="n">is_symmetric</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_hyponyms</span>
+
+<div class="viewcode-block" id="ConceptNet.get_hyponyms"><a class="viewcode-back" href="../../../api_reference/resources.html#textacy.resources.concept_net.ConceptNet.get_hyponyms">[docs]</a>    <span class="k">def</span> <span class="nf">get_hyponyms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)</span>
+<span class="sd">            lang (str): Standard code for the language of ``term``.</span>
+<span class="sd">            sense (str): Sense in which ``term`` is used in context, which in practice</span>
+<span class="sd">                is just its part of speech. Valid values: &quot;n&quot; or &quot;NOUN&quot;, &quot;v&quot; or &quot;VERB&quot;,</span>
+<span class="sd">                &quot;a&quot; or &quot;ADJ&quot;, &quot;r&quot; or &quot;ADV&quot;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_relation_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hyponyms</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="n">lang</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">sense</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">meronyms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to</span>
+<span class="sd">        sense to set of term&#39;s meronyms -- parts of the term -- such as gearshift =&gt; car.</span>
+
+<span class="sd">        Based on the &quot;/r/PartOf&quot; relation in ConceptNet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meronyms</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_meronyms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_relation_data</span><span class="p">(</span><span class="s2">&quot;/r/PartOf&quot;</span><span class="p">,</span> <span class="n">is_symmetric</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_meronyms</span>
+
+<div class="viewcode-block" id="ConceptNet.get_meronyms"><a class="viewcode-back" href="../../../api_reference/resources.html#textacy.resources.concept_net.ConceptNet.get_meronyms">[docs]</a>    <span class="k">def</span> <span class="nf">get_meronyms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)</span>
+<span class="sd">            lang (str): Standard code for the language of ``term``.</span>
+<span class="sd">            sense (str): Sense in which ``term`` is used in context, which in practice</span>
+<span class="sd">                is just its part of speech. Valid values: &quot;n&quot; or &quot;NOUN&quot;, &quot;v&quot; or &quot;VERB&quot;,</span>
+<span class="sd">                &quot;a&quot; or &quot;ADJ&quot;, &quot;r&quot; or &quot;ADV&quot;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_relation_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">meronyms</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="n">lang</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">sense</span><span class="p">)</span></div>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">synonyms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to</span>
+<span class="sd">        sense to set of term&#39;s synonyms -- sufficiently similar concepts that they may</span>
+<span class="sd">        be used interchangeably -- such as sunlight &lt;=&gt; sunshine. Note that</span>
+<span class="sd">        this relationship is symmetric.</span>
+
+<span class="sd">        Based on the &quot;/r/Synonym&quot; relation in ConceptNet.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_synonyms</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_synonyms</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_relation_data</span><span class="p">(</span><span class="s2">&quot;/r/Synonym&quot;</span><span class="p">,</span> <span class="n">is_symmetric</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_synonyms</span>
+
+<div class="viewcode-block" id="ConceptNet.get_synonyms"><a class="viewcode-back" href="../../../api_reference/resources.html#textacy.resources.concept_net.ConceptNet.get_synonyms">[docs]</a>    <span class="k">def</span> <span class="nf">get_synonyms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Args:</span>
+<span class="sd">            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)</span>
+<span class="sd">            lang (str): Standard code for the language of ``term``.</span>
+<span class="sd">            sense (str): Sense in which ``term`` is used in context, which in practice</span>
+<span class="sd">                is just its part of speech. Valid values: &quot;n&quot; or &quot;NOUN&quot;, &quot;v&quot; or &quot;VERB&quot;,</span>
+<span class="sd">                &quot;a&quot; or &quot;ADJ&quot;, &quot;r&quot; or &quot;ADV&quot;.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[str]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_relation_values</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">synonyms</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="n">lang</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">sense</span><span class="p">)</span></div></div>
+
+
+<span class="k">def</span> <span class="nf">_split_uri</span><span class="p">(</span><span class="n">uri</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get slash-delimited parts of a ConceptNet URI.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        uri (str)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List[str]</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="n">uri</span><span class="o">.</span><span class="n">lstrip</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">uri</span><span class="p">:</span>
+        <span class="k">return</span> <span class="p">[]</span>
+    <span class="k">return</span> <span class="n">uri</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;/&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span> <span class="nf">_parse_concept_uri</span><span class="p">(</span><span class="n">uri</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Extract language, term, and sense from a ConceptNet &quot;concept&quot; URI.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        uri (str)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Tuple[str, str, str]: Language, term, sense.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">uri</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;/c/&quot;</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;invalid concept uri: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">uri</span><span class="p">))</span>
+    <span class="n">uri</span> <span class="o">=</span> <span class="n">_split_uri</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">lang</span><span class="p">,</span> <span class="n">term</span> <span class="o">=</span> <span class="n">uri</span>
+        <span class="n">sense</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span> <span class="o">==</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">lang</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">sense</span> <span class="o">=</span> <span class="n">uri</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">4</span><span class="p">:</span>
+        <span class="n">_</span><span class="p">,</span> <span class="n">lang</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">sense</span><span class="p">,</span> <span class="o">*</span><span class="n">_</span> <span class="o">=</span> <span class="n">uri</span>
+    <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">uri</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;not enough parts in uri: </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">uri</span><span class="p">))</span>
+    <span class="n">term</span> <span class="o">=</span> <span class="n">term</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;_&quot;</span><span class="p">,</span> <span class="s2">&quot; &quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">lang</span><span class="p">,</span> <span class="n">term</span><span class="p">,</span> <span class="n">sense</span>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

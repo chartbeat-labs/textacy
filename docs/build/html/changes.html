@@ -1,0 +1,1514 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Changes &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="_static/language_data.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="License" href="license.html" />
+    <link rel="prev" title="Miscellany" href="api_reference/misc.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="changes">
+<h1>Changes<a class="headerlink" href="#changes" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="id1">
+<h2>0.9.1 (2019-09-03)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="changed">
+<h3>Changed:<a class="headerlink" href="#changed" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Tweaked <code class="docutils literal notranslate"><span class="pre">TopicModel</span></code> class to work with newer versions of <code class="docutils literal notranslate"><span class="pre">scikit-learn</span></code>, and updated version requirements accordingly from <code class="docutils literal notranslate"><span class="pre">&gt;=0.18.0,&lt;0.21.0</span></code> to <code class="docutils literal notranslate"><span class="pre">&gt;=0.19</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="fixed">
+<h3>Fixed:<a class="headerlink" href="#fixed" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Fixed residual bugs in the script for training language identification pipelines, then trained and released one using <code class="docutils literal notranslate"><span class="pre">scikit-learn==0.19</span></code> to prevent errors for users on that version</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id2">
+<h2>0.9.0 (2019-09-03)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<p>Note: <code class="docutils literal notranslate"><span class="pre">textacy</span></code> is now PY3-only! 🎉 Specifically, support for PY2.7 has been dropped, and the minimum PY3 version has been bumped to 3.6 (PR #261). See below for related changes.</p>
+<div class="section" id="new">
+<h3>New:<a class="headerlink" href="#new" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Added ``augmentation`` subpackage for basic text data augmentation</strong> (PR #268, #269)</p>
+<ul>
+<li><p>implemented several transformer functions for substituting, inserting, swapping, and deleting elements of text at both the word- and character-level</p></li>
+<li><p>implemented an <code class="docutils literal notranslate"><span class="pre">Augmenter</span></code> class for combining multiple transforms and applying them to spaCy <code class="docutils literal notranslate"><span class="pre">Doc</span></code>s in a randomized but configurable manner</p></li>
+<li><p><strong>Note:</strong> This API is provisional, and subject to change in future releases.</p></li>
+</ul>
+</li>
+<li><p><strong>Added ``resources`` subpackage for standardized access to linguistic resources</strong> (PR #265)</p>
+<ul>
+<li><p><strong>DepecheMood++:</strong> high-coverage emotion lexicons for understanding the emotions evoked by a text. Updated from a previous version, and now features better English data and Italian data with expanded, consistent functionality.</p>
+<ul>
+<li><p>removed <code class="docutils literal notranslate"><span class="pre">lexicon_methods.py</span></code> module with previous implementation</p></li>
+</ul>
+</li>
+<li><p><strong>ConceptNet:</strong> multilingual knowledge base for representing relationships between words, similar to WordNet. Currently supports getting word antonyms, hyponyms, meronyms, and synonyms in dozens of languages.</p></li>
+</ul>
+</li>
+<li><p><strong>Added ``UDHR`` dataset, a collection of translations of the Universal Declaration of Human Rights</strong> (PR #271)</p></li>
+</ul>
+</div>
+<div class="section" id="id3">
+<h3>Changed:<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Updated and extended functionality previously blocked by PY2 compatibility while reducing code bloat / complexity</p>
+<ul>
+<li><p>made many args keyword-only, to prevent user error</p></li>
+<li><p>args accepting strings for directory / file paths now also accept <code class="docutils literal notranslate"><span class="pre">pathlib.Path</span></code> objects, with <code class="docutils literal notranslate"><span class="pre">pathlib</span></code> adopted widely under the hood</p></li>
+<li><p>increased minimum versions and/or uncapped maximum versions of several dependencies, including <code class="docutils literal notranslate"><span class="pre">jellyfish</span></code>, <code class="docutils literal notranslate"><span class="pre">networkx</span></code>, and <code class="docutils literal notranslate"><span class="pre">numpy</span></code></p></li>
+</ul>
+</li>
+<li><p>Added a Portuguese-specific formulation of Flesch Reading Ease score to <code class="docutils literal notranslate"><span class="pre">text_stats</span></code> (PR #263)</p></li>
+<li><p>Reorganized and grouped together some like functionality</p>
+<ul>
+<li><p>moved core functionality for loading spaCy langs and making spaCy docs into <code class="docutils literal notranslate"><span class="pre">spacier.core</span></code>, out of <code class="docutils literal notranslate"><span class="pre">cache.py</span></code> and <code class="docutils literal notranslate"><span class="pre">doc.py</span></code></p></li>
+<li><p>moved some general-purpose functionality from <code class="docutils literal notranslate"><span class="pre">dataset.utils</span></code> to <code class="docutils literal notranslate"><span class="pre">io.utils</span></code> and <code class="docutils literal notranslate"><span class="pre">utils.py</span></code></p></li>
+<li><p>moved function for loading “hyphenator” out of <code class="docutils literal notranslate"><span class="pre">cache.py</span></code> and into <code class="docutils literal notranslate"><span class="pre">text_stats.py</span></code>, where it’s used</p></li>
+</ul>
+</li>
+<li><p>Re-trained and released language identification pipelines using a better mix of training data, for slightly improved performance; also added the script used to train the pipeline</p></li>
+<li><p>Changed API Reference docs to show items in source code rather than alphabetical order, which should make the ordering more human-friendly</p></li>
+<li><p>Updated repo README and PyPi metadata to be more consistent and representative of current functionality</p></li>
+<li><p>Removed previously deprecated <code class="docutils literal notranslate"><span class="pre">textacy.io.split_record_fields()</span></code> function</p></li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h3>Fixed:<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Fixed a regex for cleaning up crufty terms to prevent catastrophic backtracking in certain edge cases (true story: this bug was encountered in <em>production code</em>, and ruined my day)</p></li>
+<li><p>Fixed bad handling of edge cases in sCAKE keyterm extraction (Issue #270)</p></li>
+<li><p>Changed order in which URL regexes are applied in <code class="docutils literal notranslate"><span class="pre">preprocessing.replace_urls()</span></code> to properly handle certain edge case URLs (Issue #267)</p></li>
+</ul>
+</div>
+<div class="section" id="contributors">
+<h3>Contributors:<a class="headerlink" href="#contributors" title="Permalink to this headline">¶</a></h3>
+<p>Thanks much to &#64;hugoabonizio for the contribution. 🤝</p>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>0.8.0 (2019-07-14)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="new-and-changed">
+<h3>New and Changed:<a class="headerlink" href="#new-and-changed" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Refactored and expanded text preprocessing functionality</strong> (PR #253)</p>
+<ul>
+<li><p>Moved code from a top-level <code class="docutils literal notranslate"><span class="pre">preprocess</span></code> module into a <code class="docutils literal notranslate"><span class="pre">preprocessing</span></code> sub-package, and reorganized it in the process</p></li>
+<li><p>Added new functions:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">replace_hashtags()</span></code> to replace hashtags like <code class="docutils literal notranslate"><span class="pre">#FollowFriday</span></code> or <code class="docutils literal notranslate"><span class="pre">#spacyIRL2019</span></code> with <code class="docutils literal notranslate"><span class="pre">_TAG_</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">replace_user_handles()</span></code> to replace user handles like <code class="docutils literal notranslate"><span class="pre">&#64;bjdewilde</span></code> or <code class="docutils literal notranslate"><span class="pre">&#64;spacy_io</span></code> with <code class="docutils literal notranslate"><span class="pre">_USER_</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">replace_emojis()</span></code> to replace emoji symbols like 😉 or 🚀 with <code class="docutils literal notranslate"><span class="pre">_EMOJI_</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">normalize_hyphenated_words()</span></code> to join hyphenated words back together, like <code class="docutils literal notranslate"><span class="pre">antici-</span>&#160; <span class="pre">pation</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">anticipation</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">normalize_quotation_marks()</span></code> to replace “fancy” quotation marks with simple ascii equivalents, like <code class="docutils literal notranslate"><span class="pre">“the</span> <span class="pre">god</span> <span class="pre">particle”</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">&quot;the</span> <span class="pre">god</span> <span class="pre">particle&quot;</span></code></p></li>
+</ul>
+</li>
+<li><p>Changed a couple functions for clarity and consistency:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">replace_currency_symbols()</span></code> now replaces <em>all</em> dedicated ascii and unicode currency symbols with <code class="docutils literal notranslate"><span class="pre">_CUR_</span></code>, rather than just a subset thereof, and no longer provides for replacement with the corresponding currency code (like <code class="docutils literal notranslate"><span class="pre">$</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">USD</span></code>)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">remove_punct()</span></code> now has a <code class="docutils literal notranslate"><span class="pre">fast</span> <span class="pre">(bool)</span></code> kwarg rather than <code class="docutils literal notranslate"><span class="pre">method</span> <span class="pre">(str)</span></code></p></li>
+</ul>
+</li>
+<li><p>Removed <code class="docutils literal notranslate"><span class="pre">normalize_contractions()</span></code>, <code class="docutils literal notranslate"><span class="pre">preprocess_text()</span></code>, and <code class="docutils literal notranslate"><span class="pre">fix_bad_unicode()</span></code> functions, since they were bad/awkward and more trouble than they were worth</p></li>
+</ul>
+</li>
+<li><p><strong>Refactored and expanded keyterm extraction functionality</strong> (PR #257)</p>
+<ul>
+<li><p>Moved code from a top-level <code class="docutils literal notranslate"><span class="pre">keyterms</span></code> module into a <code class="docutils literal notranslate"><span class="pre">ke</span></code> sub-package, and cleaned it up / standardized arg names / better shared functionality in the process</p></li>
+<li><p>Added new unsupervised keyterm extraction algorithms: YAKE (<code class="docutils literal notranslate"><span class="pre">ke.yake()</span></code>), sCAKE (<code class="docutils literal notranslate"><span class="pre">ke.scake()</span></code>), and PositionRank (<code class="docutils literal notranslate"><span class="pre">ke.textrank()</span></code>, with non-default parameter values)</p></li>
+<li><p>Added new methods for selecting candidate keyterms: longest matching subsequence candidates (<code class="docutils literal notranslate"><span class="pre">ke.utils.get_longest_subsequence_candidates()</span></code>) and pattern-matching candidates (<code class="docutils literal notranslate"><span class="pre">ke.utils.get_pattern_matching_candidates()</span></code>)</p></li>
+<li><p>Improved speed of SGRank implementation, and generally optimized much of the code</p></li>
+</ul>
+</li>
+<li><p><strong>Improved document similarity functionality</strong> (PR #256)</p>
+<ul>
+<li><p>Added a character ngram-based similarity measure (<code class="docutils literal notranslate"><span class="pre">similarity.character_ngrams()</span></code>), for something that’s useful in different contexts than the other measures</p></li>
+<li><p>Removed Jaro-Winkler string similarity measure (<code class="docutils literal notranslate"><span class="pre">similarity.jaro_winkler()</span></code>), since it didn’t add much beyond other measures</p></li>
+<li><p>Improved speed of Token Sort Ratio implementation</p></li>
+<li><p>Replaced <code class="docutils literal notranslate"><span class="pre">python-levenshtein</span></code> dependency with <code class="docutils literal notranslate"><span class="pre">jellyfish</span></code>, for its active development, better documentation, and <em>actually-compliant</em> license</p></li>
+</ul>
+</li>
+<li><p><strong>Added customizability to certain functionality</strong></p>
+<ul>
+<li><p>Added options to <code class="docutils literal notranslate"><span class="pre">Doc._.to_bag_of_words()</span></code> and <code class="docutils literal notranslate"><span class="pre">Corpus.word_counts()</span></code> for filtering out stop words, punctuation, and/or numbers (PR #249)</p></li>
+<li><p>Allowed for objects that <em>look like</em> <code class="docutils literal notranslate"><span class="pre">sklearn</span></code>-style topic modeling classes to be passed into <code class="docutils literal notranslate"><span class="pre">tm.TopicModel()</span></code> (PR #248)</p></li>
+<li><p>Added options to customize rc params used by <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> when drawing a “termite” plot in <code class="docutils literal notranslate"><span class="pre">viz.draw_termite_plot()</span></code> (PR #248)</p></li>
+</ul>
+</li>
+<li><p>Removed deprecated functions with direct replacements: <code class="docutils literal notranslate"><span class="pre">io.utils.get_filenames()</span></code> and <code class="docutils literal notranslate"><span class="pre">spacier.components.merge_entities()</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="id6">
+<h3>Contributors:<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<p>Huge thanks to &#64;kjoshi and &#64;zf109 for the PRs! 🙌</p>
+</div>
+</div>
+<div class="section" id="id7">
+<h2>0.7.1 (2019-06-25)<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id8">
+<h3>New:<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added a default, built-in language identification classifier that’s moderately fast, moderately accurate, and covers a relatively large number of languages [PR #247]</p>
+<ul>
+<li><p>Implemented a Google CLD3-inspired model in <code class="docutils literal notranslate"><span class="pre">scikit-learn</span></code> and trained it on ~1.5M texts in ~130 different languages spanning a wide variety of subject matter and stylistic formality; overall, speed and performance compare favorably to other open-source options (<code class="docutils literal notranslate"><span class="pre">langid</span></code>, <code class="docutils literal notranslate"><span class="pre">langdetect</span></code>, <code class="docutils literal notranslate"><span class="pre">cld2-cffi</span></code>, and <code class="docutils literal notranslate"><span class="pre">cld3</span></code>)</p></li>
+<li><p>Dropped <code class="docutils literal notranslate"><span class="pre">cld2-cffi</span></code> dependency [Issue #246]</p></li>
+</ul>
+</li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">extract.matches()</span></code> function to extract spans from a document matching one or more pattern of per-token (attribute, value) pairs, with optional quantity qualifiers; this is a convenient interface to spaCy’s rule-based <code class="docutils literal notranslate"><span class="pre">Matcher</span></code> and a more powerful replacement for textacy’s existing (now deprecated) <code class="docutils literal notranslate"><span class="pre">extract.pos_regex_matches()</span></code></p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">preprocess.normalize_unicode()</span></code> function to transform unicode characters into their canonical forms; this is a less-intensive consolation prize for the previously-removed <code class="docutils literal notranslate"><span class="pre">fix_unicode()</span></code> function</p></li>
+</ul>
+</div>
+<div class="section" id="id9">
+<h3>Changed:<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Enabled loading blank spaCy <code class="docutils literal notranslate"><span class="pre">Language</span></code> pipelines (tokenization only – no model-based tagging, parsing, etc.) via <code class="docutils literal notranslate"><span class="pre">load_spacy_lang(name,</span> <span class="pre">allow_blank=True)</span></code> for use cases that don’t rely on annotations; disabled by default to avoid unwelcome surprises</p></li>
+<li><p>Changed inclusion/exclusion and de-duplication of entities and ngrams in <code class="docutils literal notranslate"><span class="pre">to_terms_list()</span></code> [Issues #169, #179]</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">entities</span> <span class="pre">=</span> <span class="pre">True</span></code> =&gt; include entities, and drop exact duplicate ngrams</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">entities</span> <span class="pre">=</span> <span class="pre">False</span></code> =&gt; don’t include entities, and also drop exact duplicate ngrams</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">entities</span> <span class="pre">=</span> <span class="pre">None</span></code> =&gt; use ngrams as-is without checking against entities</p></li>
+</ul>
+</li>
+<li><p>Moved <code class="docutils literal notranslate"><span class="pre">to_collection()</span></code> function from the <code class="docutils literal notranslate"><span class="pre">datasets.utils</span></code> module to the top-level <code class="docutils literal notranslate"><span class="pre">utils</span></code> module, for use throughout the code base</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">quoting</span></code> option to <code class="docutils literal notranslate"><span class="pre">io.read_csv()</span></code> and <code class="docutils literal notranslate"><span class="pre">io.write_csv()</span></code>, for problematic cases</p></li>
+<li><p>Deprecated the <code class="docutils literal notranslate"><span class="pre">spacier.components.merge_entities()</span></code> pipeline component, an implementation of which has since been added into spaCy itself</p></li>
+<li><p>Updated documentation for developer convenience and reader clarity</p>
+<ul>
+<li><p>Split API reference docs into related chunks, rather than having them all together in one long page, and tidied up headers</p></li>
+<li><p>Fixed errors / inconsistencies in various docstrings (a never-ending struggle…)</p></li>
+<li><p>Ported package readme and changelog from <code class="docutils literal notranslate"><span class="pre">.rst</span></code> to <code class="docutils literal notranslate"><span class="pre">.md</span></code> format</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id10">
+<h3>Fixed:<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> previously added to <code class="docutils literal notranslate"><span class="pre">preprocess.fix_unicode()</span></code> is now <em>raised</em> rather than returned [Issue #243]</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id11">
+<h2>0.7.0 (2019-05-13)<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id12">
+<h3>New and Changed:<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Removed textacy.Doc, and split its functionality into two parts</strong></p>
+<ul>
+<li><p><strong>New:</strong> Added <code class="docutils literal notranslate"><span class="pre">textacy.make_spacy_doc()</span></code> as a convenient and flexible entry point
+for making spaCy <code class="docutils literal notranslate"><span class="pre">Doc</span></code> s from text or (text, metadata) pairs, with optional
+spaCy language pipeline specification. It’s similar to <code class="docutils literal notranslate"><span class="pre">textacy.Doc.__init__</span></code>,
+with the exception that text and metadata are passed in together as a 2-tuple.</p></li>
+<li><p><strong>New:</strong> Added a variety of custom doc property and method extensions to
+the global <code class="docutils literal notranslate"><span class="pre">spacy.tokens.Doc</span></code> class, accessible via its <code class="docutils literal notranslate"><span class="pre">Doc._</span></code> “underscore”
+property. These are similar to the properties/methods on <code class="docutils literal notranslate"><span class="pre">textacy.Doc</span></code>,
+they just require an interstitial underscore. For example,
+<code class="docutils literal notranslate"><span class="pre">textacy.Doc.to_bag_of_words()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">spacy.tokens.Doc._.to_bag_of_words()</span></code>.</p></li>
+<li><p><strong>New:</strong> Added functions for setting, getting, and removing these extensions.
+Note that they are set automatically when textacy is imported.</p></li>
+</ul>
+</li>
+<li><p><strong>Simplified and improved performance of textacy.Corpus</strong></p>
+<ul>
+<li><p>Documents are now added through a simpler API, either in <code class="docutils literal notranslate"><span class="pre">Corpus.__init__</span></code>
+or <code class="docutils literal notranslate"><span class="pre">Corpus.add()</span></code>; they may be one or a stream of texts, (text, metadata)
+pairs, or existing spaCy <code class="docutils literal notranslate"><span class="pre">Doc</span></code> s. When adding many documents, the spaCy
+language processing pipeline is used in a faster and more efficient way.</p></li>
+<li><p>Saving / loading corpus data to disk is now more efficient and robust.</p></li>
+<li><p>Note: <code class="docutils literal notranslate"><span class="pre">Corpus</span></code> is now a collection of spaCy <code class="docutils literal notranslate"><span class="pre">Doc</span></code> s rather than <code class="docutils literal notranslate"><span class="pre">textacy.Doc</span></code> s.</p></li>
+</ul>
+</li>
+<li><p><strong>Simplified, standardized, and added Dataset functionality</strong></p>
+<ul>
+<li><p><strong>New:</strong> Added an <code class="docutils literal notranslate"><span class="pre">IMDB</span></code> dataset, built on the classic 2011 dataset
+commonly used to train sentiment analysis models.</p></li>
+<li><p><strong>New:</strong> Added a base <code class="docutils literal notranslate"><span class="pre">Wikimedia</span></code> dataset, from which a reworked
+<code class="docutils literal notranslate"><span class="pre">Wikipedia</span></code> dataset and a separate <code class="docutils literal notranslate"><span class="pre">Wikinews</span></code> dataset inherit.
+The underlying data source has changed, from XML db dumps of raw wiki markup
+to JSON db dumps of (relatively) clean text and metadata; now, the code is
+simpler, faster, and totally language-agnostic.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Dataset.records()</span></code> now streams (text, metadata) pairs rather than a dict
+containing both text and metadata, so users don’t need to know field names
+and split them into separate streams before creating <code class="docutils literal notranslate"><span class="pre">Doc</span></code> or <code class="docutils literal notranslate"><span class="pre">Corpus</span></code>
+objects from the data.</p></li>
+<li><p>Filtering and limiting the number of texts/records produced is now clearer
+and more consistent between <code class="docutils literal notranslate"><span class="pre">.texts()</span></code> and <code class="docutils literal notranslate"><span class="pre">.records()</span></code> methods on
+a given <code class="docutils literal notranslate"><span class="pre">Dataset</span></code> — and more performant!</p></li>
+<li><p>Downloading datasets now always shows progress bars and saves to the same
+file names. When appropriate, downloaded archive files’ contents are
+automatically extracted for easy inspection.</p></li>
+<li><p>Common functionality (such as validating filter values) is now standardized
+and consolidated in the <code class="docutils literal notranslate"><span class="pre">datasets.utils</span></code> module.</p></li>
+</ul>
+</li>
+<li><p><strong>Quality of life improvements</strong></p>
+<ul>
+<li><p>Reduced load time for <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">textacy</span></code> from ~2-3 seconds to ~1 second,
+by lazy-loading expensive variables, deferring a couple heavy imports, and
+dropping a couple dependencies. Specifically:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">ftfy</span></code> was dropped, and a <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> is now raised
+in textacy’s wrapper function, <code class="docutils literal notranslate"><span class="pre">textacy.preprocess.fix_bad_unicode()</span></code>.
+Users with bad unicode should now directly call <code class="docutils literal notranslate"><span class="pre">ftfy.fix_text()</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">ijson</span></code> was dropped, and the behavior of <code class="docutils literal notranslate"><span class="pre">textacy.read_json()</span></code>
+is now simpler and consistent with other functions for line-delimited data.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mwparserfromhell</span></code> was dropped, since the reworked <code class="docutils literal notranslate"><span class="pre">Wikipedia</span></code> dataset
+no longer requires complicated and slow parsing of wiki markup.</p></li>
+</ul>
+</li>
+<li><p>Renamed certain functions and variables for clarity, and for consistency with
+existing conventions:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">textacy.load_spacy()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">textacy.load_spacy_lang()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">textacy.extract.named_entities()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">textacy.extract.entities()</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">textacy.data_dir</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">textacy.DEFAULT_DATA_DIR</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">filename</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">filepath</span></code> and <code class="docutils literal notranslate"><span class="pre">dirname</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">dirpath</span></code> when specifying
+full paths to files/dirs on disk, and <code class="docutils literal notranslate"><span class="pre">textacy.io.utils.get_filenames()</span></code>
+=&gt; <code class="docutils literal notranslate"><span class="pre">textacy.io.utils.get_filepaths()</span></code> accordingly</p></li>
+<li><p>compiled regular expressions now consistently start with <code class="docutils literal notranslate"><span class="pre">RE_</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">SpacyDoc</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">Doc</span></code>, <code class="docutils literal notranslate"><span class="pre">SpacySpan</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">Span</span></code>, <code class="docutils literal notranslate"><span class="pre">SpacyToken</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">Token</span></code>,
+<code class="docutils literal notranslate"><span class="pre">SpacyLang</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">Language</span></code> as variables and in docs</p></li>
+</ul>
+</li>
+<li><p>Removed deprecated functionality</p>
+<ul>
+<li><p>top-level <code class="docutils literal notranslate"><span class="pre">spacy_utils.py</span></code> and <code class="docutils literal notranslate"><span class="pre">spacy_pipelines.py</span></code> are gone;
+use equivalent functionality in the <code class="docutils literal notranslate"><span class="pre">spacier</span></code> subpackage instead</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">math_utils.py</span></code> is gone; it was long neglected, and never actually used</p></li>
+</ul>
+</li>
+<li><p>Replaced <code class="docutils literal notranslate"><span class="pre">textacy.compat.bytes_to_unicode()</span></code> and <code class="docutils literal notranslate"><span class="pre">textacy.compat.unicode_to_bytes()</span></code>
+with <code class="docutils literal notranslate"><span class="pre">textacy.compat.to_unicode()</span></code> and <code class="docutils literal notranslate"><span class="pre">textacy.compat.to_bytes()</span></code>, which
+are safer and accept either binary or text strings as input.</p></li>
+<li><p>Moved and renamed language detection functionality,
+<code class="docutils literal notranslate"><span class="pre">textacy.text_utils.detect_language()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">textacy.lang_utils.detect_lang()</span></code>.
+The idea is to add more/better lang-related functionality here in the future.</p></li>
+<li><p>Updated and cleaned up documentation throughout the code base.</p></li>
+<li><p>Added and refactored <em>many</em> tests, for both new and old functionality,
+significantly increasing test coverage while significantly reducing run-time.
+Also, added a proper coverage report to CI builds. This should help prevent
+future errors and inspire better test-writing.</p></li>
+<li><p>Bumped the minimum required spaCy version: <code class="docutils literal notranslate"><span class="pre">v2.0.0</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">v2.0.12</span></code>,
+for access to their full set of custom extension functionality.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id13">
+<h3>Fixed:<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>The progress bar during an HTTP download now always closes, preventing weird
+nesting issues if another bar is subsequently displayed.</p></li>
+<li><p>Filtering datasets by multiple values performed either a logical AND or OR
+over the values, which was confusing; now, a logical OR is always performed.</p></li>
+<li><p>The existence of files/directories on disk is now checked <em>properly</em> via
+<code class="docutils literal notranslate"><span class="pre">os.path.isfile()</span></code> or <code class="docutils literal notranslate"><span class="pre">os.path.isdir()</span></code>, rather than <code class="docutils literal notranslate"><span class="pre">os.path.exists()</span></code>.</p></li>
+<li><p>Fixed a variety of formatting errors raised by sphinx when generating HTML docs.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id14">
+<h2>0.6.3 (2019-03-23)<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id15">
+<h3>New:<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added a proper contributing guide and code of conduct, as well as separate
+GitHub issue templates for different user situations. This should help folks
+contribute to the project more effectively, and make maintaining it a bit easier,
+too. [Issue #212]</p></li>
+<li><p>Gave the documentation a new look, using a template popularized by <code class="docutils literal notranslate"><span class="pre">requests</span></code>.
+Added documentation on dealing with multi-lingual datasets. [Issue #233]</p></li>
+<li><p>Made some minor adjustments to package dependencies, the way they’re specified,
+and the Travis CI setup, making for a faster and better development experience.</p></li>
+<li><p>Confirmed and enabled compatibility with v2.1+ of <code class="docutils literal notranslate"><span class="pre">spacy</span></code>. :dizzy:</p></li>
+</ul>
+</div>
+<div class="section" id="id16">
+<h3>Changed:<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Improved the <code class="docutils literal notranslate"><span class="pre">Wikipedia</span></code> dataset class in a variety of ways: it can now read
+Wikinews db dumps; access records in namespaces other than the usual “0”
+(such as category pages in namespace “14”); parse and extract category pages
+in several languages, including in the case of bad wiki markup; and filter out
+section headings from the accompanying text via an <code class="docutils literal notranslate"><span class="pre">include_headings</span></code> kwarg.
+[PR #219, #220, #223, #224, #231]</p></li>
+<li><p>Removed the <code class="docutils literal notranslate"><span class="pre">transliterate_unicode()</span></code> preprocessing function that transliterated
+non-ascii text into a reasonable ascii approximation, for technical and
+philosophical reasons. Also removed its GPL-licensed <code class="docutils literal notranslate"><span class="pre">unidecode</span></code> dependency,
+for legal-ish reasons. [Issue #203]</p></li>
+<li><p>Added convention-abiding <code class="docutils literal notranslate"><span class="pre">exclude</span></code> argument to the function that writes
+<code class="docutils literal notranslate"><span class="pre">spacy</span></code> docs to disk, to limit which pipeline annotations are serialized.
+Replaced the existing but non-standard <code class="docutils literal notranslate"><span class="pre">include_tensor</span></code> arg.</p></li>
+<li><p>Deprecated the <code class="docutils literal notranslate"><span class="pre">n_threads</span></code> argument in <code class="docutils literal notranslate"><span class="pre">Corpus.add_texts()</span></code>, which had not
+been working in <code class="docutils literal notranslate"><span class="pre">spacy.pipe</span></code> for some time and, as of v2.1, is defunct.</p></li>
+<li><p>Made many tests model- and python-version agnostic and thus less likely to break
+when <code class="docutils literal notranslate"><span class="pre">spacy</span></code> releases new and improved models.</p></li>
+<li><p>Auto-formatted the entire code base using <code class="docutils literal notranslate"><span class="pre">black</span></code>; the results aren’t always
+more readable, but they are pleasingly consistent.</p></li>
+</ul>
+</div>
+<div class="section" id="id17">
+<h3>Fixed:<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Fixed bad behavior of <code class="docutils literal notranslate"><span class="pre">key_terms_from_semantic_network()</span></code>, where an error
+would be raised if no suitable key terms could be found; now, an empty list
+is returned instead. [Issue #211]</p></li>
+<li><p>Fixed variable name typo so <code class="docutils literal notranslate"><span class="pre">GroupVectorizer.fit()</span></code> actually works. [Issue #215]</p></li>
+<li><p>Fixed a minor typo in the quick-start docs. [PR #217]</p></li>
+<li><p>Check for and filter out any named entities that are entirely whitespace,
+seemingly caused by an issue in <code class="docutils literal notranslate"><span class="pre">spacy</span></code>.</p></li>
+<li><p>Fixed an undefined variable error when merging spans. [Issue #225]</p></li>
+<li><p>Fixed a unicode/bytes issue in experimental function for deserializing <code class="docutils literal notranslate"><span class="pre">spacy</span></code>
+docs in “binary” format. [Issue #228, PR #229]</p></li>
+</ul>
+</div>
+<div class="section" id="id18">
+<h3>Contributors:<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<p>Many thanks to &#64;abevieiramota, &#64;ckot, &#64;Jude188, and &#64;digest0r for their help!</p>
+</div>
+</div>
+<div class="section" id="id19">
+<h2>0.6.2 (2018-07-19)<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id20">
+<h3>Changed:<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Add a <code class="docutils literal notranslate"><span class="pre">spacier.util</span></code> module, and add / reorganize relevant functionality</p>
+<ul>
+<li><p>move (most) <code class="docutils literal notranslate"><span class="pre">spacy_util</span></code> functions here, and add a deprecation warning to
+the <code class="docutils literal notranslate"><span class="pre">spacy_util</span></code> module</p></li>
+<li><p>rename <code class="docutils literal notranslate"><span class="pre">normalized_str()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">get_normalized_text()</span></code>, for consistency and clarity</p></li>
+<li><p>add a function to split long texts up into chunks but combine them into
+a single <code class="docutils literal notranslate"><span class="pre">Doc</span></code>. This is a workaround for a current limitation of spaCy’s
+neural models, whose RAM usage scales with the length of input text.</p></li>
+</ul>
+</li>
+<li><p>Add experimental support for reading and writing spaCy docs in binary format,
+where multiple docs are contained in a single file. This functionality was
+supported by spaCy v1, but is not in spaCy v2; I’ve implemented a workaround
+that should work well in most situations, but YMMV.</p></li>
+<li><p>Package documentation is now “officially” hosted on GitHub pages. The docs
+are automatically built on and deployed from Travis via <code class="docutils literal notranslate"><span class="pre">doctr</span></code>, so they
+stay up-to-date with the master branch on GitHub. Maybe someday I’ll get
+ReadTheDocs to successfully build <code class="docutils literal notranslate"><span class="pre">textacy</span></code> once again…</p></li>
+<li><p>Minor improvements/updates to documentation</p></li>
+</ul>
+</div>
+<div class="section" id="id21">
+<h3>Fixed:<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Add missing return statement in deprecated <code class="docutils literal notranslate"><span class="pre">text_stats.flesch_readability_ease()</span></code>
+function (Issue #191)</p></li>
+<li><p>Catch an empty graph error in bestcoverage-style keyterm ranking (Issue #196)</p></li>
+<li><p>Fix mishandling when specifying a single named entity type to in/exclude in
+<code class="docutils literal notranslate"><span class="pre">extract.named_entities</span></code> (Issue #202)</p></li>
+<li><p>Make <code class="docutils literal notranslate"><span class="pre">networkx</span></code> usage in keyterms module compatible with v1.11+ (Issue #199)</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id22">
+<h2>0.6.1 (2018-04-11)<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id23">
+<h3>New:<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Add a new spacier sub-package for spaCy-oriented functionality</strong> (#168, #187)</p>
+<ul>
+<li><p>Thus far, this includes a <code class="docutils literal notranslate"><span class="pre">components</span></code> module with two custom spaCy
+pipeline components: one to compute text stats on parsed documents, and
+another to merge named entities into single tokens in an efficient manner.
+More to come!</p></li>
+<li><p>Similar functionality in the top-level <code class="docutils literal notranslate"><span class="pre">spacy_pipelines</span></code> module has been
+deprecated; it will be removed in v0.7.0.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id24">
+<h3>Changed:<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Update the readme, usage, and API reference docs to be clearer and (I hope)
+more useful. (#186)</p></li>
+<li><p>Removing punctuation from a text via the <code class="docutils literal notranslate"><span class="pre">preprocessing</span></code> module now replaces
+punctuation marks with a single space rather than an empty string. This gives
+better behavior in many situations; for example, “won’t” =&gt; “won t” rather than
+“wont”, the latter of which is a valid word with a different meaning.</p></li>
+<li><p>Categories are now correctly extracted from non-English language Wikipedia
+datasets, starting with French and German and extendable to others. (#175)</p></li>
+<li><p>Log progress when adding documents to a corpus. At the debug level, every
+doc’s addition is logged; at the info level, only one message per batch
+of documents is logged. (#183)</p></li>
+</ul>
+</div>
+<div class="section" id="id25">
+<h3>Fixed:<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Fix two breaking typos in <code class="docutils literal notranslate"><span class="pre">extract.direct_quotations()</span></code>. (issue #177)</p></li>
+<li><p>Prevent crashes when adding non-parsed documents to a <code class="docutils literal notranslate"><span class="pre">Corpus</span></code>. (#180)</p></li>
+<li><p>Fix bugs in <code class="docutils literal notranslate"><span class="pre">keyterms.most_discriminating_terms()</span></code> that used <code class="docutils literal notranslate"><span class="pre">vsm</span></code>
+functionality as it was <em>before</em> the changes in v0.6.0. (#189)</p></li>
+<li><p>Fix a breaking typo in <code class="docutils literal notranslate"><span class="pre">vsm.matrix_utils.apply_idf_weighting()</span></code>, and rename
+the problematic kwarg for consistency with related functions. (#190)</p></li>
+</ul>
+</div>
+<div class="section" id="id26">
+<h3>Contributors:<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h3>
+<p>Big thanks to &#64;sammous, &#64;dixiekong (nice name!), and &#64;SandyRogers for the pull
+requests, and many more for pointing out various bugs and the rougher edges /
+unsupported use cases of this package.</p>
+</div>
+</div>
+<div class="section" id="id27">
+<h2>0.6.0 (2018-02-25)<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id28">
+<h3>Changed:<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
+<ul>
+<li><p><strong>Rename, refactor, and extend I/O functionality</strong> (PR #151)</p>
+<ul class="simple">
+<li><p>Related read/write functions were moved from <code class="docutils literal notranslate"><span class="pre">read.py</span></code> and <code class="docutils literal notranslate"><span class="pre">write.py</span></code> into
+format-specific modules, and similar functions were consolidated into one
+with the addition of an arg. For example, <code class="docutils literal notranslate"><span class="pre">write.write_json()</span></code> and
+<code class="docutils literal notranslate"><span class="pre">write.write_json_lines()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">json.write_json(lines=True|False)</span></code>.</p></li>
+<li><p>Useful functionality was added to a few readers/writers. For example,
+<code class="docutils literal notranslate"><span class="pre">write_json()</span></code> now automatically handles python dates/datetimes, writing
+them to disk as ISO-formatted strings rather than raising a TypeError
+(“datetime is not JSON serializable”, ugh). CSVs can now be written to /
+read from disk when each row is a dict rather than a list. Reading/writing
+HTTP streams now allows for basic authentication.</p></li>
+<li><p>Several things were renamed to improve clarity and consistency from a user’s
+perspective, most notably the subpackage name: <code class="docutils literal notranslate"><span class="pre">fileio</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">io</span></code>. Others:
+<code class="docutils literal notranslate"><span class="pre">read_file()</span></code> and <code class="docutils literal notranslate"><span class="pre">write_file()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">read_text()</span></code> and <code class="docutils literal notranslate"><span class="pre">write_text()</span></code>;
+<code class="docutils literal notranslate"><span class="pre">split_record_fields()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">split_records()</span></code>, although I kept an alias
+to the old function for folks; <code class="docutils literal notranslate"><span class="pre">auto_make_dirs</span></code> boolean kwarg =&gt; <code class="docutils literal notranslate"><span class="pre">make_dirs</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">io.open_sesame()</span></code> now handles zip files (provided they contain only 1 file)
+as it already does for gzip, bz2, and lzma files. On a related note, Python 2
+users can now open lzma (<code class="docutils literal notranslate"><span class="pre">.xz</span></code>) files if they’ve installed <code class="docutils literal notranslate"><span class="pre">backports.lzma</span></code>.</p></li>
+</ul>
+</li>
+<li><p><strong>Improve, refactor, and extend vector space model functionality</strong> (PRs #156 and #167)</p>
+<ul>
+<li><p>BM25 term weighting and document-length normalization were implemented, and
+and users can now flexibly add and customize individual components of an
+overall weighting scheme (local scaling + global scaling + doc-wise normalization).
+For API sanity, several additions and changes to the <code class="docutils literal notranslate"><span class="pre">Vectorizer</span></code> init
+params were required — sorry bout it!</p></li>
+<li><p>Given all the new weighting possibilities, a <code class="docutils literal notranslate"><span class="pre">Vectorizer.weighting</span></code> attribute
+was added for curious users, to give a mathematical representation of how
+values in a doc-term matrix are being calculated. Here’s a simple and a
+not-so-simple case:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">Vectorizer</span><span class="p">(</span><span class="n">apply_idf</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">idf_type</span><span class="o">=</span><span class="s1">&#39;smooth&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">weighting</span>
+<span class="go">&#39;tf * log((n_docs + 1) / (df + 1)) + 1&#39;</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">Vectorizer</span><span class="p">(</span><span class="n">tf_type</span><span class="o">=</span><span class="s1">&#39;bm25&#39;</span><span class="p">,</span> <span class="n">apply_idf</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">idf_type</span><span class="o">=</span><span class="s1">&#39;smooth&#39;</span><span class="p">,</span> <span class="n">apply_dl</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">weighting</span>
+<span class="go">&#39;(tf * (k + 1)) / (tf + k * (1 - b + b * (length / avg(lengths))) * log((n_docs - df + 0.5) / (df + 0.5))&#39;</span>
+</pre></div>
+</div>
+</li>
+<li><p>Terms are now sorted alphabetically after fitting, so you’ll have a consistent
+and interpretable ordering in your vocabulary and doc-term-matrix.</p></li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">GroupVectorizer</span></code> class was added, as a child of <code class="docutils literal notranslate"><span class="pre">Vectorizer</span></code> and
+an extension of typical document-term matrix vectorization, in which each
+row vector corresponds to the weighted terms co-occurring in a single document.
+This allows for customized grouping, such as by a shared author or publication year,
+that may span multiple documents, without forcing users to merge /concatenate
+those documents themselves.</p></li>
+<li><p>Lastly, the <code class="docutils literal notranslate"><span class="pre">vsm.py</span></code> module was refactored into a <code class="docutils literal notranslate"><span class="pre">vsm</span></code> subpackage with
+two modules. Imports should stay the same, but the code structure is now
+more amenable to future additions.</p></li>
+</ul>
+</li>
+<li><p><strong>Miscellaneous additions and improvements</strong></p>
+<ul class="simple">
+<li><p>Flesch Reading Ease in the <code class="docutils literal notranslate"><span class="pre">textstats</span></code> module is now multi-lingual! Language-
+specific formulations for German, Spanish, French, Italian, Dutch, and Russian
+were added, in addition to (the default) English. (PR #158, prompted by Issue #155)</p></li>
+<li><p>Runtime performance, as well as docs and error messages, of functions for
+generating semantic networks from lists of terms or sentences were improved. (PR #163)</p></li>
+<li><p>Labels on named entities from which determiners have been dropped are now
+preserved. There’s still a minor gotcha, but it’s explained in the docs.</p></li>
+<li><p>The size of <code class="docutils literal notranslate"><span class="pre">textacy</span></code>’s data cache can now be set via an environment
+variable, <code class="docutils literal notranslate"><span class="pre">TEXTACY_MAX_CACHE_SIZE</span></code>, in case the default 2GB cache doesn’t
+meet your needs.</p></li>
+<li><p>Docstrings were improved in many ways, large and small, throughout the code.
+May they guide you even more effectively than before!</p></li>
+<li><p>The package version is now set from a single source. This isn’t for you so
+much as me, but it does prevent confusing version mismatches b/w code, pypi,
+and docs.</p></li>
+<li><p>All tests have been converted from <code class="docutils literal notranslate"><span class="pre">unittest</span></code> to <code class="docutils literal notranslate"><span class="pre">pytest</span></code> style. They
+run faster, they’re more informative in failure, and they’re easier to extend.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id29">
+<h3>Fixed:<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Fixed an issue where existing metadata associated with a spacy Doc was being
+overwritten with an empty dict when using it to initialize a textacy Doc.
+Users can still overwrite existing metadata, but only if they pass in new data.</p></li>
+<li><p>Added a missing import to the README’s usage example. (#149)</p></li>
+<li><p>The intersphinx mapping to <code class="docutils literal notranslate"><span class="pre">numpy</span></code> got fixed (and items for <code class="docutils literal notranslate"><span class="pre">scipy</span></code> and
+<code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> were added, too). Taking advantage of that, a bunch of broken
+object links scattered throughout the docs got fixed.</p></li>
+<li><p>Fixed broken formatting of old entries in the changelog, for your reading pleasure.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id30">
+<h2>0.5.0 (2017-12-04)<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id31">
+<h3>Changed:<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><strong>Bumped version requirement for spaCy from &lt; 2.0 to &gt;= 2.0</strong> — textacy no longer
+works with spaCy 1.x! It’s worth the upgrade, though. v2.0’s new features and
+API enabled (or required) a few changes on textacy’s end</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">textacy.load_spacy()</span></code> takes the same inputs as the new <code class="docutils literal notranslate"><span class="pre">spacy.load()</span></code>,
+i.e. a package <code class="docutils literal notranslate"><span class="pre">name</span></code> string and an optional list of pipes to <code class="docutils literal notranslate"><span class="pre">disable</span></code></p></li>
+<li><p>textacy’s <code class="docutils literal notranslate"><span class="pre">Doc</span></code> metadata and language string are now stored in <code class="docutils literal notranslate"><span class="pre">user_data</span></code>
+directly on the spaCy <code class="docutils literal notranslate"><span class="pre">Doc</span></code> object; although the API from a user’s perspective
+is unchanged, this made the next change possible</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Doc</span></code> and <code class="docutils literal notranslate"><span class="pre">Corpus</span></code> classes are now de/serialized via pickle into a single
+file — no more side-car JSON files for metadata! Accordingly, the <code class="docutils literal notranslate"><span class="pre">.save()</span></code>
+and <code class="docutils literal notranslate"><span class="pre">.load()</span></code> methods on both classes have a simpler API: they take
+a single string specifying the file on disk where data is stored.</p></li>
+</ul>
+</li>
+<li><p><strong>Cleaned up docs, imports, and tests throughout the entire code base.</strong></p>
+<ul>
+<li><p>docstrings and <a class="reference external" href="https://textacy.readthedocs.io">https://textacy.readthedocs.io</a> ‘s API reference are easier to
+read, with better cross-referencing and far fewer broken web links</p></li>
+<li><p>namespaces are less cluttered, and textacy’s source code is easier to follow</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">textacy</span></code> takes less than half the time from before</p></li>
+<li><p>the full test suite also runs about twice as fast, and most tests are now
+more robust to changes in the performance of spaCy’s models</p></li>
+<li><p>consistent adherence to conventions eases users’ cognitive load :)</p></li>
+</ul>
+</li>
+<li><p><strong>The module responsible for caching loaded data in memory was cleaned up and
+improved</strong>, as well as renamed: from <code class="docutils literal notranslate"><span class="pre">data.py</span></code> to <code class="docutils literal notranslate"><span class="pre">cache.py</span></code>, which is more
+descriptive of its purpose. Otherwise, you shouldn’t notice much of a difference
+besides <em>things working correctly</em>.</p>
+<ul>
+<li><p>All loaded data (e.g. spacy language pipelines) is now cached together in a
+single LRU cache whose max size is set to 2GB, and the size of each element
+in the cache is now accurately computed. (tl;dr: <code class="docutils literal notranslate"><span class="pre">sys.getsizeof</span></code> does not
+work on non-built-in objects like, say, a <code class="docutils literal notranslate"><span class="pre">spacy.tokens.Doc</span></code>.)</p></li>
+<li><p>Loading and downloading of the DepecheMood resource is now less hacky and
+weird, and much closer to how users already deal with textacy’s various
+<code class="docutils literal notranslate"><span class="pre">Dataset</span></code> s, In fact, it can be downloaded in exactly the same way as the
+datasets via textacy’s new CLI: <code class="docutils literal notranslate"><span class="pre">$</span> <span class="pre">python</span> <span class="pre">-m</span> <span class="pre">textacy</span> <span class="pre">download</span> <span class="pre">depechemood</span></code>.
+P.S. A brief guide for using the CLI got added to the README.</p></li>
+</ul>
+</li>
+<li><p><strong>Several function/method arguments marked for deprecation have been removed.</strong>
+If you’ve been ignoring the warnings that print out when you use <code class="docutils literal notranslate"><span class="pre">lemmatize=True</span></code>
+instead of <code class="docutils literal notranslate"><span class="pre">normalize='lemma'</span></code> (etc.), now is the time to update your calls!</p>
+<ul>
+<li><p>Of particular note: The <code class="docutils literal notranslate"><span class="pre">readability_stats()</span></code> function has been removed;
+use <code class="docutils literal notranslate"><span class="pre">TextStats(doc).readability_stats</span></code> instead.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id32">
+<h3>Fixed:<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>In certain situations, the text of a spaCy span was being returned without
+whitespace between tokens; that has been avoided in textacy, and the source bug
+in spaCy got fixed (by yours truly! <a class="reference external" href="https://github.com/explosion/spaCy/pull/1621">https://github.com/explosion/spaCy/pull/1621</a>).</p></li>
+<li><p>When adding already-parsed <code class="docutils literal notranslate"><span class="pre">Doc</span></code>s to a <code class="docutils literal notranslate"><span class="pre">Corpus</span></code>, including <code class="docutils literal notranslate"><span class="pre">metadata</span></code>
+now correctly overwrites any existing metadata on those docs.</p></li>
+<li><p>Fixed a couple related issues involving the assignment of a 2-letter language
+string to the <code class="docutils literal notranslate"><span class="pre">.lang</span></code> attribute of <code class="docutils literal notranslate"><span class="pre">Doc</span></code> and <code class="docutils literal notranslate"><span class="pre">Corpus</span></code> objects.</p></li>
+<li><p>textacy’s CLI wasn’t correctly handling certain dataset kwargs in all cases;
+now, all kwargs get to their intended destinations.</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id33">
+<h2>0.4.2 (2017-11-28)<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id34">
+<h3>New:<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added a CLI for downloading <code class="docutils literal notranslate"><span class="pre">textacy</span></code>-related data, inspired by the <code class="docutils literal notranslate"><span class="pre">spaCy</span></code>
+equivalent. It’s <em>temporarily</em> undocumented, but to see available commands and
+options, just pass the usual flag: <code class="docutils literal notranslate"><span class="pre">$</span> <span class="pre">python</span> <span class="pre">-m</span> <span class="pre">textacy</span> <span class="pre">--help</span></code>. Expect more
+functionality (and docs!) to be added soonish. (#144)</p>
+<ul>
+<li><p>Note: The existing <code class="docutils literal notranslate"><span class="pre">Dataset.download()</span></code> methods work as before, and in fact,
+they are being called under the hood from the command line.</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id35">
+<h3>Changed:<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Made usage of <code class="docutils literal notranslate"><span class="pre">networkx</span></code> v2.0-compatible, and therefore dropped the &lt;2.0
+version requirement on that dependency. Upgrade as you please! (#131)</p></li>
+<li><p>Improved the regex for identifying phone numbers so that it’s easier to view
+and interpret its matches. (#128)</p></li>
+</ul>
+</div>
+<div class="section" id="id36">
+<h3>Fixed:<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Fixed caching of counts on <code class="docutils literal notranslate"><span class="pre">textacy.Doc</span></code> instance-specific, rather than
+shared by all instances of the class. Oops.</p></li>
+<li><p>Fixed currency symbols regex, so as not to replace all instances of the letter “z”
+when a custom string is passed into <code class="docutils literal notranslate"><span class="pre">replace_currency_symbols()</span></code>. (#137)</p></li>
+<li><p>Fixed README usage example, which skipped downloading of dataset data. Btw,
+see above for another way! (#124)</p></li>
+<li><p>Fixed typo in the API reference, which included the SupremeCourt dataset twice
+and omitted the RedditComments dataset. (#129)</p></li>
+<li><p>Fixed typo in <code class="docutils literal notranslate"><span class="pre">RedditComments.download()</span></code> that prevented it from downloading
+any data. (#143)</p></li>
+</ul>
+</div>
+<div class="section" id="id37">
+<h3>Contributors:<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h3>
+<p>Many thanks to &#64;asifm, &#64;harryhoch, and &#64;mdlynch37 for submitting PRs!</p>
+</div>
+</div>
+<div class="section" id="id38">
+<h2>0.4.1 (2017-07-27)<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id39">
+<h3>Changed:<a class="headerlink" href="#id39" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added key classes to the top-level <code class="docutils literal notranslate"><span class="pre">textacy</span></code> imports, for convenience:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">textacy.text_stats.TextStats</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">textacy.TextStats</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">textacy.vsm.Vectorizer</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">textacy.Vectorizer</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">textacy.tm.TopicModel</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">textacy.TopicModel</span></code></p></li>
+</ul>
+</li>
+<li><p>Added tests for <code class="docutils literal notranslate"><span class="pre">textacy.Doc</span></code> and updated the README’s usage example</p></li>
+</ul>
+</div>
+<div class="section" id="id40">
+<h3>Fixed:<a class="headerlink" href="#id40" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added explicit encoding when opening Wikipedia database files in text mode to
+resolve an issue when doing so without encoding on Windows (PR #118)</p></li>
+<li><p>Fixed <code class="docutils literal notranslate"><span class="pre">keyterms.most_discriminating_terms</span></code> to use the <code class="docutils literal notranslate"><span class="pre">vsm.Vectorizer</span></code> class
+rather than the <code class="docutils literal notranslate"><span class="pre">vsm.doc_term_matrix</span></code> function that it replaced (PR #120)</p></li>
+<li><p>Fixed mishandling of a couple optional args in <code class="docutils literal notranslate"><span class="pre">Doc.to_terms_list</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="id41">
+<h3>Contributors:<a class="headerlink" href="#id41" title="Permalink to this headline">¶</a></h3>
+<p>Thanks to &#64;minketeer and &#64;Gregory-Howard for the fixes!</p>
+</div>
+</div>
+<div class="section" id="id42">
+<h2>0.4.0 (2017-06-21)<a class="headerlink" href="#id42" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id43">
+<h3>New and Changed:<a class="headerlink" href="#id43" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Refactored and expanded built-in <code class="docutils literal notranslate"><span class="pre">corpora</span></code>, now called <code class="docutils literal notranslate"><span class="pre">datasets</span></code> (PR #112)</p>
+<ul>
+<li><p>The various classes in the old <code class="docutils literal notranslate"><span class="pre">corpora</span></code> subpackage had a similar but
+frustratingly not-identical API. Also, some fetched the corresponding dataset
+automatically, while others required users to do it themselves. Ugh.</p></li>
+<li><p>These classes have been ported over to a new <code class="docutils literal notranslate"><span class="pre">datasets</span></code> subpackage; they
+now have a consistent API, consistent features, and consistent documentation.
+They also have some new functionality, including pain-free downloading of
+the data and saving it to disk in a stream (so as not to use all your RAM).</p></li>
+<li><p>Also, there’s a new dataset: A collection of 2.7k Creative Commons texts
+from the Oxford Text Archive, which rounds out the included datasets with
+English-language, 16th-20th century <em>literary</em> works. (h/t &#64;JonathanReeve)</p></li>
+</ul>
+</li>
+<li><p>A <code class="docutils literal notranslate"><span class="pre">Vectorizer</span></code> class to convert tokenized texts into variously weighted
+document-term matrices (Issue #69, PR #113)</p>
+<ul>
+<li><p>This class uses the familiar <code class="docutils literal notranslate"><span class="pre">scikit-learn</span></code> API (which is also consistent
+with the <code class="docutils literal notranslate"><span class="pre">textacy.tm.TopicModel</span></code> class) to convert one or more documents
+in the form of “term lists” into weighted vectors. An initial set of documents
+is used to build up the matrix vocabulary (via <code class="docutils literal notranslate"><span class="pre">.fit()</span></code>), which can then
+be applied to new documents (via <code class="docutils literal notranslate"><span class="pre">.transform()</span></code>).</p></li>
+<li><p>It’s similar in concept and usage to sklearn’s <code class="docutils literal notranslate"><span class="pre">CountVectorizer</span></code> or
+<code class="docutils literal notranslate"><span class="pre">TfidfVectorizer</span></code>, but doesn’t convolve the tokenization task as they do.
+This means users have more flexibility in deciding which terms to vectorize.
+This class outright replaces the <code class="docutils literal notranslate"><span class="pre">textacy.vsm.doc_term_matrix()</span></code> function.</p></li>
+</ul>
+</li>
+<li><p>Customizable automatic language detection for <code class="docutils literal notranslate"><span class="pre">Doc</span></code> s</p>
+<ul>
+<li><p>Although <code class="docutils literal notranslate"><span class="pre">cld2-cffi</span></code> is fast and accurate, its installation is problematic
+for some users. Since other language detection libraries are available
+(e.g. <cite>``langdetect`</cite> &lt;<a class="reference external" href="https://github.com/Mimino666/langdetect">https://github.com/Mimino666/langdetect</a>&gt;`_ and
+<cite>``langid`</cite> &lt;<a class="reference external" href="https://github.com/saffsd/langid.py">https://github.com/saffsd/langid.py</a>&gt;`_), it makes sense to let
+users choose, as needed or desired.</p></li>
+<li><p>First, <code class="docutils literal notranslate"><span class="pre">cld2-cffi</span></code> is now an optional dependency, i.e. is not installed
+by default. To install it, do <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">textacy[lang]</span></code> or (for it and
+all other optional deps) do <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">textacy[all]</span></code>. (PR #86)</p></li>
+<li><p>Second, the <code class="docutils literal notranslate"><span class="pre">lang</span></code> param used to instantiate <code class="docutils literal notranslate"><span class="pre">Doc</span></code> objects may now
+be a callable that accepts a unicode string and returns a standard 2-letter
+language code. This could be a function that uses <code class="docutils literal notranslate"><span class="pre">langdetect</span></code> under the
+hood, or a function that always returns “de” – it’s up to users. Note that
+the default value is now <code class="docutils literal notranslate"><span class="pre">textacy.text_utils.detect_language()</span></code>, which
+uses <code class="docutils literal notranslate"><span class="pre">cld2-cffi</span></code>, so the default behavior is unchanged.</p></li>
+</ul>
+</li>
+<li><p>Customizable punctuation removal in the <code class="docutils literal notranslate"><span class="pre">preprocessing</span></code> module (Issue #91)</p>
+<ul>
+<li><p>Users can now specify which punctuation marks they wish to remove, rather
+than always removing <em>all</em> marks.</p></li>
+<li><p>In the case that all marks are removed, however, performance is now 5-10x
+faster by using Python’s built-in <code class="docutils literal notranslate"><span class="pre">str.translate()</span></code> method instead of
+a regular expression.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">textacy</span></code>, installable via <code class="docutils literal notranslate"><span class="pre">conda</span></code> (PR #100)</p>
+<ul>
+<li><p>The package has been added to Conda-Forge (<a class="reference external" href="https://github.com/conda-forge/textacy-feedstock">here</a>),
+and installation instructions have been added to the docs. Hurray!</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">textacy</span></code>, now with helpful badges</p>
+<ul>
+<li><p>Builds are now automatically tested via Travis CI, and there’s a badge in
+the docs showing whether the build passed or not. The days of my ignoring
+broken tests in <code class="docutils literal notranslate"><span class="pre">master</span></code> are (probably) over…</p></li>
+<li><p>There are also badges showing the latest releases on GitHub, pypi, and
+conda-forge (see above).</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id44">
+<h3>Fixed:<a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Fixed the check for overlap between named entities and unigrams in the
+<code class="docutils literal notranslate"><span class="pre">Doc.to_terms_list()</span></code> method (PR #111)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">Corpus.add_texts()</span></code> uses CPU_COUNT - 1 threads by default, rather than
+always assuming that 4 cores are available (Issue #89)</p></li>
+<li><p>Added a missing coding declaration to a test file, without which tests failed
+for Python 2 (PR #99)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">readability_stats()</span></code> now catches an exception raised on empty documents and
+logs a message, rather than barfing with an unhelpful <code class="docutils literal notranslate"><span class="pre">ZeroDivisionError</span></code>.
+(Issue #88)</p></li>
+<li><p>Added a check for empty terms list in <code class="docutils literal notranslate"><span class="pre">terms_to_semantic_network</span></code> (Issue #105)</p></li>
+<li><p>Added and standardized module-specific loggers throughout the code base; not
+a bug per sé, but certainly some much-needed housecleaning</p></li>
+<li><p>Added a note to the docs about expectations for bytes vs. unicode text (PR #103)</p></li>
+</ul>
+</div>
+<div class="section" id="id45">
+<h3>Contributors:<a class="headerlink" href="#id45" title="Permalink to this headline">¶</a></h3>
+<p>Thanks to &#64;henridwyer, &#64;rolando, &#64;pavlin99th, and &#64;kyocum for their contributions!
+:raised_hands:</p>
+</div>
+</div>
+<div class="section" id="id46">
+<h2>0.3.4 (2017-04-17)<a class="headerlink" href="#id46" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id47">
+<h3>New and Changed:<a class="headerlink" href="#id47" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Improved and expanded calculation of basic counts and readability statistics
+in <code class="docutils literal notranslate"><span class="pre">text_stats</span></code> module.</p>
+<ul>
+<li><p>Added a <code class="docutils literal notranslate"><span class="pre">TextStats()</span></code> class for more convenient, granular access to
+individual values. See usage docs for more info. When calculating, say, just
+one readability statistic, performance with this class should be slightly better;
+if calculating <em>all</em> statistics, performance is worse owing to unavoidable,
+added overhead in Python for variable lookups. The legacy function
+<code class="docutils literal notranslate"><span class="pre">text_stats.readability_stats()</span></code> still exists and behaves as before, but a
+deprecation warning is displayed.</p></li>
+<li><p>Added functions for calculating Wiener Sachtextformel (PR #77), LIX, and GULPease
+readability statistics.</p></li>
+<li><p>Added number of long words and number of monosyllabic words to basic counts.</p></li>
+</ul>
+</li>
+<li><p>Clarified the need for having spacy models installed for most use cases of textacy,
+in addition to just the spacy package.</p>
+<ul>
+<li><p>README updated with comments on this, including links to more extensive spacy
+documentation. (Issues #66 and #68)</p></li>
+<li><p>Added a function, <code class="docutils literal notranslate"><span class="pre">compat.get_config()</span></code> that includes information about which
+(if any) spacy models are installed.</p></li>
+<li><p>Recent changes to spacy, including a warning message, will also make model
+problems more apparent.</p></li>
+</ul>
+</li>
+<li><p>Added an <code class="docutils literal notranslate"><span class="pre">ngrams</span></code> parameter to <code class="docutils literal notranslate"><span class="pre">keyterms.sgrank()</span></code>, allowing for more flexibility
+in specifying valid keyterm candidates for the algorithm. (PR #75)</p></li>
+<li><p>Dropped dependency on <code class="docutils literal notranslate"><span class="pre">fuzzywuzzy</span></code> package, replacing usage of
+<code class="docutils literal notranslate"><span class="pre">fuzz.token_sort_ratio()</span></code>
+with a textacy equivalent in order to avoid license incompatibilities. As a bonus,
+the new code seems to perform faster! (Issue #62)</p>
+<ul>
+<li><p>Note: Outputs are now floats in [0.0, 1.0], consistent with other similarity
+functions, whereas before outputs were ints in [0, 100]. This has implications
+for <code class="docutils literal notranslate"><span class="pre">match_threshold</span></code> values passed to <code class="docutils literal notranslate"><span class="pre">similarity.jaccard()</span></code>; a warning
+is displayed and the conversion is performed automatically, for now.</p></li>
+</ul>
+</li>
+<li><p>A MANIFEST.in file was added to include docs, tests, and distribution files in the source distribution. This is just good practice. (PR #65)</p></li>
+</ul>
+</div>
+<div class="section" id="id48">
+<h3>Fixed:<a class="headerlink" href="#id48" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Known acronym-definition pairs are now properly handled in
+<code class="docutils literal notranslate"><span class="pre">extract.acronyms_and_definitions()</span></code> (Issue #61)</p></li>
+<li><p>WikiReader no longer crashes on null page element content while parsing (PR #64)</p></li>
+<li><p>Fixed a rare but perfectly legal edge case exception in <code class="docutils literal notranslate"><span class="pre">keyterms.sgrank()</span></code>,
+and added a window width sanity check. (Issue #72)</p></li>
+<li><p>Fixed assignment of 2-letter language codes to <code class="docutils literal notranslate"><span class="pre">Doc</span></code> and <code class="docutils literal notranslate"><span class="pre">Corpus</span></code> objects
+when the lang parameter is specified as a full spacy model name.</p></li>
+<li><p>Replaced several leftover print statements with proper logging functions.</p></li>
+</ul>
+</div>
+<div class="section" id="id49">
+<h3>Contributors:<a class="headerlink" href="#id49" title="Permalink to this headline">¶</a></h3>
+<p>Big thanks to &#64;oroszgy, &#64;rolando, &#64;covuworie, and &#64;RolandColored for the pull requests!</p>
+</div>
+</div>
+<div class="section" id="id50">
+<h2>0.3.3 (2017-02-10)<a class="headerlink" href="#id50" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id51">
+<h3>New and Changed:<a class="headerlink" href="#id51" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added a consistent <code class="docutils literal notranslate"><span class="pre">normalize</span></code> param to functions and methods that require
+token/span text normalization. Typically, it takes one of the following values:
+‘lemma’ to lemmatize tokens, ‘lower’ to lowercase tokens, False-y to <em>not</em> normalize
+tokens, or a function that converts a spacy token or span into a string, in
+whatever way the user prefers (e.g. <code class="docutils literal notranslate"><span class="pre">spacy_utils.normalized_str()</span></code>).</p>
+<ul>
+<li><p>Functions modified to use this param:
+<code class="docutils literal notranslate"><span class="pre">Doc.to_bag_of_terms()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Doc.to_bag_of_words()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Doc.to_terms_list()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Doc.to_semantic_network()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Corpus.word_freqs()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">Corpus.word_doc_freqs()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">keyterms.sgrank()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">keyterms.textrank()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">keyterms.singlerank()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">keyterms.key_terms_from_semantic_network()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">network.terms_to_semantic_network()</span></code>,
+<code class="docutils literal notranslate"><span class="pre">network.sents_to_semantic_network()</span></code></p></li>
+</ul>
+</li>
+<li><p>Tweaked <code class="docutils literal notranslate"><span class="pre">keyterms.sgrank()</span></code> for higher quality results and improved internal
+performance.</p></li>
+<li><p>When getting both n-grams and named entities with <code class="docutils literal notranslate"><span class="pre">Doc.to_terms_list()</span></code>, filtering
+out numeric spans for only one is automatically extended to the other. This prevents
+unexpected behavior, such as passing <code class="docutils literal notranslate"><span class="pre">filter_nums=True</span></code> but getting numeric named
+entities back in the terms list.</p></li>
+</ul>
+</div>
+<div class="section" id="id52">
+<h3>Fixed:<a class="headerlink" href="#id52" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">keyterms.sgrank()</span></code> no longer crashes if a term is missing from <code class="docutils literal notranslate"><span class="pre">idfs</span></code> mapping.
+(&#64;jeremybmerrill, issue #53)</p></li>
+<li><p>Proper nouns are no longer excluded from consideration as keyterms in <code class="docutils literal notranslate"><span class="pre">keyterms.sgrank()</span></code>
+and <code class="docutils literal notranslate"><span class="pre">keyterms.textrank()</span></code>. (&#64;jeremybmerrill, issue #53)</p></li>
+<li><p>Empty strings are now excluded from consideration as keyterms — a bug inherited
+from spaCy. (&#64;mlehl88, issue #58)</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id53">
+<h2>0.3.2 (2016-11-15)<a class="headerlink" href="#id53" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id54">
+<h3>New and Changed:<a class="headerlink" href="#id54" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Preliminary inclusion of custom spaCy pipelines</p>
+<ul>
+<li><p>updated <code class="docutils literal notranslate"><span class="pre">load_spacy()</span></code> to include explicit path and create_pipeline kwargs,
+and removed the already-deprecated <code class="docutils literal notranslate"><span class="pre">load_spacy_pipeline()</span></code> function to avoid
+confusion around spaCy languages and pipelines</p></li>
+<li><p>added <code class="docutils literal notranslate"><span class="pre">spacy_pipelines</span></code> module to hold implementations of custom spaCy pipelines,
+including a basic one that merges entities into single tokens</p></li>
+<li><p>note: necessarily bumped minimum spaCy version to 1.1.0+</p></li>
+<li><p>see the announcement here: <a class="reference external" href="https://explosion.ai/blog/spacy-deep-learning-keras">https://explosion.ai/blog/spacy-deep-learning-keras</a></p></li>
+</ul>
+</li>
+<li><p>To reduce code bloat, made the <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> dependency optional and dropped
+the <code class="docutils literal notranslate"><span class="pre">gensim</span></code> dependency</p>
+<ul>
+<li><p>to install <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> at the same time as textacy, do <code class="docutils literal notranslate"><span class="pre">$</span> <span class="pre">pip</span> <span class="pre">install</span> <span class="pre">textacy[viz]</span></code></p></li>
+<li><p>bonus: <code class="docutils literal notranslate"><span class="pre">backports.csv</span></code> is now only installed for Py2 users</p></li>
+<li><p>thanks to &#64;mbatchkarov for the request</p></li>
+</ul>
+</li>
+<li><p>Improved performance of <code class="docutils literal notranslate"><span class="pre">textacy.corpora.WikiReader().texts()</span></code>; results should
+stream faster and have cleaner plaintext content than when they were produced
+by <code class="docutils literal notranslate"><span class="pre">gensim</span></code>. This <em>should</em> also fix a bug reported in Issue #51 by &#64;baisk</p></li>
+<li><p>Added a <code class="docutils literal notranslate"><span class="pre">Corpus.vectors</span></code> property that returns a matrix of shape
+(# documents, vector dim) containing the average word2vec-style vector
+representation of constituent tokens for all <code class="docutils literal notranslate"><span class="pre">Doc</span></code> s</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id55">
+<h2>0.3.1 (2016-10-19)<a class="headerlink" href="#id55" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id56">
+<h3>Changed:<a class="headerlink" href="#id56" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Updated spaCy dependency to the latest v1.0.1; set a floor on other dependencies’
+versions to make sure everyone’s running reasonably up-to-date code</p></li>
+</ul>
+</div>
+<div class="section" id="id57">
+<h3>Fixed:<a class="headerlink" href="#id57" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Fixed incorrect kwarg in <code class="docutils literal notranslate"><span class="pre">sgrank</span></code> ‘s call to <code class="docutils literal notranslate"><span class="pre">extract.ngrams()</span></code> (&#64;patcollis34, issue #44)</p></li>
+<li><p>Fixed import for <code class="docutils literal notranslate"><span class="pre">cachetool</span></code> ‘s <code class="docutils literal notranslate"><span class="pre">hashkey</span></code>, which changed in the v2.0 (&#64;gramonov, issue #45)</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id58">
+<h2>0.3.0 (2016-08-23)<a class="headerlink" href="#id58" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id59">
+<h3>New and Changed:<a class="headerlink" href="#id59" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Refactored and streamlined <code class="docutils literal notranslate"><span class="pre">TextDoc</span></code>; changed name to <code class="docutils literal notranslate"><span class="pre">Doc</span></code></p>
+<ul>
+<li><p>simplified init params: <code class="docutils literal notranslate"><span class="pre">lang</span></code> can now be a language code string or an equivalent
+<code class="docutils literal notranslate"><span class="pre">spacy.Language</span></code> object, and <code class="docutils literal notranslate"><span class="pre">content</span></code> is either a string or <code class="docutils literal notranslate"><span class="pre">spacy.Doc</span></code>;
+param values and their interactions are better checked for errors and inconsistencies</p></li>
+<li><p>renamed and improved methods transforming the Doc; for example, <code class="docutils literal notranslate"><span class="pre">.as_bag_of_terms()</span></code>
+is now <code class="docutils literal notranslate"><span class="pre">.to_bag_of_terms()</span></code>, and terms can be returned as integer ids (default)
+or as strings with absolute, relative, or binary frequencies as weights</p></li>
+<li><p>added performant <code class="docutils literal notranslate"><span class="pre">.to_bag_of_words()</span></code> method, at the cost of less customizability
+of what gets included in the bag (no stopwords or punctuation); words can be
+returned as integer ids (default) or as strings with absolute, relative, or
+binary frequencies as weights</p></li>
+<li><p>removed methods wrapping <code class="docutils literal notranslate"><span class="pre">extract</span></code> functions, in favor of simply calling that
+function on the Doc (see below for updates to <code class="docutils literal notranslate"><span class="pre">extract</span></code> functions to make
+this more convenient); for example, <code class="docutils literal notranslate"><span class="pre">TextDoc.words()</span></code> is now <code class="docutils literal notranslate"><span class="pre">extract.words(Doc)</span></code></p></li>
+<li><p>removed <code class="docutils literal notranslate"><span class="pre">.term_counts()</span></code> method, which was redundant with <code class="docutils literal notranslate"><span class="pre">Doc.to_bag_of_terms()</span></code></p></li>
+<li><p>renamed <code class="docutils literal notranslate"><span class="pre">.term_count()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">.count()</span></code>, and checking + caching results is now
+smarter and faster</p></li>
+</ul>
+</li>
+<li><p>Refactored and streamlined <code class="docutils literal notranslate"><span class="pre">TextCorpus</span></code>; changed name to <code class="docutils literal notranslate"><span class="pre">Corpus</span></code></p>
+<ul>
+<li><p>added init params: can now initialize a <code class="docutils literal notranslate"><span class="pre">Corpus</span></code> with a stream of texts,
+spacy or textacy Docs, and optional metadatas, analogous to <code class="docutils literal notranslate"><span class="pre">Doc</span></code>; accordingly,
+removed <code class="docutils literal notranslate"><span class="pre">.from_texts()</span></code> class method</p></li>
+<li><p>refactored, streamlined, <em>bug-fixed</em>, and made consistent the process of
+adding, getting, and removing documents from <code class="docutils literal notranslate"><span class="pre">Corpus</span></code></p>
+<ul>
+<li><p>getting/removing by index is now equivalent to the built-in <code class="docutils literal notranslate"><span class="pre">list</span></code> API:
+<code class="docutils literal notranslate"><span class="pre">Corpus[:5]</span></code> gets the first 5 <code class="docutils literal notranslate"><span class="pre">Doc</span></code>s, and <code class="docutils literal notranslate"><span class="pre">del</span> <span class="pre">Corpus[:5]</span></code> removes the
+first 5, automatically keeping track of corpus statistics for total
+# docs, sents, and tokens</p></li>
+<li><p>getting/removing by boolean function is now done via the <code class="docutils literal notranslate"><span class="pre">.get()</span></code> and <code class="docutils literal notranslate"><span class="pre">.remove()</span></code>
+methods, the latter of which now also correctly tracks corpus stats</p></li>
+<li><p>adding documents is split across the <code class="docutils literal notranslate"><span class="pre">.add_text()</span></code>, <code class="docutils literal notranslate"><span class="pre">.add_texts()</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">.add_doc()</span></code> methods for performance and clarity reasons</p></li>
+</ul>
+</li>
+<li><p>added <code class="docutils literal notranslate"><span class="pre">.word_freqs()</span></code> and <code class="docutils literal notranslate"><span class="pre">.word_doc_freqs()</span></code> methods for getting a mapping
+of word (int id or string) to global weight (absolute, relative, binary, or
+inverse frequency); akin to a vectorized representation (see: <code class="docutils literal notranslate"><span class="pre">textacy.vsm</span></code>)
+but in non-vectorized form, which can be useful</p></li>
+<li><p>removed <code class="docutils literal notranslate"><span class="pre">.as_doc_term_matrix()</span></code> method, which was just wrapping another function;
+so, instead of <code class="docutils literal notranslate"><span class="pre">corpus.as_doc_term_matrix((doc.as_terms_list()</span> <span class="pre">for</span> <span class="pre">doc</span> <span class="pre">in</span> <span class="pre">corpus))</span></code>,
+do <code class="docutils literal notranslate"><span class="pre">textacy.vsm.doc_term_matrix((doc.to_terms_list(as_strings=True)</span> <span class="pre">for</span> <span class="pre">doc</span> <span class="pre">in</span> <span class="pre">corpus))</span></code></p></li>
+</ul>
+</li>
+<li><p>Updated several <code class="docutils literal notranslate"><span class="pre">extract</span></code> functions</p>
+<ul>
+<li><p>almost all now accept either a <code class="docutils literal notranslate"><span class="pre">textacy.Doc</span></code> or <code class="docutils literal notranslate"><span class="pre">spacy.Doc</span></code> as input</p></li>
+<li><p>renamed and improved parameters for filtering for or against certain POS or NE
+types; for example, <code class="docutils literal notranslate"><span class="pre">good_pos_tags</span></code> is now <code class="docutils literal notranslate"><span class="pre">include_pos</span></code>, and will accept
+either a single POS tag as a string or a set of POS tags to filter for; same
+goes for <code class="docutils literal notranslate"><span class="pre">exclude_pos</span></code>, and analogously <code class="docutils literal notranslate"><span class="pre">include_types</span></code>, and <code class="docutils literal notranslate"><span class="pre">exclude_types</span></code></p></li>
+</ul>
+</li>
+<li><p>Updated corpora classes for consistency and added flexibility</p>
+<ul>
+<li><p>enforced a consistent API: <code class="docutils literal notranslate"><span class="pre">.texts()</span></code> for a stream of plain text documents
+and <code class="docutils literal notranslate"><span class="pre">.records()</span></code> for a stream of dicts containing both text and metadata</p></li>
+<li><p>added filtering options for <code class="docutils literal notranslate"><span class="pre">RedditReader</span></code>, e.g. by date or subreddit,
+consistent with other corpora (similar tweaks to <code class="docutils literal notranslate"><span class="pre">WikiReader</span></code> may come later,
+but it’s slightly more complicated…)</p></li>
+<li><p>added a nicer <code class="docutils literal notranslate"><span class="pre">repr</span></code> for <code class="docutils literal notranslate"><span class="pre">RedditReader</span></code> and <code class="docutils literal notranslate"><span class="pre">WikiReader</span></code> corpora, consistent
+with other corpora</p></li>
+</ul>
+</li>
+<li><p>Moved <code class="docutils literal notranslate"><span class="pre">vsm.py</span></code> and <code class="docutils literal notranslate"><span class="pre">network.py</span></code> into the top-level of <code class="docutils literal notranslate"><span class="pre">textacy</span></code> and thus
+removed the <code class="docutils literal notranslate"><span class="pre">representations</span></code> subpackage</p>
+<ul>
+<li><p>renamed <code class="docutils literal notranslate"><span class="pre">vsm.build_doc_term_matrix()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">vsm.doc_term_matrix()</span></code>, because
+the “build” part of it is obvious</p></li>
+</ul>
+</li>
+<li><p>Renamed <code class="docutils literal notranslate"><span class="pre">distance.py</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">similarity.py</span></code>; all returned values are now similarity
+metrics in the interval [0, 1], where higher values indicate higher similarity</p></li>
+<li><p>Renamed <code class="docutils literal notranslate"><span class="pre">regexes_etc.py</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">constants.py</span></code>, without additional changes</p></li>
+<li><p>Renamed <code class="docutils literal notranslate"><span class="pre">fileio.utils.split_content_and_metadata()</span></code> =&gt; <code class="docutils literal notranslate"><span class="pre">fileio.utils.split_record_fields()</span></code>,
+without further changes (except for tweaks to the docstring)</p></li>
+<li><p>Added functions to read and write delimited file formats: <code class="docutils literal notranslate"><span class="pre">fileio.read_csv()</span></code>
+and <code class="docutils literal notranslate"><span class="pre">fileio.write_csv()</span></code>, where the delimiter can be any valid one-char string;
+gzip/bzip/lzma compression is handled automatically when available</p></li>
+<li><p>Added better and more consistent docstrings and usage examples throughout
+the code base</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id60">
+<h2>0.2.8 (2016-08-03)<a class="headerlink" href="#id60" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id61">
+<h3>New:<a class="headerlink" href="#id61" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added two new corpora!</p>
+<ul>
+<li><p>the CapitolWords corpus: a collection of 11k speeches (~7M tokens) given by
+the main protagonists of the 2016 U.S. Presidential election that had
+previously served in the U.S. Congress — including Hillary Clinton, Bernie Sanders,
+Barack Obama, Ted Cruz, and John Kasich — from January 1996 through June 2016</p></li>
+<li><p>the SupremeCourt corpus: a collection of 8.4k court cases (~71M tokens)
+decided by the U.S. Supreme Court from 1946 through 2016, with metadata on
+subject matter categories, ideology, and voting patterns</p></li>
+<li><p><strong>DEPRECATED:</strong> the Bernie and Hillary corpus, which is a small subset of
+CapitolWords that can be easily recreated by filtering CapitolWords by
+<code class="docutils literal notranslate"><span class="pre">speaker_name={'Bernie</span> <span class="pre">Sanders',</span> <span class="pre">'Hillary</span> <span class="pre">Clinton'}</span></code></p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id62">
+<h3>Changed:<a class="headerlink" href="#id62" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Refactored and improved <code class="docutils literal notranslate"><span class="pre">fileio</span></code> subpackage</p>
+<ul>
+<li><p>moved shared (read/write) functions into separate <code class="docutils literal notranslate"><span class="pre">fileio.utils</span></code> module</p></li>
+<li><p>almost all read/write functions now use <code class="docutils literal notranslate"><span class="pre">fileio.utils.open_sesame()</span></code>,
+enabling seamless fileio for uncompressed or gzip, bz2, and lzma compressed
+files; relative/user-home-based paths; and missing intermediate directories.
+NOTE: certain file mode / compression pairs simply don’t work (this is Python’s
+fault), so users may run into exceptions; in Python 3, you’ll almost always
+want to use text mode (‘wt’ or ‘rt’), but in Python 2, users can’t read or
+write compressed files in text mode, only binary mode (‘wb’ or ‘rb’)</p></li>
+<li><p>added options for writing json files (matching stdlib’s <code class="docutils literal notranslate"><span class="pre">json.dump()</span></code>) that
+can help save space</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fileio.utils.get_filenames()</span></code> now matches for/against a regex pattern rather
+than just a contained substring; using the old params will now raise a
+deprecation warning</p></li>
+<li><p><strong>BREAKING:</strong> <code class="docutils literal notranslate"><span class="pre">fileio.utils.split_content_and_metadata()</span></code> now has <code class="docutils literal notranslate"><span class="pre">itemwise=False</span></code>
+by default, rather than <code class="docutils literal notranslate"><span class="pre">itemwise=True</span></code>, which means that splitting
+multi-document streams of content and metadata into parallel iterators is
+now the default action</p></li>
+<li><p>added <code class="docutils literal notranslate"><span class="pre">compression</span></code> param to <code class="docutils literal notranslate"><span class="pre">TextCorpus.save()</span></code> and <code class="docutils literal notranslate"><span class="pre">.load()</span></code> to optionally
+write metadata json file in compressed form</p></li>
+<li><p>moved <code class="docutils literal notranslate"><span class="pre">fileio.write_conll()</span></code> functionality to <code class="docutils literal notranslate"><span class="pre">export.doc_to_conll()</span></code>, which
+converts a spaCy doc into a ConLL-U formatted string; writing that string to
+disk would require a separate call to <code class="docutils literal notranslate"><span class="pre">fileio.write_file()</span></code></p></li>
+</ul>
+</li>
+<li><p>Cleaned up deprecated/bad Py2/3 <code class="docutils literal notranslate"><span class="pre">compat</span></code> imports, and added better functionality
+for Py2/3 strings</p>
+<ul>
+<li><p>now <code class="docutils literal notranslate"><span class="pre">compat.unicode_type</span></code> used for text data, <code class="docutils literal notranslate"><span class="pre">compat.bytes_type</span></code> for binary
+data, and <code class="docutils literal notranslate"><span class="pre">compat.string_types</span></code> for when either will do</p></li>
+<li><p>also added <code class="docutils literal notranslate"><span class="pre">compat.unicode_to_bytes()</span></code> and <code class="docutils literal notranslate"><span class="pre">compat.bytes_to_unicode()</span></code> functions,
+for converting between string types</p></li>
+</ul>
+</li>
+</ul>
+</div>
+<div class="section" id="id63">
+<h3>Fixed:<a class="headerlink" href="#id63" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Fixed document(s) removal from <code class="docutils literal notranslate"><span class="pre">TextCorpus</span></code> objects, including correct decrementing
+of <code class="docutils literal notranslate"><span class="pre">.n_docs</span></code>, <code class="docutils literal notranslate"><span class="pre">.n_sents</span></code>, and <code class="docutils literal notranslate"><span class="pre">.n_tokens</span></code> attributes (&#64;michelleful #29)</p></li>
+<li><p>Fixed OSError being incorrectly raised in <code class="docutils literal notranslate"><span class="pre">fileio.open_sesame()</span></code> on missing files</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lang</span></code> parameter in <code class="docutils literal notranslate"><span class="pre">TextDoc</span></code> and <code class="docutils literal notranslate"><span class="pre">TextCorpus</span></code> can now be unicode <em>or</em> bytes,
+which was bug-like</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id64">
+<h2>0.2.5 (2016-07-14)<a class="headerlink" href="#id64" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id65">
+<h3>Fixed:<a class="headerlink" href="#id65" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added (missing) <code class="docutils literal notranslate"><span class="pre">pyemd</span></code> and <code class="docutils literal notranslate"><span class="pre">python-levenshtein</span></code> dependencies to requirements
+and setup files</p></li>
+<li><p>Fixed bug in <code class="docutils literal notranslate"><span class="pre">data.load_depechemood()</span></code> arising from the Py2 <code class="docutils literal notranslate"><span class="pre">csv</span></code> module’s
+inability to take unicode as input (thanks to &#64;robclewley, issue #25)</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id66">
+<h2>0.2.4 (2016-07-14)<a class="headerlink" href="#id66" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id67">
+<h3>New and Changed:<a class="headerlink" href="#id67" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>New features for <code class="docutils literal notranslate"><span class="pre">TextDoc</span></code> and <code class="docutils literal notranslate"><span class="pre">TextCorpus</span></code> classes</p>
+<ul>
+<li><p>added <code class="docutils literal notranslate"><span class="pre">.save()</span></code> methods and <code class="docutils literal notranslate"><span class="pre">.load()</span></code> classmethods, which allows for fast
+serialization of parsed documents/corpora and associated metadata to/from
+disk — with an important caveat: if <code class="docutils literal notranslate"><span class="pre">spacy.Vocab</span></code> object used to serialize
+and deserialize is not the same, there will be problems, making this format
+useful as short-term but not long-term storage</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TextCorpus</span></code> may now be instantiated with an already-loaded spaCy pipeline,
+which may or may not have all models loaded; it can still be instantiated
+using a language code string (‘en’, ‘de’) to load a spaCy pipeline that
+includes all models by default</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TextDoc</span></code> methods wrapping <code class="docutils literal notranslate"><span class="pre">extract</span></code> and <code class="docutils literal notranslate"><span class="pre">keyterms</span></code> functions now have full
+documentation rather than forwarding users to the wrapped functions themselves;
+more irritating on the dev side, but much less irritating on the user side :)</p></li>
+</ul>
+</li>
+<li><p>Added a <code class="docutils literal notranslate"><span class="pre">distance.py</span></code> module containing several document, set, and string distance metrics</p>
+<ul>
+<li><p>word movers: document distance as distance between individual words represented
+by word2vec vectors, normalized</p></li>
+<li><p>“word2vec”: token, span, or document distance as cosine distance between
+(average) word2vec representations, normalized</p></li>
+<li><p>jaccard: string or set(string) distance as intersection / overlap, normalized,
+with optional fuzzy-matching across set members</p></li>
+<li><p>hamming: distance between two strings as number of substititions, optionally
+normalized</p></li>
+<li><p>levenshtein: distance between two strings as number of substitions, deletions,
+and insertions, optionally normalized (and removed a redundant function from
+the still-orphaned <code class="docutils literal notranslate"><span class="pre">math_utils.py</span></code> module)</p></li>
+<li><p>jaro-winkler: distance between two strings with variable prefix weighting, normalized</p></li>
+</ul>
+</li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">most_discriminating_terms()</span></code> function to <code class="docutils literal notranslate"><span class="pre">keyterms</span></code> module to take a collection of documents split into two exclusive groups and compute the most discriminating terms for group1-and-not-group2 as well as group2-and-not-group1</p></li>
+</ul>
+</div>
+<div class="section" id="id68">
+<h3>Fixed:<a class="headerlink" href="#id68" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>fixed variable name error in docs usage example (thanks to &#64;licyeus, PR #23)</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id69">
+<h2>0.2.3 (2016-06-20)<a class="headerlink" href="#id69" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id70">
+<h3>New and Changed:<a class="headerlink" href="#id70" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">corpora.RedditReader()</span></code> class for streaming Reddit comments from disk,
+with <code class="docutils literal notranslate"><span class="pre">.texts()</span></code> method for a stream of plaintext comments and <code class="docutils literal notranslate"><span class="pre">.comments()</span></code>
+method for a stream of structured comments as dicts, with basic filtering by
+text length and limiting the number of comments returned</p></li>
+<li><p>Refactored functions for streaming Wikipedia articles from disk into a
+<code class="docutils literal notranslate"><span class="pre">corpora.WikiReader()</span></code> class, with <code class="docutils literal notranslate"><span class="pre">.texts()</span></code> method for a stream of plaintext
+articles and <code class="docutils literal notranslate"><span class="pre">.pages()</span></code> method for a stream of structured pages as dicts,
+with basic filtering by text length and limiting the number of pages returned</p></li>
+<li><p>Updated README and docs with a more comprehensive — and correct — usage example;
+also added tests to ensure it doesn’t get stale</p></li>
+<li><p>Updated requirements to latest version of spaCy, as well as added matplotlib
+for <code class="docutils literal notranslate"><span class="pre">viz</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="id71">
+<h3>Fixed:<a class="headerlink" href="#id71" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">textacy.preprocess.preprocess_text()</span></code> is now, once again, imported at the top
+level, so easily reachable via <code class="docutils literal notranslate"><span class="pre">textacy.preprocess_text()</span></code> (&#64;bretdabaker #14)</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">viz</span></code> subpackage now included in the docs’ API reference</p></li>
+<li><p>missing dependencies added into <code class="docutils literal notranslate"><span class="pre">setup.py</span></code> so pip install handles everything for folks</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id72">
+<h2>0.2.2 (2016-05-05)<a class="headerlink" href="#id72" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id73">
+<h3>New and Changed:<a class="headerlink" href="#id73" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added a <code class="docutils literal notranslate"><span class="pre">viz</span></code> subpackage, with two types of plots (so far):</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">viz.draw_termite_plot()</span></code>, typically used to evaluate and interpret topic models;
+conveniently accessible from the <code class="docutils literal notranslate"><span class="pre">tm.TopicModel</span></code> class</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">viz.draw_semantic_network()</span></code> for visualizing networks such as those output
+by <code class="docutils literal notranslate"><span class="pre">representations.network</span></code></p></li>
+</ul>
+</li>
+<li><p>Added a “Bernie &amp; Hillary” corpus with 3000 congressional speeches made by
+Bernie Sanders and Hillary Clinton since 1996</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">corpora.fetch_bernie_and_hillary()</span></code> function automatically downloads to
+and loads from disk this corpus</p></li>
+</ul>
+</li>
+<li><p>Modified <code class="docutils literal notranslate"><span class="pre">data.load_depechemood</span></code> function, now downloads data from GitHub
+source if not found on disk</p></li>
+<li><p>Removed <code class="docutils literal notranslate"><span class="pre">resources/</span></code> directory from GitHub, hence all the downloadin’</p></li>
+<li><p>Updated to spaCy v0.100.7</p>
+<ul>
+<li><p>German is now supported! although some functionality is English-only</p></li>
+<li><p>added <code class="docutils literal notranslate"><span class="pre">textacy.load_spacy()</span></code> function for loading spaCy packages, taking
+advantage of the new <code class="docutils literal notranslate"><span class="pre">spacy.load()</span></code> API; added a DeprecationWarning for
+<code class="docutils literal notranslate"><span class="pre">textacy.data.load_spacy_pipeline()</span></code></p></li>
+<li><p>proper nouns’ and pronouns’ <code class="docutils literal notranslate"><span class="pre">.pos_</span></code> attributes are now correctly assigned
+‘PROPN’ and ‘PRON’; hence, modified <code class="docutils literal notranslate"><span class="pre">regexes_etc.POS_REGEX_PATTERNS['en']</span></code>
+to include ‘PROPN’</p></li>
+<li><p>modified <code class="docutils literal notranslate"><span class="pre">spacy_utils.preserve_case()</span></code> to check for language-agnostic
+‘PROPN’ POS rather than English-specific ‘NNP’ and ‘NNPS’ tags</p></li>
+</ul>
+</li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">text_utils.clean_terms()</span></code> function for cleaning up a sequence of single-
+or multi-word strings by stripping leading/trailing junk chars, handling
+dangling parens and odd hyphenation, etc.</p></li>
+</ul>
+</div>
+<div class="section" id="id74">
+<h3>Fixed:<a class="headerlink" href="#id74" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">textstats.readability_stats()</span></code> now correctly gets the number of words in
+a doc from its generator function (&#64;gryBox #8)</p></li>
+<li><p>removed NLTK dependency, which wasn’t actually required</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">text_utils.detect_language()</span></code> now warns via <code class="docutils literal notranslate"><span class="pre">logging</span></code> rather than a
+<code class="docutils literal notranslate"><span class="pre">print()</span></code> statement</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fileio.write_conll()</span></code> documentation now correctly indicates that the filename
+param is not optional</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id75">
+<h2>0.2.0 (2016-04-11)<a class="headerlink" href="#id75" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id76">
+<h3>New and Changed:<a class="headerlink" href="#id76" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">representations</span></code> subpackage; includes modules for network and vector
+space model (VSM) document and corpus representations</p>
+<ul>
+<li><p>Document-term matrix creation now takes documents represented as a list of
+terms (rather than as spaCy Docs); splits the tokenization step from vectorization
+for added flexibility</p></li>
+<li><p>Some of this functionality was refactored from existing parts of the package</p></li>
+</ul>
+</li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">tm</span></code> (topic modeling) subpackage, with a main <code class="docutils literal notranslate"><span class="pre">TopicModel</span></code> class for
+training, applying, persisting, and interpreting NMF, LDA, and LSA topic models
+through a single interface</p></li>
+<li><p>Various improvements to <code class="docutils literal notranslate"><span class="pre">TextDoc</span></code> and <code class="docutils literal notranslate"><span class="pre">TextCorpus</span></code> classes</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">TextDoc</span></code> can now be initialized from a spaCy Doc</p></li>
+<li><p>Removed caching from <code class="docutils literal notranslate"><span class="pre">TextDoc</span></code>, because it was a pain and weird and probably
+not all that useful</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extract</span></code>-based methods are now generators, like the functions they wrap</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">.as_semantic_network()</span></code> and <code class="docutils literal notranslate"><span class="pre">.as_terms_list()</span></code> methods to <code class="docutils literal notranslate"><span class="pre">TextDoc</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">TextCorpus.from_texts()</span></code> now takes advantage of multithreading via spaCy,
+if available, and document metadata can be passed in as a paired iterable
+of dicts</p></li>
+</ul>
+</li>
+<li><p>Added read/write functions for sparse scipy matrices</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">fileio.read.split_content_and_metadata()</span></code> convenience function for
+splitting (text) content from associated metadata when reading data from disk
+into a <code class="docutils literal notranslate"><span class="pre">TextDoc</span></code> or <code class="docutils literal notranslate"><span class="pre">TextCorpus</span></code></p></li>
+<li><p>Renamed <code class="docutils literal notranslate"><span class="pre">fileio.read.get_filenames_in_dir()</span></code> to <code class="docutils literal notranslate"><span class="pre">fileio.read.get_filenames()</span></code>
+and added functionality for matching/ignoring files by their names, file extensions,
+and ignoring invisible files</p></li>
+<li><p>Rewrote <code class="docutils literal notranslate"><span class="pre">export.docs_to_gensim()</span></code>, now significantly faster</p></li>
+<li><p>Imports in <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> files for main and subpackages now explicit</p></li>
+</ul>
+</div>
+<div class="section" id="id77">
+<h3>Fixed:<a class="headerlink" href="#id77" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">textstats.readability_stats()</span></code> no longer filters out stop words (&#64;henningko #7)</p></li>
+<li><p>Wikipedia article processing now recursively removes nested markup</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">extract.ngrams()</span></code> now filters out ngrams with any space-only tokens</p></li>
+<li><p>functions with <code class="docutils literal notranslate"><span class="pre">include_nps</span></code> kwarg changed to <code class="docutils literal notranslate"><span class="pre">include_ncs</span></code>, to match the
+renaming of the associated function from <code class="docutils literal notranslate"><span class="pre">extract.noun_phrases()</span></code> to
+<code class="docutils literal notranslate"><span class="pre">extract.noun_chunks()</span></code></p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id78">
+<h2>0.1.4 (2016-02-26)<a class="headerlink" href="#id78" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id79">
+<h3>New:<a class="headerlink" href="#id79" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">corpora</span></code> subpackage with <code class="docutils literal notranslate"><span class="pre">wikipedia.py</span></code> module; functions for
+streaming pages from a Wikipedia db dump as plain text or structured data</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">fileio</span></code> subpackage with functions for reading/writing content from/to
+disk in common formats</p>
+<ul>
+<li><p>JSON formats, both standard and streaming-friendly</p></li>
+<li><p>text, optionally compressed</p></li>
+<li><p>spacy documents to/from binary</p></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="id80">
+<h2>0.1.3 (2016-02-22)<a class="headerlink" href="#id80" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id81">
+<h3>New:<a class="headerlink" href="#id81" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">export.py</span></code> module for exporting textacy/spacy objects into “third-party”
+formats; so far, just gensim and conll-u</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">compat.py</span></code> module for Py2/3 compatibility hacks</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">TextDoc.merge()</span></code> and <code class="docutils literal notranslate"><span class="pre">spacy_utils.merge_spans()</span></code> for merging spans
+into single tokens within a <code class="docutils literal notranslate"><span class="pre">spacy.Doc</span></code>, uses Spacy’s recent implementation</p></li>
+</ul>
+</div>
+<div class="section" id="id82">
+<h3>Changed:<a class="headerlink" href="#id82" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Renamed <code class="docutils literal notranslate"><span class="pre">extract.noun_phrases()</span></code> to <code class="docutils literal notranslate"><span class="pre">extract.noun_chunks()</span></code> to match Spacy’s API</p></li>
+<li><p>Changed extract functions to generators, rather than returning lists</p></li>
+</ul>
+</div>
+<div class="section" id="id83">
+<h3>Fixed:<a class="headerlink" href="#id83" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Whitespace tokens now always filtered out of <code class="docutils literal notranslate"><span class="pre">extract.words()</span></code> lists</p></li>
+<li><p>Some Py2/3 str/unicode issues fixed</p></li>
+<li><p>Broken tests in <code class="docutils literal notranslate"><span class="pre">test_extract.py</span></code> no longer broken</p></li>
+</ul>
+</div>
+</div>
+</div>
+
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+        <li>
+          &larr;
+          <a href="api_reference/misc.html" title="Previous document">Miscellany</a>
+        </li>
+        <li>
+          <a href="license.html" title="Next document">License</a>
+          &rarr;
+        </li>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="index.html">
+    <img class="logo" src="_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Changes</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#id1">0.9.1 (2019-09-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">0.9.0 (2019-09-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">0.8.0 (2019-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id7">0.7.1 (2019-06-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">0.7.0 (2019-05-13)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id14">0.6.3 (2019-03-23)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id19">0.6.2 (2018-07-19)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id22">0.6.1 (2018-04-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id27">0.6.0 (2018-02-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id30">0.5.0 (2017-12-04)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id33">0.4.2 (2017-11-28)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id38">0.4.1 (2017-07-27)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id42">0.4.0 (2017-06-21)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id46">0.3.4 (2017-04-17)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id50">0.3.3 (2017-02-10)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id53">0.3.2 (2016-11-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id55">0.3.1 (2016-10-19)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id58">0.3.0 (2016-08-23)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id60">0.2.8 (2016-08-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id64">0.2.5 (2016-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id66">0.2.4 (2016-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id69">0.2.3 (2016-06-20)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id72">0.2.2 (2016-05-05)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id75">0.2.0 (2016-04-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id78">0.1.4 (2016-02-26)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id80">0.1.3 (2016-02-22)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="api_reference/misc.html" title="previous chapter">Miscellany</a></li>
+      <li>Next: <a href="license.html" title="next chapter">License</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="_sources/changes.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

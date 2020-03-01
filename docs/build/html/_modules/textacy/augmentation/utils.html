@@ -1,0 +1,193 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.augmentation.utils &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.augmentation.utils</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">functools</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">string</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">List</span><span class="p">,</span> <span class="n">NamedTuple</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">cachetools</span> <span class="k">import</span> <span class="n">cached</span>
+<span class="kn">from</span> <span class="nn">cachetools.keys</span> <span class="k">import</span> <span class="n">hashkey</span>
+<span class="kn">from</span> <span class="nn">spacy.tokens</span> <span class="k">import</span> <span class="n">Doc</span><span class="p">,</span> <span class="n">Span</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">cache</span><span class="p">,</span> <span class="n">datasets</span><span class="p">,</span> <span class="n">resources</span>
+
+
+<span class="n">concept_net</span> <span class="o">=</span> <span class="n">resources</span><span class="o">.</span><span class="n">ConceptNet</span><span class="p">()</span>
+<span class="n">udhr</span> <span class="o">=</span> <span class="n">datasets</span><span class="o">.</span><span class="n">UDHR</span><span class="p">()</span>
+
+<span class="n">AugTok</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">namedtuple</span><span class="p">(</span><span class="s2">&quot;AugTok&quot;</span><span class="p">,</span> <span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;ws&quot;</span><span class="p">,</span> <span class="s2">&quot;pos&quot;</span><span class="p">,</span> <span class="s2">&quot;is_word&quot;</span><span class="p">,</span> <span class="s2">&quot;syns&quot;</span><span class="p">])</span>
+<span class="sd">&quot;&quot;&quot;tuple: Minimal token data required for data augmentation transforms.&quot;&quot;&quot;</span>
+
+
+<div class="viewcode-block" id="to_aug_toks"><a class="viewcode-back" href="../../../api_reference/augmentation.html#textacy.augmentation.utils.to_aug_toks">[docs]</a><span class="k">def</span> <span class="nf">to_aug_toks</span><span class="p">(</span><span class="n">spacy_obj</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Doc</span><span class="p">,</span> <span class="n">Span</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">AugTok</span><span class="p">]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform a spaCy ``Doc`` or ``Span`` into a list of ``AugTok`` objects,</span>
+<span class="sd">    suitable for use in data augmentation transform functions.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">spacy_obj</span><span class="p">,</span> <span class="p">(</span><span class="n">Doc</span><span class="p">,</span> <span class="n">Span</span><span class="p">)):</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;`spacy_obj` must be of type </span><span class="si">{}</span><span class="s2">, not </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">((</span><span class="n">Doc</span><span class="p">,</span> <span class="n">Span</span><span class="p">),</span> <span class="nb">type</span><span class="p">(</span><span class="n">spacy_obj</span><span class="p">))</span>
+        <span class="p">)</span>
+    <span class="n">lang</span> <span class="o">=</span> <span class="n">spacy_obj</span><span class="o">.</span><span class="n">vocab</span><span class="o">.</span><span class="n">lang</span>
+    <span class="n">toks_syns</span><span class="p">:</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">List</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span>
+    <span class="k">if</span> <span class="n">concept_net</span><span class="o">.</span><span class="n">filepath</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">lang</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">concept_net</span><span class="o">.</span><span class="n">synonyms</span><span class="p">:</span>
+        <span class="n">toks_syns</span> <span class="o">=</span> <span class="p">([]</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">spacy_obj</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">toks_syns</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">concept_net</span><span class="o">.</span><span class="n">get_synonyms</span><span class="p">(</span><span class="n">tok</span><span class="o">.</span><span class="n">text</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="n">lang</span><span class="p">,</span> <span class="n">sense</span><span class="o">=</span><span class="n">tok</span><span class="o">.</span><span class="n">pos_</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="p">(</span><span class="n">tok</span><span class="o">.</span><span class="n">is_punct</span> <span class="ow">or</span> <span class="n">tok</span><span class="o">.</span><span class="n">is_space</span><span class="p">)</span> <span class="k">else</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">spacy_obj</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="p">[</span>
+        <span class="n">AugTok</span><span class="p">(</span>
+            <span class="n">text</span><span class="o">=</span><span class="n">tok</span><span class="o">.</span><span class="n">text</span><span class="p">,</span>
+            <span class="n">ws</span><span class="o">=</span><span class="n">tok</span><span class="o">.</span><span class="n">whitespace_</span><span class="p">,</span>
+            <span class="n">pos</span><span class="o">=</span><span class="n">tok</span><span class="o">.</span><span class="n">pos_</span><span class="p">,</span>
+            <span class="n">is_word</span><span class="o">=</span><span class="p">(</span><span class="ow">not</span> <span class="p">(</span><span class="n">tok</span><span class="o">.</span><span class="n">is_punct</span> <span class="ow">or</span> <span class="n">tok</span><span class="o">.</span><span class="n">is_space</span><span class="p">)),</span>
+            <span class="n">syns</span><span class="o">=</span><span class="n">syns</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">tok</span><span class="p">,</span> <span class="n">syns</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">spacy_obj</span><span class="p">,</span> <span class="n">toks_syns</span><span class="p">)</span>
+    <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="get_char_weights"><a class="viewcode-back" href="../../../api_reference/augmentation.html#textacy.augmentation.utils.get_char_weights">[docs]</a><span class="nd">@cached</span><span class="p">(</span><span class="n">cache</span><span class="o">.</span><span class="n">LRU_CACHE</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="n">functools</span><span class="o">.</span><span class="n">partial</span><span class="p">(</span><span class="n">hashkey</span><span class="p">,</span> <span class="s2">&quot;char_weights&quot;</span><span class="p">))</span>
+<span class="k">def</span> <span class="nf">get_char_weights</span><span class="p">(</span><span class="n">lang</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">List</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Get lang-specific character weights for use in certain data augmentation transforms,</span>
+<span class="sd">    based on texts in :class:`textacy.datasets.UDHR`.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        lang: Standard two-letter language code.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Collection of (character, weight) pairs, based on the distribution of characters</span>
+<span class="sd">        found in the source text.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">char_weights</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="n">collections</span><span class="o">.</span><span class="n">Counter</span><span class="p">(</span>
+                <span class="n">char</span>
+                <span class="k">for</span> <span class="n">text</span> <span class="ow">in</span> <span class="n">udhr</span><span class="o">.</span><span class="n">texts</span><span class="p">(</span><span class="n">lang</span><span class="o">=</span><span class="n">lang</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">text</span>
+                <span class="k">if</span> <span class="n">char</span><span class="o">.</span><span class="n">isalnum</span><span class="p">()</span>
+            <span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="n">char_weights</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span>
+            <span class="nb">zip</span><span class="p">(</span><span class="n">string</span><span class="o">.</span><span class="n">ascii_lowercase</span> <span class="o">+</span> <span class="n">string</span><span class="o">.</span><span class="n">digits</span><span class="p">,</span> <span class="n">itertools</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span>
+        <span class="p">)</span>
+    <span class="k">return</span> <span class="n">char_weights</span></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

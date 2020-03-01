@@ -40,5 +40,4 @@ script:
       cd docs;
       make clean html;
       cd ..;
-      doctr deploy . --built-docs docs/build/html/;
     fi

@@ -1,0 +1,337 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.lang_utils &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.lang_utils</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Language identification</span>
+<span class="sd">-----------------------</span>
+
+<span class="sd">Pipeline for identifying the language of a text, using a model inspired by</span>
+<span class="sd">Google&#39;s Compact Language Detector v3 (https://github.com/google/cld3) and</span>
+<span class="sd">implemented with ``scikit-learn&gt;=0.20``.</span>
+
+<span class="sd">Model</span>
+<span class="sd">^^^^^</span>
+
+<span class="sd">Character unigrams, bigrams, and trigrams are extracted from input text, and</span>
+<span class="sd">their frequencies of occurence within the text are counted. The full set of ngrams</span>
+<span class="sd">are then hashed into a 4096-dimensional feature vector with values given by</span>
+<span class="sd">the L2 norm of the counts. These features are passed into a Multi-layer Perceptron</span>
+<span class="sd">with a single hidden layer of 512 rectified linear units and a softmax output layer</span>
+<span class="sd">giving probabilities for ~140 different languages as ISO 639-1 language codes.</span>
+
+<span class="sd">Technically, the model was implemented as a :class:`sklearn.pipeline.Pipeline`</span>
+<span class="sd">with two steps: a :class:`sklearn.feature_extraction.text.HashingVectorizer`</span>
+<span class="sd">for vectorizing input texts and a :class:`sklearn.neural_network.MLPClassifier`</span>
+<span class="sd">for multi-class language classification.</span>
+
+<span class="sd">Dataset</span>
+<span class="sd">^^^^^^^</span>
+
+<span class="sd">The pipeline was trained on a randomized, stratified subset of ~750k texts</span>
+<span class="sd">drawn from several sources:</span>
+
+<span class="sd">- **Tatoeba:** A crowd-sourced collection of sentences and their translations into</span>
+<span class="sd">  many languages. Style is relatively informal; subject matter is a variety of</span>
+<span class="sd">  everyday things and goings-on.</span>
+<span class="sd">  Source: https://tatoeba.org/eng/downloads.</span>
+<span class="sd">- **Leipzig Corpora:** A collection of corpora for many languages pulling from</span>
+<span class="sd">  comparable sources -- specifically, 10k Wikipedia articles from official database dumps</span>
+<span class="sd">  and 10k news articles from either RSS feeds or web scrapes, when available.</span>
+<span class="sd">  Style is relatively formal; subject matter is a variety of notable things and goings-on.</span>
+<span class="sd">  Source: http://wortschatz.uni-leipzig.de/en/download</span>
+<span class="sd">- **UDHR:** The UN&#39;s Universal Declaration of Human Rights document, translated into</span>
+<span class="sd">  hundreds of languages and split into paragraphs. Style is formal; subject matter is</span>
+<span class="sd">  fundamental human rights to be universally protected.</span>
+<span class="sd">  Source: https://unicode.org/udhr/index.html</span>
+<span class="sd">- **Twitter:** A collection of tweets in each of ~70 languages, posted in July 2014,</span>
+<span class="sd">  with languages assigned through a combination of models and human annotators.</span>
+<span class="sd">  Style is informal; subject matter is whatever Twitter was going on about back then.</span>
+<span class="sd">  Source: https://blog.twitter.com/engineering/en_us/a/2015/evaluating-language-identification-performance.html</span>
+<span class="sd">- **DSLCC**: Two collections of short excerpts of journalistic texts in a handful</span>
+<span class="sd">  of language groups that are highly similar to each other. Style is relatively formal;</span>
+<span class="sd">  subject matter is current events.</span>
+<span class="sd">  Source: http://ttg.uni-saarland.de/resources/DSLCC/</span>
+
+<span class="sd">Performance</span>
+<span class="sd">^^^^^^^^^^^</span>
+
+<span class="sd">The trained model achieved F1 = 0.96 when (macro and micro) averaged over all languages.</span>
+<span class="sd">A few languages have worse performance; for example, the two Norwegians (&quot;nb&quot; and &quot;no&quot;),</span>
+<span class="sd">Bosnian (&quot;bs&quot;) and Serbian (&quot;sr&quot;), and Bashkir (&quot;ba&quot;) and Tatar (&quot;tt&quot;) are</span>
+<span class="sd">often confused with each other. See the textacy-data releases for more details:</span>
+<span class="sd">https://github.com/bdewilde/textacy-data/releases/tag/lang_identifier_v1.1_sklearn_v21</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">io</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">operator</span>
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">urllib.parse</span>
+
+<span class="kn">import</span> <span class="nn">joblib</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">cache</span><span class="p">,</span> <span class="n">constants</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">io</span> <span class="k">as</span> <span class="n">tio</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="LangIdentifier"><a class="viewcode-back" href="../../api_reference/utils.html#textacy.lang_utils.LangIdentifier">[docs]</a><span class="k">class</span> <span class="nc">LangIdentifier</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Args:</span>
+<span class="sd">        data_dir (str)</span>
+<span class="sd">        max_text_len (int)</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        pipeline (:class:`sklearn.pipeline.Pipeline`)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_dir</span><span class="o">=</span><span class="n">constants</span><span class="o">.</span><span class="n">DEFAULT_DATA_DIR</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="s2">&quot;lang_identifier&quot;</span><span class="p">),</span>
+        <span class="n">max_text_len</span><span class="o">=</span><span class="mi">1000</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_version</span> <span class="o">=</span> <span class="mf">1.1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_model_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_model_id</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">to_path</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filename</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_id</span> <span class="o">+</span> <span class="s2">&quot;.pkl.gz&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_text_len</span> <span class="o">=</span> <span class="n">max_text_len</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="kc">None</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_load_pipeline</span><span class="p">()</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span>
+
+    <span class="k">def</span> <span class="nf">_load_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">filepath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">filepath</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">download</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">filepath</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s2">&quot;rb&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+            <span class="n">pipeline</span> <span class="o">=</span> <span class="n">joblib</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">f</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">pipeline</span>
+
+    <span class="k">def</span> <span class="nf">_get_model_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">fstub</span> <span class="o">=</span> <span class="s2">&quot;lang-identifier-v</span><span class="si">{}</span><span class="s2">-sklearn-v</span><span class="si">{}</span><span class="s2">&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">pkg_resources</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">fstub</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_version</span><span class="p">,</span>
+                <span class="n">pkg_resources</span><span class="o">.</span><span class="n">get_distribution</span><span class="p">(</span><span class="s2">&quot;scikit-learn&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">version</span><span class="p">[:</span><span class="mi">4</span><span class="p">]</span>
+            <span class="p">)</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="kn">import</span> <span class="nn">sklearn</span>
+            <span class="n">filename</span> <span class="o">=</span> <span class="n">fstub</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_version</span><span class="p">,</span> <span class="n">sklearn</span><span class="o">.</span><span class="n">__version__</span><span class="p">[:</span><span class="mi">4</span><span class="p">])</span>
+        <span class="k">return</span> <span class="n">filename</span>
+
+<div class="viewcode-block" id="LangIdentifier.download"><a class="viewcode-back" href="../../api_reference/utils.html#textacy.lang_utils.LangIdentifier.download">[docs]</a>    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">force</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download the pipeline data as a Python version-specific compressed pickle file</span>
+<span class="sd">        and save it to disk under the :attr:`LangIdentifier.data_dir` directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            force (bool): If True, download the dataset, even if it already</span>
+<span class="sd">                exists on disk under ``data_dir``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">release_tag</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_model_id</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;_&quot;</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span>
+            <span class="s2">&quot;https://github.com/bdewilde/textacy-data/releases/download/&quot;</span><span class="p">,</span>
+            <span class="n">release_tag</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">)</span>
+        <span class="n">tio</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">filename</span><span class="p">,</span>
+            <span class="n">dirpath</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+<div class="viewcode-block" id="LangIdentifier.identify_lang"><a class="viewcode-back" href="../../api_reference/utils.html#textacy.lang_utils.LangIdentifier.identify_lang">[docs]</a>    <span class="k">def</span> <span class="nf">identify_lang</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Identify the most probable language identified in ``text``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text (str)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            str: 2-letter language code of the most probable language.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">text_</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">to_collection</span><span class="p">(</span><span class="n">text</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">max_text_len</span><span class="p">],</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid</span><span class="p">(</span><span class="n">text_</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">lang</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">text_</span><span class="p">)</span><span class="o">.</span><span class="n">item</span><span class="p">()</span>
+            <span class="k">return</span> <span class="n">lang</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;un&quot;</span></div>
+
+<div class="viewcode-block" id="LangIdentifier.identify_topn_langs"><a class="viewcode-back" href="../../api_reference/utils.html#textacy.lang_utils.LangIdentifier.identify_topn_langs">[docs]</a>    <span class="k">def</span> <span class="nf">identify_topn_langs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">,</span> <span class="n">topn</span><span class="o">=</span><span class="mi">3</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Identify the ``topn`` most probable languages identified in ``text``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            text (str)</span>
+<span class="sd">            topn (int)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List[Tuple[str, float]]: 2-letter language code and its probability</span>
+<span class="sd">            for the ``topn`` most probable languages.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">text_</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">to_collection</span><span class="p">(</span><span class="n">text</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">max_text_len</span><span class="p">],</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_valid</span><span class="p">(</span><span class="n">text_</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+            <span class="n">lang_probs</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span>
+                <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">classes_</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">predict_proba</span><span class="p">(</span><span class="n">text_</span><span class="p">)</span><span class="o">.</span><span class="n">flat</span><span class="p">),</span>
+                <span class="n">key</span><span class="o">=</span><span class="n">operator</span><span class="o">.</span><span class="n">itemgetter</span><span class="p">(</span><span class="mi">1</span><span class="p">),</span>
+                <span class="n">reverse</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)[:</span><span class="n">topn</span><span class="p">]</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="n">lang</span><span class="o">.</span><span class="n">item</span><span class="p">(),</span> <span class="n">prob</span><span class="o">.</span><span class="n">item</span><span class="p">())</span> <span class="k">for</span> <span class="n">lang</span><span class="p">,</span> <span class="n">prob</span> <span class="ow">in</span> <span class="n">lang_probs</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[(</span><span class="s2">&quot;un&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)]</span></div>
+
+    <span class="k">def</span> <span class="nf">_is_valid</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">text</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">any</span><span class="p">(</span><span class="n">char</span><span class="o">.</span><span class="n">isalpha</span><span class="p">()</span> <span class="k">for</span> <span class="n">char</span> <span class="ow">in</span> <span class="n">text</span><span class="p">)</span>
+
+<div class="viewcode-block" id="LangIdentifier.init_pipeline"><a class="viewcode-back" href="../../api_reference/utils.html#textacy.lang_utils.LangIdentifier.init_pipeline">[docs]</a>    <span class="k">def</span> <span class="nf">init_pipeline</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Initialize a *new* language identification pipeline, overwriting any</span>
+<span class="sd">        pre-trained pipeline loaded from disk under :attr:`LangIdentifier.data_dir`.</span>
+<span class="sd">        Must be trained on (text, lang) examples before use.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span> <span class="nn">sklearn.feature_extraction</span>
+        <span class="kn">import</span> <span class="nn">sklearn.neural_network</span>
+        <span class="kn">import</span> <span class="nn">sklearn.pipeline</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pipeline</span> <span class="o">=</span> <span class="n">sklearn</span><span class="o">.</span><span class="n">pipeline</span><span class="o">.</span><span class="n">Pipeline</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;vectorizer&quot;</span><span class="p">,</span>
+                    <span class="n">sklearn</span><span class="o">.</span><span class="n">feature_extraction</span><span class="o">.</span><span class="n">text</span><span class="o">.</span><span class="n">HashingVectorizer</span><span class="p">(</span>
+                        <span class="n">analyzer</span><span class="o">=</span><span class="s2">&quot;char_wb&quot;</span><span class="p">,</span> <span class="n">ngram_range</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">lowercase</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                        <span class="n">n_features</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="s2">&quot;l2&quot;</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+                <span class="p">(</span>
+                    <span class="s2">&quot;classifier&quot;</span><span class="p">,</span>
+                    <span class="n">sklearn</span><span class="o">.</span><span class="n">neural_network</span><span class="o">.</span><span class="n">MLPClassifier</span><span class="p">(</span>
+                        <span class="n">activation</span><span class="o">=</span><span class="s2">&quot;relu&quot;</span><span class="p">,</span> <span class="n">solver</span><span class="o">=</span><span class="s2">&quot;adam&quot;</span><span class="p">,</span>
+                        <span class="n">hidden_layer_sizes</span><span class="o">=</span><span class="p">(</span><span class="mi">512</span><span class="p">,),</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.0001</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">512</span><span class="p">,</span>
+                        <span class="n">learning_rate_init</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span> <span class="n">learning_rate</span><span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="p">,</span>
+                        <span class="n">max_iter</span><span class="o">=</span><span class="mi">15</span><span class="p">,</span> <span class="n">early_stopping</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                        <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+                        <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="p">)</span>
+                <span class="p">),</span>
+            <span class="p">]</span>
+        <span class="p">)</span></div></div>
+
+
+<span class="n">lang_identifier</span> <span class="o">=</span> <span class="n">LangIdentifier</span><span class="p">()</span>
+<span class="n">identify_lang</span> <span class="o">=</span> <span class="n">lang_identifier</span><span class="o">.</span><span class="n">identify_lang</span>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

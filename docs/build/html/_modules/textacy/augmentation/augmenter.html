@@ -1,0 +1,282 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.augmentation.augmenter &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.augmentation.augmenter</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">inspect</span>
+<span class="kn">import</span> <span class="nn">random</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">spacy.tokens</span> <span class="k">import</span> <span class="n">Doc</span><span class="p">,</span> <span class="n">Span</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">spacier</span>
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">utils</span> <span class="k">as</span> <span class="n">aug_utils</span>
+
+
+<div class="viewcode-block" id="Augmenter"><a class="viewcode-back" href="../../../api_reference/augmentation.html#textacy.augmentation.augmenter.Augmenter">[docs]</a><span class="k">class</span> <span class="nc">Augmenter</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Randomly apply one or many data augmentation transforms to spaCy ``Doc`` s</span>
+<span class="sd">    to produce new docs with additional variety and/or noise in the data.</span>
+
+<span class="sd">    Initialize an ``Augmenter`` with multiple transforms, and customize the randomization</span>
+<span class="sd">    of their selection when applying to a document::</span>
+
+<span class="sd">        &gt;&gt;&gt; tfs = [transforms.delete_words, transforms.swap_chars, transforms.delete_chars]</span>
+<span class="sd">        &gt;&gt;&gt; Augmenter(tfs, num=None)  # all tfs applied each time</span>
+<span class="sd">        &gt;&gt;&gt; Augmenter(tfs, num=1)  # one randomly-selected tf applied each time</span>
+<span class="sd">        &gt;&gt;&gt; Augmenter(tfs, num=0.5)  # tfs randomly selected with 50% prob each time</span>
+<span class="sd">        &gt;&gt;&gt; augmenter = Augmenter(tfs, num=[0.4, 0.8, 0.6])  # tfs randomly selected with 40%, 80%, 60% probs, respectively, each time</span>
+
+<span class="sd">    Apply transforms to a given ``Doc`` to produce new documents::</span>
+
+<span class="sd">        &gt;&gt;&gt; text = &quot;The quick brown fox jumps over the lazy dog.&quot;</span>
+<span class="sd">        &gt;&gt;&gt; doc = textacy.make_spacy_doc(text, lang=&quot;en&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; augmenter.apply_transforms(doc)</span>
+<span class="sd">        The quick brown ox jupms over the lazy dog.</span>
+<span class="sd">        &gt;&gt;&gt; augmenter.apply_transforms(doc)</span>
+<span class="sd">        The quikc brown fox over the lazy dog.</span>
+<span class="sd">        &gt;&gt;&gt; augmenter.apply_transforms(doc)</span>
+<span class="sd">        quick brown fox jumps over teh lazy dog.</span>
+
+<span class="sd">    Parameters for individual transforms may be specified when initializing ``Augmenter``</span>
+<span class="sd">    or, if necessary, when applying to individual documents::</span>
+
+<span class="sd">        &gt;&gt;&gt; from functools import partial</span>
+<span class="sd">        &gt;&gt;&gt; tfs = [partial(transforms.delete_words, num=3), transforms.swap_chars]</span>
+<span class="sd">        &gt;&gt;&gt; augmenter = Augmenter(tfs)</span>
+<span class="sd">        &gt;&gt;&gt; augmenter.apply_transforms(doc)</span>
+<span class="sd">        brown fox jumps over layz dog.</span>
+<span class="sd">        &gt;&gt;&gt; augmenter.apply_transforms(doc, lang=doc.lang)  # (not actually needed for these tfs)</span>
+<span class="sd">        quick brown fox over teh lazy.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        transforms: Ordered sequence of callables that must take List[:obj:`AugTok`]</span>
+<span class="sd">            as their first positional argument and return another List[:obj:`AugTok`].</span>
+
+<span class="sd">            .. note:: Although the particular transforms applied may vary doc-by-doc,</span>
+<span class="sd">               they are applied *in order* as listed here. Since some transforms may</span>
+<span class="sd">               clobber text in a way that makes other transforms less effective,</span>
+<span class="sd">               a stable ordering can improve the quality of augmented data.</span>
+
+<span class="sd">        num: If int, number of transforms to randomly select from ``transforms`` each time</span>
+<span class="sd">            :meth:`Augmenter.apply_tranforms()` is called.</span>
+<span class="sd">            If float, probability that any given transform will be selected.</span>
+<span class="sd">            If Sequence[float], the probability that the corresponding transform</span>
+<span class="sd">            in ``transforms`` will be selected (these must be the same length).</span>
+<span class="sd">            If None (default), num is set to ``len(transforms)``, which means that</span>
+<span class="sd">            every transform is applied each time.</span>
+
+<span class="sd">    See Also:</span>
+<span class="sd">        A collection of general-purpose transforms are implemented in</span>
+<span class="sd">        :mod:`textacy.augmentation.transforms`.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">transforms</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Callable</span><span class="p">],</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">num</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">float</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">tfs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_transforms</span><span class="p">(</span><span class="n">transforms</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_validate_num</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+
+<div class="viewcode-block" id="Augmenter.apply_transforms"><a class="viewcode-back" href="../../../api_reference/augmentation.html#textacy.augmentation.augmenter.Augmenter.apply_transforms">[docs]</a>    <span class="k">def</span> <span class="nf">apply_transforms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">Doc</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Doc</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Sequentially apply some subset of data augmentation transforms to ``doc``,</span>
+<span class="sd">        then return a new ``Doc`` created from the augmented text.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            doc</span>
+<span class="sd">            **kwargs: If, for whatever reason, you have to pass keyword argument values</span>
+<span class="sd">                into transforms that vary or depend on characteristics of ``doc``,</span>
+<span class="sd">                specify them here. The transforms&#39; call signatures will be inspected,</span>
+<span class="sd">                and values will be passed along, as needed.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            :class:`spacy.tokens.Doc`</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">doc</span><span class="o">.</span><span class="n">is_sentenced</span><span class="p">:</span>
+            <span class="n">nested_aug_toks</span> <span class="o">=</span> <span class="p">[</span><span class="n">aug_utils</span><span class="o">.</span><span class="n">to_aug_toks</span><span class="p">(</span><span class="n">sent</span><span class="p">)</span> <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">doc</span><span class="o">.</span><span class="n">sents</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">nested_aug_toks</span> <span class="o">=</span> <span class="p">[</span><span class="n">aug_utils</span><span class="o">.</span><span class="n">to_aug_toks</span><span class="p">(</span><span class="n">doc</span><span class="p">)]</span>
+        <span class="n">lang</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;lang&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="n">doc</span><span class="o">.</span><span class="n">vocab</span><span class="o">.</span><span class="n">lang</span>
+        <span class="n">tfs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_random_transforms</span><span class="p">()</span>
+        <span class="n">new_nested_aug_toks</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">aug_toks</span> <span class="ow">in</span> <span class="n">nested_aug_toks</span><span class="p">:</span>
+            <span class="c1"># this is a bit of a hack, but whatchagonnado</span>
+            <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="n">tfs</span><span class="p">:</span>
+                    <span class="n">tf_params</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">tf</span><span class="p">)</span><span class="o">.</span><span class="n">parameters</span>
+                    <span class="n">tf_kwargs</span> <span class="o">=</span> <span class="p">{</span>
+                        <span class="n">kwarg</span><span class="p">:</span> <span class="n">value</span> <span class="k">for</span> <span class="n">kwarg</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="n">kwarg</span> <span class="ow">in</span> <span class="n">tf_params</span>
+                    <span class="p">}</span>
+                    <span class="n">aug_toks</span> <span class="o">=</span> <span class="n">tf</span><span class="p">(</span><span class="n">aug_toks</span><span class="p">,</span> <span class="o">**</span><span class="n">tf_kwargs</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="n">tfs</span><span class="p">:</span>
+                    <span class="n">aug_toks</span> <span class="o">=</span> <span class="n">tf</span><span class="p">(</span><span class="n">aug_toks</span><span class="p">)</span>
+            <span class="n">new_nested_aug_toks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">aug_toks</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_make_new_spacy_doc</span><span class="p">(</span><span class="n">new_nested_aug_toks</span><span class="p">,</span> <span class="n">lang</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_validate_transforms</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transforms</span><span class="p">):</span>
+        <span class="n">transforms</span> <span class="o">=</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">transforms</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">transforms</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;at least one transform callable must be specified&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">(</span><span class="n">callable</span><span class="p">(</span><span class="n">transform</span><span class="p">)</span> <span class="k">for</span> <span class="n">transform</span> <span class="ow">in</span> <span class="n">transforms</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;all transforms must be callable&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">transforms</span>
+
+    <span class="k">def</span> <span class="nf">_validate_num</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">num</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tfs</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="ow">and</span> <span class="mi">0</span> <span class="o">&lt;=</span> <span class="n">num</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tfs</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">num</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">num</span> <span class="o">&lt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">num</span>
+        <span class="k">elif</span> <span class="p">(</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="p">(</span><span class="nb">tuple</span><span class="p">,</span> <span class="nb">list</span><span class="p">))</span> <span class="ow">and</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">num</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tfs</span><span class="p">)</span> <span class="ow">and</span>
+            <span class="nb">all</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="mf">0.0</span> <span class="o">&lt;=</span> <span class="n">n</span> <span class="o">&lt;=</span> <span class="mf">1.0</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">num</span><span class="p">)</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="nb">tuple</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;num=</span><span class="si">{}</span><span class="s2"> is invalid; must be an int &gt;= 1, a float in [0.0, 1.0], &quot;</span>
+                <span class="s2">&quot;or a list of floats of length equal to given transforms&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">num</span><span class="p">)</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_random_transforms</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">num</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">num</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">rand_idxs</span> <span class="o">=</span> <span class="n">random</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tfs</span><span class="p">)),</span> <span class="nb">min</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tfs</span><span class="p">)))</span>
+            <span class="n">rand_tfs</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">tfs</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">rand_idxs</span><span class="p">)]</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">num</span><span class="p">,</span> <span class="nb">float</span><span class="p">):</span>
+            <span class="n">rand_tfs</span> <span class="o">=</span> <span class="p">[</span><span class="n">tf</span> <span class="k">for</span> <span class="n">tf</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">tfs</span> <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">num</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rand_tfs</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">tf</span> <span class="k">for</span> <span class="n">tf</span><span class="p">,</span> <span class="n">tf_num</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tfs</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">tf_num</span>
+            <span class="p">]</span>
+        <span class="k">return</span> <span class="n">rand_tfs</span>
+
+    <span class="k">def</span> <span class="nf">_make_new_spacy_doc</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nested_aug_tokens</span><span class="p">,</span> <span class="n">lang</span><span class="p">):</span>
+        <span class="c1"># TODO: maybe collect words, spaces, and array vals</span>
+        <span class="c1"># then directly instantiate a new Doc object?</span>
+        <span class="c1"># this would require adding an array field to AugTok</span>
+        <span class="n">new_text</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+            <span class="n">aug_tok</span><span class="o">.</span><span class="n">text</span> <span class="o">+</span> <span class="n">aug_tok</span><span class="o">.</span><span class="n">ws</span>
+            <span class="k">for</span> <span class="n">aug_toks</span> <span class="ow">in</span> <span class="n">nested_aug_tokens</span>
+            <span class="k">for</span> <span class="n">aug_tok</span> <span class="ow">in</span> <span class="n">aug_toks</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">spacier</span><span class="o">.</span><span class="n">core</span><span class="o">.</span><span class="n">make_spacy_doc</span><span class="p">(</span><span class="n">new_text</span><span class="p">,</span> <span class="n">lang</span><span class="o">=</span><span class="n">lang</span><span class="p">)</span></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

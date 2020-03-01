@@ -1,0 +1,618 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>spaCy extensions &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Datasets" href="datasets.html" />
+    <link rel="prev" title="Lang, Doc, Corpus" href="lang_doc_corpus.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="module-textacy.spacier.doc_extensions">
+<span id="spacy-extensions"></span><span id="api-reference-spacier"></span><h1>spaCy extensions<a class="headerlink" href="#module-textacy.spacier.doc_extensions" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="doc-extensions">
+<h2>Doc extensions<a class="headerlink" href="#doc-extensions" title="Permalink to this headline">¶</a></h2>
+<p>Functionality for inspecting, customizing, and transforming spaCy’s core
+data structure, <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Doc</span></code>, accessible directly as functions
+that take a <code class="docutils literal notranslate"><span class="pre">Doc</span></code> as their first argument or as custom attributes/methods
+on instantiated docs prepended by an underscore:</p>
+<div class="highlight-pycon notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">spacy_lang</span> <span class="o">=</span> <span class="n">textacy</span><span class="o">.</span><span class="n">load_spacy_lang</span><span class="p">(</span><span class="s2">&quot;en&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span> <span class="o">=</span> <span class="n">nlp</span><span class="p">(</span><span class="s2">&quot;This is a short text.&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">get_preview</span><span class="p">(</span><span class="n">doc</span><span class="p">))</span>
+<span class="go">Doc(6 tokens: &quot;This is a short text.&quot;)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">print</span><span class="p">(</span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">preview</span><span class="p">)</span>
+<span class="go">Doc(6 tokens: &quot;This is a short text.&quot;)</span>
+</pre></div>
+</div>
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.set_doc_extensions">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">set_doc_extensions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#set_doc_extensions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.set_doc_extensions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set textacy’s custom property and method doc extensions
+on the global <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Doc</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.get_doc_extensions">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">get_doc_extensions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#get_doc_extensions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.get_doc_extensions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get textacy’s custom property and method doc extensions
+that can be set on or removed from the global <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Doc</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.remove_doc_extensions">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">remove_doc_extensions</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#remove_doc_extensions"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.remove_doc_extensions" title="Permalink to this definition">¶</a></dt>
+<dd><p>Remove textacy’s custom property and method doc extensions
+from the global <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Doc</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.get_lang">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">get_lang</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#get_lang"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.get_lang" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the standard, two-letter language code assigned to <code class="docutils literal notranslate"><span class="pre">Doc</span></code>
+and its associated <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.vocab.Vocab</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.get_preview">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">get_preview</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#get_preview"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.get_preview" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a short preview of the <code class="docutils literal notranslate"><span class="pre">Doc</span></code>, including the number of tokens
+and an initial snippet.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.get_tokens">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">get_tokens</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em><span class="sig-paren">)</span> &#x2192; Iterable[spacy.tokens.token.Token]<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#get_tokens"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.get_tokens" title="Permalink to this definition">¶</a></dt>
+<dd><p>Yield the tokens in <code class="docutils literal notranslate"><span class="pre">Doc</span></code>, one at a time.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.get_n_tokens">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">get_n_tokens</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#get_n_tokens"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.get_n_tokens" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of tokens (including punctuation) in <code class="docutils literal notranslate"><span class="pre">Doc</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.get_n_sents">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">get_n_sents</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em><span class="sig-paren">)</span> &#x2192; int<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#get_n_sents"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.get_n_sents" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the number of sentences in <code class="docutils literal notranslate"><span class="pre">Doc</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.get_meta">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">get_meta</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em><span class="sig-paren">)</span> &#x2192; dict<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#get_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.get_meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get custom metadata added to <code class="docutils literal notranslate"><span class="pre">Doc</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.set_meta">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">set_meta</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em>, <em class="sig-param">value: dict</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#set_meta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.set_meta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add custom metadata to <code class="docutils literal notranslate"><span class="pre">Doc</span></code>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.to_tokenized_text">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">to_tokenized_text</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em><span class="sig-paren">)</span> &#x2192; List[List[str]]<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#to_tokenized_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.to_tokenized_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform <code class="docutils literal notranslate"><span class="pre">Doc</span></code> into an ordered, nested list of token-texts per sentence.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">doc</span></code> hasn’t been segmented into sentences, the entire document
+is treated as a single sentence.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.to_tagged_text">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">to_tagged_text</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em><span class="sig-paren">)</span> &#x2192; List[List[Tuple[str, str]]]<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#to_tagged_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.to_tagged_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform <code class="docutils literal notranslate"><span class="pre">Doc</span></code> into an ordered, nested list of (token-text, part-of-speech tag)
+pairs per sentence.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">doc</span></code> hasn’t been segmented into sentences, the entire document
+is treated as a single sentence.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.to_terms_list">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">to_terms_list</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, *, ngrams: Union[int, Collection[int], None] = (1, 2, 3), entities: Optional[bool] = True, normalize: Union[str, Callable[[Union[spacy.tokens.span.Span, spacy.tokens.token.Token]], str], None] = 'lemma', as_strings: bool = False, **kwargs</em><span class="sig-paren">)</span> &#x2192; Union[Iterable[int], Iterable[str]]<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#to_terms_list"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.to_terms_list" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform <code class="docutils literal notranslate"><span class="pre">Doc</span></code> into a sequence of ngrams and/or entities — not necessarily
+in order of appearance — where each appears in the sequence as many times as
+it appears in <code class="docutils literal notranslate"><span class="pre">Doc</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>ngrams</strong> – ngrams to include in the terms list.
+If <code class="docutils literal notranslate"><span class="pre">{1,</span> <span class="pre">2,</span> <span class="pre">3}</span></code>, unigrams, bigrams, and trigrams are included;
+if <code class="docutils literal notranslate"><span class="pre">2</span></code>, only bigrams are included; if None, ngrams aren’t included,
+except for those belonging to named entities.</p></li>
+<li><p><strong>entities</strong> – <p>If True, entities are included in the terms list;
+if False, they are <em>excluded</em> from the list;
+if None, entities aren’t included or excluded at all.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>When both <code class="docutils literal notranslate"><span class="pre">entities</span></code> and <code class="docutils literal notranslate"><span class="pre">ngrams</span></code> are non-null,
+exact duplicates (based on start and end indexes) are handled.
+If <code class="docutils literal notranslate"><span class="pre">entities</span></code> is True, any duplicate entities are included
+while duplicate ngrams are discarded to avoid double-counting;
+if <code class="docutils literal notranslate"><span class="pre">entities</span></code> is False, no entities are included of course,
+and duplicate ngrams are discarded as well.</p>
+</div>
+</p></li>
+<li><p><strong>normalize</strong> – If “lemma”, lemmatize terms; if “lower”, lowercase terms;
+if falsy, use the form of terms as they appear in doc;
+if callable, must accept a <code class="docutils literal notranslate"><span class="pre">Token</span></code> or <code class="docutils literal notranslate"><span class="pre">Span</span></code> and return a str,
+e.g. <a class="reference internal" href="#textacy.spacier.utils.get_normalized_text" title="textacy.spacier.utils.get_normalized_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_normalized_text()</span></code></a>.</p></li>
+<li><p><strong>as_strings</strong> – If True, terms are returned as strings;
+if False, terms are returned as their unique integer ids.</p></li>
+<li><p><strong>kwargs</strong> – <ul>
+<li><p>filter_stops (bool)</p></li>
+<li><p>filter_punct (bool)</p></li>
+<li><p>filter_nums (bool)</p></li>
+<li><p>include_pos (str or Set[str])</p></li>
+<li><p>exclude_pos (str or Set[str])</p></li>
+<li><p>min_freq (int)</p></li>
+<li><p>include_types (str or Set[str])</p></li>
+<li><p>exclude_types (str or Set[str]</p></li>
+<li><p>drop_determiners (bool)</p></li>
+</ul>
+<p>See <a class="reference internal" href="information_extraction.html#textacy.extract.words" title="textacy.extract.words"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.extract.words()</span></code></a>, <a class="reference internal" href="information_extraction.html#textacy.extract.ngrams" title="textacy.extract.ngrams"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.extract.ngrams()</span></code></a>,
+and <a class="reference internal" href="information_extraction.html#textacy.extract.entities" title="textacy.extract.entities"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.extract.entities()</span></code></a> for details.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Yields</dt>
+<dd class="field-even"><p>The next term in the terms list, as either a unique integer id or a string.</p>
+</dd>
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – if neither <code class="docutils literal notranslate"><span class="pre">entities</span></code> nor <code class="docutils literal notranslate"><span class="pre">ngrams</span></code> are included,
+    or if <code class="docutils literal notranslate"><span class="pre">entities</span></code> or <code class="docutils literal notranslate"><span class="pre">normalize</span></code> have invalid values</p>
+</dd>
+</dl>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Despite the name, this is a generator function; to get an
+actual list of terms, call <code class="docutils literal notranslate"><span class="pre">list(to_terms_list(doc))</span></code>.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.to_bag_of_terms">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">to_bag_of_terms</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, *, ngrams: Union[int, Collection[int], None] = (1, 2, 3), entities: Optional[bool] = True, normalize: Union[str, Callable[[Union[spacy.tokens.span.Span, spacy.tokens.token.Token]], str], None] = 'lemma', weighting: str = 'count', as_strings: bool = False, **kwargs</em><span class="sig-paren">)</span> &#x2192; Dict[Union[int, str], Union[int, float]]<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#to_bag_of_terms"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.to_bag_of_terms" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform <code class="docutils literal notranslate"><span class="pre">Doc</span></code> into a bag-of-terms: the set of unique terms in <code class="docutils literal notranslate"><span class="pre">Doc</span></code>
+mapped to their frequency of occurrence, where “terms” includes ngrams and/or entities.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>ngrams</strong> – n of which n-grams to include.
+<code class="docutils literal notranslate"><span class="pre">(1,</span> <span class="pre">2,</span> <span class="pre">3)</span></code> (default) includes unigrams (words), bigrams, and trigrams;
+<cite>2</cite> if only bigrams are wanted; falsy (e.g. False) to not include any</p></li>
+<li><p><strong>entities</strong> – If True (default), include named entities;
+note: if ngrams are also included, any ngrams that exactly
+overlap with an entity are skipped to prevent double-counting</p></li>
+<li><p><strong>normalize</strong> – If “lemma”, lemmatize terms; if “lower”, lowercase terms; if falsy,
+use the form of terms as they appear in <code class="docutils literal notranslate"><span class="pre">doc</span></code>;
+if a callable, must accept a <code class="docutils literal notranslate"><span class="pre">Token</span></code> or <code class="docutils literal notranslate"><span class="pre">Span</span></code> and return a str,
+e.g. <a class="reference internal" href="#textacy.spacier.utils.get_normalized_text" title="textacy.spacier.utils.get_normalized_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.spacier.utils.get_normalized_text()</span></code></a>.</p></li>
+<li><p><strong>weighting</strong> (<em>{&quot;count&quot;</em><em>, </em><em>&quot;freq&quot;</em><em>, </em><em>&quot;binary&quot;}</em>) – Type of weight to assign to
+terms. If “count” (default), weights are the absolute number of
+occurrences (count) of term in doc. If “binary”, all counts are
+set equal to 1. If “freq”, term counts are normalized by the
+total token count, giving their relative frequency of occurrence.</p></li>
+<li><p><strong>as_strings</strong> – If True, words are returned as strings;
+if False (default), words are returned as their unique integer ids.</p></li>
+<li><p><strong>kwargs</strong> – <ul>
+<li><p>filter_stops (bool)</p></li>
+<li><p>filter_punct (bool)</p></li>
+<li><p>filter_nums (bool)</p></li>
+<li><p>include_pos (str or Set[str])</p></li>
+<li><p>exclude_pos (str or Set[str])</p></li>
+<li><p>min_freq (int)</p></li>
+<li><p>include_types (str or Set[str])</p></li>
+<li><p>exclude_types (str or Set[str]</p></li>
+<li><p>drop_determiners (bool)</p></li>
+</ul>
+<p>See <a class="reference internal" href="information_extraction.html#textacy.extract.words" title="textacy.extract.words"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.extract.words()</span></code></a>, <a class="reference internal" href="information_extraction.html#textacy.extract.ngrams" title="textacy.extract.ngrams"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.extract.ngrams()</span></code></a>,
+and <a class="reference internal" href="information_extraction.html#textacy.extract.entities" title="textacy.extract.entities"><code class="xref py py-func docutils literal notranslate"><span class="pre">textacy.extract.entities()</span></code></a>  for details.</p>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Mapping of a unique term id or string (depending on the value of <code class="docutils literal notranslate"><span class="pre">as_strings</span></code>)
+to its absolute, relative, or binary frequency of occurrence
+(depending on the value of <code class="docutils literal notranslate"><span class="pre">weighting</span></code>).</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="#textacy.spacier.doc_extensions.to_terms_list" title="textacy.spacier.doc_extensions.to_terms_list"><code class="xref py py-func docutils literal notranslate"><span class="pre">to_terms_list()</span></code></a>, which is used under the hood.</p>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.to_bag_of_words">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">to_bag_of_words</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc</em>, <em class="sig-param">*</em>, <em class="sig-param">normalize: str = 'lemma'</em>, <em class="sig-param">weighting: str = 'count'</em>, <em class="sig-param">as_strings: bool = False</em>, <em class="sig-param">filter_stops: bool = True</em>, <em class="sig-param">filter_punct: bool = True</em>, <em class="sig-param">filter_nums: bool = False</em><span class="sig-paren">)</span> &#x2192; Dict[Union[int, str], Union[int, float]]<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#to_bag_of_words"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.to_bag_of_words" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform <code class="docutils literal notranslate"><span class="pre">Doc</span></code> into a bag-of-words: the set of unique words in <code class="docutils literal notranslate"><span class="pre">Doc</span></code>
+mapped to their absolute, relative, or binary frequency of occurrence.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>normalize</strong> – If “lemma”, lemmatize words before counting;
+if “lower”, lowercase words before counting; otherwise, words are
+counted using the form with which they they appear in doc.</p></li>
+<li><p><strong>weighting</strong> (<em>{&quot;count&quot;</em><em>, </em><em>&quot;freq&quot;</em><em>, </em><em>&quot;binary&quot;}</em>) – Type of weight to assign to
+words. If “count” (default), weights are the absolute number of
+occurrences (count) of word in doc. If “binary”, all counts are
+set equal to 1. If “freq”, word counts are normalized by the
+total token count, giving their relative frequency of occurrence.
+Note: The resulting set of frequencies won’t (necessarily) sum
+to 1.0, since punctuation and stop words are filtered out after
+counts are normalized.</p></li>
+<li><p><strong>as_strings</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – If True, words are returned as strings; if False
+(default), words are returned as their unique integer ids</p></li>
+<li><p><strong>filter_stops</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – If True (default), stop words are removed after
+counting.</p></li>
+<li><p><strong>filter_punct</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – If True (default), punctuation tokens are removed
+after counting.</p></li>
+<li><p><strong>filter_nums</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/functions.html#bool" title="(in Python v3.6)"><em>bool</em></a>) – If True, tokens consisting of digits are removed
+after counting.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>Mapping of a unique term id or string (depending on the value of <code class="docutils literal notranslate"><span class="pre">as_strings</span></code>)
+to its absolute, relative, or binary frequency of occurrence
+(depending on the value of <code class="docutils literal notranslate"><span class="pre">weighting</span></code>).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.doc_extensions.to_semantic_network">
+<code class="sig-prename descclassname">textacy.spacier.doc_extensions.</code><code class="sig-name descname">to_semantic_network</code><span class="sig-paren">(</span><em class="sig-param">doc: spacy.tokens.doc.Doc, *, nodes: str = 'words', normalize: Union[str, Callable[[Union[spacy.tokens.span.Span, spacy.tokens.token.Token]], str], None] = 'lemma', edge_weighting: str = 'default', window_width: int = 10</em><span class="sig-paren">)</span> &#x2192; networkx.classes.graph.Graph<a class="reference internal" href="../_modules/textacy/spacier/doc_extensions.html#to_semantic_network"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.doc_extensions.to_semantic_network" title="Permalink to this definition">¶</a></dt>
+<dd><p>Transform <code class="docutils literal notranslate"><span class="pre">Doc</span></code> into a semantic network, where nodes are either
+“words” or “sents” and edges between nodes may be weighted in different ways.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>doc</strong> – </p></li>
+<li><p><strong>nodes</strong> (<em>{&quot;words&quot;</em><em>, </em><em>&quot;sents&quot;}</em>) – Type of doc component to use as nodes
+in the semantic network.</p></li>
+<li><p><strong>normalize</strong> – If “lemma”, lemmatize terms; if “lower”, lowercase terms;
+if falsy, use the form of terms as they appear in doc; if a callable,
+must accept a <code class="docutils literal notranslate"><span class="pre">Token</span></code> or <code class="docutils literal notranslate"><span class="pre">Span</span></code>
+(if <code class="docutils literal notranslate"><span class="pre">nodes</span></code> = “words” or “sents”, respectively) and return a str,
+e.g. <a class="reference internal" href="#textacy.spacier.utils.get_normalized_text" title="textacy.spacier.utils.get_normalized_text"><code class="xref py py-func docutils literal notranslate"><span class="pre">get_normalized_text()</span></code></a></p></li>
+<li><p><strong>edge_weighting</strong> – Type of weighting to apply to edges between nodes;
+if <code class="docutils literal notranslate"><span class="pre">nodes</span></code> = “words”, options are {“cooc_freq”, “binary”},
+if <code class="docutils literal notranslate"><span class="pre">nodes</span></code> = “sents”, options are {“cosine”, “jaccard”}; if
+“default”, “cooc_freq” or “cosine” will be automatically used.</p></li>
+<li><p><strong>window_width</strong> – Size of sliding window over terms that determines
+which are said to co-occur; only applicable if <code class="docutils literal notranslate"><span class="pre">nodes</span></code> = “words”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>where nodes represent either terms or sentences
+in doc; edges, the relationships between them.</p>
+</dd>
+<dt class="field-odd">Return type</dt>
+<dd class="field-odd"><p><code class="docutils literal notranslate"><span class="pre">networkx.Graph</span></code></p>
+</dd>
+<dt class="field-even">Raises</dt>
+<dd class="field-even"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If <code class="docutils literal notranslate"><span class="pre">nodes</span></code> is neither “words” nor “sents”.</p>
+</dd>
+</dl>
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="misc.html#textacy.network.terms_to_semantic_network" title="textacy.network.terms_to_semantic_network"><code class="xref py py-func docutils literal notranslate"><span class="pre">terms_to_semantic_network()</span></code></a></p></li>
+<li><p><a class="reference internal" href="misc.html#textacy.network.sents_to_semantic_network" title="textacy.network.sents_to_semantic_network"><code class="xref py py-func docutils literal notranslate"><span class="pre">sents_to_semantic_network()</span></code></a></p></li>
+</ul>
+</div>
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.spacier.components"></span><div class="section" id="pipeline-components">
+<h2>Pipeline Components<a class="headerlink" href="#pipeline-components" title="Permalink to this headline">¶</a></h2>
+<p>Custom components to add to a spaCy language pipeline.</p>
+<dl class="class">
+<dt id="textacy.spacier.components.TextStatsComponent">
+<em class="property">class </em><code class="sig-prename descclassname">textacy.spacier.components.</code><code class="sig-name descname">TextStatsComponent</code><span class="sig-paren">(</span><em class="sig-param">attrs=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/textacy/spacier/components.html#TextStatsComponent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.components.TextStatsComponent" title="Permalink to this definition">¶</a></dt>
+<dd><p>A custom component to be added to a spaCy language pipeline that computes
+one, some, or all text stats for a parsed doc and sets the values
+as custom attributes on a <code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Doc</span></code>.</p>
+<p>Add the component to a pipeline, <em>after</em> the parser (as well as any
+subsequent components that modify the tokens/sentences of the doc):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">en</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;en&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">text_stats_component</span> <span class="o">=</span> <span class="n">TextStatsComponent</span><span class="p">()</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">en</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="n">text_stats_component</span><span class="p">,</span> <span class="n">after</span><span class="o">=</span><span class="s1">&#39;parser&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Process a text with the pipeline and access the custom attributes via
+spaCy’s underscore syntax:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span> <span class="o">=</span> <span class="n">en</span><span class="p">(</span><span class="sa">u</span><span class="s2">&quot;This is a test test someverylongword.&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">n_words</span>
+<span class="go">6</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">flesch_reading_ease</span>
+<span class="go">73.84500000000001</span>
+</pre></div>
+</div>
+<p>Specify which attributes of the <a class="reference internal" href="misc.html#textacy.text_stats.TextStats" title="textacy.text_stats.TextStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">textacy.text_stats.TextStats()</span></code></a>
+to add to processed documents:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">en</span> <span class="o">=</span> <span class="n">spacy</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;en&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">text_stats_component</span> <span class="o">=</span> <span class="n">TextStatsComponent</span><span class="p">(</span><span class="n">attrs</span><span class="o">=</span><span class="s1">&#39;n_words&#39;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">en</span><span class="o">.</span><span class="n">add_pipe</span><span class="p">(</span><span class="n">text_stats_component</span><span class="p">,</span> <span class="n">last</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span> <span class="o">=</span> <span class="n">en</span><span class="p">(</span><span class="sa">u</span><span class="s2">&quot;This is a test test someverylongword.&quot;</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">n_words</span>
+<span class="go">6</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">doc</span><span class="o">.</span><span class="n">_</span><span class="o">.</span><span class="n">flesch_reading_ease</span>
+<span class="go">AttributeError: [E046] Can&#39;t retrieve unregistered extension attribute &#39;flesch_reading_ease&#39;. Did you forget to call the `set_extension` method?</span>
+</pre></div>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><p><strong>attrs</strong> (<a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em> or </em><em>Iterable</em><em>[</em><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)"><em>str</em></a><em>] or </em><a class="reference external" href="https://docs.python.org/3.6/library/constants.html#None" title="(in Python v3.6)"><em>None</em></a>) – If str, a single text stat
+to compute and set on a <code class="xref py py-obj docutils literal notranslate"><span class="pre">Doc</span></code>. If Iterable[str], multiple
+text stats. If None, <em>all</em> text stats are computed and set as extensions.</p>
+</dd>
+</dl>
+<dl class="attribute">
+<dt id="textacy.spacier.components.TextStatsComponent.name">
+<code class="sig-name descname">name</code><a class="headerlink" href="#textacy.spacier.components.TextStatsComponent.name" title="Permalink to this definition">¶</a></dt>
+<dd><p>Default name of this component in a spaCy language pipeline,
+used to get and modify the component via various <code class="docutils literal notranslate"><span class="pre">spacy.Language</span></code>
+methods, e.g. <a class="reference external" href="https://spacy.io/api/language#get_pipe">https://spacy.io/api/language#get_pipe</a>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Type</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#str" title="(in Python v3.6)">str</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+<div class="admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="misc.html#textacy.text_stats.TextStats" title="textacy.text_stats.TextStats"><code class="xref py py-class docutils literal notranslate"><span class="pre">textacy.text_stats.TextStats</span></code></a></p>
+</div>
+</dd></dl>
+
+</div>
+<span class="target" id="module-textacy.spacier.utils"></span><div class="section" id="spacy-utils">
+<h2>spaCy Utils<a class="headerlink" href="#spacy-utils" title="Permalink to this headline">¶</a></h2>
+<p>Helper functions for working with / extending spaCy’s core functionality.</p>
+<dl class="function">
+<dt id="textacy.spacier.utils.make_doc_from_text_chunks">
+<code class="sig-prename descclassname">textacy.spacier.utils.</code><code class="sig-name descname">make_doc_from_text_chunks</code><span class="sig-paren">(</span><em class="sig-param">text: str, lang: Union[str, spacy.language.Language], chunk_size: int = 100000</em><span class="sig-paren">)</span> &#x2192; spacy.tokens.doc.Doc<a class="reference internal" href="../_modules/textacy/spacier/utils.html#make_doc_from_text_chunks"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.utils.make_doc_from_text_chunks" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a single spaCy-processed document from 1 or more chunks of <code class="docutils literal notranslate"><span class="pre">text</span></code>.
+This is a workaround for processing very long texts, for which spaCy
+is unable to allocate enough RAM.</p>
+<p>Although this function’s performance is <em>pretty good</em>, it’s inherently
+less performant that just processing the entire text in one shot.
+Only use it if necessary!</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>text</strong> – Text document to be chunked and processed by spaCy.</p></li>
+<li><p><strong>lang</strong> – A 2-letter language code (e.g. “en”),
+the name of a spaCy model for the desired language, or
+an already-instantiated spaCy language pipeline.</p></li>
+<li><p><strong>chunk_size</strong> – <p>Number of characters comprising each text chunk
+(excluding the last chunk, which is probably smaller).
+For best performance, value should be somewhere between 1e3 and 1e7,
+depending on how much RAM you have available.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Since chunking is done by character, chunks edges’ probably
+won’t respect natural language segmentation, which means that every
+<code class="docutils literal notranslate"><span class="pre">chunk_size</span></code> characters, spaCy will probably get tripped up and
+make weird parsing errors.</p>
+</div>
+</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns</dt>
+<dd class="field-even"><p>A single processed document, initialized from components accumulated chunk by chunk.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.utils.merge_spans">
+<code class="sig-prename descclassname">textacy.spacier.utils.</code><code class="sig-name descname">merge_spans</code><span class="sig-paren">(</span><em class="sig-param">spans: Iterable[spacy.tokens.span.Span], doc: spacy.tokens.doc.Doc</em><span class="sig-paren">)</span> &#x2192; None<a class="reference internal" href="../_modules/textacy/spacier/utils.html#merge_spans"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.utils.merge_spans" title="Permalink to this definition">¶</a></dt>
+<dd><p>Merge spans into single tokens in <code class="docutils literal notranslate"><span class="pre">doc</span></code>, <em>in-place</em>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters</dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>spans</strong> (Iterable[<code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Span</span></code>]) – </p></li>
+<li><p><strong>doc</strong> (<code class="xref py py-class docutils literal notranslate"><span class="pre">spacy.tokens.Doc</span></code>) – </p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.utils.preserve_case">
+<code class="sig-prename descclassname">textacy.spacier.utils.</code><code class="sig-name descname">preserve_case</code><span class="sig-paren">(</span><em class="sig-param">token: spacy.tokens.token.Token</em><span class="sig-paren">)</span> &#x2192; bool<a class="reference internal" href="../_modules/textacy/spacier/utils.html#preserve_case"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.utils.preserve_case" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return True if <code class="docutils literal notranslate"><span class="pre">token</span></code> is a proper noun or acronym; otherwise, False.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Raises</dt>
+<dd class="field-odd"><p><a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#ValueError" title="(in Python v3.6)"><strong>ValueError</strong></a> – If parent document has not been POS-tagged.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.utils.get_normalized_text">
+<code class="sig-prename descclassname">textacy.spacier.utils.</code><code class="sig-name descname">get_normalized_text</code><span class="sig-paren">(</span><em class="sig-param">span_or_token: Union[spacy.tokens.span.Span, spacy.tokens.token.Token]</em><span class="sig-paren">)</span> &#x2192; str<a class="reference internal" href="../_modules/textacy/spacier/utils.html#get_normalized_text"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.utils.get_normalized_text" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the text of a spaCy span or token, normalized depending on its characteristics.
+For proper nouns and acronyms, text is returned as-is; for everything else,
+text is lemmatized.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.utils.get_main_verbs_of_sent">
+<code class="sig-prename descclassname">textacy.spacier.utils.</code><code class="sig-name descname">get_main_verbs_of_sent</code><span class="sig-paren">(</span><em class="sig-param">sent: spacy.tokens.span.Span</em><span class="sig-paren">)</span> &#x2192; List[spacy.tokens.token.Token]<a class="reference internal" href="../_modules/textacy/spacier/utils.html#get_main_verbs_of_sent"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.utils.get_main_verbs_of_sent" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the main (non-auxiliary) verbs in a sentence.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.utils.get_subjects_of_verb">
+<code class="sig-prename descclassname">textacy.spacier.utils.</code><code class="sig-name descname">get_subjects_of_verb</code><span class="sig-paren">(</span><em class="sig-param">verb: spacy.tokens.token.Token</em><span class="sig-paren">)</span> &#x2192; List[spacy.tokens.token.Token]<a class="reference internal" href="../_modules/textacy/spacier/utils.html#get_subjects_of_verb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.utils.get_subjects_of_verb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all subjects of a verb according to the dependency parse.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.utils.get_objects_of_verb">
+<code class="sig-prename descclassname">textacy.spacier.utils.</code><code class="sig-name descname">get_objects_of_verb</code><span class="sig-paren">(</span><em class="sig-param">verb: spacy.tokens.token.Token</em><span class="sig-paren">)</span> &#x2192; List[spacy.tokens.token.Token]<a class="reference internal" href="../_modules/textacy/spacier/utils.html#get_objects_of_verb"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.utils.get_objects_of_verb" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return all objects of a verb according to the dependency parse,
+including open clausal complements.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.utils.get_span_for_compound_noun">
+<code class="sig-prename descclassname">textacy.spacier.utils.</code><code class="sig-name descname">get_span_for_compound_noun</code><span class="sig-paren">(</span><em class="sig-param">noun: spacy.tokens.token.Token</em><span class="sig-paren">)</span> &#x2192; Tuple[int, int]<a class="reference internal" href="../_modules/textacy/spacier/utils.html#get_span_for_compound_noun"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.utils.get_span_for_compound_noun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return document indexes spanning all (adjacent) tokens in a compound noun.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="textacy.spacier.utils.get_span_for_verb_auxiliaries">
+<code class="sig-prename descclassname">textacy.spacier.utils.</code><code class="sig-name descname">get_span_for_verb_auxiliaries</code><span class="sig-paren">(</span><em class="sig-param">verb: spacy.tokens.token.Token</em><span class="sig-paren">)</span> &#x2192; Tuple[int, int]<a class="reference internal" href="../_modules/textacy/spacier/utils.html#get_span_for_verb_auxiliaries"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#textacy.spacier.utils.get_span_for_verb_auxiliaries" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return document indexes spanning all (adjacent) tokens
+around a verb that are auxiliary verbs or negations.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+        <li>
+          &larr;
+          <a href="lang_doc_corpus.html" title="Previous document">Lang, Doc, Corpus</a>
+        </li>
+        <li>
+          <a href="datasets.html" title="Next document">Datasets</a>
+          &rarr;
+        </li>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="root.html">API Reference</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="lang_doc_corpus.html">Lang, Doc, Corpus</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">spaCy extensions</a></li>
+<li class="toctree-l2"><a class="reference internal" href="datasets.html">Datasets</a></li>
+<li class="toctree-l2"><a class="reference internal" href="resources.html">Resources</a></li>
+<li class="toctree-l2"><a class="reference internal" href="text_processing.html">Text (Pre-)Processing</a></li>
+<li class="toctree-l2"><a class="reference internal" href="information_extraction.html">Information Extraction</a></li>
+<li class="toctree-l2"><a class="reference internal" href="vsm_and_tm.html">Vectorization &amp; Topic Modeling</a></li>
+<li class="toctree-l2"><a class="reference internal" href="io.html">IO</a></li>
+<li class="toctree-l2"><a class="reference internal" href="viz.html">Visualization</a></li>
+<li class="toctree-l2"><a class="reference internal" href="augmentation.html">Data Augmentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="utils.html">Utilities</a></li>
+<li class="toctree-l2"><a class="reference internal" href="misc.html">Miscellany</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+  <li><a href="root.html">API Reference</a><ul>
+      <li>Previous: <a href="lang_doc_corpus.html" title="previous chapter">Lang, Doc, Corpus</a></li>
+      <li>Next: <a href="datasets.html" title="next chapter">Datasets</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/api_reference/spacier.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,361 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.network &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+   
+  <link rel="stylesheet" href="../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.network</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Semantic Networks</span>
+<span class="sd">-----------------</span>
+
+<span class="sd">Represent documents as semantic networks, where nodes are individual terms or</span>
+<span class="sd">whole sentences and edges are weighted by the strength of their co-occurrence or</span>
+<span class="sd">similarity, respectively.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">collections</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">DefaultDict</span><span class="p">,</span> <span class="n">Sequence</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">import</span> <span class="nn">networkx</span> <span class="k">as</span> <span class="nn">nx</span>
+<span class="kn">from</span> <span class="nn">cytoolz</span> <span class="k">import</span> <span class="n">itertoolz</span>
+<span class="kn">from</span> <span class="nn">spacy.tokens</span> <span class="k">import</span> <span class="n">Span</span><span class="p">,</span> <span class="n">Token</span>
+
+<span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">extract</span>
+<span class="c1"># from . import vsm  # we&#39;re hiding this import within a function</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="terms_to_semantic_network"><a class="viewcode-back" href="../../api_reference/misc.html#textacy.network.terms_to_semantic_network">[docs]</a><span class="k">def</span> <span class="nf">terms_to_semantic_network</span><span class="p">(</span>
+    <span class="n">terms</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Token</span><span class="p">]],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Token</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;lemma&quot;</span><span class="p">,</span>
+    <span class="n">window_width</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="n">edge_weighting</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cooc_freq&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform an ordered list of non-overlapping terms into a semantic network,</span>
+<span class="sd">    where each term is represented by a node with weighted edges linking it to</span>
+<span class="sd">    other terms that co-occur within ``window_width`` terms of itself.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        terms</span>
+<span class="sd">        normalize: If &quot;lemma&quot;, lemmatize terms; if &quot;lower&quot;, lowercase terms;</span>
+<span class="sd">            if falsy, use the form of terms as they appear in ``terms``;</span>
+<span class="sd">            if a callable, must accept a ``Token`` and return a str,</span>
+<span class="sd">            e.g. :func:`textacy.spacier.utils.get_normalized_text()`.</span>
+
+<span class="sd">            .. note:: This is applied to the elements of ``terms`` *only* if</span>
+<span class="sd">               it&#39;s a list of ``Token``.</span>
+
+<span class="sd">        window_width: Size of sliding window over ``terms`` that determines</span>
+<span class="sd">            which are said to co-occur. If 2, only immediately adjacent terms</span>
+<span class="sd">            have edges in the returned network.</span>
+<span class="sd">        edge_weighting ({&#39;cooc_freq&#39;, &#39;binary&#39;}): If &#39;cooc_freq&#39;, the nodes for</span>
+<span class="sd">            all co-occurring terms are connected by edges with weight equal to</span>
+<span class="sd">            the number of times they co-occurred within a sliding window;</span>
+<span class="sd">            if &#39;binary&#39;, all such edges have weight = 1.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Networkx graph whose nodes represent individual terms, connected by edges</span>
+<span class="sd">        based on term co-occurrence with weights determined by ``edge_weighting``.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        - Be sure to filter out stopwords, punctuation, certain parts of speech, etc.</span>
+<span class="sd">          from the terms list before passing it to this function</span>
+<span class="sd">        - Multi-word terms, such as named entities and compound nouns, must be merged</span>
+<span class="sd">          into single strings or ``Token`` s beforehand</span>
+<span class="sd">        - If terms are already strings, be sure to have normalized them so that</span>
+<span class="sd">          like terms are counted together; for example, by applying</span>
+<span class="sd">          :func:`textacy.spacier.utils.get_normalized_text()`</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">window_width</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+            <span class="s2">&quot;`window_width` = </span><span class="si">{}</span><span class="s2"> is invalid; value must be &gt;= 2&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">window_width</span><span class="p">)</span>
+        <span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">terms</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;input `terms` is empty, so output graph is also empty&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+
+    <span class="c1"># if len(terms) &lt; window_width, cytoolz throws a StopIteration error</span>
+    <span class="c1"># which we don&#39;t want</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">window_width</span><span class="p">:</span>
+        <span class="n">LOGGER</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;`terms` has fewer items (</span><span class="si">%s</span><span class="s2">) than the specified `window_width` (</span><span class="si">%s</span><span class="s2">); &quot;</span>
+            <span class="s2">&quot;setting window width to </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">terms</span><span class="p">),</span>
+            <span class="n">window_width</span><span class="p">,</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">terms</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="n">window_width</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">terms</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">terms</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="n">windows</span> <span class="o">=</span> <span class="n">itertoolz</span><span class="o">.</span><span class="n">sliding_window</span><span class="p">(</span><span class="n">window_width</span><span class="p">,</span> <span class="n">terms</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">terms</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Token</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">normalize</span> <span class="o">==</span> <span class="s2">&quot;lemma&quot;</span><span class="p">:</span>
+            <span class="n">windows</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">tok</span><span class="o">.</span><span class="n">lemma_</span> <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">window</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">itertoolz</span><span class="o">.</span><span class="n">sliding_window</span><span class="p">(</span><span class="n">window_width</span><span class="p">,</span> <span class="n">terms</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">normalize</span> <span class="o">==</span> <span class="s2">&quot;lower&quot;</span><span class="p">:</span>
+            <span class="n">windows</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">tok</span><span class="o">.</span><span class="n">lower_</span> <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">window</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">itertoolz</span><span class="o">.</span><span class="n">sliding_window</span><span class="p">(</span><span class="n">window_width</span><span class="p">,</span> <span class="n">terms</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">normalize</span><span class="p">:</span>
+            <span class="n">windows</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">tok</span><span class="o">.</span><span class="n">text</span> <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">window</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">itertoolz</span><span class="o">.</span><span class="n">sliding_window</span><span class="p">(</span><span class="n">window_width</span><span class="p">,</span> <span class="n">terms</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">windows</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span><span class="n">normalize</span><span class="p">(</span><span class="n">tok</span><span class="p">)</span> <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">window</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">itertoolz</span><span class="o">.</span><span class="n">sliding_window</span><span class="p">(</span><span class="n">window_width</span><span class="p">,</span> <span class="n">terms</span><span class="p">)</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;items in `terms` must be strings or spacy tokens, not </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">terms</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+
+    <span class="k">if</span> <span class="n">edge_weighting</span> <span class="o">==</span> <span class="s2">&quot;cooc_freq&quot;</span><span class="p">:</span>
+        <span class="n">cooc_mat</span><span class="p">:</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">DefaultDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]]</span>
+        <span class="n">cooc_mat</span> <span class="o">=</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="k">lambda</span><span class="p">:</span> <span class="n">collections</span><span class="o">.</span><span class="n">defaultdict</span><span class="p">(</span><span class="nb">int</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">windows</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">w1</span><span class="p">,</span> <span class="n">w2</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="nb">sorted</span><span class="p">(</span><span class="n">window</span><span class="p">),</span> <span class="mi">2</span><span class="p">):</span>
+                <span class="n">cooc_mat</span><span class="p">[</span><span class="n">w1</span><span class="p">][</span><span class="n">w2</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">w1</span><span class="p">,</span> <span class="n">w2</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="n">weight</span><span class="p">})</span>
+            <span class="k">for</span> <span class="n">w1</span><span class="p">,</span> <span class="n">w2s</span> <span class="ow">in</span> <span class="n">cooc_mat</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">w2</span><span class="p">,</span> <span class="n">weight</span> <span class="ow">in</span> <span class="n">w2s</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+        <span class="p">)</span>
+    <span class="k">elif</span> <span class="n">edge_weighting</span> <span class="o">==</span> <span class="s2">&quot;binary&quot;</span><span class="p">:</span>
+        <span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span>
+            <span class="n">w1_w2</span> <span class="k">for</span> <span class="n">window</span> <span class="ow">in</span> <span class="n">windows</span> <span class="k">for</span> <span class="n">w1_w2</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">combinations</span><span class="p">(</span><span class="n">window</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">graph</span></div>
+
+
+<div class="viewcode-block" id="sents_to_semantic_network"><a class="viewcode-back" href="../../api_reference/misc.html#textacy.network.sents_to_semantic_network">[docs]</a><span class="k">def</span> <span class="nf">sents_to_semantic_network</span><span class="p">(</span>
+    <span class="n">sents</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">Sequence</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Span</span><span class="p">]],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">normalize</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Token</span><span class="p">],</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="s2">&quot;lemma&quot;</span><span class="p">,</span>
+    <span class="n">edge_weighting</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cosine&quot;</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">:</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Transform a list of sentences into a semantic network, where each sentence is</span>
+<span class="sd">    represented by a node with edges linking it to other sentences weighted by</span>
+<span class="sd">    the (cosine or jaccard) similarity of their constituent words.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        sents</span>
+<span class="sd">        normalize: If &#39;lemma&#39;, lemmatize words in sents; if &#39;lower&#39;, lowercase words</span>
+<span class="sd">        in sents; if false-y, use the form of words as they appear in sents; if a callable,</span>
+<span class="sd">        must accept a :class:`spacy.tokens.Token` and return a str,</span>
+<span class="sd">        e.g. :func:`textacy.spacier.utils.get_normalized_text()`.</span>
+
+<span class="sd">            .. note:: This is applied to the elements of ``sents`` *only* if</span>
+<span class="sd">               it&#39;s a list of ``Span`` s.</span>
+
+<span class="sd">        edge_weighting ({&#39;cosine&#39;, &#39;jaccard&#39;}): Similarity metric to use for</span>
+<span class="sd">            weighting edges between sentences. If &#39;cosine&#39;, use the cosine</span>
+<span class="sd">            similarity between sentences represented as tf-idf word vectors;</span>
+<span class="sd">            if &#39;jaccard&#39;, use the set intersection divided by the set union of</span>
+<span class="sd">            all words in a given sentence pair.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Networkx graph whose nodes are the integer indexes of the sentences in ``sents``,</span>
+<span class="sd">        *not* the actual text of the sentences. Edges connect every node,</span>
+<span class="sd">        with weights determined by ``edge_weighting``.</span>
+
+<span class="sd">    Note:</span>
+<span class="sd">        - If passing sentences as strings, be sure to filter out stopwords, punctuation,</span>
+<span class="sd">          certain parts of speech, etc. beforehand</span>
+<span class="sd">        - Consider normalizing the strings so that like terms are counted together</span>
+<span class="sd">          (see :func:`textacy.spacier.utils.get_normalized_text()`)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="k">import</span> <span class="n">vsm</span>
+
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sents</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">pass</span>
+    <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">sents</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">Span</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">normalize</span> <span class="o">==</span> <span class="s2">&quot;lemma&quot;</span><span class="p">:</span>
+            <span class="n">sents</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">tok</span><span class="o">.</span><span class="n">lemma_</span>
+                    <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">extract</span><span class="o">.</span><span class="n">words</span><span class="p">(</span>
+                        <span class="n">sent</span><span class="p">,</span> <span class="n">filter_stops</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filter_punct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filter_nums</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">sents</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">normalize</span> <span class="o">==</span> <span class="s2">&quot;lower&quot;</span><span class="p">:</span>
+            <span class="n">sents</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">tok</span><span class="o">.</span><span class="n">lower_</span>
+                    <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">extract</span><span class="o">.</span><span class="n">words</span><span class="p">(</span>
+                        <span class="n">sent</span><span class="p">,</span> <span class="n">filter_stops</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filter_punct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filter_nums</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">sents</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="ow">not</span> <span class="n">normalize</span><span class="p">:</span>
+            <span class="n">sents</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">tok</span><span class="o">.</span><span class="n">text</span>
+                    <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">extract</span><span class="o">.</span><span class="n">words</span><span class="p">(</span>
+                        <span class="n">sent</span><span class="p">,</span> <span class="n">filter_stops</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filter_punct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filter_nums</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">sents</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sents</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="p">(</span>
+                    <span class="n">normalize</span><span class="p">(</span><span class="n">tok</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">tok</span> <span class="ow">in</span> <span class="n">extract</span><span class="o">.</span><span class="n">words</span><span class="p">(</span>
+                        <span class="n">sent</span><span class="p">,</span> <span class="n">filter_stops</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filter_punct</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">filter_nums</span><span class="o">=</span><span class="kc">False</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="k">for</span> <span class="n">sent</span> <span class="ow">in</span> <span class="n">sents</span>
+            <span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+            <span class="s2">&quot;items in `sents` must be strings or spacy tokens, not </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+                <span class="nb">type</span><span class="p">(</span><span class="n">sents</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">edge_weighting</span> <span class="o">==</span> <span class="s2">&quot;cosine&quot;</span><span class="p">:</span>
+        <span class="n">term_sent_matrix</span> <span class="o">=</span> <span class="n">vsm</span><span class="o">.</span><span class="n">Vectorizer</span><span class="p">(</span>
+            <span class="n">tf_type</span><span class="o">=</span><span class="s2">&quot;linear&quot;</span><span class="p">,</span> <span class="n">apply_idf</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">idf_type</span><span class="o">=</span><span class="s2">&quot;smooth&quot;</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">sents</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">edge_weighting</span> <span class="o">==</span> <span class="s2">&quot;jaccard&quot;</span><span class="p">:</span>
+        <span class="n">term_sent_matrix</span> <span class="o">=</span> <span class="n">vsm</span><span class="o">.</span><span class="n">Vectorizer</span><span class="p">(</span>
+            <span class="n">tf_type</span><span class="o">=</span><span class="s2">&quot;binary&quot;</span><span class="p">,</span> <span class="n">apply_idf</span><span class="o">=</span><span class="kc">False</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">sents</span><span class="p">)</span>
+    <span class="n">weights</span> <span class="o">=</span> <span class="p">(</span><span class="n">term_sent_matrix</span> <span class="o">*</span> <span class="n">term_sent_matrix</span><span class="o">.</span><span class="n">T</span><span class="p">)</span><span class="o">.</span><span class="n">A</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="n">n_sents</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>
+
+    <span class="n">graph</span> <span class="o">=</span> <span class="n">nx</span><span class="o">.</span><span class="n">Graph</span><span class="p">()</span>
+    <span class="n">graph</span><span class="o">.</span><span class="n">add_edges_from</span><span class="p">(</span>
+        <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="p">{</span><span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]})</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_sents</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_sents</span><span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">graph</span></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../index.html">
+    <img class="logo" src="../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../index.html">Documentation overview</a><ul>
+  <li><a href="../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

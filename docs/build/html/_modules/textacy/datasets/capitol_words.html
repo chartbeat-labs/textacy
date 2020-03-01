@@ -1,0 +1,422 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>textacy.datasets.capitol_words &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../../../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../../_static/doctools.js"></script>
+    <script type="text/javascript" src="../../../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+   
+  <link rel="stylesheet" href="../../../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <h1>Source code for textacy.datasets.capitol_words</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Capitol Words Congressional speeches</span>
+<span class="sd">------------------------------------</span>
+
+<span class="sd">A collection of ~11k (almost all) speeches given by the main protagonists of the</span>
+<span class="sd">2016 U.S. Presidential election that had previously served in the U.S. Congress --</span>
+<span class="sd">including Hillary Clinton, Bernie Sanders, Barack Obama, Ted Cruz, and John Kasich --</span>
+<span class="sd">from January 1996 through June 2016.</span>
+
+<span class="sd">Records include the following data:</span>
+
+<span class="sd">    - ``text``: Full text of the Congressperson&#39;s remarks.</span>
+<span class="sd">    - ``title``: Title of the speech, in all caps.</span>
+<span class="sd">    - ``date``: Date on which the speech was given, as an ISO-standard string.</span>
+<span class="sd">    - ``speaker_name``: First and last name of the speaker.</span>
+<span class="sd">    - ``speaker_party``: Political party of the speaker: &quot;R&quot; for Republican,</span>
+<span class="sd">      &quot;D&quot; for Democrat, &quot;I&quot; for Independent.</span>
+<span class="sd">    - ``congress``: Number of the Congress in which the speech was given: ranges</span>
+<span class="sd">      continuously between 104 and 114.</span>
+<span class="sd">    - ``chamber``: Chamber of Congress in which the speech was given: almost all</span>
+<span class="sd">      are either &quot;House&quot; or &quot;Senate&quot;, with a small number of &quot;Extensions&quot;.</span>
+
+<span class="sd">This dataset was derived from data provided by the (now defunct) Sunlight</span>
+<span class="sd">Foundation&#39;s `Capitol Words API &lt;http://sunlightlabs.github.io/Capitol-Words/&gt;`_.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">import</span> <span class="nn">itertools</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">pathlib</span>
+<span class="kn">import</span> <span class="nn">urllib.parse</span>
+<span class="kn">from</span> <span class="nn">typing</span> <span class="k">import</span> <span class="n">Iterable</span><span class="p">,</span> <span class="n">Optional</span><span class="p">,</span> <span class="n">Set</span><span class="p">,</span> <span class="n">Tuple</span><span class="p">,</span> <span class="n">Union</span>
+
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">constants</span><span class="p">,</span> <span class="n">utils</span>
+<span class="kn">from</span> <span class="nn">..</span> <span class="k">import</span> <span class="n">io</span> <span class="k">as</span> <span class="n">tio</span>
+<span class="kn">from</span> <span class="nn">.base</span> <span class="k">import</span> <span class="n">Dataset</span>
+
+<span class="n">LOGGER</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="n">NAME</span> <span class="o">=</span> <span class="s2">&quot;capitol_words&quot;</span>
+<span class="n">META</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;site_url&quot;</span><span class="p">:</span> <span class="s2">&quot;http://sunlightlabs.github.io/Capitol-Words/&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="p">(</span>
+        <span class="s2">&quot;Collection of ~11k speeches in the Congressional Record given by &quot;</span>
+        <span class="s2">&quot;notable U.S. politicians between Jan 1996 and Jun 2016.&quot;</span>
+    <span class="p">),</span>
+<span class="p">}</span>
+<span class="n">DOWNLOAD_ROOT</span> <span class="o">=</span> <span class="s2">&quot;https://github.com/bdewilde/textacy-data/releases/download/&quot;</span>
+
+
+<div class="viewcode-block" id="CapitolWords"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.capitol_words.CapitolWords">[docs]</a><span class="k">class</span> <span class="nc">CapitolWords</span><span class="p">(</span><span class="n">Dataset</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Stream a collection of Congressional speeches from a compressed json file on disk,</span>
+<span class="sd">    either as texts or text + metadata pairs.</span>
+
+<span class="sd">    Download the data (one time only!) from the textacy-data repo</span>
+<span class="sd">    (https://github.com/bdewilde/textacy-data), and save its contents to disk::</span>
+
+<span class="sd">        &gt;&gt;&gt; import textacy.datasets</span>
+<span class="sd">        &gt;&gt;&gt; ds = textacy.datasets.CapitolWords()</span>
+<span class="sd">        &gt;&gt;&gt; ds.download()</span>
+<span class="sd">        &gt;&gt;&gt; ds.info</span>
+<span class="sd">        {&#39;name&#39;: &#39;capitol_words&#39;,</span>
+<span class="sd">         &#39;site_url&#39;: &#39;http://sunlightlabs.github.io/Capitol-Words/&#39;,</span>
+<span class="sd">         &#39;description&#39;: &#39;Collection of ~11k speeches in the Congressional Record given by notable U.S. politicians between Jan 1996 and Jun 2016.&#39;}</span>
+
+<span class="sd">    Iterate over speeches as texts or records with both text and metadata::</span>
+
+<span class="sd">        &gt;&gt;&gt; for text in ds.texts(limit=3):</span>
+<span class="sd">        ...     print(text, end=&quot;\\n\\n&quot;)</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(limit=3):</span>
+<span class="sd">        ...     print(&quot;\\n{} ({})\\n{}&quot;.format(meta[&quot;title&quot;], meta[&quot;speaker_name&quot;], text))</span>
+
+<span class="sd">    Filter speeches by a variety of metadata fields and text length::</span>
+
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(speaker_name=&quot;Bernie Sanders&quot;, limit=3):</span>
+<span class="sd">        ...     print(&quot;\\n{}, {}\\n{}&quot;.format(meta[&quot;title&quot;], meta[&quot;date&quot;], text))</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(speaker_party=&quot;D&quot;, congress={110, 111, 112},</span>
+<span class="sd">        ...                          chamber=&quot;Senate&quot;, limit=3):</span>
+<span class="sd">        ...     print(meta[&quot;title&quot;], meta[&quot;speaker_name&quot;], meta[&quot;date&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; for text, meta in ds.records(speaker_name={&quot;Barack Obama&quot;, &quot;Hillary Clinton&quot;},</span>
+<span class="sd">        ...                              date_range=(&quot;2005-01-01&quot;, &quot;2005-12-31&quot;)):</span>
+<span class="sd">        ...     print(meta[&quot;title&quot;], meta[&quot;speaker_name&quot;], meta[&quot;date&quot;])</span>
+<span class="sd">        &gt;&gt;&gt; for text in ds.texts(min_len=50000):</span>
+<span class="sd">        ...     print(len(text))</span>
+
+<span class="sd">    Stream speeches into a :class:`textacy.Corpus &lt;textacy.corpus.Corpus&gt;`::</span>
+
+<span class="sd">        &gt;&gt;&gt; textacy.Corpus(&quot;en&quot;, data=ota.records(limit=100))</span>
+<span class="sd">        Corpus(100 docs; 70496 tokens)</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        data_dir: Path to directory on disk under which dataset is stored,</span>
+<span class="sd">            i.e. ``/path/to/data_dir/capitol_words``.</span>
+
+<span class="sd">    Attributes:</span>
+<span class="sd">        full_date_range: First and last dates for which speeches are available,</span>
+<span class="sd">            each as an ISO-formatted string (YYYY-MM-DD).</span>
+<span class="sd">        speaker_names: Full names of all speakers included in corpus, e.g. &quot;Bernie Sanders&quot;.</span>
+<span class="sd">        speaker_parties: All distinct political parties of speakers, e.g. &quot;R&quot;.</span>
+<span class="sd">        chambers: All distinct chambers in which speeches were given, e.g. &quot;House&quot;.</span>
+<span class="sd">        congresses: All distinct numbers of the congresses in which speeches were given, e.g. 114.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">full_date_range</span><span class="p">:</span> <span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;1996-01-01&quot;</span><span class="p">,</span> <span class="s2">&quot;2016-06-30&quot;</span><span class="p">)</span>
+    <span class="n">speaker_names</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+        <span class="s2">&quot;Barack Obama&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Bernie Sanders&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Hillary Clinton&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Jim Webb&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Joe Biden&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;John Kasich&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Joseph Biden&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Lincoln Chafee&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Lindsey Graham&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Marco Rubio&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Mike Pence&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Rand Paul&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Rick Santorum&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;Ted Cruz&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+    <span class="n">speaker_parties</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;D&quot;</span><span class="p">,</span> <span class="s2">&quot;I&quot;</span><span class="p">,</span> <span class="s2">&quot;R&quot;</span><span class="p">}</span>
+    <span class="n">chambers</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Extensions&quot;</span><span class="p">,</span> <span class="s2">&quot;House&quot;</span><span class="p">,</span> <span class="s2">&quot;Senate&quot;</span><span class="p">}</span>
+    <span class="n">congresses</span><span class="p">:</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="mi">104</span><span class="p">,</span> <span class="mi">105</span><span class="p">,</span> <span class="mi">106</span><span class="p">,</span> <span class="mi">107</span><span class="p">,</span> <span class="mi">108</span><span class="p">,</span> <span class="mi">109</span><span class="p">,</span> <span class="mi">110</span><span class="p">,</span> <span class="mi">111</span><span class="p">,</span> <span class="mi">112</span><span class="p">,</span> <span class="mi">113</span><span class="p">,</span> <span class="mi">114</span><span class="p">}</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_dir</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">pathlib</span><span class="o">.</span><span class="n">Path</span><span class="p">]</span> <span class="o">=</span> <span class="n">constants</span><span class="o">.</span><span class="n">DEFAULT_DATA_DIR</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="n">NAME</span><span class="p">),</span>
+    <span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">NAME</span><span class="p">,</span> <span class="n">meta</span><span class="o">=</span><span class="n">META</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">to_path</span><span class="p">(</span><span class="n">data_dir</span><span class="p">)</span><span class="o">.</span><span class="n">resolve</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span> <span class="o">=</span> <span class="s2">&quot;capitol-words-py3.json.gz&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="o">.</span><span class="n">joinpath</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">filepath</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Full path on disk for CapitolWords data as compressed json file.</span>
+<span class="sd">        ``None`` if file is not found, e.g. has not yet been downloaded.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">return</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="CapitolWords.download"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.capitol_words.CapitolWords.download">[docs]</a>    <span class="k">def</span> <span class="nf">download</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="p">,</span> <span class="n">force</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Download the data as a Python version-specific compressed json file and</span>
+<span class="sd">        save it to disk under the ``data_dir`` directory.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            force: If True, download the dataset, even if it already exists</span>
+<span class="sd">                on disk under ``data_dir``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">release_tag</span> <span class="o">=</span> <span class="s2">&quot;capitol_words_py3_v</span><span class="si">{data_version}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">data_version</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span>
+        <span class="n">url</span> <span class="o">=</span> <span class="n">urllib</span><span class="o">.</span><span class="n">parse</span><span class="o">.</span><span class="n">urljoin</span><span class="p">(</span><span class="n">DOWNLOAD_ROOT</span><span class="p">,</span> <span class="n">release_tag</span> <span class="o">+</span> <span class="s2">&quot;/&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">)</span>
+        <span class="n">tio</span><span class="o">.</span><span class="n">download_file</span><span class="p">(</span>
+            <span class="n">url</span><span class="p">,</span>
+            <span class="n">filename</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_filename</span><span class="p">,</span>
+            <span class="n">dirpath</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data_dir</span><span class="p">,</span>
+            <span class="n">force</span><span class="o">=</span><span class="n">force</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="o">.</span><span class="n">is_file</span><span class="p">():</span>
+            <span class="k">raise</span> <span class="ne">OSError</span><span class="p">(</span>
+                <span class="s2">&quot;dataset file </span><span class="si">{}</span><span class="s2"> not found;</span><span class="se">\n</span><span class="s2">&quot;</span>
+                <span class="s2">&quot;has the dataset been downloaded yet?&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">tio</span><span class="o">.</span><span class="n">read_json</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filepath</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;rt&quot;</span><span class="p">,</span> <span class="n">lines</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">record</span>
+
+    <span class="k">def</span> <span class="nf">_get_filters</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">speaker_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">speaker_party</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">chamber</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">congress</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">date_range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">min_len</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">min_len</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;`min_len` must be at least 1&quot;</span><span class="p">)</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span> <span class="o">&gt;=</span> <span class="n">min_len</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">date_range</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">date_range</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_and_clip_range</span><span class="p">(</span>
+                <span class="n">date_range</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">full_date_range</span><span class="p">,</span> <span class="n">val_type</span><span class="o">=</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">))</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="p">(</span>
+                    <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;date&quot;</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="n">date_range</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;date&quot;</span><span class="p">]</span> <span class="o">&lt;</span> <span class="n">date_range</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+        <span class="k">if</span> <span class="n">speaker_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">speaker_name</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_set_members</span><span class="p">(</span>
+                <span class="n">speaker_name</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">),</span> <span class="n">valid_vals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">speaker_names</span><span class="p">)</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;speaker_name&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">speaker_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">speaker_party</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">speaker_party</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_set_members</span><span class="p">(</span>
+                <span class="n">speaker_party</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">),</span> <span class="n">valid_vals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">speaker_parties</span><span class="p">)</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;speaker_party&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">speaker_party</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">chamber</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">chamber</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_set_members</span><span class="p">(</span>
+                <span class="n">chamber</span><span class="p">,</span> <span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">),</span> <span class="n">valid_vals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">chambers</span><span class="p">)</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;chamber&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">chamber</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">congress</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">congress</span> <span class="o">=</span> <span class="n">utils</span><span class="o">.</span><span class="n">validate_set_members</span><span class="p">(</span>
+                <span class="n">congress</span><span class="p">,</span> <span class="nb">int</span><span class="p">,</span> <span class="n">valid_vals</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">congresses</span><span class="p">)</span>
+            <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="k">lambda</span> <span class="n">record</span><span class="p">:</span> <span class="n">record</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;congress&quot;</span><span class="p">)</span> <span class="ow">in</span> <span class="n">congress</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">filters</span>
+
+    <span class="k">def</span> <span class="nf">_filtered_iter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filters</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">filters</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">if</span> <span class="nb">all</span><span class="p">(</span><span class="n">filter_</span><span class="p">(</span><span class="n">record</span><span class="p">)</span> <span class="k">for</span> <span class="n">filter_</span> <span class="ow">in</span> <span class="n">filters</span><span class="p">):</span>
+                    <span class="k">yield</span> <span class="n">record</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="bp">self</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">record</span>
+
+<div class="viewcode-block" id="CapitolWords.texts"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.capitol_words.CapitolWords.texts">[docs]</a>    <span class="k">def</span> <span class="nf">texts</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">speaker_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">speaker_party</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">chamber</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">congress</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">date_range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over speeches in this dataset, optionally filtering by a variety</span>
+<span class="sd">        of metadata and/or text length, and yield texts only,</span>
+<span class="sd">        in chronological order.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            speaker_name: Filter speeches by the speakers&#39; name;</span>
+<span class="sd">                see :attr:`CapitolWords.speaker_names`.</span>
+<span class="sd">            speaker_party: Filter speeches by the speakers&#39; party;</span>
+<span class="sd">                see :attr:`CapitolWords.speaker_parties`.</span>
+<span class="sd">            chamber: Filter speeches by the chamber in which they were given;</span>
+<span class="sd">                see :attr:`CapitolWords.chambers`.</span>
+<span class="sd">            congress: Filter speeches by the congress in which they were given;</span>
+<span class="sd">                see :attr:`CapitolWords.congresses`.</span>
+<span class="sd">            date_range: Filter speeches by the date on which they were given.</span>
+<span class="sd">                Both start and end date must be specified, but a null value for either</span>
+<span class="sd">                will be replaced by the min/max date available for the dataset.</span>
+<span class="sd">            min_len: Filter texts by the length (# characters) of their text content.</span>
+<span class="sd">            limit: Yield no more than ``limit`` texts that match all specified filters.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Full text of next (by chronological order) speech in dataset</span>
+<span class="sd">            passing all filter params.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any filtering options are invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_filters</span><span class="p">(</span>
+            <span class="n">speaker_name</span><span class="p">,</span> <span class="n">speaker_party</span><span class="p">,</span> <span class="n">chamber</span><span class="p">,</span> <span class="n">congress</span><span class="p">,</span> <span class="n">date_range</span><span class="p">,</span> <span class="n">min_len</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered_iter</span><span class="p">(</span><span class="n">filters</span><span class="p">),</span> <span class="n">limit</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">record</span><span class="p">[</span><span class="s2">&quot;text&quot;</span><span class="p">]</span></div>
+
+<div class="viewcode-block" id="CapitolWords.records"><a class="viewcode-back" href="../../../api_reference/datasets.html#textacy.datasets.capitol_words.CapitolWords.records">[docs]</a>    <span class="k">def</span> <span class="nf">records</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">speaker_name</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">speaker_party</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">chamber</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">congress</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Union</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Set</span><span class="p">[</span><span class="nb">int</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">date_range</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">min_len</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Iterable</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">]]:</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Iterate over speeches in this dataset, optionally filtering by a variety</span>
+<span class="sd">        of metadata and/or text length, and yield text + metadata pairs,</span>
+<span class="sd">        in chronological order.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            speaker_name: Filter speeches by the speakers&#39; name;</span>
+<span class="sd">                see :attr:`CapitolWords.speaker_names`.</span>
+<span class="sd">            speaker_party: Filter speeches by the speakers&#39; party;</span>
+<span class="sd">                see :attr:`CapitolWords.speaker_parties`.</span>
+<span class="sd">            chamber: Filter speeches by the chamber in which they were given;</span>
+<span class="sd">                see :attr:`CapitolWords.chambers`.</span>
+<span class="sd">            congress: Filter speeches by the congress in which they were given;</span>
+<span class="sd">                see :attr:`CapitolWords.congresses`.</span>
+<span class="sd">            date_range: Filter speeches by the date on which they were given.</span>
+<span class="sd">                Both start and end date must be specified, but a null value for either</span>
+<span class="sd">                will be replaced by the min/max date available for the dataset.</span>
+<span class="sd">            min_len: Filter speeches by the length (# characters) of their text content.</span>
+<span class="sd">            limit: Yield no more than ``limit`` speeches that match all specified filters.</span>
+
+<span class="sd">        Yields:</span>
+<span class="sd">            Full text of the next (by chronological order) speech in dataset</span>
+<span class="sd">            passing all filters, and its corresponding metadata.</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If any filtering options are invalid.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">filters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_filters</span><span class="p">(</span>
+            <span class="n">speaker_name</span><span class="p">,</span> <span class="n">speaker_party</span><span class="p">,</span> <span class="n">chamber</span><span class="p">,</span> <span class="n">congress</span><span class="p">,</span> <span class="n">date_range</span><span class="p">,</span> <span class="n">min_len</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">record</span> <span class="ow">in</span> <span class="n">itertools</span><span class="o">.</span><span class="n">islice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_filtered_iter</span><span class="p">(</span><span class="n">filters</span><span class="p">),</span> <span class="n">limit</span><span class="p">):</span>
+            <span class="k">yield</span> <span class="n">record</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;text&quot;</span><span class="p">),</span> <span class="n">record</span></div></div>
+</pre></div>
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../../../index.html">
+    <img class="logo" src="../../../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../getting_started/quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../../../index.html">Documentation overview</a><ul>
+  <li><a href="../../index.html">Module code</a><ul>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../../../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+    </div>
+
+    
+
+    
+  </body>
+</html>

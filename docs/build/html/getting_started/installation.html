@@ -1,0 +1,186 @@
+
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta charset="utf-8" />
+    <title>Installation &#8212; textacy 0.9.1 documentation</title>
+    <link rel="stylesheet" href="../_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="../_static/language_data.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="Quickstart" href="quickstart.html" />
+    <link rel="prev" title="textacy: NLP, before and after spaCy" href="../index.html" />
+   
+  <link rel="stylesheet" href="../_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          
+
+          <div class="body" role="main">
+            
+  <div class="section" id="installation">
+<span id="id1"></span><h1>Installation<a class="headerlink" href="#installation" title="Permalink to this headline">¶</a></h1>
+<p>The simplest way to install <code class="docutils literal notranslate"><span class="pre">textacy</span></code> is via <code class="docutils literal notranslate"><span class="pre">pip</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> pip install textacy
+</pre></div>
+</div>
+<p>or <code class="docutils literal notranslate"><span class="pre">conda</span></code>:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda install -c conda-forge textacy
+</pre></div>
+</div>
+<p>If you prefer — or are obliged — to do things the hard way, you can download
+and unzip the source <code class="docutils literal notranslate"><span class="pre">tar.gz</span></code> from  PyPi, then install manually:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> python setup.py install
+</pre></div>
+</div>
+<div class="section" id="dependencies">
+<span id="installation-dependencies"></span><h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<p>Given the breadth of functionality, <code class="docutils literal notranslate"><span class="pre">textacy</span></code> depends on a number of other
+Python packages. Most of these are typical components in the PyData stack,
+but a few are certainly more niche. One heavy dependency has been made optional.</p>
+<p>Specifically: To use visualization functionality, you’ll need <code class="docutils literal notranslate"><span class="pre">matplotlib</span></code> installed;
+you can do so via <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">textacy[viz]</span></code> or <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">matplotlib</span></code>.</p>
+</div>
+<div class="section" id="downloading-data">
+<span id="installation-downloading-data"></span><h2>Downloading Data<a class="headerlink" href="#downloading-data" title="Permalink to this headline">¶</a></h2>
+<p>For most uses of textacy, language-specific model data in spaCy is required.
+Fortunately, spaCy makes the process of getting this data easy and flexible;
+just follow <a class="reference external" href="https://spacy.io/docs/usage/models">the instructions in its docs</a>,
+which also includes a list of <a class="reference external" href="https://spacy.io/usage/models#section-available">currently-supported languages and their models</a>.</p>
+<p><strong>Note:</strong> If you install specific versions of a given language’s model data
+(e.g. “en_core_web_sm” instead of just “en”), you’ll want to create a shortcut link
+to the corresponding standard two-letter form of the language so that it will
+work as expected with textacy’s automatic language identification. For example:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> python -m spacy download en_core_web_sm
+<span class="gp">$</span> python -m spacy link en_core_web_sm en
+</pre></div>
+</div>
+<p>textacy itself features convenient access to several datasets comprised of
+thousands of text + metadata records, as well as a couple linguistic resources.
+Data can be downloaded via the <code class="docutils literal notranslate"><span class="pre">.download()</span></code> method on corresponding dataset/resource
+classes (see <a class="reference internal" href="../api_reference/datasets.html#api-reference-datasets"><span class="std std-ref">Datasets</span></a> and <a class="reference internal" href="../api_reference/resources.html#api-reference-resources"><span class="std std-ref">Resources</span></a> for details)
+or directly from the command line.</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> python -m textacy download capitol_words
+<span class="gp">$</span> python -m textacy download depeche_mood
+</pre></div>
+</div>
+<p>These commands download and save a compressed json file with ~11k speeches given by the
+main protagonists of the 2016 U.S. Presidential election, followed by a set of emotion
+lexicons in English and Italian with various word representations. For more information
+about particular datasets/resources use the <code class="docutils literal notranslate"><span class="pre">info</span></code> subcommand, or just run</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> python -m textacy --help
+</pre></div>
+</div>
+</div>
+</div>
+
+
+          </div>
+              <div class="related bottom">
+                &nbsp;
+  <nav id="rellinks">
+    <ul>
+        <li>
+          &larr;
+          <a href="../index.html" title="Previous document">textacy: NLP, before and after spaCy</a>
+        </li>
+        <li>
+          <a href="quickstart.html" title="Next document">Quickstart</a>
+          &rarr;
+        </li>
+    </ul>
+  </nav>
+              </div>
+          
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<p class="logo">
+  <a href="../index.html">
+    <img class="logo" src="../_static/textacy_logo.png" alt="Logo"/>
+    
+  </a>
+</p>
+
+
+
+
+
+
+<p>
+<iframe src="https://ghbtns.com/github-btn.html?user=chartbeat-labs&repo=textacy&type=watch&count=False&size=large&v=2"
+  allowtransparency="true" frameborder="0" scrolling="0" width="200px" height="35px"></iframe>
+</p>
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Installation</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#downloading-data">Downloading Data</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api_reference/root.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../changes.html">Changes</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../license.html">License</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="../index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="../index.html" title="previous chapter">textacy: NLP, before and after spaCy</a></li>
+      <li>Next: <a href="quickstart.html" title="next chapter">Quickstart</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3 id="searchlabel">Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="../search.html" method="get">
+      <input type="text" name="q" aria-labelledby="searchlabel" />
+      <input type="submit" value="Go" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2020 Chartbeat, Inc.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 2.2.0</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.12</a>
+      
+      |
+      <a href="../_sources/getting_started/installation.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>
