@@ -1,5 +1,30 @@
 ## Changes
 
+### 0.10.0 (in development)
+
+#### New:
+
+- Added a logo to textacy's documentation and social preview :page_with_curl:
+- Added type hints throughout the code base, for more expressive type indicators in docstrings and for static type checkers used by developers to code more effectively (PR #289)
+- Added a preprocessing function to normalize sequences of repeating characters (Issue #275)
+
+#### Changed:
+
+- Improved core `Corpus` functionality using recent additions to spacy (PR #285)
+  - Re-implemented `Corpus.save()` and `Corpus.load()` using spacy's new `DocBin` class, which resolved a few bugs/issues (Issue #254)
+  - Added `n_process` arg to `Corpus.add()` to set the number of parallel processes used when adding many items to a corpus, following spacy's updates to `nlp.pipe()` (Issue #277)
+  - Bumped minimum spaCy version from 2.0.12 => 2.2.0, accordingly
+- Added handling for zero-width whitespaces into `normalize_whitespace()` function (Issue #278)
+- Improved a couple rough spots in package administration:
+  - Moved package setup information into a declarative configuration file, in an attempt to keep up with evolving best practices for Python packaging
+  - Simplified the configuration and interoperability of sphinx + github pages for generating package documentation
+
+#### Fixed:
+
+- Fixed typo in ConceptNet docstring (Issue #280)
+- Trained and distributed a `LangIdentifier` model using `scikit-learn==0.22`, to prevent ambiguous errors when trying to load a file that didn't exist (Issues #291, #292)
+
+
 ### 0.9.1 (2019-09-03)
 
 #### Changed:

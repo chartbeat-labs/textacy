@@ -6,7 +6,7 @@
 .vscode/
 
 # distribution / packaging
-build/*
+build/
 dist/
 *.egg-info/
 .mypy_cache/
