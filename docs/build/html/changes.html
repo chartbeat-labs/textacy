@@ -4,7 +4,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Changes &#8212; textacy 0.9.1 documentation</title>
+    <title>Changes &#8212; textacy 0.10.0 documentation</title>
     <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
     <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
     <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
@@ -35,25 +35,62 @@
   <div class="section" id="changes">
 <h1>Changes<a class="headerlink" href="#changes" title="Permalink to this headline">¶</a></h1>
 <div class="section" id="id1">
-<h2>0.9.1 (2019-09-03)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<h2>0.10.0 (2020-03-01)<a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="new">
+<h3>New:<a class="headerlink" href="#new" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Added a logo to textacy’s documentation and social preview :page_with_curl:</p></li>
+<li><p>Added type hints throughout the code base, for more expressive type indicators in docstrings and for static type checkers used by developers to code more effectively (PR #289)</p></li>
+<li><p>Added a preprocessing function to normalize sequences of repeating characters (Issue #275)</p></li>
+</ul>
+</div>
 <div class="section" id="changed">
 <h3>Changed:<a class="headerlink" href="#changed" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Tweaked <code class="docutils literal notranslate"><span class="pre">TopicModel</span></code> class to work with newer versions of <code class="docutils literal notranslate"><span class="pre">scikit-learn</span></code>, and updated version requirements accordingly from <code class="docutils literal notranslate"><span class="pre">&gt;=0.18.0,&lt;0.21.0</span></code> to <code class="docutils literal notranslate"><span class="pre">&gt;=0.19</span></code></p></li>
+<li><p>Improved core <code class="docutils literal notranslate"><span class="pre">Corpus</span></code> functionality using recent additions to spacy (PR #285)</p>
+<ul>
+<li><p>Re-implemented <code class="docutils literal notranslate"><span class="pre">Corpus.save()</span></code> and <code class="docutils literal notranslate"><span class="pre">Corpus.load()</span></code> using spacy’s new <code class="docutils literal notranslate"><span class="pre">DocBin</span></code> class, which resolved a few bugs/issues (Issue #254)</p></li>
+<li><p>Added <code class="docutils literal notranslate"><span class="pre">n_process</span></code> arg to <code class="docutils literal notranslate"><span class="pre">Corpus.add()</span></code> to set the number of parallel processes used when adding many items to a corpus, following spacy’s updates to <code class="docutils literal notranslate"><span class="pre">nlp.pipe()</span></code> (Issue #277)</p></li>
+<li><p>Bumped minimum spaCy version from 2.0.12 =&gt; 2.2.0, accordingly</p></li>
+</ul>
+</li>
+<li><p>Added handling for zero-width whitespaces into <code class="docutils literal notranslate"><span class="pre">normalize_whitespace()</span></code> function (Issue #278)</p></li>
+<li><p>Improved a couple rough spots in package administration:</p>
+<ul>
+<li><p>Moved package setup information into a declarative configuration file, in an attempt to keep up with evolving best practices for Python packaging</p></li>
+<li><p>Simplified the configuration and interoperability of sphinx + github pages for generating package documentation</p></li>
+</ul>
+</li>
 </ul>
 </div>
 <div class="section" id="fixed">
 <h3>Fixed:<a class="headerlink" href="#fixed" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
-<li><p>Fixed residual bugs in the script for training language identification pipelines, then trained and released one using <code class="docutils literal notranslate"><span class="pre">scikit-learn==0.19</span></code> to prevent errors for users on that version</p></li>
+<li><p>Fixed typo in ConceptNet docstring (Issue #280)</p></li>
+<li><p>Trained and distributed a <code class="docutils literal notranslate"><span class="pre">LangIdentifier</span></code> model using <code class="docutils literal notranslate"><span class="pre">scikit-learn==0.22</span></code>, to prevent ambiguous errors when trying to load a file that didn’t exist (Issues #291, #292)</p></li>
 </ul>
 </div>
 </div>
 <div class="section" id="id2">
-<h2>0.9.0 (2019-09-03)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<h2>0.9.1 (2019-09-03)<a class="headerlink" href="#id2" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id3">
+<h3>Changed:<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Tweaked <code class="docutils literal notranslate"><span class="pre">TopicModel</span></code> class to work with newer versions of <code class="docutils literal notranslate"><span class="pre">scikit-learn</span></code>, and updated version requirements accordingly from <code class="docutils literal notranslate"><span class="pre">&gt;=0.18.0,&lt;0.21.0</span></code> to <code class="docutils literal notranslate"><span class="pre">&gt;=0.19</span></code></p></li>
+</ul>
+</div>
+<div class="section" id="id4">
+<h3>Fixed:<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<ul class="simple">
+<li><p>Fixed residual bugs in the script for training language identification pipelines, then trained and released one using <code class="docutils literal notranslate"><span class="pre">scikit-learn==0.19</span></code> to prevent errors for users on that version</p></li>
+</ul>
+</div>
+</div>
+<div class="section" id="id5">
+<h2>0.9.0 (2019-09-03)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
 <p>Note: <code class="docutils literal notranslate"><span class="pre">textacy</span></code> is now PY3-only! 🎉 Specifically, support for PY2.7 has been dropped, and the minimum PY3 version has been bumped to 3.6 (PR #261). See below for related changes.</p>
-<div class="section" id="new">
-<h3>New:<a class="headerlink" href="#new" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id6">
+<h3>New:<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p><strong>Added ``augmentation`` subpackage for basic text data augmentation</strong> (PR #268, #269)</p>
 <ul>
@@ -75,8 +112,8 @@
 <li><p><strong>Added ``UDHR`` dataset, a collection of translations of the Universal Declaration of Human Rights</strong> (PR #271)</p></li>
 </ul>
 </div>
-<div class="section" id="id3">
-<h3>Changed:<a class="headerlink" href="#id3" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id7">
+<h3>Changed:<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Updated and extended functionality previously blocked by PY2 compatibility while reducing code bloat / complexity</p>
 <ul>
@@ -99,8 +136,8 @@
 <li><p>Removed previously deprecated <code class="docutils literal notranslate"><span class="pre">textacy.io.split_record_fields()</span></code> function</p></li>
 </ul>
 </div>
-<div class="section" id="id4">
-<h3>Fixed:<a class="headerlink" href="#id4" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id8">
+<h3>Fixed:<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Fixed a regex for cleaning up crufty terms to prevent catastrophic backtracking in certain edge cases (true story: this bug was encountered in <em>production code</em>, and ruined my day)</p></li>
 <li><p>Fixed bad handling of edge cases in sCAKE keyterm extraction (Issue #270)</p></li>
@@ -112,8 +149,8 @@
 <p>Thanks much to &#64;hugoabonizio for the contribution. 🤝</p>
 </div>
 </div>
-<div class="section" id="id5">
-<h2>0.8.0 (2019-07-14)<a class="headerlink" href="#id5" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id9">
+<h2>0.8.0 (2019-07-14)<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="new-and-changed">
 <h3>New and Changed:<a class="headerlink" href="#new-and-changed" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
@@ -164,15 +201,15 @@
 <li><p>Removed deprecated functions with direct replacements: <code class="docutils literal notranslate"><span class="pre">io.utils.get_filenames()</span></code> and <code class="docutils literal notranslate"><span class="pre">spacier.components.merge_entities()</span></code></p></li>
 </ul>
 </div>
-<div class="section" id="id6">
-<h3>Contributors:<a class="headerlink" href="#id6" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id10">
+<h3>Contributors:<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
 <p>Huge thanks to &#64;kjoshi and &#64;zf109 for the PRs! 🙌</p>
 </div>
 </div>
-<div class="section" id="id7">
-<h2>0.7.1 (2019-06-25)<a class="headerlink" href="#id7" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id8">
-<h3>New:<a class="headerlink" href="#id8" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id11">
+<h2>0.7.1 (2019-06-25)<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id12">
+<h3>New:<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added a default, built-in language identification classifier that’s moderately fast, moderately accurate, and covers a relatively large number of languages [PR #247]</p>
 <ul>
@@ -184,8 +221,8 @@
 <li><p>Added <code class="docutils literal notranslate"><span class="pre">preprocess.normalize_unicode()</span></code> function to transform unicode characters into their canonical forms; this is a less-intensive consolation prize for the previously-removed <code class="docutils literal notranslate"><span class="pre">fix_unicode()</span></code> function</p></li>
 </ul>
 </div>
-<div class="section" id="id9">
-<h3>Changed:<a class="headerlink" href="#id9" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id13">
+<h3>Changed:<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Enabled loading blank spaCy <code class="docutils literal notranslate"><span class="pre">Language</span></code> pipelines (tokenization only – no model-based tagging, parsing, etc.) via <code class="docutils literal notranslate"><span class="pre">load_spacy_lang(name,</span> <span class="pre">allow_blank=True)</span></code> for use cases that don’t rely on annotations; disabled by default to avoid unwelcome surprises</p></li>
 <li><p>Changed inclusion/exclusion and de-duplication of entities and ngrams in <code class="docutils literal notranslate"><span class="pre">to_terms_list()</span></code> [Issues #169, #179]</p>
@@ -207,17 +244,17 @@
 </li>
 </ul>
 </div>
-<div class="section" id="id10">
-<h3>Fixed:<a class="headerlink" href="#id10" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id14">
+<h3>Fixed:<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>The <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> previously added to <code class="docutils literal notranslate"><span class="pre">preprocess.fix_unicode()</span></code> is now <em>raised</em> rather than returned [Issue #243]</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id11">
-<h2>0.7.0 (2019-05-13)<a class="headerlink" href="#id11" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id12">
-<h3>New and Changed:<a class="headerlink" href="#id12" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id15">
+<h2>0.7.0 (2019-05-13)<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id16">
+<h3>New and Changed:<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p><strong>Removed textacy.Doc, and split its functionality into two parts</strong></p>
 <ul>
@@ -320,8 +357,8 @@ for access to their full set of custom extension functionality.</p></li>
 </li>
 </ul>
 </div>
-<div class="section" id="id13">
-<h3>Fixed:<a class="headerlink" href="#id13" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id17">
+<h3>Fixed:<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>The progress bar during an HTTP download now always closes, preventing weird
 nesting issues if another bar is subsequently displayed.</p></li>
@@ -333,10 +370,10 @@ over the values, which was confusing; now, a logical OR is always performed.</p>
 </ul>
 </div>
 </div>
-<div class="section" id="id14">
-<h2>0.6.3 (2019-03-23)<a class="headerlink" href="#id14" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id15">
-<h3>New:<a class="headerlink" href="#id15" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id18">
+<h2>0.6.3 (2019-03-23)<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id19">
+<h3>New:<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added a proper contributing guide and code of conduct, as well as separate
 GitHub issue templates for different user situations. This should help folks
@@ -349,8 +386,8 @@ and the Travis CI setup, making for a faster and better development experience.<
 <li><p>Confirmed and enabled compatibility with v2.1+ of <code class="docutils literal notranslate"><span class="pre">spacy</span></code>. :dizzy:</p></li>
 </ul>
 </div>
-<div class="section" id="id16">
-<h3>Changed:<a class="headerlink" href="#id16" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id20">
+<h3>Changed:<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Improved the <code class="docutils literal notranslate"><span class="pre">Wikipedia</span></code> dataset class in a variety of ways: it can now read
 Wikinews db dumps; access records in namespaces other than the usual “0”
@@ -373,8 +410,8 @@ when <code class="docutils literal notranslate"><span class="pre">spacy</span></
 more readable, but they are pleasingly consistent.</p></li>
 </ul>
 </div>
-<div class="section" id="id17">
-<h3>Fixed:<a class="headerlink" href="#id17" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id21">
+<h3>Fixed:<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Fixed bad behavior of <code class="docutils literal notranslate"><span class="pre">key_terms_from_semantic_network()</span></code>, where an error
 would be raised if no suitable key terms could be found; now, an empty list
@@ -388,15 +425,15 @@ seemingly caused by an issue in <code class="docutils literal notranslate"><span
 docs in “binary” format. [Issue #228, PR #229]</p></li>
 </ul>
 </div>
-<div class="section" id="id18">
-<h3>Contributors:<a class="headerlink" href="#id18" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id22">
+<h3>Contributors:<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h3>
 <p>Many thanks to &#64;abevieiramota, &#64;ckot, &#64;Jude188, and &#64;digest0r for their help!</p>
 </div>
 </div>
-<div class="section" id="id19">
-<h2>0.6.2 (2018-07-19)<a class="headerlink" href="#id19" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id20">
-<h3>Changed:<a class="headerlink" href="#id20" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id23">
+<h2>0.6.2 (2018-07-19)<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id24">
+<h3>Changed:<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Add a <code class="docutils literal notranslate"><span class="pre">spacier.util</span></code> module, and add / reorganize relevant functionality</p>
 <ul>
@@ -419,8 +456,8 @@ ReadTheDocs to successfully build <code class="docutils literal notranslate"><sp
 <li><p>Minor improvements/updates to documentation</p></li>
 </ul>
 </div>
-<div class="section" id="id21">
-<h3>Fixed:<a class="headerlink" href="#id21" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id25">
+<h3>Fixed:<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Add missing return statement in deprecated <code class="docutils literal notranslate"><span class="pre">text_stats.flesch_readability_ease()</span></code>
 function (Issue #191)</p></li>
@@ -431,10 +468,10 @@ function (Issue #191)</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id22">
-<h2>0.6.1 (2018-04-11)<a class="headerlink" href="#id22" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id23">
-<h3>New:<a class="headerlink" href="#id23" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id26">
+<h2>0.6.1 (2018-04-11)<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id27">
+<h3>New:<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p><strong>Add a new spacier sub-package for spaCy-oriented functionality</strong> (#168, #187)</p>
 <ul>
@@ -448,8 +485,8 @@ deprecated; it will be removed in v0.7.0.</p></li>
 </li>
 </ul>
 </div>
-<div class="section" id="id24">
-<h3>Changed:<a class="headerlink" href="#id24" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id28">
+<h3>Changed:<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Update the readme, usage, and API reference docs to be clearer and (I hope)
 more useful. (#186)</p></li>
@@ -464,8 +501,8 @@ doc’s addition is logged; at the info level, only one message per batch
 of documents is logged. (#183)</p></li>
 </ul>
 </div>
-<div class="section" id="id25">
-<h3>Fixed:<a class="headerlink" href="#id25" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id29">
+<h3>Fixed:<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Fix two breaking typos in <code class="docutils literal notranslate"><span class="pre">extract.direct_quotations()</span></code>. (issue #177)</p></li>
 <li><p>Prevent crashes when adding non-parsed documents to a <code class="docutils literal notranslate"><span class="pre">Corpus</span></code>. (#180)</p></li>
@@ -475,17 +512,17 @@ functionality as it was <em>before</em> the changes in v0.6.0. (#189)</p></li>
 the problematic kwarg for consistency with related functions. (#190)</p></li>
 </ul>
 </div>
-<div class="section" id="id26">
-<h3>Contributors:<a class="headerlink" href="#id26" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id30">
+<h3>Contributors:<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h3>
 <p>Big thanks to &#64;sammous, &#64;dixiekong (nice name!), and &#64;SandyRogers for the pull
 requests, and many more for pointing out various bugs and the rougher edges /
 unsupported use cases of this package.</p>
 </div>
 </div>
-<div class="section" id="id27">
-<h2>0.6.0 (2018-02-25)<a class="headerlink" href="#id27" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id28">
-<h3>Changed:<a class="headerlink" href="#id28" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id31">
+<h2>0.6.0 (2018-02-25)<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id32">
+<h3>Changed:<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h3>
 <ul>
 <li><p><strong>Rename, refactor, and extend I/O functionality</strong> (PR #151)</p>
 <ul class="simple">
@@ -563,8 +600,8 @@ run faster, they’re more informative in failure, and they’re easier to exten
 </li>
 </ul>
 </div>
-<div class="section" id="id29">
-<h3>Fixed:<a class="headerlink" href="#id29" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id33">
+<h3>Fixed:<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Fixed an issue where existing metadata associated with a spacy Doc was being
 overwritten with an empty dict when using it to initialize a textacy Doc.
@@ -577,10 +614,10 @@ object links scattered throughout the docs got fixed.</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id30">
-<h2>0.5.0 (2017-12-04)<a class="headerlink" href="#id30" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id31">
-<h3>Changed:<a class="headerlink" href="#id31" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id34">
+<h2>0.5.0 (2017-12-04)<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id35">
+<h3>Changed:<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p><strong>Bumped version requirement for spaCy from &lt; 2.0 to &gt;= 2.0</strong> — textacy no longer
 works with spaCy 1.x! It’s worth the upgrade, though. v2.0’s new features and
@@ -634,8 +671,8 @@ use <code class="docutils literal notranslate"><span class="pre">TextStats(doc).
 </li>
 </ul>
 </div>
-<div class="section" id="id32">
-<h3>Fixed:<a class="headerlink" href="#id32" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id36">
+<h3>Fixed:<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>In certain situations, the text of a spaCy span was being returned without
 whitespace between tokens; that has been avoided in textacy, and the source bug
@@ -649,10 +686,10 @@ now, all kwargs get to their intended destinations.</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id33">
-<h2>0.4.2 (2017-11-28)<a class="headerlink" href="#id33" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id34">
-<h3>New:<a class="headerlink" href="#id34" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id37">
+<h2>0.4.2 (2017-11-28)<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id38">
+<h3>New:<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added a CLI for downloading <code class="docutils literal notranslate"><span class="pre">textacy</span></code>-related data, inspired by the <code class="docutils literal notranslate"><span class="pre">spaCy</span></code>
 equivalent. It’s <em>temporarily</em> undocumented, but to see available commands and
@@ -665,8 +702,8 @@ they are being called under the hood from the command line.</p></li>
 </li>
 </ul>
 </div>
-<div class="section" id="id35">
-<h3>Changed:<a class="headerlink" href="#id35" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id39">
+<h3>Changed:<a class="headerlink" href="#id39" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Made usage of <code class="docutils literal notranslate"><span class="pre">networkx</span></code> v2.0-compatible, and therefore dropped the &lt;2.0
 version requirement on that dependency. Upgrade as you please! (#131)</p></li>
@@ -674,8 +711,8 @@ version requirement on that dependency. Upgrade as you please! (#131)</p></li>
 and interpret its matches. (#128)</p></li>
 </ul>
 </div>
-<div class="section" id="id36">
-<h3>Fixed:<a class="headerlink" href="#id36" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id40">
+<h3>Fixed:<a class="headerlink" href="#id40" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Fixed caching of counts on <code class="docutils literal notranslate"><span class="pre">textacy.Doc</span></code> instance-specific, rather than
 shared by all instances of the class. Oops.</p></li>
@@ -689,15 +726,15 @@ and omitted the RedditComments dataset. (#129)</p></li>
 any data. (#143)</p></li>
 </ul>
 </div>
-<div class="section" id="id37">
-<h3>Contributors:<a class="headerlink" href="#id37" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id41">
+<h3>Contributors:<a class="headerlink" href="#id41" title="Permalink to this headline">¶</a></h3>
 <p>Many thanks to &#64;asifm, &#64;harryhoch, and &#64;mdlynch37 for submitting PRs!</p>
 </div>
 </div>
-<div class="section" id="id38">
-<h2>0.4.1 (2017-07-27)<a class="headerlink" href="#id38" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id39">
-<h3>Changed:<a class="headerlink" href="#id39" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id42">
+<h2>0.4.1 (2017-07-27)<a class="headerlink" href="#id42" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id43">
+<h3>Changed:<a class="headerlink" href="#id43" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added key classes to the top-level <code class="docutils literal notranslate"><span class="pre">textacy</span></code> imports, for convenience:</p>
 <ul>
@@ -709,8 +746,8 @@ any data. (#143)</p></li>
 <li><p>Added tests for <code class="docutils literal notranslate"><span class="pre">textacy.Doc</span></code> and updated the README’s usage example</p></li>
 </ul>
 </div>
-<div class="section" id="id40">
-<h3>Fixed:<a class="headerlink" href="#id40" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id44">
+<h3>Fixed:<a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added explicit encoding when opening Wikipedia database files in text mode to
 resolve an issue when doing so without encoding on Windows (PR #118)</p></li>
@@ -719,15 +756,15 @@ rather than the <code class="docutils literal notranslate"><span class="pre">vsm
 <li><p>Fixed mishandling of a couple optional args in <code class="docutils literal notranslate"><span class="pre">Doc.to_terms_list</span></code></p></li>
 </ul>
 </div>
-<div class="section" id="id41">
-<h3>Contributors:<a class="headerlink" href="#id41" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id45">
+<h3>Contributors:<a class="headerlink" href="#id45" title="Permalink to this headline">¶</a></h3>
 <p>Thanks to &#64;minketeer and &#64;Gregory-Howard for the fixes!</p>
 </div>
 </div>
-<div class="section" id="id42">
-<h2>0.4.0 (2017-06-21)<a class="headerlink" href="#id42" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id43">
-<h3>New and Changed:<a class="headerlink" href="#id43" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id46">
+<h2>0.4.0 (2017-06-21)<a class="headerlink" href="#id46" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id47">
+<h3>New and Changed:<a class="headerlink" href="#id47" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Refactored and expanded built-in <code class="docutils literal notranslate"><span class="pre">corpora</span></code>, now called <code class="docutils literal notranslate"><span class="pre">datasets</span></code> (PR #112)</p>
 <ul>
@@ -801,8 +838,8 @@ conda-forge (see above).</p></li>
 </li>
 </ul>
 </div>
-<div class="section" id="id44">
-<h3>Fixed:<a class="headerlink" href="#id44" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id48">
+<h3>Fixed:<a class="headerlink" href="#id48" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Fixed the check for overlap between named entities and unigrams in the
 <code class="docutils literal notranslate"><span class="pre">Doc.to_terms_list()</span></code> method (PR #111)</p></li>
@@ -819,16 +856,16 @@ a bug per sé, but certainly some much-needed housecleaning</p></li>
 <li><p>Added a note to the docs about expectations for bytes vs. unicode text (PR #103)</p></li>
 </ul>
 </div>
-<div class="section" id="id45">
-<h3>Contributors:<a class="headerlink" href="#id45" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id49">
+<h3>Contributors:<a class="headerlink" href="#id49" title="Permalink to this headline">¶</a></h3>
 <p>Thanks to &#64;henridwyer, &#64;rolando, &#64;pavlin99th, and &#64;kyocum for their contributions!
 :raised_hands:</p>
 </div>
 </div>
-<div class="section" id="id46">
-<h2>0.3.4 (2017-04-17)<a class="headerlink" href="#id46" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id47">
-<h3>New and Changed:<a class="headerlink" href="#id47" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id50">
+<h2>0.3.4 (2017-04-17)<a class="headerlink" href="#id50" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id51">
+<h3>New and Changed:<a class="headerlink" href="#id51" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Improved and expanded calculation of basic counts and readability statistics
 in <code class="docutils literal notranslate"><span class="pre">text_stats</span></code> module.</p>
@@ -872,8 +909,8 @@ is displayed and the conversion is performed automatically, for now.</p></li>
 <li><p>A MANIFEST.in file was added to include docs, tests, and distribution files in the source distribution. This is just good practice. (PR #65)</p></li>
 </ul>
 </div>
-<div class="section" id="id48">
-<h3>Fixed:<a class="headerlink" href="#id48" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id52">
+<h3>Fixed:<a class="headerlink" href="#id52" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Known acronym-definition pairs are now properly handled in
 <code class="docutils literal notranslate"><span class="pre">extract.acronyms_and_definitions()</span></code> (Issue #61)</p></li>
@@ -885,15 +922,15 @@ when the lang parameter is specified as a full spacy model name.</p></li>
 <li><p>Replaced several leftover print statements with proper logging functions.</p></li>
 </ul>
 </div>
-<div class="section" id="id49">
-<h3>Contributors:<a class="headerlink" href="#id49" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id53">
+<h3>Contributors:<a class="headerlink" href="#id53" title="Permalink to this headline">¶</a></h3>
 <p>Big thanks to &#64;oroszgy, &#64;rolando, &#64;covuworie, and &#64;RolandColored for the pull requests!</p>
 </div>
 </div>
-<div class="section" id="id50">
-<h2>0.3.3 (2017-02-10)<a class="headerlink" href="#id50" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id51">
-<h3>New and Changed:<a class="headerlink" href="#id51" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id54">
+<h2>0.3.3 (2017-02-10)<a class="headerlink" href="#id54" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id55">
+<h3>New and Changed:<a class="headerlink" href="#id55" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added a consistent <code class="docutils literal notranslate"><span class="pre">normalize</span></code> param to functions and methods that require
 token/span text normalization. Typically, it takes one of the following values:
@@ -924,8 +961,8 @@ unexpected behavior, such as passing <code class="docutils literal notranslate">
 entities back in the terms list.</p></li>
 </ul>
 </div>
-<div class="section" id="id52">
-<h3>Fixed:<a class="headerlink" href="#id52" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id56">
+<h3>Fixed:<a class="headerlink" href="#id56" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">keyterms.sgrank()</span></code> no longer crashes if a term is missing from <code class="docutils literal notranslate"><span class="pre">idfs</span></code> mapping.
 (&#64;jeremybmerrill, issue #53)</p></li>
@@ -936,10 +973,10 @@ from spaCy. (&#64;mlehl88, issue #58)</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id53">
-<h2>0.3.2 (2016-11-15)<a class="headerlink" href="#id53" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id54">
-<h3>New and Changed:<a class="headerlink" href="#id54" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id57">
+<h2>0.3.2 (2016-11-15)<a class="headerlink" href="#id57" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id58">
+<h3>New and Changed:<a class="headerlink" href="#id58" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Preliminary inclusion of custom spaCy pipelines</p>
 <ul>
@@ -969,27 +1006,27 @@ representation of constituent tokens for all <code class="docutils literal notra
 </ul>
 </div>
 </div>
-<div class="section" id="id55">
-<h2>0.3.1 (2016-10-19)<a class="headerlink" href="#id55" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id56">
-<h3>Changed:<a class="headerlink" href="#id56" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id59">
+<h2>0.3.1 (2016-10-19)<a class="headerlink" href="#id59" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id60">
+<h3>Changed:<a class="headerlink" href="#id60" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Updated spaCy dependency to the latest v1.0.1; set a floor on other dependencies’
 versions to make sure everyone’s running reasonably up-to-date code</p></li>
 </ul>
 </div>
-<div class="section" id="id57">
-<h3>Fixed:<a class="headerlink" href="#id57" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id61">
+<h3>Fixed:<a class="headerlink" href="#id61" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Fixed incorrect kwarg in <code class="docutils literal notranslate"><span class="pre">sgrank</span></code> ‘s call to <code class="docutils literal notranslate"><span class="pre">extract.ngrams()</span></code> (&#64;patcollis34, issue #44)</p></li>
 <li><p>Fixed import for <code class="docutils literal notranslate"><span class="pre">cachetool</span></code> ‘s <code class="docutils literal notranslate"><span class="pre">hashkey</span></code>, which changed in the v2.0 (&#64;gramonov, issue #45)</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id58">
-<h2>0.3.0 (2016-08-23)<a class="headerlink" href="#id58" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id59">
-<h3>New and Changed:<a class="headerlink" href="#id59" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id62">
+<h2>0.3.0 (2016-08-23)<a class="headerlink" href="#id62" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id63">
+<h3>New and Changed:<a class="headerlink" href="#id63" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Refactored and streamlined <code class="docutils literal notranslate"><span class="pre">TextDoc</span></code>; changed name to <code class="docutils literal notranslate"><span class="pre">Doc</span></code></p>
 <ul>
@@ -1078,10 +1115,10 @@ the code base</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id60">
-<h2>0.2.8 (2016-08-03)<a class="headerlink" href="#id60" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id61">
-<h3>New:<a class="headerlink" href="#id61" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id64">
+<h2>0.2.8 (2016-08-03)<a class="headerlink" href="#id64" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id65">
+<h3>New:<a class="headerlink" href="#id65" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added two new corpora!</p>
 <ul>
@@ -1099,8 +1136,8 @@ CapitolWords that can be easily recreated by filtering CapitolWords by
 </li>
 </ul>
 </div>
-<div class="section" id="id62">
-<h3>Changed:<a class="headerlink" href="#id62" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id66">
+<h3>Changed:<a class="headerlink" href="#id66" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Refactored and improved <code class="docutils literal notranslate"><span class="pre">fileio</span></code> subpackage</p>
 <ul>
@@ -1139,8 +1176,8 @@ for converting between string types</p></li>
 </li>
 </ul>
 </div>
-<div class="section" id="id63">
-<h3>Fixed:<a class="headerlink" href="#id63" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id67">
+<h3>Fixed:<a class="headerlink" href="#id67" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Fixed document(s) removal from <code class="docutils literal notranslate"><span class="pre">TextCorpus</span></code> objects, including correct decrementing
 of <code class="docutils literal notranslate"><span class="pre">.n_docs</span></code>, <code class="docutils literal notranslate"><span class="pre">.n_sents</span></code>, and <code class="docutils literal notranslate"><span class="pre">.n_tokens</span></code> attributes (&#64;michelleful #29)</p></li>
@@ -1150,10 +1187,10 @@ which was bug-like</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id64">
-<h2>0.2.5 (2016-07-14)<a class="headerlink" href="#id64" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id65">
-<h3>Fixed:<a class="headerlink" href="#id65" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id68">
+<h2>0.2.5 (2016-07-14)<a class="headerlink" href="#id68" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id69">
+<h3>Fixed:<a class="headerlink" href="#id69" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added (missing) <code class="docutils literal notranslate"><span class="pre">pyemd</span></code> and <code class="docutils literal notranslate"><span class="pre">python-levenshtein</span></code> dependencies to requirements
 and setup files</p></li>
@@ -1162,10 +1199,10 @@ inability to take unicode as input (thanks to &#64;robclewley, issue #25)</p></l
 </ul>
 </div>
 </div>
-<div class="section" id="id66">
-<h2>0.2.4 (2016-07-14)<a class="headerlink" href="#id66" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id67">
-<h3>New and Changed:<a class="headerlink" href="#id67" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id70">
+<h2>0.2.4 (2016-07-14)<a class="headerlink" href="#id70" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id71">
+<h3>New and Changed:<a class="headerlink" href="#id71" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>New features for <code class="docutils literal notranslate"><span class="pre">TextDoc</span></code> and <code class="docutils literal notranslate"><span class="pre">TextCorpus</span></code> classes</p>
 <ul>
@@ -1202,17 +1239,17 @@ the still-orphaned <code class="docutils literal notranslate"><span class="pre">
 <li><p>Added <code class="docutils literal notranslate"><span class="pre">most_discriminating_terms()</span></code> function to <code class="docutils literal notranslate"><span class="pre">keyterms</span></code> module to take a collection of documents split into two exclusive groups and compute the most discriminating terms for group1-and-not-group2 as well as group2-and-not-group1</p></li>
 </ul>
 </div>
-<div class="section" id="id68">
-<h3>Fixed:<a class="headerlink" href="#id68" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id72">
+<h3>Fixed:<a class="headerlink" href="#id72" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>fixed variable name error in docs usage example (thanks to &#64;licyeus, PR #23)</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id69">
-<h2>0.2.3 (2016-06-20)<a class="headerlink" href="#id69" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id70">
-<h3>New and Changed:<a class="headerlink" href="#id70" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id73">
+<h2>0.2.3 (2016-06-20)<a class="headerlink" href="#id73" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id74">
+<h3>New and Changed:<a class="headerlink" href="#id74" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added <code class="docutils literal notranslate"><span class="pre">corpora.RedditReader()</span></code> class for streaming Reddit comments from disk,
 with <code class="docutils literal notranslate"><span class="pre">.texts()</span></code> method for a stream of plaintext comments and <code class="docutils literal notranslate"><span class="pre">.comments()</span></code>
@@ -1228,8 +1265,8 @@ also added tests to ensure it doesn’t get stale</p></li>
 for <code class="docutils literal notranslate"><span class="pre">viz</span></code></p></li>
 </ul>
 </div>
-<div class="section" id="id71">
-<h3>Fixed:<a class="headerlink" href="#id71" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id75">
+<h3>Fixed:<a class="headerlink" href="#id75" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">textacy.preprocess.preprocess_text()</span></code> is now, once again, imported at the top
 level, so easily reachable via <code class="docutils literal notranslate"><span class="pre">textacy.preprocess_text()</span></code> (&#64;bretdabaker #14)</p></li>
@@ -1238,10 +1275,10 @@ level, so easily reachable via <code class="docutils literal notranslate"><span 
 </ul>
 </div>
 </div>
-<div class="section" id="id72">
-<h2>0.2.2 (2016-05-05)<a class="headerlink" href="#id72" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id73">
-<h3>New and Changed:<a class="headerlink" href="#id73" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id76">
+<h2>0.2.2 (2016-05-05)<a class="headerlink" href="#id76" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id77">
+<h3>New and Changed:<a class="headerlink" href="#id77" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added a <code class="docutils literal notranslate"><span class="pre">viz</span></code> subpackage, with two types of plots (so far):</p>
 <ul>
@@ -1279,8 +1316,8 @@ or multi-word strings by stripping leading/trailing junk chars, handling
 dangling parens and odd hyphenation, etc.</p></li>
 </ul>
 </div>
-<div class="section" id="id74">
-<h3>Fixed:<a class="headerlink" href="#id74" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id78">
+<h3>Fixed:<a class="headerlink" href="#id78" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">textstats.readability_stats()</span></code> now correctly gets the number of words in
 a doc from its generator function (&#64;gryBox #8)</p></li>
@@ -1292,10 +1329,10 @@ param is not optional</p></li>
 </ul>
 </div>
 </div>
-<div class="section" id="id75">
-<h2>0.2.0 (2016-04-11)<a class="headerlink" href="#id75" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id76">
-<h3>New and Changed:<a class="headerlink" href="#id76" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id79">
+<h2>0.2.0 (2016-04-11)<a class="headerlink" href="#id79" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id80">
+<h3>New and Changed:<a class="headerlink" href="#id80" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added <code class="docutils literal notranslate"><span class="pre">representations</span></code> subpackage; includes modules for network and vector
 space model (VSM) document and corpus representations</p>
@@ -1332,8 +1369,8 @@ and ignoring invisible files</p></li>
 <li><p>Imports in <code class="docutils literal notranslate"><span class="pre">__init__.py</span></code> files for main and subpackages now explicit</p></li>
 </ul>
 </div>
-<div class="section" id="id77">
-<h3>Fixed:<a class="headerlink" href="#id77" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id81">
+<h3>Fixed:<a class="headerlink" href="#id81" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">textstats.readability_stats()</span></code> no longer filters out stop words (&#64;henningko #7)</p></li>
 <li><p>Wikipedia article processing now recursively removes nested markup</p></li>
@@ -1344,10 +1381,10 @@ renaming of the associated function from <code class="docutils literal notransla
 </ul>
 </div>
 </div>
-<div class="section" id="id78">
-<h2>0.1.4 (2016-02-26)<a class="headerlink" href="#id78" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id79">
-<h3>New:<a class="headerlink" href="#id79" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id82">
+<h2>0.1.4 (2016-02-26)<a class="headerlink" href="#id82" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id83">
+<h3>New:<a class="headerlink" href="#id83" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added <code class="docutils literal notranslate"><span class="pre">corpora</span></code> subpackage with <code class="docutils literal notranslate"><span class="pre">wikipedia.py</span></code> module; functions for
 streaming pages from a Wikipedia db dump as plain text or structured data</p></li>
@@ -1362,10 +1399,10 @@ disk in common formats</p>
 </ul>
 </div>
 </div>
-<div class="section" id="id80">
-<h2>0.1.3 (2016-02-22)<a class="headerlink" href="#id80" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id81">
-<h3>New:<a class="headerlink" href="#id81" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id84">
+<h2>0.1.3 (2016-02-22)<a class="headerlink" href="#id84" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="id85">
+<h3>New:<a class="headerlink" href="#id85" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Added <code class="docutils literal notranslate"><span class="pre">export.py</span></code> module for exporting textacy/spacy objects into “third-party”
 formats; so far, just gensim and conll-u</p></li>
@@ -1374,15 +1411,15 @@ formats; so far, just gensim and conll-u</p></li>
 into single tokens within a <code class="docutils literal notranslate"><span class="pre">spacy.Doc</span></code>, uses Spacy’s recent implementation</p></li>
 </ul>
 </div>
-<div class="section" id="id82">
-<h3>Changed:<a class="headerlink" href="#id82" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id86">
+<h3>Changed:<a class="headerlink" href="#id86" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Renamed <code class="docutils literal notranslate"><span class="pre">extract.noun_phrases()</span></code> to <code class="docutils literal notranslate"><span class="pre">extract.noun_chunks()</span></code> to match Spacy’s API</p></li>
 <li><p>Changed extract functions to generators, rather than returning lists</p></li>
 </ul>
 </div>
-<div class="section" id="id83">
-<h3>Fixed:<a class="headerlink" href="#id83" title="Permalink to this headline">¶</a></h3>
+<div class="section" id="id87">
+<h3>Fixed:<a class="headerlink" href="#id87" title="Permalink to this headline">¶</a></h3>
 <ul class="simple">
 <li><p>Whitespace tokens now always filtered out of <code class="docutils literal notranslate"><span class="pre">extract.words()</span></code> lists</p></li>
 <li><p>Some Py2/3 str/unicode issues fixed</p></li>
@@ -1441,32 +1478,33 @@ into single tokens within a <code class="docutils literal notranslate"><span cla
 <li class="toctree-l1"><a class="reference internal" href="getting_started/quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api_reference/root.html">API Reference</a></li>
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Changes</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="#id1">0.9.1 (2019-09-03)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id2">0.9.0 (2019-09-03)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id5">0.8.0 (2019-07-14)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id7">0.7.1 (2019-06-25)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id11">0.7.0 (2019-05-13)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id14">0.6.3 (2019-03-23)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id19">0.6.2 (2018-07-19)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id22">0.6.1 (2018-04-11)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id27">0.6.0 (2018-02-25)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id30">0.5.0 (2017-12-04)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id33">0.4.2 (2017-11-28)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id38">0.4.1 (2017-07-27)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id42">0.4.0 (2017-06-21)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id46">0.3.4 (2017-04-17)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id50">0.3.3 (2017-02-10)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id53">0.3.2 (2016-11-15)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id55">0.3.1 (2016-10-19)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id58">0.3.0 (2016-08-23)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id60">0.2.8 (2016-08-03)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id64">0.2.5 (2016-07-14)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id66">0.2.4 (2016-07-14)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id69">0.2.3 (2016-06-20)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id72">0.2.2 (2016-05-05)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id75">0.2.0 (2016-04-11)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id78">0.1.4 (2016-02-26)</a></li>
-<li class="toctree-l2"><a class="reference internal" href="#id80">0.1.3 (2016-02-22)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id1">0.10.0 (2020-03-01)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id2">0.9.1 (2019-09-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id5">0.9.0 (2019-09-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id9">0.8.0 (2019-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id11">0.7.1 (2019-06-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id15">0.7.0 (2019-05-13)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id18">0.6.3 (2019-03-23)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id23">0.6.2 (2018-07-19)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id26">0.6.1 (2018-04-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id31">0.6.0 (2018-02-25)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id34">0.5.0 (2017-12-04)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id37">0.4.2 (2017-11-28)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id42">0.4.1 (2017-07-27)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id46">0.4.0 (2017-06-21)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id50">0.3.4 (2017-04-17)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id54">0.3.3 (2017-02-10)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id57">0.3.2 (2016-11-15)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id59">0.3.1 (2016-10-19)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id62">0.3.0 (2016-08-23)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id64">0.2.8 (2016-08-03)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id68">0.2.5 (2016-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id70">0.2.4 (2016-07-14)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id73">0.2.3 (2016-06-20)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id76">0.2.2 (2016-05-05)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id79">0.2.0 (2016-04-11)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id82">0.1.4 (2016-02-26)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#id84">0.1.3 (2016-02-22)</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="license.html">License</a></li>
