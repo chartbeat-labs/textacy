@@ -112,7 +112,9 @@ def draw_termite_plot(
         plt
     except NameError:
         raise ImportError(
-            "`matplotlib` is not installed, so `termite` won't work"
+            "`matplotlib` is not installed, so `textacy.viz` won't work; "
+            "install it individually via `$ pip install matplotlib`, or "
+            "along with textacy via `pip install textacy[viz]`."
         )
     n_rows, n_cols = values_mat.shape
     max_val = np.max(values_mat)
@@ -212,7 +214,6 @@ def draw_termite_plot(
 def termite_df_plot(
         components,
         *,
-        topic_order=None,
         highlight_topics=None,
         n_terms=25,
         rank_terms_by="max",
@@ -225,11 +226,10 @@ def termite_df_plot(
         to promote comparison of terms both within and across topics.
         Args:
             components (:class:`pandas.DataFrame` or sparse matrix): corpus
-                represented as a term-opic matrix with shape (n_terms, n_topics);
+                represented as a term-topic matrix with shape (n_terms, n_topics);
                 should have terms as index and topics as column names
             topics (int or Sequence[int]): topic(s) to include in termite plot;
                 if -1, all topics are included
-            sort_topics_by ({'index', 'weight'}):
             highlight_topics (str or Sequence[str]): names for up to 6 topics
                 to visually highlight in the plot with contrasting colors
             n_terms (int): number of top terms to include in termite plot
