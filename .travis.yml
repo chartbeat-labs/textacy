@@ -16,7 +16,8 @@ matrix:
 
 # command to install dependencies and data
 install:
-    - "pip install -r requirements-dev.txt"
+    - "pip install ."
+    - "pip install .[dev]"
     - if [[ $BUILD_DOCS = true ]]; then
         pip install .;
       fi
@@ -30,7 +31,7 @@ install:
 
 script:
   - set -e
-  - "python -m pytest -vv --cov=textacy --cov-report=term-missing"
+  - "python -m pytest -v --cov=textacy --cov-report=term-missing"
   - if [[ $BUILD_DOCS = true ]]; then
       cd docs;
       make clean html;
