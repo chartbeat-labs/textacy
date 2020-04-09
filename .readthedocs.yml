@@ -3,6 +3,17 @@
 
 version: 2
 
+python:
+  version: 3.8
+  install:
+    - method: pip
+      path: .
+    - method: pip
+      path: .
+      extra_requirements:
+        - dev
+  system_packages: true
+
 sphinx:
   builder: html
   configuration: docs/source/conf.py
@@ -12,11 +23,3 @@ formats: []
 
 build:
   image: latest
-
-python:
-  version: 3.7
-  install:
-    - requirements: requirements-dev.txt
-    - method: pip
-      path: .
-  system_packages: true
