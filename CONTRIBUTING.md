@@ -41,8 +41,9 @@ Use an appropriate template (if available) when [creating your issue](https://gi
 
     At this point, you may want to install your version of `textacy`. It's usually best to do this within a dedicated virtual environment; use whichever tool you're most comfortable with, such as `virtualenv`, `pyenv`, or `conda`.
 
-        $ pyenv virtualenv 3.7.0 textacy-my-descriptive-branch-name
+        $ pyenv virtualenv 3.8.0 textacy-my-descriptive-branch-name
         $ pip install -e .
+        $ pip install -e .[dev]
 
 1. **Implement your changes:** Use your preferred text editor to modify the `textacy` source code. Be sure to keep your changes focused and in scope, and follow the coding conventions described below! Document your code as you write it. Run your changes against any existing tests and add new ones as needed to validate your changes; make sure you don’t accidentally break existing functionality!
 1. **Push commits to your forked repository:** Group changes into atomic git commits, then push them to your `origin` repository. There's no need to wait until all changes are final before pushing — it's always good to have a backup, in case something goes wrong in your local copy.
