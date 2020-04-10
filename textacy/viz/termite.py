@@ -165,7 +165,8 @@ def draw_termite_plot(
         )
 
         # Create offset transform by 5 points in x direction
-        dx = 10/72.; dy = 0/72.
+        dx = 10 / 72
+        dy = 0
         offset = matplotlib.transforms.ScaledTranslation(dx, dy, fig.dpi_scale_trans)
         for label in ax.xaxis.get_majorticklabels():
             label.set_transform(label.get_transform() + offset)
