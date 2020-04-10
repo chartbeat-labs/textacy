@@ -263,9 +263,7 @@ def termite_df_plot(
             :func:`viz.termite_plot <textacy.viz.termite.termite_plot>`
         TODO: `rank_terms_by` other metrics, e.g. topic salience or relevance
         """
-        if highlight_topics is not None:
-            if isinstance(highlight_topics, str):
-                highlight_topics = [highlight_topics]
+    highlight_topics = utils.to_collection(highlight_topics, str, list)
             elif len(highlight_topics) > 6:
                 raise ValueError("no more than 6 topics may be highlighted at once")
 
