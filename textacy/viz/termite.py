@@ -225,6 +225,7 @@ def termite_df_plot(
         """
         Make a "termite" plot for assessing topic models using a tabular layout
         to promote comparison of terms both within and across topics.
+
         Args:
             components (:class:`pandas.DataFrame` or sparse matrix): corpus
                 represented as a term-topic matrix with shape (n_terms, n_topics);
@@ -245,12 +246,15 @@ def termite_df_plot(
                 rc_params (dict, optional): allow passing parameters to rc_context
                 in matplotlib.plyplot, details in
                 https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.rc_context.html
+
         Returns:
             ``matplotlib.axes.Axes.axis``: Axis on which termite plot is plotted.
+
         Raises:
             ValueError: if more than 6 topics are selected for highlighting, or
                 an invalid value is passed for the sort_topics_by, rank_terms_by,
                 and/or sort_terms_by params
+
         References:
             - Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
               Visualization techniques for assessing textual topic models."
@@ -259,6 +263,7 @@ def termite_df_plot(
             - Fajwel Fogel, Alexandre d’Aspremont, and Milan Vojnovic. 2016.
               Spectral ranking using seriation. J. Mach. Learn. Res. 17, 1
               (January 2016), 3013–3057.
+
         See Also:
             :func:`viz.termite_plot <textacy.viz.termite.termite_plot>`
         TODO: `rank_terms_by` other metrics, e.g. topic salience or relevance
