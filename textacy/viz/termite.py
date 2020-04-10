@@ -301,11 +301,6 @@ def termite_df_plot(
                     component_filter@component_filter.T
                     .pipe(lambda df: df-df.min().min())
             ).values
-            # # substract minimum of sim mat in order to keep sim mat nonnegative
-            # # UNNECESSARY
-            # topic_term_weights_sim = (
-            #     topic_term_weights_sim - topic_term_weights_sim.min()
-            # )
 
             # compute Laplacian matrice and its 2nd eigenvector
             L = np.diag(similarity.sum(axis=1)) - similarity
