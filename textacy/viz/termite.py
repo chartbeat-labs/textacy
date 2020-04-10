@@ -1,5 +1,5 @@
 import numpy as np
-
+from ..utils import to_collection
 try:
     import matplotlib.pyplot as plt
     import matplotlib.transforms
@@ -263,9 +263,10 @@ def termite_df_plot(
             :func:`viz.termite_plot <textacy.viz.termite.termite_plot>`
         TODO: `rank_terms_by` other metrics, e.g. topic salience or relevance
         """
-    highlight_topics = utils.to_collection(highlight_topics, str, list)
-            elif len(highlight_topics) > 6:
-                raise ValueError("no more than 6 topics may be highlighted at once")
+        highlight_topics = to_collection(highlight_topics, str, list)
+
+        if len(highlight_topics) > 6:
+            raise ValueError("no more than 6 topics may be highlighted at once")
 
         # get column index of any topics to highlight in termite plot
         if highlight_topics is not None:
