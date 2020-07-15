@@ -375,7 +375,7 @@ weighting, and filtering of terms:
 .. code-block:: pycon
 
     >>> import textacy.vsm  # note the import
-    >>> vectorizer = textacy.Vectorizer(
+    >>> vectorizer = textacy.vsm.Vectorizer(
     ...     tf_type="linear", apply_idf=True, idf_type="smooth", norm="l2",
     ...     min_df=2, max_df=0.95)
     >>> doc_term_matrix = vectorizer.fit_transform(
