@@ -9,7 +9,7 @@ similarity, respectively.
 import collections
 import itertools
 import logging
-from typing import Callable, DefaultDict, Sequence, Union
+from typing import Callable, DefaultDict, Literal, Sequence, Union
 
 import networkx as nx
 from cytoolz import itertoolz
@@ -26,7 +26,7 @@ def terms_to_semantic_network(
     *,
     normalize: Union[str, bool, Callable[[Token], str]] = "lemma",
     window_width: int = 10,
-    edge_weighting: str = "cooc_freq",
+    edge_weighting: Literal["cooc_freq", "binary"] = "cooc_freq",
 ) -> nx.Graph:
     """
     Transform an ordered list of non-overlapping terms into a semantic network,
@@ -46,10 +46,10 @@ def terms_to_semantic_network(
         window_width: Size of sliding window over ``terms`` that determines
             which are said to co-occur. If 2, only immediately adjacent terms
             have edges in the returned network.
-        edge_weighting ({'cooc_freq', 'binary'}): If 'cooc_freq', the nodes for
-            all co-occurring terms are connected by edges with weight equal to
-            the number of times they co-occurred within a sliding window;
-            if 'binary', all such edges have weight = 1.
+        edge_weighting: If 'cooc_freq', the nodes for all co-occurring terms
+            are connected by edges with weight equal to the number of times
+            they co-occurred within a sliding window; if 'binary', all such edges
+            have weight = 1.
 
     Returns:
         Networkx graph whose nodes represent individual terms, connected by edges
@@ -131,6 +131,8 @@ def terms_to_semantic_network(
         graph.add_edges_from(
             w1_w2 for window in windows for w1_w2 in itertools.combinations(window, 2)
         )
+    else:
+        raise ValueError(f"edge_weighting = {edge_weighting} is invalid")
 
     return graph
 
@@ -139,7 +141,7 @@ def sents_to_semantic_network(
     sents: Union[Sequence[str], Sequence[Span]],
     *,
     normalize: Union[str, bool, Callable[[Token], str]] = "lemma",
-    edge_weighting: str = "cosine",
+    edge_weighting: Literal["cosine", "jaccard"] = "cosine",
 ) -> nx.Graph:
     """
     Transform a list of sentences into a semantic network, where each sentence is
@@ -149,18 +151,17 @@ def sents_to_semantic_network(
     Args:
         sents
         normalize: If 'lemma', lemmatize words in sents; if 'lower', lowercase words
-        in sents; if false-y, use the form of words as they appear in sents; if a callable,
-        must accept a :class:`spacy.tokens.Token` and return a str,
-        e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
+            in sents; if false-y, use the form of words as they appear in sents;
+            if a callable, must accept a :class:`spacy.tokens.Token` and return a str,
+            e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
 
             .. note:: This is applied to the elements of ``sents`` *only* if
                it's a list of ``Span`` s.
 
-        edge_weighting ({'cosine', 'jaccard'}): Similarity metric to use for
-            weighting edges between sentences. If 'cosine', use the cosine
-            similarity between sentences represented as tf-idf word vectors;
-            if 'jaccard', use the set intersection divided by the set union of
-            all words in a given sentence pair.
+        edge_weighting: Similarity metric to use for weighting edges between sentences.
+            If 'cosine', use the cosine similarity between sentences represented
+            as tf-idf word vectors; if 'jaccard', use the set intersection
+            divided by the set union of all words in a given sentence pair.
 
     Returns:
         Networkx graph whose nodes are the integer indexes of the sentences in ``sents``,
@@ -233,6 +234,8 @@ def sents_to_semantic_network(
         term_sent_matrix = vsm.Vectorizer(
             tf_type="binary", apply_idf=False
         ).fit_transform(sents)
+    else:
+        raise ValueError(f"edge_weighting = {edge_weighting} is invalid")
     weights = (term_sent_matrix * term_sent_matrix.T).A.tolist()
     n_sents = len(weights)
 
