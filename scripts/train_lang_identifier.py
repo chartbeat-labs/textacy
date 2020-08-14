@@ -14,7 +14,6 @@ textacy==0.9.0
 """
 import argparse
 import collections
-import io
 import logging
 import operator
 import os
@@ -127,13 +126,15 @@ def main():
 
     # aggregate and sample datasets
     datasets = (
-        udhr_data +
-        wili_data +
-        get_random_sample(tatoeba_data, 420000, stratify=True, random_state=42) +
-        get_random_sample(leipzig_data, 480000, stratify=True, random_state=42) +
-        get_random_sample(twitter_data, len(twitter_data), stratify=True, random_state=42) +
-        get_random_sample(dslcc_data, 20000, stratify=True, random_state=42) +
-        get_random_sample(
+        udhr_data
+        + wili_data
+        + get_random_sample(tatoeba_data, 420000, stratify=True, random_state=42)
+        + get_random_sample(leipzig_data, 480000, stratify=True, random_state=42)
+        + get_random_sample(
+            twitter_data, len(twitter_data), stratify=True, random_state=42
+        )
+        + get_random_sample(dslcc_data, 20000, stratify=True, random_state=42)
+        + get_random_sample(
             [item for item in tatoeba_data if item[1] == "en"],
             10000, stratify=False, random_state=42
         )
@@ -224,8 +225,8 @@ def load_iso_639_data(dirpath, exclude=None):
     lang_map = {
         row["Id"]: row["Part1"]
         for row in rows
-        if row.get("Part1") and
-        (exclude is None or row["Part1"] not in exclude)
+        if row.get("Part1")
+        and (exclude is None or row["Part1"] not in exclude)
     }
     return lang_map
 

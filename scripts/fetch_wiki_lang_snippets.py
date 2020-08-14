@@ -270,7 +270,7 @@ def get_category_members_from_lang_links(lang_links, lang, cat_name):
     Returns:
         List[str]
     """
-    import wikipediaapi
+    # import wikipediaapi
 
     try:
         cat_page = lang_links[lang]
