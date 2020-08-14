@@ -9,14 +9,14 @@ import inspect
 import os
 import sys
 
-from cachetools import cached, LRUCache
+from cachetools import LRUCache
 
 
 def _get_size(obj, seen=None):
     """
     Recursively find the actual size of an object, in bytes.
 
-    Taken as-is (with a tweak in function name) from https://github.com/bosswissam/pysize.
+    Taken as-is (with tweaked function name) from https://github.com/bosswissam/pysize.
     """
     size = sys.getsizeof(obj)
     if seen is None:

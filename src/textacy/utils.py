@@ -2,7 +2,8 @@ import logging
 import pathlib
 import sys
 import warnings
-from typing import cast, Any, Collection, Dict, Iterable, Optional, Sequence, Set, Tuple, Type, Union
+from typing import Any, Collection, Dict, Iterable, Optional, Set, Tuple, Type, Union
+from typing import cast
 
 LOGGER = logging.getLogger(__name__)
 
@@ -13,8 +14,11 @@ def deprecated(message: str, *, action: str = "always"):
 
     Args:
         message: Message to display with ``DeprecationWarning``.
-        action: Filter controlling whether warning is ignored, displayed, or
-            turned into an error. https://docs.python.org/3/library/warnings.html#the-warnings-filter
+        action: Filter controlling whether warning is ignored, displayed, or turned
+            into an error. For reference:
+
+    See Also:
+        https://docs.python.org/3/library/warnings.html#the-warnings-filter
     """
     with warnings.catch_warnings():
         warnings.simplefilter(action, DeprecationWarning)
@@ -118,7 +122,7 @@ def to_bytes(
     *,
     encoding: str = "utf-8",
     errors: str = "strict",
-    ) -> bytes:
+) -> bytes:
     """Coerce string ``s`` to bytes."""
     if isinstance(s, str):
         return s.encode(encoding, errors)
@@ -211,7 +215,8 @@ def validate_and_clip_range(
             value in ``full_range``.
         full_range: Full range of values, i.e. [min_val, max_val),
             within which ``range_vals`` must lie.
-        val_type: Type(s) of which all ``range_vals`` must be instances (unless val is None).
+        val_type: Type(s) of which all ``range_vals`` must be instances,
+            unless val is None.
 
     Returns:
         Range for which null or too-small/large values have been clipped

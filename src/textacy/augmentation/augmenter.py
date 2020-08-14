@@ -2,7 +2,7 @@ import inspect
 import random
 from typing import Callable, Optional, Sequence, Union
 
-from spacy.tokens import Doc, Span
+from spacy.tokens import Doc
 
 from .. import spacier
 from . import utils as aug_utils
@@ -130,9 +130,9 @@ class Augmenter:
         elif isinstance(num, float) and 0.0 <= num <= 1.0:
             return num
         elif (
-            isinstance(num, (tuple, list)) and
-            len(num) == len(self.tfs) and
-            all(isinstance(n, float) and 0.0 <= n <= 1.0 for n in num)
+            isinstance(num, (tuple, list))
+            and len(num) == len(self.tfs)
+            and all(isinstance(n, float) and 0.0 <= n <= 1.0 for n in num)
         ):
             return tuple(num)
         else:

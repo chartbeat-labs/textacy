@@ -231,7 +231,7 @@ def flesch_reading_ease(
         Dutch: ?
         Portuguese: https://pt.wikipedia.org/wiki/Legibilidade_de_Flesch
         Russian: https://ru.wikipedia.org/wiki/%D0%98%D0%BD%D0%B4%D0%B5%D0%BA%D1%81_%D1%83%D0%B4%D0%BE%D0%B1%D0%BE%D1%87%D0%B8%D1%82%D0%B0%D0%B5%D0%BC%D0%BE%D1%81%D1%82%D0%B8
-    """
+    """  # noqa: E501
     if lang is None or lang == "en":
         return 206.835 - (1.015 * n_words / n_sents) - (84.6 * n_syllables / n_words)
     elif lang == "de":

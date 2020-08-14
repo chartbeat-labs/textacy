@@ -2,7 +2,7 @@ import collections
 import functools
 import itertools
 import string
-from typing import Iterable, List, NamedTuple, Tuple, Union
+from typing import Iterable, List, Tuple, Union
 
 from cachetools import cached
 from cachetools.keys import hashkey

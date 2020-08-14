@@ -213,127 +213,127 @@ def draw_termite_plot(
 
 
 def termite_df_plot(
-        components,
-        *,
-        highlight_topics=None,
-        n_terms=25,
-        rank_terms_by="max",
-        sort_terms_by="seriation",
-        save=False,
-        rc_params=None,
-    ):
-        """
-        Make a "termite" plot for assessing topic models using a tabular layout
-        to promote comparison of terms both within and across topics.
+    components,
+    *,
+    highlight_topics=None,
+    n_terms=25,
+    rank_terms_by="max",
+    sort_terms_by="seriation",
+    save=False,
+    rc_params=None,
+):
+    """
+    Make a "termite" plot for assessing topic models using a tabular layout
+    to promote comparison of terms both within and across topics.
 
-        Args:
-            components (:class:`pandas.DataFrame` or sparse matrix): corpus
-                represented as a term-topic matrix with shape (n_terms, n_topics);
-                should have terms as index and topics as column names
-            topics (int or Sequence[int]): topic(s) to include in termite plot;
-                if -1, all topics are included
-            highlight_topics (str or Sequence[str]): names for up to 6 topics
-                to visually highlight in the plot with contrasting colors
-            n_terms (int): number of top terms to include in termite plot
-            rank_terms_by ({'max', 'mean', 'var'}): argument to dataframe `agg`
-                function, used to rank terms;
-                the top-ranked ``n_terms`` are included in the plot
-            sort_terms_by ({'seriation', 'weight', 'index', 'alphabetical'}):
-                method used to vertically sort the selected top ``n_terms`` terms;
-                the default ("seriation") groups similar terms together, which
-                facilitates cross-topic assessment
-            save (str): give the full /path/to/fname on disk to save figure
-                rc_params (dict, optional): allow passing parameters to rc_context
-                in matplotlib.plyplot, details in
-                https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.rc_context.html
+    Args:
+        components (:class:`pandas.DataFrame` or sparse matrix): corpus
+            represented as a term-topic matrix with shape (n_terms, n_topics);
+            should have terms as index and topics as column names
+        topics (int or Sequence[int]): topic(s) to include in termite plot;
+            if -1, all topics are included
+        highlight_topics (str or Sequence[str]): names for up to 6 topics
+            to visually highlight in the plot with contrasting colors
+        n_terms (int): number of top terms to include in termite plot
+        rank_terms_by ({'max', 'mean', 'var'}): argument to dataframe `agg`
+            function, used to rank terms;
+            the top-ranked ``n_terms`` are included in the plot
+        sort_terms_by ({'seriation', 'weight', 'index', 'alphabetical'}):
+            method used to vertically sort the selected top ``n_terms`` terms;
+            the default ("seriation") groups similar terms together, which
+            facilitates cross-topic assessment
+        save (str): give the full /path/to/fname on disk to save figure
+            rc_params (dict, optional): allow passing parameters to rc_context
+            in matplotlib.plyplot, details in
+            https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.rc_context.html
 
-        Returns:
-            ``matplotlib.axes.Axes.axis``: Axis on which termite plot is plotted.
+    Returns:
+        ``matplotlib.axes.Axes.axis``: Axis on which termite plot is plotted.
 
-        Raises:
-            ValueError: if more than 6 topics are selected for highlighting, or
-                an invalid value is passed for the sort_topics_by, rank_terms_by,
-                and/or sort_terms_by params
+    Raises:
+        ValueError: if more than 6 topics are selected for highlighting, or
+            an invalid value is passed for the sort_topics_by, rank_terms_by,
+            and/or sort_terms_by params
 
-        References:
-            - Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
-              Visualization techniques for assessing textual topic models."
-              Proceedings of the International Working Conference on Advanced
-              Visual Interfaces. ACM, 2012.
-            - Fajwel Fogel, Alexandre d’Aspremont, and Milan Vojnovic. 2016.
-              Spectral ranking using seriation. J. Mach. Learn. Res. 17, 1
-              (January 2016), 3013–3057.
+    References:
+        - Chuang, Jason, Christopher D. Manning, and Jeffrey Heer. "Termite:
+            Visualization techniques for assessing textual topic models."
+            Proceedings of the International Working Conference on Advanced
+            Visual Interfaces. ACM, 2012.
+        - Fajwel Fogel, Alexandre d’Aspremont, and Milan Vojnovic. 2016.
+            Spectral ranking using seriation. J. Mach. Learn. Res. 17, 1
+            (January 2016), 3013–3057.
 
-        See Also:
-            :func:`viz.termite_plot <textacy.viz.termite.termite_plot>`
-        TODO: `rank_terms_by` other metrics, e.g. topic salience or relevance
-        """
-        highlight_topics = to_collection(highlight_topics, str, list)
+    See Also:
+        :func:`viz.termite_plot <textacy.viz.termite.termite_plot>`
+    TODO: `rank_terms_by` other metrics, e.g. topic salience or relevance
+    """
+    highlight_topics = to_collection(highlight_topics, str, list)
 
-        if len(highlight_topics) > 6:
-            raise ValueError("no more than 6 topics may be highlighted at once")
+    if len(highlight_topics) > 6:
+        raise ValueError("no more than 6 topics may be highlighted at once")
 
-        # get column index of any topics to highlight in termite plot
-        if highlight_topics is not None:
-            highlight_cols = tuple(
-                components.columns.get_loc(c)
-                for c in highlight_topics
-            )
-        else:
-            highlight_cols = None
-
-        component_filter = (components.loc[
-            components
-            .agg(rank_terms_by, axis=1)
-            .sort_values(ascending=False)
-            .iloc[:n_terms]
-            .index
-        ])
-
-        # get top term indices in sorted order
-        if sort_terms_by == "weight":
-            pass  # already done
-        elif sort_terms_by == "alphabetical":
-            component_filter = component_filter.sort_index()
-        elif sort_terms_by == "seriation":
-            # calculate similarity matrix
-            similarity = (
-                    component_filter@component_filter.T
-                    .pipe(lambda df: df-df.min().min())
-            ).values
-
-            # compute Laplacian matrice and its 2nd eigenvector
-            L = np.diag(similarity.sum(axis=1)) - similarity
-            D, V = np.linalg.eigh(L)
-            D = D[np.argsort(D)]
-            V = V[:, np.argsort(D)]
-            fiedler = V[:, 1]
-
-            # get permutation corresponding to sorting the 2nd eigenvector
-            component_filter=component_filter.reindex(
-                index=[
-                    component_filter.index[i]
-                    for i in np.argsort(fiedler)
-                ],
-            )
-        else:
-            msg = "invalid sort_terms_by value; must be in {}".format(
-                {"weight", "alphabetical", "seriation"}
-            )
-            raise ValueError(msg)
-
-        # get topic and term labels
-        topic_labels = component_filter.columns
-        term_labels = component_filter.index
-
-        # get topic-term weights to size dots
-        term_topic_weights = component_filter.values
-
-        return draw_termite_plot(
-            term_topic_weights,
-            topic_labels,
-            term_labels,
-            highlight_cols=highlight_cols,
-            save=save,
-            rc_params=rc_params,
+    # get column index of any topics to highlight in termite plot
+    if highlight_topics is not None:
+        highlight_cols = tuple(
+            components.columns.get_loc(c)
+            for c in highlight_topics
         )
+    else:
+        highlight_cols = None
+
+    component_filter = (components.loc[
+        components
+        .agg(rank_terms_by, axis=1)
+        .sort_values(ascending=False)
+        .iloc[:n_terms]
+        .index
+    ])
+
+    # get top term indices in sorted order
+    if sort_terms_by == "weight":
+        pass  # already done
+    elif sort_terms_by == "alphabetical":
+        component_filter = component_filter.sort_index()
+    elif sort_terms_by == "seriation":
+        # calculate similarity matrix
+        similarity = (
+            component_filter @ component_filter.T
+            .pipe(lambda df: df - df.min().min())
+        ).values
+
+        # compute Laplacian matrice and its 2nd eigenvector
+        L = np.diag(similarity.sum(axis=1)) - similarity
+        D, V = np.linalg.eigh(L)
+        D = D[np.argsort(D)]
+        V = V[:, np.argsort(D)]
+        fiedler = V[:, 1]
+
+        # get permutation corresponding to sorting the 2nd eigenvector
+        component_filter = component_filter.reindex(
+            index=[
+                component_filter.index[i]
+                for i in np.argsort(fiedler)
+            ],
+        )
+    else:
+        msg = "invalid sort_terms_by value; must be in {}".format(
+            {"weight", "alphabetical", "seriation"}
+        )
+        raise ValueError(msg)
+
+    # get topic and term labels
+    topic_labels = component_filter.columns
+    term_labels = component_filter.index
+
+    # get topic-term weights to size dots
+    term_topic_weights = component_filter.values
+
+    return draw_termite_plot(
+        term_topic_weights,
+        topic_labels,
+        term_labels,
+        highlight_cols=highlight_cols,
+        save=save,
+        rc_params=rc_params,
+    )

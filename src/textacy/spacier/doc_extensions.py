@@ -24,7 +24,6 @@ import spacy
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Span, Token
 
-from .. import constants
 from .. import extract
 from .. import network
 from .. import utils
@@ -466,19 +465,23 @@ def to_bag_of_words(
     if as_strings is False:
         for wid, weight in wid_weights.items():
             lex = vocab[wid]
-            if not ( (lex.is_stop and filter_stops) or
-                     (lex.is_punct and filter_punct) or
-                     (lex.is_digit and filter_nums) or
-                      lex.is_space):
+            if not (
+                (lex.is_stop and filter_stops)
+                or (lex.is_punct and filter_punct)
+                or (lex.is_digit and filter_nums)
+                or lex.is_space
+            ):
                 bow[wid] = weight
     else:
         ss = doc.vocab.strings
         for wid, weight in wid_weights.items():
             lex = vocab[wid]
-            if not ( (lex.is_stop and filter_stops) or
-                     (lex.is_punct and filter_punct) or
-                     (lex.is_digit and filter_nums) or
-                      lex.is_space):
+            if not (
+                (lex.is_stop and filter_stops)
+                or (lex.is_punct and filter_punct)
+                or (lex.is_digit and filter_nums)
+                or lex.is_space
+            ):
                 bow[ss[wid]] = weight
     return bow
 

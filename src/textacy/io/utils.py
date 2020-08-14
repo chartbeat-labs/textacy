@@ -17,7 +17,7 @@ import shutil
 import tarfile
 import urllib
 import zipfile
-from typing import cast, IO, Iterable, Iterator, Optional, Tuple, Union
+from typing import IO, Iterable, Optional, Tuple, Union
 
 from cytoolz import itertoolz
 

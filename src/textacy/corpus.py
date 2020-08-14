@@ -8,7 +8,18 @@ import itertools
 import logging
 import math
 import pathlib
-from typing import Any, Callable, Counter, Dict, Iterable, Iterator, List, Optional, Tuple, Union
+from typing import (
+    Any,
+    Callable,
+    Counter,
+    Dict,
+    Iterable,
+    Iterator,
+    List,
+    Optional,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 import spacy
@@ -21,7 +32,9 @@ from . import spacier, utils
 
 LOGGER = logging.getLogger(__name__)
 
-CorpusData = Union[str, Doc, Tuple[str, dict], Iterable[str], Iterable[Doc], Iterable[Tuple[str, dict]]]
+CorpusData = Union[
+    str, Doc, Tuple[str, dict], Iterable[str], Iterable[Doc], Iterable[Tuple[str, dict]]
+]
 
 
 class Corpus:
@@ -139,9 +152,7 @@ class Corpus:
     n_tokens: int
 
     def __init__(
-        self,
-        lang: Union[str, Language],
-        data: Optional[CorpusData] = None,
+        self, lang: Union[str, Language], data: Optional[CorpusData] = None,
     ) -> None:
         self.spacy_lang = _get_spacy_lang(lang)
         self.lang = self.spacy_lang.lang
@@ -180,17 +191,14 @@ class Corpus:
             self._remove_many_docs_by_index(idxs)
         else:
             raise TypeError(
-                "list indices must be integers or slices, not {}".format(type(idx_or_slice))
+                "list indices must be integers or slices, not {}".format(
+                    type(idx_or_slice)
+                )
             )
 
     # add documents
 
-    def add(
-        self,
-        data: CorpusData,
-        batch_size: int = 1000,
-        n_process: int = 1,
-    ) -> None:
+    def add(self, data: CorpusData, batch_size: int = 1000, n_process: int = 1,) -> None:
         """
         Add one or a stream of texts, records, or :class:`spacy.tokens.Doc` s
         to the corpus, ensuring that all processing is or has already been done
@@ -230,15 +238,13 @@ class Corpus:
             else:
                 raise TypeError(
                     "data must be one of {} or an interable thereof, not {}".format(
-                        {str, spacy.tokens.Doc, tuple},
-                        type(data),
+                        {str, spacy.tokens.Doc, tuple}, type(data),
                     )
                 )
         else:
             raise TypeError(
                 "data must be one of {} or an interable thereof, not {}".format(
-                    {str, spacy.tokens.Doc, tuple},
-                    type(data),
+                    {str, spacy.tokens.Doc, tuple}, type(data),
                 )
             )
 
@@ -253,10 +259,7 @@ class Corpus:
         self._add_valid_doc(self.spacy_lang(text))
 
     def add_texts(
-        self,
-        texts: Iterable[str],
-        batch_size: int = 1000,
-        n_process: int = 1,
+        self, texts: Iterable[str], batch_size: int = 1000, n_process: int = 1,
     ) -> None:
         """
         Add a stream of texts to the corpus, efficiently processing them into
@@ -370,9 +373,7 @@ class Corpus:
     # get documents
 
     def get(
-        self,
-        match_func: Callable[[Doc], bool],
-        limit: Optional[int] = None,
+        self, match_func: Callable[[Doc], bool], limit: Optional[int] = None,
     ) -> Iterator[Doc]:
         """
         Get all (or N <= ``limit``) docs in :class:`Corpus` for which
@@ -405,9 +406,7 @@ class Corpus:
     # remove documents
 
     def remove(
-        self,
-        match_func: Callable[[Doc], bool],
-        limit: Optional[int] = None,
+        self, match_func: Callable[[Doc], bool], limit: Optional[int] = None,
     ) -> None:
         """
         Remove all (or N <= ``limit``) docs in :class:`Corpus` for which
@@ -434,8 +433,7 @@ class Corpus:
         """
         matched_docs = (doc for doc in self if match_func(doc) is True)
         self._remove_many_docs_by_index(
-            self._doc_ids.index(id(doc))
-            for doc in itertools.islice(matched_docs, limit)
+            self._doc_ids.index(id(doc)) for doc in itertools.islice(matched_docs, limit)
         )
 
     def _remove_many_docs_by_index(self, idxs: Iterable[int]) -> None:
@@ -514,9 +512,12 @@ class Corpus:
         for doc in self:
             word_counts_.update(
                 doc._.to_bag_of_words(
-                    normalize=normalize, weighting="count", as_strings=as_strings,
-                    filter_stops=filter_stops, filter_punct=filter_punct,
-                    filter_nums=filter_nums
+                    normalize=normalize,
+                    weighting="count",
+                    as_strings=as_strings,
+                    filter_stops=filter_stops,
+                    filter_punct=filter_punct,
+                    filter_nums=filter_nums,
                 )
             )
         if weighting == "count":
@@ -583,9 +584,12 @@ class Corpus:
         for doc in self:
             word_doc_counts_.update(
                 doc._.to_bag_of_words(
-                    normalize=normalize, weighting="binary", as_strings=as_strings,
-                    filter_stops=filter_stops, filter_punct=filter_punct,
-                    filter_nums=filter_nums
+                    normalize=normalize,
+                    weighting="binary",
+                    as_strings=as_strings,
+                    filter_stops=filter_stops,
+                    filter_punct=filter_punct,
+                    filter_nums=filter_nums,
                 )
             )
         if weighting == "count":
@@ -618,9 +622,7 @@ class Corpus:
     # file io
 
     def save(
-        self,
-        filepath: Union[str, pathlib.Path],
-        store_user_data: bool = True,
+        self, filepath: Union[str, pathlib.Path], store_user_data: bool = True,
     ) -> None:
         """
         Save :class:`Corpus` to disk as binary data.
@@ -686,7 +688,9 @@ class Corpus:
         spacy_lang = _get_spacy_lang(lang)
         with tio.open_sesame(filepath, mode="rb") as f:
             bytes_data = f.read()
-        doc_bin = spacy.tokens.DocBin(store_user_data=store_user_data).from_bytes(bytes_data)
+        doc_bin = spacy.tokens.DocBin(store_user_data=store_user_data).from_bytes(
+            bytes_data
+        )
         return cls(spacy_lang, data=doc_bin.get_docs(spacy_lang.vocab))
 
 

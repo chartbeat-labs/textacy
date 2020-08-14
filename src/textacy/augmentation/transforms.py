@@ -1,4 +1,3 @@
-import itertools
 import random
 from typing import cast, List, Optional, Set, Union
 
@@ -127,7 +126,7 @@ def insert_word_synonyms(
                     ws=new_tok_ws,
                     pos=rand_aug_tok.pos,
                     is_word=rand_aug_tok.is_word,
-                    syns=rand_aug_tok.syns, # TODO: re-fetch syns? use []?
+                    syns=rand_aug_tok.syns,  # TODO: re-fetch syns? use []?
                 )
             )
         new_aug_toks.append(curr_tok)

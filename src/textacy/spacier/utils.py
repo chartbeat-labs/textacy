@@ -10,7 +10,7 @@ from typing import Iterable, List, Tuple, Union
 import numpy as np
 from spacy import attrs
 from spacy.language import Language
-from spacy.symbols import NOUN, PROPN, VERB
+from spacy.symbols import PROPN, VERB
 from spacy.tokens import Doc, Span, Token
 
 from .. import constants, text_utils

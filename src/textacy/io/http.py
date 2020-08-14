@@ -5,7 +5,6 @@ HTTP
 Functions for reading data from URLs via streaming HTTP requests and either
 reading it into memory or writing it directly to disk.
 """
-import io
 import logging
 import pathlib
 from contextlib import closing

@@ -26,7 +26,7 @@ import itertools
 import logging
 import os
 import re
-from typing import Any, Dict, Iterable, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, Optional, Tuple
 
 from .. import constants, utils
 from .. import io as tio

@@ -19,7 +19,7 @@ def is_acronym(token: str, exclude: Optional[Set[str]] = None) -> bool:
 
     Args:
         token: Single word to check for acronym-ness
-        exclude: If technically valid but not actually good acronyms are known in advance,
+        exclude: If technically valid but not actual acronyms are known in advance,
             pass them in as a set of strings; matching tokens will return False.
 
     Returns:
@@ -127,7 +127,7 @@ def clean_terms(terms: Iterable[str]) -> Iterable[str]:
     # get rid of leading/trailing junk characters
     terms = (constants.RE_LEAD_TAIL_CRUFT_TERM.sub("", term) for term in terms)
     terms = (constants.RE_LEAD_HYPHEN_TERM.sub(r"\1", term) for term in terms)
-    # handle dangling/backwards parens, don't allow '(' or ')' to appear without the other
+    # handle dangling/backwards parens, don't allow '(' or ')' to appear alone
     terms = (
         ""
         if term.count(")") != term.count("(") or term.find(")") < term.find("(")

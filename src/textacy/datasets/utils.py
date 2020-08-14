@@ -6,11 +6,6 @@ Shared functionality for downloading, naming, and extracting the contents
 of datasets, as well as filtering for particular subsets.
 """
 import logging
-import os
-import shutil
-import tarfile
-import urllib.parse
-import zipfile
 
 from .. import constants, utils
 from ..io import utils as io_utils

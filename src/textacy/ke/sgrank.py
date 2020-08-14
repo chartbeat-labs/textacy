@@ -9,10 +9,8 @@ import operator
 from typing import cast, Callable, Collection, Counter, DefaultDict, Dict, List, Optional, Set, Tuple, Union
 
 import networkx as nx
-from cytoolz import itertoolz
 from spacy.tokens import Doc, Span
 
-from .. import extract
 from .. import utils
 from . import utils as ke_utils
 

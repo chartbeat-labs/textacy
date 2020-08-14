@@ -12,7 +12,6 @@ from typing import Dict, Sequence, Union
 
 import numpy as np
 import sklearn.feature_extraction
-import spacy
 from cytoolz import itertoolz
 from jellyfish import levenshtein_distance as _levenshtein
 from pyemd import emd

@@ -8,7 +8,9 @@ from typing import Dict, Pattern, Set
 
 DEFAULT_DATA_DIR: pathlib.Path = pathlib.Path(__file__).parent.resolve() / "data"
 
-NUMERIC_ENT_TYPES: Set[str] = {"ORDINAL", "CARDINAL", "MONEY", "QUANTITY", "PERCENT", "TIME", "DATE"}
+NUMERIC_ENT_TYPES: Set[str] = {
+    "ORDINAL", "CARDINAL", "MONEY", "QUANTITY", "PERCENT", "TIME", "DATE",
+}
 SUBJ_DEPS: Set[str] = {"agent", "csubj", "csubjpass", "expl", "nsubj", "nsubjpass"}
 OBJ_DEPS: Set[str] = {"attr", "dobj", "dative", "oprd"}
 AUX_DEPS: Set[str] = {"aux", "auxpass", "neg"}

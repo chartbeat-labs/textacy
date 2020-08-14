@@ -57,16 +57,14 @@ A few languages have worse performance; for example, the two Norwegians ("nb" an
 Bosnian ("bs") and Serbian ("sr"), and Bashkir ("ba") and Tatar ("tt") are
 often confused with each other. See the textacy-data releases for more details:
 https://github.com/bdewilde/textacy-data/releases/tag/lang_identifier_v1.1_sklearn_v21
-"""
-import io
+"""  # noqa: E501
 import logging
 import operator
-import os
 import urllib.parse
 
 import joblib
 
-from . import cache, constants, utils
+from . import constants, utils
 from . import io as tio
 
 LOGGER = logging.getLogger(__name__)

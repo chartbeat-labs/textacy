@@ -104,9 +104,9 @@ def ngrams(
         filter_punct: If True, remove ngrams that contain any punctuation-only tokens
         filter_nums: If True, remove ngrams that contain any numbers
             or number-like tokens (e.g. 10, 'ten')
-        include_pos: Remove ngrams if any of their constituent tokens' part-of-speech tags
+        include_pos: Remove ngrams if any constituent tokens' part-of-speech tags
             ARE NOT included in this param
-        exclude_pos: Remove ngrams if any of their constituent tokens' part-of-speech tags
+        exclude_pos: Remove ngrams if any constituent tokens' part-of-speech tags
             ARE included in this param
         min_freq: Remove ngrams that occur in ``doc`` fewer than ``min_freq`` times
 
@@ -318,8 +318,8 @@ def pos_regex_matches(doc: Union[Doc, Span], pattern: str) -> Iterable[Span]:
             * prepositional phrase: r'<PREP> <DET>? (<NOUN>+<ADP>)* <NOUN>+'
 
     Yields:
-        Next span of consecutive tokens from ``doc`` whose parts-of-speech match ``pattern``,
-        in order of appearance
+        Next span of consecutive tokens from ``doc`` whose parts-of-speech
+        match ``pattern``, in order of appearance
 
     Warning:
         *DEPRECATED!* For similar but more powerful and performant functionality,
@@ -399,7 +399,7 @@ def matches(
     See Also:
         * https://spacy.io/usage/rule-based-matching
         * https://spacy.io/api/matcher
-    """
+    """  # noqa: E501
     if isinstance(patterns, str):
         patterns = [_make_pattern_from_string(patterns)]
     elif isinstance(patterns, (list, tuple)):
@@ -471,7 +471,9 @@ def _make_pattern_from_string(patstr: str) -> List[dict]:
     return pattern
 
 
-def subject_verb_object_triples(doc: Union[Doc, Span]) -> Iterable[Tuple[Span, Span, Span]]:
+def subject_verb_object_triples(
+    doc: Union[Doc, Span],
+) -> Iterable[Tuple[Span, Span, Span]]:
     """
     Extract an ordered sequence of subject-verb-object (SVO) triples from a
     spacy-parsed doc. Note that this only works for SVO languages.
@@ -791,7 +793,7 @@ def semistructured_statements(
     ignore_entity_case: bool = True,
     min_n_words: int = 1,
     max_n_words: int = 20,
-):
+) -> Tuple[Union[Span, Token], Union[Span, Token], Span]:
     """
     Extract "semi-structured statements" from a spacy-parsed doc, each as a
     (entity, cue, fragment) triple. This is similar to subject-verb-object triples.
@@ -807,8 +809,7 @@ def semistructured_statements(
         max_n_words: Max number of tokens allowed in a matching fragment
 
     Yields:
-        (:class:`spacy.tokens.Span` or :class:`spacy.tokens.Token`, :class:`spacy.tokens.Span` or :class:`spacy.tokens.Token`, :class:`spacy.tokens.Span`):
-        where each element is a matching (entity, cue, fragment) triple
+        Next matching triple, consisting of (entity, cue, fragment).
 
     Notes:
         Inspired by N. Diakopoulos, A. Zhang, A. Salway. Visual Analytics of
@@ -821,10 +822,10 @@ def semistructured_statements(
     """
     if ignore_entity_case is True:
         entity_toks = entity.lower().split(" ")
-        get_tok_text = lambda x: x.lower_
+        get_tok_text = lambda x: x.lower_  # noqa: E731
     else:
         entity_toks = entity.split(" ")
-        get_tok_text = lambda x: x.text
+        get_tok_text = lambda x: x.text  # noqa: E731
     first_entity_tok = entity_toks[0]
     n_entity_toks = len(entity_toks)
     cue = cue.lower()
@@ -934,7 +935,7 @@ def direct_quotations(doc: Doc) -> Iterable[Tuple[Span, Token, Span]]:
         doc (:class:`spacy.tokens.Doc`)
 
     Yields:
-        Next quotation in ``doc`` represented as a (speaker, reporting verb, quotation) 3-tuple
+        Next quotation in ``doc`` as a (speaker, reporting verb, quotation) triple
 
     Notes:
         Loosely inspired by Krestel, Bergler, Witte. "Minding the Source: Automatic

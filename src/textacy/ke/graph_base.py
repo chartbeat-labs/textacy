@@ -2,7 +2,7 @@ import collections
 import itertools
 import logging
 import operator
-from typing import Any, Callable, DefaultDict, Dict, List, Optional, Sequence, Tuple, Union
+from typing import Any, Callable, DefaultDict, Dict, Optional, Sequence, Set, Union
 
 import networkx as nx
 import numpy as np
@@ -173,20 +173,20 @@ def rank_nodes_by_bestcoverage(
 
     top_k_sorted_ranks = sorted_ranks[:k_prime]
 
-    def get_l_step_expanded_set(vertices, l):
+    def get_l_step_expanded_set(vertices: Sequence[str], n_steps: int) -> Set[str]:
         """
         Args:
-            vertices (iterable[str]): vertices to be expanded
-            l (int): how many steps to expand vertices set
+            vertices: vertices to be expanded
+            n_steps: how many steps to expand vertices set
 
         Returns:
-            set: the l-step expanded set of vertices
+            the l-step expanded set of vertices
         """
         # add vertices to s
         s = set(vertices)
         # s.update(vertices)
         # for each step
-        for _ in range(l):
+        for _ in range(n_steps):
             # for each node
             next_vertices = []
             for vertex in vertices:

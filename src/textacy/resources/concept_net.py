@@ -17,7 +17,6 @@ that are useful in a variety of NLP tasks:
     - synonyms: terms that are sufficiently similar that they may be used interchangeably
 """
 import collections
-import json
 import logging
 
 from spacy.tokens import Span, Token
