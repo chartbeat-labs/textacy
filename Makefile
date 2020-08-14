@@ -12,9 +12,9 @@ test: clean
 	python -m pytest tests -v --cov=textacy --cov-report=term-missing
 
 lint:
-	flake8 src
+	python -m flake8 src
 
 mypy:
-	mypy src
+	python -m mypy src
 
 check: test lint mypy

@@ -12,10 +12,11 @@ on:
 jobs:
   build:
 
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
+        os: [ubuntu-latest]
 
     steps:
     - uses: actions/checkout@v2
@@ -26,8 +27,8 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install .
-        pip install .[dev]
+        python -m pip install -e .
+        python -m pip install -e .[dev]
     - name: Set up language data
       run: |
         python -m spacy download en_core_web_sm
@@ -45,4 +46,4 @@ jobs:
         flake8 . --count --exit-zero --statistics
     - name: Test with pytest
       run: |
-        python -m pytest tests -v --cov=textacy --cov-report=term-missing
+        make test
