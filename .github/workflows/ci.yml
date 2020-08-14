@@ -16,7 +16,7 @@ jobs:
     strategy:
       matrix:
         python-version: [3.6, 3.7, 3.8]
-        os: [ubuntu-latest]
+        os: [macos-latest, ubuntu-latest, windows-latest]
 
     steps:
     - uses: actions/checkout@v2
@@ -24,6 +24,17 @@ jobs:
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Get pip cache dir
+      id: pip-cache
+      run: |
+        echo "::set-output name=dir::$(pip cache dir)"
+    - name: pip cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: ${{ matrix.os }}-pip-${{ hashFiles('setup.cfg') }}
+        restore-keys: |
+          ${{ matrix.os }}-pip-
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
