@@ -28,6 +28,15 @@ jobs:
         python -m pip install --upgrade pip
         pip install .
         pip install .[dev]
+    - name: Set up language data
+      run: |
+        python -m spacy download en_core_web_sm
+        python -m spacy link en_core_web_sm en
+        python -m spacy download es_core_news_sm
+        python -m spacy link es_core_news_sm es
+        python -m spacy validate
+        python -m textacy download capitol_words
+        python -m textacy download lang_identifier
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
