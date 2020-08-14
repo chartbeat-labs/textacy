@@ -26,17 +26,17 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install pylint pytest
+        pip install flake8 pylint pytest
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-    # - name: Lint with flake8
-    #   run: |
-    #     # stop the build if there are Python syntax errors or undefined names
-    #     flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-    #     # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
-    #     flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
-    - name: Lint with pylint
+    - name: Lint with flake8
       run: |
-        pylint src -enable W,E,F --disable C0103,C0330
+        # stop the build if there are Python syntax errors or undefined names
+        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        # exit-zero treats all errors as warnings. The GitHub editor is 127 chars wide
+        flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
+    # - name: Lint with pylint
+    #   run: |
+    #     pylint src -enable W,E,F --disable C0103,C0330
     - name: Test with pytest
       run: |
         python -m pytest tests -v --cov=textacy --cov-report=term-missing
