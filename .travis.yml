@@ -1,6 +1,6 @@
 language: python
 os: linux
-# cache: pip
+cache: pip
 matrix:
   fast_finish: true
   include:
@@ -31,7 +31,7 @@ install:
 
 script:
   - set -e
-  - "python -m pytest -v --cov=textacy --cov-report=term-missing"
+  - make test
   - if [[ $BUILD_DOCS = true ]]; then
       cd docs;
       make clean html;
