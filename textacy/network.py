@@ -9,7 +9,7 @@ similarity, respectively.
 import collections
 import itertools
 import logging
-from typing import Callable, DefaultDict, Literal, Sequence, Union
+from typing import Callable, DefaultDict, Sequence, Union
 
 import networkx as nx
 from cytoolz import itertoolz
@@ -26,7 +26,7 @@ def terms_to_semantic_network(
     *,
     normalize: Union[str, bool, Callable[[Token], str]] = "lemma",
     window_width: int = 10,
-    edge_weighting: Literal["cooc_freq", "binary"] = "cooc_freq",
+    edge_weighting: str = "cooc_freq",
 ) -> nx.Graph:
     """
     Transform an ordered list of non-overlapping terms into a semantic network,
@@ -141,7 +141,7 @@ def sents_to_semantic_network(
     sents: Union[Sequence[str], Sequence[Span]],
     *,
     normalize: Union[str, bool, Callable[[Token], str]] = "lemma",
-    edge_weighting: Literal["cosine", "jaccard"] = "cosine",
+    edge_weighting: str = "cosine",
 ) -> nx.Graph:
     """
     Transform a list of sentences into a semantic network, where each sentence is
