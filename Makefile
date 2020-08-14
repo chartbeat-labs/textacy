@@ -12,7 +12,7 @@ test: clean
 	python -m pytest tests -v --cov=textacy --cov-report=term-missing
 
 lint:
-	pylint src -enable W,E,F --disable C0103,C0330
+	flake8 src
 
 mypy:
 	mypy src
