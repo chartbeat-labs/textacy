@@ -1,6 +1,6 @@
 language: python
 os: linux
-cache: pip
+# cache: pip
 matrix:
   fast_finish: true
   include:
