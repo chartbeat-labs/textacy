@@ -159,12 +159,14 @@ class DepecheMood(Resource):
         if lang not in self._lang_map:
             raise ValueError(
                 "lang='{}' is invalid; valid options are {}".format(
-                    lang, sorted(self._lang_map.keys()))
+                    lang, sorted(self._lang_map.keys())
+                )
             )
         if word_rep not in self._word_reps:
             raise ValueError(
                 "word_rep='{}' is invalid; valid options are {}".format(
-                    word_rep, self._word_reps)
+                    word_rep, self._word_reps
+                )
             )
         self.lang = lang
         self.word_rep = word_rep
@@ -173,7 +175,8 @@ class DepecheMood(Resource):
         self._filepath = self.data_dir.joinpath(
             "DepecheMood++",
             "DepecheMood_{lang}_{word_rep}_full.tsv".format(
-                lang=self._lang_map[lang], word_rep=word_rep),
+                lang=self._lang_map[lang], word_rep=word_rep
+            ),
         )
         self._weights = None
 
@@ -222,10 +225,7 @@ class DepecheMood(Resource):
                 exists on disk under ``data_dir``.
         """
         filepath = tio.download_file(
-            DOWNLOAD_URL,
-            filename=None,
-            dirpath=self.data_dir,
-            force=force,
+            DOWNLOAD_URL, filename=None, dirpath=self.data_dir, force=force,
         )
         if filepath:
             tio.unpack_archive(filepath, extract_dir=None)
@@ -255,7 +255,8 @@ class DepecheMood(Resource):
         else:
             raise TypeError(
                 "`terms` must be of type {}, not {}".format(
-                    {Token, Span, Doc, str, collections.abc.Sequence}, type(terms))
+                    {Token, Span, Doc, str, collections.abc.Sequence}, type(terms)
+                )
             )
 
     def _get_term_emotional_valence(self, term):
@@ -271,10 +272,12 @@ class DepecheMood(Resource):
                 return self.weights[term]
             elif isinstance(term, Token):
                 if self.word_rep == "lemmapos":
-                    return self.weights["{}#{}".format(term.lemma_, self._pos_map[term.pos])]
+                    return self.weights[
+                        "{}#{}".format(term.lemma_, self._pos_map[term.pos])
+                    ]
                 elif self.word_rep == "lemma":
                     return self.weights[term.lemma_]
-                else:   # word_rep == "token"
+                else:  # word_rep == "token"
                     return self.weights[term.text]
             else:
                 raise TypeError(
@@ -297,6 +300,5 @@ class DepecheMood(Resource):
             for emo, weight in emo_weights.items():
                 all_emo_weights[emo].append(weight)
         return {
-            emo: statistics.mean(weights)
-            for emo, weights in all_emo_weights.items()
+            emo: statistics.mean(weights) for emo, weights in all_emo_weights.items()
         }

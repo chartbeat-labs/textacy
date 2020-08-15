@@ -37,7 +37,7 @@ META = {
     "description": (
         "An open, multilingual semantic network of general knowledge, "
         "designed to help computers understand the meanings of words."
-    )
+    ),
 }
 DOWNLOAD_ROOT = "https://s3.amazonaws.com/conceptnet/downloads/{year}/edges/conceptnet-assertions-{version}.csv.gz"
 
@@ -101,9 +101,7 @@ class ConceptNet(Resource):
     _pos_map = {"NOUN": "n", "VERB": "v", "ADJ": "a", "ADV": "r"}
 
     def __init__(
-        self,
-        data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME),
-        version="5.7.0",
+        self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME), version="5.7.0",
     ):
         super().__init__(NAME, meta=META)
         self.version = version
@@ -125,12 +123,10 @@ class ConceptNet(Resource):
                 exists on disk; otherwise, don't re-download the data.
         """
         url = DOWNLOAD_ROOT.format(
-            version=self.version, year=self._version_years[self.version])
+            version=self.version, year=self._version_years[self.version]
+        )
         tio.download_file(
-            url,
-            filename=self._filename,
-            dirpath=self.data_dir,
-            force=force,
+            url, filename=self._filename, dirpath=self.data_dir, force=force,
         )
 
     @property
@@ -159,12 +155,11 @@ class ConceptNet(Resource):
             )
         else:
             rel_data = collections.defaultdict(
-                lambda: collections.defaultdict(
-                    lambda: collections.defaultdict(set)
-                )
+                lambda: collections.defaultdict(lambda: collections.defaultdict(set))
             )
             LOGGER.info(
-                "preparing data for '%s' relation; this may take a while...", relation)
+                "preparing data for '%s' relation; this may take a while...", relation
+            )
             rows = tio.read_csv(self.filepath, delimiter="\t", quoting=1)
             with tqdm() as pbar:
                 for row in rows:
@@ -216,7 +211,8 @@ class ConceptNet(Resource):
         if isinstance(term, str):
             if not (lang and sense):
                 raise ValueError(
-                    "if `term` is a string, both `lang` and `sense` must be specified")
+                    "if `term` is a string, both `lang` and `sense` must be specified"
+                )
             else:
                 norm_terms = [term.replace(" ", "_").lower()]
         elif isinstance(term, (Span, Token)):
@@ -238,9 +234,7 @@ class ConceptNet(Resource):
                     return []
         else:
             raise TypeError(
-                "`term` must be one of {}, not {}".format(
-                    {str, Span, Token}, type(term)
-                )
+                "`term` must be one of {}, not {}".format({str, Span, Token}, type(term))
             )
         # TODO: implement an out-of-vocabulary strategy? for example,
         # https://github.com/commonsense/conceptnet-numberbatch#out-of-vocabulary-strategy
