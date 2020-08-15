@@ -116,10 +116,7 @@ class OxfordTextArchive(Dataset):
                 on disk under ``data_dir``.
         """
         filepath = tio.download_file(
-            DOWNLOAD_URL,
-            filename=None,
-            dirpath=self.data_dir,
-            force=force,
+            DOWNLOAD_URL, filename=None, dirpath=self.data_dir, force=force,
         )
         if filepath:
             tio.unpack_archive(filepath, extract_dir=None)
@@ -170,7 +167,9 @@ class OxfordTextArchive(Dataset):
                     row["Year"] = None
                 # extract and clean up authors
                 authors = re_extract_authors.findall(row["Author"]) or [row["Author"]]
-                row["Author"] = tuple(re_clean_authors.sub("", author) for author in authors)
+                row["Author"] = tuple(
+                    re_clean_authors.sub("", author) for author in authors
+                )
                 row["Title"] = row["Title"].strip()
                 # get rid of uniform "Language" and "License" fields
                 del row["Language"]
@@ -197,7 +196,8 @@ class OxfordTextArchive(Dataset):
             record = _metadata.get(id_, {}).copy()
             if not record:
                 LOGGER.debug(
-                    "no metadata found for record %s; probably non-English text...", id_)
+                    "no metadata found for record %s; probably non-English text...", id_
+                )
                 continue
             with io.open(filepath, mode="rt", encoding="utf-8") as f:
                 record["text"] = f.read()
@@ -208,20 +208,22 @@ class OxfordTextArchive(Dataset):
         if min_len is not None:
             if min_len < 1:
                 raise ValueError("`min_len` must be at least 1")
-            filters.append(
-                lambda record: len(record.get("text", "")) >= min_len
-            )
+            filters.append(lambda record: len(record.get("text", "")) >= min_len)
         if author is not None:
             author = utils.validate_set_members(
-                author, (str, bytes), valid_vals=self.authors)
+                author, (str, bytes), valid_vals=self.authors
+            )
             filters.append(
-                lambda record: record.get("author") and any(athr in author for athr in record["author"])
+                lambda record: record.get("author")
+                and any(athr in author for athr in record["author"])
             )
         if date_range is not None:
             date_range = utils.validate_and_clip_range(
-                date_range, self.full_date_range, val_type=(str, bytes))
+                date_range, self.full_date_range, val_type=(str, bytes)
+            )
             filters.append(
-                lambda record: record.get("year") and date_range[0] <= record["year"] < date_range[1]
+                lambda record: record.get("year")
+                and date_range[0] <= record["year"] < date_range[1]
             )
         return filters
 

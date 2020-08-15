@@ -153,10 +153,7 @@ class CapitolWords(Dataset):
         release_tag = "capitol_words_py3_v{data_version}".format(data_version=1.0)
         url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
         tio.download_file(
-            url,
-            filename=self._filename,
-            dirpath=self.data_dir,
-            force=force,
+            url, filename=self._filename, dirpath=self.data_dir, force=force,
         )
 
     def __iter__(self):
@@ -181,12 +178,11 @@ class CapitolWords(Dataset):
         if min_len is not None:
             if min_len < 1:
                 raise ValueError("`min_len` must be at least 1")
-            filters.append(
-                lambda record: len(record.get("text", "")) >= min_len
-            )
+            filters.append(lambda record: len(record.get("text", "")) >= min_len)
         if date_range is not None:
             date_range = utils.validate_and_clip_range(
-                date_range, self.full_date_range, val_type=(str, bytes))
+                date_range, self.full_date_range, val_type=(str, bytes)
+            )
             filters.append(
                 lambda record: (
                     record.get("date")
@@ -195,19 +191,23 @@ class CapitolWords(Dataset):
             )
         if speaker_name is not None:
             speaker_name = utils.validate_set_members(
-                speaker_name, (str, bytes), valid_vals=self.speaker_names)
+                speaker_name, (str, bytes), valid_vals=self.speaker_names
+            )
             filters.append(lambda record: record.get("speaker_name") in speaker_name)
         if speaker_party is not None:
             speaker_party = utils.validate_set_members(
-                speaker_party, (str, bytes), valid_vals=self.speaker_parties)
+                speaker_party, (str, bytes), valid_vals=self.speaker_parties
+            )
             filters.append(lambda record: record.get("speaker_party") in speaker_party)
         if chamber is not None:
             chamber = utils.validate_set_members(
-                chamber, (str, bytes), valid_vals=self.chambers)
+                chamber, (str, bytes), valid_vals=self.chambers
+            )
             filters.append(lambda record: record.get("chamber") in chamber)
         if congress is not None:
             congress = utils.validate_set_members(
-                congress, int, valid_vals=self.congresses)
+                congress, int, valid_vals=self.congresses
+            )
             filters.append(lambda record: record.get("congress") in congress)
         return filters
 
@@ -259,7 +259,8 @@ class CapitolWords(Dataset):
             ValueError: If any filtering options are invalid.
         """
         filters = self._get_filters(
-            speaker_name, speaker_party, chamber, congress, date_range, min_len)
+            speaker_name, speaker_party, chamber, congress, date_range, min_len
+        )
         for record in itertools.islice(self._filtered_iter(filters), limit):
             yield record["text"]
 
@@ -302,6 +303,7 @@ class CapitolWords(Dataset):
             ValueError: If any filtering options are invalid.
         """
         filters = self._get_filters(
-            speaker_name, speaker_party, chamber, congress, date_range, min_len)
+            speaker_name, speaker_party, chamber, congress, date_range, min_len
+        )
         for record in itertools.islice(self._filtered_iter(filters), limit):
             yield record.pop("text"), record

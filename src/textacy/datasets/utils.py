@@ -13,7 +13,9 @@ from ..io import utils as io_utils
 LOGGER = logging.getLogger(__name__)
 
 
-def download_file(url, *, filename=None, dirpath=constants.DEFAULT_DATA_DIR, force=False):
+def download_file(
+    url, *, filename=None, dirpath=constants.DEFAULT_DATA_DIR, force=False
+):
     utils.deprecated(
         "This function has been moved to `textacy.io.utils.download_file()` "
         "and is aliased here only for backwards compatibility. "

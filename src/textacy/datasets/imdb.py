@@ -41,7 +41,7 @@ META = {
         "Collection of 50k highly polar movie reviews split evenly "
         "into train and test sets, with 25k positive and 25k negative labels. "
         "Also includes some unlabeled reviews."
-    )
+    ),
 }
 DOWNLOAD_URL = "http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
 
@@ -95,8 +95,7 @@ class IMDB(Dataset):
     full_rating_range: Tuple[int, int] = (1, 10)
 
     def __init__(
-        self,
-        data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME),
+        self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME),
     ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
@@ -118,10 +117,7 @@ class IMDB(Dataset):
                 on disk under ``data_dir``.
         """
         filepath = tio.download_file(
-            DOWNLOAD_URL,
-            filename="aclImdb.tar.gz",
-            dirpath=self.data_dir,
-            force=force,
+            DOWNLOAD_URL, filename="aclImdb.tar.gz", dirpath=self.data_dir, force=force,
         )
         if filepath:
             tio.unpack_archive(filepath, extract_dir=None)
@@ -175,14 +171,16 @@ class IMDB(Dataset):
             "subset": subset,
             "label": label,
             "rating": int(rating) if label != "unsup" else None,
-            "movie_id": self._get_movie_id(subset, label, int(id_))
+            "movie_id": self._get_movie_id(subset, label, int(id_)),
         }
 
     def _get_movie_id(self, subset, label, id_):
         try:
             return self._movie_ids[subset][label][id_]
         except KeyError:
-            fpath = self.data_dir.joinpath("aclImdb", subset, "urls_{}.txt".format(label))
+            fpath = self.data_dir.joinpath(
+                "aclImdb", subset, "urls_{}.txt".format(label)
+            )
             self._movie_ids[subset][label] = {
                 id_: RE_MOVIE_ID.search(line).group(1)
                 for id_, line in enumerate(tio.read_text(fpath, mode="rt", lines=True))
@@ -194,12 +192,11 @@ class IMDB(Dataset):
         if min_len is not None:
             if min_len < 1:
                 raise ValueError("`min_len` must be at least 1")
-            filters.append(
-                lambda record: len(record.get("text", "")) >= min_len
-            )
+            filters.append(lambda record: len(record.get("text", "")) >= min_len)
         if rating_range is not None:
             rating_range = utils.validate_and_clip_range(
-                rating_range, self.full_rating_range, val_type=int)
+                rating_range, self.full_rating_range, val_type=int
+            )
             filters.append(
                 lambda record: (
                     record.get("rating")

@@ -52,17 +52,29 @@ METAS = {
             "All pages for a given language- and version-specific "
             "Wikinews site snapshot."
         ),
-    }
+    },
 }
 # NOTE: let's use a mirror rather than the official wikimedia host
 # see: https://meta.wikimedia.org/wiki/Mirroring_Wikimedia_project_XML_dumps
 # DOWNLOAD_ROOT = "https://dumps.wikimedia.org/other/cirrussearch/"
 DOWNLOAD_ROOT = "https://dumps.wikimedia.your.org/other/cirrussearch/"
 
+
+def _is_bad_category_en(cat: str) -> bool:
+    return (
+        cat == "All stub articles"
+        or cat.startswith("Disambiguation pages")
+        or re.search(
+            r"^(?:All )?(?:Wikipedia )?(?:[Aa]rticles?|[Pp]ages)", cat, flags=re.UNICODE
+        )
+        is not None
+    )
+
+
 is_bad_category_funcs = {
     "wiki": {
         "de": lambda cat: cat.startswith("Wikipedia:"),
-        "en": lambda cat: cat == "All stub articles" or cat.startswith("Disambiguation pages") or re.search(r"^(?:All )?(?:Wikipedia )?(?:[Aa]rticles?|[Pp]ages)", cat, flags=re.UNICODE) is not None,  # noqa
+        "en": _is_bad_category_en,
         "nl": lambda cat: cat.startswith("Wikipedia:"),
     },
     "wikinews": {
@@ -73,30 +85,30 @@ is_bad_category_funcs = {
         "it": lambda cat: cat in {"Pubblicati"},
         "nl": lambda cat: cat in {"Gepubliceerd"},
         "pt": lambda cat: cat in {"Arquivado", "Publicado"},
-    }
+    },
 }
 
 _bad_wiki_link_starts = {
     "wiki": {
         "de": ("Wikipedia:", "Hilfe:"),
-        "el": ("Βοήθεια:", ),
+        "el": ("Βοήθεια:",),
         "en": ("Wikipedia:", "Help:"),
         "es": ("Wikipedia:", "Ayuda:"),
         "fr": ("Wikipédia:", "Aide:"),
         "it": ("Wikipedia:", "Aiuto:"),
-        "nl": ("Wikipedia:", ),
+        "nl": ("Wikipedia:",),
         "pt": ("Wikipédia:", "Ajuda:"),
     },
     "wikinews": {
-        "de": ("Wikinews:", ),
-        "el": ("Βικινέα", ),
+        "de": ("Wikinews:",),
+        "el": ("Βικινέα",),
         "en": ("Wikinews:", "Template:", "User:"),
-        "es": ("Wikinoticias:", ),
-        "fr": ("Wikinews:", ),
-        "it": ("Wikinotizie:", ),
-        "nl": ("Wikinieuws:", ),
-        "pt": ("Wikinotícias:", ),
-    }
+        "es": ("Wikinoticias:",),
+        "fr": ("Wikinews:",),
+        "it": ("Wikinotizie:",),
+        "nl": ("Wikinieuws:",),
+        "pt": ("Wikinotícias:",),
+    },
 }
 
 
@@ -109,8 +121,7 @@ class Wikimedia(Dataset):
     """
 
     def __init__(
-        self, name, meta, project, data_dir,
-        lang="en", version="current", namespace=0,
+        self, name, meta, project, data_dir, lang="en", version="current", namespace=0,
     ):
         super().__init__(name, meta=meta)
         self.lang = lang
@@ -122,7 +133,7 @@ class Wikimedia(Dataset):
             "{version}".format(version=self.version),
             "{lang}{project}-{version}-cirrussearch-content.json.gz".format(
                 lang=self.lang, project=self.project, version=self.version,
-            )
+            ),
         )
         self.data_dir = utils.to_path(data_dir).resolve()
         self._filepath = self.data_dir.joinpath(self._filestub)
@@ -154,10 +165,7 @@ class Wikimedia(Dataset):
         """
         file_url = self._get_file_url()
         tio.download_file(
-            file_url,
-            filename=self._filestub,
-            dirpath=self.data_dir,
-            force=force,
+            file_url, filename=self._filestub, dirpath=self.data_dir, force=force,
         )
 
     def _get_file_url(self):
@@ -172,7 +180,9 @@ class Wikimedia(Dataset):
         # otherwise, version should be a date string like YYYYMMDD
         else:
             try:
-                version_dts = (datetime.datetime.strptime(self.version, "%Y%m%d").date(),)
+                version_dts = (
+                    datetime.datetime.strptime(self.version, "%Y%m%d").date(),
+                )
             except ValueError:
                 LOGGER.exception(
                     "version='{}' is invalid; must be 'current' or a date string "
@@ -186,8 +196,8 @@ class Wikimedia(Dataset):
                     version=self.version,
                     lang=self.lang,
                     project=self.project,
-                    version_dt=version_dt.strftime("%Y%m%d")
-                )
+                    version_dt=version_dt.strftime("%Y%m%d"),
+                ),
             )
             response = requests.head(file_url)
             if response.status_code == 200:
@@ -198,14 +208,19 @@ class Wikimedia(Dataset):
             raise ValueError(
                 "no Wikimedia CirrusSearch data found for version='{version}'; "
                 "check out '{url}' for available data".format(
-                    version=self.version, url=DOWNLOAD_ROOT)
+                    version=self.version, url=DOWNLOAD_ROOT
+                )
             )
         else:
             raise ValueError(
                 "no Wikimedia CirrusSearch data found for "
                 "version='{version}', lang='{lang}', project='{project}'; "
                 "check out '{url}' for available data".format(
-                    version=self.version, lang=self.lang, project=self.project, url=response.url)
+                    version=self.version,
+                    lang=self.lang,
+                    project=self.project,
+                    url=response.url,
+                )
             )
 
     def __iter__(self):
@@ -213,11 +228,14 @@ class Wikimedia(Dataset):
             raise OSError(
                 "{} database dump file {} not found; "
                 "has the dataset been downloaded yet?".format(
-                    self.project, self.filepath)
+                    self.project, self.filepath
+                )
             )
 
         is_bad_category = is_bad_category_funcs.get(self.project, {}).get(self.lang)
-        bad_wl_starts = _bad_wiki_link_starts.get(self.project, {}).get(self.lang, tuple())
+        bad_wl_starts = _bad_wiki_link_starts.get(self.project, {}).get(
+            self.lang, tuple()
+        )
 
         lines = tio.read_json(self.filepath, mode="rb", lines=True)
         for index, source in itertoolz.partition(2, lines):
@@ -227,17 +245,17 @@ class Wikimedia(Dataset):
             opening_text = source.get("opening_text")
             text = source.get("text")
             if opening_text and text and text.startswith(opening_text):
-                text = opening_text + "\n\n" + text[len(opening_text):].strip()
+                text = opening_text + "\n\n" + text[len(opening_text) :].strip()
             # do minimal cleaning of categories and wiki links, if available
             if is_bad_category:
                 categories = tuple(
-                    cat for cat in source.get("category", [])
-                    if not is_bad_category(cat)
+                    cat for cat in source.get("category", []) if not is_bad_category(cat)
                 )
             else:
                 categories = tuple(source.get("category", []))
             wiki_links = tuple(
-                wl for wl in source.get("outgoing_link", [])
+                wl
+                for wl in source.get("outgoing_link", [])
                 if not any(wl.startswith(bwls) for bwls in bad_wl_starts)
             )
             yield {
@@ -248,7 +266,8 @@ class Wikimedia(Dataset):
                 "wiki_links": wiki_links,
                 "ext_links": tuple(
                     urllib.parse.unquote_plus(el)
-                    for el in source.get("external_link", [])),
+                    for el in source.get("external_link", [])
+                ),
                 "categories": categories,
                 "dt_created": source.get("create_timestamp"),
                 "n_incoming_links": source.get("incoming_links"),
@@ -260,12 +279,11 @@ class Wikimedia(Dataset):
         if min_len is not None:
             if min_len < 1:
                 raise ValueError("`min_len` must be at least 1")
-            filters.append(
-                lambda record: len(record.get("text", "")) >= min_len
-            )
+            filters.append(lambda record: len(record.get("text", "")) >= min_len)
         if category is not None:
             category = utils.validate_set_members(
-                category, (str, bytes), valid_vals=None)
+                category, (str, bytes), valid_vals=None
+            )
             filters.append(
                 lambda record: (
                     record.get("categories")
@@ -274,7 +292,8 @@ class Wikimedia(Dataset):
             )
         if wiki_link is not None:
             wiki_link = utils.validate_set_members(
-                wiki_link, (str, bytes), valid_vals=None)
+                wiki_link, (str, bytes), valid_vals=None
+            )
             filters.append(
                 lambda record: (
                     record.get("wiki_links")
@@ -413,14 +432,21 @@ class Wikipedia(Wikimedia):
 
     def __init__(
         self,
-        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath("wikipedia"),
+        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(
+            "wikipedia"
+        ),
         lang: str = "en",
         version: str = "current",
         namespace: int = 0,
     ):
         super().__init__(
-            "wikipedia", METAS["wikipedia"], "wiki", data_dir,
-            lang=lang, version=version, namespace=namespace,
+            "wikipedia",
+            METAS["wikipedia"],
+            "wiki",
+            data_dir,
+            lang=lang,
+            version=version,
+            namespace=namespace,
         )
 
 
@@ -477,12 +503,19 @@ class Wikinews(Wikimedia):
 
     def __init__(
         self,
-        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath("wikinews"),
+        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(
+            "wikinews"
+        ),
         lang: str = "en",
         version: str = "current",
         namespace: int = 0,
     ):
         super().__init__(
-            "wikinews", METAS["wikinews"], "wikinews", data_dir,
-            lang=lang, version=version, namespace=namespace,
+            "wikinews",
+            METAS["wikinews"],
+            "wikinews",
+            data_dir,
+            lang=lang,
+            version=version,
+            namespace=namespace,
         )

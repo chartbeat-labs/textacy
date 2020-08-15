@@ -576,10 +576,7 @@ class SupremeCourt(Dataset):
         release_tag = "supreme_court_py3_v{data_version}".format(data_version=1.0)
         url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
         tio.download_file(
-            url,
-            filename=self._filename,
-            dirpath=self.data_dir,
-            force=force,
+            url, filename=self._filename, dirpath=self.data_dir, force=force,
         )
 
     def __iter__(self):
@@ -592,23 +589,17 @@ class SupremeCourt(Dataset):
             yield record
 
     def _get_filters(
-        self,
-        opinion_author,
-        decision_direction,
-        issue_area,
-        date_range,
-        min_len,
+        self, opinion_author, decision_direction, issue_area, date_range, min_len,
     ):
         filters = []
         if min_len is not None:
             if min_len < 1:
                 raise ValueError("`min_len` must be at least 1")
-            filters.append(
-                lambda record: len(record.get("text", "")) >= min_len
-            )
+            filters.append(lambda record: len(record.get("text", "")) >= min_len)
         if date_range is not None:
             date_range = utils.validate_and_clip_range(
-                date_range, self.full_date_range, val_type=(str, bytes))
+                date_range, self.full_date_range, val_type=(str, bytes)
+            )
             filters.append(
                 lambda record: (
                     record.get("decision_date")
@@ -617,19 +608,23 @@ class SupremeCourt(Dataset):
             )
         if opinion_author is not None:
             opinion_author = utils.validate_set_members(
-                opinion_author, int, valid_vals=self.opinion_author_codes)
+                opinion_author, int, valid_vals=self.opinion_author_codes
+            )
             filters.append(
-                lambda record: record.get("maj_opinion_author") in opinion_author)
+                lambda record: record.get("maj_opinion_author") in opinion_author
+            )
         if decision_direction is not None:
             decision_direction = utils.validate_set_members(
-                decision_direction, (str, bytes), valid_vals=self.decision_directions)
+                decision_direction, (str, bytes), valid_vals=self.decision_directions
+            )
             filters.append(
-                lambda record: record.get("decision_direction") in decision_direction)
+                lambda record: record.get("decision_direction") in decision_direction
+            )
         if issue_area is not None:
             issue_area = utils.validate_set_members(
-                issue_area, int, valid_vals=self.issue_area_codes)
-            filters.append(
-                lambda record: record.get("issue_area") in issue_area)
+                issue_area, int, valid_vals=self.issue_area_codes
+            )
+            filters.append(lambda record: record.get("issue_area") in issue_area)
         return filters
 
     def _filtered_iter(self, filters):
@@ -679,7 +674,8 @@ class SupremeCourt(Dataset):
             ValueError: If any filtering options are invalid.
         """
         filters = self._get_filters(
-            opinion_author, decision_direction, issue_area, date_range, min_len)
+            opinion_author, decision_direction, issue_area, date_range, min_len
+        )
         for record in itertools.islice(self._filtered_iter(filters), limit):
             yield record["text"]
 
@@ -722,6 +718,7 @@ class SupremeCourt(Dataset):
             ValueError: If any filtering options are invalid.
         """
         filters = self._get_filters(
-            opinion_author, decision_direction, issue_area, date_range, min_len)
+            opinion_author, decision_direction, issue_area, date_range, min_len
+        )
         for record in itertools.islice(self._filtered_iter(filters), limit):
             yield record.pop("text"), record

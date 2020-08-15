@@ -42,7 +42,7 @@ META = {
         "A collection of translations of the Universal Declaration of Human Rights (UDHR), "
         "a milestone document in the history of human rights that first, formally established "
         "fundamental human rights to be universally protected."
-    )
+    ),
 }
 DOWNLOAD_URL = "https://unicode.org/udhr/assemblies/udhr_txt.zip"
 
@@ -109,10 +109,7 @@ class UDHR(Dataset):
                 on disk under ``data_dir``.
         """
         filepath = tio.download_file(
-            DOWNLOAD_URL,
-            filename="udhr_txt.zip",
-            dirpath=self.data_dir,
-            force=force,
+            DOWNLOAD_URL, filename="udhr_txt.zip", dirpath=self.data_dir, force=force,
         )
         if filepath:
             tio.unpack_archive(filepath, extract_dir=self.data_dir.joinpath("udhr_txt"))
@@ -172,7 +169,7 @@ class UDHR(Dataset):
         # chop off the header, if it exists
         try:
             header_idx = text_lines.index("---")
-            text_lines = text_lines[header_idx + 1:]
+            text_lines = text_lines[header_idx + 1 :]
         except ValueError:
             pass
         return preprocessing.normalize_whitespace("\n".join(text_lines))

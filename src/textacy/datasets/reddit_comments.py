@@ -148,7 +148,8 @@ class RedditComments(Dataset):
                 exists on disk under ``data_dir``.
         """
         date_range = utils.validate_and_clip_range(
-            date_range, self.full_date_range, val_type=(str, bytes))
+            date_range, self.full_date_range, val_type=(str, bytes)
+        )
         filestubs = self._generate_filestubs(date_range)
         for filestub in filestubs:
             tio.download_file(
@@ -206,9 +207,11 @@ class RedditComments(Dataset):
         for filepath in filepaths:
             for line in tio.read_json(filepath, mode="rb", lines=True):
                 line["created_utc"] = self._convert_timestamp(
-                    line.get("created_utc", ""))
+                    line.get("created_utc", "")
+                )
                 line["retrieved_on"] = self._convert_timestamp(
-                    line.get("retrieved_on", ""))
+                    line.get("retrieved_on", "")
+                )
                 line["body"] = self._clean_content(line["body"])
                 yield line
 
@@ -217,17 +220,14 @@ class RedditComments(Dataset):
         if min_len is not None:
             if min_len < 1:
                 raise ValueError("`min_len` must be at least 1")
-            filters.append(
-                lambda record: len(record.get("body", "")) >= min_len
-            )
+            filters.append(lambda record: len(record.get("body", "")) >= min_len)
         if subreddit is not None:
             subreddit = utils.validate_set_members(subreddit, (str, bytes))
-            filters.append(
-                lambda record: record.get("subreddit") in subreddit
-            )
+            filters.append(lambda record: record.get("subreddit") in subreddit)
         if date_range is not None:
             date_range = utils.validate_and_clip_range(
-                date_range, self.full_date_range, val_type=(str, bytes))
+                date_range, self.full_date_range, val_type=(str, bytes)
+            )
             filters.append(
                 lambda record: (
                     record.get("created_utc")
@@ -236,7 +236,8 @@ class RedditComments(Dataset):
             )
         if score_range is not None:
             score_range = utils.validate_and_clip_range(
-                score_range, self._full_score_range, val_type=(int, float))
+                score_range, self._full_score_range, val_type=(int, float)
+            )
             filters.append(
                 lambda record: (
                     record.get("score")
