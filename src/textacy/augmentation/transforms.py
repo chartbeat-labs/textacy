@@ -36,7 +36,8 @@ def substitute_word_synonyms(
     _validate_aug_toks(aug_toks)
     pos = cast(Set[str], utils.to_collection(pos, str, set))
     cand_idxs = [
-        idx for idx, aug_tok in enumerate(aug_toks)
+        idx
+        for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.syns and (pos is None or aug_tok.pos in pos)
     ]
     rand_idxs = set(_select_random_candidates(cand_idxs, num))
@@ -93,7 +94,8 @@ def insert_word_synonyms(
         return aug_toks[:]
 
     cand_aug_toks = [
-        aug_tok for aug_tok in aug_toks
+        aug_tok
+        for aug_tok in aug_toks
         if aug_tok.syns and (pos is None or aug_tok.pos in pos)
     ]
     rand_aug_toks = _select_random_candidates(cand_aug_toks, num)
@@ -103,7 +105,9 @@ def insert_word_synonyms(
 
     rand_aug_toks = iter(rand_aug_toks)
     new_aug_toks: List[aug_utils.AugTok] = []
-    for idx, (prev_tok, curr_tok) in enumerate(itertoolz.sliding_window(2, [None] + aug_toks)):
+    for idx, (prev_tok, curr_tok) in enumerate(
+        itertoolz.sliding_window(2, [None] + aug_toks)
+    ):
         if idx in rand_idxs:
             rand_aug_tok = next(rand_aug_toks)
             if prev_tok:
@@ -168,11 +172,13 @@ def swap_words(
     #     )
     # )
     cand_idxs = (
-        idx for idx, aug_tok in enumerate(aug_toks)
+        idx
+        for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.is_word and (pos is None or aug_tok.pos in pos)
     )
     cand_idx_pairs = [
-        (idx1, idx2) for idx1, idx2 in itertoolz.sliding_window(2, cand_idxs)
+        (idx1, idx2)
+        for idx1, idx2 in itertoolz.sliding_window(2, cand_idxs)
         if idx2 - idx1 == 1
     ]
     rand_idx_pairs = _select_random_candidates(cand_idx_pairs, num)
@@ -227,7 +233,8 @@ def delete_words(
         return aug_toks[:]
 
     cand_idxs = [
-        idx for idx, aug_tok in enumerate(aug_toks)
+        idx
+        for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.is_word and (pos is None or aug_tok.pos in pos)
     ]
     rand_idxs = set(_select_random_candidates(cand_idxs, num))
@@ -284,7 +291,8 @@ def substitute_chars(
     _validate_aug_toks(aug_toks)
     char_weights = aug_utils.get_char_weights(lang or "xx")
     cand_idxs = [
-        idx for idx, aug_tok in enumerate(aug_toks)
+        idx
+        for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.is_word and len(aug_tok.text) >= 3
     ]
     rand_idxs = set(_select_random_candidates(cand_idxs, num))
@@ -349,7 +357,8 @@ def insert_chars(
     _validate_aug_toks(aug_toks)
     char_weights = aug_utils.get_char_weights(lang or "xx")
     cand_idxs = [
-        idx for idx, aug_tok in enumerate(aug_toks)
+        idx
+        for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.is_word and len(aug_tok.text) >= 3
     ]
     rand_idxs = set(_select_random_candidates(cand_idxs, num))
@@ -384,9 +393,7 @@ def insert_chars(
 
 
 def swap_chars(
-    aug_toks: List[aug_utils.AugTok],
-    *,
-    num: Union[int, float] = 1,
+    aug_toks: List[aug_utils.AugTok], *, num: Union[int, float] = 1,
 ) -> List[aug_utils.AugTok]:
     """
     Randomly swap two *adjacent* characters in randomly-selected words,
@@ -402,7 +409,8 @@ def swap_chars(
     """
     _validate_aug_toks(aug_toks)
     cand_idxs = [
-        idx for idx, aug_tok in enumerate(aug_toks)
+        idx
+        for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.is_word and len(aug_tok.text) >= 3
     ]
     rand_idxs = set(_select_random_candidates(cand_idxs, num))
@@ -430,9 +438,7 @@ def swap_chars(
 
 
 def delete_chars(
-    aug_toks: List[aug_utils.AugTok],
-    *,
-    num: Union[int, float] = 1,
+    aug_toks: List[aug_utils.AugTok], *, num: Union[int, float] = 1,
 ) -> List[aug_utils.AugTok]:
     """
     Randomly delete a character in randomly-selected words,
@@ -448,7 +454,8 @@ def delete_chars(
     """
     _validate_aug_toks(aug_toks)
     cand_idxs = [
-        idx for idx, aug_tok in enumerate(aug_toks)
+        idx
+        for idx, aug_tok in enumerate(aug_toks)
         if aug_tok.is_word and len(aug_tok.text) >= 3
     ]
     rand_idxs = set(_select_random_candidates(cand_idxs, num))
@@ -460,7 +467,8 @@ def delete_chars(
         if idx in rand_idxs:
             rand_char_idx = random.choice(range(len(aug_tok.text)))
             text = "".join(
-                char for char_idx, char in enumerate(aug_tok.text)
+                char
+                for char_idx, char in enumerate(aug_tok.text)
                 if char_idx != rand_char_idx
             )
             new_aug_toks.append(
@@ -481,7 +489,8 @@ def _validate_aug_toks(aug_toks):
     if not (isinstance(aug_toks, list) and isinstance(aug_toks[0], aug_utils.AugTok)):
         raise TypeError(
             "aug_toks must be of type List[:obj:`AugTok`], not {}[{}]".format(
-                type(aug_toks), type(aug_toks[0]))
+                type(aug_toks), type(aug_toks[0])
+            )
         )
 
 

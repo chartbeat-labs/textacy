@@ -103,7 +103,8 @@ class Augmenter:
                 for tf in tfs:
                     tf_params = inspect.signature(tf).parameters
                     tf_kwargs = {
-                        kwarg: value for kwarg, value in kwargs.items()
+                        kwarg: value
+                        for kwarg, value in kwargs.items()
                         if kwarg in tf_params
                     }
                     aug_toks = tf(aug_toks, **tf_kwargs)
@@ -150,8 +151,7 @@ class Augmenter:
             rand_tfs = [tf for tf in self.tfs if random.random() < num]
         else:
             rand_tfs = [
-                tf for tf, tf_num in zip(self.tfs, self.num)
-                if random.random() < tf_num
+                tf for tf, tf_num in zip(self.tfs, self.num) if random.random() < tf_num
             ]
         return rand_tfs
 

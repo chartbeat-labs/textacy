@@ -34,7 +34,8 @@ def to_aug_toks(spacy_obj: Union[Doc, Span]) -> List[AugTok]:
     else:
         toks_syns = (
             concept_net.get_synonyms(tok.text, lang=lang, sense=tok.pos_)
-            if not (tok.is_punct or tok.is_space) else []
+            if not (tok.is_punct or tok.is_space)
+            else []
             for tok in spacy_obj
         )
     return [
@@ -65,10 +66,7 @@ def get_char_weights(lang: str) -> List[Tuple[str, int]]:
     try:
         char_weights = list(
             collections.Counter(
-                char
-                for text in udhr.texts(lang=lang)
-                for char in text
-                if char.isalnum()
+                char for text in udhr.texts(lang=lang) for char in text if char.isalnum()
             ).items()
         )
     except ValueError:
