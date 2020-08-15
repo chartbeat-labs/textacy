@@ -17,7 +17,19 @@ on instantiated docs prepended by an underscore:
     Doc(6 tokens: "This is a short text.")
 """
 import types
-from typing import cast, Any, Callable, Collection, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import (
+    cast,
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import networkx as nx
 import spacy
@@ -135,10 +147,7 @@ def to_tokenized_text(doc: Doc) -> List[List[str]]:
         is treated as a single sentence.
     """
     if doc.is_sentenced:
-        return [
-            [token.text for token in sent]
-            for sent in doc.sents
-        ]
+        return [[token.text for token in sent] for sent in doc.sents]
     else:
         return [[token.text for token in doc]]
 
@@ -153,10 +162,7 @@ def to_tagged_text(doc: Doc) -> List[List[Tuple[str, str]]]:
         is treated as a single sentence.
     """
     if doc.is_sentenced:
-        return [
-            [(token.text, token.pos_) for token in sent]
-            for sent in doc.sents
-        ]
+        return [[(token.text, token.pos_) for token in sent] for sent in doc.sents]
     else:
         return [[(token.text, token.pos_) for token in doc]]
 
@@ -168,7 +174,7 @@ def to_terms_list(
     entities: Optional[bool] = True,
     normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]] = "lemma",
     as_strings: bool = False,
-    **kwargs
+    **kwargs,
 ) -> Union[Iterable[int], Iterable[str]]:
     """
     Transform ``Doc`` into a sequence of ngrams and/or entities — not necessarily
@@ -228,15 +234,13 @@ def to_terms_list(
     if not (entities is None or isinstance(entities, bool)):
         raise ValueError(
             "entities={} is invalid; choices are {}".format(
-                entities,
-                {True, False, None},
+                entities, {True, False, None},
             )
         )
     if not (normalize in ("lemma", "lower") or callable(normalize) or not normalize):
         raise ValueError(
             "normalize={} is invalid; choices are {}".format(
-                normalize,
-                {"lemma", "lower", types.FunctionType, None},
+                normalize, {"lemma", "lower", types.FunctionType, None},
             )
         )
     if ngrams:
@@ -245,8 +249,11 @@ def to_terms_list(
         ngrams_: List[Iterable[Span]] = []
         ng_kwargs: Union[Set[str], Dict[str, Any]]
         ng_kwargs = {
-            "filter_stops", "filter_punct", "filter_nums",
-            "include_pos", "exclude_pos",
+            "filter_stops",
+            "filter_punct",
+            "filter_nums",
+            "include_pos",
+            "exclude_pos",
             "min_freq",
         }
         ng_kwargs = {key: val for key, val in kwargs.items() if key in ng_kwargs}
@@ -270,16 +277,8 @@ def to_terms_list(
         else:
             entities_ = tuple(entities_)
             ent_idxs = {(ent.start, ent.end) for ent in entities_}
-            unigrams_ = (
-                ug
-                for ug in unigrams_
-                if (ug.i, ug.i + 1) not in ent_idxs
-            )
-            ngrams_ = (
-                ng
-                for ng in ngrams_
-                if (ng.start, ng.end) not in ent_idxs
-            )
+            unigrams_ = (ug for ug in unigrams_ if (ug.i, ug.i + 1) not in ent_idxs)
+            ngrams_ = (ng for ng in ngrams_ if (ng.start, ng.end) not in ent_idxs)
             # add unigrams and ngrams, only
             if entities is False:
                 terms = itertoolz.concatv(unigrams_, ngrams_)
@@ -331,14 +330,14 @@ def to_terms_list(
 
 
 def to_bag_of_terms(
-    doc : Doc,
+    doc: Doc,
     *,
     ngrams: Optional[Union[int, Collection[int]]] = (1, 2, 3),
     entities: Optional[bool] = True,
     normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]] = "lemma",
     weighting: str = "count",
     as_strings: bool = False,
-    **kwargs
+    **kwargs,
 ) -> Dict[Union[int, str], Union[int, float]]:
     """
     Transform ``Doc`` into a bag-of-terms: the set of unique terms in ``Doc``
@@ -393,7 +392,7 @@ def to_bag_of_terms(
         entities=entities,
         normalize=normalize,
         as_strings=as_strings,
-        **kwargs
+        **kwargs,
     )
     bot = itertoolz.frequencies(terms_list)
     if weighting == "freq":
@@ -448,8 +447,10 @@ def to_bag_of_words(
     if weighting not in {"count", "freq", "binary"}:
         raise ValueError('weighting "{}" is invalid'.format(weighting))
     count_by = (
-        spacy.attrs.LEMMA if normalize == "lemma"
-        else spacy.attrs.LOWER if normalize == "lower"
+        spacy.attrs.LEMMA
+        if normalize == "lemma"
+        else spacy.attrs.LOWER
+        if normalize == "lower"
         else spacy.attrs.ORTH
     )
 
@@ -541,9 +542,7 @@ def to_semantic_network(
             list(doc.sents), normalize=normalize, edge_weighting=edge_weighting
         )
     else:
-        msg = 'nodes "{}" not valid; must be in {}'.format(
-            nodes, {"words", "sents"}
-        )
+        msg = 'nodes "{}" not valid; must be in {}'.format(nodes, {"words", "sents"})
         raise ValueError(msg)
 
 

@@ -153,17 +153,11 @@ def make_spacy_doc(
     elif utils.is_record(data):
         return _make_spacy_doc_from_record(data, lang)
     else:
-        raise TypeError(
-            "`data` must be {}, not {}".format(
-                {str, tuple},
-                type(data),
-            )
-        )
+        raise TypeError("`data` must be {}, not {}".format({str, tuple}, type(data),))
 
 
 def _make_spacy_doc_from_text(
-    text: str,
-    lang: Union[str, Callable[[str], str], Language],
+    text: str, lang: Union[str, Callable[[str], str], Language],
 ) -> Doc:
     if isinstance(lang, str):
         spacy_lang = load_spacy_lang(lang)
@@ -177,16 +171,14 @@ def _make_spacy_doc_from_text(
     else:
         raise TypeError(
             "`lang` must be {}, not {}".format(
-                {str, spacy.language.Language, types.FunctionType},
-                type(lang),
+                {str, spacy.language.Language, types.FunctionType}, type(lang),
             )
         )
     return spacy_lang(text)
 
 
 def _make_spacy_doc_from_record(
-    record: Tuple[str, dict],
-    lang: Union[str, Callable[[str], str], Language],
+    record: Tuple[str, dict], lang: Union[str, Callable[[str], str], Language],
 ) -> Doc:
     if isinstance(lang, str):
         spacy_lang = load_spacy_lang(lang)
@@ -200,8 +192,7 @@ def _make_spacy_doc_from_record(
     else:
         raise TypeError(
             "`lang` must be {}, not {}".format(
-                {str, spacy.language.Language, types.FunctionType},
-                type(lang),
+                {str, spacy.language.Language, types.FunctionType}, type(lang),
             )
         )
     doc = spacy_lang(record[0])
@@ -210,8 +201,7 @@ def _make_spacy_doc_from_record(
 
 
 def _make_spacy_doc_from_doc(
-    doc: Doc,
-    lang: Union[str, Callable[[str], str], Language],
+    doc: Doc, lang: Union[str, Callable[[str], str], Language],
 ) -> Doc:
     # these checks are probably unnecessary, but in case a user
     # has done something strange, we should complain...
@@ -230,15 +220,15 @@ def _make_spacy_doc_from_doc(
             raise ValueError(
                 "`spacy.vocab.Vocab` used to process document ('{}') "
                 "must be the same as that used by the `lang` pipeline ('{}')".format(
-                    doc.vocab, lang.vocab)
+                    doc.vocab, lang.vocab
+                )
             )
     elif callable(lang) is False:
         # there's nothing to be done with a callable lang, since we already have
         # the doc, and checking the text lang is an unnecessary performance hit
         raise TypeError(
             "`lang` must be {}, not {}".format(
-                {str, spacy.language.Language, types.FunctionType},
-                type(lang),
+                {str, spacy.language.Language, types.FunctionType}, type(lang),
             )
         )
     return doc

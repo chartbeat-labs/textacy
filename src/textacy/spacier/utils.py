@@ -18,9 +18,7 @@ from . import core
 
 
 def make_doc_from_text_chunks(
-    text: str,
-    lang: Union[str, Language],
-    chunk_size: int = 100000,
+    text: str, lang: Union[str, Language], chunk_size: int = 100000,
 ) -> Doc:
     """
     Make a single spaCy-processed document from 1 or more chunks of ``text``.
@@ -52,9 +50,7 @@ def make_doc_from_text_chunks(
     if isinstance(lang, str):
         lang = core.load_spacy_lang(lang)
     elif not isinstance(lang, Language):
-        raise TypeError(
-            "`lang` must be {}, not {}".format({str, Language}, type(lang))
-        )
+        raise TypeError("`lang` must be {}, not {}".format({str, Language}, type(lang)))
 
     words: List[str] = []
     spaces: List[bool] = []
@@ -197,8 +193,6 @@ def get_span_for_verb_auxiliaries(verb: Token) -> Tuple[int, int]:
     )
     max_i = verb.i + sum(
         1
-        for _ in itertools.takewhile(
-            lambda x: x.dep_ in constants.AUX_DEPS, verb.rights
-        )
+        for _ in itertools.takewhile(lambda x: x.dep_ in constants.AUX_DEPS, verb.rights)
     )
     return (min_i, max_i)
