@@ -80,7 +80,9 @@ def write_text(
             otherwise, data is written to disk one line at a time.
     """
     io_utils._validate_write_mode(mode)
-    with io_utils.open_sesame(filepath, mode=mode, encoding=encoding, make_dirs=make_dirs) as f:
+    with io_utils.open_sesame(
+        filepath, mode=mode, encoding=encoding, make_dirs=make_dirs
+    ) as f:
         if lines is False:
             f.write(data)
         else:

@@ -202,9 +202,7 @@ def coerce_content_type(content: Union[str, bytes], file_mode: str) -> Union[str
 
 
 def split_records(
-    items: Iterable,
-    content_field: Union[str, int],
-    itemwise: bool = False,
+    items: Iterable, content_field: Union[str, int], itemwise: bool = False,
 ) -> Iterable:
     """
     Split records' content (text) from associated metadata, but keep them paired
@@ -361,8 +359,7 @@ def download_file(
     filepath = utils.to_path(dirpath).resolve() / filename
     if filepath.is_file() and force is False:
         LOGGER.info(
-            "file '%s' already exists and force=False; skipping download...",
-            filepath,
+            "file '%s' already exists and force=False; skipping download...", filepath,
         )
         return None
     else:
@@ -384,9 +381,7 @@ def get_filename_from_url(url: str) -> str:
 
 
 def unpack_archive(
-    filepath: Union[str, pathlib.Path],
-    *,
-    extract_dir: Union[str, pathlib.Path] = None,
+    filepath: Union[str, pathlib.Path], *, extract_dir: Union[str, pathlib.Path] = None,
 ) -> Union[str, pathlib.Path]:
     """
     Extract data from a zip or tar archive file into a directory

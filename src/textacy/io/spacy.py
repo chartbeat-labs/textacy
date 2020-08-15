@@ -73,9 +73,7 @@ def read_spacy_docs(
         elif isinstance(lang, str):
             vocab = spacier.core.load_spacy_lang(lang).vocab
         else:
-            raise ValueError(
-                "lang = '{}' is invalid; must be a str or `spacy.Language`"
-            )
+            raise ValueError("lang = '{}' is invalid; must be a str or `spacy.Language`")
         with io_utils.open_sesame(filepath, mode="rb") as f:
             unpacker = msgpack.Unpacker(f, raw=False, unicode_errors="strict")
             for msg in unpacker:
@@ -89,9 +87,7 @@ def read_spacy_docs(
                 # keys, we must have tuples. In values we just have to hope
                 # users don't mind getting a list instead of a tuple.
                 if "user_data_keys" in msg:
-                    user_data_keys = msgpack.loads(
-                        msg["user_data_keys"], use_list=False
-                    )
+                    user_data_keys = msgpack.loads(msg["user_data_keys"], use_list=False)
                     user_data_values = msgpack.loads(msg["user_data_values"])
                     user_data = {
                         key: value
@@ -108,13 +104,11 @@ def read_spacy_docs(
                 for i in range(attrs.shape[0]):
                     end = start + int(attrs[i, 0])
                     has_space = int(attrs[i, 1])
-                    words.append(text[start: end])
+                    words.append(text[start:end])
                     spaces.append(bool(has_space))
                     start = end + has_space
 
-                spacy_doc = Doc(
-                    vocab, words=words, spaces=spaces, user_data=user_data
-                )
+                spacy_doc = Doc(vocab, words=words, spaces=spaces, user_data=user_data)
                 spacy_doc = spacy_doc.from_array(msg["array_head"][2:], attrs[:, 2:])
                 if "sentiment" in msg:
                     spacy_doc.sentiment = msg["sentiment"]

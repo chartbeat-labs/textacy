@@ -16,9 +16,7 @@ from . import utils as io_utils
 
 
 def read_sparse_matrix(
-    filepath: Union[str, pathlib.Path],
-    *,
-    kind: str = "csc",
+    filepath: Union[str, pathlib.Path], *, kind: str = "csc",
 ) -> Union[sp.csc_matrix, sp.csr_matrix]:
     """
     Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
