@@ -3,7 +3,9 @@ name: build and test
 on:
   push:
     branches: [ $default-branch, develop, update-package-config ]
-  pull_request:
+  pull_request:  # run on all pull requests
+  schedule:  # run weekly
+    - cron: "0 12 * * 0"
 
 jobs:
   build:
@@ -15,27 +17,27 @@ jobs:
 
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
       with:
         python-version: ${{ matrix.python-version }}
-    - name: Get pip cache dir
+    - name: get pip cache dir
       id: pip-cache
       run: |
         echo "::set-output name=dir::$(pip cache dir)"
-    - name: Set up pip cache
+    - name: set up pip cache
       uses: actions/cache@v2
       with:
         path: ${{ steps.pip-cache.outputs.dir }}
         key: ${{ matrix.os }}-pip-${{ hashFiles('setup.cfg') }}
         restore-keys: |
           ${{ matrix.os }}-pip-
-    - name: Install package and dependencies
+    - name: install package and dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install -e .
         python -m pip install -e .[dev]
-    - name: Download language data
+    - name: download language data
       run: |
         python -m spacy download en_core_web_sm
         python -m spacy link en_core_web_sm en
@@ -44,6 +46,6 @@ jobs:
         python -m spacy validate
         python -m textacy download capitol_words
         python -m textacy download lang_identifier
-    - name: Test with pytest
+    - name: test with pytest
       run: |
         make test

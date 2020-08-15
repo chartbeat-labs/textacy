@@ -7,17 +7,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Set up Python
+    - name: set up Python
       uses: actions/setup-python@v2
       with:
         python-version: 3.8
-    - name: Check formatting with black
+    - name: install dependencies
       run: |
-        pip install black
+        python -m pip install --upgrade pip
+        python -m pip install black flake8
+    - name: check formatting with black
+      run: |
         black --diff src
-    - name: Lint with flake8
+    - name: lint with flake8
       run: |
-        pip install flake8
         # stop the build if there are Python syntax errors or undefined names
         flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings
