@@ -116,7 +116,10 @@ class TopicModel:
     def __init__(self, model, n_topics=10, **kwargs):
         if isinstance(model, (NMF, LatentDirichletAllocation, TruncatedSVD)):
             self.model = model
-        elif all(hasattr(model, required_attr) for required_attr in self._required_trained_model_attr):
+        elif all(
+            hasattr(model, required_attr)
+            for required_attr in self._required_trained_model_attr
+        ):
             self.model = model
         else:
             self.init_model(model, n_topics=n_topics, **kwargs)
@@ -164,7 +167,9 @@ class TopicModel:
     @classmethod
     def load(cls, filepath):
         model = joblib.load(filepath)
-        n_topics = model.n_components if hasattr(model, "n_components") else model.n_topics
+        n_topics = (
+            model.n_components if hasattr(model, "n_components") else model.n_topics
+        )
         return cls(model, n_topics=n_topics)
 
     def fit(self, doc_term_matrix):
@@ -463,9 +468,7 @@ class TopicModel:
         # get column index of any topics to highlight in termite plot
         if highlight_topics is not None:
             highlight_cols = tuple(
-                i
-                for i in range(len(topic_inds))
-                if topic_inds[i] in highlight_topics
+                i for i in range(len(topic_inds)) if topic_inds[i] in highlight_topics
             )
         else:
             highlight_cols = None

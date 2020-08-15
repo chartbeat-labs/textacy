@@ -1,5 +1,6 @@
 import numpy as np
 from ..utils import to_collection
+
 try:
     import matplotlib.pyplot as plt
     import matplotlib.transforms
@@ -275,20 +276,16 @@ def termite_df_plot(
 
     # get column index of any topics to highlight in termite plot
     if highlight_topics is not None:
-        highlight_cols = tuple(
-            components.columns.get_loc(c)
-            for c in highlight_topics
-        )
+        highlight_cols = tuple(components.columns.get_loc(c) for c in highlight_topics)
     else:
         highlight_cols = None
 
-    component_filter = (components.loc[
-        components
-        .agg(rank_terms_by, axis=1)
+    component_filter = components.loc[
+        components.agg(rank_terms_by, axis=1)
         .sort_values(ascending=False)
         .iloc[:n_terms]
         .index
-    ])
+    ]
 
     # get top term indices in sorted order
     if sort_terms_by == "weight":
@@ -298,8 +295,7 @@ def termite_df_plot(
     elif sort_terms_by == "seriation":
         # calculate similarity matrix
         similarity = (
-            component_filter @ component_filter.T
-            .pipe(lambda df: df - df.min().min())
+            component_filter @ component_filter.T.pipe(lambda df: df - df.min().min())
         ).values
 
         # compute Laplacian matrice and its 2nd eigenvector
@@ -311,10 +307,7 @@ def termite_df_plot(
 
         # get permutation corresponding to sorting the 2nd eigenvector
         component_filter = component_filter.reindex(
-            index=[
-                component_filter.index[i]
-                for i in np.argsort(fiedler)
-            ],
+            index=[component_filter.index[i] for i in np.argsort(fiedler)],
         )
     else:
         msg = "invalid sort_terms_by value; must be in {}".format(
