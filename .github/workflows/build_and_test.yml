@@ -1,17 +1,12 @@
-# This workflow will install Python dependencies, run tests and lint with a variety of Python versions
-# For more information see: https://help.github.com/actions/language-and-framework-guides/using-python-with-github-actions
-
-name: Build, Lint, and Test Python Package
+name: build and test
 
 on:
   push:
     branches: [ $default-branch, develop, update-package-config ]
   pull_request:
-    branches: [ $default-branch, develop ]
 
 jobs:
   build:
-
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
@@ -49,12 +44,6 @@ jobs:
         python -m spacy validate
         python -m textacy download capitol_words
         python -m textacy download lang_identifier
-    - name: Lint with flake8
-      run: |
-        # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
-        # exit-zero treats all errors as warnings
-        flake8 . --count --exit-zero --statistics
     - name: Test with pytest
       run: |
         make test
