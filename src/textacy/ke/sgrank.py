@@ -6,7 +6,19 @@ import collections
 import itertools
 import math
 import operator
-from typing import cast, Callable, Collection, Counter, DefaultDict, Dict, List, Optional, Set, Tuple, Union
+from typing import (
+    cast,
+    Callable,
+    Collection,
+    Counter,
+    DefaultDict,
+    Dict,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import networkx as nx
 from spacy.tokens import Doc, Span
@@ -70,9 +82,7 @@ def sgrank(
         raise ValueError("`window_size` must be >= 2")
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
-            raise ValueError(
-                "`topn` must be an int, or a float between 0.0 and 1.0"
-            )
+            raise ValueError("`topn` must be an int, or a float between 0.0 and 1.0")
 
     n_toks = len(doc)
     window_size = min(n_toks, window_size)
@@ -85,10 +95,12 @@ def sgrank(
     if isinstance(topn, float):
         topn = int(round(len(candidate_counts) * topn))
     candidates, unique_candidates = _prefilter_candidates(
-        candidates, candidate_counts, topn, idf)
+        candidates, candidate_counts, topn, idf
+    )
 
     term_weights = _compute_term_weights(
-        candidates, candidate_counts, unique_candidates, n_toks, idf)
+        candidates, candidate_counts, unique_candidates, n_toks, idf
+    )
     # filter terms to only those with positive weights
     candidates = [cand for cand in candidates if term_weights[cand.text] > 0]
     edge_weights = _compute_edge_weights(candidates, term_weights, window_size, n_toks)
@@ -98,10 +110,10 @@ def sgrank(
     graph.add_edges_from(edge_weights)
     term_ranks = nx.pagerank_scipy(graph, alpha=0.85, weight="weight")
     sorted_term_ranks = sorted(
-        term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True)
+        term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True
+    )
 
-    return ke_utils.get_filtered_topn_terms(
-        sorted_term_ranks, topn, match_threshold=0.8)
+    return ke_utils.get_filtered_topn_terms(sorted_term_ranks, topn, match_threshold=0.8)
 
 
 def _get_candidates(
@@ -117,10 +129,10 @@ def _get_candidates(
     """
     min_term_freq = min(max(len(doc) // 1000, 1), 4)
     cand_tuples = list(
-        ke_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos))
+        ke_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos)
+    )
     cand_texts = [
-        " ".join(ke_utils.normalize_terms(ctup, normalize))
-        for ctup in cand_tuples
+        " ".join(ke_utils.normalize_terms(ctup, normalize)) for ctup in cand_tuples
     ]
     cand_counts = collections.Counter(cand_texts)
     candidates = [
@@ -158,7 +170,8 @@ def _prefilter_candidates(
         }
     else:
         unique_candidates = {
-            ctext for ctext, _ in candidate_counts.most_common(topn_prefilter)}
+            ctext for ctext, _ in candidate_counts.most_common(topn_prefilter)
+        }
     candidates = [cand for cand in candidates if cand.text in unique_candidates]
     return candidates, unique_candidates
 
@@ -188,11 +201,14 @@ def _compute_term_weights(
         # TODO: do we want to sub-linear scale term len or not?
         clen = math.sqrt(cand.length)
         # subtract from subsum_count for the case when ctext == ctext2
-        subsum_count = sum(
-            candidate_counts[ctext2]
-            for ctext2 in unique_candidates
-            if cand.text in ctext2
-        ) - cand.count
+        subsum_count = (
+            sum(
+                candidate_counts[ctext2]
+                for ctext2 in unique_candidates
+                if cand.text in ctext2
+            )
+            - cand.count
+        )
         term_freq_factor: Union[int, float] = cand.count - subsum_count
         if idf and clen == 1:
             term_freq_factor *= idf.get(cand.text, 1)
@@ -224,7 +240,9 @@ def _compute_edge_weights(
         for c1, c2 in itertools.combinations(window_cands, 2):
             n_coocs[c1.text][c2.text] += 1
             try:
-                sum_logdists[c1.text][c2.text] += log_(window_size / abs(c1.idx - c2.idx))
+                sum_logdists[c1.text][c2.text] += log_(
+                    window_size / abs(c1.idx - c2.idx)
+                )
             except ZeroDivisionError:
                 sum_logdists[c1.text][c2.text] += log_(window_size)
         if end_idx >= n_toks:
@@ -244,7 +262,6 @@ def _compute_edge_weights(
     for c1, c2s in edge_weights.items():
         sum_edge_weights = sum(c2s.values())
         norm_edge_weights.extend(
-            (c1, c2, {"weight": weight / sum_edge_weights})
-            for c2, weight in c2s.items()
+            (c1, c2, {"weight": weight / sum_edge_weights}) for c2, weight in c2s.items()
         )
     return norm_edge_weights

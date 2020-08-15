@@ -73,7 +73,8 @@ def build_graph_from_terms(
         windows = itertoolz.sliding_window(window_size, terms)
     elif isinstance(first_term, (Span, Token)):
         windows = itertoolz.sliding_window(
-            window_size, ke_utils.normalize_terms(terms, normalize))
+            window_size, ke_utils.normalize_terms(terms, normalize)
+        )
     else:
         raise TypeError(
             "items in `terms` must be strings or spacy tokens, not {}".format(
@@ -89,8 +90,7 @@ def build_graph_from_terms(
             for w1_w2 in itertools.combinations(sorted(window), 2)
         )
         graph.add_edges_from(
-            (w1, w2, {"weight": weight})
-            for (w1, w2), weight in cooc_mat.items()
+            (w1, w2, {"weight": weight}) for (w1, w2), weight in cooc_mat.items()
         )
     elif edge_weighting == "binary":
         graph.add_edges_from(
@@ -99,16 +99,15 @@ def build_graph_from_terms(
     else:
         raise ValueError(
             "edge_weighting = {} is invalid; must be one of {}".format(
-                edge_weighting, {"count", "binary"})
+                edge_weighting, {"count", "binary"}
+            )
         )
 
     return graph
 
 
 def rank_nodes_by_pagerank(
-    graph: nx.Graph,
-    weight: str = "weight",
-    **kwargs,
+    graph: nx.Graph, weight: str = "weight", **kwargs,
 ) -> Dict[Any, float]:
     """
     Rank nodes in graph using the Pagegrank algorithm.
@@ -125,11 +124,7 @@ def rank_nodes_by_pagerank(
 
 
 def rank_nodes_by_bestcoverage(
-    graph: nx.Graph,
-    k: int,
-    c: int = 1,
-    alpha: float = 1.0,
-    weight: str = "weight",
+    graph: nx.Graph, k: int, c: int = 1, alpha: float = 1.0, weight: str = "weight",
 ) -> Dict[Any, float]:
     """
     Rank nodes in a network using the BestCoverage algorithm that attempts to
@@ -163,9 +158,7 @@ def rank_nodes_by_bestcoverage(
         return {}
 
     # ranks: array of PageRank values, summing up to 1
-    ranks = nx.pagerank_scipy(
-        graph, alpha=0.85, max_iter=100, tol=1e-08, weight=weight
-    )
+    ranks = nx.pagerank_scipy(graph, alpha=0.85, max_iter=100, tol=1e-08, weight=weight)
     sorted_ranks = sorted(ranks.items(), key=operator.itemgetter(1), reverse=True)
     avg_degree = sum(dict(graph.degree()).values()) / len(nodes_list)
     # relaxation parameter, k' in the paper

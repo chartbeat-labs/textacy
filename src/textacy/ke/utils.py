@@ -6,7 +6,18 @@ import itertools
 import math
 import operator
 from decimal import Decimal
-from typing import cast, Callable, Collection, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import (
+    cast,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 from cytoolz import itertoolz
@@ -47,7 +58,8 @@ def normalize_terms(
     else:
         raise ValueError(
             "normalize = {} is invalid; value must be a function or one of {}".format(
-                normalize, {"lemma", "lower", None})
+                normalize, {"lemma", "lower", None}
+            )
         )
     for term in terms:
         yield term
@@ -167,8 +179,7 @@ def aggregate_term_variants(
 
 
 def get_longest_subsequence_candidates(
-    doc: Doc,
-    match_func: Callable[[Token], bool],
+    doc: Doc, match_func: Callable[[Token], bool],
 ) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are longest consecutive
@@ -222,17 +233,14 @@ def get_ngram_candidates(
     )
     if include_pos:
         ngrams = (
-            ngram
-            for ngram in ngrams
-            if all(word.pos_ in include_pos for word in ngram)
+            ngram for ngram in ngrams if all(word.pos_ in include_pos for word in ngram)
         )
     for ngram in ngrams:
         yield ngram
 
 
 def get_pattern_matching_candidates(
-    doc: Doc,
-    patterns: Union[str, List[str], List[dict], List[List[dict]]],
+    doc: Doc, patterns: Union[str, List[str], List[dict], List[List[dict]]],
 ) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are sequences of tokens
@@ -282,9 +290,8 @@ def get_filtered_topn_terms(
         if any(term in st for st in seen_terms):
             continue
         # skip terms that are sufficiently similar to any higher-scoring term
-        if (
-            match_threshold
-            and any(sim_func(term, st) >= match_threshold for st in seen_terms)
+        if match_threshold and any(
+            sim_func(term, st) >= match_threshold for st in seen_terms
         ):
             continue
         seen_terms.add(term)

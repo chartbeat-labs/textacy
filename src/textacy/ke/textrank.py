@@ -96,7 +96,8 @@ def textrank(
         edge_weighting=edge_weighting,
     )
     word_scores = graph_base.rank_nodes_by_pagerank(
-        graph, weight="weight", personalization=word_pos)
+        graph, weight="weight", personalization=word_pos
+    )
     # generate a list of candidate terms
     candidates = _get_candidates(doc, normalize, include_pos)
     if isinstance(topn, float):
@@ -107,15 +108,15 @@ def textrank(
         for candidate in candidates
     }
     sorted_candidate_scores = sorted(
-        candidate_scores.items(), key=operator.itemgetter(1, 0), reverse=True)
+        candidate_scores.items(), key=operator.itemgetter(1, 0), reverse=True
+    )
     return ke_utils.get_filtered_topn_terms(
-        sorted_candidate_scores, topn, match_threshold=0.8)
+        sorted_candidate_scores, topn, match_threshold=0.8
+    )
 
 
 def _get_candidates(
-    doc: Doc,
-    normalize: Optional[Union[str, Callable]],
-    include_pos: Optional[Set[str]],
+    doc: Doc, normalize: Optional[Union[str, Callable]], include_pos: Optional[Set[str]],
 ) -> Set[Tuple[str, ...]]:
     """
     Get a set of candidate terms to be scored by joining the longest
@@ -123,14 +124,13 @@ def _get_candidates(
     nouns, proper nouns, and adjectives if ``doc`` is POS-tagged -- then
     normalized into strings.
     """
+
     def _is_valid_tok(tok):
-        return (
-            not (tok.is_stop or tok.is_punct or tok.is_space)
-            and (include_pos is None or tok.pos_ in include_pos)
+        return not (tok.is_stop or tok.is_punct or tok.is_space) and (
+            include_pos is None or tok.pos_ in include_pos
         )
 
     candidates = ke_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(ke_utils.normalize_terms(candidate, normalize))
-        for candidate in candidates
+        tuple(ke_utils.normalize_terms(candidate, normalize)) for candidate in candidates
     }

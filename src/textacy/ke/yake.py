@@ -7,7 +7,18 @@ import functools
 import math
 import operator
 import statistics
-from typing import cast, Collection, DefaultDict, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import (
+    cast,
+    Collection,
+    DefaultDict,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Token
@@ -78,7 +89,9 @@ def yake(
     stop_words: Set[str] = set()
     seen_candidates: Set[str] = set()
     # compute key values on a per-word basis
-    word_occ_vals = _get_per_word_occurrence_values(doc, normalize, stop_words, window_size)
+    word_occ_vals = _get_per_word_occurrence_values(
+        doc, normalize, stop_words, window_size
+    )
     # doc doesn't have any words...
     if not word_occ_vals:
         return []
@@ -92,8 +105,11 @@ def yake(
         candidates = _get_unigram_candidates(doc, include_pos)
         _score_unigram_candidates(
             candidates,
-            word_freqs, word_scores, term_scores,
-            stop_words, seen_candidates,
+            word_freqs,
+            word_scores,
+            term_scores,
+            stop_words,
+            seen_candidates,
             normalize,
         )
     # now compute combined scores for higher-n ngram and candidates
@@ -104,24 +120,20 @@ def yake(
     )
     attr_name = _get_attr_name(normalize, True)
     ngram_freqs = itertoolz.frequencies(
-        " ".join(getattr(word, attr_name) for word in ngram)
-        for ngram in candidates)
+        " ".join(getattr(word, attr_name) for word in ngram) for ngram in candidates
+    )
     _score_ngram_candidates(
-        candidates,
-        ngram_freqs, word_scores, term_scores,
-        seen_candidates,
-        normalize,
+        candidates, ngram_freqs, word_scores, term_scores, seen_candidates, normalize,
     )
     # build up a list of key terms in order of increasing score
     if isinstance(topn, float):
         topn = int(round(len(seen_candidates) * topn))
     sorted_term_scores = sorted(
-        term_scores.items(),
-        key=operator.itemgetter(1),
-        reverse=False,
+        term_scores.items(), key=operator.itemgetter(1), reverse=False,
     )
     return ke_utils.get_filtered_topn_terms(
-        sorted_term_scores, topn, match_threshold=0.8)
+        sorted_term_scores, topn, match_threshold=0.8
+    )
 
 
 def _get_attr_name(normalize: Optional[str], as_strings: bool) -> str:
@@ -140,16 +152,15 @@ def _get_attr_name(normalize: Optional[str], as_strings: bool) -> str:
 
 
 def _get_per_word_occurrence_values(
-    doc: Doc,
-    normalize: Optional[str],
-    stop_words: Set[str],
-    window_size: int,
+    doc: Doc, normalize: Optional[str], stop_words: Set[str], window_size: int,
 ) -> Dict[int, Dict[str, list]]:
     """
     Get base values for each individual occurrence of a word, to be aggregated
     and combined into a per-word score.
     """
-    word_occ_vals: DefaultDict = collections.defaultdict(lambda: collections.defaultdict(list))
+    word_occ_vals: DefaultDict = collections.defaultdict(
+        lambda: collections.defaultdict(list)
+    )
 
     def _is_upper_cased(tok):
         return tok.is_upper or (tok.is_title and not tok.is_sent_start)
@@ -159,18 +170,24 @@ def _get_per_word_occurrence_values(
     for sent_idx, sent in enumerate(doc.sents):
         sent_padded = itertoolz.concatv(padding, sent, padding)
         for window in itertoolz.sliding_window(1 + (2 * window_size), sent_padded):
-            lwords, word, rwords = window[:window_size], window[window_size], window[window_size + 1:]
+            lwords, word, rwords = (
+                window[:window_size],
+                window[window_size],
+                window[window_size + 1 :],
+            )
             w_id = getattr(word, attr_name)
             if word.is_stop:
                 stop_words.add(w_id)
             word_occ_vals[w_id]["is_uc"].append(_is_upper_cased(word))
             word_occ_vals[w_id]["sent_idx"].append(sent_idx)
             word_occ_vals[w_id]["l_context"].extend(
-                getattr(w, attr_name) for w in lwords
+                getattr(w, attr_name)
+                for w in lwords
                 if not (w is None or w.is_punct or w.is_space)
             )
             word_occ_vals[w_id]["r_context"].extend(
-                getattr(w, attr_name) for w in rwords
+                getattr(w, attr_name)
+                for w in rwords
                 if not (w is None or w.is_punct or w.is_space)
             )
     return word_occ_vals
@@ -195,7 +212,9 @@ def _compute_word_scores(
     for w_id, vals in word_occ_vals.items():
         freq = word_freqs[w_id]
         word_weights[w_id]["case"] = sum(vals["is_uc"]) / math.log2(1 + freq)
-        word_weights[w_id]["pos"] = math.log2(math.log2(3 + statistics.mean(vals["sent_idx"])))
+        word_weights[w_id]["pos"] = math.log2(
+            math.log2(3 + statistics.mean(vals["sent_idx"]))
+        )
         word_weights[w_id]["freq"] = freq / freq_baseline
         word_weights[w_id]["disp"] = len(set(vals["sent_idx"])) / n_sents
         n_unique_lc = len(set(vals["l_context"]))
@@ -214,7 +233,8 @@ def _compute_word_scores(
 
     # combine individual weights into per-word scores
     word_scores = {
-        w_id: (wts["rel"] * wts["pos"]) / (wts["case"] + (wts["freq"] / wts["rel"]) + (wts["disp"] / wts["rel"]))
+        w_id: (wts["rel"] * wts["pos"])
+        / (wts["case"] + (wts["freq"] / wts["rel"]) + (wts["disp"] / wts["rel"]))
         for w_id, wts in word_weights.items()
     }
     return word_scores
@@ -222,14 +242,10 @@ def _compute_word_scores(
 
 def _get_unigram_candidates(doc: Doc, include_pos: Set[str]) -> Iterable[Token]:
     candidates = (
-        word for word in doc
-        if not (word.is_stop or word.is_punct or word.is_space)
+        word for word in doc if not (word.is_stop or word.is_punct or word.is_space)
     )
     if include_pos:
-        candidates = (
-            word for word in candidates
-            if word.pos_ in include_pos
-        )
+        candidates = (word for word in candidates if word.pos_ in include_pos)
     return candidates
 
 
@@ -252,8 +268,8 @@ def _score_unigram_candidates(
             seen_candidates.add(w_id)
         # NOTE: here i've modified the YAKE algorithm to put less emphasis on term freq
         # term_scores[word.lower_] = word_scores[w_id] / (word_freqs[w_id] * (1 + word_scores[w_id]))
-        term_scores[getattr(word, attr_name_str)] = (
-            word_scores[w_id] / (math.log2(1 + word_freqs[w_id]) * (1 + word_scores[w_id]))
+        term_scores[getattr(word, attr_name_str)] = word_scores[w_id] / (
+            math.log2(1 + word_freqs[w_id]) * (1 + word_scores[w_id])
         )
 
 

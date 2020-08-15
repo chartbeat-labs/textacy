@@ -5,7 +5,20 @@ sCAKE
 import collections
 import itertools
 import operator
-from typing import cast, Callable, Collection, Counter, DefaultDict, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import (
+    cast,
+    Callable,
+    Collection,
+    Counter,
+    DefaultDict,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import networkx as nx
 from cytoolz import itertoolz
@@ -86,8 +99,7 @@ def scake(
 
     graph = nx.Graph()
     graph.add_edges_from(
-        (w1, w2, {"weight": weight})
-        for (w1, w2), weight in cooc_mat.items()
+        (w1, w2, {"weight": weight}) for (w1, w2), weight in cooc_mat.items()
     )
 
     word_scores = _compute_word_scores(doc, graph, cooc_mat, normalize)
@@ -104,9 +116,11 @@ def scake(
         for candidate in candidates
     }
     sorted_candidate_scores = sorted(
-        candidate_scores.items(), key=operator.itemgetter(1, 0), reverse=True)
+        candidate_scores.items(), key=operator.itemgetter(1, 0), reverse=True
+    )
     return ke_utils.get_filtered_topn_terms(
-        sorted_candidate_scores, topn, match_threshold=0.8)
+        sorted_candidate_scores, topn, match_threshold=0.8
+    )
 
 
 def _compute_word_scores(
@@ -125,12 +139,16 @@ def _compute_word_scores(
 
     # "semantic strength of a word" component
     sem_strengths: Dict[str, int] = {
-        w: sum(cooc_mat[tuple(sorted([w, nbr]))] * max_truss_levels[nbr] for nbr in graph.neighbors(w))
+        w: sum(
+            cooc_mat[tuple(sorted([w, nbr]))] * max_truss_levels[nbr]
+            for nbr in graph.neighbors(w)
+        )
         for w in word_strs
     }
     # "semantic connectivity" component
     sem_connectivities = {
-        w: len(set(max_truss_levels[nbr] for nbr in graph.neighbors(w))) / max_truss_level
+        w: len(set(max_truss_levels[nbr] for nbr in graph.neighbors(w)))
+        / max_truss_level
         for w in word_strs
     }
     # "positional weight" component
@@ -154,16 +172,15 @@ def _get_candidates(
     nouns, proper nouns, and adjectives if ``doc`` is POS-tagged -- then
     normalized into strings.
     """
+
     def _is_valid_tok(tok):
-        return (
-            not (tok.is_stop or tok.is_punct or tok.is_space)
-            and (not include_pos or tok.pos_ in include_pos)
+        return not (tok.is_stop or tok.is_punct or tok.is_space) and (
+            not include_pos or tok.pos_ in include_pos
         )
 
     candidates = ke_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(ke_utils.normalize_terms(candidate, normalize))
-        for candidate in candidates
+        tuple(ke_utils.normalize_terms(candidate, normalize)) for candidate in candidates
     }
 
 
@@ -178,7 +195,8 @@ def _compute_node_truss_levels(graph: nx.Graph) -> Dict[str, int]:
     is_removed: DefaultDict[tuple, int] = collections.defaultdict(int)
     triangle_counts = {
         edge: len(set(graph.neighbors(edge[0])) & set(graph.neighbors(edge[1])))
-        for edge in graph.edges()}
+        for edge in graph.edges()
+    }
     # rather than iterating over all theoretical values of k
     # let's break out early once all edges have been removed
     # max_edge_k = math.ceil(math.sqrt(len(triangle_counts)))
@@ -193,7 +211,7 @@ def _compute_node_truss_levels(graph: nx.Graph) -> Dict[str, int]:
         while to_remove:
             edge = to_remove.popleft()
             is_removed[edge] = 1
-            for nbr in (set(graph.neighbors(edge[0])) & set(graph.neighbors(edge[1]))):
+            for nbr in set(graph.neighbors(edge[0])) & set(graph.neighbors(edge[1])):
                 for node in edge:
                     nbr_edge = (node, nbr)
                     try:
