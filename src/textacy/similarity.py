@@ -62,23 +62,23 @@ def word_movers(doc1: Doc, doc2: Doc, metric: str = "cosine") -> float:
     vec1 = collections.Counter(
         word_idxs[word.orth] for word in extract.words(doc1) if word.has_vector
     )
-    vec1 = np.array(
-        [vec1[word_idx] for word_idx in range(len(word_idxs))]
-    ).astype(np.double)
+    vec1 = np.array([vec1[word_idx] for word_idx in range(len(word_idxs))]).astype(
+        np.double
+    )
     vec1 /= vec1.sum()  # normalize word counts
 
     vec2 = collections.Counter(
         word_idxs[word.orth] for word in extract.words(doc2) if word.has_vector
     )
-    vec2 = np.array(
-        [vec2[word_idx] for word_idx in range(len(word_idxs))]
-    ).astype(np.double)
+    vec2 = np.array([vec2[word_idx] for word_idx in range(len(word_idxs))]).astype(
+        np.double
+    )
     vec2 /= vec2.sum()  # normalize word counts
 
     return 1.0 - emd(vec1, vec2, distance_mat)
 
 
-def word2vec(obj1: Union[Doc, Span, Token], obj2 : Union[Doc, Span, Token]) -> float:
+def word2vec(obj1: Union[Doc, Span, Token], obj2: Union[Doc, Span, Token]) -> float:
     """
     Measure the semantic similarity between one spacy Doc, Span, Token, or Lexeme
     and another like object using the cosine distance between the objects' (average)

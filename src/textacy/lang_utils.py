@@ -83,7 +83,7 @@ class LangIdentifier:
     def __init__(
         self,
         data_dir=constants.DEFAULT_DATA_DIR.joinpath("lang_identifier"),
-        max_text_len=1000
+        max_text_len=1000,
     ):
         self._version = 1.1
         self._model_id = self._get_model_id()
@@ -110,12 +110,13 @@ class LangIdentifier:
         fstub = "lang-identifier-v{}-sklearn-v{}"
         try:
             import pkg_resources
+
             filename = fstub.format(
-                self._version,
-                pkg_resources.get_distribution("scikit-learn").version[:4]
+                self._version, pkg_resources.get_distribution("scikit-learn").version[:4]
             )
         except ImportError:
             import sklearn
+
             filename = fstub.format(self._version, sklearn.__version__[:4])
         return filename
 
@@ -131,12 +132,10 @@ class LangIdentifier:
         release_tag = self._model_id.replace("-", "_")
         url = urllib.parse.urljoin(
             "https://github.com/bdewilde/textacy-data/releases/download/",
-            release_tag + "/" + self.filename)
+            release_tag + "/" + self.filename,
+        )
         tio.utils.download_file(
-            url,
-            filename=self.filename,
-            dirpath=self.data_dir,
-            force=force,
+            url, filename=self.filename, dirpath=self.data_dir, force=force,
         )
 
     def identify_lang(self, text):
@@ -149,7 +148,7 @@ class LangIdentifier:
         Returns:
             str: 2-letter language code of the most probable language.
         """
-        text_ = utils.to_collection(text[:self.max_text_len], str, list)
+        text_ = utils.to_collection(text[: self.max_text_len], str, list)
         if self._is_valid(text_[0]):
             lang = self.pipeline.predict(text_).item()
             return lang
@@ -168,7 +167,7 @@ class LangIdentifier:
             List[Tuple[str, float]]: 2-letter language code and its probability
             for the ``topn`` most probable languages.
         """
-        text_ = utils.to_collection(text[:self.max_text_len], str, list)
+        text_ = utils.to_collection(text[: self.max_text_len], str, list)
         if self._is_valid(text_[0]):
             lang_probs = sorted(
                 zip(self.pipeline.classes_, self.pipeline.predict_proba(text_).flat),
@@ -197,20 +196,30 @@ class LangIdentifier:
                 (
                     "vectorizer",
                     sklearn.feature_extraction.text.HashingVectorizer(
-                        analyzer="char_wb", ngram_range=(1, 3), lowercase=True,
-                        n_features=4096, norm="l2",
-                    )
+                        analyzer="char_wb",
+                        ngram_range=(1, 3),
+                        lowercase=True,
+                        n_features=4096,
+                        norm="l2",
+                    ),
                 ),
                 (
                     "classifier",
                     sklearn.neural_network.MLPClassifier(
-                        activation="relu", solver="adam",
-                        hidden_layer_sizes=(512,), alpha=0.0001, batch_size=512,
-                        learning_rate_init=0.001, learning_rate="constant",
-                        max_iter=15, early_stopping=True, tol=0.001,
-                        shuffle=True, random_state=42,
+                        activation="relu",
+                        solver="adam",
+                        hidden_layer_sizes=(512,),
+                        alpha=0.0001,
+                        batch_size=512,
+                        learning_rate_init=0.001,
+                        learning_rate="constant",
+                        max_iter=15,
+                        early_stopping=True,
+                        tol=0.001,
+                        shuffle=True,
+                        random_state=42,
                         verbose=True,
-                    )
+                    ),
                 ),
             ]
         )

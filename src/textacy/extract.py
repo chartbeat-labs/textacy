@@ -146,9 +146,7 @@ def ngrams(
         exclude_pos = cast(Set[str], utils.to_collection(exclude_pos, str, set))
         exclude_pos = {pos.upper() for pos in exclude_pos}
         ngrams_ = (
-            ngram
-            for ngram in ngrams_
-            if not any(w.pos_ in exclude_pos for w in ngram)
+            ngram for ngram in ngrams_ if not any(w.pos_ in exclude_pos for w in ngram)
         )
     if min_freq > 1:
         ngrams_ = list(ngrams_)
@@ -236,8 +234,7 @@ def entities(
 
 
 def _parse_ent_types(
-    ent_types: Optional[Union[str, Set[str]]],
-    which: str,
+    ent_types: Optional[Union[str, Set[str]]], which: str,
 ) -> Optional[Union[str, Set[str]]]:
     if not ent_types:
         return None
@@ -266,10 +263,7 @@ def _parse_ent_types(
 
 
 def noun_chunks(
-    doc: Doc,
-    *,
-    drop_determiners: bool = True,
-    min_freq: int = 1,
+    doc: Doc, *, drop_determiners: bool = True, min_freq: int = 1,
 ) -> Iterable[Span]:
     """
     Extract an ordered sequence of noun chunks from a spacy-parsed doc, optionally
@@ -412,12 +406,14 @@ def matches(
         else:
             raise TypeError(
                 "patterns={} is invalid; values must be one of {}".format(
-                    patterns, {"str", "List[str]", "List[dict]", "List[list[dict]]"})
+                    patterns, {"str", "List[str]", "List[dict]", "List[list[dict]]"}
+                )
             )
     else:
         raise TypeError(
             "patterns={} is invalid; values must be one of {}".format(
-                patterns, {"str", "List[str]", "List[dict]", "List[list[dict]]"})
+                patterns, {"str", "List[str]", "List[dict]", "List[list[dict]]"}
+            )
         )
     matcher = Matcher(doc.vocab)
     matcher.add("match", on_match, *patterns)
@@ -456,7 +452,8 @@ def _make_pattern_from_string(patstr: str) -> List[dict]:
                 else:
                     raise ValueError(
                         "op={} invalid; valid choices are {}".format(
-                            op_val, constants.MATCHER_VALID_OPS)
+                            op_val, constants.MATCHER_VALID_OPS
+                        )
                     )
             except IndexError:
                 pass
@@ -529,8 +526,7 @@ def subject_verb_object_triples(
 
 
 def acronyms_and_definitions(
-    doc: Union[Doc, Span],
-    known_acro_defs: Optional[Dict[str, str]] = None,
+    doc: Union[Doc, Span], known_acro_defs: Optional[Dict[str, str]] = None,
 ) -> Dict[str, List[str]]:
     """
     Extract a collection of acronyms and their most likely definitions, if available,
@@ -624,9 +620,7 @@ def acronyms_and_definitions(
 
 
 def _get_acronym_definition(
-    acronym: str,
-    window: Span,
-    threshold: float = 0.8,
+    acronym: str, window: Span, threshold: float = 0.8,
 ) -> Tuple[str, float]:
     """
     Identify most likely definition for an acronym given a list of tokens.
@@ -676,9 +670,7 @@ def _get_acronym_definition(
                             vec[l] = k
                         vectors.append(vec)
                     else:
-                        parse_lcs_matrix(
-                            b, i + 1, j + 1, lcs_length - 1, stack, vectors
-                        )
+                        parse_lcs_matrix(b, i + 1, j + 1, lcs_length - 1, stack, vectors)
                     stack = []
         return vectors
 
@@ -737,9 +729,7 @@ def _get_acronym_definition(
         elif "-" in tok_text and not tok_text.startswith("-"):
             tok_split = [t[0] for t in tok_text.split("-") if t]
             def_leads.extend(tok_split)
-            def_types.extend(
-                "H" if i == 0 else "h" for i in range(len(tok_split))
-            )
+            def_types.extend("H" if i == 0 else "h" for i in range(len(tok_split)))
         else:
             def_leads.append(tok_text[0])
             def_types.append("w")

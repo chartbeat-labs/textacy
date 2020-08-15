@@ -16,6 +16,7 @@ from cytoolz import itertoolz
 from spacy.tokens import Span, Token
 
 from . import extract
+
 # from . import vsm  # we're hiding this import within a function
 
 LOGGER = logging.getLogger(__name__)

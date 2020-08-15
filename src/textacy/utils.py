@@ -83,9 +83,7 @@ def is_record(obj: Any) -> bool:
 
 
 def to_collection(
-    val: Any,
-    val_type: Union[Type[Any], Tuple[Type[Any], ...]],
-    col_type: Type[Any],
+    val: Any, val_type: Union[Type[Any], Tuple[Type[Any], ...]], col_type: Type[Any],
 ) -> Optional[Collection[Any]]:
     """
     Validate and cast a value or values to a collection.
@@ -118,10 +116,7 @@ def to_collection(
 
 
 def to_bytes(
-    s: Union[str, bytes],
-    *,
-    encoding: str = "utf-8",
-    errors: str = "strict",
+    s: Union[str, bytes], *, encoding: str = "utf-8", errors: str = "strict",
 ) -> bytes:
     """Coerce string ``s`` to bytes."""
     if isinstance(s, str):
@@ -133,10 +128,7 @@ def to_bytes(
 
 
 def to_unicode(
-    s: Union[str, bytes],
-    *,
-    encoding: str = "utf-8",
-    errors: str = "strict",
+    s: Union[str, bytes], *, encoding: str = "utf-8", errors: str = "strict",
 ) -> str:
     """Coerce string ``s`` to unicode."""
     if isinstance(s, bytes):
@@ -249,7 +241,8 @@ def validate_and_clip_range(
     elif range_vals[0] < full_range[0]:
         LOGGER.info(
             "start of range %s < minimum valid value %s; clipping...",
-            range_vals[0], full_range[0],
+            range_vals[0],
+            full_range[0],
         )
         range_vals = (full_range[0], range_vals[1])
     if range_vals[1] is None:
@@ -257,7 +250,8 @@ def validate_and_clip_range(
     elif range_vals[1] > full_range[1]:
         LOGGER.info(
             "end of range %s > maximum valid value %s; clipping...",
-            range_vals[1], full_range[1],
+            range_vals[1],
+            full_range[1],
         )
         range_vals = (range_vals[0], full_range[1])
     return cast(Tuple[Any, Any], tuple(range_vals))

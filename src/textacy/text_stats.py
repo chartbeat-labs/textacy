@@ -172,9 +172,7 @@ class TextStats:
     @property
     def readability_stats(self) -> Optional[Dict[str, float]]:
         if self.n_words == 0:
-            LOGGER.warning(
-                "readability stats can't be computed because doc has 0 words"
-            )
+            LOGGER.warning("readability stats can't be computed because doc has 0 words")
             return None
         elif self.n_sents is None:
             LOGGER.warning(
@@ -208,11 +206,7 @@ def flesch_kincaid_grade_level(n_syllables: int, n_words: int, n_sents: int) -> 
 
 
 def flesch_reading_ease(
-    n_syllables: int,
-    n_words: int,
-    n_sents: int,
-    *,
-    lang: Optional[str] = None,
+    n_syllables: int, n_words: int, n_sents: int, *, lang: Optional[str] = None,
 ) -> float:
     """
     Readability score usually in the range [0, 100], related (inversely) to
