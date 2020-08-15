@@ -41,7 +41,9 @@ re_breaking_whitespace = re.compile(r"\n+", flags=re.UNICODE)
 re_whitespace = re.compile(r"\s+", flags=re.UNICODE)
 re_citation = re.compile(r"\[\d+\]+(\s|\u200b|$)", flags=re.UNICODE)
 re_text = re.compile(r"[\w\s]+", flags=re.UNICODE | re.IGNORECASE)
-re_doi = re.compile(r"""\b(10[.][0-9]{3,}(?:[.][0-9]+)*/(?:(?!["&\'<>])\S)+)\b""", flags=re.UNICODE)
+re_doi = re.compile(
+    r"""\b(10[.][0-9]{3,}(?:[.][0-9]+)*/(?:(?!["&\'<>])\S)+)\b""", flags=re.UNICODE
+)
 re_issn = re.compile(r"e?ISSN \d{4}\-\d{3}[X\d]", flags=re.UNICODE | re.IGNORECASE)
 re_isbn = re.compile(r"ISBN (?:-?\d){10,13}", flags=re.UNICODE | re.IGNORECASE)
 
@@ -50,48 +52,71 @@ def main(argv):
     parser = argparse.ArgumentParser(
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
         description="fetch snippets of language-specific text from random pages "
-                    "of one or many wikipedias",
+        "of one or many wikipedias",
     )
     parser.add_argument(
-        "--langs", type=str, nargs="+", required=False,
+        "--langs",
+        type=str,
+        nargs="+",
+        required=False,
         help="one or more languages for which to fetch wiki snippets "
-             "as ISO 639-1 language codes",
+        "as ISO 639-1 language codes",
     )
     parser.add_argument(
-        "--langs_file", type=str, required=False,
+        "--langs_file",
+        type=str,
+        required=False,
         help="path to text file on disk containing languages for which to fetch "
-             "wiki snippets as ISO 639-1 language codes, one per line",
+        "wiki snippets as ISO 639-1 language codes, one per line",
     )
     parser.add_argument(
-        "--skip_langs", type=str, nargs="+", required=False, default=[],
+        "--skip_langs",
+        type=str,
+        nargs="+",
+        required=False,
+        default=[],
         help="one or more languages for which to *skip* fetching wiki snippets "
-             "as ISO 639-1 language codes, as a convenience",
+        "as ISO 639-1 language codes, as a convenience",
     )
     parser.add_argument(
-        "--outdir", type=str, required=False,
+        "--outdir",
+        type=str,
+        required=False,
         help="path to directory on disk to which wiki snippets will be saved",
     )
     parser.add_argument(
-        "--n_snippets", "-n", type=int, default=25,
+        "--n_snippets",
+        "-n",
+        type=int,
+        default=25,
         help="number of text snippets to save per language",
     )
     parser.add_argument(
-        "--timeout", type=int, default=3600,
+        "--timeout",
+        type=int,
+        default=3600,
         help="maximum number of seconds to spend fetching snippets, per language",
     )
     parser.add_argument(
-        "--mode", type=str, choices=["skip", "append", "overwrite"], default="skip",
+        "--mode",
+        type=str,
+        choices=["skip", "append", "overwrite"],
+        default="skip",
         help="",
     )
     parser.add_argument(
-        "--featured", action="store_true", default=False,
+        "--featured",
+        action="store_true",
+        default=False,
         help="if set, will attempt to get 'featured articles' for each language "
-             "before falling back to random pages",
+        "before falling back to random pages",
     )
     parser.add_argument(
-        "--good", action="store_true", default=False,
+        "--good",
+        action="store_true",
+        default=False,
         help="if set, will attempt to get 'good articles' for each language "
-             "before falling back to random pages",
+        "before falling back to random pages",
     )
     args = parser.parse_args(argv)
 
@@ -104,7 +129,9 @@ def main(argv):
         langs = args.langs
 
     outdir = os.path.realpath(os.path.expanduser(args.outdir)) if args.outdir else None
-    featured = get_all_lang_links("Category:Featured_articles", "en") if args.featured else None
+    featured = (
+        get_all_lang_links("Category:Featured_articles", "en") if args.featured else None
+    )
     good = get_all_lang_links("Category:Good_articles", "en") if args.good else None
 
     wikipedia.set_rate_limiting(True, min_wait=datetime.timedelta(milliseconds=10))
@@ -120,8 +147,7 @@ def main(argv):
         wikilang = wiki_langs[lang]
         if lang in args.skip_langs:
             logging.info(
-                "skipping lang %s '%s' (%s/%s) ...",
-                wikilang, lang, i + 1, len(langs),
+                "skipping lang %s '%s' (%s/%s) ...", wikilang, lang, i + 1, len(langs),
             )
             continue
         n_snippets = args.n_snippets
@@ -132,7 +158,10 @@ def main(argv):
                 if args.mode == "skip":
                     logging.info(
                         "snippets for lang %s '%s' (%s/%s) already fetched, skipping ...",
-                        wikilang, lang, i + 1, len(langs),
+                        wikilang,
+                        lang,
+                        i + 1,
+                        len(langs),
                     )
                     continue
                 else:
@@ -144,35 +173,50 @@ def main(argv):
                         if n_snippets == 0:
                             logging.info(
                                 "snippets for lang %s '%s' (%s/%s) already fetched, skipping ...",
-                                wikilang, lang, i + 1, len(langs),
+                                wikilang,
+                                lang,
+                                i + 1,
+                                len(langs),
                             )
                             continue
                     logging.info(
                         "fetching snippets for lang %s '%s' (%s/%s) "
                         "to %s %s existing snippets ...",
-                        wikilang, lang, i + 1, len(langs), args.mode, n_snippets_existing,
+                        wikilang,
+                        lang,
+                        i + 1,
+                        len(langs),
+                        args.mode,
+                        n_snippets_existing,
                     )
             else:
                 logging.info(
                     "fetching snippets for lang %s '%s' (%s/%s) ...",
-                    wiki_langs[lang], lang, i + 1, len(langs),
+                    wiki_langs[lang],
+                    lang,
+                    i + 1,
+                    len(langs),
                 )
         else:
             logging.info(
                 "fetching snippets for lang %s '%s' (%s/%s) ...",
-                wiki_langs[lang], lang, i + 1, len(langs),
+                wiki_langs[lang],
+                lang,
+                i + 1,
+                len(langs),
             )
         snippets = get_snippets(lang, n_snippets, featured, good, args.timeout)
         if outdir:
             with io.open(fname, mode=mode, encoding="utf-8") as f:
                 for snippet in snippets:
                     f.write(snippet + "\n")
-            logging.info(
-                "saved %s %s snippets to %s", len(snippets), lang, fname)
+            logging.info("saved %s %s snippets to %s", len(snippets), lang, fname)
         else:
             logging.info(
                 "fetched %s %s snippets but did not save to disk:\n%s\n...",
-                len(snippets), lang, snippets[:3]
+                len(snippets),
+                lang,
+                snippets[:3],
             )
 
 
@@ -198,7 +242,8 @@ def get_snippets(lang, n, featured, good, timeout):
             if featured:
                 try:
                     featured_titles = get_category_members_from_lang_links(
-                        featured, lang, "Category:Featured_articles")
+                        featured, lang, "Category:Featured_articles"
+                    )
                     titles.extend(featured_titles)
                 except Exception:
                     logging.exception("unable to get featured article titles")
@@ -208,7 +253,8 @@ def get_snippets(lang, n, featured, good, timeout):
             if good:
                 try:
                     good_titles = get_category_members_from_lang_links(
-                        good, lang, "Category:Good_articles")
+                        good, lang, "Category:Good_articles"
+                    )
                     titles.extend(good_titles)
                 except Exception:
                     logging.exception("unable to get good article titles")
@@ -279,7 +325,8 @@ def get_category_members_from_lang_links(lang_links, lang, cat_name):
         return []
     cat_members = list(
         {
-            title for title, page in cat_page.categorymembers.items()
+            title
+            for title, page in cat_page.categorymembers.items()
             # if page.ns == 0  # wikipediaapi.Namespace.MAIN
         }
     )
@@ -354,10 +401,13 @@ def is_good_snippet(snippet, len_range, min_text_frac, exclude_en):
         return False
     # filter out english copy-paste jobs
     if exclude_en is True:
-        is_reliable, _, best_guesses = cld2_detect(snippet.encode("utf-8"), bestEffort=True)
+        is_reliable, _, best_guesses = cld2_detect(
+            snippet.encode("utf-8"), bestEffort=True
+        )
         if is_reliable is True and best_guesses[0][1] == "en":
             logging.debug(
-                "found english-heavy snippet in non-english wiki text:\n%s", snippet)
+                "found english-heavy snippet in non-english wiki text:\n%s", snippet
+            )
             return False
     return True
 

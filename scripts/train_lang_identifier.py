@@ -48,31 +48,41 @@ def main():
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
     parser.add_argument(
-        "--root_dirpath", required=True,
+        "--root_dirpath",
+        required=True,
         help="path to root directory under which datasets and models are saved",
     )
     parser.add_argument(
-        "--twitter_creds", required=True,
+        "--twitter_creds",
+        required=True,
         help="path to file containing twitter API credentials",
     )
     parser.add_argument(
-        "--min_len", type=int, default=25,
+        "--min_len",
+        type=int,
+        default=25,
         help="minimum number of alphanumeric characters in a text "
         "for it to be included in the training dataset",
     )
     parser.add_argument(
-        "--min_obs", type=int, default=300,
+        "--min_obs",
+        type=int,
+        default=300,
         help="minimum number of observations -- (text, lang) pairs -- in a language "
         "for it to be included in the training dataset",
     )
     parser.add_argument(
-        "--version", type=str, required=True,
+        "--version",
+        type=str,
+        required=True,
         help="semantic version number to assign to trained model, e.g. '1.0'",
     )
     parser.add_argument(
-        "--force", action="store_true", default=False,
+        "--force",
+        action="store_true",
+        default=False,
         help="if specified, force downloads of all datasets, "
-        "even if they already exist on disk under ``root_dirpath``"
+        "even if they already exist on disk under ``root_dirpath``",
     )
     args = parser.parse_args()
 
@@ -92,7 +102,8 @@ def main():
 
     download_twitter_data(twitter_dirpath, args.twitter_creds, force=args.force)
     twitter_data = load_twitter_data(
-        twitter_dirpath, set(iso_639_data.values()), min_len=args.min_len)
+        twitter_dirpath, set(iso_639_data.values()), min_len=args.min_len
+    )
     summarize_dataset(twitter_data)
 
     download_tatoeba_data(tatoeba_dirpath, force=args.force)
@@ -105,12 +116,14 @@ def main():
 
     download_udhr_data(udhr_dirpath, force=args.force)
     udhr_data = load_udhr_data(
-        udhr_dirpath, set(iso_639_data.values()), min_len=args.min_len)
+        udhr_dirpath, set(iso_639_data.values()), min_len=args.min_len
+    )
     summarize_dataset(udhr_data)
 
     download_dslcc_data(dslcc_dirpath, force=args.force)
     dslcc_data = load_dslcc_data(
-        dslcc_dirpath, set(iso_639_data.values()), min_len=args.min_len)
+        dslcc_dirpath, set(iso_639_data.values()), min_len=args.min_len
+    )
     summarize_dataset(dslcc_data)
 
     # HACK HACK HACK
@@ -118,7 +131,9 @@ def main():
         "/Users/burtondewilde/Desktop/datasets/language_identification/leipzig-corpora"
     ).resolve()
     if leipzig_dirpath.is_dir():
-        leipzig_data = load_leipzig_data(leipzig_dirpath, iso_639_data, min_len=args.min_len)
+        leipzig_data = load_leipzig_data(
+            leipzig_dirpath, iso_639_data, min_len=args.min_len
+        )
         summarize_dataset(leipzig_data)
     else:
         logging.warning("leipzig data hack unavailable, sorry")
@@ -136,23 +151,23 @@ def main():
         + get_random_sample(dslcc_data, 20000, stratify=True, random_state=42)
         + get_random_sample(
             [item for item in tatoeba_data if item[1] == "en"],
-            10000, stratify=False, random_state=42
+            10000,
+            stratify=False,
+            random_state=42,
         )
     )
     datasets = get_random_sample(datasets, 3000000, stratify=True)
 
     valid_langs = {
         lang
-        for lang, count in collections.Counter(lang for _, lang in datasets).most_common()
+        for lang, count in collections.Counter(
+            lang for _, lang in datasets
+        ).most_common()
         if count >= args.min_obs
     }
     datasets = [text_lang for text_lang in datasets if text_lang[1] in valid_langs]
 
-    chars_set = {
-        char
-        for text, _ in datasets
-        for char in text
-    }
+    chars_set = {char for text, _ in datasets for char in text}
     langs_set = {lang for _, lang in datasets}
     num_langs = len(langs_set)
     print("# unique chars:", len(chars_set))
@@ -160,33 +175,36 @@ def main():
     summarize_dataset(datasets)
 
     train_items, test_items = sklearn.model_selection.train_test_split(
-        datasets, test_size=0.2, random_state=42)
+        datasets, test_size=0.2, random_state=42
+    )
     print(train_items[0])
     print("# train items:", len(train_items))
     print("# test items:", len(test_items))
 
     # fit and validate a model
     model_id = "lang-identifier-v{}-sklearn-v{}".format(
-        args.version, sklearn.__version__[:4])
+        args.version, sklearn.__version__[:4]
+    )
     print("training model {} ...".format(model_id))
     lid = textacy.lang_utils.LangIdentifier(data_dir=models_dirpath)
     lid.init_pipeline()
     print(lid.pipeline.steps)
     lid.pipeline.fit(
-        [text for text, _ in train_items],
-        y=[lang for _, lang in train_items],
+        [text for text, _ in train_items], y=[lang for _, lang in train_items],
     )
     true, preds = test_model(
-        lid.pipeline, test_items, filepath=models_dirpath.joinpath(model_id + ".txt"))
+        lid.pipeline, test_items, filepath=models_dirpath.joinpath(model_id + ".txt")
+    )
     try:
         ax = plot_confusion_matrix(
-            true, preds, normalize=True, title=None, cmap=plt.cm.Blues, annotate=False)
+            true, preds, normalize=True, title=None, cmap=plt.cm.Blues, annotate=False
+        )
         ax.get_figure().savefig(
-            models_dirpath.joinpath(model_id + "-confusion-matrix.png"))
+            models_dirpath.joinpath(model_id + "-confusion-matrix.png")
+        )
     except Exception:
         pass  # well, at least we tried
-    joblib.dump(
-        lid.pipeline, models_dirpath.joinpath(model_id + ".pkl.gz"), compress=3)
+    joblib.dump(lid.pipeline, models_dirpath.joinpath(model_id + ".pkl.gz"), compress=3)
 
 
 def download_iso_639_data(dirpath, force=False):
@@ -219,14 +237,22 @@ def load_iso_639_data(dirpath, exclude=None):
     rows = textacy.io.read_csv(
         dirpath.joinpath("iso-639-3.tsv").resolve(),
         delimiter="\t",
-        fieldnames=["Id", "Part2B", "Part2T", "Part1", "Scope", "Language_Type", "Ref_Name", "Comment"],
+        fieldnames=[
+            "Id",
+            "Part2B",
+            "Part2T",
+            "Part1",
+            "Scope",
+            "Language_Type",
+            "Ref_Name",
+            "Comment",
+        ],
         quoting=1,
     )
     lang_map = {
         row["Id"]: row["Part1"]
         for row in rows
-        if row.get("Part1")
-        and (exclude is None or row["Part1"] not in exclude)
+        if row.get("Part1") and (exclude is None or row["Part1"] not in exclude)
     }
     return lang_map
 
@@ -258,7 +284,7 @@ def download_twitter_data(dirpath, creds_fpath, force=False):
         (
             "https://raw.githubusercontent.com/mitjat/langid_eval/master/recall_oriented.tsv",
             "recall_oriented.tsv",
-        )
+        ),
     ]
     # download tweet ids first
     for url, fname in url_fnames:
@@ -301,7 +327,9 @@ def download_twitter_data(dirpath, creds_fpath, force=False):
     tweets = []
     try:
         for chunk_ids in itertoolz.partition_all(chunk_size, status_ids):
-            chunk_tweets = api.GetStatuses(chunk_ids, trim_user=True, include_entities=True, map=False)
+            chunk_tweets = api.GetStatuses(
+                chunk_ids, trim_user=True, include_entities=True, map=False
+            )
             tweets.extend(chunk_tweets)
             pbar.update(len(chunk_ids))
     except Exception:
@@ -325,7 +353,8 @@ def load_twitter_data(dirpath, langs, min_len=25):
     """
     dirpath = textacy.utils.to_path(dirpath).resolve()
     raw_tweets = textacy.io.read_json(
-        dirpath.joinpath("tweets.jsonl"), mode="rt", lines=True)
+        dirpath.joinpath("tweets.jsonl"), mode="rt", lines=True
+    )
     tweets = []
     for tweet in raw_tweets:
         # totally remove any URLS from tweet text
@@ -416,9 +445,11 @@ def load_wili_data(dirpath, iso_lang_map, min_len=25):
     ds = []
     for subset in ("train", "test"):
         text_lines = textacy.io.read_text(
-            dirpath.joinpath("x_{}.txt".format(subset)), lines=True)
+            dirpath.joinpath("x_{}.txt".format(subset)), lines=True
+        )
         lang_lines = textacy.io.read_text(
-            dirpath.joinpath("y_{}.txt".format(subset)), lines=True)
+            dirpath.joinpath("y_{}.txt".format(subset)), lines=True
+        )
         texts = (line.strip() for line in text_lines)
         langs = (line.strip() for line in lang_lines)
         langs_set = set(iso_lang_map.keys())
@@ -496,8 +527,10 @@ def load_dslcc_data(dirpath, langs, min_len=25):
     """
     data = []
     fstubs = [
-        "dslcc3/train/task1-train.txt", "dslcc3/train/task1-dev.txt",
-        "dslcc4/DSL-TRAIN.txt", "dslcc4/DSL-DEV.txt",
+        "dslcc3/train/task1-train.txt",
+        "dslcc3/train/task1-dev.txt",
+        "dslcc4/DSL-TRAIN.txt",
+        "dslcc4/DSL-DEV.txt",
     ]
     for fstub in fstubs:
         filepath = dirpath.joinpath(fstub)
@@ -572,15 +605,12 @@ def summarize_dataset(ds):
     print("max text len:", max_text_len)
     lang_counts = collections.Counter(lang for _, lang in ds)
     top_counts = ", ".join(
-        "'{}': {}".format(lang, count)
-        for lang, count in lang_counts.most_common(15)
+        "'{}': {}".format(lang, count) for lang, count in lang_counts.most_common(15)
     )
     bot_counts = ", ".join(
         "'{}': {}".format(lang, count)
         for lang, count in sorted(
-            lang_counts.items(),
-            key=operator.itemgetter(1),
-            reverse=True
+            lang_counts.items(), key=operator.itemgetter(1), reverse=True
         )[-15:]
     )
     print("# languages:", len(lang_counts))
@@ -640,7 +670,9 @@ def test_model(model, ds_test, filepath=None):
     return true, preds
 
 
-def plot_confusion_matrix(y_true, y_pred, normalize=False, title=None, cmap=plt.cm.Blues, annotate=False):
+def plot_confusion_matrix(
+    y_true, y_pred, normalize=False, title=None, cmap=plt.cm.Blues, annotate=False
+):
     cm = sklearn.metrics.confusion_matrix(y_true, y_pred)
     classes = sklearn.utils.multiclass.unique_labels(y_true, y_pred)
     if normalize:
@@ -656,8 +688,10 @@ def plot_confusion_matrix(y_true, y_pred, normalize=False, title=None, cmap=plt.
     ax.set(
         xticks=np.arange(cm.shape[1]),
         yticks=np.arange(cm.shape[0]),
-        xticklabels=classes, yticklabels=classes,
-        ylabel="true", xlabel="pred",
+        xticklabels=classes,
+        yticklabels=classes,
+        ylabel="true",
+        xlabel="pred",
     )
     ax.tick_params(axis="x", which="major", labelrotation=90)
     ax.tick_params(axis="both", which="major", labelsize="x-small")
@@ -669,9 +703,12 @@ def plot_confusion_matrix(y_true, y_pred, normalize=False, title=None, cmap=plt.
         for i in range(cm.shape[0]):
             for j in range(cm.shape[1]):
                 ax.text(
-                    j, i, format(cm[i, j], fmt),
-                    ha="center", va="center",
-                    color="white" if cm[i, j] > thresh else "black"
+                    j,
+                    i,
+                    format(cm[i, j], fmt),
+                    ha="center",
+                    va="center",
+                    color="white" if cm[i, j] > thresh else "black",
                 )
     return ax
 
