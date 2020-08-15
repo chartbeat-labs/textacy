@@ -17,7 +17,7 @@ jobs:
         python -m pip install black flake8
     - name: check formatting with black
       run: |
-        black --diff src
+        black --check src scripts
     - name: lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
