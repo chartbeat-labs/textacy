@@ -169,12 +169,19 @@ class TestValidateSetMembers:
             _ = utils.validate_set_members(vals, val_type, valid_vals)
 
 
-def _func_pos_only_args(parg1, parg2, /):
-    return (parg1, parg2)
+
+# TODO: uncomment this when we're only supporting PY3.8+
+# def _func_pos_only_args(parg1, parg2, /):
+#     return (parg1, parg2)
 
 
-def _func_mix_args(parg, /, arg, *, kwarg):
-    return (parg, arg, kwarg)
+# TODO: uncomment this when we're only supporting PY3.8+
+# def _func_mix_args(parg, /, arg, *, kwarg):
+#     return (parg, arg, kwarg)
+
+
+def _func_mix_args(arg, *, kwarg):
+    return (arg, kwarg)
 
 
 def _func_kw_only_args(*, kwarg1, kwarg2):
@@ -184,7 +191,7 @@ def _func_kw_only_args(*, kwarg1, kwarg2):
 @pytest.mark.parametrize(
     "func,kwargs,expected",
     [
-        (_func_pos_only_args, {"kwarg": "kwargval"}, {}),
+        # (_func_pos_only_args, {"kwarg": "kwargval"}, {}),
         (_func_mix_args, {"arg": "argval"}, {"arg": "argval"}),
         (
             _func_mix_args,
