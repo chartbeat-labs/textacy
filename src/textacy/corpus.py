@@ -167,7 +167,7 @@ class Corpus:
     # dunder
 
     def __str__(self):
-        return "Corpus({} docs, {} tokens)".format(self.n_docs, self.n_tokens)
+        return f"Corpus({self.n_docs} docs, {self.n_tokens} tokens)"
 
     def __len__(self):
         return self.n_docs

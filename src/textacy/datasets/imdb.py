@@ -131,21 +131,20 @@ class IMDB(Dataset):
             for label in labels
         )
         url_filepaths = (
-            self.data_dir.joinpath("aclImdb", subset, "urls_{}.txt".format(label))
+            self.data_dir.joinpath("aclImdb", subset, f"urls_{label}.txt")
             for subset, labels in self._subset_labels.items()
             for label in labels
         )
         for dirpath in data_dirpaths:
             if not dirpath.is_dir():
                 raise OSError(
-                    "data directory {} not found; "
-                    "has the dataset been downloaded?".format(dirpath)
+                    f"data directory {dirpath} not found; "
+                    "has the dataset been downloaded?"
                 )
         for filepath in url_filepaths:
             if not filepath.is_file():
                 raise OSError(
-                    "data file {} not found; "
-                    "has the dataset been downloaded?".format(filepath)
+                    f"data file {filepath} not found; has the dataset been downloaded?"
                 )
 
     def __iter__(self):
@@ -178,9 +177,7 @@ class IMDB(Dataset):
         try:
             return self._movie_ids[subset][label][id_]
         except KeyError:
-            fpath = self.data_dir.joinpath(
-                "aclImdb", subset, "urls_{}.txt".format(label)
-            )
+            fpath = self.data_dir.joinpath("aclImdb", subset, f"urls_{label}.txt")
             self._movie_ids[subset][label] = {
                 id_: RE_MOVIE_ID.search(line).group(1)
                 for id_, line in enumerate(tio.read_text(fpath, mode="rt", lines=True))

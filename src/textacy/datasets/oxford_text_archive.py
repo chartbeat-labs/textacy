@@ -139,8 +139,8 @@ class OxfordTextArchive(Dataset):
         """
         if not self._metadata_filepath.is_file():
             raise OSError(
-                "metadata file {} not found;\n"
-                "has the dataset been downloaded yet?".format(self._metadata_filepath)
+                f"metadata file {self._metadata_filepath} not found;\n"
+                "has the dataset been downloaded yet?"
             )
 
         re_extract_year = re.compile(r"(\d{4})")
@@ -187,8 +187,8 @@ class OxfordTextArchive(Dataset):
     def __iter__(self):
         if not self._text_dirpath.is_dir():
             raise OSError(
-                "text directory {} not found;\n"
-                "has the dataset been downloaded yet?".format(self._text_dirpath)
+                f"text directory {self._text_dirpath} not found;\n"
+                "has the dataset been downloaded yet?"
             )
         _metadata = self.metadata  # for performance
         for filepath in sorted(tio.get_filepaths(self._text_dirpath, extension=".txt")):

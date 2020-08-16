@@ -193,15 +193,15 @@ class RedditComments(Dataset):
             for filepath in filepaths:
                 if not filepath.is_file():
                     raise OSError(
-                        "requested comments file {} not found;\n"
-                        "has the dataset been downloaded yet?".format(filepath)
+                        f"requested comments file {filepath} not found;\n"
+                        "has the dataset been downloaded yet?"
                     )
         else:
             filepaths = self.filepaths
             if not filepaths:
                 raise OSError(
-                    "no comments files found in {} directory;\n"
-                    "has the dataset been downloaded yet?".format(self.data_dir)
+                    f"no comments files found in {self.data_dir} directory;\n"
+                    "has the dataset been downloaded yet?"
                 )
 
         for filepath in filepaths:

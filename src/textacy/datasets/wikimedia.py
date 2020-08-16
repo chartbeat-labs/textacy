@@ -129,11 +129,9 @@ class Wikimedia(Dataset):
         self.project = project
         self.namespace = int(namespace)
         self._filestub = os.path.join(
-            "{lang}{project}".format(lang=self.lang, project=self.project),
-            "{version}".format(version=self.version),
-            "{lang}{project}-{version}-cirrussearch-content.json.gz".format(
-                lang=self.lang, project=self.project, version=self.version,
-            ),
+            f"{self.lang}{self.project}",
+            f"{self.version}",
+            f"{self.lang}{self.project}-{self.version}-cirrussearch-content.json.gz",
         )
         self.data_dir = utils.to_path(data_dir).resolve()
         self._filepath = self.data_dir.joinpath(self._filestub)
@@ -185,8 +183,9 @@ class Wikimedia(Dataset):
                 )
             except ValueError:
                 LOGGER.exception(
-                    "version='{}' is invalid; must be 'current' or a date string "
-                    "like YYYYMMDD".format(self.version)
+                    "version = %s is invalid; must be 'current' "
+                    "or a date string like YYYYMMDD",
+                    self.version
                 )
                 raise
         for version_dt in version_dts:
@@ -206,30 +205,21 @@ class Wikimedia(Dataset):
         response = requests.head(urllib.parse.urljoin(DOWNLOAD_ROOT, self.version))
         if response.status_code != 200:
             raise ValueError(
-                "no Wikimedia CirrusSearch data found for version='{version}'; "
-                "check out '{url}' for available data".format(
-                    version=self.version, url=DOWNLOAD_ROOT
-                )
+                f"no Wikimedia CirrusSearch data found for version='{self.version}'; "
+                f"check out '{DOWNLOAD_ROOT}' for available data"
             )
         else:
             raise ValueError(
-                "no Wikimedia CirrusSearch data found for "
-                "version='{version}', lang='{lang}', project='{project}'; "
-                "check out '{url}' for available data".format(
-                    version=self.version,
-                    lang=self.lang,
-                    project=self.project,
-                    url=response.url,
-                )
+                f"no Wikimedia CirrusSearch data found for version = '{self.version}', "
+                f"lang = '{self.lang}', project = '{self.project}'; "
+                f"check out '{response.url}' for available data"
             )
 
     def __iter__(self):
         if not self.filepath:
             raise OSError(
-                "{} database dump file {} not found; "
-                "has the dataset been downloaded yet?".format(
-                    self.project, self.filepath
-                )
+                f"{self.project} database dump file '{self.filepath}' not found; "
+                "has the dataset been downloaded yet?"
             )
 
         is_bad_category = is_bad_category_funcs.get(self.project, {}).get(self.lang)

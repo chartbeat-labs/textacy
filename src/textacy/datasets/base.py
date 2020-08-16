@@ -16,7 +16,7 @@ class Dataset:
         self.meta = meta or {}
 
     def __repr__(self):
-        return 'Dataset("{}")'.format(self.name)
+        return f"Dataset('{self.name}')"
 
     @property
     def info(self):
