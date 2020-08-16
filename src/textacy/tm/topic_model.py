@@ -459,9 +459,7 @@ class TopicModel:
                 if topic_ind in topic_inds
             )
         else:
-            errors.value_not_valid(
-                "sort_topics_by", sort_topics_by, {"index", "weight"}
-            )
+            errors.value_not_valid("sort_topics_by", sort_topics_by, {"index", "weight"})
 
         # get column index of any topics to highlight in termite plot
         if highlight_topics is not None:
