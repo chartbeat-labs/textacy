@@ -10,7 +10,7 @@ import joblib
 import numpy as np
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
-from .. import viz
+from .. import errors, viz
 
 LOGGER = logging.getLogger(__name__)
 
@@ -152,8 +152,7 @@ class TopicModel:
                 random_state=kwargs.get("random_state", 1),
             )
         else:
-            msg = 'model "{}" invalid; must be {}'.format(model, {"nmf", "lda", "lsa"})
-            raise ValueError(msg)
+            errors.value_not_valid("model", model, {"nmf", "lda", "lsa"})
 
     def __repr__(self):
         return "TopicModel(n_topics={}, model={})".format(
@@ -460,10 +459,9 @@ class TopicModel:
                 if topic_ind in topic_inds
             )
         else:
-            msg = "invalid sort_topics_by value; must be in {}".format(
-                {"index", "weight"}
+            errors.value_not_valid(
+                "sort_topics_by", sort_topics_by, {"index", "weight"}
             )
-            raise ValueError(msg)
 
         # get column index of any topics to highlight in termite plot
         if highlight_topics is not None:
@@ -483,10 +481,9 @@ class TopicModel:
                 : -n_terms - 1 : -1
             ]
         else:
-            msg = "invalid rank_terms_by value; must be in {}".format(
-                {"corpus_weight", "topic_weight"}
+            errors.value_not_valid(
+                "rank_terms_by", rank_terms_by, {"corpus_weight", "topic_weight"}
             )
-            raise ValueError(msg)
 
         # get top term indices in sorted order
         if sort_terms_by == "weight":
@@ -521,10 +518,11 @@ class TopicModel:
             # get permutation corresponding to sorting the 2nd eigenvector
             term_inds = [term_inds[i] for i in np.argsort(fiedler)]
         else:
-            msg = "invalid sort_terms_by value; must be in {}".format(
-                {"weight", "index", "alphabetical", "seriation"}
+            errors.value_not_valid(
+                "sort_terms_by",
+                sort_terms_by,
+                {"weight", "index", "alphabetical", "seriation"},
             )
-            raise ValueError(msg)
 
         # get topic and term labels
         topic_labels = tuple("topic {}".format(topic_ind) for topic_ind in topic_inds)

@@ -36,6 +36,7 @@ import spacy
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Span, Token
 
+from .. import errors
 from .. import extract
 from .. import network
 from .. import utils
@@ -531,8 +532,7 @@ def to_semantic_network(
             list(doc.sents), normalize=normalize, edge_weighting=edge_weighting
         )
     else:
-        msg = 'nodes "{}" not valid; must be in {}'.format(nodes, {"words", "sents"})
-        raise ValueError(msg)
+        errors.value_not_valid("nodes", nodes, {"words", "sents"})
 
 
 _doc_extensions = {

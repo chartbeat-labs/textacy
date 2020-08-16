@@ -1,4 +1,6 @@
 import numpy as np
+
+from .. import errors
 from ..utils import to_collection
 
 try:
@@ -121,15 +123,15 @@ def draw_termite_plot(
     max_val = np.max(values_mat)
 
     if n_rows != len(row_labels):
-        msg = "values_mat and row_labels dimensions don't match: {} vs. {}".format(
-            n_rows, len(row_labels)
+        raise ValueError(
+            "values_mat and row_labels dimensions don't match: "
+            f"{n_rows} vs. {len(row_labels)}"
         )
-        raise ValueError(msg)
     if n_cols != len(col_labels):
-        msg = "values_mat and col_labels dimensions don't match: {} vs. {}".format(
-            n_cols, len(col_labels)
+        raise ValueError(
+            "values_mat and col_labels dimensions don't match: "
+            f"{n_cols} vs. {len(col_labels)}"
         )
-        raise ValueError(msg)
 
     if highlight_colors is None:
         highlight_colors = COLOR_PAIRS
@@ -137,10 +139,11 @@ def draw_termite_plot(
         if isinstance(highlight_cols, int):
             highlight_cols = (highlight_cols,)
         elif len(highlight_cols) > len(highlight_colors):
-            msg = "no more than {} columns may be highlighted at once".format(
-                len(highlight_colors)
+            raise ValueError(
+                f"no more than {len(highlight_colors)} columns "
+                "may be highlighted at once"
             )
-            raise ValueError(msg)
+
         highlight_colors = {hc: COLOR_PAIRS[i] for i, hc in enumerate(highlight_cols)}
 
     _rc_params = RC_PARAMS.copy()
@@ -310,10 +313,9 @@ def termite_df_plot(
             index=[component_filter.index[i] for i in np.argsort(fiedler)],
         )
     else:
-        msg = "invalid sort_terms_by value; must be in {}".format(
-            {"weight", "alphabetical", "seriation"}
+        errors.value_not_valid(
+            "sort_terms_by", sort_terms_by, {"weight", "alphabetical", "seriation"},
         )
-        raise ValueError(msg)
 
     # get topic and term labels
     topic_labels = component_filter.columns
