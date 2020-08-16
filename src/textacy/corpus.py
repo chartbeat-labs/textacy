@@ -340,9 +340,7 @@ class Corpus:
             doc
         """
         if not isinstance(doc, Doc):
-            raise TypeError(
-                "doc must be a {}, not {}".format(Doc, type(doc))
-            )
+            raise TypeError("doc must be a {}, not {}".format(Doc, type(doc)))
         if doc.vocab is not self.spacy_lang.vocab:
             raise ValueError(
                 "doc.vocab ({}) must be the same as corpus.vocab ({})".format(
@@ -688,9 +686,7 @@ class Corpus:
         spacy_lang = _get_spacy_lang(lang)
         with tio.open_sesame(filepath, mode="rb") as f:
             bytes_data = f.read()
-        doc_bin = DocBin(store_user_data=store_user_data).from_bytes(
-            bytes_data
-        )
+        doc_bin = DocBin(store_user_data=store_user_data).from_bytes(bytes_data)
         return cls(spacy_lang, data=doc_bin.get_docs(spacy_lang.vocab))
 
 

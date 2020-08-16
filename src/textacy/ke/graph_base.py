@@ -3,7 +3,15 @@ import itertools
 import logging
 import operator
 from typing import (
-    Any, Callable, Collection, DefaultDict, Dict, Optional, Sequence, Set, Union
+    Any,
+    Callable,
+    Collection,
+    DefaultDict,
+    Dict,
+    Optional,
+    Sequence,
+    Set,
+    Union,
 )
 
 import networkx as nx
