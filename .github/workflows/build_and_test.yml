@@ -2,7 +2,7 @@ name: build and test
 
 on:
   push:
-    branches: [ $default-branch, develop, update-package-config ]
+    branches: [ $default-branch, develop ]
   pull_request:  # run on all pull requests
   schedule:  # run weekly
     - cron: "0 12 * * 0"
