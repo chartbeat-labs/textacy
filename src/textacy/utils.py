@@ -17,6 +17,8 @@ from typing import (
 )
 from typing import cast
 
+from . import errors as errors_
+
 LOGGER = logging.getLogger(__name__)
 
 
@@ -123,13 +125,12 @@ def to_collection(
         return col_type([val])
     elif isinstance(val, (tuple, list, set, frozenset)):
         if not all(isinstance(v, val_type) for v in val):
-            raise TypeError("not all values are of type {}".format(val_type))
+            raise TypeError(f"not all values are of type {val_type}")
         return col_type(val)
     else:
+        # TODO: use standard error message, maybe?
         raise TypeError(
-            "values must be {} or a collection thereof, not {}".format(
-                val_type, type(val),
-            )
+            f"values must be {val_type} or a collection thereof, not {type(val)}"
         )
 
 
@@ -142,7 +143,7 @@ def to_bytes(
     elif isinstance(s, bytes):
         return s
     else:
-        raise TypeError("`s` must be {}, not {}".format((str, bytes), type(s)))
+        raise TypeError(errors_.type_invalid_msg("s", type(s), Union[str, bytes]))
 
 
 def to_unicode(
@@ -154,7 +155,7 @@ def to_unicode(
     elif isinstance(s, str):
         return s
     else:
-        raise TypeError("`s` must be {}, not {}".format((str, bytes), type(s)))
+        raise TypeError(errors_.type_invalid_msg("s", type(s), Union[str, bytes]))
 
 
 def to_path(path: Union[str, pathlib.Path]) -> pathlib.Path:
@@ -173,7 +174,7 @@ def to_path(path: Union[str, pathlib.Path]) -> pathlib.Path:
         return path
     else:
         raise TypeError(
-            "`path` must be {}, not {}".format((str, pathlib.Path), type(path))
+            errors_.type_invalid_msg("path", type(path), Union[str, pathlib.Path])
         )
 
 
@@ -243,7 +244,7 @@ def validate_and_clip_range(
             )
         if len(range_) != 2:
             raise ValueError(
-                "range must have 2 items -- (start, end) -- not {}".format(len(range_))
+                f"range must have 2 items -- (start, end) -- not {len(range_)}"
             )
     if val_type:
         for range_ in (range_vals, full_range):

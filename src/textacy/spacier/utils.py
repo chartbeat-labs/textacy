@@ -13,7 +13,7 @@ from spacy.language import Language
 from spacy.symbols import PROPN, VERB
 from spacy.tokens import Doc, Span, Token
 
-from .. import constants, text_utils
+from .. import constants, errors, text_utils
 from . import core
 
 
@@ -50,7 +50,9 @@ def make_doc_from_text_chunks(
     if isinstance(lang, str):
         lang = core.load_spacy_lang(lang)
     elif not isinstance(lang, Language):
-        raise TypeError("`lang` must be {}, not {}".format({str, Language}, type(lang)))
+        raise TypeError(
+            errors.type_invalid_msg("lang", type(lang), Union[str, Language])
+        )
 
     words: List[str] = []
     spaces: List[bool] = []
@@ -103,9 +105,7 @@ def preserve_case(token: Token) -> bool:
         ValueError: If parent document has not been POS-tagged.
     """
     if token.doc.is_tagged is False:
-        raise ValueError(
-            'parent doc of token "{}" has not been POS-tagged'.format(token)
-        )
+        raise ValueError(f"parent doc of token '{token}' has not been POS-tagged")
     if token.pos == PROPN or text_utils.is_acronym(token.text):
         return True
     else:
@@ -129,7 +129,9 @@ def get_normalized_text(span_or_token: Union[Span, Token]) -> str:
         )
     else:
         raise TypeError(
-            'input must be a spaCy Token or Span, not "{}"'.format(type(span_or_token))
+            errors.type_invalid_msg(
+                "span_or_token", type(span_or_token), Union[Span, Token]
+            )
         )
 
 

@@ -22,6 +22,7 @@ from typing import IO, Iterable, Optional, Tuple, Union
 from cytoolz import itertoolz
 
 from .. import constants
+from .. import errors as errors_
 from .. import utils
 from .http import write_http_stream
 
@@ -79,7 +80,7 @@ def open_sesame(
     if make_dirs is True:
         _make_dirs(filepath, mode)
     elif mode.startswith("r") and not filepath.is_file():
-        raise OSError("file '{}' does not exist".format(filepath))
+        raise OSError(f"file '{filepath}' does not exist")
 
     compression = _get_compression(filepath, compression)
     f = _get_file_handle(
@@ -112,11 +113,9 @@ def _get_compression(filepath, compression):
     elif compression in _ext_to_compression.values():
         return compression
     else:
+        valid_values = [None, "infer"] + sorted(_ext_to_compression.values())
         raise ValueError(
-            "compression='{}' is invalid; "
-            "valid values are {}.".format(
-                compression, [None, "infer"] + sorted(_ext_to_compression.values())
-            )
+            errors_.value_invalid_msg("compression", compression, valid_values)
         )
 
 
@@ -140,18 +139,16 @@ def _get_file_handle(
             if len(zip_names) == 1:
                 f = zip_file.open(zip_names[0])
             elif len(zip_names) == 0:
-                raise ValueError("no files found in zip file '{}'".format(filepath))
+                raise ValueError(f"no files found in zip file '{filepath}'")
             else:
                 raise ValueError(
-                    "{} files found in zip file '{}', "
-                    "but only one file is allowed".format(len(zip_names), filepath)
+                    f"{len(zip_names)} files found in zip file '{filepath}', "
+                    "but only one file is allowed"
                 )
         else:
+            valid_values = [None, "infer"] + sorted(_ext_to_compression.values())
             raise ValueError(
-                "compression='{}' is invalid; "
-                "valid values are {}".format(
-                    compression, [None, "infer"] + sorted(_ext_to_compression.values())
-                )
+                errors_.value_invalid_msg("compression", compression, valid_values)
             )
 
         if "t" in mode:
@@ -177,14 +174,14 @@ def _make_dirs(filepath, mode):
 def _validate_read_mode(mode):
     if "w" in mode or "a" in mode:
         raise ValueError(
-            "mode='{}' is invalid; file must be opened in read mode".format(mode)
+            f"mode = '{mode}' is invalid; file must be opened in read mode"
         )
 
 
 def _validate_write_mode(mode):
     if "r" in mode:
         raise ValueError(
-            "mode='{}' is invalid; file must be opened in write mode".format(mode)
+            f"mode = '{mode}' is invalid; file must be opened in write mode"
         )
 
 
@@ -298,7 +295,7 @@ def get_filepaths(
     """
     dirpath = utils.to_path(dirpath).resolve()
     if not dirpath.is_dir():
-        raise OSError("directory '{}' does not exist".format(dirpath))
+        raise OSError(f"directory '{dirpath}' does not exist")
 
     re_match = re.compile(match_regex) if match_regex else None
     re_ignore = re.compile(ignore_regex) if ignore_regex else None

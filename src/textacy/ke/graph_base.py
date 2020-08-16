@@ -19,6 +19,7 @@ import numpy as np
 from cytoolz import itertoolz
 from spacy.tokens import Span, Token
 
+from .. import errors
 from . import utils as ke_utils
 
 LOGGER = logging.getLogger(__name__)
@@ -60,9 +61,7 @@ def build_graph_from_terms(
         by ``edge_weighting``.
     """
     if window_size < 2:
-        raise ValueError(
-            "window_size = {} is invalid; value must be >= 2".format(window_size)
-        )
+        raise ValueError(f"window_size = {window_size} is invalid; value must be >= 2")
     if not terms:
         LOGGER.warning("input `terms` is empty, so output graph is also empty")
         return nx.Graph()
@@ -87,8 +86,10 @@ def build_graph_from_terms(
         )
     else:
         raise TypeError(
-            "items in `terms` must be strings or spacy tokens, not {}".format(
-                type(first_term)
+            errors.type_invalid_msg(
+                "terms",
+                type(first_term),
+                Union[Sequence[str], Sequence[Token], Sequence[Span]],
             )
         )
 
@@ -108,8 +109,8 @@ def build_graph_from_terms(
         )
     else:
         raise ValueError(
-            "edge_weighting = {} is invalid; must be one of {}".format(
-                edge_weighting, {"count", "binary"}
+            errors.value_invalid_msg(
+                "edge_weighting", edge_weighting, {"count", "binary"}
             )
         )
 

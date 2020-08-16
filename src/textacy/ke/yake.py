@@ -24,7 +24,7 @@ from cytoolz import itertoolz
 from spacy.tokens import Doc, Token
 
 from . import utils as ke_utils
-from .. import utils
+from .. import errors, utils
 
 
 def yake(
@@ -78,8 +78,8 @@ def yake(
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
-                "topn={} is invalid; "
-                "must be an int, or a float between 0.0 and 1.0".format(topn)
+                f"topn = {topn} is invalid; "
+                "must be an int, or a float between 0.0 and 1.0"
             )
 
     # bail out on empty docs
@@ -143,8 +143,7 @@ def _get_attr_name(normalize: Optional[str], as_strings: bool) -> str:
         attr_name = normalize
     else:
         raise ValueError(
-            "normalize='{}' is invalid; "
-            "must be None or one of {}".format(normalize, {None, "lemma", "lower"})
+            errors.value_invalid_msg("normalize", normalize, {"lemma", "lower", None})
         )
     if as_strings is True:
         attr_name = attr_name + "_"

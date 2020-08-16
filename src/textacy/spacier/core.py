@@ -13,7 +13,7 @@ from cachetools.keys import hashkey
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from .. import cache, lang_utils, utils
+from .. import cache, errors, lang_utils, utils
 
 
 LOGGER = logging.getLogger(__name__)
@@ -148,12 +148,16 @@ def make_spacy_doc(
     """
     if isinstance(data, str):
         return _make_spacy_doc_from_text(data, lang)
-    elif isinstance(data, spacy.tokens.Doc):
+    elif isinstance(data, Doc):
         return _make_spacy_doc_from_doc(data, lang)
     elif utils.is_record(data):
         return _make_spacy_doc_from_record(data, lang)
     else:
-        raise TypeError("`data` must be {}, not {}".format({str, tuple}, type(data),))
+        raise TypeError(
+            errors.type_invalid_msg(
+                "data", type(data), Union[str, Tuple[str, dict], Doc]
+            )
+        )
 
 
 def _make_spacy_doc_from_text(
@@ -170,8 +174,8 @@ def _make_spacy_doc_from_text(
         spacy_lang = load_spacy_lang(langstr)
     else:
         raise TypeError(
-            "`lang` must be {}, not {}".format(
-                {str, spacy.language.Language, types.FunctionType}, type(lang),
+            errors.type_invalid_msg(
+                "lang", type(lang), Union[str, Callable[[str], str], Language]
             )
         )
     return spacy_lang(text)
@@ -191,8 +195,8 @@ def _make_spacy_doc_from_record(
         spacy_lang = load_spacy_lang(langstr)
     else:
         raise TypeError(
-            "`lang` must be {}, not {}".format(
-                {str, spacy.language.Language, types.FunctionType}, type(lang),
+            errors.type_invalid_msg(
+                "lang", type(lang), Union[str, Callable[[str], str], Language]
             )
         )
     doc = spacy_lang(record[0])
@@ -211,24 +215,22 @@ def _make_spacy_doc_from_doc(
         langstr = doc.vocab.lang
         if not lang.startswith(langstr):
             raise ValueError(
-                "lang of spacy pipeline used to process document ('{}') "
-                "must be the same as `lang` ('{}')".format(langstr, lang)
+                f"lang of spacy pipeline used to process document ('{langstr}') "
+                f"must be the same as `lang` ('{lang}')"
             )
     elif isinstance(lang, spacy.language.Language):
         # just want to make sure that doc and lang share the same vocabulary
         if doc.vocab is not lang.vocab:
             raise ValueError(
-                "`spacy.vocab.Vocab` used to process document ('{}') "
-                "must be the same as that used by the `lang` pipeline ('{}')".format(
-                    doc.vocab, lang.vocab
-                )
+                f"`spacy.vocab.Vocab` used to process document ({doc.vocab}) "
+                f"must be the same as that used by the `lang` pipeline ({lang.vocab})"
             )
     elif callable(lang) is False:
         # there's nothing to be done with a callable lang, since we already have
         # the doc, and checking the text lang is an unnecessary performance hit
         raise TypeError(
-            "`lang` must be {}, not {}".format(
-                {str, spacy.language.Language, types.FunctionType}, type(lang),
+            errors.type_invalid_msg(
+                "lang", type(lang), Union[str, Callable[[str], str], Language]
             )
         )
     return doc

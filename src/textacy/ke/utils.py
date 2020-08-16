@@ -23,6 +23,7 @@ import numpy as np
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Span, Token
 
+from .. import errors
 from .. import extract
 from .. import similarity
 from .. import utils
@@ -57,8 +58,8 @@ def normalize_terms(
         terms = (normalize(term) for term in terms)
     else:
         raise ValueError(
-            "normalize = {} is invalid; value must be a function or one of {}".format(
-                normalize, {"lemma", "lower", None}
+            errors.value_invalid_msg(
+                "normalize", normalize, {"lemma", "lower", None, Callable}
             )
         )
     for term in terms:
