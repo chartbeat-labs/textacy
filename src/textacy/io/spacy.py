@@ -13,7 +13,7 @@ from srsly import msgpack
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from .. import spacier, utils
+from .. import errors, spacier, utils
 from . import utils as io_utils
 
 
@@ -53,8 +53,8 @@ def read_spacy_docs(
         Next deserialized document.
 
     Raises:
-        ValueError: if format is not "pickle" or "binary", or if ``lang`` is not
-            provided when ``format="binary"``
+        ValueError: if format is not "pickle" or "binary"
+        TypeError: if ``lang`` is None when ``format="binary"``
     """
     if format == "pickle":
         with io_utils.open_sesame(filepath, mode="rb") as f:
@@ -73,7 +73,9 @@ def read_spacy_docs(
         elif isinstance(lang, str):
             vocab = spacier.core.load_spacy_lang(lang).vocab
         else:
-            raise ValueError("lang = '{}' is invalid; must be a str or `spacy.Language`")
+            raise TypeError(
+                errors.type_invalid_msg("lang", type(lang), Union[str, Language])
+            )
         with io_utils.open_sesame(filepath, mode="rb") as f:
             unpacker = msgpack.Unpacker(f, raw=False, unicode_errors="strict")
             for msg in unpacker:
@@ -117,9 +119,7 @@ def read_spacy_docs(
                 yield spacy_doc
     else:
         raise ValueError(
-            "format = '{}' is invalid; value must be one of {}".format(
-                format, {"pickle", "binary"}
-            )
+            errors.value_invalid_msg("format", format, {"pickle", "binary"})
         )
 
 

@@ -3,7 +3,7 @@ from typing import cast, List, Optional, Set, Union
 
 from cytoolz import itertoolz
 
-from .. import utils
+from .. import errors, utils
 from . import utils as aug_utils
 
 
@@ -491,9 +491,7 @@ def delete_chars(
 def _validate_aug_toks(aug_toks):
     if not (isinstance(aug_toks, list) and isinstance(aug_toks[0], aug_utils.AugTok)):
         raise TypeError(
-            "aug_toks must be of type List[:obj:`AugTok`], not {}[{}]".format(
-                type(aug_toks), type(aug_toks[0])
-            )
+            errors.type_invalid_msg("aug_toks", type(aug_toks), List[aug_utils.AugTok])
         )
 
 

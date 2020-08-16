@@ -532,7 +532,9 @@ def to_semantic_network(
             list(doc.sents), normalize=normalize, edge_weighting=edge_weighting
         )
     else:
-        errors.value_not_valid("nodes", nodes, {"words", "sents"})
+        raise ValueError(
+            errors.value_invalid_msg("nodes", nodes, {"words", "sents"})
+        )
 
 
 _doc_extensions = {

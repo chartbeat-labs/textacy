@@ -313,8 +313,10 @@ def termite_df_plot(
             index=[component_filter.index[i] for i in np.argsort(fiedler)],
         )
     else:
-        errors.value_not_valid(
-            "sort_terms_by", sort_terms_by, {"weight", "alphabetical", "seriation"},
+        raise ValueError(
+            errors.value_invalid_msg(
+                "sort_terms_by", sort_terms_by, {"weight", "alphabetical", "seriation"},
+            )
         )
 
     # get topic and term labels

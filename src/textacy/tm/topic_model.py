@@ -152,7 +152,9 @@ class TopicModel:
                 random_state=kwargs.get("random_state", 1),
             )
         else:
-            errors.value_not_valid("model", model, {"nmf", "lda", "lsa"})
+            raise ValueError(
+                errors.value_invalid_msg("model", model, {"nmf", "lda", "lsa"})
+            )
 
     def __repr__(self):
         return "TopicModel(n_topics={}, model={})".format(
@@ -459,7 +461,11 @@ class TopicModel:
                 if topic_ind in topic_inds
             )
         else:
-            errors.value_not_valid("sort_topics_by", sort_topics_by, {"index", "weight"})
+            raise ValueError(
+                errors.value_invalid_msg(
+                    "sort_topics_by", sort_topics_by, {"index", "weight"},
+                )
+            )
 
         # get column index of any topics to highlight in termite plot
         if highlight_topics is not None:
@@ -479,8 +485,10 @@ class TopicModel:
                 : -n_terms - 1 : -1
             ]
         else:
-            errors.value_not_valid(
-                "rank_terms_by", rank_terms_by, {"corpus_weight", "topic_weight"}
+            raise ValueError(
+                errors.value_invalid_msg(
+                    "rank_terms_by", rank_terms_by, {"corpus_weight", "topic_weight"},
+                )
             )
 
         # get top term indices in sorted order
@@ -516,10 +524,12 @@ class TopicModel:
             # get permutation corresponding to sorting the 2nd eigenvector
             term_inds = [term_inds[i] for i in np.argsort(fiedler)]
         else:
-            errors.value_not_valid(
-                "sort_terms_by",
-                sort_terms_by,
-                {"weight", "index", "alphabetical", "seriation"},
+            raise ValueError(
+                errors.value_invalid_msg(
+                    "sort_terms_by",
+                    sort_terms_by,
+                    {"weight", "index", "alphabetical", "seriation"},
+                )
             )
 
         # get topic and term labels
