@@ -1,11 +1,29 @@
+import inspect
 import logging
 import pathlib
 import sys
 import warnings
-from typing import Any, Collection, Dict, Iterable, Optional, Set, Tuple, Type, Union
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    Optional,
+    Set,
+    Tuple,
+    Type,
+    Union,
+)
 from typing import cast
 
 LOGGER = logging.getLogger(__name__)
+
+
+_KW_PARAM_KINDS = {
+    inspect.Parameter.POSITIONAL_OR_KEYWORD,
+    inspect.Parameter.KEYWORD_ONLY,
+}
 
 
 def deprecated(message: str, *, action: str = "always"):
@@ -255,3 +273,23 @@ def validate_and_clip_range(
         )
         range_vals = (range_vals[0], full_range[1])
     return cast(Tuple[Any, Any], tuple(range_vals))
+
+
+def get_kwargs_for_func(func: Callable, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Get the set of keyword arguments from ``kwargs`` that are used by ``func``.
+    Useful when calling a func from another func and inferring its signature
+    from provided ``**kwargs``.
+    """
+    if not kwargs:
+        return {}
+
+    func_params = {
+        name
+        for name, param in inspect.signature(func).parameters.items()
+        if param.kind in _KW_PARAM_KINDS
+    }
+    func_kwargs = {
+        kwarg: value for kwarg, value in kwargs.items() if kwarg in func_params
+    }
+    return func_kwargs

@@ -148,3 +148,47 @@ class TestValidateSetMembers:
         for input_ in inputs:
             with pytest.raises(ValueError):
                 utils.validate_set_members(*input_)
+
+
+def _func_pos_only_args(parg1, parg2, /):
+    return (parg1, parg2)
+
+
+def _func_mix_args(parg, /, arg, *, kwarg):
+    return (parg, arg, kwarg)
+
+
+def _func_kw_only_args(*, kwarg1, kwarg2):
+    return (kwarg1, kwarg2)
+
+
+@pytest.mark.parametrize(
+    "input_func,input_kwargs,expected",
+    [
+        (_func_pos_only_args, {"kwarg": "kwargval"}, {}),
+        (_func_mix_args, {"arg": "argval"}, {"arg": "argval"}),
+        (
+            _func_mix_args,
+            {"arg": "argval", "kwarg": "kwarval"},
+            {"arg": "argval", "kwarg": "kwarval"},
+        ),
+        (
+            _func_mix_args,
+            {"arg": "argval", "kwarg": "kwargval", "foo": "bar"},
+            {"arg": "argval", "kwarg": "kwargval"},
+        ),
+        (
+            _func_kw_only_args,
+            {"kwarg1": "kwarg1val", "kwarg2": "kwarg2val"},
+            {"kwarg1": "kwarg1val", "kwarg2": "kwarg2val"},
+        ),
+        (
+            _func_kw_only_args,
+            {"kwarg1": "kwarg1val", "kwarg3": "kwarg3val"},
+            {"kwarg1": "kwarg1val"},
+        ),
+        (_func_kw_only_args, {}, {}),
+    ],
+)
+def test_get_kwargs_for_func(input_func, input_kwargs, expected):
+    assert utils.get_kwargs_for_func(input_func, input_kwargs) == expected
