@@ -133,8 +133,8 @@ class Augmenter:
             return tuple(num)
         else:
             raise ValueError(
-                "num={} is invalid; must be an int >= 1, a float in [0.0, 1.0], "
-                "or a list of floats of length equal to given transforms".format(num)
+                f"num={num} is invalid; must be an int >= 1, a float in [0.0, 1.0], "
+                "or a list of floats of length equal to given transforms"
             )
 
     def _get_random_transforms(self):

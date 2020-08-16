@@ -510,6 +510,6 @@ def _select_random_candidates(cands, num):
         rand_cands = [cand for cand in cands if random.random() < num]
     else:
         raise ValueError(
-            "num={} is invalid; must be an int >= 0 or a float in [0.0, 1.0]".format(num)
+            f"num={num} is invalid; must be an int >= 0 or a float in [0.0, 1.0]"
         )
     return rand_cands

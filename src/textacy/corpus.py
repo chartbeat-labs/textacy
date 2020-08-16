@@ -28,7 +28,7 @@ from spacy.language import Language
 from spacy.tokens import Doc, DocBin
 
 from . import io as tio
-from . import spacier, utils
+from . import errors, spacier, utils
 
 LOGGER = logging.getLogger(__name__)
 
@@ -182,7 +182,7 @@ class Corpus:
     def __getitem__(self, idx_or_slice):
         return self.docs[idx_or_slice]
 
-    def __delitem__(self, idx_or_slice):
+    def __delitem__(self, idx_or_slice: Union[int, slice]):
         if isinstance(idx_or_slice, int):
             self._remove_one_doc_by_index(idx_or_slice)
         elif isinstance(idx_or_slice, slice):
@@ -191,8 +191,8 @@ class Corpus:
             self._remove_many_docs_by_index(idxs)
         else:
             raise TypeError(
-                "list indices must be integers or slices, not {}".format(
-                    type(idx_or_slice)
+                errors.type_invalid_msg(
+                    "idx_or_slice", type(idx_or_slice), Union[int, slice]
                 )
             )
 
@@ -236,17 +236,9 @@ class Corpus:
             elif utils.is_record(first):
                 self.add_records(data, batch_size=batch_size, n_process=n_process)
             else:
-                raise TypeError(
-                    "data must be one of {} or an interable thereof, not {}".format(
-                        {str, Doc, tuple}, type(data),
-                    )
-                )
+                raise TypeError(errors.type_invalid_msg("data", type(data), CorpusData))
         else:
-            raise TypeError(
-                "data must be one of {} or an interable thereof, not {}".format(
-                    {str, Doc, tuple}, type(data),
-                )
-            )
+            raise TypeError(errors.type_invalid_msg("data", type(data), CorpusData))
 
     def add_text(self, text: str) -> None:
         """
@@ -340,12 +332,11 @@ class Corpus:
             doc
         """
         if not isinstance(doc, Doc):
-            raise TypeError("doc must be a {}, not {}".format(Doc, type(doc)))
+            raise TypeError(errors.type_invalid_msg("doc", type(doc), Doc))
         if doc.vocab is not self.spacy_lang.vocab:
             raise ValueError(
-                "doc.vocab ({}) must be the same as corpus.vocab ({})".format(
-                    doc.vocab, self.spacy_lang.vocab,
-                )
+                f"doc.vocab ({doc.vocab}) must be the same as "
+                f"corpus.vocab ({self.spacy_lang.vocab})"
             )
         self._add_valid_doc(doc)
 
@@ -527,9 +518,7 @@ class Corpus:
             }
         else:
             raise ValueError(
-                "weighting='{}' is invalid; valid values are {}".format(
-                    weighting, {"count", "freq"}
-                )
+                errors.value_invalid_msg("weighting", weighting, {"count", "freq"})
             )
         return word_counts_
 
@@ -611,8 +600,8 @@ class Corpus:
                 }
         else:
             raise ValueError(
-                "weighting='{}' is invalid; valid values are {}".format(
-                    weighting, {"count", "freq", "idf"}
+                errors.value_invalid_msg(
+                    "weighting", weighting, {"count", "freq", "idf"}
                 )
             )
         return word_doc_counts_
@@ -696,4 +685,6 @@ def _get_spacy_lang(lang: Union[str, Language]) -> Language:
     elif isinstance(lang, Language):
         return lang
     else:
-        raise TypeError("`lang` must be {}, not {}".format({str, Language}, type(lang)))
+        raise TypeError(
+            errors.type_invalid_msg("lang", type(lang), Union[str, Language])
+        )
