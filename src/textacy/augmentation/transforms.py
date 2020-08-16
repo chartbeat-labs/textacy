@@ -105,9 +105,9 @@ def insert_word_synonyms(
 
     rand_aug_toks = iter(rand_aug_toks)
     new_aug_toks: List[aug_utils.AugTok] = []
-    for idx, (prev_tok, curr_tok) in enumerate(
-        itertoolz.sliding_window(2, [None] + aug_toks)
-    ):
+    # NOTE: https://github.com/python/mypy/issues/5492
+    padded_pairs = itertoolz.sliding_window(2, [None] + aug_toks)  # type: ignore
+    for idx, (prev_tok, curr_tok) in enumerate(padded_pairs):
         if idx in rand_idxs:
             rand_aug_tok = next(rand_aug_toks)
             if prev_tok:
@@ -242,7 +242,10 @@ def delete_words(
         return aug_toks[:]
 
     new_aug_toks: List[aug_utils.AugTok] = []
-    padded_triplets = itertoolz.sliding_window(3, [None] + aug_toks + [None])
+    # NOTE: https://github.com/python/mypy/issues/5492
+    padded_triplets = itertoolz.sliding_window(
+        3, [None] + aug_toks + [None],  # type: ignore
+    )
     for idx, (prev_tok, curr_tok, next_tok) in enumerate(padded_triplets):
         if idx in rand_idxs:
             # special case: word then [deleted word] then punctuation

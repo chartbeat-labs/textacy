@@ -103,11 +103,13 @@ def terms_to_semantic_network(
                 (tok.text for tok in window)
                 for window in itertoolz.sliding_window(window_width, terms)
             )
-        else:
+        elif callable(normalize):
             windows = (
                 (normalize(tok) for tok in window)
                 for window in itertoolz.sliding_window(window_width, terms)
             )
+        else:
+            raise ValueError()
     else:
         raise TypeError(
             "items in `terms` must be strings or spacy tokens, not {}".format(
@@ -210,7 +212,7 @@ def sents_to_semantic_network(
                 )
                 for sent in sents
             )
-        else:
+        elif callable(normalize):
             sents = (
                 (
                     normalize(tok)
@@ -220,6 +222,8 @@ def sents_to_semantic_network(
                 )
                 for sent in sents
             )
+        else:
+            raise ValueError()
     else:
         raise TypeError(
             "items in `sents` must be strings or spacy tokens, not {}".format(

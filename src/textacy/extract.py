@@ -57,7 +57,7 @@ def words(
         Filtering by part-of-speech tag uses the universal POS tag set; for details,
         check spaCy's docs: https://spacy.io/api/annotation#pos-tagging
     """
-    words_ = (w for w in doc if not w.is_space)
+    words_: Iterable[Token] = (w for w in doc if not w.is_space)
     if filter_stops is True:
         words_ = (w for w in words_ if not w.is_stop)
     if filter_punct is True:
@@ -126,7 +126,7 @@ def ngrams(
     if n < 1:
         raise ValueError("n must be greater than or equal to 1")
 
-    ngrams_ = (doc[i : i + n] for i in range(len(doc) - n + 1))
+    ngrams_: Iterable[Span] = (doc[i : i + n] for i in range(len(doc) - n + 1))
     ngrams_ = (ngram for ngram in ngrams_ if not any(w.is_space for w in ngram))
     if filter_stops is True:
         ngrams_ = (
@@ -338,7 +338,7 @@ def pos_regex_matches(doc: Union[Doc, Span], pattern: str) -> Iterable[Span]:
 
 def matches(
     doc: Doc,
-    patterns: Union[str, List[str], List[dict], List[List[dict]]],
+    patterns: Union[str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]],
     *,
     on_match: Callable = None,
 ) -> Iterable[Span]:
@@ -421,14 +421,7 @@ def matches(
         yield doc[start:end]
 
 
-def _make_pattern_from_string(patstr: str) -> List[dict]:
-    """
-    Args:
-        patstr (str)
-
-    Returns:
-        List[dict]
-    """
+def _make_pattern_from_string(patstr: str) -> List[Dict[str, str]]:
     pattern = []
     for tokpatstr in constants.RE_MATCHER_TOKPAT_DELIM.split(patstr):
         parts = tokpatstr.split(":")

@@ -25,7 +25,7 @@ import numpy as np
 import spacy
 from cytoolz import itertoolz
 from spacy.language import Language
-from spacy.tokens import Doc
+from spacy.tokens import Doc, DocBin
 
 from . import io as tio
 from . import spacier, utils
@@ -223,7 +223,7 @@ class Corpus:
         """
         if isinstance(data, str):
             self.add_text(data)
-        elif isinstance(data, spacy.tokens.Doc):
+        elif isinstance(data, Doc):
             self.add_doc(data)
         elif utils.is_record(data):
             self.add_record(data)
@@ -231,20 +231,20 @@ class Corpus:
             first, data = itertoolz.peek(data)
             if isinstance(first, str):
                 self.add_texts(data, batch_size=batch_size, n_process=n_process)
-            elif isinstance(first, spacy.tokens.Doc):
+            elif isinstance(first, Doc):
                 self.add_docs(data)
             elif utils.is_record(first):
                 self.add_records(data, batch_size=batch_size, n_process=n_process)
             else:
                 raise TypeError(
                     "data must be one of {} or an interable thereof, not {}".format(
-                        {str, spacy.tokens.Doc, tuple}, type(data),
+                        {str, Doc, tuple}, type(data),
                     )
                 )
         else:
             raise TypeError(
                 "data must be one of {} or an interable thereof, not {}".format(
-                    {str, spacy.tokens.Doc, tuple}, type(data),
+                    {str, Doc, tuple}, type(data),
                 )
             )
 
@@ -339,9 +339,9 @@ class Corpus:
         Args:
             doc
         """
-        if not isinstance(doc, spacy.tokens.Doc):
+        if not isinstance(doc, Doc):
             raise TypeError(
-                "doc must be a {}, not {}".format(spacy.tokens.Doc, type(doc))
+                "doc must be a {}, not {}".format(Doc, type(doc))
             )
         if doc.vocab is not self.spacy_lang.vocab:
             raise ValueError(
@@ -653,7 +653,7 @@ class Corpus:
         if self[0].is_nered:
             attrs.append(spacy.attrs.ENT_IOB)
             attrs.append(spacy.attrs.ENT_TYPE)
-        doc_bin = spacy.tokens.DocBin(attrs=attrs, store_user_data=store_user_data)
+        doc_bin = DocBin(attrs=attrs, store_user_data=store_user_data)
         for doc in self:
             doc_bin.add(doc)
         with tio.open_sesame(filepath, mode="wb") as f:
@@ -688,7 +688,7 @@ class Corpus:
         spacy_lang = _get_spacy_lang(lang)
         with tio.open_sesame(filepath, mode="rb") as f:
             bytes_data = f.read()
-        doc_bin = spacy.tokens.DocBin(store_user_data=store_user_data).from_bytes(
+        doc_bin = DocBin(store_user_data=store_user_data).from_bytes(
             bytes_data
         )
         return cls(spacy_lang, data=doc_bin.get_docs(spacy_lang.vocab))
