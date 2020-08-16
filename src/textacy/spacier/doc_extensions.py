@@ -247,16 +247,7 @@ def to_terms_list(
         ngrams = cast(Set[int], utils.to_collection(ngrams, int, set))
         unigrams_: Iterable[Token] = []
         ngrams_: List[Iterable[Span]] = []
-        ng_kwargs: Union[Set[str], Dict[str, Any]]
-        ng_kwargs = {
-            "filter_stops",
-            "filter_punct",
-            "filter_nums",
-            "include_pos",
-            "exclude_pos",
-            "min_freq",
-        }
-        ng_kwargs = {key: val for key, val in kwargs.items() if key in ng_kwargs}
+        ng_kwargs = utils.get_kwargs_for_func(extract.ngrams, kwargs)
         for n in sorted(ngrams):
             # use a faster function for unigrams
             if n == 1:
@@ -265,9 +256,7 @@ def to_terms_list(
                 ngrams_.append(extract.ngrams(doc, n, **ng_kwargs))
         ngrams_ = itertoolz.concat(ngrams_)
     if entities is not None:
-        ent_kwargs: Union[Set[str], Dict[str, Any]]
-        ent_kwargs = {"include_types", "exclude_types", "drop_determiners", "min_freq"}
-        ent_kwargs = {key: val for key, val in kwargs.items() if key in ent_kwargs}
+        ent_kwargs = utils.get_kwargs_for_func(extract.entities, kwargs)
         entities_ = extract.entities(doc, **ent_kwargs)
     if ngrams:
         # use ngrams as-is
