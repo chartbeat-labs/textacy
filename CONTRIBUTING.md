@@ -45,12 +45,21 @@ Use an appropriate template (if available) when [creating your issue](https://gi
         $ pip install -e .
         $ pip install -e .[dev]
 
-1. **Implement your changes:** Use your preferred text editor to modify the `textacy` source code. Be sure to keep your changes focused and in scope, and follow the coding conventions described below! Document your code as you write it. Run your changes against any existing tests and add new ones as needed to validate your changes; make sure you don’t accidentally break existing functionality!
+1. **Implement your changes:** Use your preferred text editor to modify the `textacy` source code. Be sure to keep your changes focused and in scope, and follow the coding conventions described below! Document your code as you write it. Run your changes against any existing tests and add new ones as needed to validate your changes; make sure you don’t accidentally break existing functionality! Several common commands can be accessed via the package `Makefile`:
+
+        $ make test
+        $ make lint
+        $ make mypy
+
+    Or, to run all three at once, use
+
+        $ make check
+
 1. **Push commits to your forked repository:** Group changes into atomic git commits, then push them to your `origin` repository. There's no need to wait until all changes are final before pushing — it's always good to have a backup, in case something goes wrong in your local copy.
 
         $ git push origin my-descriptive-branch-name
 
-1. **Open a new Pull Request in GitHub:** When you're ready to submit your changes to the main repo, navigate to your forked repository on GitHub. Switch to your working branch then click "New pull request"; alternatively, if you recently pushed, you may see a banner at the top of the repo with a "Compare & pull request" button, which you can click on to initiate the same process. Fill out the PR template completely and clearly, confirm that code "diff" is as expected, then submit the PR.
+1. **Open a new Pull Request in GitHub:** When you're ready to submit your changes to the main repo, navigate to your forked repository on GitHub. Switch to your working branch then click "New pull request"; alternatively, if you recently pushed, you may see a banner at the top of the repo with a "Compare & pull request" button, which you can click on to initiate the same process. Fill out the PR template completely and clearly, confirm that the code "diff" is as expected, then submit the PR. A number of processes will run automatically via GitHub Workflows (see `.github/workflows/`); we'll want to make sure everything passes before the PR gets merged.
 1. **Respond to any code review feedback:** At this point, @bdewilde will review your work and either request additional changes/clarification or approve your work. There may be some necessary back-and-forth; please do your best to be responsive. If you haven’t gotten a response in a week or so, please politely nudge him in the same thread — thanks in advance for your patience!
 
 ## conventions
@@ -58,7 +67,8 @@ Use an appropriate template (if available) when [creating your issue](https://gi
 ### python
 
 - Adhere to [PEP 8 style](https://www.python.org/dev/peps/pep-0008/) as much as is reasonable. In particular, try to keep lines to 90 characters or less; indent levels with four spaces; don't include trailing trailing whitespace, and include vertical whitespace only sparingly; and prefer double-quotes over single-quotes for string literals.
-- Write code that's compatible with Python 3.5+. (Python 2.7 support was dropped in v0.9.) There's no longer any need to begin each module with `from __future__ import absolute_import, division, print_function, unicode_literals`, or to put additional logic that dealing with 2/3 compatibility in a dedicated `compat` module.
+- Write code that's compatible with Python 3.6+. (Python 2.7 support was dropped in v0.9.) There's no longer any need to begin each module with `from __future__ import absolute_import, division, print_function, unicode_literals`, or to put additional logic that dealing with 2/3 compatibility in a dedicated `compat` module.
+- Annotate your classes and functions with type hints. Strive to be specific about the types of objects your code expects, but avoid being overly prescriptive (e.g. using `List[str]` when `Iterable[str]` will work). For a handy reference, check out the [`mypy` cheat sheet](https://mypy.readthedocs.io/en/stable/cheat_sheet_py3.html).
 - When naming objects, strive to be both descriptive *and* brief in a way that reflects usage rather than, say, data type. Function names should be all lowercase, with words separated by underscores, and often including an action verb: `normalize_whitespace()`, `read_csv()`, `get_term_freqs()`, and so on. Objects pulled in directly from `spacy` usually have names prepended by `spacy_`, e.g. `spacy_doc` or `spacy_vocab`.
 
 ### git commits

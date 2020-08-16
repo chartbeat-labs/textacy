@@ -3,5 +3,15 @@ requires = ["setuptools >= 40.8.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
-line-length = 90
+line-length = 89
 target-version = ["py36", "py37", "py38"]
+exclude = '''
+(
+    src/textacy/preprocessing/resources.py
+)
+'''
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -v"
+testpaths = ["tests"]

@@ -1,0 +1,39 @@
+name: docs
+
+on:
+  push:  # run on every push to default branch
+    branches: [ $default-branch ]
+  pull_request:  # run on all pull requests
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        build-type: [ html, text ]
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: set up Python 3.8
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+    - name: get pip cache dir
+      id: pip-cache
+      run: |
+        echo "::set-output name=dir::$(pip cache dir)"
+    - name: set up pip cache
+      uses: actions/cache@v2
+      with:
+        path: ${{ steps.pip-cache.outputs.dir }}
+        key: ${{ matrix.os }}-pip-${{ hashFiles('setup.cfg') }}
+        restore-keys: |
+          ${{ matrix.os }}-pip-
+    - name: install package and dependencies
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install -e .
+        python -m pip install -e .[dev]
+    - name: make ${{ matrix.build-type }} docs
+      run: |
+        cd docs && make ${{ matrix.build-type }}
