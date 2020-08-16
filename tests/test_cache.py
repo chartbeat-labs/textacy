@@ -1,5 +1,3 @@
-import pytest
-
 from textacy import load_spacy_lang
 from textacy import cache
 

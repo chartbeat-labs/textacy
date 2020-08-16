@@ -6,148 +6,167 @@ import pytest
 from textacy import utils
 
 
-PATHS = (pathlib.Path("."), pathlib.Path.home())
-STRINGS = (b"bytes", "unicode", "úñîçødé")
-NOT_STRINGS = (1, 2.0, ["foo", "bar"], {"foo": "bar"})
+@pytest.mark.parametrize(
+    "val,val_type,col_type,expected",
+    [
+        (None, int, list, None),
+        (1, int, list, [1]),
+        ([1, 2], int, tuple, (1, 2)),
+        ((1, 1.0), (int, float), set, {1, 1.0}),
+    ],
+)
+def test_to_collection(val, val_type, col_type, expected):
+    assert utils.to_collection(val, val_type, col_type) == expected
 
 
-def test_to_collection():
-    in_outs = [
-        [(1, int, list), [1]],
-        [([1, 2], int, tuple), (1, 2)],
-        [((1, 1.0), (int, float), set), {1, 1.0}],
-    ]
-    assert utils.to_collection(None, int, list) is None
-    for in_, out_ in in_outs:
-        assert utils.to_collection(*in_) == out_
+class TestToUnicode:
 
+    @pytest.mark.parametrize("s", [b"bytes", "unicode", "úñîçødé"])
+    def test_valid(self, s):
+        assert isinstance(utils.to_unicode(s), str)
 
-def test_to_unicode():
-    for obj in STRINGS:
-        assert isinstance(utils.to_unicode(obj), str)
-    for obj in NOT_STRINGS:
+    @pytest.mark.parametrize("s", [1, 2.0, ["foo", "bar"], {"foo": "bar"}])
+    def test_invalid(self, s):
         with pytest.raises(TypeError):
-            utils.to_unicode(obj)
+            _ = utils.to_unicode(s)
 
 
-def test_to_bytes():
-    for obj in STRINGS:
-        assert isinstance(utils.to_bytes(obj), bytes)
-    for obj in NOT_STRINGS:
+class TestToBytes:
+
+    @pytest.mark.parametrize("s", [b"bytes", "unicode", "úñîçødé"])
+    def test_valid(self, s):
+        assert isinstance(utils.to_bytes(s), bytes)
+
+    @pytest.mark.parametrize("s", [1, 2.0, ["foo", "bar"], {"foo": "bar"}])
+    def test_invalid(self, s):
         with pytest.raises(TypeError):
-            utils.to_bytes(obj)
+            _ = utils.to_bytes(s)
 
 
-def test_to_path():
-    for obj in PATHS:
-        assert isinstance(utils.to_path(obj), pathlib.Path)
-    for obj in STRINGS:
-        if isinstance(obj, str):
-            assert isinstance(utils.to_path(obj), pathlib.Path)
-    for obj in NOT_STRINGS:
+class TestToPath:
+
+    @pytest.mark.parametrize("path", [pathlib.Path("."), pathlib.Path.home()])
+    def test_path_input(self, path):
+        assert isinstance(utils.to_path(path), pathlib.Path)
+
+    @pytest.mark.parametrize("path", ["unicode", "úñîçødé"])
+    def test_str_input(self, path):
+        assert isinstance(utils.to_path(path), pathlib.Path)
+
+    @pytest.mark.parametrize("path", [1, 2.0, ["foo", "bar"], {"foo": "bar"}])
+    def test_invalid_input(self, path):
         with pytest.raises(TypeError):
-            utils.to_path(obj)
+            _ = utils.to_path(path)
 
 
 class TestValidateAndClipRange:
 
-    def test_good_inputs(self):
-        inputs = [
-            [("2001-01", "2002-01"), ("2000-01", "2003-01")],
-            [["2001-01", "2004-01"], ("2000-01", "2003-01")],
+    @pytest.mark.parametrize(
+        "range_vals,full_range,val_type",
+        [
+            [("2001-01", "2002-01"), ("2000-01", "2003-01"), None],
+            [["2001-01", "2004-01"], ("2000-01", "2003-01"), None],
             [("2001-01", "2002-01"), ["2000-01", "2003-01"], (str, bytes)],
-            [[-5, 5], [-10, 10]],
-            [(-5, 5), (0, 10)],
+            [[-5, 5], [-10, 10], None],
+            [(-5, 5), (0, 10), None],
             [(-5, 5), (-10, 10), int],
             [(-5, 5), (-10, 10), (int, float)],
-        ]
-        for input_ in inputs:
-            output = utils.validate_and_clip_range(*input_)
-            assert isinstance(output, tuple)
-            assert len(output) == 2
-            assert output[0] == max(input_[0][0], input_[1][0])
-            assert output[1] == min(input_[0][1], input_[1][1])
+            [(0, None), (-5, 5), None],
+            [(None, 0), (-5, 5), None],
+        ],
+    )
+    def test_valid_inputs(self, range_vals, full_range, val_type):
+        output = utils.validate_and_clip_range(range_vals, full_range, val_type)
+        assert isinstance(output, tuple)
+        assert len(output) == 2
+        if range_vals[0] is None:
+            assert output[0] == full_range[0]
+        else:
+            assert output[0] == max(range_vals[0], full_range[0])
+        if range_vals[1] is None:
+            assert output[1] == full_range[1]
+        else:
+            assert output[1] == min(range_vals[1], full_range[1])
 
-    def test_null_inputs(self):
-        inputs = [
-            [(0, None), (-5, 5)],
-            [(None, 0), (-5, 5)],
-        ]
-        for input_ in inputs:
-            output = utils.validate_and_clip_range(*input_)
-            assert isinstance(output, tuple)
-            assert len(output) == 2
-            if input_[0][0] is None:
-                assert output[0] == input_[1][0]
-            elif input_[0][1] is None:
-                assert output[1] == input_[1][1]
-
-    def test_bad_typeerror(self):
-        inputs = [
-            ["2001-01", ("2000-01", "2003-01")],
-            [("2001-01", "2002-01"), "2000-01"],
-            [{"2001-01", "2002-01"}, ("2000-01", "2003-01")],
-            [("2001-01", "2002-01"), ("2000-01", "2003-01"), datetime.date],
-            [0, [-10, 10]],
-            [(-5, 5), 0],
-            [[-5, 5], [-10, 10], (str, bytes)],
-        ]
-        for input_ in inputs:
-            with pytest.raises(TypeError):
-                utils.validate_and_clip_range(*input_)
-
-    def test_bad_valueerror(self):
-        inputs = [
-            [("2001-01", "2002-01", "2003-01"), ("2000-01", "2003-01")],
-            [("2001-01", "2002-01"), ["2000-01", "2002-01", "2004-01"]],
-            [[0, 5, 10], (-10, 10)],
-            [(-5, 5), [-10, 0, 10]],
-            [(-5, 5), [-10, 0, 10], (str, bytes)],
-        ]
-        for input_ in inputs:
-            with pytest.raises(ValueError):
-                utils.validate_and_clip_range(*input_)
+    @pytest.mark.parametrize(
+        "range_vals,full_range,val_type,error",
+        [
+            ["2001-01", ("2000-01", "2003-01"), None, pytest.raises(TypeError)],
+            [("2001-01", "2002-01"), "2000-01", None, pytest.raises(TypeError)],
+            [
+                {"2001-01", "2002-01"},
+                ("2000-01", "2003-01"),
+                None,
+                pytest.raises(TypeError),
+            ],
+            [
+                ("2001-01", "2002-01"),
+                ("2000-01", "2003-01"),
+                datetime.date,
+                pytest.raises(TypeError),
+            ],
+            [0, [-10, 10], None, pytest.raises(TypeError)],
+            [(-5, 5), 0, None, pytest.raises(TypeError)],
+            [[-5, 5], [-10, 10], (str, bytes), pytest.raises(TypeError)],
+            [
+                ("2001-01", "2002-01", "2003-01"),
+                ("2000-01", "2003-01"),
+                None,
+                pytest.raises(ValueError),
+            ],
+            [
+                ("2001-01", "2002-01"),
+                ["2000-01", "2002-01", "2004-01"],
+                None,
+                pytest.raises(ValueError),
+            ],
+            [[0, 5, 10], (-10, 10), None, pytest.raises(ValueError)],
+            [(-5, 5), [-10, 0, 10], None, pytest.raises(ValueError)],
+            [(-5, 5), [-10, 0, 10], (str, bytes), pytest.raises(ValueError)],
+        ],
+    )
+    def test_invalid_inputs(self, range_vals, full_range, val_type, error):
+        with error:
+            _ = utils.validate_and_clip_range(range_vals, full_range, val_type)
 
 
 class TestValidateSetMembers:
 
-    def test_good_inputs(self):
-        inputs = [
+    @pytest.mark.parametrize(
+        "vals,val_type,valid_vals",
+        [
             [{"a", "b"}, (str, bytes), {"a", "b", "c"}],
             ["a", (str, bytes), {"a", "b", "c"}],
             [("a", "b"), (str, bytes), {"a", "b", "c"}],
-            [["a", "b"], (str, bytes)],
+            [["a", "b"], (str, bytes), None],
             [{1, 2}, int, {1, 2, 3}],
             [{1, 2}, (int, float), {1, 2, 3}],
             [1, int, {1: "a", 2: "b", 3: "c"}],
-            [{3.14, 42.0}, float],
-            [3.14, (int, float)],
+            [{3.14, 42.0}, float, None],
+            [3.14, (int, float), None],
         ]
-        for input_ in inputs:
-            output = utils.validate_set_members(*input_)
-            assert isinstance(output, set)
-            assert all(isinstance(val, input_[1]) for val in output)
+    )
+    def test_valid_inputs(self, vals, val_type, valid_vals):
+        output = utils.validate_set_members(vals, val_type, valid_vals)
+        assert isinstance(output, set)
+        assert all(isinstance(val, val_type) for val in output)
 
-    def test_bad_typeerror(self):
-        inputs = [
-            [{"a", "b"}, int],
-            ["a", int],
-            [("a", "b"), (int, float)],
-        ]
-        for input_ in inputs:
-            with pytest.raises(TypeError):
-                utils.validate_set_members(*input_)
 
-    def test_bad_valueerror(self):
-        inputs = [
-            [{"a", "b"}, (str, bytes), {"x", "y", "z"}],
-            [{"a", "x"}, (str, bytes), {"x", "y", "z"}],
-            ["a", (str, bytes), {"x", "y", "z"}],
-            ["a", (str, bytes), {"x": 24, "y": 25, "z": 26}],
+    @pytest.mark.parametrize(
+        "vals,val_type,valid_vals,error",
+        [
+            [{"a", "b"}, int, None, pytest.raises(TypeError)],
+            ["a", int, None, pytest.raises(TypeError)],
+            [("a", "b"), (int, float), None, pytest.raises(TypeError)],
+            [{"a", "b"}, (str, bytes), {"x", "y", "z"}, pytest.raises(ValueError)],
+            [{"a", "x"}, (str, bytes), {"x", "y", "z"}, pytest.raises(ValueError)],
+            ["a", (str, bytes), {"x", "y", "z"}, pytest.raises(ValueError)],
+            ["a", (str, bytes), {"x": 24, "y": 25, "z": 26}, pytest.raises(ValueError)],
         ]
-        for input_ in inputs:
-            with pytest.raises(ValueError):
-                utils.validate_set_members(*input_)
+    )
+    def test_invalid_inputs(self, vals, val_type, valid_vals, error):
+        with error:
+            _ = utils.validate_set_members(vals, val_type, valid_vals)
 
 
 def _func_pos_only_args(parg1, parg2, /):
@@ -163,7 +182,7 @@ def _func_kw_only_args(*, kwarg1, kwarg2):
 
 
 @pytest.mark.parametrize(
-    "input_func,input_kwargs,expected",
+    "func,kwargs,expected",
     [
         (_func_pos_only_args, {"kwarg": "kwargval"}, {}),
         (_func_mix_args, {"arg": "argval"}, {"arg": "argval"}),
@@ -190,5 +209,5 @@ def _func_kw_only_args(*, kwarg1, kwarg2):
         (_func_kw_only_args, {}, {}),
     ],
 )
-def test_get_kwargs_for_func(input_func, input_kwargs, expected):
-    assert utils.get_kwargs_for_func(input_func, input_kwargs) == expected
+def test_get_kwargs_for_func(func, kwargs, expected):
+    assert utils.get_kwargs_for_func(func, kwargs) == expected

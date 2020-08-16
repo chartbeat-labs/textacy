@@ -1,6 +1,5 @@
 import re
 
-import numpy as np
 import pytest
 
 from textacy import load_spacy_lang
