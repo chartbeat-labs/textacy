@@ -173,9 +173,7 @@ def _make_dirs(filepath, mode):
 
 def _validate_read_mode(mode):
     if "w" in mode or "a" in mode:
-        raise ValueError(
-            f"mode = '{mode}' is invalid; file must be opened in read mode"
-        )
+        raise ValueError(f"mode = '{mode}' is invalid; file must be opened in read mode")
 
 
 def _validate_write_mode(mode):

@@ -185,7 +185,7 @@ class Wikimedia(Dataset):
                 LOGGER.exception(
                     "version = %s is invalid; must be 'current' "
                     "or a date string like YYYYMMDD",
-                    self.version
+                    self.version,
                 )
                 raise
         for version_dt in version_dts:

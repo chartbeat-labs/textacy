@@ -375,9 +375,7 @@ def to_bag_of_terms(
     """
     if weighting not in {"count", "freq", "binary"}:
         raise ValueError(
-            errors.value_invalid_msg(
-                "weighting", weighting, {"count", "freq", "binary"}
-            )
+            errors.value_invalid_msg("weighting", weighting, {"count", "freq", "binary"})
         )
     terms_list = to_terms_list(
         doc,
@@ -439,9 +437,7 @@ def to_bag_of_words(
     """
     if weighting not in {"count", "freq", "binary"}:
         raise ValueError(
-            errors.value_invalid_msg(
-                "weighting", weighting, {"count", "freq", "binary"}
-            )
+            errors.value_invalid_msg("weighting", weighting, {"count", "freq", "binary"})
         )
     count_by = (
         spacy.attrs.LEMMA
@@ -539,9 +535,7 @@ def to_semantic_network(
             list(doc.sents), normalize=normalize, edge_weighting=edge_weighting
         )
     else:
-        raise ValueError(
-            errors.value_invalid_msg("nodes", nodes, {"words", "sents"})
-        )
+        raise ValueError(errors.value_invalid_msg("nodes", nodes, {"words", "sents"}))
 
 
 _doc_extensions = {

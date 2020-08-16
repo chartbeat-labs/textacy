@@ -7,7 +7,18 @@ import collections
 import itertools
 import operator
 import re
-from typing import cast, Callable, Collection, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import (
+    cast,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 from cytoolz import itertoolz
@@ -258,9 +269,8 @@ def _parse_ent_types(
         allowed_types = (None, str, set, frozenset, list, tuple)
         raise TypeError(
             errors.type_invalid_msg(
-                f"{which}_types",
-                type(ent_types),
-                Optional[Union[str, Collection[str]]])
+                f"{which}_types", type(ent_types), Optional[Union[str, Collection[str]]]
+            )
         )
 
 
@@ -410,7 +420,9 @@ def matches(
                 errors.type_invalid_msg(
                     "patterns",
                     type(patterns),
-                    Union[str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]]  # noqa: E501
+                    Union[
+                        str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]
+                    ],
                 )
             )
     else:
@@ -418,7 +430,7 @@ def matches(
             errors.type_invalid_msg(
                 "patterns",
                 type(patterns),
-                Union[str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]]
+                Union[str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]],
             )
         )
     matcher = Matcher(doc.vocab)
