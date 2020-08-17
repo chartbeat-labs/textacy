@@ -157,7 +157,7 @@ def write_json(
                 )
             )
         else:
-            newline = "\n" if "t" in mode else b"\n"
+            newline: Union[str, bytes] = "\n" if "t" in mode else b"\n"
             for item in data:
                 f.write(
                     json.dumps(

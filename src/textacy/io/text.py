@@ -86,6 +86,6 @@ def write_text(
         if lines is False:
             f.write(data)
         else:
-            newline = "\n" if "t" in mode else b"\n"
+            newline: Union[str, bytes] = "\n" if "t" in mode else b"\n"
             for line in data:
                 f.write(line + newline)

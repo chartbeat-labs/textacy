@@ -4,7 +4,7 @@ from typing import Callable, Optional, Sequence, Union
 
 from spacy.tokens import Doc
 
-from .. import spacier
+from .. import spacier, utils
 from . import utils as aug_utils
 
 
@@ -101,12 +101,7 @@ class Augmenter:
             # this is a bit of a hack, but whatchagonnado
             if kwargs:
                 for tf in tfs:
-                    tf_params = inspect.signature(tf).parameters
-                    tf_kwargs = {
-                        kwarg: value
-                        for kwarg, value in kwargs.items()
-                        if kwarg in tf_params
-                    }
+                    tf_kwargs = utils.get_kwargs_for_func(tf, kwargs)
                     aug_toks = tf(aug_toks, **tf_kwargs)
             else:
                 for tf in tfs:
@@ -138,8 +133,8 @@ class Augmenter:
             return tuple(num)
         else:
             raise ValueError(
-                "num={} is invalid; must be an int >= 1, a float in [0.0, 1.0], "
-                "or a list of floats of length equal to given transforms".format(num)
+                f"num={num} is invalid; must be an int >= 1, a float in [0.0, 1.0], "
+                "or a list of floats of length equal to given transforms"
             )
 
     def _get_random_transforms(self):

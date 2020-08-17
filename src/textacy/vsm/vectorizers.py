@@ -21,6 +21,7 @@ import numpy as np
 import scipy.sparse as sp
 from sklearn.preprocessing import normalize as normalize_mat
 
+from .. import errors
 from .matrix_utils import get_doc_lengths, get_inverse_doc_freqs, filter_terms_by_df
 
 
@@ -304,8 +305,8 @@ class Vectorizer:
                 for i, term in enumerate(sorted(vocabulary)):
                     if vocab.setdefault(term, i) != i:
                         raise ValueError(
-                            'Terms in `vocabulary` must be unique, but "{}" '
-                            "was found more than once.".format(term)
+                            f"Terms in `vocabulary` must be unique, but '{term}' "
+                            "was found more than once."
                         )
                 vocabulary = vocab
             else:
@@ -318,15 +319,15 @@ class Vectorizer:
                         if term_id_count > 1
                     )
                     raise ValueError(
-                        "Term ids in `vocabulary` must be unique, but {} ids"
-                        "were assigned to more than one term.".format(n_dupe_term_ids)
+                        "Term ids in `vocabulary` must be unique, but "
+                        f"{n_dupe_term_ids} ids were assigned to more than one term."
                     )
                 for i in range(len(vocabulary)):
                     if i not in ids:
                         raise ValueError(
                             "Term ids in `vocabulary` must be compact, i.e. "
-                            "not have any gaps, but term id {} is missing from "
-                            "a vocabulary of {} terms".format(i, len(vocabulary))
+                            f"not have any gaps, but term id {i} is missing from "
+                            f"a vocabulary of {len(vocabulary)} terms"
                         )
             if not vocabulary:
                 raise ValueError("`vocabulary` must not be empty.")
@@ -619,9 +620,7 @@ class Vectorizer:
             return matrix[:, new_idx_array]
         else:
             raise ValueError(
-                "`axis` = {} is invalid; must be one of {}".format(
-                    axis, {"rows", "columns", 0, 1}
-                )
+                errors.value_invalid_msg("axis", axis, {"rows", "columns", 0, 1})
             )
 
     def _reweight_values(self, doc_term_matrix):
@@ -668,7 +667,11 @@ class Vectorizer:
             pass  # tfs are already linear
         else:
             # this should never raise, i'm just being a worrywart
-            raise ValueError("`tf_type` = {} is invalid".format(self.tf_type))
+            raise ValueError(
+                errors.value_invalid_msg(
+                    "tf_type", self.tf_type, {"binary", "bm25", "sqrt", "log", "linear"}
+                )
+            )
 
         # apply the global component (idfs), column-wise
         if self.apply_idf is True:

@@ -36,6 +36,7 @@ import spacy
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Span, Token
 
+from .. import errors
 from .. import extract
 from .. import network
 from .. import utils
@@ -130,7 +131,7 @@ def get_meta(doc: Doc) -> dict:
 def set_meta(doc: Doc, value: dict) -> None:
     """Add custom metadata to ``Doc``."""
     if not isinstance(value, dict):
-        raise TypeError("doc metadata must be a dict, not {}".format(type(value)))
+        raise TypeError(errors.type_invalid_msg("value", type(value), Dict))
     try:
         doc.user_data["textacy"]["meta"] = value
     except KeyError:
@@ -223,7 +224,8 @@ def to_terms_list(
 
     Raises:
         ValueError: if neither ``entities`` nor ``ngrams`` are included,
-            or if ``entities`` or ``normalize`` have invalid values
+            or if ``normalize`` have invalid values
+        TypeError: if ``entities` has an invalid type
 
     Note:
         Despite the name, this is a generator function; to get an
@@ -232,31 +234,20 @@ def to_terms_list(
     if not (entities or ngrams):
         raise ValueError("`entities` and/or `ngrams` must be included")
     if not (entities is None or isinstance(entities, bool)):
-        raise ValueError(
-            "entities={} is invalid; choices are {}".format(
-                entities, {True, False, None},
-            )
+        raise TypeError(
+            errors.type_invalid_msg("entities", type(entities), Optional[bool])
         )
     if not (normalize in ("lemma", "lower") or callable(normalize) or not normalize):
         raise ValueError(
-            "normalize={} is invalid; choices are {}".format(
-                normalize, {"lemma", "lower", types.FunctionType, None},
+            errors.value_invalid_msg(
+                "normalize", normalize, {"lemma", "lower", None, Callable}
             )
         )
     if ngrams:
         ngrams = cast(Set[int], utils.to_collection(ngrams, int, set))
         unigrams_: Iterable[Token] = []
         ngrams_: List[Iterable[Span]] = []
-        ng_kwargs: Union[Set[str], Dict[str, Any]]
-        ng_kwargs = {
-            "filter_stops",
-            "filter_punct",
-            "filter_nums",
-            "include_pos",
-            "exclude_pos",
-            "min_freq",
-        }
-        ng_kwargs = {key: val for key, val in kwargs.items() if key in ng_kwargs}
+        ng_kwargs = utils.get_kwargs_for_func(extract.ngrams, kwargs)
         for n in sorted(ngrams):
             # use a faster function for unigrams
             if n == 1:
@@ -265,9 +256,7 @@ def to_terms_list(
                 ngrams_.append(extract.ngrams(doc, n, **ng_kwargs))
         ngrams_ = itertoolz.concat(ngrams_)
     if entities is not None:
-        ent_kwargs: Union[Set[str], Dict[str, Any]]
-        ent_kwargs = {"include_types", "exclude_types", "drop_determiners", "min_freq"}
-        ent_kwargs = {key: val for key, val in kwargs.items() if key in ent_kwargs}
+        ent_kwargs = utils.get_kwargs_for_func(extract.entities, kwargs)
         entities_ = extract.entities(doc, **ent_kwargs)
     if ngrams:
         # use ngrams as-is
@@ -385,7 +374,9 @@ def to_bag_of_terms(
         :func:`to_terms_list()`, which is used under the hood.
     """
     if weighting not in {"count", "freq", "binary"}:
-        raise ValueError('weighting "{}" is invalid'.format(weighting))
+        raise ValueError(
+            errors.value_invalid_msg("weighting", weighting, {"count", "freq", "binary"})
+        )
     terms_list = to_terms_list(
         doc,
         ngrams=ngrams,
@@ -445,7 +436,9 @@ def to_bag_of_words(
         (depending on the value of ``weighting``).
     """
     if weighting not in {"count", "freq", "binary"}:
-        raise ValueError('weighting "{}" is invalid'.format(weighting))
+        raise ValueError(
+            errors.value_invalid_msg("weighting", weighting, {"count", "freq", "binary"})
+        )
     count_by = (
         spacy.attrs.LEMMA
         if normalize == "lemma"
@@ -542,8 +535,7 @@ def to_semantic_network(
             list(doc.sents), normalize=normalize, edge_weighting=edge_weighting
         )
     else:
-        msg = 'nodes "{}" not valid; must be in {}'.format(nodes, {"words", "sents"})
-        raise ValueError(msg)
+        raise ValueError(errors.value_invalid_msg("nodes", nodes, {"words", "sents"}))
 
 
 _doc_extensions = {

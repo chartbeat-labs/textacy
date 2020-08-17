@@ -3,6 +3,7 @@ import collections
 import numpy as np
 import pytest
 import spacy
+from spacy.tokens import Doc
 
 from textacy import Corpus
 from textacy import load_spacy_lang
@@ -79,8 +80,8 @@ class TestCorpusDunder:
         assert isinstance(corpus, collections.abc.Iterable)
 
     def test_getitem(self, corpus):
-        assert isinstance(corpus[0], spacy.tokens.Doc)
-        assert all(isinstance(doc, spacy.tokens.Doc) for doc in corpus[0:2])
+        assert isinstance(corpus[0], Doc)
+        assert all(isinstance(doc, Doc) for doc in corpus[0:2])
 
     def test_delitem(self, corpus):
         del corpus[-1]

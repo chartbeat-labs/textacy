@@ -133,15 +133,21 @@ class TestDocExtensions:
             for kwargs in kwargs_sets:
                 terms_list = list(doc._.to_terms_list(as_strings=as_strings, **kwargs))
 
-    def test_to_terms_list_error(self, doc):
-        bad_inputs = (
-            {"ngrams": False, "entities": False},
-            {"entities": (1, 2, 3)},
-            {"normalize": True},
-        )
-        for bad_input in bad_inputs:
-            with pytest.raises(ValueError):
-                _ = list(doc._.to_terms_list(**bad_input))
+    @pytest.mark.parametrize(
+        "ngrams,entities,normalize,error",
+        [
+            (False, False, "lemma", pytest.raises(ValueError)),
+            (False, (1, 2, 3), "lemma", pytest.raises(TypeError)),
+            ((1, 2, 3), True, True, pytest.raises(ValueError)),
+        ]
+    )
+    def test_to_terms_list_error(self, doc, ngrams, entities, normalize, error):
+        with error:
+            _ = list(
+                doc._.to_terms_list(
+                    ngrams=ngrams, entities=entities, normalize=normalize
+                )
+            )
 
     def test_to_bag_of_terms(self, doc):
         bot = doc._.to_bag_of_terms(weighting="count")

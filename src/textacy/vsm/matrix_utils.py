@@ -9,6 +9,8 @@ from a matrix by their document frequency.
 import numpy as np
 import scipy.sparse as sp
 
+from .. import errors
+
 
 def get_term_freqs(doc_term_matrix, *, type_="linear"):
     """
@@ -42,9 +44,7 @@ def get_term_freqs(doc_term_matrix, *, type_="linear"):
         return np.log(tfs) + 1.0
     else:
         raise ValueError(
-            "type_ = {} is invalid; value must be one of {}".format(
-                type_, {"linear", "sqrt", "log"}
-            )
+            errors.value_invalid_msg("type_", type_, {"linear", "sqrt", "log"})
         )
 
 
@@ -109,9 +109,7 @@ def get_inverse_doc_freqs(doc_term_matrix, *, type_="smooth"):
         return np.log((n_docs - dfs + 0.5) / (dfs + 0.5))
     else:
         raise ValueError(
-            "type_ = {} is invalid; value must be one of {}".format(
-                type_, {"standard", "smooth", "bm25"}
-            )
+            errors.value_invalid_msg("type_", type_, {"standard", "smooth", "bm25"})
         )
 
 
@@ -144,9 +142,7 @@ def get_doc_lengths(doc_term_matrix, *, type_="linear"):
         return np.log(dls) + 1.0
     else:
         raise ValueError(
-            "`type_` = {} invalid; must be one of {}".format(
-                type_, {"linear", "sqrt", "log"}
-            )
+            errors.value_invalid_msg("type_", type_, {"linear", "sqrt", "log"})
         )
 
 

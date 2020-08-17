@@ -8,7 +8,7 @@ from cachetools import cached
 from cachetools.keys import hashkey
 from spacy.tokens import Doc, Span
 
-from .. import cache, datasets, resources
+from .. import cache, datasets, errors, resources
 
 
 concept_net = resources.ConceptNet()
@@ -25,7 +25,7 @@ def to_aug_toks(spacy_obj: Union[Doc, Span]) -> List[AugTok]:
     """
     if not isinstance(spacy_obj, (Doc, Span)):
         raise TypeError(
-            "`spacy_obj` must be of type {}, not {}".format((Doc, Span), type(spacy_obj))
+            errors.type_invalid_msg("spacy_obj", type(spacy_obj), Union[Doc, Span])
         )
     lang = spacy_obj.vocab.lang
     toks_syns: Iterable[List[str]]

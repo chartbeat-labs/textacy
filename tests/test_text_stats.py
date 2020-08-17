@@ -1,3 +1,7 @@
+from contextlib import ExitStack as does_not_raise
+# TODO: when only supporting PY3.7+, use this instead
+# from contextlib import nullcontext as does_not_raise
+
 import pytest
 
 from textacy import text_stats
@@ -171,30 +175,31 @@ def test_wiener_sachtextformel_variant4(ts):
     ) == pytest.approx(9.169619607843138, rel=1e-2)
 
 
-def test_flesch_reading_ease_langs(ts):
-    lang_fres = [
-        (None, 50.707745098039254),
-        ("en", 50.707745098039254),
-        ("de", 65.28186274509805),
-        ("es", 89.30823529411765),
-        ("fr", 68.18156862745099),
-        ("it", 93.12156862745098),
-        ("nl", 64.59823529411764),
-        ("pt", 92.70774509803925),
-        ("ru", 82.79921568627452),
-    ]
-    for lang, fre in lang_fres:
-        assert text_stats.flesch_reading_ease(
+@pytest.mark.parametrize(
+    "lang,fre,context",
+    [
+        (None, 50.707745098039254, does_not_raise()),
+        ("en", 50.707745098039254, does_not_raise()),
+        ("de", 65.28186274509805, does_not_raise()),
+        ("es", 89.30823529411765, does_not_raise()),
+        ("fr", 68.18156862745099, does_not_raise()),
+        ("it", 93.12156862745098, does_not_raise()),
+        ("nl", 64.59823529411764, does_not_raise()),
+        ("pt", 92.70774509803925, does_not_raise()),
+        ("ru", 82.79921568627452, does_not_raise()),
+        ("ja", None, pytest.raises(ValueError)),
+        ("un", None, pytest.raises(ValueError)),
+        ("zh", None, pytest.raises(ValueError)),
+    ],
+)
+def test_flesch_reading_ease_lang(ts, lang, fre, context):
+    with context:
+        result = text_stats.flesch_reading_ease(
             ts.n_syllables, ts.n_words, ts.n_sents, lang=lang
-        ) == pytest.approx(fre, rel=1e-2)
+        )
+        assert result == pytest.approx(fre, rel=1e-2)
 
 
-def test_flesch_reading_ease_bad_lang(ts):
-    with pytest.raises(ValueError):
-        _ = text_stats.flesch_reading_ease(1, 1, 1, lang="foo")
-
-
-def test_load_hyphenator():
-    for lang in ("en", "es"):
-        _ = text_stats.load_hyphenator(lang=lang)
-        assert True
+@pytest.mark.parametrize("lang", ["en", "es"])
+def test_load_hyphenator(lang):
+    assert text_stats.load_hyphenator(lang=lang)

@@ -1,5 +1,7 @@
-graft docs
+graft src
+graft scripts
 graft tests
+graft docs
 prune docs/build/
 
 include CHANGES.md

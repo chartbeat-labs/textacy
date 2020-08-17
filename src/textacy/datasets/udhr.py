@@ -119,13 +119,13 @@ class UDHR(Dataset):
         """Check that necessary data is found on disk, or raise an OSError."""
         if not self._texts_dirpath.is_dir():
             raise OSError(
-                "data directory {} not found; "
-                "has the dataset been downloaded?".format(self._texts_dirpath)
+                f"data directory {self._texts_dirpath} not found; "
+                "has the dataset been downloaded?"
             )
         if not self._index_filepath.is_file():
             raise OSError(
-                "data index file {} not found; "
-                "has the dataset been downloaded?".format(self._index_filepath)
+                f"data index file {self._index_filepath} not found; "
+                "has the dataset been downloaded?"
             )
 
     @property
@@ -154,7 +154,7 @@ class UDHR(Dataset):
             else:
                 index.append(
                     {
-                        "filename": "udhr_{}.txt".format(ele.get("f")),
+                        "filename": f"udhr_{ele.get('f')}.txt",
                         "lang": iso_lang_code,
                         "lang_name": ele.get("n"),
                     }

@@ -573,7 +573,8 @@ class SupremeCourt(Dataset):
             force: If True, download the dataset, even if it already exists
                 on disk under ``data_dir``.
         """
-        release_tag = "supreme_court_py3_v{data_version}".format(data_version=1.0)
+        data_version = 1.0
+        release_tag = f"supreme_court_py3_v{data_version}"
         url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
         tio.download_file(
             url, filename=self._filename, dirpath=self.data_dir, force=force,
@@ -582,8 +583,8 @@ class SupremeCourt(Dataset):
     def __iter__(self):
         if not self._filepath.is_file():
             raise OSError(
-                "dataset file {} not found;\n"
-                "has the dataset been downloaded yet?".format(self._filepath)
+                f"dataset file {self._filepath} not found;\n"
+                "has the dataset been downloaded yet?"
             )
         for record in tio.read_json(self._filepath, mode="rt", lines=True):
             yield record

@@ -129,7 +129,7 @@ def _compute_word_scores(
     cooc_mat: Dict[Tuple[str, str], int],
     normalize: Optional[Union[str, Callable[[Token], str]]],
 ) -> Dict[str, float]:
-    word_strs = list(graph.nodes())
+    word_strs: List[str] = list(graph.nodes())
     # "level of hierarchy" component
     max_truss_levels = _compute_node_truss_levels(graph)
     max_truss_level = max(max_truss_levels.values())

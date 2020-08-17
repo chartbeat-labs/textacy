@@ -11,7 +11,7 @@ from typing import Union
 import numpy as np
 import scipy.sparse as sp
 
-from .. import utils
+from .. import errors, utils
 from . import utils as io_utils
 
 
@@ -44,9 +44,7 @@ def read_sparse_matrix(
             shape=npz_file["shape"],
         )
     else:
-        raise ValueError(
-            "kind='{}' is invalid; valid values are {}".format(kind, ["csc", "csr"])
-        )
+        raise ValueError(errors.value_invalid_msg("kind", kind, {"csc", "csr"}))
 
 
 def write_sparse_matrix(
@@ -73,8 +71,9 @@ def write_sparse_matrix(
     """
     if not isinstance(data, (sp.csc_matrix, sp.csr_matrix)):
         raise TypeError(
-            "`data` must be a scipy sparse csr or csc matrix, "
-            "not '{}'".format(type(data))
+            errors.type_invalid_msg(
+                "data", type(data), Union[sp.csc_matrix, sp.csr_matrix]
+            )
         )
     filepath = utils.to_path(filepath).resolve()
     if make_dirs is True:

@@ -3,7 +3,7 @@ from typing import cast, List, Optional, Set, Union
 
 from cytoolz import itertoolz
 
-from .. import utils
+from .. import errors, utils
 from . import utils as aug_utils
 
 
@@ -105,9 +105,9 @@ def insert_word_synonyms(
 
     rand_aug_toks = iter(rand_aug_toks)
     new_aug_toks: List[aug_utils.AugTok] = []
-    for idx, (prev_tok, curr_tok) in enumerate(
-        itertoolz.sliding_window(2, [None] + aug_toks)
-    ):
+    # NOTE: https://github.com/python/mypy/issues/5492
+    padded_pairs = itertoolz.sliding_window(2, [None] + aug_toks)  # type: ignore
+    for idx, (prev_tok, curr_tok) in enumerate(padded_pairs):
         if idx in rand_idxs:
             rand_aug_tok = next(rand_aug_toks)
             if prev_tok:
@@ -242,7 +242,10 @@ def delete_words(
         return aug_toks[:]
 
     new_aug_toks: List[aug_utils.AugTok] = []
-    padded_triplets = itertoolz.sliding_window(3, [None] + aug_toks + [None])
+    # NOTE: https://github.com/python/mypy/issues/5492
+    padded_triplets = itertoolz.sliding_window(
+        3, [None] + aug_toks + [None],  # type: ignore
+    )
     for idx, (prev_tok, curr_tok, next_tok) in enumerate(padded_triplets):
         if idx in rand_idxs:
             # special case: word then [deleted word] then punctuation
@@ -488,9 +491,7 @@ def delete_chars(
 def _validate_aug_toks(aug_toks):
     if not (isinstance(aug_toks, list) and isinstance(aug_toks[0], aug_utils.AugTok)):
         raise TypeError(
-            "aug_toks must be of type List[:obj:`AugTok`], not {}[{}]".format(
-                type(aug_toks), type(aug_toks[0])
-            )
+            errors.type_invalid_msg("aug_toks", type(aug_toks), List[aug_utils.AugTok])
         )
 
 
@@ -509,6 +510,6 @@ def _select_random_candidates(cands, num):
         rand_cands = [cand for cand in cands if random.random() < num]
     else:
         raise ValueError(
-            "num={} is invalid; must be an int >= 0 or a float in [0.0, 1.0]".format(num)
+            f"num={num} is invalid; must be an int >= 0 or a float in [0.0, 1.0]"
         )
     return rand_cands

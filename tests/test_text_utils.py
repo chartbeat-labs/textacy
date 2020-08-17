@@ -1,52 +1,7 @@
+import pytest
+
 from textacy import text_utils
 
-GOOD_ACRONYMS = [
-    "LGTM",
-    "U.S.A.",
-    "PEP8",
-    "LGBTQQI2S",
-    "TF-IDF",
-    "D3",
-    "3D",
-    "3-D",
-    "3D-TV",
-    "D&D",
-    "PrEP",
-    "H2SO4",
-    "I/O",
-    "WASPs",
-    "G-8",
-    "A-TReC",
-]
-BAD_ACRONYMS = [
-    "A",
-    "GHz",
-    "1a",
-    "D o E",
-    "Ms",
-    "Ph.D",
-    "3-Dim.",
-    "the",
-    "FooBar",
-    "1",
-    " ",
-    "",
-]
-
-CRUFTY_TERMS = [
-    "( foo bar )",
-    "foo -bar",
-    "- 123.4",
-    ".-foo bar",
-    "?!foo",
-    "bar?!",
-    "foo 's bar",
-    "foo 'll bar",
-    "  foo   bar   ",
-    "foo bar.   ",
-]
-GOOD_TERMS = ["foo (bar)", "foo?", "bar!", "-123.4"]
-BAD_TERMS = ["(foo bar", "foo) bar", "?>,!-.", "", "foo) (bar"]
 
 TEXT = """
     The hedge fund magnates Daniel S. Loeb, Louis Moore Bacon and Steven A. Cohen have much in common. They have managed billions of dollars in capital, earning vast fortunes. They have invested millions in art — and millions more in political candidates.
@@ -66,100 +21,142 @@ TEXT = """
     """
 
 
-def test_is_acronym_good():
-    for item in GOOD_ACRONYMS:
-        assert text_utils.is_acronym(item)
+@pytest.mark.parametrize(
+    "token",
+    [
+        "LGTM",
+        "U.S.A.",
+        "PEP8",
+        "LGBTQQI2S",
+        "TF-IDF",
+        "D3",
+        "3D",
+        "3-D",
+        "3D-TV",
+        "D&D",
+        "PrEP",
+        "H2SO4",
+        "I/O",
+        "WASPs",
+        "G-8",
+        "A-TReC",
+    ]
+)
+def test_is_acronym_good(token):
+    assert text_utils.is_acronym(token)
 
 
-def test_is_acronym_bad():
-    for item in BAD_ACRONYMS:
-        assert not text_utils.is_acronym(item)
+@pytest.mark.parametrize(
+    "token",
+    [
+        "A",
+        "GHz",
+        "1a",
+        "D o E",
+        "Ms",
+        "Ph.D",
+        "3-Dim.",
+        "the",
+        "FooBar",
+        "1",
+        " ",
+        "",
+    ]
+)
+def test_is_acronym_bad(token):
+    assert not text_utils.is_acronym(token)
 
 
-def test_is_acronym_exclude():
-    assert not text_utils.is_acronym("NASA", exclude={"NASA"})
+@pytest.mark.parametrize(
+    "token,exclude,expected",
+    [
+        ("NASA", {"NASA"}, False),
+        ("NASA", {"CSA", "ISS"}, True),
+        ("NASA", None, True)
+    ]
+)
+def test_is_acronym_exclude(token, exclude, expected):
+    assert text_utils.is_acronym(token, exclude=exclude) == expected
 
 
-def test_keyword_in_context_keyword():
-    for keyword in ("clinton", "all"):
-        results = list(
-            text_utils.keyword_in_context(
-                TEXT, keyword, ignore_case=True, window_width=50, print_only=False
-            )
-        )
-        for pre, kw, post in results:
-            assert kw.lower() == keyword
-
-
-def test_keyword_in_context_ignore_case():
-    for keyword in ("All", "all"):
-        results = list(
-            text_utils.keyword_in_context(
-                TEXT, keyword, ignore_case=False, window_width=50, print_only=False
-            )
-        )
-        for pre, kw, post in results:
-            assert kw == keyword
-    # also test for a null result, bc of case
-    results = list(
-        text_utils.keyword_in_context(
-            TEXT, "clinton", ignore_case=False, window_width=50, print_only=False
-        )
-    )
-    assert results == []
-
-
-def test_keyword_in_context_window_width():
-    for window_width in (10, 20):
-        results = list(
-            text_utils.keyword_in_context(
-                TEXT,
-                "clinton",
-                ignore_case=True,
-                print_only=False,
-                window_width=window_width,
-            )
-        )
-        for pre, kw, post in results:
-            assert len(pre) <= window_width
-            assert len(post) <= window_width
-
-
-def test_keyword_in_context_unicode():
-    keyword = "terminó"
-    results = list(
-        text_utils.keyword_in_context(
+@pytest.mark.parametrize(
+    "text,keyword,ignore_case,window_width,has_results",
+    [
+        (TEXT, "clinton", True, 50, True),
+        (TEXT, "clinton", False, 50, False),
+        (TEXT, "clinton", True, 10, True),
+        (TEXT, "all", True, 50, True),
+        (TEXT, "All", False, 50, True),
+        (
             "No llores porque ya se terminó, sonríe porque sucedió.",
+            "terminó",
+            True,
+            50,
+            True,
+        ),
+    ],
+)
+def test_keyword_in_context(text, keyword, ignore_case, window_width, has_results):
+    results = list(
+        text_utils.keyword_in_context(
+            text,
             keyword,
+            ignore_case=ignore_case,
+            window_width=window_width,
             print_only=False,
         )
     )
+    # check if any results
+    if has_results:
+        assert results
+    else:
+        assert not results
     for pre, kw, post in results:
-        assert kw == keyword
+        # check kw match by case
+        if ignore_case is True:
+            assert kw.lower() == keyword.lower()
+        else:
+            assert kw == keyword
+        # check pre/post window widths
+        assert len(pre) <= window_width
+        assert len(post) <= window_width
 
 
-def test_clean_terms_good():
-    observed = list(text_utils.clean_terms(GOOD_TERMS))
-    assert observed == GOOD_TERMS
-
-
-def test_clean_terms_bad():
-    observed = list(text_utils.clean_terms(BAD_TERMS))
-    assert observed == []
-
-
-def test_clean_terms_crufty():
-    observed = list(text_utils.clean_terms(CRUFTY_TERMS))
-    expected = [
-        "(foo bar)",
-        "foo-bar",
-        "-123.4",
-        "foo bar",
-        "foo",
-        "bar?!",
-        "foo's bar",
-        "foo'll bar",
-        "foo bar",
-        "foo bar.",
-    ]
-    assert observed == expected
+@pytest.mark.parametrize(
+    "input_,output_",
+    [
+        (
+            ["foo (bar)", "foo?", "bar!", "-123.4"],
+            ["foo (bar)", "foo?", "bar!", "-123.4"],
+        ),
+        (["(foo bar", "foo) bar", "?>,!-.", "", "foo) (bar"], []),
+        (
+            [
+                "( foo bar )",
+                "foo -bar",
+                "- 123.4",
+                ".-foo bar",
+                "?!foo",
+                "bar?!",
+                "foo 's bar",
+                "foo 'll bar",
+                "  foo   bar   ",
+                "foo bar.   ",
+            ],
+            [
+                "(foo bar)",
+                "foo-bar",
+                "-123.4",
+                "foo bar",
+                "foo",
+                "bar?!",
+                "foo's bar",
+                "foo'll bar",
+                "foo bar",
+                "foo bar.",
+            ],
+        ),
+    ],
+)
+def test_clean_terms(input_, output_):
+    assert list(text_utils.clean_terms(input_)) == output_

@@ -7,7 +7,18 @@ import collections
 import itertools
 import operator
 import re
-from typing import cast, Callable, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import (
+    cast,
+    Callable,
+    Collection,
+    Dict,
+    Iterable,
+    List,
+    Optional,
+    Set,
+    Tuple,
+    Union,
+)
 
 import numpy as np
 from cytoolz import itertoolz
@@ -16,6 +27,7 @@ from spacy.matcher import Matcher
 from spacy.tokens import Doc, Span, Token
 
 from . import constants
+from . import errors
 from . import text_utils
 from . import utils
 from .spacier import utils as spacy_utils
@@ -57,7 +69,7 @@ def words(
         Filtering by part-of-speech tag uses the universal POS tag set; for details,
         check spaCy's docs: https://spacy.io/api/annotation#pos-tagging
     """
-    words_ = (w for w in doc if not w.is_space)
+    words_: Iterable[Token] = (w for w in doc if not w.is_space)
     if filter_stops is True:
         words_ = (w for w in words_ if not w.is_stop)
     if filter_punct is True:
@@ -126,7 +138,7 @@ def ngrams(
     if n < 1:
         raise ValueError("n must be greater than or equal to 1")
 
-    ngrams_ = (doc[i : i + n] for i in range(len(doc) - n + 1))
+    ngrams_: Iterable[Span] = (doc[i : i + n] for i in range(len(doc) - n + 1))
     ngrams_ = (ngram for ngram in ngrams_ if not any(w.is_space for w in ngram))
     if filter_stops is True:
         ngrams_ = (
@@ -234,7 +246,7 @@ def entities(
 
 
 def _parse_ent_types(
-    ent_types: Optional[Union[str, Set[str]]], which: str,
+    ent_types: Optional[Union[str, Collection[str]]], which: str,
 ) -> Optional[Union[str, Set[str]]]:
     if not ent_types:
         return None
@@ -256,8 +268,8 @@ def _parse_ent_types(
     else:
         allowed_types = (None, str, set, frozenset, list, tuple)
         raise TypeError(
-            "{}_types = {} is {}, which is not one of the allowed types: {}".format(
-                which, ent_types, type(ent_types), allowed_types
+            errors.type_invalid_msg(
+                f"{which}_types", type(ent_types), Optional[Union[str, Collection[str]]]
             )
         )
 
@@ -338,7 +350,7 @@ def pos_regex_matches(doc: Union[Doc, Span], pattern: str) -> Iterable[Span]:
 
 def matches(
     doc: Doc,
-    patterns: Union[str, List[str], List[dict], List[List[dict]]],
+    patterns: Union[str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]],
     *,
     on_match: Callable = None,
 ) -> Iterable[Span]:
@@ -405,14 +417,20 @@ def matches(
             pass  # already in the right format!
         else:
             raise TypeError(
-                "patterns={} is invalid; values must be one of {}".format(
-                    patterns, {"str", "List[str]", "List[dict]", "List[list[dict]]"}
+                errors.type_invalid_msg(
+                    "patterns",
+                    type(patterns),
+                    Union[
+                        str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]
+                    ],
                 )
             )
     else:
         raise TypeError(
-            "patterns={} is invalid; values must be one of {}".format(
-                patterns, {"str", "List[str]", "List[dict]", "List[list[dict]]"}
+            errors.type_invalid_msg(
+                "patterns",
+                type(patterns),
+                Union[str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]],
             )
         )
     matcher = Matcher(doc.vocab)
@@ -421,14 +439,7 @@ def matches(
         yield doc[start:end]
 
 
-def _make_pattern_from_string(patstr: str) -> List[dict]:
-    """
-    Args:
-        patstr (str)
-
-    Returns:
-        List[dict]
-    """
+def _make_pattern_from_string(patstr: str) -> List[Dict[str, str]]:
     pattern = []
     for tokpatstr in constants.RE_MATCHER_TOKPAT_DELIM.split(patstr):
         parts = tokpatstr.split(":")
@@ -451,8 +462,8 @@ def _make_pattern_from_string(patstr: str) -> List[dict]:
                     tokpat["OP"] = op_val
                 else:
                     raise ValueError(
-                        "op={} invalid; valid choices are {}".format(
-                            op_val, constants.MATCHER_VALID_OPS
+                        errors.value_invalid_msg(
+                            "op", op_val, constants.MATCHER_VALID_OPS
                         )
                     )
             except IndexError:
@@ -460,10 +471,10 @@ def _make_pattern_from_string(patstr: str) -> List[dict]:
             pattern.append(tokpat)
         else:
             raise ValueError(
-                "pattern string '{}' is invalid; "
+                f"pattern string '{patstr}' is invalid; "
                 "each element in a pattern string must contain an attribute, "
                 "a corresponding value, and an optional quantity qualifier, "
-                "delimited by colons, like attr:value:op".format(patstr)
+                "delimited by colons, like attr:value:op"
             )
     return pattern
 
