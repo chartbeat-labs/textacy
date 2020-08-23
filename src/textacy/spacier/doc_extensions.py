@@ -16,10 +16,8 @@ on instantiated docs prepended by an underscore:
     >>> print(doc._.preview)
     Doc(6 tokens: "This is a short text.")
 """
-import types
 from typing import (
     cast,
-    Any,
     Callable,
     Collection,
     Dict,
