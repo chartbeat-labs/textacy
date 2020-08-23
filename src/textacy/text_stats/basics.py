@@ -1,0 +1,123 @@
+"""
+Functions for computing basic text statistics.
+"""
+import functools
+import logging
+from typing import Iterable, Tuple, Union
+
+import pyphen
+import spacy.pipeline
+from cachetools import cached
+from cachetools.keys import hashkey
+from cytoolz import itertoolz
+from spacy.tokens import Doc, Token
+
+from .. import cache, extract
+
+
+LOGGER = logging.getLogger(__name__)
+
+_SENTENCIZER = spacy.pipeline.Sentencizer()
+
+
+def n_words(doc_or_words: Union[Doc, Iterable[Token]]) -> int:
+    """
+    Compute the number of words in a document.
+
+    Args:
+        doc_or_words: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
+            if an iterable of spaCy ``Token`` s, all are included as-is.
+    """
+    words = _get_words(doc_or_words)
+    return itertoolz.count(words)
+
+
+def n_unique_words(doc_or_words: Union[Doc, Iterable[Token]]) -> int:
+    """
+    Compute the number of *unique* words in a document.
+
+    Args:
+        doc_or_words: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
+            if an iterable of spaCy ``Token`` s, all are included as-is.
+    """
+    words = _get_words(doc_or_words)
+    # NOTE: this stdlib solution is slower than itertoolz for docs with ~250+ words
+    # so let's take a small hit on short docs for the sake of big wins on long docs
+    # return len({word.lower for word in words})
+    return itertoolz.count(itertoolz.unique(word.lower for word in words))
+
+
+def n_chars_per_word(doc_or_words: Union[Doc, Iterable[Token]]) -> Tuple[int, ...]:
+    """
+    Compute the number of characters for each word in a document.
+
+    Args:
+        doc_or_words: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
+            if an iterable of spaCy ``Token`` s, all are included as-is.
+    """
+    words = _get_words(doc_or_words)
+    return tuple(len(word) for word in words)
+
+
+def n_syllables_per_word(
+    doc_or_words: Union[Doc, Iterable[Token]], lang: str,
+) -> Tuple[int, ...]:
+    """
+    Compute the number of syllables for each word in a document.
+
+    Args:
+        doc_or_words: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
+            if an iterable of spaCy ``Token`` s, all are included as-is.
+
+    Note:
+        Identifying syllables is _tricky_; this method relies on hyphenation, which is
+        more straightforward but doesn't always give the correct number of syllables.
+        While all hyphenation points fall on syllable divisions, not all syllable
+        divisions are valid hyphenation points.
+    """
+    hyphenator = load_hyphenator(lang=lang)
+    words = _get_words(doc_or_words)
+    return tuple(len(hyphenator.positions(word.lower_)) + 1 for word in words)
+
+
+def _get_words(doc_or_words: Union[Doc, Iterable[Token]]) -> Iterable[Token]:
+    if isinstance(doc_or_words, Doc):
+        return extract.words(
+            doc_or_words, filter_punct=True, filter_stops=False, filter_nums=False,
+        )
+    else:
+        return doc_or_words
+
+
+def n_sents(doc: Doc) -> int:
+    """
+    Compute the number of sentences in a document.
+
+    Warning:
+        If ``doc`` has not been segmented into sentences, it will be modified in-place
+        using spaCy's rule-based ``Sentencizer`` pipeline component before counting.
+    """
+    if not doc.is_sentenced:
+        LOGGER.warning(
+            "`doc` has not been segmented into sentences; applying spaCy's rule-based, "
+            "`Sentencizer` pipeline component to `doc` before counting..."
+        )
+        doc = _SENTENCIZER(doc)
+    return itertoolz.count(doc.sents)
+
+
+@cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
+def load_hyphenator(lang: str):
+    """
+    Load an object that hyphenates words at valid points, as used in LaTex typesetting.
+
+    Args:
+        lang: Standard 2-letter language abbreviation. To get a list of valid values::
+
+            >>> import pyphen; pyphen.LANGUAGES
+
+    Returns:
+        :class:`pyphen.Pyphen()`
+    """
+    LOGGER.debug("loading '%s' language hyphenator", lang)
+    return pyphen.Pyphen(lang=lang)
