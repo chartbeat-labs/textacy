@@ -180,3 +180,42 @@ def gulpease_index(n_chars: int, n_words: int, n_sents: int) -> float:
         https://it.wikipedia.org/wiki/Indice_Gulpease
     """
     return (300 * n_sents / n_words) - (10 * n_chars / n_words) + 89
+
+
+def perspicuity_index(n_words: int, n_syllables: int, n_sents: int) -> float:
+    """
+    Readability test for Spanish-language texts, whose value is in the range [0, 100];
+    very similar to the Spanish-specific formulation of :func:`flesch_reading_ease()`,
+    but included additionally since it's become a common readability standard.
+    Higher value => easier text.
+
+    References:
+        Pazos, Francisco Szigriszt. Sistemas predictivos de legibilidad del mensaje
+        escrito: fórmula de perspicuidad. Universidad Complutense de Madrid,
+        Servicio de Reprografía, 1993.
+    """
+    return 206.835 - (n_words / n_sents) - (62.3 * (n_syllables / n_words))
+
+
+def mu_legibility_index(words: Collection[str]) -> float:
+    """
+    Readability test for Spanish-language texts based on number of words and
+    the mean and variance of their lengths in characters, whose value is in the range
+    [0, 100]. Higher value => easier text.
+
+    References:
+        Muñoz, M., and J. Muñoz. "Legibilidad Mµ." Viña del Mar: CHL (2006).
+    """
+    n_words = len(words)
+    if n_words < 2:
+        LOGGER.warning(
+            "mu legibility index is undefined for texts with fewer than two words; "
+            "returning 0.0"
+        )
+        return 0.0
+    chars_per_word = [len(word) for word in words]
+    return (
+        100
+        * (n_words / (n_words - 1))
+        * (statistics.mean(chars_per_word) / statistics.variance(chars_per_word))
+    )
