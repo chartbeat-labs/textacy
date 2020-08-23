@@ -51,9 +51,7 @@ def flesch_reading_ease(
     try:
         coefs = _FRE_COEFS[lang or "en"]
     except KeyError:
-        raise ValueError(
-            errors.value_invalid_msg("lang", lang, list(_FRE_COEFS.keys()))
-        )
+        raise ValueError(errors.value_invalid_msg("lang", lang, list(_FRE_COEFS.keys())))
     return (
         coefs["base"]
         - (coefs["asl"] * n_words / n_sents)
@@ -129,8 +127,9 @@ def automated_readability_index(n_chars: int, n_words: int, n_sents: int) -> flo
 
 def lix(n_words: int, n_long_words: int, n_sents: int) -> float:
     """
-    Readability test commonly used in Sweden, whose value estimates the
-    difficulty of reading a foreign text. Higher value => more difficult text.
+    Readability test commonly used in Sweden on both English- and non-English-language
+    texts, whose value estimates the difficulty of reading a foreign text.
+    Higher value => more difficult text.
 
     References:
         https://en.wikipedia.org/wiki/Lix_(readability_test)
@@ -219,3 +218,17 @@ def mu_legibility_index(words: Collection[str]) -> float:
         * (n_words / (n_words - 1))
         * (statistics.mean(chars_per_word) / statistics.variance(chars_per_word))
     )
+
+
+def automatic_arabic_readability_index(
+    n_chars: int, n_words: int, n_sents: int,
+) -> float:
+    """
+    Readability test for Arabic-language texts based on number of characters and
+    average word and sentence lengths. Higher value => more difficult text.
+
+    References:
+        Al Tamimi, Abdel Karim, et al. "AARI: automatic arabic readability index."
+        Int. Arab J. Inf. Technol. 11.4 (2014): 370-378.
+    """
+    return (3.28 * n_chars) + (1.43 * n_chars / n_words) + (1.24 * n_words / n_sents)
