@@ -19,7 +19,8 @@ sphinx:
   configuration: docs/source/conf.py
   fail_on_warning: false
 
-formats: []
+formats:
+  - pdf
 
 build:
   image: latest
