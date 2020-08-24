@@ -3,6 +3,7 @@ Functions for computing basic text statistics.
 """
 import functools
 import logging
+import math
 from typing import Iterable, Tuple, Union
 
 import pyphen
@@ -165,6 +166,23 @@ def n_sents(doc: Doc) -> int:
         )
         doc = _SENTENCIZER(doc)
     return itertoolz.count(doc.sents)
+
+
+def entropy(doc_or_words: Union[Doc, Iterable[Token]]) -> float:
+    """
+    Compute the entropy of words in a document.
+
+    Args:
+        doc_or_words: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
+            if an iterable of spaCy ``Token`` s, all are included as-is.
+    """
+    words = _get_words(doc_or_words)
+    word_counts = itertoolz.frequencies(word.text for word in words)
+    n_words = sum(word_counts.values())
+    n_unique_words = len(word_counts)
+    probs = (count / n_words for count in word_counts.values())
+    # TODO: should base be 2 or n_unique_words ??
+    return - sum(prob * math.log(prob, n_unique_words) for prob in probs)
 
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))

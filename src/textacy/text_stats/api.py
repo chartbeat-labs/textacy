@@ -7,7 +7,6 @@ Compute various basic counts and readability statistics for documents.
 import logging
 from typing import Tuple
 
-from cytoolz import itertoolz
 from spacy.tokens import Doc
 
 from .. import extract
@@ -47,6 +46,7 @@ class TextStats:
         self._n_syllables = None
         self._n_monosyllable_words = None
         self._n_polysyllable_words = None
+        self._entropy = None
 
     @property
     def n_words(self) -> int:
@@ -165,6 +165,18 @@ class TextStats:
                 self.n_syllables_per_word, min_n_syllables=3,
             )
         return self._n_polysyllable_words
+
+    @property
+    def entropy(self) -> float:
+        """
+        Entropy of words in document.
+
+        See Also:
+            :func:`basics.entropy()`
+        """
+        if self._entropy is None:
+            self._entropy = basics.entropy(self.words)
+        return self._entropy
 
     @property
     def automated_readability_index(self) -> float:
