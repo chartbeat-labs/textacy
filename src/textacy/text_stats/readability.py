@@ -24,6 +24,59 @@ _FRE_COEFS = {
 }
 
 
+def automated_readability_index(n_chars: int, n_words: int, n_sents: int) -> float:
+    """
+    Readability test for English-language texts, particularly for technical writing,
+    whose value estimates the U.S. grade level required to understand a text.
+    Similar to several other tests (e.g. :func:`flesch_kincaid_grade_level()`),
+    but uses characters per word instead of syllables like :func:`coleman_liau_index()`.
+    Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Automated_readability_index
+    """
+    return (4.71 * n_chars / n_words) + (0.5 * n_words / n_sents) - 21.43
+
+
+def automatic_arabic_readability_index(
+    n_chars: int, n_words: int, n_sents: int,
+) -> float:
+    """
+    Readability test for Arabic-language texts based on number of characters and
+    average word and sentence lengths. Higher value => more difficult text.
+
+    References:
+        Al Tamimi, Abdel Karim, et al. "AARI: automatic arabic readability index."
+        Int. Arab J. Inf. Technol. 11.4 (2014): 370-378.
+    """
+    return (3.28 * n_chars) + (1.43 * n_chars / n_words) + (1.24 * n_words / n_sents)
+
+
+def coleman_liau_index(n_chars: int, n_words: int, n_sents: int) -> float:
+    """
+    Readability test whose value estimates the number of years of education
+    required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
+    and :func:`smog_index()`, but using characters per word instead of syllables.
+    Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Coleman%E2%80%93Liau_index
+    """
+    return (5.879851 * n_chars / n_words) - (29.587280 * n_sents / n_words) - 15.800804
+
+
+def flesch_kincaid_grade_level(n_syllables: int, n_words: int, n_sents: int) -> float:
+    """
+    Readability test used widely in education, whose value estimates the U.S.
+    grade level / number of years of education required to understand a text.
+    Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch.E2.80.93Kincaid_grade_level
+    """  # noqa: E501
+    return (11.8 * n_syllables / n_words) + (0.39 * n_words / n_sents) - 15.59
+
+
 def flesch_reading_ease(
     n_syllables: int, n_words: int, n_sents: int, *, lang: Optional[str] = None,
 ) -> float:
@@ -59,16 +112,79 @@ def flesch_reading_ease(
     )
 
 
-def flesch_kincaid_grade_level(n_syllables: int, n_words: int, n_sents: int) -> float:
+def gulpease_index(n_chars: int, n_words: int, n_sents: int) -> float:
     """
-    Readability test used widely in education, whose value estimates the U.S.
-    grade level / number of years of education required to understand a text.
+    Readability test for Italian-language texts, whose value is in the range
+    [0, 100] similar to :func:`flesch_reading_ease()`. Higher value =>
+    easier text.
+
+    References:
+        https://it.wikipedia.org/wiki/Indice_Gulpease
+    """
+    return (300 * n_sents / n_words) - (10 * n_chars / n_words) + 89
+
+
+def gunning_fog_index(n_words: int, n_polysyllable_words: int, n_sents: int) -> float:
+    """
+    Readability test whose value estimates the number of years of education
+    required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
+    and :func:`smog_index()`. Higher value => more difficult text.
+
+    References:
+        https://en.wikipedia.org/wiki/Gunning_fog_index
+    """
+    return 0.4 * ((n_words / n_sents) + (100 * n_polysyllable_words / n_words))
+
+
+def lix(n_words: int, n_long_words: int, n_sents: int) -> float:
+    """
+    Readability test commonly used in Sweden on both English- and non-English-language
+    texts, whose value estimates the difficulty of reading a foreign text.
     Higher value => more difficult text.
 
     References:
-        https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch.E2.80.93Kincaid_grade_level
-    """  # noqa: E501
-    return (11.8 * n_syllables / n_words) + (0.39 * n_words / n_sents) - 15.59
+        https://en.wikipedia.org/wiki/Lix_(readability_test)
+    """
+    return (n_words / n_sents) + (100 * n_long_words / n_words)
+
+
+def mu_legibility_index(words: Collection[str]) -> float:
+    """
+    Readability test for Spanish-language texts based on number of words and
+    the mean and variance of their lengths in characters, whose value is in the range
+    [0, 100]. Higher value => easier text.
+
+    References:
+        Muñoz, M., and J. Muñoz. "Legibilidad Mµ." Viña del Mar: CHL (2006).
+    """
+    n_words = len(words)
+    if n_words < 2:
+        LOGGER.warning(
+            "mu legibility index is undefined for texts with fewer than two words; "
+            "returning 0.0"
+        )
+        return 0.0
+    chars_per_word = [len(word) for word in words]
+    return (
+        100
+        * (n_words / (n_words - 1))
+        * (statistics.mean(chars_per_word) / statistics.variance(chars_per_word))
+    )
+
+
+def perspicuity_index(n_words: int, n_syllables: int, n_sents: int) -> float:
+    """
+    Readability test for Spanish-language texts, whose value is in the range [0, 100];
+    very similar to the Spanish-specific formulation of :func:`flesch_reading_ease()`,
+    but included additionally since it's become a common readability standard.
+    Higher value => easier text.
+
+    References:
+        Pazos, Francisco Szigriszt. Sistemas predictivos de legibilidad del mensaje
+        escrito: fórmula de perspicuidad. Universidad Complutense de Madrid,
+        Servicio de Reprografía, 1993.
+    """
+    return 206.835 - (n_words / n_sents) - (62.3 * (n_syllables / n_words))
 
 
 def smog_index(n_polysyllable_words: int, n_sents: int) -> float:
@@ -84,57 +200,6 @@ def smog_index(n_polysyllable_words: int, n_sents: int) -> float:
     if n_sents < 30:
         LOGGER.warning("SMOG index may be unreliable for n_sents < 30")
     return (1.0430 * sqrt(30 * n_polysyllable_words / n_sents)) + 3.1291
-
-
-def gunning_fog_index(n_words: int, n_polysyllable_words: int, n_sents: int) -> float:
-    """
-    Readability test whose value estimates the number of years of education
-    required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
-    and :func:`smog_index()`. Higher value => more difficult text.
-
-    References:
-        https://en.wikipedia.org/wiki/Gunning_fog_index
-    """
-    return 0.4 * ((n_words / n_sents) + (100 * n_polysyllable_words / n_words))
-
-
-def coleman_liau_index(n_chars: int, n_words: int, n_sents: int) -> float:
-    """
-    Readability test whose value estimates the number of years of education
-    required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
-    and :func:`smog_index()`, but using characters per word instead of syllables.
-    Higher value => more difficult text.
-
-    References:
-        https://en.wikipedia.org/wiki/Coleman%E2%80%93Liau_index
-    """
-    return (5.879851 * n_chars / n_words) - (29.587280 * n_sents / n_words) - 15.800804
-
-
-def automated_readability_index(n_chars: int, n_words: int, n_sents: int) -> float:
-    """
-    Readability test for English-language texts, particularly for technical writing,
-    whose value estimates the U.S. grade level required to understand a text.
-    Similar to several other tests (e.g. :func:`flesch_kincaid_grade_level()`),
-    but uses characters per word instead of syllables like :func:`coleman_liau_index()`.
-    Higher value => more difficult text.
-
-    References:
-        https://en.wikipedia.org/wiki/Automated_readability_index
-    """
-    return (4.71 * n_chars / n_words) + (0.5 * n_words / n_sents) - 21.43
-
-
-def lix(n_words: int, n_long_words: int, n_sents: int) -> float:
-    """
-    Readability test commonly used in Sweden on both English- and non-English-language
-    texts, whose value estimates the difficulty of reading a foreign text.
-    Higher value => more difficult text.
-
-    References:
-        https://en.wikipedia.org/wiki/Lix_(readability_test)
-    """
-    return (n_words / n_sents) + (100 * n_long_words / n_words)
 
 
 def wiener_sachtextformel(
@@ -167,68 +232,3 @@ def wiener_sachtextformel(
         return (0.2744 * ms) + (0.2656 * sl) - 1.693
     else:
         raise ValueError(errors.value_invalid_msg("variant", variant, [1, 2, 3, 4]))
-
-
-def gulpease_index(n_chars: int, n_words: int, n_sents: int) -> float:
-    """
-    Readability test for Italian-language texts, whose value is in the range
-    [0, 100] similar to :func:`flesch_reading_ease()`. Higher value =>
-    easier text.
-
-    References:
-        https://it.wikipedia.org/wiki/Indice_Gulpease
-    """
-    return (300 * n_sents / n_words) - (10 * n_chars / n_words) + 89
-
-
-def perspicuity_index(n_words: int, n_syllables: int, n_sents: int) -> float:
-    """
-    Readability test for Spanish-language texts, whose value is in the range [0, 100];
-    very similar to the Spanish-specific formulation of :func:`flesch_reading_ease()`,
-    but included additionally since it's become a common readability standard.
-    Higher value => easier text.
-
-    References:
-        Pazos, Francisco Szigriszt. Sistemas predictivos de legibilidad del mensaje
-        escrito: fórmula de perspicuidad. Universidad Complutense de Madrid,
-        Servicio de Reprografía, 1993.
-    """
-    return 206.835 - (n_words / n_sents) - (62.3 * (n_syllables / n_words))
-
-
-def mu_legibility_index(words: Collection[str]) -> float:
-    """
-    Readability test for Spanish-language texts based on number of words and
-    the mean and variance of their lengths in characters, whose value is in the range
-    [0, 100]. Higher value => easier text.
-
-    References:
-        Muñoz, M., and J. Muñoz. "Legibilidad Mµ." Viña del Mar: CHL (2006).
-    """
-    n_words = len(words)
-    if n_words < 2:
-        LOGGER.warning(
-            "mu legibility index is undefined for texts with fewer than two words; "
-            "returning 0.0"
-        )
-        return 0.0
-    chars_per_word = [len(word) for word in words]
-    return (
-        100
-        * (n_words / (n_words - 1))
-        * (statistics.mean(chars_per_word) / statistics.variance(chars_per_word))
-    )
-
-
-def automatic_arabic_readability_index(
-    n_chars: int, n_words: int, n_sents: int,
-) -> float:
-    """
-    Readability test for Arabic-language texts based on number of characters and
-    average word and sentence lengths. Higher value => more difficult text.
-
-    References:
-        Al Tamimi, Abdel Karim, et al. "AARI: automatic arabic readability index."
-        Int. Arab J. Inf. Technol. 11.4 (2014): 370-378.
-    """
-    return (3.28 * n_chars) + (1.43 * n_chars / n_words) + (1.24 * n_words / n_sents)
