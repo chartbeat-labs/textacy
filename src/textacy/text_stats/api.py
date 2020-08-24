@@ -2,7 +2,7 @@
 Text Statistics
 ---------------
 
-Compute various basic and readability statistics for documents.
+Compute various basic counts and readability statistics for documents.
 """
 import logging
 from typing import Tuple
@@ -18,6 +18,19 @@ LOGGER = logging.getLogger(__name__)
 
 
 class TextStats:
+    """
+    Class to compute a variety of basic counts and readability statistics for a given
+    document. For example:
+
+    .. code-block:: pycon
+
+        >>> text = next(textacy.datasets.CapitolWords().texts(limit=1))
+        >>> doc = textacy.make_spacy_doc(text)
+        >>> ts = TextStats(doc)
+
+    Args:
+        doc: A text document tokenized and (optionally) sentence-segmented by spaCy.
+    """
 
     def __init__(self, doc: Doc):
         self.lang = doc.vocab.lang
@@ -37,39 +50,75 @@ class TextStats:
 
     @property
     def n_words(self) -> int:
+        """
+        Number of words in document.
+
+        See Also:
+            :func:`basics.n_words()`
+        """
         if self._n_words is None:
             self._n_words = basics.n_words(self.words)
         return self._n_words
 
     @property
     def n_unique_words(self) -> int:
+        """
+        Number of *unique* words in document.
+
+        See Also:
+            :func:`basics.n_unique_words()`
+        """
         if self._n_unique_words is None:
             self._n_unique_words = basics.n_unique_words(self.words)
         return self._n_unique_words
 
     @property
     def n_long_words(self) -> int:
+        """
+        Number of long words in document.
+
+        See Also:
+            :func:`basics.n_long_words()`
+        """
         # TODO: should we vary char threshold by lang?
         if self._n_long_words is None:
-            self._n_long_words = itertoolz.count(
-                cpw for cpw in self.n_chars_per_word if cpw >= 7
+            self._n_long_words = basics.n_long_words(
+                self.n_chars_per_word, min_n_chars=7,
             )
         return self._n_long_words
 
     @property
     def n_chars_per_word(self) -> Tuple[int, ...]:
+        """
+        Number of characters for each word in document.
+
+        See Also:
+            :func:`basics.n_chars_per_word()`
+        """
         if self._n_chars_per_word is None:
             self._n_chars_per_word = basics.n_chars_per_word(self.words)
         return self._n_chars_per_word
 
     @property
     def n_chars(self) -> int:
+        """
+        Total number of characters in document.
+
+        See Also:
+            :func:`basics.n_chars()`
+        """
         if self._n_chars is None:
-            self._n_chars = sum(self.n_chars_per_word)
+            self._n_chars = basics.n_chars(self.n_chars_per_word)
         return self._n_chars
 
     @property
     def n_syllables_per_word(self) -> Tuple[int, ...]:
+        """
+        Number of syllables for each word in document.
+
+        See Also:
+            :func:`basics.n_syllables_per_word()`
+        """
         if self._n_syllables_per_word is None:
             self._n_syllables_per_word = basics.n_syllables_per_word(
                 self.words, self.lang,
@@ -78,24 +127,42 @@ class TextStats:
 
     @property
     def n_syllables(self) -> int:
+        """
+        Total number of syllables in document.
+
+        See Also:
+            :func:`basics.n_syllables()`
+        """
         if self._n_syllables is None:
-            self._n_syllables = sum(self.n_syllables_per_word)
+            self._n_syllables = basics.n_syllables(self.n_syllables_per_word)
         return self._n_syllables
 
     @property
     def n_monosyllable_words(self) -> int:
+        """
+        Number of monosyllobic words in document.
+
+        See Also:
+            :func:`basics.n_monosyllable_words()`
+        """
         if self._n_monosyllable_words is None:
-            self._n_monosyllable_words = itertoolz.count(
-                spw for spw in self.n_syllables_per_word if spw == 1
+            self._n_monosyllable_words = basics.n_monosyllable_words(
+                self.n_syllables_per_word,
             )
         return self._n_monosyllable_words
 
     @property
     def n_polysyllable_words(self) -> int:
+        """
+        Number of polysyllobic words in document.
+
+        See Also:
+            :func:`basics.n_polysyllable_words()`
+        """
         # TODO: should we vary syllable threshold by lang?
         if self._n_polysyllable_words is None:
-            self._n_polysyllable_words = itertoolz.count(
-                spw for spw in self.n_syllables_per_word if spw >= 3
+            self._n_polysyllable_words = basics.n_polysyllable_words(
+                self.n_syllables_per_word, min_n_syllables=3,
             )
         return self._n_polysyllable_words
 
