@@ -59,6 +59,30 @@ def n_chars_per_word(doc_or_words: Union[Doc, Iterable[Token]]) -> Tuple[int, ..
     return tuple(len(word) for word in words)
 
 
+def n_chars(n_chars_per_word: Tuple[int, ...]) -> int:
+    """
+    Compute the total number of characters in a document.
+
+    Args:
+        n_chars_per_word: Number of characters per word in a given document,
+            as computed by :func:`n_chars_per_word()`.
+    """
+    return sum(n_chars_per_word)
+
+
+def n_long_words(n_chars_per_word: Tuple[int, ...], min_n_chars: int = 7) -> int:
+    """
+    Compute the number of long words in a document.
+
+    Args:
+        n_chars_per_word: Number of characters per word in a given document,
+            as computed by :func:`n_chars_per_word()`.
+        min_n_chars: Minimum number of characters required for a word to be
+            considered "long".
+    """
+    return itertoolz.count(nc for nc in n_chars_per_word if nc >= min_n_chars)
+
+
 def n_syllables_per_word(
     doc_or_words: Union[Doc, Iterable[Token]], lang: str,
 ) -> Tuple[int, ...]:
@@ -78,6 +102,43 @@ def n_syllables_per_word(
     hyphenator = load_hyphenator(lang=lang)
     words = _get_words(doc_or_words)
     return tuple(len(hyphenator.positions(word.lower_)) + 1 for word in words)
+
+
+def n_syllables(n_syllables_per_word: Tuple[int, ...]) -> int:
+    """
+    Compute the total number of syllables in a document.
+
+    Args:
+        n_syllables_per_word: Number of syllables per word in a given document,
+            as computed by :func:`n_syllables_per_word()`.
+    """
+    return sum(n_syllables_per_word)
+
+
+def n_monosyllable_words(n_syllables_per_word: Tuple[int, ...]) -> int:
+    """
+    Compute the number of monosyllobic words in a document.
+
+    Args:
+        n_syllables_per_word: Number of syllables per word in a given document,
+            as computed by :func:`n_syllables_per_word()`.
+    """
+    return itertoolz.count(ns for ns in n_syllables_per_word if ns == 1)
+
+
+def n_polysyllable_words(
+    n_syllables_per_word: Tuple[int, ...], min_n_syllables: int = 3,
+) -> int:
+    """
+    Compute the number of polysyllobic words in a document.
+
+    Args:
+        n_syllables_per_word: Number of syllables per word in a given document,
+            as computed by :func:`n_syllables_per_word()`.
+        min_n_syllables: Minimum number of syllables required for a word to be
+            considered "polysyllobic".
+    """
+    return itertoolz.count(ns for ns in n_syllables_per_word if ns >= min_n_syllables)
 
 
 def _get_words(doc_or_words: Union[Doc, Iterable[Token]]) -> Iterable[Token]:
