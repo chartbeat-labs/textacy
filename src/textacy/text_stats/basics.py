@@ -180,7 +180,7 @@ def entropy(doc_or_words: Union[Doc, Iterable[Token]]) -> float:
     word_counts = itertoolz.frequencies(word.text for word in words)
     n_words = sum(word_counts.values())
     probs = (count / n_words for count in word_counts.values())
-    return - sum(prob * math.log2(prob) for prob in probs)
+    return -sum(prob * math.log2(prob) for prob in probs)
 
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
