@@ -179,10 +179,8 @@ def entropy(doc_or_words: Union[Doc, Iterable[Token]]) -> float:
     words = _get_words(doc_or_words)
     word_counts = itertoolz.frequencies(word.text for word in words)
     n_words = sum(word_counts.values())
-    n_unique_words = len(word_counts)
     probs = (count / n_words for count in word_counts.values())
-    # TODO: should base be 2 or n_unique_words ??
-    return - sum(prob * math.log(prob, n_unique_words) for prob in probs)
+    return - sum(prob * math.log2(prob) for prob in probs)
 
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
