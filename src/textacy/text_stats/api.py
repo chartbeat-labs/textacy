@@ -4,12 +4,16 @@ Text Statistics
 
 Compute various basic counts and readability statistics for documents.
 """
+import functools
 import logging
 from typing import Tuple
 
+import pyphen
+from cachetools import cached
+from cachetools.keys import hashkey
 from spacy.tokens import Doc
 
-from .. import extract
+from .. import cache, extract
 from . import basics, readability
 
 
@@ -38,6 +42,8 @@ class TextStats:
         50.707745098039254
 
     Some stats vary by language or are designed for use with specific languages:
+
+    .. code-block:: pycon
 
         >>> text = (
         ...     "Muchos años después, frente al pelotón de fusilamiento, "
@@ -347,3 +353,20 @@ class TextStats:
             self.n_sents,
             variant=1,
         )
+
+
+@cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
+def load_hyphenator(lang: str):
+    """
+    Load an object that hyphenates words at valid points, as used in LaTex typesetting.
+
+    Args:
+        lang: Standard 2-letter language abbreviation. To get a list of valid values::
+
+            >>> import pyphen; pyphen.LANGUAGES
+
+    Returns:
+        :class:`pyphen.Pyphen()`
+    """
+    LOGGER.debug("loading '%s' language hyphenator", lang)
+    return pyphen.Pyphen(lang=lang)

@@ -88,43 +88,8 @@ def test_wiener_sachtextformel(ts):
     assert ts.wiener_sachtextformel == pytest.approx(8.266410784313727, rel=1e-2)
 
 
-def test_basic_counts(ts):
-    assert isinstance(ts.basic_counts, dict)
-    basic_counts = ts.basic_counts
-    basic_counts_keys = (
-        "n_sents",
-        "n_words",
-        "n_chars",
-        "n_syllables",
-        "n_unique_words",
-        "n_long_words",
-        "n_monosyllable_words",
-        "n_polysyllable_words",
-    )
-    for key in basic_counts_keys:
-        assert basic_counts[key] == getattr(ts, key)
-
-
-def test_readability_stats(ts):
-    assert isinstance(ts.basic_counts, dict)
-    readability_stats = ts.readability_stats
-    readability_stats_keys = (
-        "flesch_kincaid_grade_level",
-        "flesch_reading_ease",
-        "smog_index",
-        "gunning_fog_index",
-        "coleman_liau_index",
-        "automated_readability_index",
-        "lix",
-        "gulpease_index",
-        "wiener_sachtextformel",
-    )
-    for key in readability_stats_keys:
-        assert readability_stats[key] == getattr(ts, key)
-
-
 def test_wiener_sachtextformel_variant1(ts):
-    assert ts.wiener_sachtextformel == text_stats.wiener_sachtextformel(
+    assert ts.wiener_sachtextformel == text_stats.readability.wiener_sachtextformel(
         ts.n_words,
         ts.n_polysyllable_words,
         ts.n_monosyllable_words,
@@ -132,7 +97,7 @@ def test_wiener_sachtextformel_variant1(ts):
         ts.n_sents,
         variant=1,
     )
-    assert text_stats.wiener_sachtextformel(
+    assert text_stats.readability.wiener_sachtextformel(
         ts.n_words,
         ts.n_polysyllable_words,
         ts.n_monosyllable_words,
@@ -143,7 +108,7 @@ def test_wiener_sachtextformel_variant1(ts):
 
 
 def test_wiener_sachtextformel_variant2(ts):
-    assert text_stats.wiener_sachtextformel(
+    assert text_stats.readability.wiener_sachtextformel(
         ts.n_words,
         ts.n_polysyllable_words,
         ts.n_monosyllable_words,
@@ -154,7 +119,7 @@ def test_wiener_sachtextformel_variant2(ts):
 
 
 def test_wiener_sachtextformel_variant3(ts):
-    assert text_stats.wiener_sachtextformel(
+    assert text_stats.readability.wiener_sachtextformel(
         ts.n_words,
         ts.n_polysyllable_words,
         ts.n_monosyllable_words,
@@ -165,7 +130,7 @@ def test_wiener_sachtextformel_variant3(ts):
 
 
 def test_wiener_sachtextformel_variant4(ts):
-    assert text_stats.wiener_sachtextformel(
+    assert text_stats.readability.wiener_sachtextformel(
         ts.n_words,
         ts.n_polysyllable_words,
         ts.n_monosyllable_words,
@@ -194,7 +159,7 @@ def test_wiener_sachtextformel_variant4(ts):
 )
 def test_flesch_reading_ease_lang(ts, lang, fre, context):
     with context:
-        result = text_stats.flesch_reading_ease(
+        result = text_stats.readability.flesch_reading_ease(
             ts.n_syllables, ts.n_words, ts.n_sents, lang=lang
         )
         assert result == pytest.approx(fre, rel=1e-2)

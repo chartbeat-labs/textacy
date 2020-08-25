@@ -1,19 +1,16 @@
 """
 Functions for computing basic text statistics.
 """
-import functools
 import logging
 import math
 from typing import Iterable, Tuple, Union
 
-import pyphen
 import spacy.pipeline
-from cachetools import cached
-from cachetools.keys import hashkey
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Token
 
-from .. import cache, extract
+from .. import extract
+from . import api as _api
 
 
 LOGGER = logging.getLogger(__name__)
@@ -100,7 +97,7 @@ def n_syllables_per_word(
         While all hyphenation points fall on syllable divisions, not all syllable
         divisions are valid hyphenation points.
     """
-    hyphenator = load_hyphenator(lang=lang)
+    hyphenator = _api.load_hyphenator(lang=lang)
     words = _get_words(doc_or_words)
     return tuple(len(hyphenator.positions(word.lower_)) + 1 for word in words)
 
@@ -181,20 +178,3 @@ def entropy(doc_or_words: Union[Doc, Iterable[Token]]) -> float:
     n_words = sum(word_counts.values())
     probs = (count / n_words for count in word_counts.values())
     return -sum(prob * math.log2(prob) for prob in probs)
-
-
-@cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
-def load_hyphenator(lang: str):
-    """
-    Load an object that hyphenates words at valid points, as used in LaTex typesetting.
-
-    Args:
-        lang: Standard 2-letter language abbreviation. To get a list of valid values::
-
-            >>> import pyphen; pyphen.LANGUAGES
-
-    Returns:
-        :class:`pyphen.Pyphen()`
-    """
-    LOGGER.debug("loading '%s' language hyphenator", lang)
-    return pyphen.Pyphen(lang=lang)
