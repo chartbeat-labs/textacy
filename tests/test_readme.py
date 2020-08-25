@@ -149,19 +149,10 @@ def test_extract_functionality(doc):
 def test_text_stats_functionality(doc):
     ts = TextStats(doc)
 
-    assert isinstance(ts.n_words, int)
-    assert isinstance(ts.flesch_kincaid_grade_level, float)
+    for attr in ["n_words", "n_syllables", "n_chars"]:
+        assert hasattr(ts, attr)
+        assert isinstance(getattr(ts, attr), int)
 
-    basic_counts = ts.basic_counts
-    assert isinstance(basic_counts, dict)
-    for field in ("n_chars", "n_words", "n_sents"):
-        assert isinstance(basic_counts.get(field), int)
-
-    readability_stats = ts.readability_stats
-    assert isinstance(readability_stats, dict)
-    for field in (
-        "flesch_kincaid_grade_level",
-        "automated_readability_index",
-        "wiener_sachtextformel",
-    ):
-        assert isinstance(readability_stats.get(field), float)
+    for attr in ["entropy", "flesch_kincaid_grade_level", "flesch_reading_ease", "lix"]:
+        assert hasattr(ts, attr)
+        assert isinstance(getattr(ts, attr), float)
