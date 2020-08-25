@@ -18,14 +18,44 @@ LOGGER = logging.getLogger(__name__)
 
 class TextStats:
     """
-    Class to compute a variety of basic counts and readability statistics for a given
-    document. For example:
+    Class to compute a variety of basic and readability statistics for a given doc,
+    where each stat is a lazily-computed attribute.
 
     .. code-block:: pycon
 
         >>> text = next(textacy.datasets.CapitolWords().texts(limit=1))
         >>> doc = textacy.make_spacy_doc(text)
-        >>> ts = TextStats(doc)
+        >>> ts = textacy.text_stats.TextStats(doc)
+        >>> ts.n_words
+        136
+        >>> ts.n_unique_words
+        80
+        >>> ts.entropy
+        6.00420319027642
+        >>> ts.flesch_kincaid_grade_level
+        11.817647058823532
+        >>> ts.flesch_reading_ease
+        50.707745098039254
+
+    Some stats vary by language or are designed for use with specific languages:
+
+        >>> text = (
+        ...     "Muchos años después, frente al pelotón de fusilamiento, "
+        ...     "el coronel Aureliano Buendía había de recordar aquella tarde remota "
+        ...     "en que su padre lo llevó a conocer el hielo."
+        ... )
+        >>> doc = textacy.make_spacy_doc(text, lang="es")
+        >>> ts = textacy.text_stats.TextStats(doc)
+        >>> ts.n_words
+        28
+        >>> ts.perspicuity_index
+        56.46000000000002
+        >>> ts.mu_legibility_index
+        71.18644067796609
+
+    Each of these stats have stand-alone functions in :mod:`text_stats.basics` and
+    :mod:`text_stats.readability` with more detailed info and links in the docstrings --
+    when in doubt, read the docs!
 
     Args:
         doc: A text document tokenized and (optionally) sentence-segmented by spaCy.
@@ -180,12 +210,20 @@ class TextStats:
 
     @property
     def automated_readability_index(self) -> float:
+        """
+        See Also:
+            :func:`readability.automated_readability_index()`
+        """
         return readability.automated_readability_index(
             self.n_chars, self.n_words, self.n_sents,
         )
 
     @property
     def automatic_arabic_readability_index(self) -> float:
+        """
+        See Also:
+            :func:`readability.automatic_arabic_readability_index()`
+        """
         if self.lang != "ar":
             LOGGER.warning(
                 "doc lang = '%s', but automatic arabic readability index is meant "
@@ -197,22 +235,38 @@ class TextStats:
 
     @property
     def coleman_liau_index(self) -> float:
+        """
+        See Also:
+            :func:`readability.coleman_liau_index()`
+        """
         return readability.coleman_liau_index(self.n_chars, self.n_words, self.n_sents)
 
     @property
     def flesch_kincaid_grade_level(self) -> float:
+        """
+        See Also:
+            :func:`readability.flesch_kincaid_grade_level()`
+        """
         return readability.flesch_kincaid_grade_level(
             self.n_syllables, self.n_words, self.n_sents,
         )
 
     @property
     def flesch_reading_ease(self) -> float:
+        """
+        See Also:
+            :func:`readability.flesch_reading_ease()`
+        """
         return readability.flesch_reading_ease(
             self.n_syllables, self.n_words, self.n_sents, lang=self.lang
         )
 
     @property
     def gulpease_index(self) -> float:
+        """
+        See Also:
+            :func:`readability.gulpease_index()`
+        """
         if self.lang != "it":
             LOGGER.warning(
                 "doc lang = '%s', but gulpease index is meant for use on "
@@ -222,16 +276,28 @@ class TextStats:
 
     @property
     def gunning_fog_index(self) -> float:
+        """
+        See Also:
+            :func:`readability.gunning_fog_index()`
+        """
         return readability.gunning_fog_index(
             self.n_words, self.n_polysyllable_words, self.n_sents,
         )
 
     @property
     def lix(self) -> float:
+        """
+        See Also:
+            :func:`readability.lix()`
+        """
         return readability.lix(self.n_words, self.n_long_words, self.n_sents)
 
     @property
     def mu_legibility_index(self) -> float:
+        """
+        See Also:
+            :func:`readability.mu_legibility_index()`
+        """
         if self.lang != "es":
             LOGGER.warning(
                 "doc lang = '%s', but mu legibility index is meant for use on "
@@ -241,6 +307,10 @@ class TextStats:
 
     @property
     def perspicuity_index(self) -> float:
+        """
+        See Also:
+            :func:`readability.perspicuity_index()`
+        """
         if self.lang != "es":
             LOGGER.warning(
                 "doc lang = '%s', but perspicuity index is meant for use on "
@@ -252,10 +322,18 @@ class TextStats:
 
     @property
     def smog_index(self) -> float:
+        """
+        See Also:
+            :func:`readability.smog_index()`
+        """
         return readability.smog_index(self.n_polysyllable_words, self.n_sents)
 
     @property
     def wiener_sachtextformel(self) -> float:
+        """
+        See Also:
+            :func:`readability.wiener_sachtextformel()`
+        """
         if self.lang != "es":
             LOGGER.warning(
                 "doc lang = '%s', but wiener sachtextformel is meant for use on "
