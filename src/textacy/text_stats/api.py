@@ -235,7 +235,7 @@ class TextStats:
                 "doc lang = '%s', but automatic arabic readability index is meant "
                 "for use on Arabic-language texts, only"
             )
-        return readability.automated_readability_index(
+        return readability.automatic_arabic_readability_index(
             self.n_chars, self.n_words, self.n_sents,
         )
 
