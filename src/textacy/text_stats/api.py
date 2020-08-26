@@ -59,9 +59,9 @@ class TextStats:
         >>> ts.mu_legibility_index
         71.18644067796609
 
-    Each of these stats have stand-alone functions in :mod:`text_stats.basics` and
-    :mod:`text_stats.readability` with more detailed info and links in the docstrings --
-    when in doubt, read the docs!
+    Each of these stats have stand-alone functions in :mod:`textacy.text_stats.basics`
+    and :mod:`textacy.text_stats.readability` with more detailed info and links
+    in the docstrings -- when in doubt, read the docs!
 
     Args:
         doc: A text document tokenized and (optionally) sentence-segmented by spaCy.
@@ -90,7 +90,7 @@ class TextStats:
         Number of words in document.
 
         See Also:
-            :func:`basics.n_words()`
+            :func:`textacy.text_stats.basics.n_words()`
         """
         if self._n_words is None:
             self._n_words = basics.n_words(self.words)
@@ -102,7 +102,7 @@ class TextStats:
         Number of *unique* words in document.
 
         See Also:
-            :func:`basics.n_unique_words()`
+            :func:`textacy.text_stats.basics.n_unique_words()`
         """
         if self._n_unique_words is None:
             self._n_unique_words = basics.n_unique_words(self.words)
@@ -114,7 +114,7 @@ class TextStats:
         Number of long words in document.
 
         See Also:
-            :func:`basics.n_long_words()`
+            :func:`textacy.text_stats.basics.n_long_words()`
         """
         # TODO: should we vary char threshold by lang?
         if self._n_long_words is None:
@@ -129,7 +129,7 @@ class TextStats:
         Number of characters for each word in document.
 
         See Also:
-            :func:`basics.n_chars_per_word()`
+            :func:`textacy.text_stats.basics.n_chars_per_word()`
         """
         if self._n_chars_per_word is None:
             self._n_chars_per_word = basics.n_chars_per_word(self.words)
@@ -141,7 +141,7 @@ class TextStats:
         Total number of characters in document.
 
         See Also:
-            :func:`basics.n_chars()`
+            :func:`textacy.text_stats.basics.n_chars()`
         """
         if self._n_chars is None:
             self._n_chars = basics.n_chars(self.n_chars_per_word)
@@ -153,7 +153,7 @@ class TextStats:
         Number of syllables for each word in document.
 
         See Also:
-            :func:`basics.n_syllables_per_word()`
+            :func:`textacy.text_stats.basics.n_syllables_per_word()`
         """
         if self._n_syllables_per_word is None:
             self._n_syllables_per_word = basics.n_syllables_per_word(
@@ -167,7 +167,7 @@ class TextStats:
         Total number of syllables in document.
 
         See Also:
-            :func:`basics.n_syllables()`
+            :func:`textacy.text_stats.basics.n_syllables()`
         """
         if self._n_syllables is None:
             self._n_syllables = basics.n_syllables(self.n_syllables_per_word)
@@ -179,7 +179,7 @@ class TextStats:
         Number of monosyllobic words in document.
 
         See Also:
-            :func:`basics.n_monosyllable_words()`
+            :func:`textacy.text_stats.basics.n_monosyllable_words()`
         """
         if self._n_monosyllable_words is None:
             self._n_monosyllable_words = basics.n_monosyllable_words(
@@ -193,7 +193,7 @@ class TextStats:
         Number of polysyllobic words in document.
 
         See Also:
-            :func:`basics.n_polysyllable_words()`
+            :func:`textacy.text_stats.basics.n_polysyllable_words()`
         """
         # TODO: should we vary syllable threshold by lang?
         if self._n_polysyllable_words is None:
@@ -208,7 +208,7 @@ class TextStats:
         Entropy of words in document.
 
         See Also:
-            :func:`basics.entropy()`
+            :func:`textacy.text_stats.basics.entropy()`
         """
         if self._entropy is None:
             self._entropy = basics.entropy(self.words)
@@ -217,8 +217,10 @@ class TextStats:
     @property
     def automated_readability_index(self) -> float:
         """
+        Readability test for English-language texts. Higher value => more difficult text.
+
         See Also:
-            :func:`readability.automated_readability_index()`
+            :func:`textacy.text_stats.readability.automated_readability_index()`
         """
         return readability.automated_readability_index(
             self.n_chars, self.n_words, self.n_sents,
@@ -227,8 +229,10 @@ class TextStats:
     @property
     def automatic_arabic_readability_index(self) -> float:
         """
+        Readability test for Arabic-language texts. Higher value => more difficult text.
+
         See Also:
-            :func:`readability.automatic_arabic_readability_index()`
+            :func:`textacy.text_stats.readability.automatic_arabic_readability_index()`
         """
         if self.lang != "ar":
             LOGGER.warning(
@@ -242,16 +246,20 @@ class TextStats:
     @property
     def coleman_liau_index(self) -> float:
         """
+        Readability test, not language-specific. Higher value => more difficult text.
+
         See Also:
-            :func:`readability.coleman_liau_index()`
+            :func:`textacy.text_stats.readability.coleman_liau_index()`
         """
         return readability.coleman_liau_index(self.n_chars, self.n_words, self.n_sents)
 
     @property
     def flesch_kincaid_grade_level(self) -> float:
         """
+        Readability test, not language-specific. Higher value => more difficult text.
+
         See Also:
-            :func:`readability.flesch_kincaid_grade_level()`
+            :func:`textacy.text_stats.readability.flesch_kincaid_grade_level()`
         """
         return readability.flesch_kincaid_grade_level(
             self.n_syllables, self.n_words, self.n_sents,
@@ -260,8 +268,11 @@ class TextStats:
     @property
     def flesch_reading_ease(self) -> float:
         """
+        Readability test with several language-specific formulations.
+        Higher value => easier text.
+
         See Also:
-            :func:`readability.flesch_reading_ease()`
+            :func:`textacy.text_stats.readability.flesch_reading_ease()`
         """
         return readability.flesch_reading_ease(
             self.n_syllables, self.n_words, self.n_sents, lang=self.lang
@@ -270,8 +281,10 @@ class TextStats:
     @property
     def gulpease_index(self) -> float:
         """
+        Readability test for Italian-language texts. Higher value => easier text.
+
         See Also:
-            :func:`readability.gulpease_index()`
+            :func:`textacy.text_stats.readability.gulpease_index()`
         """
         if self.lang != "it":
             LOGGER.warning(
@@ -283,8 +296,10 @@ class TextStats:
     @property
     def gunning_fog_index(self) -> float:
         """
+        Readability test, not language-specific. Higher value => more difficult text.
+
         See Also:
-            :func:`readability.gunning_fog_index()`
+            :func:`textacy.text_stats.readability.gunning_fog_index()`
         """
         return readability.gunning_fog_index(
             self.n_words, self.n_polysyllable_words, self.n_sents,
@@ -293,16 +308,21 @@ class TextStats:
     @property
     def lix(self) -> float:
         """
+        Readability test for both English- and non-English-language texts.
+        Higher value => more difficult text.
+
         See Also:
-            :func:`readability.lix()`
+            :func:`textacy.text_stats.readability.lix()`
         """
         return readability.lix(self.n_words, self.n_long_words, self.n_sents)
 
     @property
     def mu_legibility_index(self) -> float:
         """
+        Readability test for Spanish-language texts. Higher value => easier text.
+
         See Also:
-            :func:`readability.mu_legibility_index()`
+            :func:`textacy.text_stats.readability.mu_legibility_index()`
         """
         if self.lang != "es":
             LOGGER.warning(
@@ -314,8 +334,10 @@ class TextStats:
     @property
     def perspicuity_index(self) -> float:
         """
+        Readability test for Spanish-language texts. Higher value => easier text.
+
         See Also:
-            :func:`readability.perspicuity_index()`
+            :func:`textacy.text_stats.readability.perspicuity_index()`
         """
         if self.lang != "es":
             LOGGER.warning(
@@ -329,16 +351,20 @@ class TextStats:
     @property
     def smog_index(self) -> float:
         """
+        Readability test, not language-specific. Higher value => more difficult text.
+
         See Also:
-            :func:`readability.smog_index()`
+            :func:`textacy.text_stats.readability.smog_index()`
         """
         return readability.smog_index(self.n_polysyllable_words, self.n_sents)
 
     @property
     def wiener_sachtextformel(self) -> float:
         """
+        Readability test for German-language texts. Higher value => more difficult text.
+
         See Also:
-            :func:`readability.wiener_sachtextformel()`
+            :func:`textacy.text_stats.readability.wiener_sachtextformel()`
         """
         if self.lang != "es":
             LOGGER.warning(

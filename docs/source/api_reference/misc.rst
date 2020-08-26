@@ -3,7 +3,11 @@
 Miscellany
 ==========
 
-.. automodule:: textacy.text_stats
+.. automodule:: textacy.text_stats.api
+
+.. automodule:: textacy.text_stats.basics
+
+.. automodule:: textacy.text_stats.readability
 
 .. automodule:: textacy.network
 
