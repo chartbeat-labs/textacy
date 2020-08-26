@@ -71,4 +71,4 @@ dmypy.json
 data/
 
 # documentation
-# docs/build/*
+docs/build/*
