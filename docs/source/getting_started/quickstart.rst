@@ -187,34 +187,19 @@ We can also identify key terms in a document by a number of algorithms:
      ('mid 1990s', 0.05832421657510258),
      ('machine learning', 0.05536624437146417)]
 
-Or we can compute basic counts and various readability statistics:
+Or we can compute various basic and readability statistics:
 
 .. code-block:: pycon
 
     >>> ts = textacy.TextStats(doc)
-    >>> ts.n_unique_words
-    57
-    >>> ts.basic_counts
-    {'n_sents': 3,
-     'n_words': 73,
-     'n_chars': 414,
-     'n_syllables': 134,
-     'n_unique_words': 57,
-     'n_long_words': 30,
-     'n_monosyllable_words': 38,
-     'n_polysyllable_words': 19}
-    >>> ts.flesch_kincaid_grade_level
-    15.56027397260274
-    >>> ts.readability_stats
-    {'flesch_kincaid_grade_level': 15.56027397260274,
-     'flesch_reading_ease': 26.84351598173518,
-     'smog_index': 17.5058628484301,
-     'gunning_fog_index': 20.144292237442922,
-     'coleman_liau_index': 16.32928468493151,
-     'automated_readability_index': 17.448173515981736,
-     'lix': 65.42922374429223,
-     'gulpease_index': 44.61643835616438,
-     'wiener_sachtextformel': 11.857779908675797}
+    >>> ts.n_words, ts.n_syllables, ts.n_chars
+    (73, 134, 414)
+    >>> ts.entropy
+    5.8233192506312115
+    >>> ts.flesch_kincaid_grade_level, ts.flesch_reading_ease
+    (15.56027397260274, 26.84351598173518)
+    >>> ts.lix
+    65.42922374429223
 
 Lastly, we can transform a document into a "bag of terms", with flexible weighting
 and term inclusion criteria:

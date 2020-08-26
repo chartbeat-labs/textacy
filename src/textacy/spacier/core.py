@@ -4,7 +4,6 @@ Convenient entry points for making spaCy docs and loading spaCy language pipelin
 import functools
 import logging
 import pathlib
-import types
 from typing import Callable, Optional, Tuple, Union
 
 import spacy

@@ -201,9 +201,10 @@ def rank_nodes_by_bestcoverage(
             vertices = set(next_vertices)
         return s
 
+    # TODO: someday, burton, figure out what you were going to do with this...
     top_k_exp_vertices = get_l_step_expanded_set(
         [item[0] for item in top_k_sorted_ranks], c
-    )
+    )  # noqa: F841
 
     # compute initial exprel contribution
     taken: DefaultDict = collections.defaultdict(bool)
