@@ -39,6 +39,7 @@ def ts_es():
 @pytest.mark.parametrize(
     "lang, attr_name, attr_type, attr_subtype, exp_val",
     [
+        ("en", "n_sents", int, None, 3),
         ("en", "n_words", int, None, 84),
         ("en", "n_unique_words", int, None, 66),
         ("en", "n_long_words", int, None, 14),
@@ -49,6 +50,7 @@ def ts_es():
         ("en", "n_monosyllable_words", int, None, 63),
         ("en", "n_polysyllable_words", int, None, 8),
         ("en", "entropy", float, None, 5.9071),
+        ("es", "n_sents", int, None, 3),
         ("es", "n_words", int, None, 85),
         ("es", "n_unique_words", int, None, 66),
         ("es", "n_long_words", int, None, 24),

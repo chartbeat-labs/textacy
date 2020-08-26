@@ -309,7 +309,7 @@ class TextStats:
                 "doc lang = '%s', but mu legibility index is meant for use on "
                 "Spanish-language texts, only"
             )
-        return readability.mu_legibility_index(self.words)
+        return readability.mu_legibility_index(self.n_chars_per_word)
 
     @property
     def perspicuity_index(self) -> float:
@@ -323,7 +323,7 @@ class TextStats:
                 "Spanish-language texts, only"
             )
         return readability.perspicuity_index(
-            self.n_words, self.n_syllables, self.n_sents,
+            self.n_syllables, self.n_words, self.n_sents,
         )
 
     @property

@@ -19,8 +19,8 @@ _FRE_COEFS = {
     "it": {"base": 217.0, "asl": 1.3, "awl": 60.0},  # 0.6 x 100
     "nl": {"base": 206.835, "asl": 0.93, "awl": 77.0},
     "pt": {"base": 248.835, "asl": 1.015, "awl": 84.6},
-    "tr": {"base": 198.825, "asl": 2.610, "awl": 40.175},
     "ru": {"base": 206.835, "asl": 1.3, "awl": 60.1},
+    "tr": {"base": 198.825, "asl": 2.610, "awl": 40.175},
 }
 
 
@@ -148,7 +148,7 @@ def lix(n_words: int, n_long_words: int, n_sents: int) -> float:
     return (n_words / n_sents) + (100 * n_long_words / n_words)
 
 
-def mu_legibility_index(words: Collection[str]) -> float:
+def mu_legibility_index(n_chars_per_word: Collection[int]) -> float:
     """
     Readability test for Spanish-language texts based on number of words and
     the mean and variance of their lengths in characters, whose value is in the range
@@ -157,22 +157,21 @@ def mu_legibility_index(words: Collection[str]) -> float:
     References:
         Muñoz, M., and J. Muñoz. "Legibilidad Mµ." Viña del Mar: CHL (2006).
     """
-    n_words = len(words)
+    n_words = len(n_chars_per_word)
     if n_words < 2:
         LOGGER.warning(
             "mu legibility index is undefined for texts with fewer than two words; "
             "returning 0.0"
         )
         return 0.0
-    chars_per_word = [len(word) for word in words]
     return (
         100
         * (n_words / (n_words - 1))
-        * (statistics.mean(chars_per_word) / statistics.variance(chars_per_word))
+        * (statistics.mean(n_chars_per_word) / statistics.variance(n_chars_per_word))
     )
 
 
-def perspicuity_index(n_words: int, n_syllables: int, n_sents: int) -> float:
+def perspicuity_index(n_syllables: int, n_words: int, n_sents: int) -> float:
     """
     Readability test for Spanish-language texts, whose value is in the range [0, 100];
     very similar to the Spanish-specific formulation of :func:`flesch_reading_ease()`,
