@@ -17,10 +17,10 @@ jobs:
         python -m pip install black flake8
     - name: check formatting with black
       run: |
-        black --check --diff src scripts
+        python -m black --check --diff src scripts
     - name: lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
-        flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+        python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
         # exit-zero treats all errors as warnings
-        flake8 . --count --exit-zero --statistics
+        python -m flake8 . --count --exit-zero --statistics
