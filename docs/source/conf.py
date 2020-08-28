@@ -2,7 +2,9 @@
 import datetime
 import os
 
+import recommonmark
 import textacy
+from recommonmark.transform import AutoStructify
 
 # -- General configuration ------------------------------------------------
 
@@ -18,8 +20,11 @@ extensions = [
     "sphinx.ext.intersphinx",
     "sphinx.ext.napoleon",
     "sphinx.ext.githubpages",
-    "m2r",
+    "recommonmark",
 ]
+
+# If you need extensions of a certain version or higher, list them here.
+needs_extensions = {"recommonmark": "0.6"}
 
 # The suffix(es) of source filenames.
 source_suffix = {
@@ -30,12 +35,6 @@ source_suffix = {
 
 # The master toctree document.
 master_doc = "index"
-
-# autodoc extension configuration
-autodoc_default_options = {
-    "members": True,
-}
-autodoc_member_order = "bysource"
 
 # General information about the project.
 project = "textacy"
@@ -50,7 +49,7 @@ release = textacy.__version__
 templates_path = ["_templates"]
 
 intersphinx_mapping = {
-    "python": ("https://docs.python.org/3.6", None),
+    "python": ("https://docs.python.org/3/", None),
     "numpy": ("https://numpy.org/doc/stable/", None),
     "scipy": ("https://docs.scipy.org/doc/scipy/reference", None),
     "matplotlib": ("https://matplotlib.org", None),
@@ -62,17 +61,13 @@ add_function_parentheses = True
 # The name of the Pygments (syntax highlighting) style to use.
 pygments_style = "sphinx"
 
-# If true, `todo` and `todoList` produce output, else they produce nothing.
-todo_include_todos = False
-
 # The encoding of source files.
 # source_encoding = 'utf-8-sig'
-
 
 # -- Options for HTML output ----------------------------------------------
 
 html_theme = "alabaster"
-html_static_path = [os.path.join("..", "_static")]
+
 html_theme_options = {
     "logo": "textacy_logo.png",
     "logo_name": False,
@@ -83,6 +78,9 @@ html_theme_options = {
     "sidebar_collapse": True,
     "show_relbar_bottom": True,
 }
+
+# Custom sidebar templates, must be a dictionary that maps document names
+# to template names.
 html_sidebars = {
     '**': [
         "about.html",
@@ -91,6 +89,11 @@ html_sidebars = {
         "searchbox.html",
     ]
 }
+
+# Add any paths that contain custom static files (such as style sheets) here,
+# relative to this directory. They are copied after the builtin static files,
+# so a file named "default.css" will overwrite the builtin "default.css".
+html_static_path = [os.path.join("..", "_static")]
 
 # name for this set of Sphinx docs; if None, "<project> v<release> documentation"
 # html_title = None
@@ -242,3 +245,33 @@ texinfo_documents = [
 
 # If true, do not generate a @detailmenu in the "Top" node's menu.
 # texinfo_no_detailmenu = False
+
+# -- Extension configuration -------------------------------------------------
+
+# autodoc
+
+autodoc_default_options = {
+    "members": True,
+}
+autodoc_member_order = "bysource"
+
+# todo
+
+# If true, `todo` and `todoList` produce output, else they produce nothing.
+todo_include_todos = False
+
+# recommonmark
+
+github_doc_root = "https://github.com/chartbeat-labs/textacy/tree/master/docs/"
+
+# app setup hook
+def setup(app):
+    app.add_config_value(
+        "recommonmark_config",
+        {
+            "url_resolver": lambda url: github_doc_root + url,
+            "auto_toc_tree_section": "Contents",
+        },
+        True,
+    )
+    app.add_transform(AutoStructify)
