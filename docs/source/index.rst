@@ -44,7 +44,7 @@ features
 .. toctree::
    :maxdepth: 2
 
-   getting_started/installation
-   getting_started/quickstart
+   installation
+   quickstart
    api_reference/root
    license
