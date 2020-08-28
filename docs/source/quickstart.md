@@ -402,7 +402,7 @@ be fed in its entirety into a single `Corpus`. This is irritating, but
 there are some workarounds.
 
 If you haven't already, download spaCy models for the languages you want to analyze ---
-see :ref:`installation_downloading-data` for details. Then, if your use case
+see [Installation](installation) for details. Then, if your use case
 doesn't require `Corpus` functionality, you can iterate over the texts and
 only analyze those for which models are available:
 
