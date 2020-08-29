@@ -235,7 +235,7 @@ def delete_words(
     cand_idxs = [
         idx
         for idx, aug_tok in enumerate(aug_toks)
-        if aug_tok.is_word and (pos is None or aug_tok.pos in pos)
+        if aug_tok.is_word and (pos is None or aug_tok.pos in pos) and idx > 0
     ]
     rand_idxs = set(_select_random_candidates(cand_idxs, num))
     if not rand_idxs:
