@@ -92,7 +92,7 @@ Thanks much to @hugoabonizio for the contribution. 🤝
     - `normalize_hyphenated_words()` to join hyphenated words back together, like `antici-  pation` => `anticipation`
     - `normalize_quotation_marks()` to replace "fancy" quotation marks with simple ascii equivalents, like `“the god particle”` => `"the god particle"`
   - Changed a couple functions for clarity and consistency:
-    - `replace_currency_symbols()` now replaces _all_ dedicated ascii and unicode currency symbols with `_CUR_`, rather than just a subset thereof, and no longer provides for replacement with the corresponding currency code (like `$` => `USD`)
+    - `replace_currency_symbols()` now replaces _all_ dedicated ascii and unicode currency symbols with `_CUR_`, rather than just a subset thereof, and no longer provides for replacement with the corresponding currency code (like `€` => `EUR`)
     - `remove_punct()` now has a `fast (bool)` kwarg rather than `method (str)`
   - Removed `normalize_contractions()`, `preprocess_text()`, and `fix_bad_unicode()` functions, since they were bad/awkward and more trouble than they were worth
 - **Refactored and expanded keyterm extraction functionality** (PR #257)

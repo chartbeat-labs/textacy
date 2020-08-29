@@ -47,3 +47,4 @@ features
    installation
    quickstart
    api_reference/root
+   changes
