@@ -1,9 +1,6 @@
 """
-Similarity
-----------
-
-Collection of semantic + lexical similarity metrics between tokens, strings,
-and sequences thereof, returning values between 0.0 (totally dissimilar)
+:mod:`textacy.similarity`: Collection of semantic + lexical similarity metrics between
+tokens, strings, and sequences thereof, returning values between 0.0 (totally dissimilar)
 and 1.0 (totally similar).
 """
 import collections
