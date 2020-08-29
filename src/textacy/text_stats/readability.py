@@ -1,5 +1,6 @@
 """
-Functions for computing various measures of text "readability".
+:mod:`textacy.text_stats.readability`: Functions for computing various measures
+of text "readability".
 """
 import logging
 import statistics

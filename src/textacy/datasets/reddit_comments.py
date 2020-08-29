@@ -1,7 +1,4 @@
 """
-Reddit comments
----------------
-
 A collection of up to ~1.5 billion Reddit comments posted from
 October 2007 through May 2015.
 
@@ -91,9 +88,6 @@ class RedditComments(Dataset):
     Attributes:
         full_date_range: First and last dates for which comments
             are available, each as an ISO-formatted string (YYYY-MM-DD).
-        filepaths: Full paths on disk for all Reddit comments files
-            found under :attr:`ReddictComments.data_dir` directory, sorted
-            in chronological order.
     """
 
     full_date_range: Tuple[str, str] = ("2007-10-01", "2015-06-01")
@@ -111,7 +105,7 @@ class RedditComments(Dataset):
     def filepaths(self) -> Tuple[str, ...]:
         """
         Full paths on disk for all Reddit comments files found under
-        the ``data_dir`` directory, sorted chronologically.
+        :attr:`RedditComments.data_dir` directory, sorted in chronological order.
         """
         if self.data_dir.is_dir():
             return tuple(

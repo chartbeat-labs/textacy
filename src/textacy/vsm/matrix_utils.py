@@ -1,10 +1,7 @@
 """
-Sparse Matrix Utils
--------------------
-
-Functions for computing corpus-wide term- or document-based values, like
-term frequency, document frequency, and document length, and filtering terms
-from a matrix by their document frequency.
+:mod:`textacy.vsm.matrix_utils`: Functions for computing corpus-wide term- or
+document-based values, like term frequency, document frequency, and document length,
+and filtering terms from a matrix by their document frequency.
 """
 import numpy as np
 import scipy.sparse as sp

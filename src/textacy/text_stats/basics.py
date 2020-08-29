@@ -1,5 +1,5 @@
 """
-Functions for computing basic text statistics.
+:mod:`textacy.text_stats.basics`: Functions for computing basic text statistics.
 """
 import logging
 import math

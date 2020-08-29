@@ -1,8 +1,5 @@
 """
-IO Utils
---------
-
-Functions to help read and write data to disk in a variety of formats.
+:mod:`textacy.io.utils`: Functions to help read and write data to disk in a variety of formats.
 """
 import bz2
 import gzip
@@ -279,7 +276,7 @@ def get_filepaths(
             Only files whose names *do not* match this pattern are included.
         extension: File extension, e.g. ".txt" or ".json".
             Only files whose extensions match are included.
-        ignore_invisibl: If True, ignore invisible files,
+        ignore_invisible: If True, ignore invisible files,
             i.e. those that begin with a period.; otherwise, include them.
         recursive: If True, iterate recursively through subdirectories
             in search of files to include; otherwise, only return files located

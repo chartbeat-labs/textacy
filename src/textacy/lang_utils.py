@@ -1,7 +1,4 @@
 """
-Language identification
------------------------
-
 Pipeline for identifying the language of a text, using a model inspired by
 Google's Compact Language Detector v3 (https://github.com/google/cld3) and
 implemented with ``scikit-learn>=0.20``.

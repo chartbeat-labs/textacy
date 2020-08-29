@@ -1,5 +1,6 @@
 """
-Convenient entry points for making spaCy docs and loading spaCy language pipelines.
+:mod:`textacy.spacier.core`: Convenient entry point for loading spaCy language pipelines
+and making spaCy docs.
 """
 import functools
 import logging
@@ -28,7 +29,18 @@ def load_spacy_lang(
     Load a spaCy ``Language``: a shared vocabulary and language-specific data
     for tokenizing text, and (if available) model data and a processing pipeline
     containing a sequence of components for annotating a document.
-    An LRU cache saves languages in memory.
+    An LRU cache saves languages in memory for quick reloading.
+
+    .. code-block:: pycon
+
+        >>> en_nlp = textacy.load_spacy_lang("en")
+        >>> en_nlp = textacy.load_spacy_lang("en_core_web_sm")
+        >>> en_nlp = textacy.load_spacy_lang("en", disable=("parser",))
+        >>> textacy.load_spacy_lang("ar")
+        ...
+        OSError: [E050] Can't find model 'ar'. It doesn't seem to be a shortcut link, a Python package or a valid path to a data directory.
+        >>> textacy.load_spacy_lang("ar", allow_blank=True)
+        <spacy.lang.ar.Arabic at 0x126418550>
 
     Args:
         name: spaCy language to load.

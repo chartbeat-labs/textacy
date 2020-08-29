@@ -1,8 +1,5 @@
 """
-Pipeline Components
--------------------
-
-Custom components to add to a spaCy language pipeline.
+:mod:`textacy.spacier.components`: Custom components to add to a spaCy language pipeline.
 """
 import logging
 

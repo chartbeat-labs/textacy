@@ -1,16 +1,13 @@
 """
-Doc extensions
---------------
-
-Functionality for inspecting, customizing, and transforming spaCy's core
-data structure, :class:`spacy.tokens.Doc`, accessible directly as functions
-that take a ``Doc`` as their first argument or as custom attributes/methods
-on instantiated docs prepended by an underscore:
+:mod:`textacy.spacier.doc_extensions`: Inspect, extend, and transform spaCy's core
+data structure, :class:`spacy.tokens.Doc`, either directly via functions that take
+a ``Doc`` as their first argument or as custom attributes / methods on instantiated docs
+prepended by an underscore:
 
 .. code-block:: pycon
 
     >>> spacy_lang = textacy.load_spacy_lang("en")
-    >>> doc = nlp("This is a short text.")
+    >>> doc = spacy_lang("This is a short text.")
     >>> print(get_preview(doc))
     Doc(6 tokens: "This is a short text.")
     >>> print(doc._.preview)
@@ -223,7 +220,7 @@ def to_terms_list(
     Raises:
         ValueError: if neither ``entities`` nor ``ngrams`` are included,
             or if ``normalize`` have invalid values
-        TypeError: if ``entities` has an invalid type
+        TypeError: if ``entities`` has an invalid type
 
     Note:
         Despite the name, this is a generator function; to get an

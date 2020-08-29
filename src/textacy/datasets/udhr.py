@@ -1,7 +1,4 @@
 """
-UDHR translations
------------------
-
 A collection of translations of the Universal Declaration of Human Rights (UDHR),
 a milestone document in the history of human rights that first, formally established
 fundamental human rights to be universally protected.

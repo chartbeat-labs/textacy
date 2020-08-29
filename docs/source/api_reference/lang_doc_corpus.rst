@@ -1,5 +1,3 @@
-.. _api-reference-lang-doc-corpus:
-
 Lang, Doc, Corpus
 =================
 

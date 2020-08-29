@@ -1,7 +1,3 @@
-"""
-Keyterm Extraction Utils
-------------------------
-"""
 import itertools
 import math
 import operator

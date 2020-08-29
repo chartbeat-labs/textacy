@@ -1,7 +1,3 @@
-"""
-sCAKE
------
-"""
 import collections
 import itertools
 import operator

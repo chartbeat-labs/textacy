@@ -1,13 +1,15 @@
-.. _ref-api-reference-misc:
-
 Miscellany
 ==========
+
+Text Statistics
+---------------
 
 .. currentmodule:: textacy.text_stats
 
 .. autosummary::
    :nosignatures:
 
+   api.TextStats
    basics.n_sents
    basics.n_words
    basics.n_unique_words
@@ -38,6 +40,24 @@ Miscellany
 
 .. automodule:: textacy.text_stats.readability
 
-.. automodule:: textacy.network
+Similarity
+----------
+
+.. currentmodule:: textacy.similarity
+
+.. autosummary::
+   :nosignatures:
+
+   word_movers
+   word2vec
+   jaccard
+   levenshtein
+   token_sort_ratio
+   character_ngrams
 
 .. automodule:: textacy.similarity
+
+Semantic Networks
+-----------------
+
+.. automodule:: textacy.network

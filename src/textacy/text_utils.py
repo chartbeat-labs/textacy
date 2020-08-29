@@ -1,8 +1,5 @@
 """
-Text Utils
-----------
-
-Set of small utility functions that take text strings as input.
+:mod:`textacy.text_utils`: Set of small utility functions that take text strings as input.
 """
 import logging
 import re
