@@ -1,7 +1,5 @@
-.. _ref-api-reference-io:
-
-IO
-==
+I/O
+===
 
 .. automodule:: textacy.io.text
 

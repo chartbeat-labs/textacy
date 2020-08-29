@@ -1,5 +1,3 @@
-.. _ref-api-reference-utils:
-
 Utilities
 =========
 

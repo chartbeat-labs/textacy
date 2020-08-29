@@ -1,5 +1,3 @@
-.. _api-reference-datasets:
-
 Datasets
 ========
 

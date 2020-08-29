@@ -1,5 +1,3 @@
-.. _api-reference-resources:
-
 Resources
 =========
 

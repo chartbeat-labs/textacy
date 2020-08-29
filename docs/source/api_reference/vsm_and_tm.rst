@@ -1,5 +1,3 @@
-.. _ref-api-reference-vsm-and-tm:
-
 Vectorization & Topic Modeling
 ==============================
 

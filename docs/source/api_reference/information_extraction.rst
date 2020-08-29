@@ -1,5 +1,3 @@
-.. _ref-api-reference-information-extraction:
-
 Information Extraction
 ======================
 
