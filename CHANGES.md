@@ -1,5 +1,44 @@
 ## Changes
 
+### 0.10.1 (_in development_)
+
+#### New and Changed:
+
+- **Expanded text statistics and refactored into a sub-package (PR #307)**
+  - Refactored `text_stats` module into a sub-package with the same name and top-level API, but restructured under the hood for better consistency
+  - Improved performance, API, and documentation on the main `TextStats` class, and improved documentation on many of the individual stats functions
+  - Added new readability tests for texts in Arabic (Automated Arabic Readability Index), Spanish (µ-legibility and perspecuity index), and Turkish (a lang-specific formulation of Flesch Reading Ease)
+  - _Breaking change:_ Removed `TextStats.basic_counts` and `TextStats.readability_stats` attributes, since typically only one or a couple needed for a given use case; also, some of the readability tests are language-specific, which meant bad results could get mixed in with good ones
+- **Improved and standardized some code quality and performance (PR #305, #306)**
+  - Standardized error messages via top-level `errors.py` module
+  - Replaced `str.format()` with f-strings (almost) everywhere, for performance and readability
+  - Fixed a whole mess of linting errors, significantly improving code quality and consistency
+- **Improved package configuration, and maintenance (PRs #298, #305, #306)**
+  - Added automated GitHub workflows for building and testing the package, linting and formatting, publishing new releases to PyPi, and building documentation (and ripped out Travis CI)
+  - Added a makefile with common commands for dev work, plus instructions
+  - Adopted the new `pyproject.toml` package configuration standard; updated and streamlined `setup.py` and `setup.cfg` accordingly; and removed `requirements.txt`
+  - Moved all source code into a `/src` directory, for technical reasons
+  - Added `mypy`-specific config file to reduce output noisiness when type-checking
+- **Improved and moved package documentation (PR #309)**
+  - Enabled markdown-based documentation using `recommonmark` instead of `m2r`, and migrated all "narrative" docs from `.rst` to equivalent `.md` files
+  - Added auto-generated summary tables to many sections of the API Reference, to help users get an overview of functionality and better find what they're looking for; also added auto-generated section heading references
+  - Tidied up and further standardized docstrings throughout the code
+- **Kept up with the Python ecosystem**
+  - Trained a v1.1 language identifier model using `scikit-learn==0.23.0`, and bumped the upper bound on that dependency's version accordingly
+  - Updated and parametrized many tests using modern `pytest` functionality (PR #306)
+  - Got `textacy` versions 0.9.1 and 0.10.0 up on `conda-forge` (Issue #294)
+  - Added spectral seriation as a term-ordering technique when making a "Termite" visualization by taking advantage of `pandas.DataFrame` functionality, and otherwise tidied up the default for nice-looking plots (PR #295)
+
+#### Fixed:
+
+- Corrected an incorrect and misleading reference in the quickstart docs (Issue #300, PR #302)
+- Fixed a bug in the `delete_words()` augmentation transform (Issue #308)
+
+#### Contributors:
+
+Special thanks to @tbsexton, @marius-mather, and @rmax for their contributions! 💐
+
+
 ### 0.10.0 (2020-03-01)
 
 #### New:
