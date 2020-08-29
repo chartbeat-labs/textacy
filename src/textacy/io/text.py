@@ -1,9 +1,6 @@
 """
-Text
-----
-
-Functions for reading from and writing to disk records in plain text format,
-either as one text per file or one text per *line* in a file.
+:mod:`textacy.io.text`: Functions for reading from and writing to disk records in
+plain text format, either as one text per file or one text per *line* in a file.
 """
 import pathlib
 from typing import Iterable, Optional, Union

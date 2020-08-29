@@ -1,8 +1,5 @@
 """
-JSON
-----
-
-Functions for reading from and writing to disk records in JSON format,
+:mod:`textacy.io.json`: Functions for reading from and writing to disk records in JSON format,
 as one record per file or one record per *line* in a file.
 """
 import datetime

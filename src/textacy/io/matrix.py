@@ -1,9 +1,6 @@
 """
-Matrix
-------
-
-Functions for reading from and writing to disk CSC and CSR sparse matrices
-in numpy binary format.
+:mod:`textacy.io.matrix`: Functions for reading from and writing to disk CSC and CSR
+sparse matrices in numpy binary format.
 """
 import pathlib
 from typing import Union

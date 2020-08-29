@@ -1,9 +1,6 @@
 """
-spaCy
------
-
-Functions for reading from and writing to disk spacy documents in either
-pickle or binary format. Be warned: Both formats have pros and cons.
+:mod:`textacy.io.spacy`: Functions for reading from and writing to disk spacy documents
+in either pickle or binary format. Be warned: Both formats have pros and cons.
 """
 import pathlib
 import pickle

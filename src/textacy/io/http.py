@@ -1,9 +1,6 @@
 """
-HTTP
-----
-
-Functions for reading data from URLs via streaming HTTP requests and either
-reading it into memory or writing it directly to disk.
+:mod:`textacy.io.http`: Functions for reading data from URLs via streaming HTTP requests
+and either reading it into memory or writing it directly to disk.
 """
 import logging
 import pathlib

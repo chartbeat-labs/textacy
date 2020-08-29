@@ -1,8 +1,5 @@
 """
-IO Utils
---------
-
-Functions to help read and write data to disk in a variety of formats.
+:mod:`textacy.io.utils`: Functions to help read and write data to disk in a variety of formats.
 """
 import bz2
 import gzip

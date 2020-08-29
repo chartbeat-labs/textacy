@@ -1,9 +1,6 @@
 """
-CSV
----
-
-Functions for reading from and writing to disk records in CSV format, where
-CSVs may be delimited not only by commas (the default) but tabs, pipes, and
+:mod:`textacy.io.csv`: Functions for reading from and writing to disk records in CSV format,
+where CSVs may be delimited not only by commas (the default) but tabs, pipes, and
 other valid one-char delimiters.
 """
 import csv
