@@ -1,10 +1,7 @@
 """
-Vectorizers
------------
-
-Transform a collection of tokenized documents into a document-term matrix
-of shape (# docs, # unique terms), with various ways to filter or limit
-included terms and flexible weighting schemes for their values.
+:mod:`textacy.vsm.vectorizers`:  Transform a collection of tokenized documents into
+a document-term matrix of shape (# docs, # unique terms), with various ways to filter
+or limit included terms and flexible weighting schemes for their values.
 
 A second option aggregates terms in tokenized documents by provided group labels,
 resulting in a "group-term-matrix" of shape (# unique groups, # unique terms),

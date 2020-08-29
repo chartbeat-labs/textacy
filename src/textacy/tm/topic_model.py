@@ -1,8 +1,6 @@
 """
-Topic Models
-------------
-
-Convenient and consolidated topic-modeling, built on ``scikit-learn``.
+:mod:`textacy.tm.topic_model`: Convenient and consolidated topic-modeling,
+built on ``scikit-learn``.
 """
 import logging
 
