@@ -1,8 +1,6 @@
 """
-Normalize
----------
-
-Normalize aspects of raw text that may vary in problematic ways.
+:mod:`textacy.preprocessing.normalize`: Normalize aspects of raw text that may vary
+in problematic ways.
 """
 import re
 import unicodedata

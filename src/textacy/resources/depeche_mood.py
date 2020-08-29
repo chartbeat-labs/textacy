@@ -1,7 +1,4 @@
 """
-DepecheMood
------------
-
 DepecheMood is a high-quality and high-coverage emotion lexicon for English and Italian
 text, mapping individual terms to their emotional valences. These word-emotion weights
 are inferred from crowd-sourced datasets of emotionally tagged news articles

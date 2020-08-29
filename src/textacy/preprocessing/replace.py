@@ -1,9 +1,6 @@
 """
-Replace
--------
-
-Replace parts of raw text that are semantically important as members of a group
-but not so much in the individual instances.
+:mod:`textacy.preprocessing.replace`: Replace parts of raw text that are semantically
+important as members of a group but not so much in the individual instances.
 """
 from .resources import (
     RE_CURRENCY_SYMBOL,

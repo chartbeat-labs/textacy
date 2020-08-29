@@ -1,8 +1,6 @@
 """
-Remove
-------
-
-Remove aspects of raw text that may be unwanted for certain use cases.
+:mod:`textacy.preprocessing.remove`: Remove aspects of raw text that may be unwanted
+for certain use cases.
 """
 import re
 import unicodedata
