@@ -66,11 +66,12 @@ class TextStats:
     """
 
     def __init__(self, doc: Doc):
+        self.doc = doc
         self.lang = doc.vocab.lang
         self.words = tuple(
             extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False)
         )
-        self.n_sents = basics.n_sents(doc)
+        self._n_sents = None
         self._n_words = None
         self._n_unique_words = None
         self._n_long_words = None
@@ -81,6 +82,18 @@ class TextStats:
         self._n_monosyllable_words = None
         self._n_polysyllable_words = None
         self._entropy = None
+
+    @property
+    def n_sents(self) -> int:
+        """
+        Number of sentences in document.
+
+        See Also:
+            :func:`textacy.text_stats.basics.n_sents()`
+        """
+        if self._n_sents is None:
+            self._n_sents = basics.n_sents(self.doc)
+        return self._n_sents
 
     @property
     def n_words(self) -> int:

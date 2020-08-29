@@ -1,6 +1,7 @@
 """
 :mod:`textacy.spacier.components`: Custom components to add to a spaCy language pipeline.
 """
+import inspect
 import logging
 
 from spacy.tokens import Doc
@@ -8,6 +9,14 @@ from spacy.tokens import Doc
 from .. import text_stats
 
 LOGGER = logging.getLogger(__name__)
+
+_TS_ATTRS = tuple(
+    name
+    for name, _ in inspect.getmembers(
+        text_stats.api.TextStats, lambda member: not(inspect.isroutine(member))
+    )
+    if not name.startswith("_")
+)
 
 
 class TextStatsComponent:
@@ -62,25 +71,7 @@ class TextStatsComponent:
 
     def __init__(self, attrs=None):
         if attrs is None:
-            self.attrs = (
-                "n_sents",
-                "n_words",
-                "n_chars",
-                "n_syllables",
-                "n_unique_words",
-                "n_long_words",
-                "n_monosyllable_words",
-                "n_polysyllable_words",
-                "flesch_kincaid_grade_level",
-                "flesch_reading_ease",
-                "smog_index",
-                "gunning_fog_index",
-                "coleman_liau_index",
-                "automated_readability_index",
-                "lix",
-                "gulpease_index",
-                "wiener_sachtextformel",
-            )
+            self.attrs = _TS_ATTRS
         elif isinstance(attrs, (str, bytes)):
             self.attrs = (attrs,)
         else:

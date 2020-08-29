@@ -49,4 +49,4 @@ def test_attrs_on_doc(spacy_lang, spacy_doc):
     tsc = spacy_lang.get_pipe("textacy_text_stats")
     for attr in tsc.attrs:
         assert spacy_doc._.has(attr) is True
-        assert isinstance(spacy_doc._.get(attr), (int, float, dict)) is True
+        assert isinstance(spacy_doc._.get(attr), (int, float, tuple)) is True
