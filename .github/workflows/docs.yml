@@ -2,7 +2,7 @@ name: docs
 
 on:
   push:  # run on every push to default branch
-    branches: [ $default-branch ]
+    branches: [ $default-branch, master ]
   pull_request:  # run on all pull requests
 
 jobs:
