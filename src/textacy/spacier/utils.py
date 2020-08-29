@@ -1,8 +1,6 @@
 """
-spaCy Utils
------------
-
-Helper functions for working with / extending spaCy's core functionality.
+:mod:`textacy.spacier.utils`: Helper functions for working with / extending spaCy's
+core functionality.
 """
 import itertools
 from typing import Iterable, List, Tuple, Union

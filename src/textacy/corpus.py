@@ -1,7 +1,7 @@
 """
-A class for working with a collection of spaCy docs. Includes functionality for
-easily adding, getting, and removing documents; saving to / loading their data
-from disk; and tracking basic corpus statistics.
+:mod:`textacy.corpus`: Class for working with a collection of spaCy ``Doc`` s.
+Includes functionality for easily adding, getting, and removing documents;
+saving to / loading their data from disk; and tracking basic corpus statistics.
 """
 import collections
 import itertools
