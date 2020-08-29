@@ -1,7 +1,6 @@
 # Quickstart
 
-First things first: Import the package. Most functionality is available from
-this top-level import, but we'll see that some features require their own imports.
+First things first: Import the package. Most functionality is available from this top-level import, but we'll see that some features require their own imports.
 
 ```pycon
 >>> import textacy
@@ -23,15 +22,9 @@ Let's start with a single text document:
 ... )
 ```
 
-**Note:** In almost all cases, textacy (as well as spaCy) expects to be
-working with unicode text data. Throughout the code, this is indicated as `str`
-to be consistent with Python 3's default string type; users of Python 2, however,
-must be mindful to use `unicode`, and convert from the default (bytes) string
-type as needed.
+**Note:** In almost all cases, textacy (as well as spaCy) expects to be working with unicode text data. Throughout the code, this is indicated as `str` to be consistent with Python 3's default string type; users of Python 2, however, must be mindful to use `unicode`, and convert from the default (bytes) string type as needed.
 
-Before (or *in lieu of*) processing this text with spaCy, we can do a few things.
-First, let's look for keywords-in-context, as a quick way to assess, by eye,
-how a particular word or phrase is used in a body of text:
+Before (or *in lieu of*) processing this text with spaCy, we can do a few things. First, let's look for keywords-in-context, as a quick way to assess, by eye, how a particular word or phrase is used in a body of text:
 
 ```pycon
 >>> textacy.text_utils.KWIC(text, "language", window_width=35)
@@ -40,11 +33,7 @@ n machine learning. Formerly, many  language -processing tasks typically involve
 s not in general robust to natural  language  variation. The machine-learning pa
 ```
 
-Sometimes, "raw" text is messy and must be cleaned up before analysis; other
-times, an analysis simply benefits from well-standardized text. In either case,
-the `textacy.preprocessing` sub-package contains a number of functions to
-normalize (whitespace, quotation marks, etc.), remove (punctuation, accents, etc.),
-and replace (URLs, emails, numbers, etc.) messy text data. For example:
+Sometimes, "raw" text is messy and must be cleaned up before analysis; other times, an analysis simply benefits from well-standardized text. In either case, the `textacy.preprocessing` sub-package contains a number of functions to normalize (whitespace, quotation marks, etc.), remove (punctuation, accents, etc.), and replace (URLs, emails, numbers, etc.) messy text data. For example:
 
 ```pycon
 >>> from textacy import preprocessing
@@ -54,13 +43,7 @@ and replace (URLs, emails, numbers, etc.) messy text data. For example:
 
 ## Make a Doc
 
-Usually, though, we want to work with text that's been processed by spaCy:
-tokenized, part-of-speech tagged, parsed, and so on. Since spaCy's pipelines
-are language-dependent, we have to load a particular pipeline to match the text;
-when working with texts from multiple languages, this can be a pain. Fortunately,
-textacy includes automatic language detection to apply the right pipeline
-to the text, and it caches the loaded language data to minimize wait time and
-hassle. Making a `Doc` from text is easy:
+Usually, though, we want to work with text that's been processed by spaCy: tokenized, part-of-speech tagged, parsed, and so on. Since spaCy's pipelines are language-dependent, we have to load a particular pipeline to match the text; when working with texts from multiple languages, this can be a pain. Fortunately, textacy includes automatic language detection to apply the right pipeline to the text, and it caches the loaded language data to minimize wait time and hassle. Making a `Doc` from text is easy:
 
 ```pycon
 >>> doc = textacy.make_spacy_doc(text)
@@ -68,10 +51,7 @@ hassle. Making a `Doc` from text is easy:
 'Doc(85 tokens: "Since the so-called "statistical revolution" in...")'
 ```
 
-Under the hood, the text has been identified as English, and the default English-
-language (`"en"`) pipeline has been loaded, cached, and applied to it. If you
-need to customize the pipeline, you can still easily load and cache it, then
-specify it yourself when initializing the doc:
+Under the hood, the text has been identified as English, and the default English-language (`"en"`) pipeline has been loaded, cached, and applied to it. If you need to customize the pipeline, you can still easily load and cache it, then specify it yourself when initializing the doc:
 
 ```pycon
 >>> en = textacy.load_spacy_lang("en_core_web_sm", disable=("parser",))
@@ -80,8 +60,7 @@ specify it yourself when initializing the doc:
 'Doc(85 tokens: "Since the so-called "statistical revolution" in...")'
 ```
 
-Oftentimes, text data comes paired with metadata, such as a title, author, or
-publication date, and we'd like to keep them together. textacy makes this easy:
+Oftentimes, text data comes paired with metadata, such as a title, author, or publication date, and we'd like to keep them together. textacy makes this easy:
 
 ```pycon
 >>> metadata = {
@@ -94,23 +73,13 @@ publication date, and we'd like to keep them together. textacy makes this easy:
 'Natural-language processing'
 ```
 
-`textacy` adds a variety of useful functionality to vanilla spaCy docs,
-accessible via its `._` "underscore" property. For example: `doc._.preview`
-gives a convenient preview of the doc's contents, and `doc._.meta` returns
-any metadata associated with the main text content. Consult the
-[spaCy docs](https://spacy.io/usage/processing-pipelines#custom-components-attributes)
-for implementation details.
+`textacy` adds a variety of useful functionality to vanilla spaCy docs, accessible via its `._` "underscore" property. For example: `doc._.preview` gives a convenient preview of the doc's contents, and `doc._.meta` returns any metadata associated with the main text content. Consult the [spaCy docs](https://spacy.io/usage/processing-pipelines#custom-components-attributes) for implementation details.
 
-**Note:** Older versions of textacy (<0.7.0) used a `textacy.Doc` class
-as a convenient wrapper around an underlying spaCy `Doc`, with additional
-functionality available as class attributes and methods. Once spaCy started
-natively supporting custom extensions on `Doc` objects (as well as custom
-components in language processing pipelines), that approach was dropped.
+**Note:** Older versions of textacy (<0.7.0) used a `textacy.Doc` class as a convenient wrapper around an underlying spaCy `Doc`, with additional functionality available as class attributes and methods. Once spaCy started natively supporting custom extensions on `Doc` objects (as well as custom components in language processing pipelines), that approach was dropped.
 
 ## Analyze a Doc
 
-There are many ways to understand the content of a `Doc`. For starters, let's
-extract various elements of interest:
+There are many ways to understand the content of a `Doc`. For starters, let's extract various elements of interest:
 
 ```pycon
 >>> list(textacy.extract.ngrams(
@@ -197,8 +166,7 @@ Or we can compute various basic and readability statistics:
 65.42922374429223
 ```
 
-Lastly, we can transform a document into a "bag of terms", with flexible weighting
-and term inclusion criteria:
+Lastly, we can transform a document into a "bag of terms", with flexible weighting and term inclusion criteria:
 
 ```pycon
 >>> bot = doc._.to_bag_of_terms(
@@ -223,10 +191,7 @@ and term inclusion criteria:
 
 ## Working with Many Texts
 
-Many NLP tasks require datasets comprised of a large number of texts, which
-are often stored on disk in one or multiple files. textacy makes it easy
-to efficiently stream text and (text, metadata) pairs from disk, regardless of
-the format or compression of the data.
+Many NLP tasks require datasets comprised of a large number of texts, which are often stored on disk in one or multiple files. textacy makes it easy to efficiently stream text and (text, metadata) pairs from disk, regardless of the format or compression of the data.
 
 Let's start with a single text file, where each line is a new text document:
 
@@ -237,9 +202,7 @@ Spent an entire day translating structured data blobs into concise, readable sen
 ...
 ```
 
-In this case, the texts are tweets from my sporadic presence on Twitter ---
-a fine example of small (and boring) data. Let's stream it from disk so we
-can analyze it in textacy:
+In this case, the texts are tweets from my sporadic presence on Twitter --- a fine example of small (and boring) data. Let's stream it from disk so we can analyze it in textacy:
 
 ```pycon
 >>> texts = textacy.io.read_text('~/Desktop/burton-tweets.txt', lines=True)
@@ -254,11 +217,7 @@ Doc(20 tokens; "Spent an entire day translating structured data...")
 
 Okay, let's not *actually* analyze my ramblings on social media...
 
-Instead, let's consider a more complicated dataset: a compressed JSON file in the
-mostly-standard "lines" format, in which each line is a separate record with both
-text data and metadata fields. As an example, we can use the "Capitol Words" dataset
-integrated into textacy (see :ref:`api-reference-datasets` for details). The data
-is downloadable from the [textacy-data GitHub repository](https://github.com/bdewilde/textacy-data/releases/tag/capitol_words_py3_v1.0>).
+Instead, let's consider a more complicated dataset: a compressed JSON file in the mostly-standard "lines" format, in which each line is a separate record with both text data and metadata fields. As an example, we can use the "Capitol Words" dataset integrated into textacy (see [Datasets](api_reference/datasets) for details). The data is downloadable from the [textacy-data GitHub repository](https://github.com/bdewilde/textacy-data/releases/tag/capitol_words_py3_v1.0>).
 
 ```pycon
 >>> records = textacy.io.read_json(
@@ -274,8 +233,7 @@ Doc(159 tokens; "Mr. Speaker, 480,000 Federal employees are work...")
 meta: {'title': 'JOIN THE SENATE AND PASS A CONTINUING RESOLUTION'}
 ```
 
-For this and a few other datasets, convenient `Dataset` classes are already
-implemented in textacy to help users get up and running, faster:
+For this and a few other datasets, convenient `Dataset` classes are already implemented in textacy to help users get up and running, faster:
 
 ```pycon
 >>> import textacy.datasets  # note the import
@@ -294,10 +252,7 @@ implemented in textacy to help users get up and running, faster:
 
 ## Make a Corpus
 
-A `textacy.Corpus` is an ordered collection of spaCy `Doc` s, all processed
-by the same language pipeline. Let's continue with the Capitol Words dataset
-and make a corpus from a stream of records. (**Note:** This may take a
-few minutes.)
+A `textacy.Corpus` is an ordered collection of spaCy `Doc` s, all processed by the same language pipeline. Let's continue with the Capitol Words dataset and make a corpus from a stream of records. (**Note:** This may take a few minutes.)
 
 ```pycon
 >>> corpus = textacy.Corpus("en", data=records)
@@ -305,9 +260,7 @@ few minutes.)
 Corpus(1240 docs, 857548 tokens)
 ```
 
-The language pipeline used to analyze documents in the corpus must be specified
-on instantiation, but the data added to it may come in the form of one or a stream
-of texts, records, or (valid) `Doc` s.
+The language pipeline used to analyze documents in the corpus must be specified on instantiation, but the data added to it may come in the form of one or a stream of texts, records, or (valid) `Doc` s.
 
 ```pycon
 >>> textacy.Corpus(
@@ -316,8 +269,7 @@ of texts, records, or (valid) `Doc` s.
 Corpus(100 docs, 31356 tokens)
 ```
 
-You can use basic indexing as well as flexible boolean queries to select
-documents in a corpus:
+You can use basic indexing as well as flexible boolean queries to select documents in a corpus:
 
 ```pycon
 >>> corpus[-1]._.preview
@@ -333,22 +285,18 @@ documents in a corpus:
 411
 ```
 
-It's important to note that all of the data in a `textacy.Corpus` is stored
-in-memory, which makes a number of features much easier to implement.
-Unfortunately, this means that the maximum size of a corpus will be bounded by RAM.
+It's important to note that all of the data in a `textacy.Corpus` is stored in-memory, which makes a number of features much easier to implement. Unfortunately, this means that the maximum size of a corpus will be bounded by RAM.
 
 ## Analyze a Corpus
 
-There are lots of ways to analyze the data in a corpus. Basic stats are
-computed on the fly as documents are added (or removed) from a corpus:
+There are lots of ways to analyze the data in a corpus. Basic stats are computed on the fly as documents are added (or removed) from a corpus:
 
 ```pycon
 >>> corpus.n_docs, corpus.n_sents, corpus.n_tokens
 (1240, 34530, 857548)
 ```
 
-You can transform a corpus into a document-term matrix, with flexible tokenization,
-weighting, and filtering of terms:
+You can transform a corpus into a document-term matrix, with flexible tokenization, weighting, and filtering of terms:
 
 ```pycon
 >>> import textacy.vsm  # note the import
@@ -386,25 +334,13 @@ topic 8 : tax   budget   cut   debt   pay   deficit   $   fiscal   billion   spe
 topic 9 : Senator   Virginia   yield   West Virginia   West   question   thank   Massachusetts   objection   time
 ```
 
-And that's just getting started! For now, though, I encourage you to pick a dataset
---- either your own or one already included in textacy --- and start exploring
-the data. *Most* functionality is well-documented via in-code docstrings; to see
-that information all together in nicely-formatted HTML, be sure to check out
-the :ref:`api-reference`.
+And that's just getting started! For now, though, I encourage you to pick a dataset --- either your own or one already included in textacy --- and start exploring the data. *Most* functionality is well-documented via in-code docstrings; to see that information all together in nicely-formatted HTML, be sure to check out the [API Reference](api_reference/root).
 
 ## Working with Many Languages
 
-Since a `Corpus` uses the same spaCy language pipeline to process all input texts,
-it only works in a mono-lingual context. In some cases, though, your collection
-of texts may contain more than one language; for example, if I occasionally tweeted
-in Spanish (sí, ¡se habla español!), the `burton-tweets.txt` dataset couldn't
-be fed in its entirety into a single `Corpus`. This is irritating, but
-there are some workarounds.
+Since a `Corpus` uses the same spaCy language pipeline to process all input texts, it only works in a mono-lingual context. In some cases, though, your collection of texts may contain more than one language; for example, if I occasionally tweeted in Spanish (sí, ¡se habla español!), the `burton-tweets.txt` dataset couldn't be fed in its entirety into a single `Corpus`. This is irritating, but there are some workarounds.
 
-If you haven't already, download spaCy models for the languages you want to analyze ---
-see [Installation](installation) for details. Then, if your use case
-doesn't require `Corpus` functionality, you can iterate over the texts and
-only analyze those for which models are available:
+If you haven't already, download spaCy models for the languages you want to analyze --- see [Installation](installation) for details. Then, if your use case doesn't require `Corpus` functionality, you can iterate over the texts and only analyze those for which models are available:
 
 ```pycon
 >>> for text in texts:
@@ -415,19 +351,11 @@ only analyze those for which models are available:
 ...     # do stuff...
 ```
 
-When the `lang` param is unspecified, textacy tries to auto-detect the text's
-language and load the corresponding model; if that model is unavailable, spaCy
-will raise an `OSError`. This try/except also handles the case where
-language detection fails and returns, say, "un" for "unknown".
+When the `lang` param is unspecified, textacy tries to auto-detect the text's language and load the corresponding model; if that model is unavailable, spaCy will raise an `OSError`. This try/except also handles the case where language detection fails and returns, say, "un" for "unknown".
 
-It's worth noting that, although spaCy has statistical models for annotating texts
-in only 10 or so languages, it supports tokenization in dozens of other languages.
-See https://spacy.io/usage/models#languages for details. You can load such languages
-in textacy via `textacy.load_spacy_lang(langstr, allow_blank=True)`.
+It's worth noting that, although spaCy has statistical models for annotating texts in only 10 or so languages, it supports tokenization in dozens of other languages. See https://spacy.io/usage/models#languages for details. You can load such languages in `textacy` via `textacy.load_spacy_lang(langstr, allow_blank=True)`.
 
-If you do need a `Corpus`, you can split the input texts by language into
-distinct collections, then instantiate monolingual corpora on those collections.
-For example:
+If you do need a `Corpus`, you can split the input texts by language into distinct collections, then instantiate monolingual corpora on those collections. For example:
 
 ```pycon
 >>> en_corpus = textacy.Corpus(
@@ -442,5 +370,4 @@ For example:
 ... )
 ```
 
-Both of these options are less convenient than I'd like, but hopefully they
-get the job done.
+Both of these options are less convenient than I'd like, but hopefully they get the job done.
