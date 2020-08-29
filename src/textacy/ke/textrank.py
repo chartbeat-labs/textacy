@@ -1,7 +1,3 @@
-"""
-TextRank
---------
-"""
 import collections
 import operator
 from typing import cast, Callable, Collection, Dict, List, Optional, Set, Tuple, Union

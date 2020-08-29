@@ -1,7 +1,3 @@
-"""
-YAKE
-----
-"""
 import collections
 import functools
 import math

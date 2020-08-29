@@ -1,7 +1,7 @@
 """
-Functions to extract various elements of interest from documents already parsed
-by spaCy, such as n-grams, named entities, subject-verb-object triples, and
-acronyms.
+:mod:`textacy.extract`: Functions to extract various elements of interest from documents
+already parsed by spaCy, such as n-grams, named entities, subject-verb-object triples,
+and acronyms.
 """
 import collections
 import itertools
