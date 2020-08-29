@@ -1,6 +1,6 @@
 ## Changes
 
-### 0.10.1 (_in development_)
+### 0.10.1 (2020-08-29)
 
 #### New and Changed:
 
