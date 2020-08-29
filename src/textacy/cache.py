@@ -1,7 +1,4 @@
 """
-Cache
------
-
 Functionality for caching language data and other NLP resources. Loading data
 from disk can be slow; let's just do it once and forget about it. :)
 """
