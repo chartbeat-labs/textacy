@@ -41,6 +41,24 @@ features
 
 ... *and more!*
 
+links
+-----
+
+- Download: https://pypi.org/project/textacy
+- Documentation: https://textacy.readthedocs.io
+- Source code: https://github.com/chartbeat-labs/textacy
+- Bug Tracker: https://github.com/chartbeat-labs/textacy/issues
+
+maintainer
+----------
+
+Howdy, y’all. 👋
+
+- Burton DeWilde (burton@chartbeat.com)
+
+contents
+--------
+
 .. toctree::
    :maxdepth: 2
 

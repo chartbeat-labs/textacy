@@ -20,6 +20,7 @@
   - Moved all source code into a `/src` directory, for technical reasons
   - Added `mypy`-specific config file to reduce output noisiness when type-checking
 - **Improved and moved package documentation (PR #309)**
+  - Moved the docs site back to ReadTheDocs (https://textacy.readthedocs.io)! Pardon the years-long detour into GitHub Pages...
   - Enabled markdown-based documentation using `recommonmark` instead of `m2r`, and migrated all "narrative" docs from `.rst` to equivalent `.md` files
   - Added auto-generated summary tables to many sections of the API Reference, to help users get an overview of functionality and better find what they're looking for; also added auto-generated section heading references
   - Tidied up and further standardized docstrings throughout the code

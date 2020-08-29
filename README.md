@@ -24,7 +24,7 @@ textacy is a Python library for performing a variety of natural language process
 ### Links
 
 - Download: https://pypi.org/project/textacy
-- Documentation: https://chartbeat-labs.github.io/textacy
+- Documentation: https://textacy.readthedocs.io
 - Source code: https://github.com/chartbeat-labs/textacy
 - Bug Tracker: https://github.com/chartbeat-labs/textacy/issues
 
