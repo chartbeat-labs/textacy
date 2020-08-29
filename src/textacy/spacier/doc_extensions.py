@@ -223,7 +223,7 @@ def to_terms_list(
     Raises:
         ValueError: if neither ``entities`` nor ``ngrams`` are included,
             or if ``normalize`` have invalid values
-        TypeError: if ``entities` has an invalid type
+        TypeError: if ``entities`` has an invalid type
 
     Note:
         Despite the name, this is a generator function; to get an
