@@ -1,7 +1,4 @@
 """
-Wikimedia articles
-------------------
-
 All articles for a given Wikimedia project, specified by language and version.
 
 Records include the following key fields (plus a few others):

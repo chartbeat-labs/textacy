@@ -1,7 +1,4 @@
 """
-Supreme Court decisions
------------------------
-
 A collection of ~8.4k (almost all) decisions issued by the U.S. Supreme Court
 from November 1946 through June 2016 -- the "modern" era.
 
@@ -72,7 +69,7 @@ DOWNLOAD_ROOT = "https://github.com/bdewilde/textacy-data/releases/download/"
 
 class SupremeCourt(Dataset):
     """
-    Stream a collection of U.S. Supreme Court decisions from a compressed json file on disk,
+    Stream a collection of US Supreme Court decisions from a compressed json file on disk,
     either as texts or text + metadata pairs.
 
     Download the data (one time only!) from the textacy-data repo
