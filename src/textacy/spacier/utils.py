@@ -8,7 +8,7 @@ from typing import Iterable, List, Tuple, Union
 import numpy as np
 from spacy import attrs
 from spacy.language import Language
-from spacy.symbols import PROPN, VERB
+from spacy.symbols import PROPN, VERB, NOUN
 from spacy.tokens import Doc, Span, Token
 
 from .. import constants, errors, text_utils
@@ -158,6 +158,12 @@ def get_objects_of_verb(verb: Token) -> List[Token]:
     objs.extend(tok for tok in verb.rights if tok.dep_ == "xcomp")
     # get additional conjunct objects
     objs.extend(tok for obj in objs for tok in _get_conjuncts(obj))
+    # get additional prepositional objects
+    for tok in verb.rights:
+        if tok.dep_ == "prep":
+            for tok2 in tok.rights:
+                if tok2.pos in [PROPN, NOUN]:  # pragma: no cover
+                    objs.append(tok2)
     return objs
 
 
