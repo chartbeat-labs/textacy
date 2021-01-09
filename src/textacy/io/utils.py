@@ -56,7 +56,7 @@ def open_sesame(
             Only applicable in text mode.
         compression: Type of compression, if any, with which ``filepath``
             is read from or written to disk. If None, no compression is used;
-            if 'infer', compression is inferrred from the extension on ``filepath``.
+            if 'infer', compression is inferred from the extension on ``filepath``.
         make_dirs: If True, automatically create (sub)directories
             if not already present in order to write ``filepath``.
 
