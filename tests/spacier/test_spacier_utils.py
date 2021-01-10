@@ -94,7 +94,7 @@ def test_get_subjects_of_verb(spacy_doc):
 
 
 def test_get_objects_of_verb(spacy_doc):
-    expected = [[], ["Python"], ["incompatibilities"], [], ["God"]]
+    expected = [[], ["Python"], ["incompatibilities"], ["sake"], ["God", "Overflow"]]
     main_verbs = [
         tok for sent in spacy_doc.sents for tok in utils.get_main_verbs_of_sent(sent)
     ]
