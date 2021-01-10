@@ -297,6 +297,11 @@ class TestSubjectVerbObjectTriples:
         assert all(isinstance(span, Span) for triple in result for span in triple)
         assert all(any(tok.pos_ == "VERB" for tok in triple[1]) for triple in result)
 
+    def test_prepositions(self):
+        spacy_doc = load_spacy_lang("en")("Barack Obama was born in Hawaii.")
+        result = list(extract.subject_verb_object_triples(spacy_doc))
+        assert [(str(x[0]), str(x[1]), str(x[2])) for x in result] == [("Barack Obama", "was born", "Hawaii")]
+
 
 class TestAcronymsAndDefinitions:
 
