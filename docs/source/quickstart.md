@@ -338,7 +338,7 @@ And that's just getting started! For now, though, I encourage you to pick a data
 
 ## Working with Many Languages
 
-Since a `Corpus` uses the same spaCy language pipeline to process all input texts, it only works in a mono-lingual context. In some cases, though, your collection of texts may contain more than one language; for example, if I occasionally tweeted in Spanish (sí, ¡se habla español!), the `burton-tweets.txt` dataset couldn't be fed in its entirety into a single `Corpus`. This is irritating, but there are some workarounds.
+Since a `Corpus` uses the same spaCy language pipeline to process all input texts, it only works in a mono-lingual context. In some cases, though, your collection of texts may contain more than one language; for example, if I occasionally tweeted in Spanish (sí, ¡sé hablar español!), the `burton-tweets.txt` dataset couldn't be fed in its entirety into a single `Corpus`. This is irritating, but there are some workarounds.
 
 If you haven't already, download spaCy models for the languages you want to analyze --- see [Installation](installation) for details. Then, if your use case doesn't require `Corpus` functionality, you can iterate over the texts and only analyze those for which models are available:
 
