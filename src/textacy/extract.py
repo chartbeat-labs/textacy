@@ -162,8 +162,8 @@ def ngrams(
         )
     if min_freq > 1:
         ngrams_ = list(ngrams_)
-        freqs = itertoolz.frequencies(ngram.lower_ for ngram in ngrams_)
-        ngrams_ = (ngram for ngram in ngrams_ if freqs[ngram.lower_] >= min_freq)
+        freqs = itertoolz.frequencies(ngram.lemma_.lower() for ngram in ngrams_)
+        ngrams_ = (ngram for ngram in ngrams_ if freqs[ngram.lemma_.lower()] >= min_freq)
 
     for ngram in ngrams_:
         yield ngram
@@ -434,7 +434,7 @@ def matches(
             )
         )
     matcher = Matcher(doc.vocab)
-    matcher.add("match", on_match, *patterns)
+    matcher.add("match", patterns, on_match=on_match)
     for _, start, end in matcher(doc):
         yield doc[start:end]
 
