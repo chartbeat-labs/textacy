@@ -12,7 +12,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        python-version: [3.7, 3.8]
+        python-version: [3.7, 3.8, 3.9]
         os: [macos-latest, ubuntu-latest]  # windows-latest
 
     steps:
@@ -40,9 +40,7 @@ jobs:
     - name: download language data
       run: |
         python -m spacy download en_core_web_sm
-        python -m spacy link en_core_web_sm en
         python -m spacy download es_core_news_sm
-        python -m spacy link es_core_news_sm es
         python -m spacy validate
         python -m textacy download capitol_words
         python -m textacy download lang_identifier
