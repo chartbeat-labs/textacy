@@ -11,7 +11,8 @@ import numpy as np
 import sklearn.feature_extraction
 from cytoolz import itertoolz
 from jellyfish import levenshtein_distance as _levenshtein
-from pyemd import emd
+# TODO: figure out if this dependency is broken or what
+# from pyemd import emd
 from sklearn.metrics import pairwise_distances
 from spacy.tokens import Doc, Span, Token
 
@@ -43,6 +44,9 @@ def word_movers(doc1: Doc, doc2: Doc, metric: str = "cosine") -> float:
           Proceedings of the 32nd International Conference on Machine Learning
           (ICML 2015). 2015. http://jmlr.org/proceedings/papers/v37/kusnerb15.pdf
     """
+    # TODO: see original import
+    from pyemd import emd
+
     word_idxs: Dict[str, int] = dict()
 
     n = 0
