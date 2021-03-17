@@ -73,7 +73,7 @@ def load_spacy_lang(
         disable = []
     # load a full spacy lang processing pipeline
     try:
-        spacy_lang = spacy.load(name, disable=disable)
+        spacy_lang = spacy.load(_get_full_model_name(name), disable=disable)
         LOGGER.info("loaded '%s' spaCy language pipeline", name)
         return spacy_lang
     except OSError as e:
@@ -84,6 +84,21 @@ def load_spacy_lang(
             return spacy_lang
         else:
             raise e
+
+
+def _get_full_model_name(name: Union[str, pathlib.Path]) -> Union[str, pathlib.Path]:
+    """This is a hack for spaCy v3. Hopefully temporary."""
+    if isinstance(name, str) and len(name) == 2:
+        candidate_model_names = [
+            mn for mn in spacy.util.get_installed_models() if mn.startswith(name)
+        ]
+        if len(candidate_model_names) == 1:
+            return candidate_model_names[0]
+        else:
+            LOGGER.error(
+                f"unable to infer which spaCy model to load for lang='{name}'"
+            )
+    return name
 
 
 def make_spacy_doc(
