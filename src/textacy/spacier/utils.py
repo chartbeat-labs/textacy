@@ -102,7 +102,7 @@ def preserve_case(token: Token) -> bool:
     Raises:
         ValueError: If parent document has not been POS-tagged.
     """
-    if token.doc.is_tagged is False:
+    if token.doc.has_annotation("TAG") is False:
         raise ValueError(f"parent doc of token '{token}' has not been POS-tagged")
     if token.pos == PROPN or text_utils.is_acronym(token.text):
         return True

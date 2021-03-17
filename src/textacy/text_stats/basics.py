@@ -156,7 +156,7 @@ def n_sents(doc: Doc) -> int:
         If ``doc`` has not been segmented into sentences, it will be modified in-place
         using spaCy's rule-based ``Sentencizer`` pipeline component before counting.
     """
-    if not doc.is_sentenced:
+    if not doc.has_annotation("SENT_START"):
         LOGGER.warning(
             "`doc` has not been segmented into sentences; applying spaCy's rule-based, "
             "`Sentencizer` pipeline component to `doc` before counting..."

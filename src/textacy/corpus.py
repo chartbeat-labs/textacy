@@ -356,7 +356,7 @@ class Corpus:
         self._doc_ids.append(id(doc))
         self.n_docs += 1
         self.n_tokens += len(doc)
-        if doc.is_sentenced:
+        if doc.has_annotation("SENT_START"):
             self.n_sents += itertoolz.count(doc.sents)
 
     # get documents
@@ -433,7 +433,7 @@ class Corpus:
         doc = self.docs[idx]
         self.n_docs -= 1
         self.n_tokens -= len(doc)
-        if doc.is_sentenced:
+        if doc.has_annotation("SENT_START"):
             self.n_sents -= itertoolz.count(doc.sents)
         del self.docs[idx]
         del self._doc_ids[idx]
@@ -628,16 +628,16 @@ class Corpus:
             spacy.attrs.ORTH,
             spacy.attrs.SPACY,
         ]
-        if self[0].is_tagged:
+        if self[0].has_annotation("TAG"):
             attrs.append(spacy.attrs.TAG)
-        if self[0].is_parsed:
+        if self[0].has_annotation("DEP"):
             attrs.append(spacy.attrs.HEAD)
             attrs.append(spacy.attrs.DEP)
         # NOTE: HEAD sets sentence boundaries implicitly based on tree structure, so
         # also setting SENT_START would potentially conflict with existing annotations.
-        elif self[0].is_sentenced:
+        elif self[0].has_annotation("SENT_START"):
             attrs.append(spacy.attrs.SENT_START)
-        if self[0].is_nered:
+        if self[0].has_annotation("ENT_IOB"):
             attrs.append(spacy.attrs.ENT_IOB)
             attrs.append(spacy.attrs.ENT_TYPE)
         doc_bin = DocBin(attrs=attrs, store_user_data=store_user_data)

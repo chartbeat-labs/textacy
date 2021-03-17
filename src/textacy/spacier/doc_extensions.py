@@ -142,7 +142,7 @@ def to_tokenized_text(doc: Doc) -> List[List[str]]:
         If ``doc`` hasn't been segmented into sentences, the entire document
         is treated as a single sentence.
     """
-    if doc.is_sentenced:
+    if doc.has_annotation("SENT_START"):
         return [[token.text for token in sent] for sent in doc.sents]
     else:
         return [[token.text for token in doc]]
@@ -157,7 +157,7 @@ def to_tagged_text(doc: Doc) -> List[List[Tuple[str, str]]]:
         If ``doc`` hasn't been segmented into sentences, the entire document
         is treated as a single sentence.
     """
-    if doc.is_sentenced:
+    if doc.has_annotation("SENT_START"):
         return [[(token.text, token.pos_) for token in sent] for sent in doc.sents]
     else:
         return [[(token.text, token.pos_) for token in doc]]

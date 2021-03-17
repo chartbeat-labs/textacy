@@ -89,7 +89,7 @@ class Augmenter:
         Returns:
             :class:`spacy.tokens.Doc`
         """
-        if doc.is_sentenced:
+        if doc.has_annotation("SENT_START"):
             nested_aug_toks = [aug_utils.to_aug_toks(sent) for sent in doc.sents]
         else:
             nested_aug_toks = [aug_utils.to_aug_toks(doc)]

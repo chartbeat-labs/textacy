@@ -92,7 +92,7 @@ def doc_to_conll(doc):
     Raises:
         ValueError: if ``doc`` is not parsed
     """
-    if doc.is_parsed is False:
+    if doc.has_annotation("DEP") is False:
         raise ValueError("spaCy doc must be parsed")
     rows = []
     for j, sent in enumerate(doc.sents):
