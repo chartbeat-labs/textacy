@@ -3,7 +3,9 @@
 """
 import inspect
 import logging
+from typing import Iterable, Optional, Union
 
+import spacy
 from spacy.tokens import Doc
 
 from .. import text_stats
@@ -28,9 +30,8 @@ class TextStatsComponent:
     Add the component to a pipeline, *after* the parser (as well as any
     subsequent components that modify the tokens/sentences of the doc)::
 
-        >>> en = spacy.load('en')
-        >>> text_stats_component = TextStatsComponent()
-        >>> en.add_pipe(text_stats_component, after='parser')
+        >>> en = spacy.load("en_core_web_sm")
+        >>> en.add_pipe("textacy_text_stats", after="parser")
 
     Process a text with the pipeline and access the custom attributes via
     spaCy's underscore syntax::
@@ -44,9 +45,8 @@ class TextStatsComponent:
     Specify which attributes of the :class:`textacy.text_stats.TextStats()`
     to add to processed documents::
 
-        >>> en = spacy.load('en')
-        >>> text_stats_component = TextStatsComponent(attrs='n_words')
-        >>> en.add_pipe(text_stats_component, last=True)
+        >>> en = spacy.load("en_core_web_sm")
+        >>> en.add_pipe("textacy_text_stats", last=True, config={"attrs": "n_words"})
         >>> doc = en(u"This is a test test someverylongword.")
         >>> doc._.n_words
         6
@@ -96,3 +96,8 @@ class TextStatsComponent:
                 )
                 raise
         return doc
+
+
+@spacy.language.Language.factory("textacy_text_stats", default_config={"attrs": None})
+def text_stats_component(nlp, name, attrs: Optional[Union[str, Iterable[str]]]):
+    return TextStatsComponent(attrs=attrs)
