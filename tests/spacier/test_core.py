@@ -13,12 +13,12 @@ Many different classes of machine learning algorithms have been applied to NLP t
 
 @pytest.fixture(scope="module")
 def doc(request):
-    return make_spacy_doc((TEXT, {"foo": "bar!"}), lang="en")
+    return make_spacy_doc((TEXT, {"foo": "bar!"}), lang="en_core_web_sm")
 
 
 @pytest.fixture(scope="module")
 def langs():
-    return ("en", load_spacy_lang("en"), lambda text: "en")
+    return ("en", load_spacy_lang("en_core_web_sm"), lambda text: "en")
 
 
 class TestLoadSpacyLang:

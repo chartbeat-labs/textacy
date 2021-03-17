@@ -19,7 +19,7 @@ def ts_en():
         "white and enormous, like prehistoric eggs. The world was so recent that many "
         "things lacked names, and in order to indicate them it was necessary to point."
     )
-    return textacy.TextStats(textacy.make_spacy_doc(text, lang="en"))
+    return textacy.TextStats(textacy.make_spacy_doc(text, lang="en_core_web_sm"))
 
 
 @pytest.fixture(scope="module")

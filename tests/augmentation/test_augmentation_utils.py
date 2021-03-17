@@ -13,7 +13,7 @@ def spacy_doc():
         "Worse, their response to globalization's excesses has been: "
         "Here's a new trade deal, much better than the last one."
     )
-    return make_spacy_doc(text, lang="en")
+    return make_spacy_doc(text, lang="en_core_web_sm")
 
 
 def test_aug_tok():

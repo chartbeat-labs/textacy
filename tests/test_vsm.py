@@ -18,7 +18,7 @@ def tokenized_docs():
         "Why does the lamb love Mary so? The eager children cry.",
         "Mary loves the lamb, you know, the teacher did reply.",
     ]
-    corpus = Corpus("en", data=texts)
+    corpus = Corpus("en_core_web_sm", data=texts)
     tokenized_docs = [
         list(doc._.to_terms_list(ngrams=1, entities=None, normalize="lower", as_strings=True))
         for doc in corpus

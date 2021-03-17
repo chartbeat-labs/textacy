@@ -11,5 +11,5 @@ def test_cache_size():
     # check cache size; low thresh but still larger than if the size of
     # loaded data was not being correctly assessed
     # NOTE: should come *after* the function that clears the cache
-    _ = load_spacy_lang("en")
+    _ = load_spacy_lang("en_core_web_sm")
     assert cache.LRU_CACHE.currsize >= 1000

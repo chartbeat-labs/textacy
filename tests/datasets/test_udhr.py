@@ -71,7 +71,7 @@ def test_bad_filters():
             list(DATASET.texts(**bad_filter))
     bad_filters = (
         {"lang": True},
-        {"lang": textacy.load_spacy_lang("en")},
+        {"lang": textacy.load_spacy_lang("en_core_web_sm")},
     )
     for bad_filter in bad_filters:
         with pytest.raises(TypeError):

@@ -19,7 +19,7 @@ TESTS_DIR = os.path.split(__file__)[0]
 
 @pytest.fixture(scope="module")
 def spacy_doc():
-    spacy_lang = load_spacy_lang("en")
+    spacy_lang = load_spacy_lang("en_core_web_sm")
     spacy_doc = spacy_lang(TEXT)
     return spacy_doc
 
@@ -180,7 +180,7 @@ class TestSpacyIO:
             next(io.read_spacy_docs(filepath, format="binary", lang=None))
         observed = [
             tok.lower_
-            for doc in io.read_spacy_docs(filepath, format="binary", lang="en")
+            for doc in io.read_spacy_docs(filepath, format="binary", lang="en_core_web_sm")
             for tok in doc
         ]
         assert observed == expected
@@ -194,7 +194,7 @@ class TestSpacyIO:
         )
         observed = [
             tok.lower_
-            for doc in io.read_spacy_docs(filepath, format="binary", lang="en")
+            for doc in io.read_spacy_docs(filepath, format="binary", lang="en_core_web_sm")
             for tok in doc
         ]
         assert observed == expected

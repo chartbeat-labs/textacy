@@ -15,7 +15,7 @@ pytestmark = pytest.mark.skipif(
 @pytest.fixture(scope="module")
 def spacy_doc():
     text = "The quick brown fox jumps over the lazy dog."
-    return textacy.make_spacy_doc(text, lang="en")
+    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
 
 
 @pytest.mark.skip("No need to download a new resource every time")

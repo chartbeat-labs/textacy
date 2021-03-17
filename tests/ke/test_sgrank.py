@@ -8,12 +8,12 @@ from textacy import datasets, ke
 def spacy_doc():
     ds = datasets.CapitolWords()
     text = next(ds.texts(min_len=1500, limit=1))
-    return textacy.make_spacy_doc(text, lang="en")
+    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
 
 
 @pytest.fixture(scope="module")
 def empty_spacy_doc():
-    return textacy.make_spacy_doc("", lang="en")
+    return textacy.make_spacy_doc("", lang="en_core_web_sm")
 
 
 def test_default(spacy_doc):

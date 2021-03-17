@@ -11,7 +11,7 @@ def doc():
         "Many years later, as he faced the firing squad, Colonel Aureliano Buendía was "
         "to remember that distant afternoon when his father took him to discover ice."
     )
-    return make_spacy_doc(text, lang="en")
+    return make_spacy_doc(text, lang="en_core_web_sm")
 
 
 @pytest.fixture(scope="module")

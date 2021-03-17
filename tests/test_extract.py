@@ -11,7 +11,7 @@ from textacy import constants, extract
 
 @pytest.fixture(scope="module")
 def spacy_doc():
-    spacy_lang = load_spacy_lang("en")
+    spacy_lang = load_spacy_lang("en_core_web_sm")
     text = (
         "Two weeks ago, I was in Kuwait participating in an I.M.F. (International Monetary Fund) seminar for Arab educators. "
         "For 30 minutes, we discussed the impact of technology trends on education in the Middle East. "

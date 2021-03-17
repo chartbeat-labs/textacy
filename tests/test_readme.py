@@ -34,14 +34,14 @@ def text():
 
 @pytest.fixture(scope="module")
 def doc(text):
-    spacy_lang = load_spacy_lang("en")
+    spacy_lang = load_spacy_lang("en_core_web_sm")
     return make_spacy_doc(text, lang=spacy_lang)
 
 
 @pytest.fixture(scope="module")
 def corpus():
     records = DATASET.records(speaker_name={"Bernie Sanders"}, limit=10)
-    corpus = Corpus("en", data=records)
+    corpus = Corpus("en_core_web_sm", data=records)
     return corpus
 
 

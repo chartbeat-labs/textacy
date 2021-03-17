@@ -8,12 +8,12 @@ from textacy import datasets, ke
 def spacy_doc():
     ds = datasets.CapitolWords()
     text = next(ds.texts(min_len=1500, limit=1))
-    return textacy.make_spacy_doc(text, lang="en")
+    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
 
 
 @pytest.fixture(scope="module")
 def empty_spacy_doc():
-    return textacy.make_spacy_doc("", lang="en")
+    return textacy.make_spacy_doc("", lang="en_core_web_sm")
 
 
 def test_default(spacy_doc):
@@ -53,7 +53,10 @@ def test_empty_doc(empty_spacy_doc):
 
 
 def test_single_sentence_doc():
-    doc = textacy.make_spacy_doc("This is a document with a single sentence.", lang="en")
+    doc = textacy.make_spacy_doc(
+        "This is a document with a single sentence.",
+        lang="en_core_web_sm",
+    )
     result = ke.scake(doc)
     assert isinstance(result, list)
     assert len(result) > 0

@@ -17,7 +17,7 @@ Many different classes of machine learning algorithms have been applied to NLP t
 
 @pytest.fixture(scope="module")
 def doc(request):
-    return make_spacy_doc((TEXT, {"foo": "bar"}), lang="en")
+    return make_spacy_doc((TEXT, {"foo": "bar"}), lang="en_core_web_sm")
 
 
 def test_set_remove_extensions():
@@ -76,7 +76,7 @@ class TestDocExtensions:
         assert len(tokenized_text) == doc._.n_sents
 
     def test_to_tokenized_text_nosents(self):
-        spacy_lang = load_spacy_lang("en")
+        spacy_lang = load_spacy_lang("en_core_web_sm")
         with spacy_lang.disable_pipes("parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tokenized_text = doc._.to_tokenized_text()
@@ -94,7 +94,7 @@ class TestDocExtensions:
         assert len(tagged_text) == doc._.n_sents
 
     def test_to_tagged_text_nosents(self):
-        spacy_lang = load_spacy_lang("en")
+        spacy_lang = load_spacy_lang("en_core_web_sm")
         with spacy_lang.disable_pipes("parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tagged_text = doc._.to_tagged_text()
@@ -193,7 +193,7 @@ class TestDocExtensions:
 
     def test_to_bag_of_words_values(self):
         text = "Burton Jacob DeWilde, Burton Jacob, Burton."
-        doc = make_spacy_doc(text, lang="en")
+        doc = make_spacy_doc(text, lang="en_core_web_sm")
         bow = doc._.to_bag_of_words(weighting="count", normalize="lower", as_strings=True)
         assert len(bow) == 3
         assert bow["burton"] == 3

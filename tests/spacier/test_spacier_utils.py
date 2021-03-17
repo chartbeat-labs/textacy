@@ -7,7 +7,7 @@ from textacy.spacier import utils
 
 @pytest.fixture(scope="module")
 def spacy_doc():
-    spacy_lang = load_spacy_lang("en")
+    spacy_lang = load_spacy_lang("en_core_web_sm")
     text = """
     The unit tests aren't going well.
     I love Python, but I don't love backwards incompatibilities.
@@ -108,7 +108,7 @@ def test_get_objects_of_verb(spacy_doc):
 
 def test_make_doc_from_text_chunks():
     text = "Burton forgot to add tests for this function."
-    for lang in ("en", load_spacy_lang("en")):
+    for lang in ("en_core_web_sm", load_spacy_lang("en_core_web_sm")):
         spacy_doc = utils.make_doc_from_text_chunks(text, lang)
         assert isinstance(spacy_doc, Doc)
         assert spacy_doc.text == text

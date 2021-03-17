@@ -9,13 +9,13 @@ from textacy import export
 @pytest.fixture(scope="module")
 def spacy_doc():
     text = "I would have lived in peace. But my enemies brought me war."
-    spacy_lang = load_spacy_lang("en")
+    spacy_lang = load_spacy_lang("en_core_web_sm")
     spacy_doc = spacy_lang(text)
     return spacy_doc
 
 
 def test_to_gensim(spacy_doc):
-    spacy_lang = load_spacy_lang("en")
+    spacy_lang = load_spacy_lang("en_core_web_sm")
     result = export.docs_to_gensim(
         [spacy_doc], spacy_lang.vocab,
         filter_stops=True, filter_punct=True, filter_nums=True,

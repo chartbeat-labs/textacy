@@ -16,7 +16,7 @@ def text_pairs():
 @pytest.fixture(scope="module")
 def doc_pairs(text_pairs):
     return [
-        (make_spacy_doc(text1, lang="en"), make_spacy_doc(text2, lang="en"))
+        (make_spacy_doc(text1, lang="en_core_web_sm"), make_spacy_doc(text2, lang="en_core_web_sm"))
         for text1, text2 in text_pairs
     ]
 
