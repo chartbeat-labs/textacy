@@ -81,18 +81,13 @@ def merge_spans(spans: Iterable[Span], doc: Doc) -> None:
         spans (Iterable[:class:`spacy.tokens.Span`])
         doc (:class:`spacy.tokens.Doc`)
     """
-    try:  # retokenizer was added to spacy in v2.0.11
-        with doc.retokenize() as retokenizer:
-            string_store = doc.vocab.strings
-            for span in spans:
-                retokenizer.merge(
-                    doc[span.start : span.end],
-                    attrs=attrs.intify_attrs({"ent_type": span.label}, string_store),
-                )
-    except AttributeError:
-        spans = [(span.start_char, span.end_char, span.label) for span in spans]
-        for start_char, end_char, label in spans:
-            doc.merge(start_char, end_char, ent_type=label)
+    with doc.retokenize() as retokenizer:
+        string_store = doc.vocab.strings
+        for span in spans:
+            retokenizer.merge(
+                doc[span.start : span.end],
+                attrs=attrs.intify_attrs({"ent_type": span.label}, string_store),
+            )
 
 
 def preserve_case(token: Token) -> bool:
