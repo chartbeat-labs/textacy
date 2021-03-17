@@ -81,9 +81,9 @@ class TestNGrams:
     def test_min_freq(self, spacy_doc):
         n = 2
         counts = collections.Counter()
-        counts.update(spacy_doc[i : i + n].lower_ for i in range(len(spacy_doc) - n + 1))
+        counts.update(spacy_doc[i : i + n].text.lower() for i in range(len(spacy_doc) - n + 1))
         result = list(extract.ngrams(spacy_doc, 2, min_freq=2))
-        assert all(counts[span.lower_] >= 2 for span in result)
+        assert all(counts[span.text.lower()] >= 2 for span in result)
 
     def test_pos(self, spacy_doc):
         result1 = list(extract.ngrams(spacy_doc, 2, include_pos={"NOUN"}))
@@ -171,7 +171,7 @@ class TestNounChunks:
     def test_min_freq(self, spacy_doc):
         text = spacy_doc.text.lower()
         result = list(extract.noun_chunks(spacy_doc, drop_determiners=True, min_freq=2))
-        assert all(text.count(span.lower_) >= 2 for span in result)
+        assert all(text.count(span.text.lower()) >= 2 for span in result)
 
 
 class TestPOSRegexMatches:

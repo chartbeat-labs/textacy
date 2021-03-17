@@ -287,7 +287,7 @@ def to_terms_list(
                 try:
                     yield term.lower
                 except AttributeError:
-                    yield ss.add(term.lower_)
+                    yield ss.add(term.text.lower())
         elif callable(normalize):
             for term in terms:
                 yield ss.add(normalize(term))
@@ -304,7 +304,7 @@ def to_terms_list(
                 yield term.lemma_
         elif normalize == "lower":
             for term in terms:
-                yield term.lower_
+                yield term.text.lower()
         elif callable(normalize):
             for term in terms:
                 yield normalize(term)

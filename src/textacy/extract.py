@@ -162,8 +162,8 @@ def ngrams(
         )
     if min_freq > 1:
         ngrams_ = list(ngrams_)
-        freqs = itertoolz.frequencies(ngram.lower_ for ngram in ngrams_)
-        ngrams_ = (ngram for ngram in ngrams_ if freqs[ngram.lower_] >= min_freq)
+        freqs = itertoolz.frequencies(ngram.text.lower() for ngram in ngrams_)
+        ngrams_ = (ngram for ngram in ngrams_ if freqs[ngram.text.lower()] >= min_freq)
 
     for ngram in ngrams_:
         yield ngram
@@ -238,8 +238,8 @@ def entities(
         )
     if min_freq > 1:
         ents = list(ents)
-        freqs = itertoolz.frequencies(ent.lower_ for ent in ents)
-        ents = (ent for ent in ents if freqs[ent.lower_] >= min_freq)
+        freqs = itertoolz.frequencies(ent.text.lower() for ent in ents)
+        ents = (ent for ent in ents if freqs[ent.text.lower()] >= min_freq)
 
     for ent in ents:
         yield ent
@@ -295,8 +295,8 @@ def noun_chunks(
         ncs = (nc if nc[0].pos != DET else nc[1:] for nc in ncs)
     if min_freq > 1:
         ncs = list(ncs)
-        freqs = itertoolz.frequencies(nc.lower_ for nc in ncs)
-        ncs = (nc for nc in ncs if freqs[nc.lower_] >= min_freq)
+        freqs = itertoolz.frequencies(nc.text.lower() for nc in ncs)
+        ncs = (nc for nc in ncs if freqs[nc.text.lower()] >= min_freq)
 
     for nc in ncs:
         yield nc
@@ -434,7 +434,7 @@ def matches(
             )
         )
     matcher = Matcher(doc.vocab)
-    matcher.add("match", on_match, *patterns)
+    matcher.add("match", patterns, on_match=on_match)
     for _, start, end in matcher(doc):
         yield doc[start:end]
 

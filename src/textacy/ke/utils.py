@@ -47,7 +47,7 @@ def normalize_terms(
     if normalize == "lemma":
         terms = (term.lemma_ for term in terms)
     elif normalize == "lower":
-        terms = (term.lower_ for term in terms)
+        terms = (term.text.lower() for term in terms)
     elif normalize is None:
         terms = (term.text for term in terms)
     elif callable(normalize):
