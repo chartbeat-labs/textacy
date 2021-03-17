@@ -18,13 +18,17 @@ def doc(request):
 
 @pytest.fixture(scope="module")
 def langs():
-    return ("en", load_spacy_lang("en_core_web_sm"), lambda text: "en")
+    return (
+        "en_core_web_sm",
+        load_spacy_lang("en_core_web_sm"),
+        lambda text: "en_core_web_sm",
+    )
 
 
 class TestLoadSpacyLang:
 
     def test_load_model(self):
-        for lang in ["en", "en_core_web_sm"]:
+        for lang in ["en_core_web_sm", "es_core_news_sm"]:
             for disable in [None, ("tagger", "parser", "ner")]:
                 assert isinstance(
                     load_spacy_lang(lang, disable=disable),
@@ -39,7 +43,7 @@ class TestLoadSpacyLang:
 
     def test_disable_hashability(self):
         with pytest.raises(TypeError):
-            _ = load_spacy_lang("en", disable=["tagger", "parser", "ner"])
+            _ = load_spacy_lang("en_core_web_sm", disable=["tagger", "parser", "ner"])
 
     def test_bad_name(self):
         for name in ("unk", "un"):
@@ -64,7 +68,7 @@ class TestMakeSpacyDoc:
             assert isinstance(make_spacy_doc(record, lang=lang), spacy.tokens.Doc)
 
     def test_doc_data(self, langs):
-        spacy_lang = load_spacy_lang("en")
+        spacy_lang = load_spacy_lang("en_core_web_sm")
         doc = spacy_lang("This is an English sentence.")
         assert isinstance(make_spacy_doc(doc), spacy.tokens.Doc)
         for lang in langs:
@@ -81,13 +85,13 @@ class TestMakeSpacyDoc:
                 _ = make_spacy_doc(invalid_content)
 
     def test_invalid_lang(self):
-        invalid_langs = [b"en", ["en", "en_core_web_sm"], True]
+        invalid_langs = [b"en", ["en_core_web_sm", "es_core_news_sm"], True]
         for invalid_lang in invalid_langs:
             with pytest.raises(TypeError):
                 _ = make_spacy_doc("This is an English sentence.", lang=invalid_lang)
 
     def test_invalid_data_lang_combo(self):
-        spacy_lang = load_spacy_lang("en")
+        spacy_lang = load_spacy_lang("en_core_web_sm")
         combos = (
             (spacy_lang("Hello, how are you my friend?"), "es"),
             (spacy_lang("Hello, how are you my friend?"), True),

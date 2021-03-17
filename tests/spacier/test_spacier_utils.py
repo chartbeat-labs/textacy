@@ -8,12 +8,12 @@ from textacy.spacier import utils
 @pytest.fixture(scope="module")
 def spacy_doc():
     spacy_lang = load_spacy_lang("en_core_web_sm")
-    text = """
-    The unit tests aren't going well.
-    I love Python, but I don't love backwards incompatibilities.
-    No programmers were permanently damaged for textacy's sake.
-    Thank God for Stack Overflow.
-    """
+    text = (
+        "The unit tests aren't going well. "
+        "I love Python, but I don't love backwards incompatibilities. "
+        "No programmers were permanently damaged for textacy's sake. "
+        "Thank God for Stack Overflow."
+    )
     spacy_doc = spacy_lang(text.strip())
     return spacy_doc
 
@@ -33,18 +33,18 @@ def test_get_normalized_text(spacy_doc):
         "unit",
         "test",
         "be",
-        "not",
+        "n't",
         "go",
         "well",
         ".",
-        "-PRON-",
+        "I",
         "love",
         "Python",
         ",",
         "but",
-        "-PRON-",
+        "I",
         "do",
-        "not",
+        "n't",
         "love",
         "backwards",
         "incompatibility",

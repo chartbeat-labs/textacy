@@ -21,6 +21,7 @@ def doc_pairs(text_pairs):
     ]
 
 
+@pytest.importorskip("pyemd")
 class TestWordMovers:
 
     def test_metrics(self, doc_pairs):
