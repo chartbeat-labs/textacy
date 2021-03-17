@@ -4,10 +4,17 @@ import textacy
 from textacy import datasets, ke
 
 
+DATASET = datasets.CapitolWords()
+
+pytestmark = pytest.mark.skipif(
+    DATASET.filepath is None,
+    reason="CapitolWords dataset must be downloaded before running tests",
+)
+
+
 @pytest.fixture(scope="module")
 def spacy_doc():
-    ds = datasets.CapitolWords()
-    text = next(ds.texts(min_len=1500, limit=1))
+    text = next(DATASET.texts(min_len=1500, limit=1))
     return textacy.make_spacy_doc(text, lang="en_core_web_sm")
 
 
