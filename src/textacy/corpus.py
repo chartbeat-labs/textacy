@@ -161,7 +161,7 @@ class Corpus:
         self.n_docs = 0
         self.n_sents = 0
         self.n_tokens = 0
-        if data:
+        if data is not None:
             self.add(data)
 
     # dunder
