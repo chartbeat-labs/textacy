@@ -26,10 +26,41 @@ def test_remove_accents():
 
 
 @pytest.mark.parametrize(
+    "text_in, only, text_out",
+    [
+        ("Hello, {name}!", None, "Hello, !"),
+        ("Hello, world (DeWilde et al., 2021, p. 42)!", None, "Hello, world !"),
+        ("Hello, world (1)!", None, "Hello, world !"),
+        ("Hello, world [1]!", None, "Hello, world !"),
+        (
+            "Hello, world (and whomever it may concern [not that it's any of my business])!",
+            None,
+            "Hello, world !",
+        ),
+        (
+            "Hello, world (and whomever it may concern (not that it's any of my business))!",
+            None,
+            "Hello, world (and whomever it may concern )!",
+        ),
+        (
+            "Hello, world (and whomever it may concern [not that it's any of my business])!",
+            "square",
+            "Hello, world (and whomever it may concern )!",
+        ),
+        ("Hello, world [1]!", "round", "Hello, world [1]!"),
+        ("Hello, world [1]!", ("curly", "round"), "Hello, world [1]!"),
+    ]
+)
+def test_remove_brackets(text_in, only, text_out):
+    assert preprocessing.remove.remove_brackets(text_in, only=only) == text_out
+
+
+@pytest.mark.parametrize(
     "text_in, text_out",
     [
         ("Hello, <i>world!</i>", "Hello, world!"),
         ("<title>Hello, world!</title>", "Hello, world!"),
+        ('<title class="foo">Hello, world!</title>', "Hello, world!"),
         (
             "<html><head><title>Hello, <i>world!</i></title></head></html>",
             "Hello, world!",
@@ -37,7 +68,7 @@ def test_remove_accents():
         (
             "<html>\n"
             "  <head>\n"
-            "    <title>Hello, <i>world!</i></title>\n"
+            '    <title class="foo">Hello, <i>world!</i></title>\n'
             "  </head>\n"
             "  <!--this is a comment-->\n"
             "  <body>\n"

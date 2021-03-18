@@ -34,6 +34,10 @@ RE_LINEBREAK: Pattern = re.compile(r"(\r\n|[\n\v])+")
 RE_NONBREAKING_SPACE: Pattern = re.compile(r"[^\S\n\v]+")
 RE_ZWSP: Pattern = re.compile(r"[\u200B\u2060\uFEFF]+")
 
+RE_BRACKETS_CURLY = re.compile(r"\{[^{}]*?\}")
+RE_BRACKETS_ROUND = re.compile(r"\([^()]*?\)")
+RE_BRACKETS_SQUARE = re.compile(r"\[[^\[\]]*?\]")
+
 # source: https://gist.github.com/dperini/729294
 RE_URL: Pattern = re.compile(
     r"(?:^|(?<![\w/.]))"
