@@ -5,13 +5,7 @@ in problematic ways.
 import re
 import unicodedata
 
-from .resources import (
-    QUOTE_TRANSLATION_TABLE,
-    RE_HYPHENATED_WORD,
-    RE_LINEBREAK,
-    RE_NONBREAKING_SPACE,
-    RE_ZWSP,
-)
+from . import resources
 
 
 def normalize_hyphenated_words(text: str) -> str:
@@ -20,7 +14,7 @@ def normalize_hyphenated_words(text: str) -> str:
     for visual consistency (aka hyphenated) by joining the pieces back together,
     sans hyphen and whitespace.
     """
-    return RE_HYPHENATED_WORD.sub(r"\1\2", text)
+    return resources.RE_HYPHENATED_WORD.sub(r"\1\2", text)
 
 
 def normalize_quotation_marks(text: str) -> str:
@@ -29,7 +23,7 @@ def normalize_quotation_marks(text: str) -> str:
     to just the basic ASCII equivalents. Note that this will also normalize fancy
     apostrophes, which are typically represented as single quotation marks.
     """
-    return text.translate(QUOTE_TRANSLATION_TABLE)
+    return text.translate(resources.QUOTE_TRANSLATION_TABLE)
 
 
 def normalize_repeating_chars(text: str, *, chars: str, maxn: int = 1) -> str:
@@ -76,7 +70,7 @@ def normalize_whitespace(text: str) -> str:
     with a single newline, and non-breaking spaces with a single space, then
     strip any leading/trailing whitespace.
     """
-    text = RE_ZWSP.sub("", text)
-    text = RE_LINEBREAK.sub(r"\n", text)
-    text = RE_NONBREAKING_SPACE.sub(" ", text)
+    text = resources.RE_ZWSP.sub("", text)
+    text = resources.RE_LINEBREAK.sub(r"\n", text)
+    text = resources.RE_NONBREAKING_SPACE.sub(" ", text)
     return text.strip()

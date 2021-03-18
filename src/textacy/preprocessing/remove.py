@@ -6,7 +6,7 @@ import re
 import unicodedata
 from typing import Optional
 
-from .resources import _get_punct_translation_table
+from . import resources
 
 
 def remove_accents(text: str, *, fast: bool = False) -> str:
@@ -26,9 +26,6 @@ def remove_accents(text: str, *, fast: bool = False) -> str:
 
     Returns:
         str
-
-    Raises:
-        ValueError: If ``method`` is not in {"unicode", "ascii"}.
 
     See Also:
         For a more powerful (but slower) alternative, check out ``unidecode``:
@@ -70,4 +67,4 @@ def remove_punctuation(text: str, *, marks: Optional[str] = None) -> str:
     if marks:
         return re.sub("[{}]+".format(re.escape(marks)), " ", text, flags=re.UNICODE)
     else:
-        return text.translate(_get_punct_translation_table())
+        return text.translate(resources.PUNCT_TRANSLATION_TABLE)
