@@ -1,8 +1,32 @@
 import functools
+import html.parser
 import re
 import sys
 import unicodedata
 from typing import Any, Dict, Pattern
+
+
+class HTMLTextExtractor(html.parser.HTMLParser):
+    """
+    Simple subclass of :class:`html.parser.HTMLParser` to collect data elements
+    (non-tag, -comment, -pi, etc. elements) fed to the parser, then make them
+    available as stripped, concatenated text via :meth:`HTMLTextExtractor.get_text()`.
+
+    Note:
+        Users probably shouldn't deal with this class directly;
+        instead, use `:func:`remove.remove_html_tags()`.
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.data = []
+
+    def handle_data(self, data):
+        self.data.append(data)
+
+    def get_text(self) -> str:
+        return "".join(self.data).strip()
+
 
 # compile regexes, so we don't do this on the fly and rely on caching
 
@@ -116,7 +140,6 @@ RE_HYPHENATED_WORD: Pattern = re.compile(
 
 # build mapping of unicode punctuation symbol ordinals to their replacements
 # and lazy-load the big one, since it's relatively expensive to compute
-
 
 QUOTE_TRANSLATION_TABLE: Dict[int, int] = {
     ord(x): ord(y)

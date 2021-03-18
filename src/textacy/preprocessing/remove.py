@@ -45,6 +45,27 @@ def remove_accents(text: str, *, fast: bool = False) -> str:
         )
 
 
+def remove_html_tags(text: str) -> str:
+    """
+    Remove HTML tags from ``text``, returning just the text found between tags
+    and other non-data elements.
+
+    Args:
+        text
+
+    Returns:
+        str
+
+    Note:
+        This function relies on the stdlib :class:`html.parser.HTMLParser` and
+        doesn't do anything fancy. For a better and potentially faster solution,
+        consider using ``lxml`` and/or ``beautifulsoup4``.
+    """
+    parser = resources.HTMLTextExtractor()
+    parser.feed(text)
+    return parser.get_text()
+
+
 def remove_punctuation(text: str, *, marks: Optional[str] = None) -> str:
     """
     Remove punctuation from ``text`` by replacing all instances of ``marks``
