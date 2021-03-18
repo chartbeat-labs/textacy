@@ -10,7 +10,7 @@ from . import resources
 from .. import utils
 
 
-def remove_accents(text: str, *, fast: bool = False) -> str:
+def accents(text: str, *, fast: bool = False) -> str:
     """
     Remove accents from any accented unicode characters in ``text``, either by
     replacing them with ASCII equivalents or removing them entirely.
@@ -46,7 +46,7 @@ def remove_accents(text: str, *, fast: bool = False) -> str:
         )
 
 
-def remove_brackets(
+def brackets(
     text: str,
     *,
     only: Optional[Union[str, Collection[str]]] = None,
@@ -82,7 +82,7 @@ def remove_brackets(
     return text
 
 
-def remove_html_tags(text: str) -> str:
+def html_tags(text: str) -> str:
     """
     Remove HTML tags from ``text``, returning just the text found between tags
     and other non-data elements.
@@ -103,7 +103,7 @@ def remove_html_tags(text: str) -> str:
     return parser.get_text()
 
 
-def remove_punctuation(
+def punctuation(
     text: str,
     *,
     only: Optional[Union[str, Collection[str]]] = None,

@@ -17,7 +17,7 @@ from textacy import preprocessing
     ]
 )
 def test_normalize_hyphenated_words(text_in, text_out):
-    assert preprocessing.normalize_hyphenated_words(text_in) == text_out
+    assert preprocessing.normalize.hyphenated_words(text_in) == text_out
 
 
 @pytest.mark.parametrize(
@@ -29,7 +29,7 @@ def test_normalize_hyphenated_words(text_in, text_out):
     ]
 )
 def test_normalize_quotation_marks(text_in, text_out):
-    assert preprocessing.normalize_quotation_marks(text_in) == text_out
+    assert preprocessing.normalize.quotation_marks(text_in) == text_out
 
 
 @pytest.mark.parametrize(
@@ -59,7 +59,7 @@ def test_normalize_quotation_marks(text_in, text_out):
 )
 def test_normalize_repeating_chars(kwargs, text_out):
     text_in = "**Hello**, world!!! I wonder....... How are *you* doing?!?! lololol"
-    assert preprocessing.normalize_repeating_chars(text_in, **kwargs) == text_out
+    assert preprocessing.normalize.repeating_chars(text_in, **kwargs) == text_out
 
 
 @pytest.mark.parametrize(
@@ -69,7 +69,7 @@ def test_normalize_repeating_chars(kwargs, text_out):
     ]
 )
 def test_normalize_unicode(text_in, text_out):
-    assert preprocessing.normalize_unicode(text_in, form="NFKC") == text_out
+    assert preprocessing.normalize.unicode(text_in, form="NFKC") == text_out
 
 
 @pytest.mark.parametrize(
@@ -87,4 +87,4 @@ def test_normalize_unicode(text_in, text_out):
     ]
 )
 def test_normalize_whitespace(text_in, text_out):
-    assert preprocessing.normalize_whitespace(text_in) == text_out
+    assert preprocessing.normalize.whitespace(text_in) == text_out

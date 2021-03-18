@@ -12,7 +12,7 @@ from textacy import preprocessing
     ]
 )
 def test_replace_currency_symbols(text_in, text_out):
-    assert preprocessing.replace_currency_symbols(text_in) == text_out
+    assert preprocessing.replace.currency_symbols(text_in) == text_out
 
 
 @pytest.mark.parametrize(
@@ -23,7 +23,7 @@ def test_replace_currency_symbols(text_in, text_out):
     ]
 )
 def test_replace_emails(text_in, text_out):
-    assert preprocessing.replace_emails(text_in) == text_out
+    assert preprocessing.replace.emails(text_in) == text_out
 
 
 @pytest.mark.parametrize(
@@ -34,7 +34,7 @@ def test_replace_emails(text_in, text_out):
     ]
 )
 def test_replace_emojis(text_in, text_out):
-    assert preprocessing.replace_emojis(text_in) == text_out
+    assert preprocessing.replace.emojis(text_in) == text_out
 
 
 @pytest.mark.parametrize(
@@ -47,7 +47,7 @@ def test_replace_emojis(text_in, text_out):
     ]
 )
 def test_replace_hashtags(text_in, text_out):
-    assert preprocessing.replace_hashtags(text_in) == text_out
+    assert preprocessing.replace.hashtags(text_in) == text_out
 
 
 @pytest.mark.parametrize(
@@ -60,7 +60,7 @@ def test_replace_hashtags(text_in, text_out):
     ]
 )
 def test_replace_numbers(text_in, text_out):
-    assert preprocessing.replace_numbers(text_in) == text_out
+    assert preprocessing.replace.numbers(text_in) == text_out
 
 
 @pytest.mark.parametrize(
@@ -73,7 +73,7 @@ def test_replace_numbers(text_in, text_out):
     ]
 )
 def test_replace_phone_numbers(text_in, text_out):
-    assert preprocessing.replace_phone_numbers(text_in) == text_out
+    assert preprocessing.replace.phone_numbers(text_in) == text_out
 
 
 @pytest.mark.parametrize(
@@ -86,7 +86,7 @@ def test_replace_phone_numbers(text_in, text_out):
     ]
 )
 def test_replace_urls(text_in, text_out):
-    assert preprocessing.replace_urls(text_in) == text_out
+    assert preprocessing.replace.urls(text_in) == text_out
 
 
 @pytest.mark.parametrize(
@@ -99,4 +99,4 @@ def test_replace_urls(text_in, text_out):
     ]
 )
 def test_replace_user_handles(text_in, text_out):
-    assert preprocessing.replace_user_handles(text_in) == text_out
+    assert preprocessing.replace.user_handles(text_in) == text_out

@@ -8,7 +8,7 @@ import unicodedata
 from . import resources
 
 
-def normalize_hyphenated_words(text: str) -> str:
+def hyphenated_words(text: str) -> str:
     """
     Normalize words in ``text`` that have been split across lines by a hyphen
     for visual consistency (aka hyphenated) by joining the pieces back together,
@@ -17,7 +17,7 @@ def normalize_hyphenated_words(text: str) -> str:
     return resources.RE_HYPHENATED_WORD.sub(r"\1\2", text)
 
 
-def normalize_quotation_marks(text: str) -> str:
+def quotation_marks(text: str) -> str:
     """
     Normalize all "fancy" single- and double-quotation marks in ``text``
     to just the basic ASCII equivalents. Note that this will also normalize fancy
@@ -26,7 +26,7 @@ def normalize_quotation_marks(text: str) -> str:
     return text.translate(resources.QUOTE_TRANSLATION_TABLE)
 
 
-def normalize_repeating_chars(text: str, *, chars: str, maxn: int = 1) -> str:
+def repeating_chars(text: str, *, chars: str, maxn: int = 1) -> str:
     """
     Normalize repeating characters in ``text`` by truncating their number of consecutive
     repetitions to ``maxn``.
@@ -44,7 +44,7 @@ def normalize_repeating_chars(text: str, *, chars: str, maxn: int = 1) -> str:
     return re.sub(r"({}){{{},}}".format(re.escape(chars), maxn + 1), chars * maxn, text)
 
 
-def normalize_unicode(text: str, *, form: str = "NFC") -> str:
+def unicode(text: str, *, form: str = "NFC") -> str:
     """
     Normalize unicode characters in ``text`` into canonical forms.
 
@@ -64,7 +64,7 @@ def normalize_unicode(text: str, *, form: str = "NFC") -> str:
     return unicodedata.normalize(form, text)
 
 
-def normalize_whitespace(text: str) -> str:
+def whitespace(text: str) -> str:
     """
     Replace all contiguous zero-width spaces with an empty string, line-breaking spaces
     with a single newline, and non-breaking spaces with a single space, then

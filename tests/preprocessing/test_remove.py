@@ -29,7 +29,7 @@ from textacy import preprocessing
     ]
 )
 def test_remove_accents(text_in, fast, text_out):
-    assert preprocessing.remove_accents(text_in, fast=fast) == text_out
+    assert preprocessing.remove.accents(text_in, fast=fast) == text_out
 
 
 @pytest.mark.parametrize(
@@ -59,7 +59,7 @@ def test_remove_accents(text_in, fast, text_out):
     ]
 )
 def test_remove_brackets(text_in, only, text_out):
-    assert preprocessing.remove.remove_brackets(text_in, only=only) == text_out
+    assert preprocessing.remove.brackets(text_in, only=only) == text_out
 
 
 @pytest.mark.parametrize(
@@ -87,7 +87,7 @@ def test_remove_brackets(text_in, only, text_out):
     ]
 )
 def test_remove_html_tags(text_in, text_out):
-    assert preprocessing.remove.remove_html_tags(text_in) == text_out
+    assert preprocessing.remove.html_tags(text_in) == text_out
 
 
 @pytest.mark.parametrize(
@@ -111,4 +111,4 @@ def test_remove_html_tags(text_in, text_out):
     ]
 )
 def test_remove_punct(text_in, only, text_out):
-    assert preprocessing.remove_punctuation(text_in, only=only) == text_out
+    assert preprocessing.remove.punctuation(text_in, only=only) == text_out

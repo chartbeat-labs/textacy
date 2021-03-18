@@ -37,7 +37,7 @@ Sometimes, "raw" text is messy and must be cleaned up before analysis; other tim
 
 ```pycon
 >>> from textacy import preprocessing
->>> preprocessing.normalize_whitespace(preprocessing.remove_punctuation(text))[:80]
+>>> preprocessing.normalize.whitespace(preprocessing.remove.punctuation(text))[:80]
 'Since the so called statistical revolution in the late 1980s and mid 1990s much '
 ```
 
