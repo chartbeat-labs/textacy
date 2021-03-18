@@ -1,12 +1,13 @@
+import functools
 import re
 import sys
 import unicodedata
-from typing import Dict, Pattern
+from typing import Any, Dict, Pattern
 
 # compile regexes, so we don't do this on the fly and rely on caching
 
 RE_LINEBREAK: Pattern = re.compile(r"(\r\n|[\n\v])+")
-RE_NONBREAKING_SPACE: Pattern = re.compile(r"[^\S\n\v]+", flags=re.UNICODE)
+RE_NONBREAKING_SPACE: Pattern = re.compile(r"[^\S\n\v]+")
 RE_ZWSP: Pattern = re.compile(r"[\u200B\u2060\uFEFF]+")
 
 # source: https://gist.github.com/dperini/729294
@@ -44,7 +45,8 @@ RE_URL: Pattern = re.compile(
     # resource path
     r"(?:/\S*)?"
     r"(?:$|(?![\w?!+&/]))",
-    flags=re.UNICODE | re.IGNORECASE)
+    flags=re.IGNORECASE,
+)
 
 RE_SHORT_URL: Pattern = re.compile(
     r"(?:^|(?<![\w/.]))"
@@ -56,71 +58,94 @@ RE_SHORT_URL: Pattern = re.compile(
     # hash
     r"[^\s.,?!'\"|+]{2,12}"
     r"(?:$|(?![\w?!+&/]))",
-    flags=re.UNICODE | re.IGNORECASE)
+    flags=re.IGNORECASE,
+)
 
 RE_EMAIL: Pattern = re.compile(
     r"(?:mailto:)?"
     r"(?:^|(?<=[^\w@.)]))([\w+-](\.(?!\.))?)*?[\w+-]@(?:\w-?)*?\w+(\.([a-z]{2,})){1,3}"
     r"(?:$|(?=\b))",
-    flags=re.UNICODE | re.IGNORECASE)
+    flags=re.IGNORECASE,
+)
 
 RE_USER_HANDLE: Pattern = re.compile(
     r"(?:^|(?<![\w@.]))@\w+",
-    flags=re.UNICODE | re.IGNORECASE)
+    flags=re.IGNORECASE,
+)
 
 RE_HASHTAG: Pattern = re.compile(
     r"(?:^|(?<![\w#＃.]))(#|＃)(?!\d)\w+",
-    flags=re.UNICODE | re.IGNORECASE)
+    flags=re.IGNORECASE,
+)
 
 RE_PHONE_NUMBER: Pattern = re.compile(
     # core components of a phone number
     r"(?:^|(?<=[^\w)]))(\+?1[ .-]?)?(\(?\d{3}\)?[ .-]?)?(\d{3}[ .-]?\d{4})"
     # extensions, etc.
     r"(\s?(?:ext\.?|[#x-])\s?\d{2,6})?(?:$|(?=\W))",
-    flags=re.UNICODE | re.IGNORECASE)
+    flags=re.IGNORECASE,
+)
 
 RE_NUMBER: Pattern = re.compile(
     r"(?:^|(?<=[^\w,.]))[+–-]?"
     r"(([1-9]\d{0,2}(,\d{3})+(\.\d*)?)|([1-9]\d{0,2}([ .]\d{3})+(,\d*)?)|(\d*?[.,]\d+)|\d+)"
-    r"(?:$|(?=\b))")
+    r"(?:$|(?=\b))"
+)
 
 RE_CURRENCY_SYMBOL: Pattern = re.compile(
     r"[$¢£¤¥ƒ֏؋৲৳૱௹฿៛ℳ元円圆圓﷼\u20A0-\u20C0]",
-    flags=re.UNICODE)
+)
 
 RE_EMOJI: Pattern
 if sys.maxunicode < 0x10ffff:
     RE_EMOJI = re.compile(
         r"[\u2600-\u26FF\u2700-\u27BF]",
-        flags=re.UNICODE | re.IGNORECASE)
+        flags=re.IGNORECASE,
+    )
 else:
     RE_EMOJI = re.compile(
         r"[\u2600-\u26FF\u2700-\u27BF\U0001F300-\U0001F5FF\U0001F600-\U0001F64F\U0001F680-\U0001F6FF\U0001F900-\U0001F9FF\U0001FA70-\U0001FAFF]",
-        flags=re.UNICODE | re.IGNORECASE)
+        flags=re.IGNORECASE,
+    )
 
 RE_HYPHENATED_WORD: Pattern = re.compile(
     r"(\w{2,}(?<!\d))\-\s+((?!\d)\w{2,})",
-    flags=re.UNICODE | re.IGNORECASE)
+    flags=re.IGNORECASE,
+)
 
 
 # build mapping of unicode punctuation symbol ordinals to their replacements
 # and lazy-load the big one, since it's relatively expensive to compute
 
-PUNCT_TRANSLATION_TABLE = None
-
-
-def _get_punct_translation_table():
-    global PUNCT_TRANSLATION_TABLE
-    if PUNCT_TRANSLATION_TABLE is None:
-        PUNCT_TRANSLATION_TABLE = dict.fromkeys(
-            (i for i in range(sys.maxunicode)
-             if unicodedata.category(chr(i)).startswith("P")),
-            " "
-        )
-    return PUNCT_TRANSLATION_TABLE
-
 
 QUOTE_TRANSLATION_TABLE: Dict[int, int] = {
     ord(x): ord(y)
-    for x, y in zip("ʼ‘’´`“”", "'''''\"\"")
+    for x, y in [
+        ("ʼ", "'"),
+        ("‘", "'"),
+        ("’", "'"),
+        ("´", "'"),
+        ("`", "'"),
+        ("“", '"'),
+        ("”", '"')
+    ]
 }
+
+
+@functools.lru_cache(maxsize=None)
+def _get_punct_translation_table():
+    return dict.fromkeys(
+        (
+            i for i in range(sys.maxunicode)
+            if unicodedata.category(chr(i)).startswith("P")
+        ),
+        " "
+    )
+
+
+# Hello, PEP 562: https://www.python.org/dev/peps/pep-0562
+def __getattr__(name: str) -> Any:
+    if name == "PUNCT_TRANSLATION_TABLE":
+        return _get_punct_translation_table()
+    else:
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
