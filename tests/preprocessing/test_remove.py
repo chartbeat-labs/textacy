@@ -4,25 +4,6 @@ from textacy import preprocessing
 
 
 @pytest.mark.parametrize(
-    "text_in, marks, text_out",
-    [
-        (
-            "I can't. No, I won't! It's a matter of \"principle\"; of -- what's the word? -- conscience.",
-            None,
-            "I can t  No  I won t  It s a matter of  principle   of    what s the word     conscience ",
-        ),
-        (
-            "I can't. No, I won't! It's a matter of \"principle\"; of -- what's the word? -- conscience.",
-            "-'\"",
-            "I can t. No, I won t! It s a matter of  principle ; of   what s the word?   conscience.",
-        ),
-    ]
-)
-def test_remove_punct(text_in, marks, text_out):
-    assert preprocessing.remove_punctuation(text_in, marks=marks) == text_out
-
-
-@pytest.mark.parametrize(
     "text_in, fast, text_out",
     [
         (
@@ -107,3 +88,27 @@ def test_remove_brackets(text_in, only, text_out):
 )
 def test_remove_html_tags(text_in, text_out):
     assert preprocessing.remove.remove_html_tags(text_in) == text_out
+
+
+@pytest.mark.parametrize(
+    "text_in, only, text_out",
+    [
+        (
+            "I can't. No, I won't! It's a matter of \"principle\"; of -- what's the word? -- conscience.",
+            None,
+            "I can t  No  I won t  It s a matter of  principle   of    what s the word     conscience ",
+        ),
+        (
+            "I can't. No, I won't! It's a matter of \"principle\"; of -- what's the word? -- conscience.",
+            ".",
+            "I can't  No, I won't! It's a matter of \"principle\"; of -- what's the word? -- conscience ",
+        ),
+        (
+            "I can't. No, I won't! It's a matter of \"principle\"; of -- what's the word? -- conscience.",
+            ["-", "'", "\""],
+            "I can t. No, I won t! It s a matter of  principle ; of   what s the word?   conscience.",
+        ),
+    ]
+)
+def test_remove_punct(text_in, only, text_out):
+    assert preprocessing.remove_punctuation(text_in, only=only) == text_out

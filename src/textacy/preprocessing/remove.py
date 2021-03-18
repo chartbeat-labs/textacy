@@ -57,10 +57,10 @@ def remove_brackets(
 
     Args:
         text
-        only: Remove only those bracketed contents as specified here. For example,
-            "square" removes only those contents found between square brackets,
-            while ("round", "square") removes only those found contents between square
-            or round brackets, but not curly.
+        only: Remove only those bracketed contents as specified here: "curly", "square",
+            and/or "round". For example, ``"square"`` removes only those contents found
+            between square brackets, while ``["round", "square"]`` removes those contents
+            found between square or round brackets, but not curly.
 
     Returns:
         str
@@ -103,26 +103,31 @@ def remove_html_tags(text: str) -> str:
     return parser.get_text()
 
 
-def remove_punctuation(text: str, *, marks: Optional[str] = None) -> str:
+def remove_punctuation(
+    text: str,
+    *,
+    only: Optional[Union[str, Collection[str]]] = None,
+) -> str:
     """
-    Remove punctuation from ``text`` by replacing all instances of ``marks``
-    with whitespace.
+    Remove punctuation from ``text`` by replacing all instances of punctuation
+    (or a subset thereof specified by ``only``) with whitespace.
 
     Args:
         text
-        marks: Remove only those punctuation marks specified here.
-            For example, ",;:" removes commas, semi-colons, and colons.
-            If None, *all* unicode punctuation marks are removed.
+        only: Remove only those punctuation marks specified here. For example,
+            ``"."`` removes only periods, while ``[",", ";", ":"]`` removes commas,
+            semicolons, and colons; if None, all unicode punctuation marks are removed.
 
     Returns:
         str
 
     Note:
-        When ``marks=None``, Python's built-in :meth:`str.translate()` is
+        When ``only=None``, Python's built-in :meth:`str.translate()` is
         used to remove punctuation; otherwise, a regular expression is used.
-        The former's performance is about 5-10x faster.
+        The former's performance can be up to an order of magnitude faster.
     """
-    if marks:
-        return re.sub("[{}]+".format(re.escape(marks)), " ", text, flags=re.UNICODE)
+    if only is not None:
+        only = utils.to_collection(only, val_type=str, col_type=set)
+        return re.sub("[{}]+".format(re.escape("".join(only))), " ", text)
     else:
         return text.translate(resources.PUNCT_TRANSLATION_TABLE)
