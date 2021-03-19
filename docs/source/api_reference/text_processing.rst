@@ -7,6 +7,7 @@ Text (Pre-)Processing
    :nosignatures:
 
    pipeline.make_pipeline
+   normalize.bullet_points
    normalize.hyphenated_words
    normalize.quotation_marks
    normalize.repeating_chars
