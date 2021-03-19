@@ -6,21 +6,29 @@ Text (Pre-)Processing
 .. autosummary::
    :nosignatures:
 
-   normalize.normalize_hyphenated_words
-   normalize.normalize_quotation_marks
-   normalize.normalize_repeating_chars
-   normalize.normalize_unicode
-   normalize.normalize_whitespace
-   remove.remove_accents
-   remove.remove_punctuation
-   replace.replace_currency_symbols
-   replace.replace_emails
-   replace.replace_emojis
-   replace.replace_hashtags
-   replace.replace_numbers
-   replace.replace_phone_numbers
-   replace.replace_urls
-   replace.replace_user_handles
+   pipeline.make_pipeline
+   normalize.hyphenated_words
+   normalize.quotation_marks
+   normalize.repeating_chars
+   normalize.unicode
+   normalize.whitespace
+   remove.accents
+   remove.brackets
+   remove.html_tags
+   remove.punctuation
+   replace.currency_symbols
+   replace.emails
+   replace.emojis
+   replace.hashtags
+   replace.numbers
+   replace.phone_numbers
+   replace.urls
+   replace.user_handles
+
+Pipeline
+--------
+
+.. automodule:: textacy.preprocessing.pipeline
 
 Normalize
 ---------

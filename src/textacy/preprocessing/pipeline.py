@@ -5,9 +5,8 @@ from cytoolz import functoolz
 
 def make_pipeline(*funcs: Callable[[str], str]) -> Callable[[str], str]:
     """
-    Make a callable pipeline that takes a text string as input, passes it through
-    one or multiple functions in the order with which they were specified, then outputs
-    a single (preprocessed) text string.
+    Make a callable pipeline that takes a text as input, passes it through one or more
+    functions in sequential order, then outputs a single (preprocessed) text string.
 
     This function is intended as a lightweight convenience for users, allowing them
     to flexibly specify which (and in which order) preprocessing functions are to be
@@ -17,14 +16,14 @@ def make_pipeline(*funcs: Callable[[str], str]) -> Callable[[str], str]:
 
         >>> from textacy import preprocessing
         >>> preproc = preprocessing.make_pipeline(
-        ...     preprocessing.remove.accents,
-        ...     preprocessing.replace.phone_numbers,
-        ...     preprocessing.normalize.whitespace,
+        ...     preprocessing.replace.hashtags,
+        ...     preprocessing.replace.user_handles,
+        ...     preprocessing.replace.emojis,
         ... )
-        >>> preproc("Mi número de teléfono es 555-123-4567.\n\n¿Cuál es el suyo?")
-        'Mi numero de telefono es _PHONE_.\nCual es el suyo?'
-        >>> preproc("¿Quién tiene un celular?  Tengo que llamar a mi mamá.")
-        'Quien tiene un celular? Tengo que llamar a mi mama.'
+        >>> preproc("@spacy_io is OSS for industrial-strength NLP in Python developed by @explosion_ai 💥")
+        '_USER_ is OSS for industrial-strength NLP in Python developed by _USER_ _EMOJI_'
+        >>> preproc("hacking with my buddy Isaac Mewton 🥰 #PawProgramming")
+        'hacking with my buddy Isaac Mewton _EMOJI_ _TAG_'
 
     Args:
         *funcs
