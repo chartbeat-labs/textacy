@@ -2,9 +2,11 @@
 :mod:`textacy.preprocessing.remove`: Remove aspects of raw text that may be unwanted
 for certain use cases.
 """
+from __future__ import annotations
+
 import re
 import unicodedata
-from typing import Collection, Optional, Union
+from typing import Collection, Optional
 
 from . import resources
 from .. import utils
@@ -49,7 +51,7 @@ def accents(text: str, *, fast: bool = False) -> str:
 def brackets(
     text: str,
     *,
-    only: Optional[Union[str, Collection[str]]] = None,
+    only: Optional[str | Collection[str]] = None,
 ) -> str:
     """
     Remove text within curly {}, square [], and/or round () brackets, as well as
@@ -106,7 +108,7 @@ def html_tags(text: str) -> str:
 def punctuation(
     text: str,
     *,
-    only: Optional[Union[str, Collection[str]]] = None,
+    only: Optional[str | Collection[str]] = None,
 ) -> str:
     """
     Remove punctuation from ``text`` by replacing all instances of punctuation
