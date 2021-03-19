@@ -38,6 +38,12 @@ RE_BRACKETS_CURLY = re.compile(r"\{[^{}]*?\}")
 RE_BRACKETS_ROUND = re.compile(r"\([^()]*?\)")
 RE_BRACKETS_SQUARE = re.compile(r"\[[^\[\]]*?\]")
 
+RE_BULLET_POINTS = re.compile(
+    # require bullet points as first non-whitespace char on a new line, like a list
+    r"((^|\n)\s*?)"
+    r"([\u2022\u2023\u2043\u204C\u204D\u2219\u25aa\u25CF\u25E6\u29BE\u29BF\u30fb])",
+)
+
 # source: https://gist.github.com/dperini/729294
 RE_URL: Pattern = re.compile(
     r"(?:^|(?<![\w/.]))"

@@ -8,6 +8,15 @@ import unicodedata
 from . import resources
 
 
+def bullet_points(text: str) -> str:
+    """
+    Normalize all "fancy" bullet point symbols in ``text`` to just the basic ASCII "-",
+    provided they are the first non-whitespace characters on a new line
+    (like a list of items).
+    """
+    return resources.RE_BULLET_POINTS.sub(r"\1-", text)
+
+
 def hyphenated_words(text: str) -> str:
     """
     Normalize words in ``text`` that have been split across lines by a hyphen

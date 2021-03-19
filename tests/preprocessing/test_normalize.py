@@ -6,6 +6,25 @@ from textacy import preprocessing
 @pytest.mark.parametrize(
     "text_in, text_out",
     [
+        ("• foo\n• bar", "- foo\n- bar"),
+        ("• foo\n    • bar", "- foo\n    - bar"),
+        (
+            "\n‣ item1\n⁃ item2\n⁌ item3\n⁍ item4\n∙ item5\n▪ item6\n● item7\n◦ item8",
+            "\n- item1\n- item2\n- item3\n- item4\n- item5\n- item6\n- item7\n- item8",
+        ),
+        (
+            "\n⦾ item1\n⦿ item2\n・ item3",
+            "\n- item1\n- item2\n- item3",
+        ),
+    ]
+)
+def test_normalize_bullet_points(text_in, text_out):
+    assert preprocessing.normalize.bullet_points(text_in) == text_out
+
+
+@pytest.mark.parametrize(
+    "text_in, text_out",
+    [
         ("I see you shiver with antici- pation.", "I see you shiver with anticipation."),
         ("I see you shiver with antici-   \npation.", "I see you shiver with anticipation."),
         ("I see you shiver with antici- PATION.", "I see you shiver with anticiPATION."),
