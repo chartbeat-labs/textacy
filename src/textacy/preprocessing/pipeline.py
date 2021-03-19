@@ -1,0 +1,34 @@
+from typing import Callable
+
+from cytoolz import functoolz
+
+
+def make_pipeline(*funcs: Callable[[str], str]) -> Callable[[str], str]:
+    """
+    Make a callable pipeline that takes a text as input, passes it through one or more
+    functions in sequential order, then outputs a single (preprocessed) text string.
+
+    This function is intended as a lightweight convenience for users, allowing them
+    to flexibly specify which (and in which order) preprocessing functions are to be
+    applied to raw texts, then treating the whole thing as a single callable.
+
+    .. code-block:: pycon
+
+        >>> from textacy import preprocessing
+        >>> preproc = preprocessing.make_pipeline(
+        ...     preprocessing.replace.hashtags,
+        ...     preprocessing.replace.user_handles,
+        ...     preprocessing.replace.emojis,
+        ... )
+        >>> preproc("@spacy_io is OSS for industrial-strength NLP in Python developed by @explosion_ai 💥")
+        '_USER_ is OSS for industrial-strength NLP in Python developed by _USER_ _EMOJI_'
+        >>> preproc("hacking with my buddy Isaac Mewton 🥰 #PawProgramming")
+        'hacking with my buddy Isaac Mewton _EMOJI_ _TAG_'
+
+    Args:
+        *funcs
+
+    Returns:
+        Pipeline composed of ``*funcs`` that applies each in sequential order.
+    """
+    return functoolz.compose_left(*funcs)
