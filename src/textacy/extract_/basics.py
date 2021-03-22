@@ -6,9 +6,9 @@ from cytoolz import itertoolz
 from spacy.parts_of_speech import DET
 from spacy.tokens import Doc, Span, Token
 
-from . import constants
-from . import errors
-from . import utils
+from .. import constants
+from .. import errors
+from .. import utils
 
 
 def words(
