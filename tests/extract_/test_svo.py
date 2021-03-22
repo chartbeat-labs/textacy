@@ -48,6 +48,38 @@ def spacy_lang():
             "Rico eats food and plays fetch.",
             [(["Rico"], ["eats"], ["food"]), (["Rico"], ["plays"], ["fetch"])]
         ),
+        (
+            "What the cat did makes sense.",
+            [
+                (["cat"], ["did"], ["What"]),
+                (["What", "the", "cat", "did"], ["makes"], ["sense"]),
+            ],
+        ),
+        (
+            "What the cat wanted was eaten by the dog.",
+            [
+                (["cat"], ["wanted"], ["What"]),
+                (["What", "the", "cat", "wanted"], ["was", "eaten"], ["dog"]),
+            ],
+        ),
+        (
+            "Burton and Nick do not expect to adopt another cat.",
+            [
+                (
+                    ["Burton", "Nick"],
+                    ["do", "not", "expect"],
+                    ["to", "adopt", "another", "cat"],
+                )
+            ],
+        ),
+        (
+            "She and her friend did find, sell, and throw sea shells by the sea shore.",
+            [
+                (["She", "friend"], ["did", "find"], ["sea", "shells"]),
+                (["She", "friend"], ["sell"], ["sea", "shells"]),
+                (["She", "friend"], ["throw"], ["sea", "shells"]),
+            ],
+        ),
     ]
 )
 def test_subject_verb_object_triples(text, svos_exp, spacy_lang):
