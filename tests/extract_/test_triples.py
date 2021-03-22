@@ -1,7 +1,7 @@
 import pytest
 
 from textacy import load_spacy_lang
-import textacy.extract_.svo
+import textacy.extract_.triples
 
 
 @pytest.fixture(scope="module")
@@ -84,7 +84,7 @@ def spacy_lang():
 )
 def test_subject_verb_object_triples(text, svos_exp, spacy_lang):
     doc = spacy_lang(text)
-    svos_tok = textacy.extract_.svo.subject_verb_object_triples(doc)
+    svos_tok = textacy.extract_.triples.subject_verb_object_triples(doc)
     svos_obs = [
         (
             [tok.text for tok in subject],
