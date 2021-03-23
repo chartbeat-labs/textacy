@@ -3,13 +3,15 @@ from __future__ import annotations
 import collections
 import itertools
 from operator import attrgetter
-from typing import Iterable, List, Tuple
+from typing import Iterable, List, Pattern, Tuple
 
 from spacy.symbols import (
-    CONJ, DET, VERB,
-    agent, aux, auxpass, csubj, csubjpass, dobj, neg, nsubj, nsubjpass, pobj, xcomp,
+    AUX, CONJ, DET, VERB,
+    agent, attr, aux, auxpass, csubj, csubjpass, dobj, neg, nsubj, nsubjpass, obj, pobj, xcomp,
 )
 from spacy.tokens import Doc, Span, Token
+
+from . import matches
 
 
 _NOMINAL_SUBJ_DEPS = {nsubj, nsubjpass}
@@ -114,6 +116,37 @@ def expand_verb(tok: Token) -> List[Token]:
         child for child in tok.children if child.dep in _VERB_MODIFIER_DEPS
     ]
     return [tok] + verb_modifiers
+
+
+def semistructured_statements_v2(
+    doclike: Doc | Span,
+    *,
+    entity: str | Pattern,
+    cue: str,
+) -> Iterable[Tuple[List[Token], List[Token], List[Token]]]:
+    """
+    """
+    for entity_cand in matches.regex_matches(doclike, entity, expand=False):
+        # is the entity candidate a nominal subject?
+        if entity_cand.root.dep in _NOMINAL_SUBJ_DEPS:
+            cue_cand = entity_cand.root.head
+            # is the cue candidate a verb with matching lemma?
+            if cue_cand.pos in {VERB, AUX} and cue_cand.lemma_ == cue:
+                frag_cand = None
+                for tok in cue_cand.children:
+                    if (
+                        tok.dep in {attr, dobj, obj} or
+                        tok.dep_ == "dative" or
+                        (tok.dep == xcomp and not any(child.dep == dobj for child in cue_cand.children))
+                    ):
+                        frag_cand = list(tok.subtree)
+                        break
+                if frag_cand is not None:
+                    yield (
+                        list(entity_cand),
+                        sorted(expand_verb(cue_cand), key=attrgetter("i")),
+                        sorted(frag_cand, key=attrgetter("i")),
+                    )
 
 
 def semistructured_statements(
