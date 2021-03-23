@@ -7,19 +7,24 @@ import textacy.extract_.triples
 
 
 @pytest.fixture(scope="module")
-def spacy_lang():
+def en_nlp():
     return load_spacy_lang("en_core_web_sm")
 
 
 @pytest.fixture(scope="module")
-def sss_doc(spacy_lang):
+def es_nlp():
+    return load_spacy_lang("es_core_news_sm")
+
+
+@pytest.fixture(scope="module")
+def sss_doc(en_nlp):
     text = (
         "In general, Burton DeWilde loves animals, but he does not love *all* animals. "
         "Burton loves his cats Rico and Isaac; Burton loved his cat Lucy. "
         "But Burton DeWilde definitely does not love snakes, spiders, or moths. "
         "Now you know that Burton loves animals and cats in particular."
     )
-    return spacy_lang(text)
+    return en_nlp(text)
 
 
 @pytest.mark.parametrize(
@@ -95,8 +100,8 @@ def sss_doc(spacy_lang):
         ),
     ]
 )
-def test_subject_verb_object_triples(text, svos_exp, spacy_lang):
-    doc = spacy_lang(text)
+def test_subject_verb_object_triples(text, svos_exp, en_nlp):
+    doc = en_nlp(text)
     svos_tok = textacy.extract_.triples.subject_verb_object_triples(doc)
     svos_obs = [
         (
@@ -217,8 +222,34 @@ def test_semistructured_statements(sss_doc, entity, cue, fragment_len_range, exp
         ),
     ]
 )
-def test_direct_quotations(spacy_lang, text, exp):
-    obs = textacy.extract_.triples.direct_quotations(spacy_lang(text))
+def test_direct_quotations(en_nlp, text, exp):
+    obs = textacy.extract_.triples.direct_quotations(en_nlp(text))
+    obs_text = [
+        (
+            [tok.text for tok in speaker],
+            [tok.text for tok in cue],
+            content.text
+        )
+        for speaker, cue, content in obs
+    ]
+    assert obs_text == exp
+
+
+@pytest.mark.parametrize(
+    "text, exp",
+    [
+        (
+            "\"Me encantan los gatos\", dijo Burtón.",
+            [(["Burtón"], ["dijo"], "\"Me encantan los gatos\"")],
+        ),
+        (
+            "«Me encantan los gatos», afirmó Burtón.",
+            [(["Burtón"], ["afirmó"], "«Me encantan los gatos»")],
+        ),
+    ]
+)
+def test_direct_quotations_spanish(es_nlp, text, exp):
+    obs = textacy.extract_.triples.direct_quotations(es_nlp(text))
     obs_text = [
         (
             [tok.text for tok in speaker],
