@@ -179,3 +179,52 @@ def test_semistructured_statements(sss_doc, entity, cue, fragment_len_range, exp
         for e, c, f in obs
     ]
     assert obs_text == exp
+
+
+@pytest.mark.parametrize(
+    "text, exp",
+    [
+        (
+            "Burton said, \"I love cats!\"",
+            [(["Burton"], ["said"], "\"I love cats!\"")],
+        ),
+        (
+            "\"We love cats!\" reply Burton and Nick.",
+            [(["Burton", "Nick"], ["reply"], "\"We love cats!\"")],
+        ),
+        (
+            "Burton explained from a podium. \"I love cats,\" he said.",
+            [(["he"], ["said"], "\"I love cats,\"")],
+        ),
+        (
+            "\"I love cats!\" insists Burton. \"I absolutely do.\"",
+            [
+                (["Burton"], ["insists"], "\"I love cats!\""),
+                (["Burton"], ["insists"], "\"I absolutely do.\"")
+            ],
+        ),
+        (
+            "\"Some people say otherwise,\" he conceded.",
+            [(["he"], ["conceded"], "\"Some people say otherwise,\"")],
+        ),
+        (
+            "Burton claims that his favorite book is \"One Hundred Years of Solitude\".",
+            [],
+        ),
+        (
+            "Burton thinks that cats are \"cuties\".",
+            [],
+        ),
+    ]
+)
+def test_direct_quotations(spacy_lang, text, exp):
+    obs = textacy.extract_.triples.direct_quotations(spacy_lang(text))
+    obs_text = [
+        (
+            [tok.text for tok in speaker],
+            [tok.text for tok in cue],
+            content.text
+        )
+        for speaker, cue, content in obs
+    ]
+    assert obs_text == exp

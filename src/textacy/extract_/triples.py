@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 import collections
-import itertools
 from operator import attrgetter
 from typing import Iterable, List, Optional, Pattern, Tuple
 
+from cytoolz import itertoolz
 from spacy.symbols import (
-    AUX, CONJ, DET, VERB,
+    AUX, NOUN, PROPN, VERB,
     agent, attr, aux, auxpass, csubj, csubjpass, dobj, neg, nsubj, nsubjpass, obj, pobj, xcomp,
 )
 from spacy.tokens import Doc, Span, Token
 
 from . import matches
-from .. import utils
+from .. import constants, utils
 
 
 _NOMINAL_SUBJ_DEPS = {nsubj, nsubjpass}
@@ -100,25 +100,6 @@ def subject_verb_object_triples(
                 )
 
 
-def expand_noun(tok: Token) -> List[Token]:
-    tok_and_conjuncts = [tok] + list(tok.conjuncts)
-    compounds = [
-        child
-        for tc in tok_and_conjuncts
-        for child in tc.children
-        # TODO: why doesn't compound import from spacy.symbols?
-        if child.dep_ == "compound"
-    ]
-    return tok_and_conjuncts + compounds
-
-
-def expand_verb(tok: Token) -> List[Token]:
-    verb_modifiers = [
-        child for child in tok.children if child.dep in _VERB_MODIFIER_DEPS
-    ]
-    return [tok] + verb_modifiers
-
-
 def semistructured_statements(
     doclike: Doc | Span,
     *,
@@ -189,3 +170,117 @@ def semistructured_statements(
                         sorted(expand_verb(cue_cand), key=attrgetter("i")),
                         sorted(frag_cand, key=attrgetter("i")),
                     )
+
+
+def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Span]]:
+    """
+    Extract direct quotations from a document using simple rules and patterns.
+    Note: Does not extract indirect or mixed quotations!
+
+    Args:
+        doc
+
+    Yields:
+        Next quotation in ``doc`` as a (speaker, cue verb, quotation content) triple.
+
+    Notes:
+        Loosely inspired by Krestel, Bergler, Witte. "Minding the Source: Automatic
+        Tagging of Reported Speech in Newspaper Articles".
+    """
+    # TODO: train a model to do this instead, maybe similar to entity recognition
+    qtok_idxs = [tok.i for tok in doc if tok.is_quote]
+    if len(qtok_idxs) % 2 != 0:
+        raise ValueError(
+            f"{len(qtok_idxs)} quotation marks found, indicating an unclosed quotation; "
+            "given the limitations of this method, it's safest to bail out "
+            "rather than guess which quotation is unclosed"
+        )
+    qtok_pair_idxs = list(itertoolz.partition(2, qtok_idxs))
+    for qtok_start_idx, qtok_end_idx in qtok_pair_idxs:
+        content = doc[qtok_start_idx : qtok_end_idx + 1]
+        cue = None
+        speaker = None
+        # filter quotations by content
+        if (
+            # quotations should have at least a couple tokens
+            # excluding the first/last quotation mark tokens
+            len(content) < 4 or
+            # filter out titles of books and such, if possible
+            all(
+                tok.is_title
+                for tok in content
+                # if tok.pos in {NOUN, PROPN}
+                if not (tok.is_punct or tok.is_stop)
+            )
+            # TODO: require closing punctuation before the quotation mark?
+            # content[-2].is_punct is False
+        ):
+            continue
+        print(f"content: {content}")
+        # get window of adjacent/overlapping sentences
+        window_sents = (
+            sent
+            for sent in doc.sents
+            # these boundary cases are a subtle bit of work...
+            if (
+                (sent.start < qtok_start_idx and sent.end >= qtok_start_idx - 1) or
+                (sent.start <= qtok_end_idx + 1 and sent.end > qtok_end_idx)
+            )
+        )
+        # get candidate cue verbs in window
+        cue_cands = [
+            tok
+            for sent in window_sents
+            for tok in sent
+            if (
+                tok.pos == VERB and
+                tok.lemma_ in constants.REPORTING_VERBS and
+                # cue verbs must occur *outside* any quotation content
+                not any(
+                    qts_idx <= tok.i <= qte_idx
+                    for qts_idx, qte_idx in qtok_pair_idxs
+                )
+            )
+        ]
+        print(f"cue_cands: {cue_cands}")
+        # sort candidates by proximity to quote content
+        cue_cands = sorted(
+            cue_cands,
+            key=lambda cc: min(abs(cc.i - qtok_start_idx), abs(cc.i - qtok_end_idx)),
+        )
+        for cue_cand in cue_cands:
+            if cue is not None:
+                break
+            for speaker_cand in cue_cand.children:
+                # print(f"speaker_cand: {speaker_cand}")
+                if speaker_cand.dep in {nsubj, csubj}:
+                    cue = expand_verb(cue_cand)
+                    speaker = expand_noun(speaker_cand)
+                    break
+        if content and cue and speaker:
+            yield (
+                sorted(speaker, key=attrgetter("i")),
+                sorted(cue, key=attrgetter("i")),
+                content,
+            )
+
+
+def expand_noun(tok: Token) -> List[Token]:
+    """Expand a noun token to include all associated conjunct and compound nouns."""
+    tok_and_conjuncts = [tok] + list(tok.conjuncts)
+    compounds = [
+        child
+        for tc in tok_and_conjuncts
+        for child in tc.children
+        # TODO: why doesn't compound import from spacy.symbols?
+        if child.dep_ == "compound"
+    ]
+    return tok_and_conjuncts + compounds
+
+
+def expand_verb(tok: Token) -> List[Token]:
+    """Expand a verb token to include all associated auxiliary and negation tokens."""
+    verb_modifiers = [
+        child for child in tok.children if child.dep in _VERB_MODIFIER_DEPS
+    ]
+    return [tok] + verb_modifiers
