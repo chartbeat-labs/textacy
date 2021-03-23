@@ -17,6 +17,7 @@ from .. import constants, utils
 
 _NOMINAL_SUBJ_DEPS = {nsubj, nsubjpass}
 _CLAUSAL_SUBJ_DEPS = {csubj, csubjpass}
+_ACTIVE_SUBJ_DEPS = {csubj, nsubj}
 _VERB_MODIFIER_DEPS = {aux, auxpass, neg}
 
 
@@ -223,7 +224,6 @@ def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Spa
             # content[-2].is_punct is False
         ):
             continue
-        print(f"content: {content}")
         # get window of adjacent/overlapping sentences
         window_sents = (
             sent
@@ -249,7 +249,6 @@ def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Spa
                 )
             )
         ]
-        print(f"cue_cands: {cue_cands}")
         # sort candidates by proximity to quote content
         cue_cands = sorted(
             cue_cands,
@@ -259,8 +258,7 @@ def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Spa
             if cue is not None:
                 break
             for speaker_cand in cue_cand.children:
-                # print(f"speaker_cand: {speaker_cand}")
-                if speaker_cand.dep in {nsubj, csubj}:
+                if speaker_cand.dep in _ACTIVE_SUBJ_DEPS:
                     cue = expand_verb(cue_cand)
                     speaker = expand_noun(speaker_cand)
                     break
