@@ -3,7 +3,7 @@ from __future__ import annotations
 import collections
 import itertools
 from operator import attrgetter
-from typing import Iterable, List, Pattern, Tuple
+from typing import Iterable, List, Optional, Pattern, Tuple
 
 from spacy.symbols import (
     AUX, CONJ, DET, VERB,
@@ -12,6 +12,7 @@ from spacy.symbols import (
 from spacy.tokens import Doc, Span, Token
 
 from . import matches
+from .. import utils
 
 
 _NOMINAL_SUBJ_DEPS = {nsubj, nsubjpass}
@@ -118,59 +119,27 @@ def expand_verb(tok: Token) -> List[Token]:
     return [tok] + verb_modifiers
 
 
-def semistructured_statements_v2(
+def semistructured_statements(
     doclike: Doc | Span,
     *,
     entity: str | Pattern,
     cue: str,
+    fragment_len_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
 ) -> Iterable[Tuple[List[Token], List[Token], List[Token]]]:
-    """
-    """
-    for entity_cand in matches.regex_matches(doclike, entity, expand=False):
-        # is the entity candidate a nominal subject?
-        if entity_cand.root.dep in _NOMINAL_SUBJ_DEPS:
-            cue_cand = entity_cand.root.head
-            # is the cue candidate a verb with matching lemma?
-            if cue_cand.pos in {VERB, AUX} and cue_cand.lemma_ == cue:
-                frag_cand = None
-                for tok in cue_cand.children:
-                    if (
-                        tok.dep in {attr, dobj, obj} or
-                        tok.dep_ == "dative" or
-                        (tok.dep == xcomp and not any(child.dep == dobj for child in cue_cand.children))
-                    ):
-                        frag_cand = list(tok.subtree)
-                        break
-                if frag_cand is not None:
-                    yield (
-                        list(entity_cand),
-                        sorted(expand_verb(cue_cand), key=attrgetter("i")),
-                        sorted(frag_cand, key=attrgetter("i")),
-                    )
-
-
-def semistructured_statements(
-    doc: Doc,
-    entity: str,
-    *,
-    cue: str = "be",
-    ignore_entity_case: bool = True,
-    min_n_words: int = 1,
-    max_n_words: int = 20,
-) -> Tuple[Span | Token, Span | Token, Span]:
     """
     Extract "semi-structured statements" from a document as a sequence of
     (entity, cue, fragment) triples.
 
     Args:
-        doc
-        entity: a noun or noun phrase of some sort (e.g. "President Obama",
-            "global warming", "Python")
-        cue: verb lemma with which ``entity`` is associated
-            (e.g. "talk about", "have", "write")
-        ignore_entity_case: If True, entity matching is case-independent
-        min_n_words: Min number of tokens allowed in a matching fragment
-        max_n_words: Max number of tokens allowed in a matching fragment
+        doclike
+        entity: Noun or noun phrase of interest expressed as a regular expression
+            pattern string (e.g. ``"[Gg]lobal [Ww]arming"``) or compiled object
+            (e.g. ``re.compile("global warming", re.IGNORECASE)``).
+        cue: Verb lemma with which ``entity`` is associated (e.g. "be", "have", "say").
+        fragment_len_range: Filter statements to those whose fragment length in tokens
+            is within the specified [low, high) interval. Both low and high values
+            must be specified, but a null value for either is automatically replaced
+            by safe default values. None (default) skips filtering by fragment length.
 
     Yields:
         Next matching triple, consisting of (entity, cue, fragment).
@@ -187,107 +156,36 @@ def semistructured_statements(
     See Also:
         :func:`subject_verb_object_triples()`
     """
-    if ignore_entity_case is True:
-        entity_toks = entity.lower().split(" ")
-        get_tok_text = lambda x: x.lower_  # noqa: E731
-    else:
-        entity_toks = entity.split(" ")
-        get_tok_text = lambda x: x.text  # noqa: E731
-    first_entity_tok = entity_toks[0]
-    n_entity_toks = len(entity_toks)
-    cue = cue.lower()
-    cue_toks = cue.split(" ")
-    n_cue_toks = len(cue_toks)
-
-    def is_good_last_tok(tok):
-        if tok.is_punct:
-            return False
-        if tok.pos in {CONJ, DET}:
-            return False
-        return True
-
-    for sent in doc.sents:
-        for tok in sent:
-
-            # filter by entity
-            if get_tok_text(tok) != first_entity_tok:
-                continue
-            if n_entity_toks == 1:
-                the_entity = tok
-                the_entity_root = the_entity
-            if tok.i + n_cue_toks >= len(doc):
-                continue
-            elif all(
-                get_tok_text(tok.nbor(i=i + 1)) == et
-                for i, et in enumerate(entity_toks[1:])
-            ):
-                the_entity = doc[tok.i : tok.i + n_entity_toks]
-                the_entity_root = the_entity.root
-            else:
-                continue
-
-            # filter by cue
-            terh = the_entity_root.head
-            if terh.lemma_ != cue_toks[0]:
-                continue
-            if n_cue_toks == 1:
-                min_cue_i = terh.i
-                max_cue_i = terh.i + n_cue_toks
-                the_cue = terh
-            elif all(
-                terh.nbor(i=i + 1).lemma_ == ct for i, ct in enumerate(cue_toks[1:])
-            ):
-                min_cue_i = terh.i
-                max_cue_i = terh.i + n_cue_toks
-                the_cue = doc[terh.i : max_cue_i]
-            else:
-                continue
-            if the_entity_root in the_cue.rights:
-                continue
-
-            # now add adjacent auxiliary and negating tokens to the cue, for context
-            try:
-                min_cue_i = min(
-                    left.i
-                    for left in itertools.takewhile(
-                        lambda x: x.dep_ in {"aux", "neg"},
-                        reversed(list(the_cue.lefts)),
+    if fragment_len_range is not None:
+        fragment_len_range = utils.validate_and_clip_range(
+            fragment_len_range, (1, 1000), int
+        )
+    for entity_cand in matches.regex_matches(doclike, entity, expand=False):
+        # is the entity candidate a nominal subject?
+        if entity_cand.root.dep in _NOMINAL_SUBJ_DEPS:
+            cue_cand = entity_cand.root.head
+            # is the cue candidate a verb with matching lemma?
+            if cue_cand.pos in {VERB, AUX} and cue_cand.lemma_ == cue:
+                frag_cand = None
+                for tok in cue_cand.children:
+                    if (
+                        tok.dep in {attr, dobj, obj} or
+                        tok.dep_ == "dative" or
+                        (
+                            tok.dep == xcomp and
+                            not any(child.dep == dobj for child in cue_cand.children)
+                        )
+                    ):
+                        subtoks = list(tok.subtree)
+                        if (
+                            fragment_len_range is None or
+                            fragment_len_range[0] <= len(subtoks) < fragment_len_range[1]
+                        ):
+                            frag_cand = subtoks
+                            break
+                if frag_cand is not None:
+                    yield (
+                        list(entity_cand),
+                        sorted(expand_verb(cue_cand), key=attrgetter("i")),
+                        sorted(frag_cand, key=attrgetter("i")),
                     )
-                )
-            except ValueError:
-                pass
-            try:
-                max_cue_i = max(
-                    right.i
-                    for right in itertools.takewhile(
-                        lambda x: x.dep_ in {"aux", "neg"}, the_cue.rights
-                    )
-                )
-            except ValueError:
-                pass
-            if max_cue_i - min_cue_i > 1:
-                the_cue = doc[min_cue_i:max_cue_i]
-            else:
-                the_cue = doc[min_cue_i]
-
-            # filter by fragment
-            try:
-                min_frag_i = min(right.left_edge.i for right in the_cue.rights)
-                max_frag_i = max(right.right_edge.i for right in the_cue.rights)
-            except ValueError:
-                continue
-            while is_good_last_tok(doc[max_frag_i]) is False:
-                max_frag_i -= 1
-            n_fragment_toks = max_frag_i - min_frag_i
-            if (
-                n_fragment_toks <= 0
-                or n_fragment_toks < min_n_words
-                or n_fragment_toks > max_n_words
-            ):
-                continue
-            # HACK...
-            if min_frag_i == max_cue_i - 1:
-                min_frag_i += 1
-            the_fragment = doc[min_frag_i : max_frag_i + 1]
-
-            yield (the_entity, the_cue, the_fragment)
