@@ -117,9 +117,9 @@ def test_subject_verb_object_triples(text, svos_exp, spacy_lang):
             "love",
             None,
             [
-                (['Burton'], ['loves'], ['his', 'cats', 'Rico', 'and', 'Isaac']),
-                (['Burton'], ['loved'], ['his', 'cat', 'Lucy']),
-                (['Burton'], ['loves'], ['animals', 'and', 'cats'])
+                (["Burton"], ["loves"], ["his", "cats", "Rico", "and", "Isaac"]),
+                (["Burton"], ["loved"], ["his", "cat", "Lucy"]),
+                (["Burton"], ["loves"], ["animals", "and", "cats"])
             ],
         ),
         (
@@ -127,9 +127,9 @@ def test_subject_verb_object_triples(text, svos_exp, spacy_lang):
             "love",
             None,
             [
-                (['Burton'], ['loves'], ['his', 'cats', 'Rico', 'and', 'Isaac']),
-                (['Burton'], ['loved'], ['his', 'cat', 'Lucy']),
-                (['Burton'], ['loves'], ['animals', 'and', 'cats'])
+                (["Burton"], ["loves"], ["his", "cats", "Rico", "and", "Isaac"]),
+                (["Burton"], ["loved"], ["his", "cat", "Lucy"]),
+                (["Burton"], ["loves"], ["animals", "and", "cats"])
             ],
         ),
         (
@@ -137,15 +137,15 @@ def test_subject_verb_object_triples(text, svos_exp, spacy_lang):
             "love",
             None,
             [
-                (['Burton', 'DeWilde'], ['loves'], ['animals']),
-                (['Burton'], ['loves'], ['his', 'cats', 'Rico', 'and', 'Isaac']),
-                (['Burton'], ['loved'], ['his', 'cat', 'Lucy']),
+                (["Burton", "DeWilde"], ["loves"], ["animals"]),
+                (["Burton"], ["loves"], ["his", "cats", "Rico", "and", "Isaac"]),
+                (["Burton"], ["loved"], ["his", "cat", "Lucy"]),
                 (
-                    ['Burton', 'DeWilde'],
-                    ['does', 'not', 'love'],
-                    ['snakes', ',', 'spiders', ',', 'or', 'moths']
+                    ["Burton", "DeWilde"],
+                    ["does", "not", "love"],
+                    ["snakes", ",", "spiders", ",", "or", "moths"]
                 ),
-                (['Burton'], ['loves'], ['animals', 'and', 'cats'])
+                (["Burton"], ["loves"], ["animals", "and", "cats"])
             ],
         ),
         (
@@ -153,15 +153,15 @@ def test_subject_verb_object_triples(text, svos_exp, spacy_lang):
             "love",
             (None, 4),
             [
-                (['Burton'], ['loved'], ['his', 'cat', 'Lucy']),
-                (['Burton'], ['loves'], ['animals', 'and', 'cats'])
+                (["Burton"], ["loved"], ["his", "cat", "Lucy"]),
+                (["Burton"], ["loves"], ["animals", "and", "cats"])
             ],
         ),
         (
             "Burton",
             "love",
             (4, 6),
-            [(['Burton'], ['loves'], ['his', 'cats', 'Rico', 'and', 'Isaac'])]
+            [(["Burton"], ["loves"], ["his", "cats", "Rico", "and", "Isaac"])]
         ),
         ("Burton", "hate", None, []),
     ],
