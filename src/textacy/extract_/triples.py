@@ -188,6 +188,13 @@ def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Spa
         Tagging of Reported Speech in Newspaper Articles".
     """
     # TODO: train a model to do this instead, maybe similar to entity recognition
+    try:
+        _reporting_verbs = constants.REPORTING_VERBS[doc.lang_]
+    except KeyError:
+        raise ValueError(
+            f"direct quotation extraction is not implemented for lang='{doc.lang_}', "
+            f"only {sorted(constants.REPORTING_VERBS.keys())}"
+        )
     qtok_idxs = [tok.i for tok in doc if tok.is_quote]
     if len(qtok_idxs) % 2 != 0:
         raise ValueError(
@@ -234,7 +241,7 @@ def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Spa
             for tok in sent
             if (
                 tok.pos == VERB and
-                tok.lemma_ in constants.REPORTING_VERBS and
+                tok.lemma_ in _reporting_verbs and
                 # cue verbs must occur *outside* any quotation content
                 not any(
                     qts_idx <= tok.i <= qte_idx
