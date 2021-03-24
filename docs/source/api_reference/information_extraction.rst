@@ -15,7 +15,8 @@ Information Extraction
    triples.subject_verb_object_triples
    triples.semistructured_statements
    triples.direct_quotations
-   acronymns.acronyms_and_definitions
+   acros.acronyms
+   acros.acronyms_and_definitions
    kwic.keyword_in_context
    keyterms.textrank
    keyterms.yake
@@ -28,7 +29,7 @@ Information Extraction
 
 .. automodule:: textacy.extract.triples
 
-.. automodule:: textacy.extract.acronyms
+.. automodule:: textacy.extract.acros
 
 .. automodule:: textacy.extract.kwic
 

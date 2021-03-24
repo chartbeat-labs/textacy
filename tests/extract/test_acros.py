@@ -1,5 +1,7 @@
 import pytest
 
+from spacy.tokens import Token
+
 from textacy import extract
 from textacy import load_spacy_lang
 
@@ -31,7 +33,7 @@ def spacy_lang():
     ]
 )
 def test_is_acronym_good(token):
-    assert extract.acronyms.is_acronym(token)
+    assert extract.acros.is_acronym(token)
 
 
 @pytest.mark.parametrize(
@@ -52,7 +54,7 @@ def test_is_acronym_good(token):
     ]
 )
 def test_is_acronym_bad(token):
-    assert not extract.acronyms.is_acronym(token)
+    assert not extract.acros.is_acronym(token)
 
 
 @pytest.mark.parametrize(
@@ -64,7 +66,21 @@ def test_is_acronym_bad(token):
     ]
 )
 def test_is_acronym_exclude(token, exclude, expected):
-    assert extract.acronyms.is_acronym(token, exclude=exclude) == expected
+    assert extract.acros.is_acronym(token, exclude=exclude) == expected
+
+
+@pytest.mark.parametrize(
+    "text, exp",
+    [
+        ("I want to work for NASA when I grow up, but not NOAA.", ["NASA", "NOAA"]),
+        ("I want to live in the U.S. Do you?", ["U.S."]),
+    ]
+)
+def test_acronyms(spacy_lang, text, exp):
+    doc = spacy_lang(text)
+    obs = list(extract.acronyms(doc))
+    assert all(isinstance(tok, Token) for tok in obs)
+    assert [tok.text for tok in obs] == exp
 
 
 class TestAcronymsAndDefinitions:

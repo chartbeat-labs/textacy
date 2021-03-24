@@ -9,12 +9,28 @@ from __future__ import annotations
 
 import collections
 from operator import itemgetter
-from typing import Dict, List, Optional, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import numpy as np
-from spacy.tokens import Doc, Span
+from spacy.tokens import Doc, Span, Token
 
 from .. import constants
+
+
+def acronyms(doclike: Doc | Span) -> Iterable[Token]:
+    """
+    Extract tokens whose text is "acronym-like" from a document or sentence,
+    in order of appearance.
+
+    Args:
+        doclike
+
+    Yields:
+        Next acronym-like ``Token``.
+    """
+    for tok in doclike:
+        if is_acronym(tok.text):
+            yield tok
 
 
 def acronyms_and_definitions(
