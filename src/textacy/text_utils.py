@@ -10,47 +10,6 @@ from . import constants
 LOGGER = logging.getLogger(__name__)
 
 
-def is_acronym(token: str, exclude: Optional[Set[str]] = None) -> bool:
-    """
-    Pass single token as a string, return True/False if is/is not valid acronym.
-
-    Args:
-        token: Single word to check for acronym-ness
-        exclude: If technically valid but not actual acronyms are known in advance,
-            pass them in as a set of strings; matching tokens will return False.
-
-    Returns:
-        Whether or not ``token`` is an acronym.
-    """
-    # exclude certain valid acronyms from consideration
-    if exclude and token in exclude:
-        return False
-    # don't allow empty strings
-    if not token:
-        return False
-    # don't allow spaces
-    if " " in token:
-        return False
-    # 2-character acronyms can't have lower-case letters
-    if len(token) == 2 and not token.isupper():
-        return False
-    # acronyms can't be all digits
-    if token.isdigit():
-        return False
-    # acronyms must have at least one upper-case letter or start/end with a digit
-    if not any(char.isupper() for char in token) and not (
-        token[0].isdigit() or token[-1].isdigit()
-    ):
-        return False
-    # acronyms must have between 2 and 10 alphanumeric characters
-    if not 2 <= sum(1 for char in token if char.isalnum()) <= 10:
-        return False
-    # only certain combinations of letters, digits, and '&/.-' allowed
-    if not constants.RE_ACRONYM.match(token):
-        return False
-    return True
-
-
 def clean_terms(terms: Iterable[str]) -> Iterable[str]:
     """
     Clean up a sequence of single- or multi-word strings: strip leading/trailing
