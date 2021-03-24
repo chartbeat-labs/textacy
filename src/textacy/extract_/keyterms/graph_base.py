@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import itertools
 import logging
@@ -19,16 +21,16 @@ import numpy as np
 from cytoolz import itertoolz
 from spacy.tokens import Span, Token
 
-from .. import errors
+from ... import errors
 from . import utils as ke_utils
 
 LOGGER = logging.getLogger(__name__)
 
 
 def build_graph_from_terms(
-    terms: Union[Sequence[str], Sequence[Token], Sequence[Span]],
+    terms: Sequence[str] | Sequence[Token] | Sequence[Span],
     *,
-    normalize: Optional[Union[str, Callable[[Token], str]]] = "lemma",
+    normalize: Optional[str | Callable[[Token], str]] = "lemma",
     window_size: int = 10,
     edge_weighting: str = "count",
 ) -> nx.Graph:

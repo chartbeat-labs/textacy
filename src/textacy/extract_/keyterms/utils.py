@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import itertools
 import math
 import operator
@@ -12,23 +14,22 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    Union,
 )
 
 import numpy as np
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Span, Token
 
-from .. import errors
-from .. import extract
-from .. import similarity
-from .. import utils
-from .. import vsm
+from ... import errors
+from ... import extract
+from ... import similarity
+from ... import utils
+from ... import vsm
 
 
 def normalize_terms(
-    terms: Union[Iterable[Span], Iterable[Token]],
-    normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]],
+    terms: Iterable[Span] | Iterable[Token],
+    normalize: Optional[str | Callable[[Span | Token], str]],
 ) -> Iterable[str]:
     """
     Transform a sequence of terms from spaCy ``Token`` or ``Span`` s into
@@ -197,9 +198,9 @@ def get_longest_subsequence_candidates(
 
 def get_ngram_candidates(
     doc: Doc,
-    ns: Union[int, Collection[int]],
+    ns: int | Collection[int],
     *,
-    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+    include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
 ) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are n-length sequences
@@ -237,7 +238,7 @@ def get_ngram_candidates(
 
 
 def get_pattern_matching_candidates(
-    doc: Doc, patterns: Union[str, List[str], List[dict], List[List[dict]]],
+    doc: Doc, patterns: str | List[str] | List[dict] | List[List[dict]],
 ) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are sequences of tokens
@@ -303,7 +304,7 @@ def most_discriminating_terms(
     bool_array_grp1: Iterable[bool],
     *,
     max_n_terms: int = 1000,
-    top_n_terms: Union[int, float] = 25,
+    top_n_terms: int | float = 25,
 ) -> Tuple[List[str], List[str]]:
     """
     Given a collection of documents assigned to 1 of 2 exclusive groups, get the

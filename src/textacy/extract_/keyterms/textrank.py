@@ -1,10 +1,12 @@
+from __future__ import annotations
+
 import collections
 import operator
-from typing import cast, Callable, Collection, Dict, List, Optional, Set, Tuple, Union
+from typing import cast, Callable, Collection, Dict, List, Optional, Set, Tuple
 
 from spacy.tokens import Doc, Token
 
-from .. import utils
+from ... import utils
 from . import graph_base
 from . import utils as ke_utils
 
@@ -12,12 +14,12 @@ from . import utils as ke_utils
 def textrank(
     doc: Doc,
     *,
-    normalize: Optional[Union[str, Callable[[Token], str]]] = "lemma",
-    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+    normalize: Optional[str | Callable[[Token], str]] = "lemma",
+    include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
     window_size: int = 2,
     edge_weighting: str = "binary",
     position_bias: bool = False,
-    topn: Union[int, float] = 10,
+    topn: int | float = 10,
 ) -> List[Tuple[str, float]]:
     """
     Extract key terms from a document using the TextRank algorithm, or
@@ -112,7 +114,7 @@ def textrank(
 
 
 def _get_candidates(
-    doc: Doc, normalize: Optional[Union[str, Callable]], include_pos: Optional[Set[str]],
+    doc: Doc, normalize: Optional[str | Callable], include_pos: Optional[Set[str]],
 ) -> Set[Tuple[str, ...]]:
     """
     Get a set of candidate terms to be scored by joining the longest

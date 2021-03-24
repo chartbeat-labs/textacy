@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import itertools
 import operator
@@ -13,23 +15,22 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    Union,
 )
 
 import networkx as nx
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Token
 
-from .. import utils
+from ... import utils
 from . import utils as ke_utils
 
 
 def scake(
     doc: Doc,
     *,
-    normalize: Optional[Union[str, Callable[[Token], str]]] = "lemma",
-    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
-    topn: Union[int, float] = 10,
+    normalize: Optional[str | Callable[[Token], str]] = "lemma",
+    include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
+    topn: int | float = 10,
 ) -> List[Tuple[str, float]]:
     """
     Extract key terms from a document using the sCAKE algorithm.
@@ -123,7 +124,7 @@ def _compute_word_scores(
     doc: Doc,
     graph: nx.Graph,
     cooc_mat: Dict[Tuple[str, str], int],
-    normalize: Optional[Union[str, Callable[[Token], str]]],
+    normalize: Optional[str | Callable[[Token], str]],
 ) -> Dict[str, float]:
     word_strs: List[str] = list(graph.nodes())
     # "level of hierarchy" component
@@ -159,7 +160,7 @@ def _compute_word_scores(
 
 def _get_candidates(
     doc: Doc,
-    normalize: Optional[Union[str, Callable[[Token], str]]],
+    normalize: Optional[str | Callable[[Token], str]],
     include_pos: Set[str],
 ) -> Set[Tuple[str, ...]]:
     """

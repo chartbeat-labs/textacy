@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import functools
 import math
@@ -13,24 +15,23 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    Union,
 )
 
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Token
 
 from . import utils as ke_utils
-from .. import errors, utils
+from ... import errors, utils
 
 
 def yake(
     doc: Doc,
     *,
     normalize: Optional[str] = "lemma",
-    ngrams: Union[int, Collection[int]] = (1, 2, 3),
-    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+    ngrams: int | Collection[int] = (1, 2, 3),
+    include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
     window_size: int = 2,
-    topn: Union[int, float] = 10,
+    topn: int | float = 10,
 ) -> List[Tuple[str, float]]:
     """
     Extract key terms from a document using the YAKE algorithm.
