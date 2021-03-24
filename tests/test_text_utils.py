@@ -80,49 +80,6 @@ def test_is_acronym_exclude(token, exclude, expected):
 
 
 @pytest.mark.parametrize(
-    "text,keyword,ignore_case,window_width,has_results",
-    [
-        (TEXT, "clinton", True, 50, True),
-        (TEXT, "clinton", False, 50, False),
-        (TEXT, "clinton", True, 10, True),
-        (TEXT, "all", True, 50, True),
-        (TEXT, "All", False, 50, True),
-        (
-            "No llores porque ya se terminó, sonríe porque sucedió.",
-            "terminó",
-            True,
-            50,
-            True,
-        ),
-    ],
-)
-def test_keyword_in_context(text, keyword, ignore_case, window_width, has_results):
-    results = list(
-        text_utils.keyword_in_context(
-            text,
-            keyword,
-            ignore_case=ignore_case,
-            window_width=window_width,
-            print_only=False,
-        )
-    )
-    # check if any results
-    if has_results:
-        assert results
-    else:
-        assert not results
-    for pre, kw, post in results:
-        # check kw match by case
-        if ignore_case is True:
-            assert kw.lower() == keyword.lower()
-        else:
-            assert kw == keyword
-        # check pre/post window widths
-        assert len(pre) <= window_width
-        assert len(post) <= window_width
-
-
-@pytest.mark.parametrize(
     "input_,output_",
     [
         (

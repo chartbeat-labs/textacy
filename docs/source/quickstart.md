@@ -27,10 +27,11 @@ Let's start with a single text document:
 Before (or *in lieu of*) processing this text with spaCy, we can do a few things. First, let's look for keywords-in-context, as a quick way to assess, by eye, how a particular word or phrase is used in a body of text:
 
 ```pycon
->>> textacy.text_utils.KWIC(text, "language", window_width=35)
-1980s and mid 1990s, much Natural  Language  Processing research has relied hea
-n machine learning. Formerly, many  language -processing tasks typically involve
-s not in general robust to natural  language  variation. The machine-learning pa
+>>> from textacy import extract
+>>> list(extract.keyword_in_context(text, "language", window_width=25, pad_context=True))
+[(' mid 1990s, much Natural ', 'Language', ' Processing research has '),
+ ('learning. Formerly, many ', 'language', '-processing tasks typical'),
+ ('eneral robust to natural ', 'language', ' variation. The machine-l')]
 ```
 
 Sometimes, "raw" text is messy and must be cleaned up before analysis; other times, an analysis simply benefits from well-standardized text. In either case, the `textacy.preprocessing` sub-package contains a number of functions to normalize (whitespace, quotation marks, etc.), remove (punctuation, accents, etc.), and replace (URLs, emails, numbers, etc.) messy text data. For example:

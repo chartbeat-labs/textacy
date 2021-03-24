@@ -94,7 +94,7 @@ def test_plaintext_functionality(text):
     assert all(char.islower() for char in preprocessed_text if char.isalpha())
     assert all(char.isalnum() or char.isspace() for char in preprocessed_text)
     keyword = "America"
-    kwics = text_utils.keyword_in_context(
+    kwics = extract.keyword_in_context(
         text, keyword, window_width=35, print_only=False
     )
     for pre, kw, post in kwics:
