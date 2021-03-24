@@ -1,3 +1,10 @@
+"""
+Language Identification
+-----------------------
+
+:mod:`textacy.lang_id`: Simple interface for identifying the most probable language
+of a given text.
+"""
 import logging
 
 import gcld3
@@ -5,7 +12,7 @@ import gcld3
 
 LOGGER = logging.getLogger(__name__)
 
-lang_identifier = gcld3.NNetLanguageIdentifier(min_num_bytes=0, max_num_bytes=1000)
+lang_identifier = gcld3.NNetLanguageIdentifier(min_num_bytes=3, max_num_bytes=1000)
 
 
 def identify_lang(text: str) -> str:
