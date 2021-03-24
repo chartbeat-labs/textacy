@@ -313,30 +313,3 @@ class TestAcronymsAndDefinitions:
             spacy_doc, known_acro_defs={"I.M.F.": "International Monetary Fund"}
         )
         assert observed == expected
-
-
-def test_direct_quotations(spacy_doc):
-    expected = [
-        ("he", "said", '"I heard Donald Trump say we need to close mosques in the United States,"'),
-        ("he", "said", '"Is that what we want our kids to learn?"'),
-    ]
-    result = list(extract.direct_quotations(spacy_doc))
-    assert all(isinstance(dq, tuple) for dq in result)
-    assert all(isinstance(obj, (Span, Token)) for dq in result for obj in dq)
-    observed = [
-        tuple(obj.text for obj in dq)
-        for dq in result
-    ]
-    assert observed == expected
-
-
-def test_semistructured_statements(spacy_doc):
-    expected = (
-        "we",
-        "discussed",
-        "the impact of technology trends on education in the Middle East"
-    )
-    observed = next(extract.semistructured_statements(spacy_doc, "we", cue="discuss"))
-    assert isinstance(observed, tuple) and len(observed) == 3
-    assert all(isinstance(obj, (Span, Token)) for obj in observed)
-    assert all(obs.text == exp for obs, exp in zip(observed, expected))
