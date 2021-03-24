@@ -1,3 +1,10 @@
+"""
+Matches
+-------
+
+:mod:`textacy.extract.matches`: Extract matching spans from a document or sentence
+using spaCy's built-in matcher or regular expressions.
+"""
 from __future__ import annotations
 
 import re
@@ -16,7 +23,7 @@ def token_matches(
     on_match: Optional[Callable] = None,
 ) -> Iterable[Span]:
     """
-    Extract sub-spans from a ``Doc`` or ``Span`` matching one or more patterns
+    Extract ``Span`` s from a document or sentence matching one or more patterns
     of per-token attr:value pairs, with optional quantity qualifiers.
 
     Args:
@@ -147,7 +154,7 @@ def regex_matches(
     expand: bool = False,
 ) -> Iterable[Span]:
     """
-    Extract ``Span`` s from a Doc-like object whose full texts match against
+    Extract ``Span`` s from a document or sentence whose full texts match against
     a regular expression ``pattern``.
 
     Args:

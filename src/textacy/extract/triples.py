@@ -1,3 +1,10 @@
+"""
+Triples
+-------
+
+:mod:`textacy.extract.triples`: Extract structured triples from a document or sentence
+through rule-based pattern-matching of the annotated tokens.
+"""
 from __future__ import annotations
 
 import collections

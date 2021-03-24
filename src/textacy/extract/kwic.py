@@ -1,3 +1,10 @@
+"""
+KWIC
+----
+
+:mod:`textacy.extract.kwic`: Extract keywords with their surrounding contexts from
+a text document using regular expressions.
+"""
 from __future__ import annotations
 
 import re

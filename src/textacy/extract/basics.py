@@ -1,3 +1,10 @@
+"""
+Basics
+------
+
+:mod:`textacy.extract.basics`: Extract basic components from a document or sentence
+via spaCy, with bells and whistles for filtering the results.
+"""
 from __future__ import annotations
 
 from typing import Collection, Iterable, Optional, Set, Union

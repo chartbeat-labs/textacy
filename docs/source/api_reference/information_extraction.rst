@@ -6,41 +6,40 @@ Information Extraction
 .. autosummary::
    :nosignatures:
 
-   words
-   ngrams
-   entities
-   noun_chunks
-   pos_regex_matches
-   matches
-   subject_verb_object_triples
-   acronyms_and_definitions
-   semistructured_statements
-   direct_quotations
+   basics.words
+   basics.ngrams
+   basics.entities
+   basics.noun_chunks
+   matches.token_matches
+   matches.regex_matches
+   triples.subject_verb_object_triples
+   triples.semistructured_statements
+   triples.direct_quotations
+   acronymns.acronyms_and_definitions
+   kwic.keyword_in_context
+   keyterms.textrank
+   keyterms.yake
+   keyterms.scake
+   keyterms.sgrank
 
-.. automodule:: textacy.extract
+.. automodule:: textacy.extract.basics
 
-Keyterm Extraction
-------------------
+.. automodule:: textacy.extract.matches
 
-.. currentmodule:: textacy.ke
+.. automodule:: textacy.extract.triples
 
-.. autosummary::
-   :nosignatures:
+.. automodule:: textacy.extract.acronyms
 
-   textrank.textrank
-   yake.yake
-   scake.scake
-   sgrank.sgrank
+.. automodule:: textacy.extract.kwic
 
-.. automodule:: textacy.ke.textrank
+.. automodule:: textacy.extract.keyterms
 
-.. automodule:: textacy.ke.yake
+.. automodule:: textacy.extract.keyterms.textrank
 
-.. automodule:: textacy.ke.scake
+.. automodule:: textacy.extract.keyterms.yake
 
-.. automodule:: textacy.ke.sgrank
+.. automodule:: textacy.extract.keyterms.scake
 
-Keyterm Extraction Utils
-^^^^^^^^^^^^^^^^^^^^^^^^
+.. automodule:: textacy.extract.keyterms.sgrank
 
-.. automodule:: textacy.ke.utils
+.. automodule:: textacy.extract.keyterms.utils
