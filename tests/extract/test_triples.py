@@ -102,14 +102,18 @@ def sss_doc(en_nlp):
 )
 def test_subject_verb_object_triples(text, svos_exp, en_nlp):
     doc = en_nlp(text)
-    svos_tok = extract.subject_verb_object_triples(doc)
+    svos = list(extract.subject_verb_object_triples(doc))
+    assert all(
+        hasattr(svo, attr)
+        for svo in svos for attr in ["subject", "verb", "object"]
+    )
     svos_obs = [
         (
             [tok.text for tok in subject],
             [tok.text for tok in verb],
             [tok.text for tok in object]
         )
-        for subject, verb, object in svos_tok
+        for subject, verb, object in svos
     ]
     assert svos_obs == svos_exp
 
@@ -172,8 +176,14 @@ def test_subject_verb_object_triples(text, svos_exp, en_nlp):
     ],
 )
 def test_semistructured_statements(sss_doc, entity, cue, fragment_len_range, exp):
-    obs = extract.semistructured_statements(
-        sss_doc, entity=entity, cue=cue, fragment_len_range=fragment_len_range
+    obs = list(
+        extract.semistructured_statements(
+            sss_doc, entity=entity, cue=cue, fragment_len_range=fragment_len_range
+        )
+    )
+    assert all(
+        hasattr(sss, attr)
+        for sss in obs for attr in ["entity", "cue", "fragment"]
     )
     obs_text = [
         (
@@ -223,7 +233,11 @@ def test_semistructured_statements(sss_doc, entity, cue, fragment_len_range, exp
     ]
 )
 def test_direct_quotations(en_nlp, text, exp):
-    obs = extract.direct_quotations(en_nlp(text))
+    obs = list(extract.direct_quotations(en_nlp(text)))
+    assert all(
+        hasattr(dq, attr)
+        for dq in obs for attr in ["speaker", "cue", "content"]
+    )
     obs_text = [
         (
             [tok.text for tok in speaker],

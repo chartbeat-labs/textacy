@@ -27,22 +27,23 @@ _CLAUSAL_SUBJ_DEPS = {csubj, csubjpass}
 _ACTIVE_SUBJ_DEPS = {csubj, nsubj}
 _VERB_MODIFIER_DEPS = {aux, auxpass, neg}
 
+SVO = collections.namedtuple("SVO", ["subject", "verb", "object"])
+SSS = collections.namedtuple("SSS", ["entity", "cue", "fragment"])
+DQ = collections.namedtuple("DQ", ["speaker", "cue", "content"])
+
 
 def subject_verb_object_triples(
     doclike: Doc | Span,
 ) -> Iterable[Tuple[List[Token], List[Token], List[Token]]]:
     """
-    Extract an ordered sequence of (subject, verb, object) triples from a document
+    Extract an ordered sequence of subject-verb-object triples from a document
     or sentence.
 
     Args:
         doclike
 
     Yields:
-        Next SVO triple, in (more or less) order of appearance.
-
-    See Also:
-        :func:`semistructured_statements()`
+        Next SVO triple as (subject, verb, object), in approximate order of appearance.
     """
     if isinstance(doclike, Span):
         sents = [doclike]
@@ -101,10 +102,10 @@ def subject_verb_object_triples(
         # expand verbs and restructure into svo triples
         for verb, so_dict in verb_sos.items():
             if so_dict["subjects"] and so_dict["objects"]:
-                yield (
-                    sorted(so_dict["subjects"], key=attrgetter("i")),
-                    sorted(expand_verb(verb), key=attrgetter("i")),
-                    sorted(so_dict["objects"], key=attrgetter("i")),
+                yield SVO(
+                    subject=sorted(so_dict["subjects"], key=attrgetter("i")),
+                    verb=sorted(expand_verb(verb), key=attrgetter("i")),
+                    object=sorted(so_dict["objects"], key=attrgetter("i")),
                 )
 
 
@@ -131,7 +132,8 @@ def semistructured_statements(
             by safe default values. None (default) skips filtering by fragment length.
 
     Yields:
-        Next matching triple, consisting of (entity, cue, fragment).
+        Next matching triple, consisting of (entity, cue, fragment),
+        in order of appearance.
 
     Notes:
         Inspired by N. Diakopoulos, A. Zhang, A. Salway. Visual Analytics of
@@ -141,9 +143,6 @@ def semistructured_statements(
         Which itself was inspired by by Salway, A.; Kelly, L.; Skadiņa, I.; and
         Jones, G. 2010. Portable Extraction of Partially Structured Facts from
         the Web. In Proc. ICETAL 2010, LNAI 6233, 345-356. Heidelberg, Springer.
-
-    See Also:
-        :func:`subject_verb_object_triples()`
     """
     if fragment_len_range is not None:
         fragment_len_range = utils.validate_and_clip_range(
@@ -173,23 +172,23 @@ def semistructured_statements(
                             frag_cand = subtoks
                             break
                 if frag_cand is not None:
-                    yield (
-                        list(entity_cand),
-                        sorted(expand_verb(cue_cand), key=attrgetter("i")),
-                        sorted(frag_cand, key=attrgetter("i")),
+                    yield SSS(
+                        entity=list(entity_cand),
+                        cue=sorted(expand_verb(cue_cand), key=attrgetter("i")),
+                        fragment=sorted(frag_cand, key=attrgetter("i")),
                     )
 
 
 def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Span]]:
     """
-    Extract direct quotations from a document using simple rules and patterns.
-    Note: Does not extract indirect or mixed quotations!
+    Extract direct quotations with an attributable speaker from a document
+    using simple rules and patterns. Does not extract indirect or mixed quotations!
 
     Args:
         doc
 
     Yields:
-        Next quotation in ``doc`` as a (speaker, cue verb, quotation content) triple.
+        Next direct quotation in ``doc`` as a (speaker, cue, content) triple.
 
     Notes:
         Loosely inspired by Krestel, Bergler, Witte. "Minding the Source: Automatic
@@ -270,10 +269,10 @@ def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Spa
                     speaker = expand_noun(speaker_cand)
                     break
         if content and cue and speaker:
-            yield (
-                sorted(speaker, key=attrgetter("i")),
-                sorted(cue, key=attrgetter("i")),
-                content,
+            yield DQ(
+                speaker=sorted(speaker, key=attrgetter("i")),
+                cue=sorted(cue, key=attrgetter("i")),
+                content=content,
             )
 
 
