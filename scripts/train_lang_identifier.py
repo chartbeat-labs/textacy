@@ -1,4 +1,10 @@
 """
+NOTE: This script will no longer work and is no longer needed as of textacy v0.11.
+The home-brewed language identification model trained here, which was directly inspired
+by Google's CLD3 model, has since been replaced by their official Python package
+backed by the CLD3 model. For reference, see here: https://github.com/google/cld3;
+and for posterity, search for "lang_utils" in older versions of textacy.
+
 ### env
 
 textacy==0.9.0

@@ -4,7 +4,6 @@ import sys
 from pprint import pprint
 
 from . import datasets
-from . import lang_utils
 from . import resources
 from . import utils
 
@@ -21,7 +20,6 @@ LOGGER.addHandler(ch)
 LOGGER.setLevel(logging.INFO)
 
 NAME_TO_CLASS = {
-    "lang_identifier": lang_utils.LangIdentifier,
     "capitol_words": datasets.CapitolWords,
     "imdb": datasets.IMDB,
     "oxford_text_archive": datasets.OxfordTextArchive,
