@@ -1,4 +1,4 @@
-from textacy.extract_ import keyterms as kt
+from textacy.extract import keyterms as kt
 
 
 def test_aggregate_term_variants():

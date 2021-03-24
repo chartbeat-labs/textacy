@@ -2,7 +2,7 @@ import pytest
 
 import textacy
 from textacy import datasets
-from textacy.extract_ import keyterms as kt
+from textacy.extract import keyterms as kt
 
 
 DATASET = datasets.CapitolWords()
