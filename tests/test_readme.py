@@ -6,7 +6,6 @@ import scipy.sparse as sp
 from spacy.tokens import Doc, Span
 
 import textacy.datasets
-import textacy.ke
 from textacy import Corpus, TextStats
 from textacy import (
     constants,
@@ -16,6 +15,7 @@ from textacy import (
     text_utils,
 )
 from textacy import load_spacy_lang, make_spacy_doc
+from textacy.extract_ import keyterms as kt
 from textacy.tm import TopicModel
 from textacy.vsm import Vectorizer
 
@@ -138,7 +138,7 @@ def test_extract_functionality(doc):
         assert isinstance(stmt[0], str)
         assert len(stmt) == 3
 
-    kts = textacy.ke.textrank(doc, topn=10)
+    kts = kt.textrank(doc, topn=10)
     for keyterm in kts:
         assert isinstance(keyterm, tuple)
         assert isinstance(keyterm[0], str)

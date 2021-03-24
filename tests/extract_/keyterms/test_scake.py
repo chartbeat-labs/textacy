@@ -1,7 +1,8 @@
 import pytest
 
 import textacy
-from textacy import datasets, ke
+from textacy import datasets
+from textacy.extract_ import keyterms as kt
 
 
 DATASET = datasets.CapitolWords()
@@ -24,7 +25,7 @@ def empty_spacy_doc():
 
 
 def test_default(spacy_doc):
-    result = ke.scake(spacy_doc)
+    result = kt.scake(spacy_doc)
     assert isinstance(result, list) and len(result) > 0
     assert all(isinstance(ts, tuple) and len(ts) == 2 for ts in result)
     assert all(
@@ -34,27 +35,27 @@ def test_default(spacy_doc):
 
 
 def test_include_pos(spacy_doc):
-    result1 = ke.scake(spacy_doc, include_pos={"NOUN", "PROPN", "ADJ"})
-    result2 = ke.scake(spacy_doc, include_pos={"NOUN", "PROPN"})
+    result1 = kt.scake(spacy_doc, include_pos={"NOUN", "PROPN", "ADJ"})
+    result2 = kt.scake(spacy_doc, include_pos={"NOUN", "PROPN"})
     assert len(result1) > 0 and len(result2) > 0
     assert result1 != result2
 
 
 def test_n_topn(spacy_doc):
     for n in (5, 25):
-        result = ke.scake(spacy_doc, topn=n)
+        result = kt.scake(spacy_doc, topn=n)
         assert 0 < len(result) <= n
 
 
 def test_topn_float(spacy_doc):
-    result = ke.scake(spacy_doc, topn=0.2)
+    result = kt.scake(spacy_doc, topn=0.2)
     assert len(result) > 0
     with pytest.raises(ValueError):
-        _ = ke.scake(spacy_doc, topn=2.0)
+        _ = kt.scake(spacy_doc, topn=2.0)
 
 
 def test_empty_doc(empty_spacy_doc):
-    result = ke.scake(empty_spacy_doc)
+    result = kt.scake(empty_spacy_doc)
     assert isinstance(result, list)
     assert len(result) == 0
 
@@ -64,6 +65,6 @@ def test_single_sentence_doc():
         "This is a document with a single sentence.",
         lang="en_core_web_sm",
     )
-    result = ke.scake(doc)
+    result = kt.scake(doc)
     assert isinstance(result, list)
     assert len(result) > 0
