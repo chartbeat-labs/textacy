@@ -1,5 +1,3 @@
-from operator import itemgetter
-
 import numpy as np
 import pytest
 import scipy.sparse as sp
@@ -8,11 +6,8 @@ from spacy.tokens import Doc, Span
 import textacy.datasets
 from textacy import Corpus, TextStats
 from textacy import (
-    constants,
     extract,
-    io,
     preprocessing,
-    text_utils,
 )
 from textacy import load_spacy_lang, make_spacy_doc
 from textacy.extract import keyterms as kt
@@ -94,9 +89,7 @@ def test_plaintext_functionality(text):
     assert all(char.islower() for char in preprocessed_text if char.isalpha())
     assert all(char.isalnum() or char.isspace() for char in preprocessed_text)
     keyword = "America"
-    kwics = extract.keyword_in_context(
-        text, keyword, window_width=35, print_only=False
-    )
+    kwics = extract.keyword_in_context(text, keyword, window_width=35)
     for pre, kw, post in kwics:
         assert kw == keyword
         assert isinstance(pre, str)
