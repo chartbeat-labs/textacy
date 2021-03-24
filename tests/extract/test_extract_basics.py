@@ -4,8 +4,8 @@ import pytest
 from spacy.tokens import Span, Token
 
 from textacy import load_spacy_lang
-from textacy import extract_
-from textacy.extract_ import basics
+from textacy import extract
+from textacy.extract import basics
 
 
 @pytest.fixture(scope="module")
@@ -24,13 +24,13 @@ def spacy_doc():
 class TestWords:
 
     def test_default(self, spacy_doc):
-        result = list(extract_.words(spacy_doc))
+        result = list(extract.words(spacy_doc))
         assert all(isinstance(tok, Token) for tok in result)
         assert not any(tok.is_space for tok in result)
 
     def test_filter(self, spacy_doc):
         result = list(
-            extract_.words(
+            extract.words(
                 spacy_doc, filter_stops=True, filter_punct=True, filter_nums=True
             )
         )
@@ -39,19 +39,19 @@ class TestWords:
         assert not any(tok.like_num for tok in result)
 
     def test_pos(self, spacy_doc):
-        result1 = list(extract_.words(spacy_doc, include_pos={"NOUN"}))
-        result2 = list(extract_.words(spacy_doc, include_pos="NOUN"))
+        result1 = list(extract.words(spacy_doc, include_pos={"NOUN"}))
+        result2 = list(extract.words(spacy_doc, include_pos="NOUN"))
         assert all(tok.pos_ == "NOUN" for tok in result1)
         assert all(tok.pos_ == "NOUN" for tok in result2)
-        result3 = list(extract_.words(spacy_doc, exclude_pos={"NOUN"}))
-        result4 = list(extract_.words(spacy_doc, exclude_pos="NOUN"))
+        result3 = list(extract.words(spacy_doc, exclude_pos={"NOUN"}))
+        result4 = list(extract.words(spacy_doc, exclude_pos="NOUN"))
         assert not any(tok.pos_ == "NOUN" for tok in result3)
         assert not any(tok.pos_ == "NOUN" for tok in result4)
 
     def test_min_freq(self, spacy_doc):
         counts = collections.Counter()
         counts.update(tok.lower_ for tok in spacy_doc)
-        result = list(extract_.words(spacy_doc, min_freq=2))
+        result = list(extract.words(spacy_doc, min_freq=2))
         assert all(counts[tok.lower_] >= 2 for tok in result)
 
 
@@ -59,17 +59,17 @@ class TestNGrams:
 
     def test_n_less_than_1(self, spacy_doc):
         with pytest.raises(ValueError):
-            _ = list(extract_.ngrams(spacy_doc, 0))
+            _ = list(extract.ngrams(spacy_doc, 0))
 
     def test_n(self, spacy_doc):
         for n in (1, 2):
-            result = list(extract_.ngrams(spacy_doc, n))
+            result = list(extract.ngrams(spacy_doc, n))
             assert all(isinstance(span, Span) for span in result)
             assert all(len(span) == n for span in result)
 
     def test_filter(self, spacy_doc):
         result = list(
-            extract_.ngrams(
+            extract.ngrams(
                 spacy_doc, 2, filter_stops=True, filter_punct=True, filter_nums=True
             )
         )
@@ -81,16 +81,16 @@ class TestNGrams:
         n = 2
         counts = collections.Counter()
         counts.update(spacy_doc[i : i + n].text.lower() for i in range(len(spacy_doc) - n + 1))
-        result = list(extract_.ngrams(spacy_doc, 2, min_freq=2))
+        result = list(extract.ngrams(spacy_doc, 2, min_freq=2))
         assert all(counts[span.text.lower()] >= 2 for span in result)
 
     def test_pos(self, spacy_doc):
-        result1 = list(extract_.ngrams(spacy_doc, 2, include_pos={"NOUN"}))
-        result2 = list(extract_.ngrams(spacy_doc, 2, include_pos="NOUN"))
+        result1 = list(extract.ngrams(spacy_doc, 2, include_pos={"NOUN"}))
+        result2 = list(extract.ngrams(spacy_doc, 2, include_pos="NOUN"))
         assert all(tok.pos_ == "NOUN" for span in result1 for tok in span)
         assert all(tok.pos_ == "NOUN" for span in result2 for tok in span)
-        result3 = list(extract_.ngrams(spacy_doc, 2, exclude_pos={"NOUN"}))
-        result4 = list(extract_.ngrams(spacy_doc, 2, exclude_pos="NOUN"))
+        result3 = list(extract.ngrams(spacy_doc, 2, exclude_pos={"NOUN"}))
+        result4 = list(extract.ngrams(spacy_doc, 2, exclude_pos="NOUN"))
         assert not any(tok.pos_ == "NOUN" for span in result3 for tok in span)
         assert not any(tok.pos_ == "NOUN" for span in result4 for tok in span)
 
@@ -98,7 +98,7 @@ class TestNGrams:
 class TestEntities:
 
     def test_default(self, spacy_doc):
-        result = list(extract_.entities(spacy_doc, drop_determiners=False))
+        result = list(extract.entities(spacy_doc, drop_determiners=False))
         assert all(isinstance(span, Span) for span in result)
         assert all(span.label_ for span in result)
         assert all(span[0].ent_type for span in result)
@@ -106,33 +106,33 @@ class TestEntities:
     def test_include_types(self, spacy_doc):
         ent_types = ["PERSON", "GPE"]
         for include_types in ent_types:
-            result = extract_.entities(spacy_doc, include_types=include_types)
+            result = extract.entities(spacy_doc, include_types=include_types)
             assert all(span.label_ == include_types for span in result)
         ent_types = [{"PERSON", "GPE"}, ("DATE", "ORG"), ["LOC"]]
         for include_types in ent_types:
-            result = extract_.entities(spacy_doc, include_types=include_types)
+            result = extract.entities(spacy_doc, include_types=include_types)
             assert all(span.label_ in include_types for span in result)
         # special numeric cases!
         ent_types = ["NUMERIC", ("NUMERIC",), {"PERSON", "NUMERIC"}]
         for include_types in ent_types:
             include_types_parsed = basics._parse_ent_types(include_types, "include")
-            result = extract_.entities(spacy_doc, include_types=include_types)
+            result = extract.entities(spacy_doc, include_types=include_types)
             assert all(span.label_ in include_types_parsed for span in result)
 
     def test_exclude_types(self, spacy_doc):
         ent_types = ["PERSON", "GPE"]
         for exclude_types in ent_types:
-            result = extract_.entities(spacy_doc, exclude_types=exclude_types)
+            result = extract.entities(spacy_doc, exclude_types=exclude_types)
             assert all(span.label_ != exclude_types for span in result)
         ent_types = [{"PERSON", "GPE"}, ("DATE", "ORG"), ["LOC"]]
         for exclude_types in ent_types:
-            result = extract_.entities(spacy_doc, exclude_types=exclude_types)
+            result = extract.entities(spacy_doc, exclude_types=exclude_types)
             assert all(span.label_ not in exclude_types for span in result)
         # special numeric cases!
         ent_types = ["NUMERIC", ("NUMERIC",), {"PERSON", "NUMERIC"}]
         for exclude_types in ent_types:
             exclude_types_parsed = basics._parse_ent_types(exclude_types, "exclude")
-            result = extract_.entities(spacy_doc, exclude_types=exclude_types)
+            result = extract.entities(spacy_doc, exclude_types=exclude_types)
             assert all(span.label_ not in exclude_types_parsed for span in result)
 
     def test_parse_ent_types_bad_type(self):
@@ -141,17 +141,17 @@ class TestEntities:
                 _ = basics._parse_ent_types(bad_type, "include")
 
     def test_min_freq(self, spacy_doc):
-        result = list(extract_.entities(spacy_doc, min_freq=2))
+        result = list(extract.entities(spacy_doc, min_freq=2))
         assert len(result) == 0
 
     def test_determiner(self, spacy_doc):
-        result = list(extract_.entities(spacy_doc, drop_determiners=False))
+        result = list(extract.entities(spacy_doc, drop_determiners=False))
         assert all(isinstance(span, Span) for span in result)
         assert any(span[0].pos_ == "DET" for span in result)
         assert all(span.label_ for span in result)
 
     def test_drop_determiners(self, spacy_doc):
-        result = list(extract_.entities(spacy_doc, drop_determiners=True))
+        result = list(extract.entities(spacy_doc, drop_determiners=True))
         assert not any(span[0].pos_ == "DET" for span in result)
         assert all(span.label_ for span in result)
 
@@ -159,15 +159,15 @@ class TestEntities:
 class TestNounChunks:
 
     def test_default(self, spacy_doc):
-        result = list(extract_.noun_chunks(spacy_doc))
+        result = list(extract.noun_chunks(spacy_doc))
         assert all(isinstance(span, Span) for span in result)
 
     def test_determiner(self, spacy_doc):
-        result = list(extract_.noun_chunks(spacy_doc, drop_determiners=False))
+        result = list(extract.noun_chunks(spacy_doc, drop_determiners=False))
         assert all(isinstance(span, Span) for span in result)
         assert any(span[0].pos_ == "DET" for span in result)
 
     def test_min_freq(self, spacy_doc):
         text = spacy_doc.text.lower()
-        result = list(extract_.noun_chunks(spacy_doc, drop_determiners=True, min_freq=2))
+        result = list(extract.noun_chunks(spacy_doc, drop_determiners=True, min_freq=2))
         assert all(text.count(span.text.lower()) >= 2 for span in result)

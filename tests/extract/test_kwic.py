@@ -2,7 +2,7 @@ import re
 
 import pytest
 
-import textacy.extract_.kwic
+from textacy import extract
 
 
 @pytest.fixture(scope="module")
@@ -28,7 +28,7 @@ class TestKeywordInContext:
     )
     def test_keywords(self, text, keyword, ignore_case):
         obs = list(
-            textacy.extract_.kwic.keyword_in_context(
+            extract.keyword_in_context(
                 text,
                 keyword,
                 ignore_case=ignore_case,
@@ -53,7 +53,7 @@ class TestKeywordInContext:
     )
     def test_contexts(self, text, window_width, pad_context):
         obs = list(
-            textacy.extract_.kwic.keyword_in_context(
+            extract.keyword_in_context(
                 text,
                 "you",
                 window_width=window_width,
@@ -146,7 +146,7 @@ class TestKeywordInContext:
     )
     def test_results(self, text, keyword, ignore_case, window_width, pad_context, exp):
         obs = list(
-            textacy.extract_.kwic.keyword_in_context(
+            extract.kwic.keyword_in_context(
                 text,
                 keyword,
                 ignore_case=ignore_case,

@@ -1,6 +1,6 @@
 import pytest
 
-from textacy.extract_.acronyms import acronyms_and_definitions
+from textacy import extract
 from textacy import load_spacy_lang
 
 
@@ -45,7 +45,7 @@ class TestAcronymsAndDefinitions:
         ]
     )
     def test_default(self, spacy_lang, text, exp):
-        obs = acronyms_and_definitions(spacy_lang(text))
+        obs = extract.acronyms_and_definitions(spacy_lang(text))
         assert obs == exp
 
     @pytest.mark.parametrize(
@@ -69,5 +69,5 @@ class TestAcronymsAndDefinitions:
         ],
     )
     def test_default(self, spacy_lang, text, known, exp):
-        obs = acronyms_and_definitions(spacy_lang(text), known_acro_defs=known)
+        obs = extract.acronyms_and_definitions(spacy_lang(text), known_acro_defs=known)
         assert obs == exp

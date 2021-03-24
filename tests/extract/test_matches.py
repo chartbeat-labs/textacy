@@ -2,8 +2,8 @@ import pytest
 from spacy.tokens import Span
 
 from textacy import load_spacy_lang
-from textacy import extract_
-from textacy.extract_.matches import _make_pattern_from_string
+from textacy import extract
+from textacy.extract.matches import _make_pattern_from_string
 
 
 @pytest.fixture(scope="module")
@@ -31,51 +31,51 @@ class TestTokenMatches:
         ],
     )
     def test_pattern_types(self, spacy_doc, patterns):
-        matches = list(extract_.token_matches(spacy_doc, patterns))[:5]
+        matches = list(extract.token_matches(spacy_doc, patterns))[:5]
         assert matches
         assert all(isinstance(span, Span) for span in matches)
 
     def test_patstr(self, spacy_doc):
-        matches = list(extract_.token_matches(spacy_doc, "POS:NOUN"))[:5]
+        matches = list(extract.token_matches(spacy_doc, "POS:NOUN"))[:5]
         assert matches
         assert all(len(span) == 1 for span in matches)
         assert all(span[0].pos_ == "NOUN" for span in matches)
 
     def test_patstr_op(self, spacy_doc):
-        matches = list(extract_.token_matches(spacy_doc, "POS:NOUN:+"))[:5]
+        matches = list(extract.token_matches(spacy_doc, "POS:NOUN:+"))[:5]
         assert matches
         assert all(len(span) >= 1 for span in matches)
         assert all(tok.pos_ == "NOUN" for span in matches for tok in span)
 
     def test_patstr_bool(self, spacy_doc):
-        matches = list(extract_.token_matches(spacy_doc, "IS_DIGIT:bool(True)"))[:5]
+        matches = list(extract.token_matches(spacy_doc, "IS_DIGIT:bool(True)"))[:5]
         assert matches
         assert all(span[0].is_digit is True for span in matches)
 
     def test_patstr_int(self, spacy_doc):
-        matches = list(extract_.token_matches(spacy_doc, "LENGTH:int(5)"))[:5]
+        matches = list(extract.token_matches(spacy_doc, "LENGTH:int(5)"))[:5]
         assert matches
         assert all(len(span[0]) == 5 for span in matches)
 
     def test_patdict(self, spacy_doc):
-        matches = list(extract_.token_matches(spacy_doc, [{"POS": "NOUN"}]))[:5]
+        matches = list(extract.token_matches(spacy_doc, [{"POS": "NOUN"}]))[:5]
         assert matches
         assert all(len(span) == 1 for span in matches)
         assert all(span[0].pos_ == "NOUN" for span in matches)
 
     def test_patdict_op(self, spacy_doc):
-        matches = list(extract_.token_matches(spacy_doc, [{"POS": "NOUN", "OP": "+"}]))[:5]
+        matches = list(extract.token_matches(spacy_doc, [{"POS": "NOUN", "OP": "+"}]))[:5]
         assert matches
         assert all(len(span) >= 1 for span in matches)
         assert all(tok.pos_ == "NOUN" for span in matches for tok in span)
 
     def test_patdict_bool(self, spacy_doc):
-        matches = list(extract_.token_matches(spacy_doc, [{"IS_DIGIT": True}]))[:5]
+        matches = list(extract.token_matches(spacy_doc, [{"IS_DIGIT": True}]))[:5]
         assert matches
         assert all(span[0].is_digit is True for span in matches)
 
     def test_patdict_int(self, spacy_doc):
-        matches = list(extract_.token_matches(spacy_doc, [{"LENGTH": 5}]))[:5]
+        matches = list(extract.token_matches(spacy_doc, [{"LENGTH": 5}]))[:5]
         assert matches
         assert all(len(span[0]) == 5 for span in matches)
 

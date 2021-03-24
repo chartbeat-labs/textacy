@@ -3,7 +3,7 @@ import re
 import pytest
 
 from textacy import load_spacy_lang
-import textacy.extract_.triples
+from textacy import extract
 
 
 @pytest.fixture(scope="module")
@@ -102,7 +102,7 @@ def sss_doc(en_nlp):
 )
 def test_subject_verb_object_triples(text, svos_exp, en_nlp):
     doc = en_nlp(text)
-    svos_tok = textacy.extract_.triples.subject_verb_object_triples(doc)
+    svos_tok = extract.subject_verb_object_triples(doc)
     svos_obs = [
         (
             [tok.text for tok in subject],
@@ -172,7 +172,7 @@ def test_subject_verb_object_triples(text, svos_exp, en_nlp):
     ],
 )
 def test_semistructured_statements(sss_doc, entity, cue, fragment_len_range, exp):
-    obs = textacy.extract_.triples.semistructured_statements(
+    obs = extract.semistructured_statements(
         sss_doc, entity=entity, cue=cue, fragment_len_range=fragment_len_range
     )
     obs_text = [
@@ -223,7 +223,7 @@ def test_semistructured_statements(sss_doc, entity, cue, fragment_len_range, exp
     ]
 )
 def test_direct_quotations(en_nlp, text, exp):
-    obs = textacy.extract_.triples.direct_quotations(en_nlp(text))
+    obs = extract.direct_quotations(en_nlp(text))
     obs_text = [
         (
             [tok.text for tok in speaker],
@@ -249,7 +249,7 @@ def test_direct_quotations(en_nlp, text, exp):
     ]
 )
 def test_direct_quotations_spanish(es_nlp, text, exp):
-    obs = textacy.extract_.triples.direct_quotations(es_nlp(text))
+    obs = extract.direct_quotations(es_nlp(text))
     obs_text = [
         (
             [tok.text for tok in speaker],
