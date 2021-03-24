@@ -105,10 +105,10 @@ def preserve_case(token: Token) -> bool:
     # using a try/except for performance
     # not the prettiest solution, but should be alright
     try:
-        acronyms.is_acronym
+        acros.is_acronym
     except NameError:
-        from textacy.extract import acronyms
-    if token.pos == PROPN or acronyms.is_acronym(token.text):
+        from textacy.extract import acros
+    if token.pos == PROPN or acros.is_acronym(token.text):
         return True
     else:
         return False
