@@ -10,7 +10,8 @@ lang_identifier = gcld3.NNetLanguageIdentifier(min_num_bytes=0, max_num_bytes=10
 
 def identify_lang(text: str) -> str:
     """
-    Identify the most probable language identified in ``text``.
+    Identify the most probable language identified in ``text``,
+    or "un" (for "unknown") if one can't be identified.
 
     Args:
         text
@@ -22,6 +23,11 @@ def identify_lang(text: str) -> str:
         Language identification results are known to be unreliable
         for extremely short texts (fewer than ~20 characters).
     """
+    # gcld3 likes to guess "ja" (japanese) for short, non-alpha texts
+    # so here we shield users from a GIGO situation
+    if not _is_valid_text(text[:1000]):
+        return "un"
+
     result = lang_identifier.FindLanguage(text)
     if result.is_reliable is False:
         LOGGER.warning("unable to reliably identify language of text = %s", text[:1000])
@@ -32,3 +38,7 @@ def identify_lang(text: str) -> str:
         return "un"
     else:
         return result.language
+
+
+def _is_valid_text(text: str) -> bool:
+    return any(char.isalpha() for char in text)
