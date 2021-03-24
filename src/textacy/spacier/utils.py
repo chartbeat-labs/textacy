@@ -99,7 +99,16 @@ def preserve_case(token: Token) -> bool:
     """
     if token.doc.has_annotation("TAG") is False:
         raise ValueError(f"parent doc of token '{token}' has not been POS-tagged")
-    if token.pos == PROPN or text_utils.is_acronym(token.text):
+    # is_acronym() got moved into a subpkg with heavier dependencies that we don't
+    # want imported at the top-level package; this is the only outside place
+    # that uses that function, so let's hide the required import in this function
+    # using a try/except for performance
+    # not the prettiest solution, but should be alright
+    try:
+        acronyms.is_acronym
+    except NameError:
+        from textacy.extract import acronyms
+    if token.pos == PROPN or acronyms.is_acronym(token.text):
         return True
     else:
         return False
