@@ -22,64 +22,6 @@ TEXT = """
 
 
 @pytest.mark.parametrize(
-    "token",
-    [
-        "LGTM",
-        "U.S.A.",
-        "PEP8",
-        "LGBTQQI2S",
-        "TF-IDF",
-        "D3",
-        "3D",
-        "3-D",
-        "3D-TV",
-        "D&D",
-        "PrEP",
-        "H2SO4",
-        "I/O",
-        "WASPs",
-        "G-8",
-        "A-TReC",
-    ]
-)
-def test_is_acronym_good(token):
-    assert text_utils.is_acronym(token)
-
-
-@pytest.mark.parametrize(
-    "token",
-    [
-        "A",
-        "GHz",
-        "1a",
-        "D o E",
-        "Ms",
-        "Ph.D",
-        "3-Dim.",
-        "the",
-        "FooBar",
-        "1",
-        " ",
-        "",
-    ]
-)
-def test_is_acronym_bad(token):
-    assert not text_utils.is_acronym(token)
-
-
-@pytest.mark.parametrize(
-    "token,exclude,expected",
-    [
-        ("NASA", {"NASA"}, False),
-        ("NASA", {"CSA", "ISS"}, True),
-        ("NASA", None, True)
-    ]
-)
-def test_is_acronym_exclude(token, exclude, expected):
-    assert text_utils.is_acronym(token, exclude=exclude) == expected
-
-
-@pytest.mark.parametrize(
     "input_,output_",
     [
         (

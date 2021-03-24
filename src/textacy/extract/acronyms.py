@@ -2,12 +2,12 @@ from __future__ import annotations
 
 import collections
 from operator import itemgetter
-from typing import Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 import numpy as np
 from spacy.tokens import Doc, Span
 
-from .. import text_utils
+from .. import constants
 
 
 def acronyms_and_definitions(
@@ -53,7 +53,7 @@ def acronyms_and_definitions(
         for i, token in enumerate(sent):
 
             token_ = token.text
-            if token_ in known_acronyms or text_utils.is_acronym(token_) is False:
+            if token_ in known_acronyms or is_acronym(token_) is False:
                 continue
 
             # define definition search window(s)
@@ -207,7 +207,7 @@ def _get_acronym_definition(
         if tok.is_stop:
             def_leads.append(tok_text[0])
             def_types.append("s")
-        elif text_utils.is_acronym(tok_text):
+        elif is_acronym(tok_text):
             def_leads.append(tok_text[0])
             def_types.append("a")
         elif "-" in tok_text and not tok_text.startswith("-"):
@@ -257,3 +257,44 @@ def _get_acronym_definition(
         return ("", confidence)
 
     return (definition, confidence)
+
+
+def is_acronym(token: str, exclude: Optional[Set[str]] = None) -> bool:
+    """
+    Pass single token as a string, return True/False if is/is not valid acronym.
+
+    Args:
+        token: Single word to check for acronym-ness
+        exclude: If technically valid but not actual acronyms are known in advance,
+            pass them in as a set of strings; matching tokens will return False.
+
+    Returns:
+        Whether or not ``token`` is an acronym.
+    """
+    # exclude certain valid acronyms from consideration
+    if exclude and token in exclude:
+        return False
+    # don't allow empty strings
+    if not token:
+        return False
+    # don't allow spaces
+    if " " in token:
+        return False
+    # 2-character acronyms can't have lower-case letters
+    if len(token) == 2 and not token.isupper():
+        return False
+    # acronyms can't be all digits
+    if token.isdigit():
+        return False
+    # acronyms must have at least one upper-case letter or start/end with a digit
+    if not any(char.isupper() for char in token) and not (
+        token[0].isdigit() or token[-1].isdigit()
+    ):
+        return False
+    # acronyms must have between 2 and 10 alphanumeric characters
+    if not 2 <= sum(1 for char in token if char.isalnum()) <= 10:
+        return False
+    # only certain combinations of letters, digits, and '&/.-' allowed
+    if not constants.RE_ACRONYM.match(token):
+        return False
+    return True
