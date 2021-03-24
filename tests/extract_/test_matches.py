@@ -23,17 +23,19 @@ def spacy_doc():
 
 class TestTokenMatches:
 
-    def test_pattern_types(self, spacy_doc):
-        all_patterns = [
+    @pytest.mark.parametrize(
+        "patterns",
+        [
             "POS:NOUN",
             ["POS:NOUN", "POS:DET"],
             [{"POS": "NOUN"}],
             [[{"POS": "NOUN"}], [{"POS": "DET"}]],
-        ]
-        for patterns in all_patterns:
-            matches = list(extract_.token_matches(spacy_doc, patterns))[:5]
-            assert matches
-            assert all(isinstance(span, Span) for span in matches)
+        ],
+    )
+    def test_pattern_types(self, spacy_doc, patterns):
+        matches = list(extract_.token_matches(spacy_doc, patterns))[:5]
+        assert matches
+        assert all(isinstance(span, Span) for span in matches)
 
     def test_patstr(self, spacy_doc):
         matches = list(extract_.token_matches(spacy_doc, "POS:NOUN"))[:5]
@@ -79,8 +81,9 @@ class TestTokenMatches:
         assert matches
         assert all(len(span[0]) == 5 for span in matches)
 
-    def test_make_pattern_from_string(self):
-        patstr_to_pats = [
+    @pytest.mark.parametrize(
+        "patstr, pat",
+        [
             ("TAG:VBZ", [{"TAG": "VBZ"}]),
             ("POS:NOUN:+", [{"POS": "NOUN", "OP": "+"}]),
             ("IS_PUNCT:bool(False)", [{"IS_PUNCT": False}]),
@@ -97,11 +100,12 @@ class TestTokenMatches:
                 "IS_PUNCT:bool(False) : IS_PUNCT:bool(True)",
                 [{"IS_PUNCT": False}, {}, {"IS_PUNCT": True}],
             ),
-        ]
-        for patstr, pat in patstr_to_pats:
-            assert _make_pattern_from_string(patstr) == pat
+        ],
+    )
+    def test_make_pattern_from_string(self, patstr, pat):
+        assert _make_pattern_from_string(patstr) == pat
 
-    def test_make_pattern_from_str_error(self):
-        for patstr in ["POS", "POS:NOUN:VERB:+", "POS:NOUN:*?"]:
-            with pytest.raises(ValueError):
-                _ = _make_pattern_from_string(patstr)
+    @pytest.mark.parametrize("patstr", ["POS", "POS:NOUN:VERB:+", "POS:NOUN:*?"])
+    def test_make_pattern_from_str_error(self, patstr):
+        with pytest.raises(ValueError):
+            _ = _make_pattern_from_string(patstr)
