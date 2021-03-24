@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import collections
 import itertools
 import math
@@ -19,7 +21,7 @@ from typing import (
 import networkx as nx
 from spacy.tokens import Doc, Span
 
-from .. import utils
+from ... import utils
 from . import utils as ke_utils
 
 
@@ -29,11 +31,11 @@ Candidate = collections.namedtuple("Candidate", ["text", "idx", "length", "count
 def sgrank(
     doc: Doc,
     *,
-    normalize: Optional[Union[str, Callable[[Span], str]]] = "lemma",
-    ngrams: Union[int, Collection[int]] = (1, 2, 3, 4, 5, 6),
-    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+    normalize: Optional[str | Callable[[Span], str]] = "lemma",
+    ngrams: int | Collection[int] = (1, 2, 3, 4, 5, 6),
+    include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
     window_size: int = 1500,
-    topn: Union[int, float] = 10,
+    topn: int | float = 10,
     idf: Dict[str, float] = None,
 ) -> List[Tuple[str, float]]:
     """
@@ -114,7 +116,7 @@ def sgrank(
 
 def _get_candidates(
     doc: Doc,
-    normalize: Optional[Union[str, Callable[[Span], str]]],
+    normalize: Optional[str | Callable[[Span], str]],
     ngrams: Tuple[int, ...],
     include_pos: Set[str],
 ) -> Tuple[List[Candidate], Counter[str]]:
