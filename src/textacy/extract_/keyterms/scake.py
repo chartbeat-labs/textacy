@@ -2,13 +2,11 @@ from __future__ import annotations
 
 import collections
 import itertools
-import operator
+from operator import itemgetter
 from typing import (
-    cast,
     Callable,
     Collection,
     Counter,
-    DefaultDict,
     Dict,
     Iterable,
     List,
@@ -22,7 +20,7 @@ from cytoolz import itertoolz
 from spacy.tokens import Doc, Token
 
 from ... import utils
-from . import utils as ke_utils
+from . import utils as kt_utils
 
 
 def scake(
@@ -59,7 +57,7 @@ def scake(
         https://arxiv.org/abs/1811.10831v1
     """
     # validate / transform args
-    include_pos = cast(Set[str], utils.to_collection(include_pos, str, set))
+    include_pos = utils.to_collection(include_pos, str, set)
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -84,7 +82,7 @@ def scake(
             if not (word.is_stop or word.is_punct or word.is_space)
             and (not include_pos or word.pos_ in include_pos)
         )
-        window_words = ke_utils.normalize_terms(window_words, normalize)
+        window_words = kt_utils.normalize_terms(window_words, normalize)
         cooc_mat.update(
             w1_w2
             for w1_w2 in itertools.combinations(sorted(window_words), 2)
@@ -113,9 +111,9 @@ def scake(
         for candidate in candidates
     }
     sorted_candidate_scores = sorted(
-        candidate_scores.items(), key=operator.itemgetter(1, 0), reverse=True
+        candidate_scores.items(), key=itemgetter(1, 0), reverse=True
     )
-    return ke_utils.get_filtered_topn_terms(
+    return kt_utils.get_filtered_topn_terms(
         sorted_candidate_scores, topn, match_threshold=0.8
     )
 
@@ -135,7 +133,7 @@ def _compute_word_scores(
         return {}
 
     # "semantic strength of a word" component
-    sem_strengths: Dict[str, int] = {
+    sem_strengths = {
         w: sum(
             cooc_mat[tuple(sorted([w, nbr]))] * max_truss_levels[nbr]
             for nbr in graph.neighbors(w)
@@ -149,8 +147,8 @@ def _compute_word_scores(
         for w in word_strs
     }
     # "positional weight" component
-    word_pos: DefaultDict[str, float] = collections.defaultdict(float)
-    for word, word_str in zip(doc, ke_utils.normalize_terms(doc, normalize)):
+    word_pos = collections.defaultdict(float)
+    for word, word_str in zip(doc, kt_utils.normalize_terms(doc, normalize)):
         word_pos[word_str] += 1 / (word.i + 1)
     return {
         w: word_pos[w] * max_truss_levels[w] * sem_strengths[w] * sem_connectivities[w]
@@ -175,9 +173,10 @@ def _get_candidates(
             not include_pos or tok.pos_ in include_pos
         )
 
-    candidates = ke_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
+    candidates = kt_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(ke_utils.normalize_terms(candidate, normalize)) for candidate in candidates
+        tuple(kt_utils.normalize_terms(candidate, normalize))
+        for candidate in candidates
     }
 
 
@@ -189,7 +188,7 @@ def _compute_node_truss_levels(graph: nx.Graph) -> Dict[str, int]:
         https://arxiv.org/abs/1806.05523v1
     """
     max_edge_ks = {}
-    is_removed: DefaultDict[tuple, int] = collections.defaultdict(int)
+    is_removed = collections.defaultdict(int)
     triangle_counts = {
         edge: len(set(graph.neighbors(edge[0])) & set(graph.neighbors(edge[1])))
         for edge in graph.edges()

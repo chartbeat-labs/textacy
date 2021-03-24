@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import itertools
 import math
-import operator
+from operator import itemgetter
 from decimal import Decimal
 from typing import (
-    cast,
     Callable,
     Collection,
     Dict,
@@ -220,7 +219,7 @@ def get_ngram_candidates(
     See Also:
         :func:`textacy.extract.ngrams()`
     """
-    ns = cast(Tuple[int, ...], utils.to_collection(ns, int, tuple))
+    ns = utils.to_collection(ns, int, tuple)
     include_pos = utils.to_collection(include_pos, str, set)
     ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns)
     ngrams = (
@@ -427,7 +426,7 @@ def most_discriminating_terms(
     top_grp1_terms = [
         term
         for term, likelihood in sorted(
-            grp1_terms_likelihoods.items(), key=operator.itemgetter(1), reverse=True
+            grp1_terms_likelihoods.items(), key=itemgetter(1), reverse=True
         )[:top_n_terms]
     ]
 
@@ -472,7 +471,7 @@ def most_discriminating_terms(
     top_grp2_terms = [
         term
         for term, likelihood in sorted(
-            grp2_terms_likelihoods.items(), key=operator.itemgetter(1), reverse=True
+            grp2_terms_likelihoods.items(), key=itemgetter(1), reverse=True
         )[:top_n_terms]
     ]
 

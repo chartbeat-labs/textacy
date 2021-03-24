@@ -5,22 +5,12 @@ import functools
 import math
 import operator
 import statistics
-from typing import (
-    cast,
-    Collection,
-    DefaultDict,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-)
+from typing import Collection, Dict, Iterable, List, Optional, Set, Tuple
 
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Token
 
-from . import utils as ke_utils
+from . import utils as kt_utils
 from ... import errors, utils
 
 
@@ -70,8 +60,8 @@ def yake(
         Lecture Notes in Computer Science, vol 10772, pp. 684-691.
     """
     # validate / transform args
-    ngrams = cast(Tuple[int, ...], utils.to_collection(ngrams, int, tuple))
-    include_pos = cast(Set[str], utils.to_collection(include_pos, str, set))
+    ngrams = utils.to_collection(ngrams, int, tuple)
+    include_pos = utils.to_collection(include_pos, str, set)
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -111,7 +101,7 @@ def yake(
         )
     # now compute combined scores for higher-n ngram and candidates
     candidates = list(
-        ke_utils.get_ngram_candidates(
+        kt_utils.get_ngram_candidates(
             doc, [n for n in ngrams if n > 1], include_pos=include_pos,
         )
     )
@@ -128,7 +118,7 @@ def yake(
     sorted_term_scores = sorted(
         term_scores.items(), key=operator.itemgetter(1), reverse=False,
     )
-    return ke_utils.get_filtered_topn_terms(
+    return kt_utils.get_filtered_topn_terms(
         sorted_term_scores, topn, match_threshold=0.8
     )
 
@@ -154,9 +144,7 @@ def _get_per_word_occurrence_values(
     Get base values for each individual occurrence of a word, to be aggregated
     and combined into a per-word score.
     """
-    word_occ_vals: DefaultDict = collections.defaultdict(
-        lambda: collections.defaultdict(list)
-    )
+    word_occ_vals = collections.defaultdict(lambda: collections.defaultdict(list))
 
     def _is_upper_cased(tok):
         return tok.is_upper or (tok.is_title and not tok.is_sent_start)
@@ -199,7 +187,7 @@ def _compute_word_scores(
     Aggregate values from per-word occurrence values, compute per-word weights
     of several components, then combine components into per-word scores.
     """
-    word_weights: DefaultDict[int, dict] = collections.defaultdict(dict)
+    word_weights = collections.defaultdict(dict)
     # compute summary stats for word frequencies
     freqs_nsw = [freq for w_id, freq in word_freqs.items() if w_id not in stop_words]
     freq_max = max(word_freqs.values())
