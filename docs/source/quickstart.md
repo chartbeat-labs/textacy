@@ -106,34 +106,13 @@ There are many ways to understand the content of a `Doc`. For starters, let's ex
 [Natural Language, natural language]
 >>> list(textacy.extract.entities(doc, drop_determiners=True))
 [late 1980s and mid 1990s]
->>> pattern = textacy.constants.POS_REGEX_PATTERNS["en"]["NP"]
->>> pattern
-'<DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN>|<PROPN> <PART>?)+'
->>> list(textacy.extract.pos_regex_matches(doc, pattern))
-[statistical revolution,
- the late 1980s,
- mid 1990s,
- much Natural Language Processing research,
- machine learning,
- many language,
- tasks,
- the direct hand coding,
- rules,
- natural language variation,
- The machine,
- paradigm,
- statistical inference,
- such rules,
- the analysis,
- large corpora,
- typical real-world examples]
 ```
 
 We can also identify key terms in a document by a number of algorithms:
 
 ```pycon
->>> import textacy.ke
->>> textacy.ke.textrank(doc, normalize="lemma", topn=10)
+>>> from textacy.extract import keyterms as kt
+>>> kt.textrank(doc, normalize="lemma", topn=10)
 [('Natural Language Processing research', 0.059959246697826624),
  ('natural language variation', 0.04488350959275309),
  ('direct hand coding', 0.037736661821063354),
@@ -144,7 +123,7 @@ We can also identify key terms in a document by a number of algorithms:
  ('late 1980', 0.026499549123496648),
  ('general robust', 0.024835834233545625),
  ('large corpora', 0.024322049918545637)]
->>> textacy.ke.sgrank(doc, ngrams=(1, 2, 3, 4), normalize="lower", topn=0.1)
+>>> kt.sgrank(doc, ngrams=(1, 2, 3, 4), normalize="lower", topn=0.1)
 [('natural language processing research', 0.31279919999041045),
  ('direct hand coding', 0.09373747682969617),
  ('natural language variation', 0.09229056171473927),
