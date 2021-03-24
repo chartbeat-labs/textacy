@@ -1,3 +1,5 @@
+import pytest
+
 from textacy.extract import keyterms as kt
 
 
@@ -45,3 +47,43 @@ def test_most_discriminating_terms():
         doc1 + doc2, [True] * len(doc1) + [False] * len(doc2), top_n_terms=2
     )
     assert expected == observed
+
+
+@pytest.mark.parametrize(
+    "input_,output_",
+    [
+        (
+            ["foo (bar)", "foo?", "bar!", "-123.4"],
+            ["foo (bar)", "foo?", "bar!", "-123.4"],
+        ),
+        (["(foo bar", "foo) bar", "?>,!-.", "", "foo) (bar"], []),
+        (
+            [
+                "( foo bar )",
+                "foo -bar",
+                "- 123.4",
+                ".-foo bar",
+                "?!foo",
+                "bar?!",
+                "foo 's bar",
+                "foo 'll bar",
+                "  foo   bar   ",
+                "foo bar.   ",
+            ],
+            [
+                "(foo bar)",
+                "foo-bar",
+                "-123.4",
+                "foo bar",
+                "foo",
+                "bar?!",
+                "foo's bar",
+                "foo'll bar",
+                "foo bar",
+                "foo bar.",
+            ],
+        ),
+    ],
+)
+def test_clean_terms(input_, output_):
+    assert list(kt.utils.clean_terms(input_)) == output_
