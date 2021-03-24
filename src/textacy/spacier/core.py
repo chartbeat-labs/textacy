@@ -13,7 +13,7 @@ from cachetools.keys import hashkey
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from .. import cache, errors, lang_utils, utils
+from .. import cache, errors, lang_id, utils
 
 
 LOGGER = logging.getLogger(__name__)
@@ -103,7 +103,7 @@ def _get_full_model_name(name: Union[str, pathlib.Path]) -> Union[str, pathlib.P
 
 def make_spacy_doc(
     data: Union[str, Tuple[str, dict], Doc],
-    lang: Union[str, Callable[[str], str], Language] = lang_utils.identify_lang,
+    lang: Union[str, Callable[[str], str], Language] = lang_id.identify_lang,
 ) -> Doc:
     """
     Make a :class:`spacy.tokens.Doc` from valid inputs, and automatically
@@ -137,7 +137,7 @@ def make_spacy_doc(
         >>> make_spacy_doc(text, lang="en")
         >>> make_spacy_doc(text, lang="en_core_web_sm")
         >>> make_spacy_doc(text, lang=textacy.load_spacy_lang("en"))
-        >>> make_spacy_doc(text, lang=textacy.lang_utils.identify_lang)
+        >>> make_spacy_doc(text, lang=textacy.identify_lang)
 
     Ensure that an already-processed ``Doc`` is compatible with ``lang``:
 
