@@ -341,12 +341,12 @@ If you do need a `Corpus`, you can split the input texts by language into distin
 >>> en_corpus = textacy.Corpus(
 ...     "en", data=(
 ...         text for text in texts
-...         if textacy.lang_utils.identify_lang(text) == "en")
+...         if textacy.identify_lang(text) == "en")
 ... )
 >>> es_corpus = textacy.Corpus(
 ...     "es", data=(
 ...         text for text in texts
-...         if textacy.lang_utils.identify_lang(text) == "es")
+...         if textacy.identify_lang(text) == "es")
 ... )
 ```
 
