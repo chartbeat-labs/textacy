@@ -1,26 +1,16 @@
+from __future__ import annotations
+
 import collections
 import itertools
 import math
-import operator
-from typing import (
-    cast,
-    Callable,
-    Collection,
-    Counter,
-    DefaultDict,
-    Dict,
-    List,
-    Optional,
-    Set,
-    Tuple,
-    Union,
-)
+from operator import itemgetter
+from typing import Callable, Collection, Counter, Dict, List, Optional, Set, Tuple
 
 import networkx as nx
 from spacy.tokens import Doc, Span
 
-from .. import utils
-from . import utils as ke_utils
+from ... import utils
+from . import utils as kt_utils
 
 
 Candidate = collections.namedtuple("Candidate", ["text", "idx", "length", "count"])
@@ -29,11 +19,11 @@ Candidate = collections.namedtuple("Candidate", ["text", "idx", "length", "count
 def sgrank(
     doc: Doc,
     *,
-    normalize: Optional[Union[str, Callable[[Span], str]]] = "lemma",
-    ngrams: Union[int, Collection[int]] = (1, 2, 3, 4, 5, 6),
-    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+    normalize: Optional[str | Callable[[Span], str]] = "lemma",
+    ngrams: int | Collection[int] = (1, 2, 3, 4, 5, 6),
+    include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
     window_size: int = 1500,
-    topn: Union[int, float] = 10,
+    topn: int | float = 10,
     idf: Dict[str, float] = None,
 ) -> List[Tuple[str, float]]:
     """
@@ -72,8 +62,8 @@ def sgrank(
         Lexical and Computational Semantics (* SEM 2015) (2015): 117.
     """
     # validate / transform args
-    ngrams = cast(Tuple[int, ...], utils.to_collection(ngrams, int, tuple))
-    include_pos = cast(Set[str], utils.to_collection(include_pos, str, set))
+    ngrams = utils.to_collection(ngrams, int, tuple)
+    include_pos = utils.to_collection(include_pos, str, set)
     if window_size < 2:
         raise ValueError("`window_size` must be >= 2")
     if isinstance(topn, float):
@@ -105,16 +95,14 @@ def sgrank(
     graph = nx.DiGraph()
     graph.add_edges_from(edge_weights)
     term_ranks = nx.pagerank_scipy(graph, alpha=0.85, weight="weight")
-    sorted_term_ranks = sorted(
-        term_ranks.items(), key=operator.itemgetter(1, 0), reverse=True
-    )
+    sorted_term_ranks = sorted(term_ranks.items(), key=itemgetter(1, 0), reverse=True)
 
-    return ke_utils.get_filtered_topn_terms(sorted_term_ranks, topn, match_threshold=0.8)
+    return kt_utils.get_filtered_topn_terms(sorted_term_ranks, topn, match_threshold=0.8)
 
 
 def _get_candidates(
     doc: Doc,
-    normalize: Optional[Union[str, Callable[[Span], str]]],
+    normalize: Optional[str | Callable[[Span], str]],
     ngrams: Tuple[int, ...],
     include_pos: Set[str],
 ) -> Tuple[List[Candidate], Counter[str]]:
@@ -125,10 +113,10 @@ def _get_candidates(
     """
     min_term_freq = min(max(len(doc) // 1000, 1), 4)
     cand_tuples = list(
-        ke_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos)
+        kt_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos)
     )
     cand_texts = [
-        " ".join(ke_utils.normalize_terms(ctup, normalize)) for ctup in cand_tuples
+        " ".join(kt_utils.normalize_terms(ctup, normalize)) for ctup in cand_tuples
     ]
     cand_counts = collections.Counter(cand_texts)
     candidates = [
@@ -161,7 +149,7 @@ def _prefilter_candidates(
         unique_candidates = {
             ctext
             for ctext, _ in sorted(
-                mod_tfidfs.items(), key=operator.itemgetter(1), reverse=True
+                mod_tfidfs.items(), key=itemgetter(1), reverse=True
             )[:topn_prefilter]
         }
     else:
@@ -185,7 +173,7 @@ def _compute_term_weights(
     """
     clen: float
     term_weights = {}
-    seen_terms: Set[str] = set()
+    seen_terms = set()
     n_toks_p1 = n_toks + 1
     for cand in candidates:
         # we only want the *first* occurrence of a unique term (by its text)
@@ -205,7 +193,7 @@ def _compute_term_weights(
             )
             - cand.count
         )
-        term_freq_factor: Union[int, float] = cand.count - subsum_count
+        term_freq_factor = cand.count - subsum_count
         if idf and clen == 1:
             term_freq_factor *= idf.get(cand.text, 1)
         term_weights[cand.text] = term_freq_factor * pos_first_occ * clen
@@ -223,9 +211,7 @@ def _compute_edge_weights(
     each other, then combine with statistical ``term_weights`` and normalize
     by the total number of outgoing edge weights.
     """
-    n_coocs: DefaultDict[str, DefaultDict[str, int]]
     n_coocs = collections.defaultdict(lambda: collections.defaultdict(int))
-    sum_logdists: DefaultDict[str, DefaultDict[str, float]]
     sum_logdists = collections.defaultdict(lambda: collections.defaultdict(float))
     # iterate over windows
     log_ = math.log  # localize this, for performance
@@ -244,7 +230,6 @@ def _compute_edge_weights(
         if end_idx >= n_toks:
             break
     # compute edge weights between co-occurring terms (nodes)
-    edge_weights: DefaultDict[str, DefaultDict[str, float]]
     edge_weights = collections.defaultdict(lambda: collections.defaultdict(float))
     for c1, c2_dict in sum_logdists.items():
         for c2, sum_logdist in c2_dict.items():

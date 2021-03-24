@@ -1,7 +1,9 @@
+from __future__ import annotations
+
 import collections
 import itertools
 import logging
-import operator
+from operator import itemgetter
 from typing import (
     Any,
     Callable,
@@ -19,16 +21,16 @@ import numpy as np
 from cytoolz import itertoolz
 from spacy.tokens import Span, Token
 
-from .. import errors
-from . import utils as ke_utils
+from ... import errors
+from . import utils as kt_utils
 
 LOGGER = logging.getLogger(__name__)
 
 
 def build_graph_from_terms(
-    terms: Union[Sequence[str], Sequence[Token], Sequence[Span]],
+    terms: Sequence[str] | Sequence[Token] | Sequence[Span],
     *,
-    normalize: Optional[Union[str, Callable[[Token], str]]] = "lemma",
+    normalize: Optional[str | Callable[[Token], str]] = "lemma",
     window_size: int = 10,
     edge_weighting: str = "count",
 ) -> nx.Graph:
@@ -82,7 +84,7 @@ def build_graph_from_terms(
         windows = itertoolz.sliding_window(window_size, terms)
     elif isinstance(first_term, (Span, Token)):
         windows = itertoolz.sliding_window(
-            window_size, ke_utils.normalize_terms(terms, normalize)
+            window_size, kt_utils.normalize_terms(terms, normalize)
         )
     else:
         raise TypeError(
@@ -170,7 +172,7 @@ def rank_nodes_by_bestcoverage(
 
     # ranks: array of PageRank values, summing up to 1
     ranks = nx.pagerank_scipy(graph, alpha=0.85, max_iter=100, tol=1e-08, weight=weight)
-    sorted_ranks = sorted(ranks.items(), key=operator.itemgetter(1), reverse=True)
+    sorted_ranks = sorted(ranks.items(), key=itemgetter(1), reverse=True)
     avg_degree = sum(dict(graph.degree()).values()) / len(nodes_list)
     # relaxation parameter, k' in the paper
     k_prime = int(k * avg_degree * c)
@@ -207,7 +209,7 @@ def rank_nodes_by_bestcoverage(
     )  # noqa: F841
 
     # compute initial exprel contribution
-    taken: DefaultDict = collections.defaultdict(bool)
+    taken = collections.defaultdict(bool)
     contrib = {}
     for vertex in nodes_list:
         # get l-step expanded set
@@ -222,9 +224,7 @@ def rank_nodes_by_bestcoverage(
         if not contrib:
             break
         # find word with highest l-step expanded relevance score
-        max_word_score = sorted(
-            contrib.items(), key=operator.itemgetter(1), reverse=True
-        )[0]
+        max_word_score = sorted(contrib.items(), key=itemgetter(1), reverse=True)[0]
         sum_contrib += max_word_score[1]  # contrib[max_word[0]]
         results[max_word_score[0]] = max_word_score[1]
         # find its l-step expanded set
@@ -318,7 +318,7 @@ def rank_nodes_by_divrank(
     # sort nodes by divrank score
     results = sorted(
         ((i, score) for i, score in enumerate(pr.flatten().tolist())),
-        key=operator.itemgetter(1),
+        key=itemgetter(1),
         reverse=True,
     )
 

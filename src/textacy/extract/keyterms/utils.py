@@ -1,9 +1,11 @@
+from __future__ import annotations
+
 import itertools
 import math
-import operator
+import re
+from operator import itemgetter
 from decimal import Decimal
 from typing import (
-    cast,
     Callable,
     Collection,
     Dict,
@@ -12,23 +14,69 @@ from typing import (
     Optional,
     Set,
     Tuple,
-    Union,
 )
 
 import numpy as np
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Span, Token
 
-from .. import errors
-from .. import extract
-from .. import similarity
-from .. import utils
-from .. import vsm
+from .. import matches
+from ... import constants, errors, similarity, utils, vsm
+
+
+def clean_terms(terms: Iterable[str]) -> Iterable[str]:
+    """
+    Clean up a sequence of single- or multi-word strings: strip leading/trailing
+    junk chars, handle dangling parens and odd hyphenation, etc.
+
+    Args:
+        terms: Sequence of terms such as "presidency", "epic failure",
+            or "George W. Bush" that may be _unclean_ for whatever reason.
+
+    Yields:
+        Next term in `terms` but with the cruft cleaned up, excluding terms
+        that were _entirely_ cruft
+
+    Warning:
+        Terms with (intentionally) unusual punctuation may get "cleaned"
+        into a form that changes or obscures the original meaning of the term.
+    """
+    # get rid of leading/trailing junk characters
+    terms = (constants.RE_LEAD_TAIL_CRUFT_TERM.sub("", term) for term in terms)
+    terms = (constants.RE_LEAD_HYPHEN_TERM.sub(r"\1", term) for term in terms)
+    # handle dangling/backwards parens, don't allow '(' or ')' to appear alone
+    terms = (
+        ""
+        if term.count(")") != term.count("(") or term.find(")") < term.find("(")
+        else term
+        if "(" not in term
+        else constants.RE_DANGLING_PARENS_TERM.sub(r"\1\2\3", term)
+        for term in terms
+    )
+    # handle oddly separated hyphenated words
+    terms = (
+        term
+        if "-" not in term
+        else constants.RE_NEG_DIGIT_TERM.sub(
+            r"\1\2", constants.RE_WEIRD_HYPHEN_SPACE_TERM.sub(r"\1", term)
+        )
+        for term in terms
+    )
+    # handle oddly separated apostrophe'd words
+    terms = (
+        constants.RE_WEIRD_APOSTR_SPACE_TERM.sub(r"\1\2", term) if "'" in term else term
+        for term in terms
+    )
+    # normalize whitespace
+    terms = (constants.RE_NONBREAKING_SPACE.sub(" ", term).strip() for term in terms)
+    for term in terms:
+        if re.search(r"\w", term):
+            yield term
 
 
 def normalize_terms(
-    terms: Union[Iterable[Span], Iterable[Token]],
-    normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]],
+    terms: Iterable[Span] | Iterable[Token],
+    normalize: Optional[str | Callable[[Span | Token], str]],
 ) -> Iterable[str]:
     """
     Transform a sequence of terms from spaCy ``Token`` or ``Span`` s into
@@ -197,9 +245,9 @@ def get_longest_subsequence_candidates(
 
 def get_ngram_candidates(
     doc: Doc,
-    ns: Union[int, Collection[int]],
+    ns: int | Collection[int],
     *,
-    include_pos: Optional[Union[str, Collection[str]]] = ("NOUN", "PROPN", "ADJ"),
+    include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
 ) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are n-length sequences
@@ -219,7 +267,7 @@ def get_ngram_candidates(
     See Also:
         :func:`textacy.extract.ngrams()`
     """
-    ns = cast(Tuple[int, ...], utils.to_collection(ns, int, tuple))
+    ns = utils.to_collection(ns, int, tuple)
     include_pos = utils.to_collection(include_pos, str, set)
     ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns)
     ngrams = (
@@ -237,7 +285,7 @@ def get_ngram_candidates(
 
 
 def get_pattern_matching_candidates(
-    doc: Doc, patterns: Union[str, List[str], List[dict], List[List[dict]]],
+    doc: Doc, patterns: str | List[str] | List[dict] | List[List[dict]],
 ) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are sequences of tokens
@@ -253,9 +301,9 @@ def get_pattern_matching_candidates(
         as a tuple of constituent Tokens.
 
     See Also:
-        :func:`textacy.extract.matches()`
+        :func:`textacy.extract.token_matches()`
     """
-    for match in extract.matches(doc, patterns, on_match=None):
+    for match in matches.token_matches(doc, patterns, on_match=None):
         yield tuple(match)
 
 
@@ -303,7 +351,7 @@ def most_discriminating_terms(
     bool_array_grp1: Iterable[bool],
     *,
     max_n_terms: int = 1000,
-    top_n_terms: Union[int, float] = 25,
+    top_n_terms: int | float = 25,
 ) -> Tuple[List[str], List[str]]:
     """
     Given a collection of documents assigned to 1 of 2 exclusive groups, get the
@@ -426,7 +474,7 @@ def most_discriminating_terms(
     top_grp1_terms = [
         term
         for term, likelihood in sorted(
-            grp1_terms_likelihoods.items(), key=operator.itemgetter(1), reverse=True
+            grp1_terms_likelihoods.items(), key=itemgetter(1), reverse=True
         )[:top_n_terms]
     ]
 
@@ -471,7 +519,7 @@ def most_discriminating_terms(
     top_grp2_terms = [
         term
         for term, likelihood in sorted(
-            grp2_terms_likelihoods.items(), key=operator.itemgetter(1), reverse=True
+            grp2_terms_likelihoods.items(), key=itemgetter(1), reverse=True
         )[:top_n_terms]
     ]
 

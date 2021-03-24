@@ -1,4 +1,6 @@
-from textacy import ke
+import pytest
+
+from textacy.extract import keyterms as kt
 
 
 def test_aggregate_term_variants():
@@ -12,8 +14,8 @@ def test_aggregate_term_variants():
         "the big black cat named Rico",
         "the black cat named Rico",
     ])
-    result1 = ke.utils.aggregate_term_variants(terms)
-    result2 = ke.utils.aggregate_term_variants(
+    result1 = kt.utils.aggregate_term_variants(terms)
+    result2 = kt.utils.aggregate_term_variants(
         terms, acro_defs={"BJD": "Burton Jacob DeWilde"})
     assert len(result2) <= len(result1) <= len(terms)
 
@@ -41,7 +43,47 @@ def test_most_discriminating_terms():
     doc2 = [line.split() for line in text2.split("\n")]
 
     expected = (["Friedman", "Times"], ["General", "malls"])
-    observed = ke.utils.most_discriminating_terms(
+    observed = kt.utils.most_discriminating_terms(
         doc1 + doc2, [True] * len(doc1) + [False] * len(doc2), top_n_terms=2
     )
     assert expected == observed
+
+
+@pytest.mark.parametrize(
+    "input_,output_",
+    [
+        (
+            ["foo (bar)", "foo?", "bar!", "-123.4"],
+            ["foo (bar)", "foo?", "bar!", "-123.4"],
+        ),
+        (["(foo bar", "foo) bar", "?>,!-.", "", "foo) (bar"], []),
+        (
+            [
+                "( foo bar )",
+                "foo -bar",
+                "- 123.4",
+                ".-foo bar",
+                "?!foo",
+                "bar?!",
+                "foo 's bar",
+                "foo 'll bar",
+                "  foo   bar   ",
+                "foo bar.   ",
+            ],
+            [
+                "(foo bar)",
+                "foo-bar",
+                "-123.4",
+                "foo bar",
+                "foo",
+                "bar?!",
+                "foo's bar",
+                "foo'll bar",
+                "foo bar",
+                "foo bar.",
+            ],
+        ),
+    ],
+)
+def test_clean_terms(input_, output_):
+    assert list(kt.utils.clean_terms(input_)) == output_

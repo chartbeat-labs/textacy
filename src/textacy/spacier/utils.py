@@ -11,7 +11,7 @@ from spacy.language import Language
 from spacy.symbols import PROPN, VERB
 from spacy.tokens import Doc, Span, Token
 
-from .. import constants, errors, text_utils
+from .. import constants, errors
 from . import core
 
 
@@ -99,7 +99,16 @@ def preserve_case(token: Token) -> bool:
     """
     if token.doc.has_annotation("TAG") is False:
         raise ValueError(f"parent doc of token '{token}' has not been POS-tagged")
-    if token.pos == PROPN or text_utils.is_acronym(token.text):
+    # is_acronym() got moved into a subpkg with heavier dependencies that we don't
+    # want imported at the top-level package; this is the only outside place
+    # that uses that function, so let's hide the required import in this function
+    # using a try/except for performance
+    # not the prettiest solution, but should be alright
+    try:
+        acros.is_acronym
+    except NameError:
+        from textacy.extract import acros
+    if token.pos == PROPN or acros.is_acronym(token.text):
         return True
     else:
         return False

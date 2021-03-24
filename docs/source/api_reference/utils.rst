@@ -7,10 +7,6 @@ Utilities
    :nosignatures:
 
    lang_utils.identify_lang
-   text_utils.is_acronym
-   text_utils.keyword_in_context
-   text_utils.KWIC
-   text_utils.clean_terms
    utils.get_config
    utils.print_markdown
    utils.is_record
@@ -28,8 +24,6 @@ Language Identification
 
 Other Utils
 -----------
-
-.. automodule:: textacy.text_utils
 
 .. automodule:: textacy.utils
 

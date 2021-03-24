@@ -1,12 +1,11 @@
 import collections
-import re
 
 import pytest
-import spacy
 from spacy.tokens import Span, Token
 
 from textacy import load_spacy_lang
-from textacy import constants, extract
+from textacy import extract
+from textacy.extract import basics
 
 
 @pytest.fixture(scope="module")
@@ -116,7 +115,7 @@ class TestEntities:
         # special numeric cases!
         ent_types = ["NUMERIC", ("NUMERIC",), {"PERSON", "NUMERIC"}]
         for include_types in ent_types:
-            include_types_parsed = extract._parse_ent_types(include_types, "include")
+            include_types_parsed = basics._parse_ent_types(include_types, "include")
             result = extract.entities(spacy_doc, include_types=include_types)
             assert all(span.label_ in include_types_parsed for span in result)
 
@@ -132,14 +131,14 @@ class TestEntities:
         # special numeric cases!
         ent_types = ["NUMERIC", ("NUMERIC",), {"PERSON", "NUMERIC"}]
         for exclude_types in ent_types:
-            exclude_types_parsed = extract._parse_ent_types(exclude_types, "exclude")
+            exclude_types_parsed = basics._parse_ent_types(exclude_types, "exclude")
             result = extract.entities(spacy_doc, exclude_types=exclude_types)
             assert all(span.label_ not in exclude_types_parsed for span in result)
 
     def test_parse_ent_types_bad_type(self):
         for bad_type in [1, 3.1415, True, b"PERSON"]:
             with pytest.raises(TypeError):
-                _ = extract._parse_ent_types(bad_type, "include")
+                _ = basics._parse_ent_types(bad_type, "include")
 
     def test_min_freq(self, spacy_doc):
         result = list(extract.entities(spacy_doc, min_freq=2))
@@ -172,171 +171,3 @@ class TestNounChunks:
         text = spacy_doc.text.lower()
         result = list(extract.noun_chunks(spacy_doc, drop_determiners=True, min_freq=2))
         assert all(text.count(span.text.lower()) >= 2 for span in result)
-
-
-class TestPOSRegexMatches:
-
-    def test_deprecation_warning(self, spacy_doc):
-        with pytest.warns(DeprecationWarning):
-            _ = list(extract.pos_regex_matches(spacy_doc, r"<NOUN>"))
-
-    def test_simple(self, spacy_doc):
-        result = list(extract.pos_regex_matches(spacy_doc, r"<NOUN>+"))
-        assert all(isinstance(span, Span) for span in result)
-        assert all(tok.pos_ == "NOUN" for span in result for tok in span)
-
-    def test_complex(self, spacy_doc):
-        pattern = constants.POS_REGEX_PATTERNS["en"]["NP"]
-        valid_pos = set(re.findall(r"(\w+)", pattern))
-        required_pos = {"NOUN", "PROPN"}
-        result = list(extract.pos_regex_matches(spacy_doc, pattern))
-        assert all(isinstance(span, Span) for span in result)
-        assert all(tok.pos_ in valid_pos for span in result for tok in span)
-        assert all(any(tok.pos_ in required_pos for tok in span) for span in result)
-
-
-class TestMatches:
-
-    def test_pattern_types(self, spacy_doc):
-        all_patterns = [
-            "POS:NOUN",
-            ["POS:NOUN", "POS:DET"],
-            [{"POS": "NOUN"}],
-            [[{"POS": "NOUN"}], [{"POS": "DET"}]],
-        ]
-        for patterns in all_patterns:
-            matches = list(extract.matches(spacy_doc, patterns))[:5]
-            assert matches
-            assert all(isinstance(span, Span) for span in matches)
-
-    def test_patstr(self, spacy_doc):
-        matches = list(extract.matches(spacy_doc, "POS:NOUN"))[:5]
-        assert matches
-        assert all(len(span) == 1 for span in matches)
-        assert all(span[0].pos_ == "NOUN" for span in matches)
-
-    def test_patstr_op(self, spacy_doc):
-        matches = list(extract.matches(spacy_doc, "POS:NOUN:+"))[:5]
-        assert matches
-        assert all(len(span) >= 1 for span in matches)
-        assert all(tok.pos_ == "NOUN" for span in matches for tok in span)
-
-    def test_patstr_bool(self, spacy_doc):
-        matches = list(extract.matches(spacy_doc, "IS_DIGIT:bool(True)"))[:5]
-        assert matches
-        assert all(span[0].is_digit is True for span in matches)
-
-    @pytest.mark.xfail(
-        spacy.__version__.startswith("2.2."),
-        reason="https://github.com/explosion/spaCy/pull/4749",
-    )
-    def test_patstr_int(self, spacy_doc):
-        matches = list(extract.matches(spacy_doc, "LENGTH:int(5)"))[:5]
-        assert matches
-        assert all(len(span[0]) == 5 for span in matches)
-
-    def test_patdict(self, spacy_doc):
-        matches = list(extract.matches(spacy_doc, [{"POS": "NOUN"}]))[:5]
-        assert matches
-        assert all(len(span) == 1 for span in matches)
-        assert all(span[0].pos_ == "NOUN" for span in matches)
-
-    def test_patdict_op(self, spacy_doc):
-        matches = list(extract.matches(spacy_doc, [{"POS": "NOUN", "OP": "+"}]))[:5]
-        assert matches
-        assert all(len(span) >= 1 for span in matches)
-        assert all(tok.pos_ == "NOUN" for span in matches for tok in span)
-
-    def test_patdict_bool(self, spacy_doc):
-        matches = list(extract.matches(spacy_doc, [{"IS_DIGIT": True}]))[:5]
-        assert matches
-        assert all(span[0].is_digit is True for span in matches)
-
-    @pytest.mark.xfail(
-        spacy.__version__.startswith("2.2."),
-        reason="https://github.com/explosion/spaCy/pull/4749",
-    )
-    def test_patdict_int(self, spacy_doc):
-        matches = list(extract.matches(spacy_doc, [{"LENGTH": 5}]))[:5]
-        assert matches
-        assert all(len(span[0]) == 5 for span in matches)
-
-    def test_make_pattern_from_string(self):
-        patstr_to_pats = [
-            ("TAG:VBZ", [{"TAG": "VBZ"}]),
-            ("POS:NOUN:+", [{"POS": "NOUN", "OP": "+"}]),
-            ("IS_PUNCT:bool(False)", [{"IS_PUNCT": False}]),
-            (
-                "IS_DIGIT:bool(True):? POS:NOUN:*",
-                [{"IS_DIGIT": True, "OP": "?"}, {"POS": "NOUN", "OP": "*"}],
-            ),
-            (
-                "LENGTH:int(5) DEP:nsubj:!",
-                [{"LENGTH": 5}, {"DEP": "nsubj", "OP": "!"}],
-            ),
-            ("POS:DET :", [{"POS": "DET"}, {}]),
-            (
-                "IS_PUNCT:bool(False) : IS_PUNCT:bool(True)",
-                [{"IS_PUNCT": False}, {}, {"IS_PUNCT": True}],
-            ),
-        ]
-        for patstr, pat in patstr_to_pats:
-            assert extract._make_pattern_from_string(patstr) == pat
-
-    def test_make_pattern_from_str_error(self):
-        for patstr in ["POS", "POS:NOUN:VERB:+", "POS:NOUN:*?"]:
-            with pytest.raises(ValueError):
-                _ = extract._make_pattern_from_string(patstr)
-
-
-class TestSubjectVerbObjectTriples:
-
-    def test_default(self, spacy_doc):
-        result = list(extract.subject_verb_object_triples(spacy_doc))
-        assert all(isinstance(triple, tuple) for triple in result)
-        assert all(isinstance(span, Span) for triple in result for span in triple)
-        assert all(any(tok.pos_ == "VERB" for tok in triple[1]) for triple in result)
-
-
-class TestAcronymsAndDefinitions:
-
-    def test_default(self, spacy_doc):
-        # TODO: figure out if this function no longer works, ugh
-        # expected = {"I.M.F.": "International Monetary Fund"}
-        expected = {"I.M.F.": ""}
-        observed = extract.acronyms_and_definitions(spacy_doc)
-        assert observed == expected
-
-    def test_known(self, spacy_doc):
-        expected = {"I.M.F.": "International Monetary Fund"}
-        observed = extract.acronyms_and_definitions(
-            spacy_doc, known_acro_defs={"I.M.F.": "International Monetary Fund"}
-        )
-        assert observed == expected
-
-
-def test_direct_quotations(spacy_doc):
-    expected = [
-        ("he", "said", '"I heard Donald Trump say we need to close mosques in the United States,"'),
-        ("he", "said", '"Is that what we want our kids to learn?"'),
-    ]
-    result = list(extract.direct_quotations(spacy_doc))
-    assert all(isinstance(dq, tuple) for dq in result)
-    assert all(isinstance(obj, (Span, Token)) for dq in result for obj in dq)
-    observed = [
-        tuple(obj.text for obj in dq)
-        for dq in result
-    ]
-    assert observed == expected
-
-
-def test_semistructured_statements(spacy_doc):
-    expected = (
-        "we",
-        "discussed",
-        "the impact of technology trends on education in the Middle East"
-    )
-    observed = next(extract.semistructured_statements(spacy_doc, "we", cue="discuss"))
-    assert isinstance(observed, tuple) and len(observed) == 3
-    assert all(isinstance(obj, (Span, Token)) for obj in observed)
-    assert all(obs.text == exp for obs, exp in zip(observed, expected))
