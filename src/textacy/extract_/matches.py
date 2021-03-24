@@ -10,31 +10,31 @@ from .. import constants, errors
 
 
 def token_matches(
-    doc: Doc,
+    doclike: Doc | Span,
     patterns: str | List[str] | List[Dict[str, str]] | List[List[Dict[str, str]]],
     *,
     on_match: Optional[Callable] = None,
 ) -> Iterable[Span]:
     """
-    Extract ``Span`` s from a ``Doc`` matching one or more patterns
+    Extract sub-spans from a ``Doc`` or ``Span`` matching one or more patterns
     of per-token attr:value pairs, with optional quantity qualifiers.
 
     Args:
-        doc
+        doclike
         patterns:
-            One or multiple patterns to match against ``doc``
+            One or multiple patterns to match against ``doclike``
             using a :class:`spacy.matcher.Matcher`.
 
             If List[dict] or List[List[dict]], each pattern is specified
             as attr: value pairs per token, with optional quantity qualifiers:
 
-            * ``[{"POS": "NOUN"}]`` matches singular or plural nouns,
+            - ``[{"POS": "NOUN"}]`` matches singular or plural nouns,
               like "friend" or "enemies"
-            * ``[{"POS": "PREP"}, {"POS": "DET", "OP": "?"}, {"POS": "ADJ", "OP": "?"}, {"POS": "NOUN", "OP": "+"}]``
+            - ``[{"POS": "PREP"}, {"POS": "DET", "OP": "?"}, {"POS": "ADJ", "OP": "?"}, {"POS": "NOUN", "OP": "+"}]``
               matches prepositional phrases, like "in the future" or "from the distant past"
-            * ``[{"IS_DIGIT": True}, {"TAG": "NNS"}]`` matches numbered plural nouns,
+            - ``[{"IS_DIGIT": True}, {"TAG": "NNS"}]`` matches numbered plural nouns,
               like "60 seconds" or "2 beers"
-            * ``[{"POS": "PROPN", "OP": "+"}, {}]`` matches proper nouns and
+            - ``[{"POS": "PROPN", "OP": "+"}, {}]`` matches proper nouns and
               whatever word follows them, like "Burton DeWilde yaaasss"
 
             If str or List[str], each pattern is specified as one or more
@@ -44,28 +44,28 @@ def token_matches(
             "int(val)", respectively --- and that wildcard tokens still need
             a colon between the (empty) attribute and value strings.
 
-            * ``"POS:NOUN"`` matches singular or plural nouns
-            * ``"POS:PREP POS:DET:? POS:ADJ:? POS:NOUN:+"`` matches prepositional phrases
-            * ``"IS_DIGIT:bool(True) TAG:NNS"`` matches numbered plural nouns
-            * ``"POS:PROPN:+ :"`` matches proper nouns and whatever word follows them
+            - ``"POS:NOUN"`` matches singular or plural nouns
+            - ``"POS:PREP POS:DET:? POS:ADJ:? POS:NOUN:+"`` matches prepositional phrases
+            - ``"IS_DIGIT:bool(True) TAG:NNS"`` matches numbered plural nouns
+            - ``"POS:PROPN:+ :"`` matches proper nouns and whatever word follows them
 
             Also note that these pattern strings don't support spaCy v2.1's
             "extended" pattern syntax; if you need such complex patterns, it's
             probably better to use a List[dict] or List[List[dict]], anyway.
 
         on_match: Callback function to act on matches.
-            Takes the arguments ``matcher``, ``doc``, ``i`` and ``matches``.
+            Takes the arguments ``matcher``, ``doclike``, ``i`` and ``matches``.
 
     Yields:
-        Next matching ``Span`` in ``doc``, in order of appearance
+        Next matching ``Span`` in ``doclike``, in order of appearance
 
     Raises:
         TypeError
         ValueError
 
     See Also:
-        * https://spacy.io/usage/rule-based-matching
-        * https://spacy.io/api/matcher
+        - https://spacy.io/usage/rule-based-matching
+        - https://spacy.io/api/matcher
     """  # noqa: E501
     if isinstance(patterns, str):
         patterns = [_make_pattern_from_string(patterns)]
@@ -94,10 +94,10 @@ def token_matches(
                 Union[str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]],
             )
         )
-    matcher = Matcher(doc.vocab)
+    matcher = Matcher(doclike.vocab)
     matcher.add("match", patterns, on_match=on_match)
-    for _, start, end in matcher(doc):
-        yield doc[start:end]
+    for match in matcher(doclike, as_spans=True):
+        yield match
 
 
 def _make_pattern_from_string(patstr: str) -> List[Dict[str, str]]:

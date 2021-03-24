@@ -19,8 +19,8 @@ import numpy as np
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Span, Token
 
+from .. import matches
 from ... import errors
-from ... import extract
 from ... import similarity
 from ... import utils
 from ... import vsm
@@ -253,9 +253,9 @@ def get_pattern_matching_candidates(
         as a tuple of constituent Tokens.
 
     See Also:
-        :func:`textacy.extract.matches()`
+        :func:`textacy.extract.token_matches()`
     """
-    for match in extract.matches(doc, patterns, on_match=None):
+    for match in matches.token_matches(doc, patterns, on_match=None):
         yield tuple(match)
 
 
