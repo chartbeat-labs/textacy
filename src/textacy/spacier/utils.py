@@ -11,7 +11,7 @@ from spacy.language import Language
 from spacy.symbols import PROPN, VERB
 from spacy.tokens import Doc, Span, Token
 
-from .. import constants, errors, text_utils
+from .. import constants, errors
 from . import core
 
 
