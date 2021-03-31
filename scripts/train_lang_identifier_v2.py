@@ -40,35 +40,20 @@ def main():
     )
     print(f"training data: {len(train_data)}\ntest_data: {len(test_data)}")
 
-    # binarize language labels
-    # NOTE: thinc seems to require type "float32" arrays -- errors otherwise
-    lb = sklearn.preprocessing.LabelBinarizer()
-    Y_train = lb.fit_transform([lang for _, lang in train_data]).astype("float32")
-    Y_test = lb.transform([lang for _, lang in test_data]).astype("float32")
-    print(f"binarized labels with {len(lb.classes_)} unique values")
-
-    X_train = [text for text, _ in train_data]
-    X_test = [text for text, _ in test_data]
-
-    lang_identifier = textacy.lang_id_.LangIdentifier(args.root_dirpath.joinpath("lang_identifier"))
-    # THIS NEXT LINE IS CRITICAL
-    lang_identifier.model.layers[-1].attrs["classes"] = lb.classes_  # list(lb.classes_)
+    lang_identifier = textacy.lang_id_.LangIdentifier(
+        textacy.lang_id_.models.LangIdentifierModelV2(embed_dim=100),
+        args.root_dirpath.joinpath("lang_identifier")
+    )
 
     batch_size = thinc.api.compounding(2.0, 64.0, 1.001)
-    learn_rate = thinc.api.cyclic_triangular(min_lr=0.001, max_lr=0.01, period=1000)
-
-    textacy.lang_id_.utils.train_model(
-        lang_identifier.model,
-        train=(X_train, Y_train),
-        test=(X_test, Y_test),
+    learn_rate = thinc.api.cyclic_triangular(min_lr=0.0005, max_lr=0.02, period=1000)
+    lang_identifier.train_model(
+        train=train_data,
+        test=test_data,
         n_iter=args.n_iter,
         batch_size=batch_size,
         learn_rate=learn_rate,
     )
-
-    true_langs = list(lb.inverse_transform(Y_test))
-    pred_langs = lang_identifier._get_model_preds(X_test)
-    print(sklearn.metrics.classification_report(true_langs, pred_langs))
 
     lang_identifier.save_model()
 
