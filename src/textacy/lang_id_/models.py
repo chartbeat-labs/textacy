@@ -32,7 +32,7 @@ def LangIdentifierModelV2(
             MultiCharNgramsEmbedding(
                 ns=list(ns),
                 max_chars=1000,
-                num_vectors=[2000, 4000, 8000],
+                num_vectors=[2500, 5000, 7500],
                 embed_dims=embed_dim,
                 dropout=dropout,
             )
