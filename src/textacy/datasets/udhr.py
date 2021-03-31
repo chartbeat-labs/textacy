@@ -169,7 +169,7 @@ class UDHR(Dataset):
             text_lines = text_lines[header_idx + 1 :]
         except ValueError:
             pass
-        return preprocessing.normalize_whitespace("\n".join(text_lines))
+        return preprocessing.normalize.whitespace("\n".join(text_lines))
 
     def __iter__(self):
         self._check_data()
