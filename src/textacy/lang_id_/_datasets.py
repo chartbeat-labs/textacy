@@ -123,7 +123,10 @@ class DSLCCDataset:
                     continue
                 try:
                     text, lang = line.split("\t")
-                    if len(text) >= min_len and lang[:2] in langs:
+                    if (
+                        lang[:2] in langs and
+                        itertoolz.count(char for char in text if char.isalnum()) >= min_len
+                    ):
                         data.append((text, lang[:2]))
                 except Exception:
                     LOGGER.debug("bad line in data")
