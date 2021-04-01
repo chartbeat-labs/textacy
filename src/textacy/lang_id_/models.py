@@ -8,7 +8,7 @@ from thinc.api import Model, chain, concatenate
 
 def LangIdentifierModelV2(
     ns: Sequence[int] = (1, 2, 3),
-    embed_dim: int = 50,
+    embed_dim: int = 100,
     hidden_width: int = 512,
     dropout: Optional[float] = 0.1,
 ) -> Model[List[str], thinc.types.Floats2d]:
@@ -32,7 +32,8 @@ def LangIdentifierModelV2(
             MultiCharNgramsEmbedding(
                 ns=list(ns),
                 max_chars=1000,
-                num_vectors=[2500, 5000, 7500],
+                lower=True,
+                num_vectors=[2000 * n for n in ns],
                 embed_dims=embed_dim,
                 dropout=dropout,
             )
@@ -48,7 +49,8 @@ def LangIdentifierModelV2(
 
 def MultiCharNgramsEmbedding(
     ns: List[int],
-    max_chars: int | List[int],
+    max_chars: int,
+    lower: bool,
     num_vectors: int | List[int],
     embed_dims: int | List[int],
     dropout: Optional[float],
@@ -57,25 +59,26 @@ def MultiCharNgramsEmbedding(
     Args:
         ns
         max_chars
+        lower
         num_vectors
         embed_dims
         dropout
     """
     numn = len(ns)
-    max_chars = [max_chars] * numn if isinstance(max_chars, int) else max_chars
     num_vectors = [num_vectors] * numn if isinstance(num_vectors, int) else num_vectors
     embed_dims = [embed_dims] * numn if isinstance(embed_dims, int) else embed_dims
     with Model.define_operators({">>": chain}):
         model = concatenate(*
             [
                 CharNgramsEmbedding(
-                    n,
-                    max_chars=mc,
+                    n=n,
+                    max_chars=max_chars,
+                    lower=lower,
                     num_vectors=nvec,
                     embed_dim=edim,
                     dropout=dropout,
                 )
-                for n, mc, nvec, edim in zip(ns, max_chars, num_vectors, embed_dims)
+                for n, nvec, edim in zip(ns, num_vectors, embed_dims)
             ]
         )
     return model
@@ -84,6 +87,7 @@ def MultiCharNgramsEmbedding(
 def CharNgramsEmbedding(
     n: int,
     max_chars: int,
+    lower: bool,
     num_vectors: int,
     embed_dim: int,
     dropout: Optional[float],
@@ -92,13 +96,14 @@ def CharNgramsEmbedding(
     Args:
         n
         max_chars
+        lower
         num_vectors
         embed_dim
         dropout
     """
     with Model.define_operators({">>": chain}):
         model = (
-            text_to_char_ngrams(n, max_chars)
+            text_to_char_ngrams(n, max_chars, lower)
             >> thinc.layers.strings2arrays()
             >> thinc.layers.with_array(
                 thinc.layers.HashEmbed(
@@ -114,7 +119,11 @@ def CharNgramsEmbedding(
     return model
 
 
-def text_to_char_ngrams(n: int, max_chars: int) -> Model[List[str], List[List[str]]]:
+def text_to_char_ngrams(
+    n: int,
+    max_chars: int,
+    lower: bool,
+) -> Model[List[str], List[List[str]]]:
     """
     Custom data type transfer thinc layer that transforms a sequence of text strings
     into a sequence of sequence of character ngram strings. Like this::
@@ -125,16 +134,22 @@ def text_to_char_ngrams(n: int, max_chars: int) -> Model[List[str], List[List[st
         n: Number of adjacent characters to combine into an ngram.
         max_chars: Max number of characters from the start of the text to transform
             into character ngrams.
+        lower: If True, lowercase text before extracting character ngrams; otherwise,
+            leave text casing as-is.
     """
 
     def forward(
         model: Model, texts: List[str], is_train: bool
     ) -> Tuple[List[List[str]], Callable]:
+        if lower is True:
+            texts = (text[:max_chars].lower() for text in texts)
+        else:
+            texts = (text[:max_chars] for text in texts)
         if n == 1:
-            char_ngs = [list(text[:max_chars]) for text in texts]
+            char_ngs = [list(text) for text in texts]
         else:
             char_ngs = [
-                [text[i : i + n] for i in range(min(len(text), max_chars) - n + 1)]
+                [text[i : i + n] for i in range(len(text) - n + 1)]
                 for text in texts
             ]
 
@@ -144,5 +159,7 @@ def text_to_char_ngrams(n: int, max_chars: int) -> Model[List[str], List[List[st
         return (char_ngs, backprop)
 
     return Model(
-        "texts_to_char_ngrams", forward, attrs={"n": n, "max_chars": max_chars}
+        "texts_to_char_ngrams",
+        forward,
+        attrs={"n": n, "max_chars": max_chars, "lower": lower},
     )
