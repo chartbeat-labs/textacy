@@ -19,6 +19,7 @@ import textacy
 import textacy.datasets
 import textacy.lang_id_
 import textacy.lang_id_._datasets  # oof, naming
+import textacy.lang_id_._training
 import textacy.preprocessing
 
 logging.basicConfig(level=logging.INFO)
@@ -27,7 +28,15 @@ logging.basicConfig(level=logging.INFO)
 def main():
     args = add_and_parse_args()
 
+    lang_identifier = textacy.lang_id_.LangIdentifier(
+        textacy.lang_id_.models.LangIdentifierModelV2(),
+        args.root_dirpath.joinpath("lang_identifier"),
+        version=args.version,
+    )
+
     data = load_and_agg_data(args.root_dirpath, args.force, args.min_len, args.min_obs)
+    # HACK: let's make sure there aren't any URLs in our training data
+    # since it seems like a bunch of characters that would confuse the model
     data = [
         (textacy.preprocessing.replace.urls(text, ""), lang)
         for text, lang in data
@@ -40,22 +49,26 @@ def main():
     )
     print(f"training data: {len(train_data)}\ntest_data: {len(test_data)}")
 
-    lang_identifier = textacy.lang_id_.LangIdentifier(
-        textacy.lang_id_.models.LangIdentifierModelV2(embed_dim=100),
-        args.root_dirpath.joinpath("lang_identifier")
-    )
-
     batch_size = thinc.api.compounding(2.0, 64.0, 1.001)
-    learn_rate = thinc.api.cyclic_triangular(min_lr=0.0005, max_lr=0.02, period=1000)
-    lang_identifier.train_model(
+    # NOTE: training appears to be VERY sensitive to learning rate
+    # these values have been manually fine-tuned ...
+    # learn_rate = thinc.api.cyclic_triangular(min_lr=0.0005, max_lr=0.005, period=2500)
+    learn_rate = textacy.lang_id_._training.decaying_cyclic_triangular(
+        thinc.api.decaying(1.0, decay=1e-4),
+        thinc.api.cyclic_triangular(min_lr=0.0005, max_lr=0.005, period=2500),
+        min_lr=0.00025,
+    )
+    model = textacy.lang_id_._training.train_model(
+        lang_identifier.model,
         train=train_data,
         test=test_data,
         n_iter=args.n_iter,
         batch_size=batch_size,
         learn_rate=learn_rate,
     )
-
-    lang_identifier.save_model()
+    lang_identifier.model = model
+    if args.save:
+        lang_identifier.save_model()
 
 
 def add_and_parse_args() -> argparse.Namespace:
@@ -67,6 +80,12 @@ def add_and_parse_args() -> argparse.Namespace:
         type=pathlib.Path,
         required=True,
         help="path to root directory under which datasets and models are saved",
+    )
+    parser.add_argument(
+        "--version",
+        type=str,
+        required=True,
+        help="semantic version number to assign to trained model, e.g. '2.0'",
     )
     parser.add_argument(
         "--min_len",
@@ -82,13 +101,17 @@ def add_and_parse_args() -> argparse.Namespace:
         help="minimum number of observations -- (text, lang) pairs -- in a language "
         "for it to be included in the training dataset",
     )
-    parser.add_argument("--n_iter", type=int, default=1)
-    # parser.add_argument(
-    #     "--version",
-    #     type=str,
-    #     required=True,
-    #     help="semantic version number to assign to trained model, e.g. '1.0'",
-    # )
+    parser.add_argument(
+        "--n_iter",
+        type=int,
+        default=1,
+        help="number of epochs to train model",
+    )
+    parser.add_argument(
+        "--save",
+        action="store_true",
+        default=False,
+    )
     parser.add_argument(
         "--force",
         action="store_true",
@@ -135,15 +158,15 @@ def load_and_agg_data(
     # aggregate and sample datasets
     agg_data = (
         udhr_data
-        + get_random_sample(wili_data, 50000, stratify=True, random_state=42)
-        + get_random_sample(tatoeba_data, 50000, stratify=True, random_state=42)
+        + wili_data
+        + get_random_sample(tatoeba_data, 20000, stratify=True, random_state=42)
         # add additional examples for hard-to-distinguish language groups
-        + get_random_sample(dslcc_data, 25000, stratify=True, random_state=42)
+        + get_random_sample(dslcc_data, 5000, stratify=True, random_state=42)
         # add some extra english examples, since there's apparently a fair amount
         # of english sprinkled throughout other languages, causing meh performance
         + get_random_sample(
             [item for item in tatoeba_data if item[1] == "en"],
-            5000,
+            1000,
             stratify=False,
             random_state=42,
         )
