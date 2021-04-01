@@ -2,8 +2,47 @@ from __future__ import annotations
 
 from typing import Callable, List, Optional, Sequence, Tuple
 
+import numpy as np
 import thinc
+from cytoolz import itertoolz
 from thinc.api import Model, chain, concatenate
+
+
+def get_model_preds(model: Model, texts: List[str], classes: np.ndarray) -> List[str]:
+    """
+    Get model predictions for multiple texts as class labels rather than as a 2dim
+    matrix of prediction probabilities.
+    """
+    # predict in batches, otherwise memory blows UP
+    results = (
+        result
+        for texts_pt in itertoolz.partition_all(1000, texts)
+        for result in get_topn_preds_and_probs(model.predict(texts_pt), 1, classes)
+    )
+    return [lang for result in results for lang, _ in result]
+
+
+def get_topn_preds_and_probs(
+    preds: np.ndarray,
+    topn: int,
+    classes: np.ndarray,
+) -> List[List[Tuple[str, float]]]:
+    # TODO
+    # if only need 1 (max) value, use faster numpy ops?
+    # if topn == 1:
+    #     idxs = np.argmax(preds, axis=1)
+    #     pred_probs = np.max(preds, axis=1)
+    #     pred_langs = self.classes[idxs]
+    #     return list(zip(pred_langs, pred_probs))
+    # otherwise, do the full array sorts to get topn max
+    # else:
+    idxs = np.argsort(preds, axis=1)[:,::-1][:,:topn]
+    pred_probs = np.sort(preds, axis=1)[:,::-1][:,:topn]
+    pred_langs = classes[idxs]
+    return [
+        list(zip(pred_langs[i], pred_probs[i]))
+        for i in range(pred_probs.shape[0])
+    ]
 
 
 def LangIdentifierModelV2(
