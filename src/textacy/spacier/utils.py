@@ -2,6 +2,8 @@
 :mod:`textacy.spacier.utils`: Helper functions for working with / extending spaCy's
 core functionality.
 """
+from __future__ import annotations
+
 import itertools
 from typing import Iterable, List, Tuple, Union
 
@@ -16,7 +18,7 @@ from . import core
 
 
 def make_doc_from_text_chunks(
-    text: str, lang: Union[str, Language], chunk_size: int = 100000,
+    text: str, lang: str | Language, chunk_size: int = 100000,
 ) -> Doc:
     """
     Make a single spaCy-processed document from 1 or more chunks of ``text``.
@@ -114,7 +116,7 @@ def preserve_case(token: Token) -> bool:
         return False
 
 
-def get_normalized_text(span_or_token: Union[Span, Token]) -> str:
+def get_normalized_text(span_or_token: Span | Token) -> str:
     """
     Get the text of a spaCy span or token, normalized depending on its characteristics.
     For proper nouns and acronyms, text is returned as-is; for everything else,

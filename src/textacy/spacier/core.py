@@ -2,6 +2,8 @@
 :mod:`textacy.spacier.core`: Convenient entry point for loading spaCy language pipelines
 and making spaCy docs.
 """
+from __future__ import annotations
+
 import functools
 import logging
 import pathlib
@@ -21,7 +23,7 @@ LOGGER = logging.getLogger(__name__)
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "spacy_lang"))
 def load_spacy_lang(
-    name: Union[str, pathlib.Path],
+    name: str | pathlib.Path,
     disable: Optional[Tuple[str, ...]] = None,
     allow_blank: bool = False,
 ) -> Language:
@@ -86,7 +88,7 @@ def load_spacy_lang(
             raise e
 
 
-def _get_full_model_name(name: Union[str, pathlib.Path]) -> Union[str, pathlib.Path]:
+def _get_full_model_name(name: str | pathlib.Path) -> str | pathlib.Path:
     """This is a hack for spaCy v3. Hopefully temporary."""
     if isinstance(name, str) and len(name) == 2:
         candidate_model_names = [
@@ -102,8 +104,8 @@ def _get_full_model_name(name: Union[str, pathlib.Path]) -> Union[str, pathlib.P
 
 
 def make_spacy_doc(
-    data: Union[str, Tuple[str, dict], Doc],
-    lang: Union[str, Callable[[str], str], Language] = lang_id.identify_lang,
+    data: str | Tuple[str, dict] | Doc,
+    lang: str | Callable[[str], str] | Language = lang_id.identify_lang,
 ) -> Doc:
     """
     Make a :class:`spacy.tokens.Doc` from valid inputs, and automatically
@@ -187,7 +189,7 @@ def make_spacy_doc(
 
 
 def _make_spacy_doc_from_text(
-    text: str, lang: Union[str, Callable[[str], str], Language],
+    text: str, lang: str | Callable[[str], str] | Language,
 ) -> Doc:
     if isinstance(lang, str):
         spacy_lang = load_spacy_lang(lang)
@@ -208,7 +210,7 @@ def _make_spacy_doc_from_text(
 
 
 def _make_spacy_doc_from_record(
-    record: Tuple[str, dict], lang: Union[str, Callable[[str], str], Language],
+    record: Tuple[str, dict], lang: str | Callable[[str], str] | Language,
 ) -> Doc:
     if isinstance(lang, str):
         spacy_lang = load_spacy_lang(lang)
@@ -231,7 +233,7 @@ def _make_spacy_doc_from_record(
 
 
 def _make_spacy_doc_from_doc(
-    doc: Doc, lang: Union[str, Callable[[str], str], Language],
+    doc: Doc, lang: str | Callable[[str], str] | Language,
 ) -> Doc:
     # these checks are probably unnecessary, but in case a user
     # has done something strange, we should complain...

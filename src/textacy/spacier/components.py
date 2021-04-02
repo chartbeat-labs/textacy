@@ -1,9 +1,12 @@
 """
 :mod:`textacy.spacier.components`: Custom components to add to a spaCy language pipeline.
 """
+# TODO: figure out why this breaks the code...
+# from __future__ import annotations
+
 import inspect
 import logging
-from typing import Iterable, Optional, Union
+from typing import Collection, Optional, Union
 
 import spacy
 from spacy.tokens import Doc
@@ -69,7 +72,7 @@ class TextStatsComponent:
 
     name = "textacy_text_stats"
 
-    def __init__(self, attrs=None):
+    def __init__(self, attrs: Optional[Union[str, Collection[str]]] = None):
         if attrs is None:
             self.attrs = _TS_ATTRS
         elif isinstance(attrs, (str, bytes)):
@@ -82,7 +85,7 @@ class TextStatsComponent:
             Doc.set_extension(attr, default=None, force=True)
             LOGGER.debug('"%s" custom attribute added to `spacy.tokens.Doc`')
 
-    def __call__(self, doc):
+    def __call__(self, doc: Doc) -> Doc:
         ts = text_stats.TextStats(doc)
         for attr in self.attrs:
             try:
@@ -99,5 +102,5 @@ class TextStatsComponent:
 
 
 @spacy.language.Language.factory("textacy_text_stats", default_config={"attrs": None})
-def text_stats_component(nlp, name, attrs: Optional[Union[str, Iterable[str]]]):
+def text_stats_component(nlp, name, attrs: Optional[Union[str, Collection[str]]]):
     return TextStatsComponent(attrs=attrs)
