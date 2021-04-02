@@ -4,6 +4,7 @@ import sys
 from pprint import pprint
 
 from . import datasets
+from . import lang_id
 from . import resources
 from . import utils
 
@@ -20,6 +21,7 @@ LOGGER.addHandler(ch)
 LOGGER.setLevel(logging.INFO)
 
 NAME_TO_CLASS = {
+    "lang_identifier": lang_id.LangIdentifier,
     "capitol_words": datasets.CapitolWords,
     "imdb": datasets.IMDB,
     "oxford_text_archive": datasets.OxfordTextArchive,
@@ -78,8 +80,8 @@ if __name__ == "__main__":
         "--version",
         type=str,
         required=False,
-        help='if `name` is "wikipedia", "wikinews", or "concept_net", version of '
-        "the database to download",
+        help='if `name` is "lang_identifier", "wikipedia", "wikinews", or "concept_net", '
+        "version of the database to download",
     )
     parser_download.add_argument(
         "--force",
