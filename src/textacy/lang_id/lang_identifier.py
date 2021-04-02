@@ -71,6 +71,10 @@ class LangIdentifier:
         version
         data_dir
         model_base
+
+    Attributes:
+        model
+        classes
     """
 
     def __init__(
@@ -106,10 +110,15 @@ class LangIdentifier:
         return self._classes
 
     def save_model(self):
+        """Save trained :attr:`LangIdentifier.model` to disk, as bytes."""
         LOGGER.info("saving LangIdentifier model to %s", self.model_fpath)
         self.model.to_disk(self.model_fpath)
 
     def load_model(self) -> Model:
+        """
+        Load trained model from bytes on disk, using :attr:`LangIdentifier.model_base`
+        as the framework into which the data is fit.
+        """
         try:
             LOGGER.debug("loading LangIdentifier model from %s", self.model_fpath)
             return self._model_base.from_disk(self.model_fpath)
@@ -147,14 +156,16 @@ class LangIdentifier:
         with_probs: bool = False,
     ) -> str | Tuple[str, float]:
         """
-        Identify the most probable language identified in ``text``.
+        Identify the most probable language identified in ``text``,
+        with or without the corresponding probability.
 
         Args:
             text
             with_probs
 
         Returns:
-            ISO 639-1 standard language code of the most probable language.
+            ISO 639-1 standard language code of the most probable language,
+            optionally with its probability.
         """
         if not self._is_valid_text(text):
             result = ("un", 1.0)
@@ -172,7 +183,8 @@ class LangIdentifier:
         with_probs: bool = False,
     ) -> List[str] | List[Tuple[str, float]]:
         """
-        Identify the ``topn`` most probable languages identified in ``text``.
+        Identify the ``topn`` most probable languages identified in ``text``,
+        with or without the corresponding probabilities.
 
         Args:
             text
@@ -180,7 +192,7 @@ class LangIdentifier:
             with_probs
 
         Returns:
-            ISO 639-1 standard language code and corresponding prediction probability
+            ISO 639-1 standard language code and optionally with its probability
             of the ``topn`` most probable languages.
         """
         if not self._is_valid_text(text):
@@ -201,4 +213,7 @@ lang_identifier = LangIdentifier(
     data_dir=constants.DEFAULT_DATA_DIR.joinpath("lang_identifier"),
     model_base=models.LangIdentifierModelV2(),
 )
+# expose this as primary user-facing API
+# TODO: there's gotta be a better way, this whole setup feels clunky
 identify_lang = lang_identifier.identify_lang
+identify_topn_langs = lang_identifier.identify_topn_langs
