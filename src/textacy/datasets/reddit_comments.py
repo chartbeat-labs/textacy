@@ -1,4 +1,7 @@
 """
+Reddit comments
+---------------
+
 A collection of up to ~1.5 billion Reddit comments posted from
 October 2007 through May 2015.
 
