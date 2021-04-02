@@ -109,10 +109,10 @@ class LangIdentifier:
         LOGGER.info("saving LangIdentifier model to %s", self.model_fpath)
         self.model.to_disk(self.model_fpath)
 
-    def load_model(self):
+    def load_model(self) -> Model:
         try:
             LOGGER.debug("loading LangIdentifier model from %s", self.model_fpath)
-            self._model_base.from_disk(self.model_fpath)
+            return self._model_base.from_disk(self.model_fpath)
         except FileNotFoundError:
             LOGGER.exception(
                 "LangIdentifier model not found at %s -- have you downloaded it yet?",
@@ -163,7 +163,7 @@ class LangIdentifier:
             text_ = utils.to_collection(text, str, list)
             result = models.get_topn_preds_and_probs(
                 self.model.predict(text_), 1, self.classes
-            )[0]
+            )[0][0]
         return result[0] if with_probs is False else result
 
     def identify_topn_langs(
