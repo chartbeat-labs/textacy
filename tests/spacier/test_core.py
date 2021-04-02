@@ -4,11 +4,26 @@ import spacy
 from textacy import load_spacy_lang, make_spacy_doc
 
 
-TEXT = """
-Since the so-called "statistical revolution" in the late 1980s and mid 1990s, much Natural Language Processing research has relied heavily on machine learning.
-Formerly, many language-processing tasks typically involved the direct hand coding of rules, which is not in general robust to natural language variation. The machine-learning paradigm calls instead for using statistical inference to automatically learn such rules through the analysis of large corpora of typical real-world examples (a corpus is a set of documents, possibly with human or computer annotations).
-Many different classes of machine learning algorithms have been applied to NLP tasks. These algorithms take as input a large set of "features" that are generated from the input data. Some of the earliest-used algorithms, such as decision trees, produced systems of hard if-then rules similar to the systems of hand-written rules that were then common. Increasingly, however, research has focused on statistical models, which make soft, probabilistic decisions based on attaching real-valued weights to each input feature. Such models have the advantage that they can express the relative certainty of many different possible answers rather than only one, producing more reliable results when such a model is included as a component of a larger system.
-""".strip()
+# TODO: why are we using such a long text here??
+TEXT = (
+    "Since the so-called \"statistical revolution\" in the late 1980s and mid 1990s, "
+    "much Natural Language Processing research has relied heavily on machine learning. "
+    "Formerly, many language-processing tasks typically involved the direct hand coding "
+    "of rules, which is not in general robust to natural language variation. "
+    "The machine-learning paradigm calls instead for using statistical inference "
+    "to automatically learn such rules through the analysis of large corpora of typical "
+    "real-world examples (a corpus is a set of documents, possibly with human or "
+    "computer annotations). Many different classes of machine learning algorithms "
+    "have been applied to NLP tasks. These algorithms take as input a large set "
+    "of \"features\" that are generated from the input data. Some of the earliest-used "
+    "algorithms, such as decision trees, produced systems of hard if-then rules similar "
+    "to the systems of hand-written rules that were then common. Increasingly, however, "
+    "research has focused on statistical models, which make soft, probabilistic "
+    "decisions based on attaching real-valued weights to each input feature. "
+    "Such models have the advantage that they can express the relative certainty of "
+    "many different possible answers rather than only one, producing more reliable "
+    "results when such a model is included as a component of a larger system."
+)
 
 
 @pytest.fixture(scope="module")
@@ -94,18 +109,9 @@ class TestMakeSpacyDoc:
         "data, lang",
         [
             ("Hello, how are you my friend?", "es_core_news_sm"),
-            # ("Hello, how are you my friend?", lambda x: "es_core_news_sm"),
+            ("Hello, how are you my friend?", lambda x: "es_core_news_sm"),
         ]
     )
     def test_invalid_data_lang_combo(self, data, lang, en_core_web_sm):
         with pytest.raises((ValueError, TypeError)):
             _ = make_spacy_doc(en_core_web_sm(data), lang=lang)
-        # combos = (
-        #     (en_core_web_sm("Hello, how are you my friend?"), "es_core_news_sm"),
-        #     (en_core_web_sm("Hello, how are you my friend?"), True),
-        #     ("This is an English sentence.", True),
-        #     (("This is an English sentence.", {"foo": "bar"}), True),
-        # )
-        # for data, lang in combos:
-        #     with pytest.raises((ValueError, TypeError)):
-        #         _ = make_spacy_doc(data, lang=lang)
