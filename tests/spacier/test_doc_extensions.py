@@ -77,7 +77,7 @@ class TestDocExtensions:
 
     def test_to_tokenized_text_nosents(self):
         spacy_lang = load_spacy_lang("en_core_web_sm")
-        with spacy_lang.disable_pipes("parser"):
+        with spacy_lang.select_pipes(disable="parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tokenized_text = doc._.to_tokenized_text()
         assert isinstance(tokenized_text, list)
@@ -95,7 +95,7 @@ class TestDocExtensions:
 
     def test_to_tagged_text_nosents(self):
         spacy_lang = load_spacy_lang("en_core_web_sm")
-        with spacy_lang.disable_pipes("parser"):
+        with spacy_lang.select_pipes(disable="parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tagged_text = doc._.to_tagged_text()
         assert isinstance(tagged_text, list)
