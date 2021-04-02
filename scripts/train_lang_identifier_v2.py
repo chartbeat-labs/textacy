@@ -54,19 +54,19 @@ def main():
     # these values have been manually fine-tuned ...
     # learn_rate = thinc.api.cyclic_triangular(min_lr=0.0005, max_lr=0.005, period=2500)
     learn_rate = textacy.lang_id_._training.decaying_cyclic_triangular(
-        thinc.api.decaying(1.0, decay=1e-4),
-        thinc.api.cyclic_triangular(min_lr=0.0005, max_lr=0.005, period=2500),
+        thinc.api.decaying(1.0, decay=5e-5),
+        thinc.api.cyclic_triangular(min_lr=0.0005, max_lr=0.0025, period=3000),
         min_lr=0.00025,
     )
     model = textacy.lang_id_._training.train_model(
-        lang_identifier.model,
+        lang_identifier._model_base,
         train=train_data,
         test=test_data,
         n_iter=args.n_iter,
         batch_size=batch_size,
         learn_rate=learn_rate,
     )
-    lang_identifier.model = model
+    lang_identifier._model = model
     if args.save:
         lang_identifier.save_model()
 
@@ -155,18 +155,23 @@ def load_and_agg_data(
     tatoeba.download(force=force)
     tatoeba_data = tatoeba.load(iso_lang_map, min_len=min_len)
 
+    ud = textacy.lang_id_._datasets.UDDataset(root_dirpath.joinpath("ud"))
+    ud.download(force=force)
+    ud_data = ud.load(valid_langs, min_len=min_len)
+
     # aggregate and sample datasets
     agg_data = (
         udhr_data
         + wili_data
-        + get_random_sample(tatoeba_data, 20000, stratify=True, random_state=42)
+        + get_random_sample(tatoeba_data, 200000, stratify=True, random_state=42)
+        + get_random_sample(ud_data, 200000, stratify=True, random_state=42)
         # add additional examples for hard-to-distinguish language groups
-        + get_random_sample(dslcc_data, 5000, stratify=True, random_state=42)
+        + get_random_sample(dslcc_data, 50000, stratify=True, random_state=42)
         # add some extra english examples, since there's apparently a fair amount
         # of english sprinkled throughout other languages, causing meh performance
         + get_random_sample(
             [item for item in tatoeba_data if item[1] == "en"],
-            1000,
+            10000,
             stratify=False,
             random_state=42,
         )
