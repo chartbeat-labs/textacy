@@ -68,16 +68,16 @@ LOGGER = logging.getLogger(__name__)
 class LangIdentifier:
     """
     Args:
-        model_base
-        data_dir
         version
+        data_dir
+        model_base
     """
 
     def __init__(
         self,
-        model_base: Model,
-        data_dir: str | pathlib.Path,
         version: float | str,
+        data_dir: str | pathlib.Path = constants.DEFAULT_DATA_DIR.joinpath("lang_identifier"),
+        model_base: Model = models.LangIdentifierModelV2(),
     ):
         self.data_dir = utils.to_path(data_dir)
         self.version = str(version)
@@ -132,11 +132,10 @@ class LangIdentifier:
         # hide this import, since we'll only ever need it _once_ (per model version)
         from .. import io as tio
 
-        release_tag = self.model_id.replace("-", "_")
         model_fname = self.model_fpath.name
         url = urllib.parse.urljoin(
             "https://github.com/bdewilde/textacy-data/releases/download/",
-            release_tag + "/" + model_fname,
+            self.model_id + "/" + model_fname,
         )
         tio.utils.download_file(
             url, filename=model_fname, dirpath=self.data_dir, force=force,
@@ -198,8 +197,8 @@ class LangIdentifier:
 
 
 lang_identifier = LangIdentifier(
-    models.LangIdentifierModelV2(),
-    constants.DEFAULT_DATA_DIR.joinpath("lang_identifier"),
     version="2.0",
+    data_dir=constants.DEFAULT_DATA_DIR.joinpath("lang_identifier"),
+    model_base=models.LangIdentifierModelV2(),
 )
 identify_lang = lang_identifier.identify_lang
