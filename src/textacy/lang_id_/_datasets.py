@@ -3,11 +3,14 @@ from __future__ import annotations
 import logging
 import operator
 import pathlib
-from typing import Dict, List, Optional, Tuple, Set
+import random
+import re
+from typing import Dict, Iterable, List, Optional, Tuple, Set
 
 from cytoolz import itertoolz
 
 import textacy
+from textacy import io as tio
 
 LOGGER = logging.getLogger(__name__)
 
@@ -32,7 +35,7 @@ class IsoLangResource:
             force: If True, always download a new copy of the dataset; otherwise,
                 only download dataset if it doesn't already exist on disk.
         """
-        textacy.io.download_file(
+        tio.download_file(
             self.download_url,
             filename=self.filename,
             dirpath=self.data_dir,
@@ -47,7 +50,7 @@ class IsoLangResource:
         Returns:
             Dict[str, str]
         """
-        rows = textacy.io.read_csv(
+        rows = tio.read_csv(
             self.data_dir.joinpath(self.filename),
             delimiter="\t",
             fieldnames=[
@@ -95,9 +98,9 @@ class DSLCCDataset:
         for version in [3, 4]:
             name = f"dslcc{version}"
             url = f"http://scholar.harvard.edu/files/malmasi/files/{name}.zip"
-            fpath = textacy.io.download_file(url, dirpath=self.data_dir, force=force)
+            fpath = tio.download_file(url, dirpath=self.data_dir, force=force)
             if fpath:
-                textacy.io.unpack_archive(fpath, extract_dir=self.data_dir.joinpath(name))
+                tio.unpack_archive(fpath, extract_dir=self.data_dir.joinpath(name))
 
     def load(self, langs: Set[str], min_len: int = 25) -> List[Tuple[str, str]]:
         """
@@ -117,7 +120,7 @@ class DSLCCDataset:
         ]
         for fstub in fstubs:
             filepath = self.data_dir.joinpath(fstub)
-            lines = textacy.io.read_text(filepath, mode="rt", encoding="utf-8", lines=True)
+            lines = tio.read_text(filepath, mode="rt", encoding="utf-8", lines=True)
             for line in lines:
                 if not line.strip():
                     continue
@@ -152,11 +155,9 @@ class TatoebaDataset:
         Note:
             Source: https://tatoeba.org/eng/downloads
         """
-        fpath = textacy.io.download_file(
-            self.download_url, dirpath=self.data_dir, force=force
-        )
+        fpath = tio.download_file(self.download_url, dirpath=self.data_dir, force=force)
         if fpath:
-            textacy.io.unpack_archive(fpath, extract_dir=self.data_dir)
+            tio.unpack_archive(fpath, extract_dir=self.data_dir)
 
     def load(
         self,
@@ -171,7 +172,7 @@ class TatoebaDataset:
         Returns:
             Sequence of (text, lang) examples.
         """
-        rows = textacy.io.read_csv(
+        rows = tio.read_csv(
             self.data_dir.joinpath("sentences.csv"),
             fieldnames=["sent_id", "iso-639-3", "text"],
             delimiter="\t",
@@ -209,11 +210,11 @@ class Wili2018Dataset:
             force: If True, always download a new copy of the dataset; otherwise,
                 only download dataset if it doesn't already exist on disk.
         """
-        fpath = textacy.io.download_file(
+        fpath = tio.download_file(
             self.download_url, dirpath=self.data_dir, force=force
         )
         if fpath:
-            textacy.io.unpack_archive(fpath, extract_dir=self.data_dir)
+            tio.unpack_archive(fpath, extract_dir=self.data_dir)
 
     def load(
         self,
@@ -232,10 +233,10 @@ class Wili2018Dataset:
         # we'll combine train/test from individual datasets
         # and instead split on the full, aggregated dataset
         for subset in ("train", "test"):
-            text_lines = textacy.io.read_text(
+            text_lines = tio.read_text(
                 self.data_dir.joinpath(f"x_{subset}.txt"), lines=True
             )
-            lang_lines = textacy.io.read_text(
+            lang_lines = tio.read_text(
                 self.data_dir.joinpath(f"y_{subset}.txt"), lines=True
             )
             texts = (line.strip() for line in text_lines)
@@ -248,3 +249,80 @@ class Wili2018Dataset:
             )
         LOGGER.info("loaded Wili2018Dataset data:\n%s ...", data[:3])
         return data
+
+
+class UDDataset:
+    """
+    Source: https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-3424
+
+    References:
+        Zeman, Daniel; Nivre, Joakim; Abrams, Mitchell; et al., 2020, Universal Dependencies 2.7,
+        LINDAT/CLARIAH-CZ digital library at the Institute of Formal and Applied Linguistics (ÚFAL),
+        Faculty of Mathematics and Physics, Charles University,
+        http://hdl.handle.net/11234/1-3424.
+    """
+
+    download_url = "https://lindat.mff.cuni.cz/repository/xmlui/bitstream/handle/11234/1-3424/ud-treebanks-v2.7.tgz"
+
+    def __init__(self, data_dir: str | pathlib.Path):
+        self.data_dir = textacy.utils.to_path(data_dir).resolve()
+
+    def download(self, force: bool = False):
+        """
+        Args:
+            force: If True, always download a new copy of the dataset; otherwise,
+                only download dataset if it doesn't already exist on disk.
+        """
+        fpath = tio.download_file(
+            self.download_url, dirpath=self.data_dir, force=force
+        )
+        if fpath:
+            tio.unpack_archive(fpath, extract_dir=self.data_dir)
+
+    def load(self, langs: Set[str], min_len: int = 25) -> List[Tuple[str, str]]:
+        """
+        Args:
+            langs
+            min_len: Minimum text length in *chars* for a given example to be included.
+
+        Returns:
+            Sequence of (text, lang) examples.
+        """
+        data = []
+        match_regex = r"ud-(train|test|dev)\.txt"
+        for fpath in tio.get_filepaths(
+            self.data_dir, match_regex=match_regex, recursive=True
+        ):
+            fname = pathlib.Path(fpath).name
+            lang, _ = fname.split("_", maxsplit=1)
+            if lang not in langs:
+                continue
+
+            with open(fpath, mode="rt") as f:
+                text = f.read()
+            if "\n" in text:
+                data.extend(
+                    (text_segment, lang)
+                    for text_segment in re.split(r"\n+", text)
+                    if len(text_segment) >= min_len
+                )
+            else:
+                data.extend(
+                    (text_segment, lang)
+                    for text_segment in _randomly_segment_text(text, (50, 1000))
+                    if len(text_segment) >= min_len
+                )
+        LOGGER.info("loaded TatoebaDataset data:\n%s ...", data[:3])
+        return data
+
+
+def _randomly_segment_text(text: str, len_range: Tuple[int, int]) -> Iterable[str]:
+    min_len, max_len = len_range
+    idxs = []
+    idx = 0
+    while idx < len(text):
+        idxs.append(idx)
+        idx += random.randint(min_len, max_len)
+    idxs.append(len(text))
+    for idx_start, idx_end in itertoolz.sliding_window(2, idxs):
+        yield text[idx_start : idx_end]
