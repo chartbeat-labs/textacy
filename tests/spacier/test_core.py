@@ -12,8 +12,13 @@ Many different classes of machine learning algorithms have been applied to NLP t
 
 
 @pytest.fixture(scope="module")
-def doc(request):
-    return make_spacy_doc((TEXT, {"foo": "bar!"}), lang="en_core_web_sm")
+def en_core_web_sm():
+    return load_spacy_lang("en_core_web_sm")
+
+
+@pytest.fixture(scope="module")
+def doc(en_core_web_sm):
+    return make_spacy_doc((TEXT, {"foo": "bar!"}), lang=en_core_web_sm)
 
 
 @pytest.fixture(scope="module")
@@ -27,77 +32,80 @@ def langs():
 
 class TestLoadSpacyLang:
 
-    def test_load_model(self):
-        for lang in ["en_core_web_sm", "es_core_news_sm"]:
-            for disable in [None, ("tagger", "parser", "ner")]:
-                assert isinstance(
-                    load_spacy_lang(lang, disable=disable),
-                    spacy.language.Language
-                )
+    @pytest.mark.parametrize("name", ["en_core_web_sm", "es_core_news_sm"])
+    def test_load_model(self, name):
+        assert isinstance(load_spacy_lang(name), spacy.language.Language)
 
-    def test_load_blank(self):
+    @pytest.mark.parametrize("kwargs", [{"exclude": ("tagger", "parser", "ner")}])
+    def test_load_model_kwargs(self, kwargs):
         assert isinstance(
-            load_spacy_lang("ar", allow_blank=True),
-            spacy.language.Language
+            load_spacy_lang("en_core_web_sm", **kwargs),
+            spacy.language.Language,
         )
 
-    def test_disable_hashability(self):
+    @pytest.mark.parametrize("kwargs", [{"exclude": ["tagger", "parser", "ner"]}])
+    def test_disable_hashability(self, kwargs):
         with pytest.raises(TypeError):
-            _ = load_spacy_lang("en_core_web_sm", disable=["tagger", "parser", "ner"])
+            _ = load_spacy_lang("en_core_web_sm", **kwargs)
 
-    def test_bad_name(self):
-        for name in ("unk", "un"):
-            with pytest.raises(OSError):
-                _ = load_spacy_lang(name)
-        with pytest.raises(ImportError):
-            _ = load_spacy_lang("un", allow_blank=True)
+    @pytest.mark.parametrize("name", ["en", "un"])
+    def test_bad_name(self, name):
+        with pytest.raises(OSError):
+            _ = load_spacy_lang(name)
 
 
 class TestMakeSpacyDoc:
 
     def test_text_data(self, langs):
         text = "This is an English sentence."
-        assert isinstance(make_spacy_doc(text), spacy.tokens.Doc)
         for lang in langs:
             assert isinstance(make_spacy_doc(text, lang=lang), spacy.tokens.Doc)
 
     def test_record_data(self, langs):
         record = ("This is an English sentence.", {"foo": "bar"})
-        assert isinstance(make_spacy_doc(record), spacy.tokens.Doc)
         for lang in langs:
             assert isinstance(make_spacy_doc(record, lang=lang), spacy.tokens.Doc)
 
-    def test_doc_data(self, langs):
-        spacy_lang = load_spacy_lang("en_core_web_sm")
-        doc = spacy_lang("This is an English sentence.")
-        assert isinstance(make_spacy_doc(doc), spacy.tokens.Doc)
+    def test_doc_data(self, langs, en_core_web_sm):
+        doc = en_core_web_sm("This is an English sentence.")
         for lang in langs:
             assert isinstance(make_spacy_doc(doc, lang=lang), spacy.tokens.Doc)
 
-    def test_invalid_data(self):
-        invalid_contents = [
+    @pytest.mark.parametrize(
+        "data",
+        [
             b"This is an English sentence in bytes.",
             {"content": "This is an English sentence as dict value."},
             True,
+        ],
+    )
+    def test_invalid_data(self, data, en_core_web_sm):
+        with pytest.raises(TypeError):
+            _ = make_spacy_doc(data, lang=en_core_web_sm)
+
+    @pytest.mark.parametrize(
+        "lang", [b"en", ["en_core_web_sm", "es_core_news_sm"], True]
+    )
+    def test_invalid_lang(self, lang):
+        with pytest.raises(TypeError):
+            _ = make_spacy_doc("This is an English sentence.", lang=lang)
+
+    @pytest.mark.parametrize(
+        "data, lang",
+        [
+            ("Hello, how are you my friend?", "es_core_news_sm"),
+            # ("Hello, how are you my friend?", lambda x: "es_core_news_sm"),
         ]
-        for invalid_content in invalid_contents:
-            with pytest.raises(TypeError):
-                _ = make_spacy_doc(invalid_content)
-
-    def test_invalid_lang(self):
-        invalid_langs = [b"en", ["en_core_web_sm", "es_core_news_sm"], True]
-        for invalid_lang in invalid_langs:
-            with pytest.raises(TypeError):
-                _ = make_spacy_doc("This is an English sentence.", lang=invalid_lang)
-
-    def test_invalid_data_lang_combo(self):
-        spacy_lang = load_spacy_lang("en_core_web_sm")
-        combos = (
-            (spacy_lang("Hello, how are you my friend?"), "es"),
-            (spacy_lang("Hello, how are you my friend?"), True),
-            ("This is an English sentence.", True),
-            (("This is an English sentence.", {"foo": "bar"}), True),
-        )
-        for data, lang in combos:
-            with pytest.raises((ValueError, TypeError)):
-                _ = make_spacy_doc(data, lang=lang)
+    )
+    def test_invalid_data_lang_combo(self, data, lang, en_core_web_sm):
+        with pytest.raises((ValueError, TypeError)):
+            _ = make_spacy_doc(en_core_web_sm(data), lang=lang)
+        # combos = (
+        #     (en_core_web_sm("Hello, how are you my friend?"), "es_core_news_sm"),
+        #     (en_core_web_sm("Hello, how are you my friend?"), True),
+        #     ("This is an English sentence.", True),
+        #     (("This is an English sentence.", {"foo": "bar"}), True),
+        # )
+        # for data, lang in combos:
+        #     with pytest.raises((ValueError, TypeError)):
+        #         _ = make_spacy_doc(data, lang=lang)
