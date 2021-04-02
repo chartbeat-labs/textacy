@@ -42,9 +42,10 @@ $ python -m spacy link en_core_web_sm en
 ```zsh
 $ python -m textacy download capitol_words
 $ python -m textacy download depeche_mood
+$ python -m textacy download lang_identifier --version 2.0
 ```
 
-These commands download and save a compressed json file with ~11k speeches given by the main protagonists of the 2016 U.S. Presidential election, followed by a set of emotion lexicons in English and Italian with various word representations. For more information about particular datasets/resources use the `info` subcommand, or just run
+These commands download and save a compressed json file with ~11k speeches given by the main protagonists of the 2016 U.S. Presidential election, followed by a set of emotion lexicons in English and Italian with various word representations, and lastly a language identification model. For more information about particular datasets/resources use the `info` subcommand, or just run
 
 ```zsh
 $ python -m textacy --help
