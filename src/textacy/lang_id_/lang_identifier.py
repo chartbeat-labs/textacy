@@ -1,3 +1,54 @@
+"""
+Language Identification
+-----------------------
+
+:mod:`textacy.lang_id`: Interface for de/serializing a language identification model,
+and using it to identify the most probable language(s) of a given text. Inspired by
+Google's Compact Language Detector v3 (https://github.com/google/cld3) and
+implemented with ``thinc`` v8.0.
+
+Model
+^^^^^
+
+Character unigrams, bigrams, and trigrams are extracted separately from the first
+1000 characters of lower-cased input text. Each collection of ngrams is hash-embedded
+into a 100-dimensional space, then averaged. The resulting feature vectors are
+concatenated into a single embedding layer, then passed on to a dense layer with
+ReLu activation and finally a Softmax output layer. The model's predictions give
+the probabilities for a text to be written in ~140 ISO 639-1 languages.
+
+Dataset
+^^^^^^^
+
+The model was trained on a randomized, stratified subset of ~375k texts
+drawn from several sources:
+
+- **WiLi:** A public dataset of short text extracts from Wikipedias in over 230
+  languages. Style is relatively formal; subject matter is "encyclopedic".
+  Source: https://zenodo.org/record/841984
+- **Tatoeba:** A crowd-sourced collection of sentences and their translations into
+  many languages. Style is relatively informal; subject matter is a variety of
+  everyday things and goings-on.
+  Source: https://tatoeba.org/eng/downloads.
+- **UDHR:** The UN's Universal Declaration of Human Rights document, translated into
+  hundreds of languages and split into paragraphs. Style is formal; subject matter is
+  fundamental human rights to be universally protected.
+  Source: https://unicode.org/udhr/index.html
+- **DSLCC**: Two collections of short excerpts of journalistic texts in a handful
+  of language groups that are highly similar to each other. Style is relatively formal;
+  subject matter is current events.
+  Source: http://ttg.uni-saarland.de/resources/DSLCC/
+
+Performance
+^^^^^^^^^^^
+
+The trained model achieved F1 = 0.97 when averaged over all languages.
+
+A few languages have worse performance; for example, the two Norwegians ("nb" and "no"),
+as well as Bosnian ("bs"), Serbian ("sr"), and Croatian ("hr"), which are extremely
+similar to each other. See the textacy-data releases for more details:
+https://github.com/bdewilde/textacy-data/releases/tag/lang-identifier-v2.0
+"""
 from __future__ import annotations
 
 import logging
