@@ -9,7 +9,6 @@ from thinc.api import Model
 
 from . import models
 from .. import constants, utils
-from .. import io as tio
 
 
 LOGGER = logging.getLogger(__name__)
@@ -18,15 +17,21 @@ LOGGER = logging.getLogger(__name__)
 class LangIdentifier:
     """
     Args:
-        model
+        model_base
         data_dir
         version
     """
 
-    def __init__(self, model: Model, data_dir: str | pathlib.Path, version: float | str):
-        self.model = model
+    def __init__(
+        self,
+        model_base: Model,
+        data_dir: str | pathlib.Path,
+        version: float | str,
+    ):
         self.data_dir = utils.to_path(data_dir)
         self.version = str(version)
+        self._model_base = model_base
+        self._model = None
         self._classes = None
 
     @property
@@ -36,6 +41,12 @@ class LangIdentifier:
     @property
     def model_fpath(self) -> pathlib.Path:
         return self.data_dir.joinpath(f"{self.model_id}.bin")
+
+    @property
+    def model(self) -> Model:
+        if self._model is None:
+            self._model = self.load_model()
+        return self._model
 
     @property
     def classes(self):
@@ -48,24 +59,28 @@ class LangIdentifier:
         self.model.to_disk(self.model_fpath)
 
     def load_model(self):
-        if self.model_fpath.exists():
+        try:
             LOGGER.debug("loading LangIdentifier model from %s", self.model_fpath)
-            self.model.from_disk(self.model_fpath)
-        else:
-            LOGGER.warning(
-                "LangIdentifier model not found at %s, unable to load data ...",
+            self._model_base.from_disk(self.model_fpath)
+        except FileNotFoundError:
+            LOGGER.exception(
+                "LangIdentifier model not found at %s -- have you downloaded it yet?",
                 self.model_fpath,
             )
+            raise
 
     def download(self, force: bool = False):
         """
-        Download model data as a Python version-specific compressed pickle file
-        and save it to disk under the :attr:`LangIdentifier.data_dir` directory.
+        Download version-specific model data as a binary file and save it to disk
+        at :attr:`LangIdentifier.model_fpath`.
 
         Args:
             force: If True, download the model data, even if it already exists on disk
                 under :attr:`self.data_dir`; otherwise, don't.
         """
+        # hide this import, since we'll only ever need it _once_ (per model version)
+        from .. import io as tio
+
         release_tag = self.model_id.replace("-", "_")
         model_fname = self.model_fpath.name
         url = urllib.parse.urljoin(
@@ -134,6 +149,6 @@ class LangIdentifier:
 lang_identifier = LangIdentifier(
     models.LangIdentifierModelV2(),
     constants.DEFAULT_DATA_DIR.joinpath("lang_identifier"),
-    version=2.0,
+    version="2.0",
 )
 identify_lang = lang_identifier.identify_lang
