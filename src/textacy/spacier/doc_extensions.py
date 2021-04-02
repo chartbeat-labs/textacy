@@ -13,6 +13,8 @@ prepended by an underscore:
     >>> print(doc._.preview)
     Doc(6 tokens: "This is a short text.")
 """
+from __future__ import annotations
+
 from typing import (
     cast,
     Callable,
@@ -166,12 +168,12 @@ def to_tagged_text(doc: Doc) -> List[List[Tuple[str, str]]]:
 def to_terms_list(
     doc: Doc,
     *,
-    ngrams: Optional[Union[int, Collection[int]]] = (1, 2, 3),
+    ngrams: Optional[int | Collection[int]] = (1, 2, 3),
     entities: Optional[bool] = True,
-    normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]] = "lemma",
+    normalize: Optional[str | Callable[[Union[Span, Token]], str]] = "lemma",
     as_strings: bool = False,
     **kwargs,
-) -> Union[Iterable[int], Iterable[str]]:
+) -> Iterable[int] | Iterable[str]:
     """
     Transform ``Doc`` into a sequence of ngrams and/or entities — not necessarily
     in order of appearance — where each appears in the sequence as many times as
@@ -316,13 +318,13 @@ def to_terms_list(
 def to_bag_of_terms(
     doc: Doc,
     *,
-    ngrams: Optional[Union[int, Collection[int]]] = (1, 2, 3),
+    ngrams: Optional[int | Collection[int]] = (1, 2, 3),
     entities: Optional[bool] = True,
-    normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]] = "lemma",
+    normalize: Optional[str | Callable[[Union[Span, Token]], str]] = "lemma",
     weighting: str = "count",
     as_strings: bool = False,
     **kwargs,
-) -> Dict[Union[int, str], Union[int, float]]:
+) -> Dict[int | str, int | float]:
     """
     Transform ``Doc`` into a bag-of-terms: the set of unique terms in ``Doc``
     mapped to their frequency of occurrence, where "terms" includes ngrams and/or entities.
@@ -398,7 +400,7 @@ def to_bag_of_words(
     filter_stops: bool = True,
     filter_punct: bool = True,
     filter_nums: bool = False,
-) -> Dict[Union[int, str], Union[int, float]]:
+) -> Dict[int | str, int | float]:
     """
     Transform ``Doc`` into a bag-of-words: the set of unique words in ``Doc``
     mapped to their absolute, relative, or binary frequency of occurrence.
@@ -479,7 +481,7 @@ def to_semantic_network(
     doc: Doc,
     *,
     nodes: str = "words",
-    normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]] = "lemma",
+    normalize: Optional[str | Callable[[Union[Span, Token]], str]] = "lemma",
     edge_weighting: str = "default",
     window_width: int = 10,
 ) -> nx.Graph:
