@@ -1,4 +1,7 @@
 """
+Oxford Text Archive literary works
+----------------------------------
+
 A collection of ~2.7k Creative Commons literary works from the Oxford Text Archive,
 containing primarily English-language 16th-20th century literature and history.
 
