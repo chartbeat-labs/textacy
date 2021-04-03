@@ -11,10 +11,20 @@ from typing import Collection, Optional, Union
 from spacy.language import Language
 from spacy.tokens import Doc
 
-# TODO: should we hide this import in, e.g. the component init?
 from .. import text_stats
 
 LOGGER = logging.getLogger(__name__)
+
+
+@Language.factory(
+    "textacy_text_stats",
+    default_config={"attrs": None},
+    retokenizes=False,
+)
+def create_text_stats_component(
+    nlp: Language, name: str, attrs: Optional[Union[str, Collection[str]]]
+):
+    return TextStatsComponent(attrs=attrs)
 
 
 class TextStatsComponent:
@@ -94,12 +104,3 @@ class TextStatsComponent:
             self.attrs = (attrs,)
         else:
             self.attrs = tuple(attrs)
-
-
-@Language.factory(
-    "textacy_text_stats",
-    default_config={"attrs": None},
-    retokenizes=False,
-)
-def create_text_stats_component(nlp, name, attrs: Optional[Union[str, Collection[str]]]):
-    return TextStatsComponent(attrs=attrs)
