@@ -23,11 +23,6 @@ spaCy extensions
 
 .. automodule:: textacy.spacier.doc_extensions
 
-Pipeline Components
--------------------
-
-.. automodule:: textacy.spacier.components
-
 spaCy Utils
 -----------
 
