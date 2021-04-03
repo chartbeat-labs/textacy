@@ -1,5 +1,7 @@
+from __future__ import annotations
+
 import random
-from typing import cast, List, Optional, Set, Union
+from typing import List, Optional, Set
 
 from cytoolz import itertoolz
 
@@ -10,8 +12,8 @@ from . import utils as aug_utils
 def substitute_word_synonyms(
     aug_toks: List[aug_utils.AugTok],
     *,
-    num: Union[int, float] = 1,
-    pos: Optional[Union[str, Set[str]]] = None,
+    num: int | float = 1,
+    pos: Optional[str | Set[str]] = None,
 ) -> List[aug_utils.AugTok]:
     """
     Randomly substitute words for which synonyms are available
@@ -34,7 +36,7 @@ def substitute_word_synonyms(
         to work properly, since this is the data source for word synonyms to be substituted.
     """
     _validate_aug_toks(aug_toks)
-    pos = cast(Set[str], utils.to_collection(pos, str, set))
+    pos = utils.to_collection(pos, str, set)
     cand_idxs = [
         idx
         for idx, aug_tok in enumerate(aug_toks)
@@ -64,8 +66,8 @@ def substitute_word_synonyms(
 def insert_word_synonyms(
     aug_toks: List[aug_utils.AugTok],
     *,
-    num: Union[int, float] = 1,
-    pos: Optional[Union[str, Set[str]]] = None,
+    num: int | float = 1,
+    pos: Optional[str | Set[str]] = None,
 ) -> List[aug_utils.AugTok]:
     """
     Randomly insert random synonyms of tokens for which synonyms are available,
@@ -88,7 +90,7 @@ def insert_word_synonyms(
         to work properly, since this is the data source for word synonyms to be inserted.
     """
     _validate_aug_toks(aug_toks)
-    pos = cast(Set[str], utils.to_collection(pos, str, set))
+    pos = utils.to_collection(pos, str, set)
     # bail out on very short sentences to avoid clobbering meaning
     if len(aug_toks) < 3:
         return aug_toks[:]
@@ -140,8 +142,8 @@ def insert_word_synonyms(
 def swap_words(
     aug_toks: List[aug_utils.AugTok],
     *,
-    num: Union[int, float] = 1,
-    pos: Optional[Union[str, Set[str]]] = None,
+    num: int | float = 1,
+    pos: Optional[str | Set[str]] = None,
 ) -> List[aug_utils.AugTok]:
     """
     Randomly swap the positions of two *adjacent* words,
@@ -158,7 +160,7 @@ def swap_words(
         New, augmented sequence of tokens.
     """
     _validate_aug_toks(aug_toks)
-    pos = cast(Set[str], utils.to_collection(pos, str, set))
+    pos = utils.to_collection(pos, str, set)
     # if we don't require _adjacent_ words, this does the trick
     # if not pos:
     #     pos = set(aug_tok.pos for aug_tok in aug_toks if aug_tok.is_word)
@@ -209,8 +211,8 @@ def swap_words(
 def delete_words(
     aug_toks: List[aug_utils.AugTok],
     *,
-    num: Union[int, float] = 1,
-    pos: Optional[Union[str, Set[str]]] = None,
+    num: int | float = 1,
+    pos: Optional[str | Set[str]] = None,
 ) -> List[aug_utils.AugTok]:
     """
     Randomly delete words,
@@ -227,7 +229,7 @@ def delete_words(
         New, augmented sequence of tokens.
     """
     _validate_aug_toks(aug_toks)
-    pos = cast(Set[str], utils.to_collection(pos, str, set))
+    pos = utils.to_collection(pos, str, set)
     # bail out on very short sentences to avoid clobbering meaning
     if len(aug_toks) < 3:
         return aug_toks[:]
@@ -266,7 +268,7 @@ def delete_words(
 def substitute_chars(
     aug_toks: List[aug_utils.AugTok],
     *,
-    num: Union[int, float] = 1,
+    num: int | float = 1,
     lang: Optional[str] = None,
 ) -> List[aug_utils.AugTok]:
     """
@@ -332,7 +334,7 @@ def substitute_chars(
 def insert_chars(
     aug_toks: List[aug_utils.AugTok],
     *,
-    num: Union[int, float] = 1,
+    num: int | float = 1,
     lang: Optional[str] = None,
 ) -> List[aug_utils.AugTok]:
     """
@@ -396,7 +398,7 @@ def insert_chars(
 
 
 def swap_chars(
-    aug_toks: List[aug_utils.AugTok], *, num: Union[int, float] = 1,
+    aug_toks: List[aug_utils.AugTok], *, num: int | float = 1,
 ) -> List[aug_utils.AugTok]:
     """
     Randomly swap two *adjacent* characters in randomly-selected words,
@@ -441,7 +443,7 @@ def swap_chars(
 
 
 def delete_chars(
-    aug_toks: List[aug_utils.AugTok], *, num: Union[int, float] = 1,
+    aug_toks: List[aug_utils.AugTok], *, num: int | float = 1,
 ) -> List[aug_utils.AugTok]:
     """
     Randomly delete a character in randomly-selected words,

@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import random
-from typing import Callable, Optional, Sequence, Union
+from typing import Callable, List, Optional, Sequence, Tuple
 
 from spacy.tokens import Doc
 
 from .. import spacier, types, utils
 from . import utils as aug_utils
+
+
+AugTransform = Callable[[List[aug_utils.AugTok]], List[aug_utils.AugTok]]
 
 
 class Augmenter:
@@ -67,9 +72,9 @@ class Augmenter:
 
     def __init__(
         self,
-        transforms: Sequence[Callable],
+        transforms: Sequence[AugTransform],
         *,
-        num: Optional[Union[int, float, Sequence[float]]] = None,
+        num: Optional[int | float | Sequence[float]] = None,
     ):
         self.tfs = self._validate_transforms(transforms)
         self.num = self._validate_num(num)
@@ -108,7 +113,9 @@ class Augmenter:
             new_nested_aug_toks.append(aug_toks)
         return self._make_new_spacy_doc(new_nested_aug_toks, lang)
 
-    def _validate_transforms(self, transforms):
+    def _validate_transforms(
+        self, transforms: Sequence[AugTransform]
+    ) -> Tuple[AugTransform]:
         transforms = tuple(transforms)
         if not transforms:
             raise ValueError("at least one transform callable must be specified")
@@ -117,7 +124,9 @@ class Augmenter:
         else:
             return transforms
 
-    def _validate_num(self, num):
+    def _validate_num(
+        self, num: Optional[int | float | Sequence[float]]
+    ) -> int | float | Tuple[float]:
         if num is None:
             return len(self.tfs)
         elif isinstance(num, int) and 0 <= num <= len(self.tfs):
@@ -136,7 +145,7 @@ class Augmenter:
                 "or a list of floats of length equal to given transforms"
             )
 
-    def _get_random_transforms(self):
+    def _get_random_transforms(self) -> List[AugTransform]:
         num = self.num
         if isinstance(num, int):
             rand_idxs = random.sample(range(len(self.tfs)), min(num, len(self.tfs)))
@@ -149,7 +158,7 @@ class Augmenter:
             ]
         return rand_tfs
 
-    def _make_new_spacy_doc(self, nested_aug_tokens, lang: types.LangLike):
+    def _make_new_spacy_doc(self, nested_aug_tokens, lang: types.LangLike) -> Doc:
         # TODO: maybe collect words, spaces, and array vals
         # then directly instantiate a new Doc object?
         # this would require adding an array field to AugTok
