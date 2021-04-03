@@ -13,7 +13,7 @@ from spacy.language import Language
 from spacy.symbols import PROPN, VERB
 from spacy.tokens import Doc, Span, Token
 
-from .. import constants, errors, types
+from .. import constants, errors, types, utils
 from . import core
 
 
@@ -42,11 +42,13 @@ def make_doc_from_text_chunks(
     Returns:
         A single processed document, built from concatenated text chunks.
     """
-    if isinstance(lang, (str, pathlib.Path)):
-        lang = core.load_spacy_lang(lang)
-    elif not isinstance(lang, Language):
-        raise TypeError(errors.type_invalid_msg("lang", type(lang), types.LangLike))
-
+    utils.deprecated(
+        "This function is deprecated, and will be removed in a future version. "
+        "Instead, use the usual :func:`textacy.make_spacy_doc()` "
+        "and specify a non-null `chunk_size`",
+        action="once",
+    )
+    lang = resolve_langlike(lang)
     text_chunks = (text[i : i + chunk_size] for i in range(0, len(text), chunk_size))
     docs = list(lang.pipe(text_chunks))
     return Doc.from_docs(docs)
