@@ -7,6 +7,7 @@ from __future__ import annotations
 import functools
 import logging
 import pathlib
+from typing import Optional
 
 import spacy
 from cachetools import cached
@@ -64,7 +65,12 @@ def load_spacy_lang(name: str | pathlib.Path, **kwargs) -> Language:
     return spacy_lang
 
 
-def make_spacy_doc(data: types.DocData, lang: types.LangLikeInContext) -> Doc:
+def make_spacy_doc(
+    data: types.DocData,
+    lang: types.LangLikeInContext,
+    *,
+    chunk_size: Optional[int] = None,
+) -> Doc:
     """
     Make a :class:`spacy.tokens.Doc` from valid inputs, and automatically
     load/validate :class:`spacy.language.Language` pipelines to process ``data``.
@@ -116,6 +122,18 @@ def make_spacy_doc(data: types.DocData, lang: types.LangLikeInContext) -> Doc:
             represented as the full name of a spaCy language pipeline, the path on disk
             to it, an already instantiated pipeline, or a callable function that takes
             the text component of ``data`` and outputs one of the above representations.
+        chunk_size: Size of chunks in number of characters into which ``text`` will be
+            split before processing each via spaCy and concatenating the results
+            into a single ``Doc``.
+
+            .. note:: This is intended as a workaround for processing very long texts,
+               for which spaCy is unable to allocate enough RAM. For best performance,
+               chunk size should be somewhere between 1e3 and 1e7 characters,
+               depending on how much RAM you have available.
+
+               Since chunking is done by *character*, chunks' boundaries likely
+               won't respect natural language segmentation, and as a result
+               spaCy's models may make mistakes on sentences/words that cross them.
 
     Returns:
         Processed spaCy Doc.
@@ -125,29 +143,42 @@ def make_spacy_doc(data: types.DocData, lang: types.LangLikeInContext) -> Doc:
         ValueError
     """
     if isinstance(data, str):
-        return _make_spacy_doc_from_text(data, lang)
+        return _make_spacy_doc_from_text(data, lang, chunk_size)
     elif isinstance(data, Doc):
         return _make_spacy_doc_from_doc(data, lang)
     elif utils.is_record(data):
-        return _make_spacy_doc_from_record(data, lang)
+        return _make_spacy_doc_from_record(data, lang, chunk_size)
     else:
         raise TypeError(errors.type_invalid_msg("data", type(data), types.DocData))
 
 
-def _make_spacy_doc_from_text(text: str, lang: types.LangLikeInContext) -> Doc:
+def _make_spacy_doc_from_text(
+    text: str, lang: types.LangLikeInContext, chunk_size: Optional[int]
+) -> Doc:
     spacy_lang = sputils.resolve_langlikeincontext(text, lang)
-    doc = spacy_lang(text)
+    if chunk_size:
+        doc = _make_spacy_doc_from_text_chunks(text, spacy_lang, chunk_size)
+    else:
+        doc = spacy_lang(text)
     return doc
 
 
 def _make_spacy_doc_from_record(
-    record: types.Record, lang: types.LangLikeInContext
+    record: types.Record, lang: types.LangLikeInContext, chunk_size: Optional[int]
 ) -> Doc:
     text, meta = record
     spacy_lang = sputils.resolve_langlikeincontext(text, lang)
-    doc = spacy_lang(text)
+    if chunk_size:
+        doc = _make_spacy_doc_from_text_chunks(text, spacy_lang, chunk_size)
+    else:
+        doc = spacy_lang(text)
     doc._.meta = meta
     return doc
+
+
+def _make_spacy_doc_from_text_chunks(text: str, lang: Language, chunk_size: int) -> Doc:
+    text_chunks = (text[i : i + chunk_size] for i in range(0, len(text), chunk_size))
+    return Doc.from_docs(list(lang.pipe(text_chunks)))
 
 
 def _make_spacy_doc_from_doc(doc: Doc, lang: types.LangLikeInContext) -> Doc:
