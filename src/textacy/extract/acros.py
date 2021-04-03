@@ -14,10 +14,10 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 import numpy as np
 from spacy.tokens import Doc, Span, Token
 
-from .. import constants
+from .. import constants, types
 
 
-def acronyms(doclike: Doc | Span) -> Iterable[Token]:
+def acronyms(doclike: types.DocLike) -> Iterable[Token]:
     """
     Extract tokens whose text is "acronym-like" from a document or sentence,
     in order of appearance.
@@ -34,7 +34,7 @@ def acronyms(doclike: Doc | Span) -> Iterable[Token]:
 
 
 def acronyms_and_definitions(
-    doc: Doc | Span,
+    doclike: types.DocLike,
     known_acro_defs: Optional[Dict[str, str]] = None,
 ) -> Dict[str, List[str]]:
     """
@@ -43,7 +43,7 @@ def acronyms_and_definitions(
     only the most frequently occurring definition is returned.
 
     Args:
-        doc
+        doclike
         known_acro_defs: If certain acronym/definition pairs
             are known, pass them in as {acronym (str): definition (str)};
             algorithm will not attempt to find new definitions
@@ -64,10 +64,10 @@ def acronyms_and_definitions(
             acro_defs[acro] = [(def_, 1.0)]
         known_acronyms = set(acro_defs.keys())
 
-    if isinstance(doc, Span):
-        sents = [doc]
+    if isinstance(doclike, Span):
+        sents = [doclike]
     else:  # spacy.Doc
-        sents = doc.sents
+        sents = doclike.sents
 
     # iterate over sentences and their tokens
     for sent in sents:
