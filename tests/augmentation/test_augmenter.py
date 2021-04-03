@@ -51,8 +51,8 @@ class TestAugmenter:
             _ = augmenter.Augmenter(tfs, num=1)
 
     def test_apply_transforms(self, spacy_doc, example_augmenter):
-        new_doc1 = example_augmenter.apply_transforms(spacy_doc)
-        new_doc2 = example_augmenter.apply_transforms(spacy_doc)
+        new_doc1 = example_augmenter.apply_transforms(spacy_doc, lang="en_core_web_sm")
+        new_doc2 = example_augmenter.apply_transforms(spacy_doc, lang="en_core_web_sm")
         assert isinstance(new_doc1, Doc)
         assert new_doc1.text != spacy_doc.text
         assert new_doc1.text != new_doc2.text
