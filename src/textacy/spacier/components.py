@@ -8,20 +8,13 @@ import inspect
 import logging
 from typing import Collection, Optional, Union
 
-import spacy
+from spacy.language import Language
 from spacy.tokens import Doc
 
+# TODO: should we hide this import in, e.g. the component init?
 from .. import text_stats
 
 LOGGER = logging.getLogger(__name__)
-
-_TS_ATTRS = tuple(
-    name
-    for name, _ in inspect.getmembers(
-        text_stats.api.TextStats, lambda member: not(inspect.isroutine(member))
-    )
-    if not name.startswith("_")
-)
 
 
 class TextStatsComponent:
@@ -30,11 +23,11 @@ class TextStatsComponent:
     one, some, or all text stats for a parsed doc and sets the values
     as custom attributes on a :class:`spacy.tokens.Doc`.
 
-    Add the component to a pipeline, *after* the parser (as well as any
-    subsequent components that modify the tokens/sentences of the doc)::
+    Add the component to a pipeline, *after* the parser and any subsequent components
+    that modify the tokens/sentences of the doc (to be safe, just put it last)::
 
         >>> en = spacy.load("en_core_web_sm")
-        >>> en.add_pipe("textacy_text_stats", after="parser")
+        >>> en.add_pipe("textacy_text_stats", last=True)
 
     Process a text with the pipeline and access the custom attributes via
     spaCy's underscore syntax::
@@ -57,28 +50,16 @@ class TextStatsComponent:
         AttributeError: [E046] Can't retrieve unregistered extension attribute 'flesch_reading_ease'. Did you forget to call the `set_extension` method?
 
     Args:
-        attrs (str or Iterable[str] or None): If str, a single text stat
-            to compute and set on a :obj:`Doc`. If Iterable[str], multiple
-            text stats. If None, *all* text stats are computed and set as extensions.
-
-    Attributes:
-        name (str): Default name of this component in a spaCy language pipeline,
-            used to get and modify the component via various ``spacy.Language``
-            methods, e.g. https://spacy.io/api/language#get_pipe.
+        attr: If str, a single text stat to compute and set on a :obj:`Doc`;
+            if Iterable[str], set multiple text stats; if None, *all* text stats
+            are computed and set as extensions.
 
     See Also:
         :class:`textacy.text_stats.TextStats`
     """
 
-    name = "textacy_text_stats"
-
     def __init__(self, attrs: Optional[Union[str, Collection[str]]] = None):
-        if attrs is None:
-            self.attrs = _TS_ATTRS
-        elif isinstance(attrs, (str, bytes)):
-            self.attrs = (attrs,)
-        else:
-            self.attrs = tuple(attrs)
+        self._set_attrs(attrs)
         for attr in self.attrs:
             # TODO: see if there's a better way to handle this
             # that doesn't involve clobbering existing property extensions
@@ -100,7 +81,25 @@ class TextStatsComponent:
                 raise
         return doc
 
+    def _set_attrs(self, attrs: Optional[Union[str, Collection[str]]]):
+        if attrs is None:
+            self.attrs = tuple(
+                name
+                for name, _ in inspect.getmembers(
+                    text_stats.TextStats, lambda memb: not(inspect.isroutine(memb))
+                )
+                if not name.startswith("_")
+            )
+        elif isinstance(attrs, str):
+            self.attrs = (attrs,)
+        else:
+            self.attrs = tuple(attrs)
 
-@spacy.language.Language.factory("textacy_text_stats", default_config={"attrs": None})
-def text_stats_component(nlp, name, attrs: Optional[Union[str, Collection[str]]]):
+
+@Language.factory(
+    "textacy_text_stats",
+    default_config={"attrs": None},
+    retokenizes=False,
+)
+def create_text_stats_component(nlp, name, attrs: Optional[Union[str, Collection[str]]]):
     return TextStatsComponent(attrs=attrs)
