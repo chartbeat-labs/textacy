@@ -14,6 +14,7 @@ from cachetools.keys import hashkey
 from spacy.language import Language
 from spacy.tokens import Doc
 
+from . import utils as sputils
 from .. import cache, errors, types, utils
 
 
@@ -112,9 +113,9 @@ def make_spacy_doc(data: types.DocData, lang: types.LangLikeInContext) -> Doc:
             If already a ``Doc``, ensure that it's compatible with ``lang``
             to avoid surprises downstream, and return it as-is.
         lang: Language with which spaCy processes (or processed) ``data``,
-            represented as a full spaCy language pipeline name, an instantiated
-            pipeline, or a callable function that takes the text component of ``data``
-            and outputs an appropriate pipeline name or instance.
+            represented as the full name of a spaCy language pipeline, the path on disk
+            to it, an already instantiated pipeline, or a callable function that takes
+            the text component of ``data`` and outputs one of the above representations.
 
     Returns:
         Processed spaCy Doc.
@@ -133,21 +134,8 @@ def make_spacy_doc(data: types.DocData, lang: types.LangLikeInContext) -> Doc:
         raise TypeError(errors.type_invalid_msg("data", type(data), types.DocData))
 
 
-def _resolve_spacy_lang(text: str, lang: types.LangLikeInContext) -> Language:
-    if isinstance(lang, (str, pathlib.Path)):
-        return load_spacy_lang(lang)
-    elif isinstance(lang, Language):
-        return lang
-    elif callable(lang):
-        return _resolve_spacy_lang(text, lang(text))
-    else:
-        raise TypeError(
-            errors.type_invalid_msg("lang", type(lang), types.LangLikeInContext)
-        )
-
-
 def _make_spacy_doc_from_text(text: str, lang: types.LangLikeInContext) -> Doc:
-    spacy_lang = _resolve_spacy_lang(text, lang)
+    spacy_lang = sputils.resolve_langlikeincontext(text, lang)
     doc = spacy_lang(text)
     return doc
 
@@ -156,14 +144,14 @@ def _make_spacy_doc_from_record(
     record: types.Record, lang: types.LangLikeInContext
 ) -> Doc:
     text, meta = record
-    spacy_lang = _resolve_spacy_lang(text, lang)
+    spacy_lang = sputils.resolve_langlikeincontext(text, lang)
     doc = spacy_lang(text)
     doc._.meta = meta
     return doc
 
 
 def _make_spacy_doc_from_doc(doc: Doc, lang: types.LangLikeInContext) -> Doc:
-    spacy_lang = _resolve_spacy_lang(doc.text, lang)
+    spacy_lang = sputils.resolve_langlikeincontext(doc.text, lang)
     # we want to make sure that the language used to create `doc` is the same as
     # the one passed here; however, the best we can do (bc of spaCy's API) is ensure
     # that they share the same vocab
