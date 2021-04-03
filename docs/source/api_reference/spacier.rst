@@ -12,7 +12,6 @@ spaCy extensions
    get_preview
    get_meta
    set_meta
-   get_tokens
    get_n_tokens
    get_n_sents
    to_tokenized_text
