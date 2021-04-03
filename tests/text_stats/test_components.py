@@ -1,7 +1,7 @@
 import pytest
 
 from textacy import load_spacy_lang
-from textacy.spacier import components
+from textacy.text_stats import components
 
 TEXT = (
     "The year was 2081, and everybody was finally equal. "
