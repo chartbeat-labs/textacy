@@ -43,7 +43,6 @@ __all__ = [
     "get_doc_extensions",
     "remove_doc_extensions",
     "get_preview",
-    "get_tokens",
     "get_meta",
     "set_meta",
     "get_n_tokens",
@@ -93,12 +92,6 @@ def get_preview(doc: Doc) -> str:
     if len(snippet) == 50:
         snippet = snippet[:47] + "..."
     return f'Doc({len(doc)} tokens: "{snippet}")'
-
-
-def get_tokens(doc: Doc) -> Iterable[Token]:
-    """Yield the tokens in ``Doc``, one at a time."""
-    for tok in doc:
-        yield tok
 
 
 def get_n_tokens(doc: Doc) -> int:
@@ -529,7 +522,6 @@ def to_semantic_network(
 _doc_extensions = {
     # property extensions
     "preview": {"getter": get_preview},
-    "tokens": {"getter": get_tokens},
     "meta": {"getter": get_meta, "setter": set_meta},
     "n_tokens": {"getter": get_n_tokens},
     "n_sents": {"getter": get_n_sents},

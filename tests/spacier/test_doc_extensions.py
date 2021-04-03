@@ -16,7 +16,7 @@ Many different classes of machine learning algorithms have been applied to NLP t
 
 
 @pytest.fixture(scope="module")
-def doc(request):
+def doc():
     return make_spacy_doc((TEXT, {"foo": "bar"}), lang="en_core_web_sm")
 
 
@@ -35,10 +35,6 @@ class TestDocExtensions:
         preview = doc._.preview
         assert isinstance(preview, str)
         assert preview.startswith("Doc")
-
-    def test_tokens(self, doc):
-        tokens = list(doc._.tokens)[:5]
-        assert all(isinstance(token, spacy.tokens.Token) for token in tokens)
 
     def test_n_tokens(self, doc):
         n_tokens = doc._.n_tokens
