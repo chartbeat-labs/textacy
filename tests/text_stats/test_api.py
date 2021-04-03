@@ -33,7 +33,7 @@ def ts_es():
         "El mundo era tan reciente, que muchas cosas carecían de nombre, y para "
         "mencionarlas había que señalarlas con el dedo."
     )
-    return textacy.TextStats(textacy.make_spacy_doc(text, lang="es"))
+    return textacy.TextStats(textacy.make_spacy_doc(text, lang="es_core_news_sm"))
 
 
 @pytest.mark.parametrize(
