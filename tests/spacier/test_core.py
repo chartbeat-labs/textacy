@@ -87,6 +87,21 @@ class TestMakeSpacyDoc:
             assert isinstance(make_spacy_doc(doc, lang=lang), spacy.tokens.Doc)
 
     @pytest.mark.parametrize(
+        "text, chunk_size",
+        [
+            # NOTE: I'm cheating with chunk size here, to align with sentence bounds
+            ("This is an English sentence. And here is another!", 29),
+            ("This is an English sentence. And here is another!", 1000),
+        ]
+    )
+    def test_chunk_size(self, text, chunk_size, en_core_web_sm):
+        doc_full = make_spacy_doc(text, en_core_web_sm)
+        doc_chunked = make_spacy_doc(text, en_core_web_sm, chunk_size=chunk_size)
+        assert isinstance(doc_chunked, spacy.tokens.Doc)
+        assert len(doc_full.text) == len(doc_chunked.text)
+        assert len(doc_full) == len(doc_chunked)
+
+    @pytest.mark.parametrize(
         "data",
         [
             b"This is an English sentence in bytes.",
