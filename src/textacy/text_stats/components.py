@@ -11,7 +11,7 @@ from typing import Collection, Optional, Union
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from .. import text_stats
+from . import api
 
 LOGGER = logging.getLogger(__name__)
 
@@ -77,7 +77,7 @@ class TextStatsComponent:
             LOGGER.debug('"%s" custom attribute added to `spacy.tokens.Doc`')
 
     def __call__(self, doc: Doc) -> Doc:
-        ts = text_stats.TextStats(doc)
+        ts = api.TextStats(doc)
         for attr in self.attrs:
             try:
                 doc._.set(attr, getattr(ts, attr))
@@ -96,7 +96,7 @@ class TextStatsComponent:
             self.attrs = tuple(
                 name
                 for name, _ in inspect.getmembers(
-                    text_stats.TextStats, lambda memb: not(inspect.isroutine(memb))
+                    api.TextStats, lambda memb: not(inspect.isroutine(memb))
                 )
                 if not name.startswith("_")
             )
