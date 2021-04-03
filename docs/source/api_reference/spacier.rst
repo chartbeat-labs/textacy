@@ -9,7 +9,6 @@ spaCy extensions
 .. autosummary::
    :nosignatures:
 
-   get_lang
    get_preview
    get_meta
    set_meta
