@@ -13,11 +13,11 @@ from typing import Callable, Dict, Iterable, List, Optional, Pattern, Union
 from spacy.matcher import Matcher
 from spacy.tokens import Doc, Span
 
-from .. import constants, errors
+from .. import constants, errors, types
 
 
 def token_matches(
-    doclike: Doc | Span,
+    doclike: types.DocLike,
     patterns: str | List[str] | List[Dict[str, str]] | List[List[Dict[str, str]]],
     *,
     on_match: Optional[Callable] = None,
@@ -148,7 +148,7 @@ def _make_pattern_from_string(patstr: str) -> List[Dict[str, str]]:
 
 
 def regex_matches(
-    doclike: Doc | Span,
+    doclike: types.DocLike,
     pattern: str | Pattern,
     *,
     expand: bool = False,
