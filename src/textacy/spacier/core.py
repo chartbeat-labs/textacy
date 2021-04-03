@@ -134,7 +134,7 @@ def make_spacy_doc(data: types.DocData, lang: types.LangLikeInContext) -> Doc:
 
 
 def _resolve_spacy_lang(text: str, lang: types.LangLikeInContext) -> Language:
-    if isinstance(lang, str):
+    if isinstance(lang, (str, pathlib.Path)):
         return load_spacy_lang(lang)
     elif isinstance(lang, Language):
         return lang
