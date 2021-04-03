@@ -42,7 +42,6 @@ __all__ = [
     "set_doc_extensions",
     "get_doc_extensions",
     "remove_doc_extensions",
-    "get_lang",
     "get_preview",
     "get_tokens",
     "get_meta",
@@ -85,14 +84,6 @@ def remove_doc_extensions():
         _ = spacy.tokens.Doc.remove_extension(name)
 
 
-def get_lang(doc: Doc) -> str:
-    """
-    Get the standard, two-letter language code assigned to ``Doc``
-    and its associated :class:`spacy.vocab.Vocab`.
-    """
-    return doc.vocab.lang
-
-
 def get_preview(doc: Doc) -> str:
     """
     Get a short preview of the ``Doc``, including the number of tokens
@@ -101,7 +92,7 @@ def get_preview(doc: Doc) -> str:
     snippet = doc.text[:50].replace("\n", " ")
     if len(snippet) == 50:
         snippet = snippet[:47] + "..."
-    return 'Doc({} tokens: "{}")'.format(len(doc), snippet)
+    return f'Doc({len(doc)} tokens: "{snippet}")'
 
 
 def get_tokens(doc: Doc) -> Iterable[Token]:
@@ -537,7 +528,6 @@ def to_semantic_network(
 
 _doc_extensions = {
     # property extensions
-    "lang": {"getter": get_lang},
     "preview": {"getter": get_preview},
     "tokens": {"getter": get_tokens},
     "meta": {"getter": get_meta, "setter": set_meta},

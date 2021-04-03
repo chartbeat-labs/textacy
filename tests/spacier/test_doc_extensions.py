@@ -31,11 +31,6 @@ def test_set_remove_extensions():
 
 class TestDocExtensions:
 
-    def test_lang(self, doc):
-        lang = doc._.lang
-        assert isinstance(lang, str)
-        assert lang == doc.vocab.lang
-
     def test_preview(self, doc):
         preview = doc._.preview
         assert isinstance(preview, str)
