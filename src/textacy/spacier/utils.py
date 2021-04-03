@@ -179,3 +179,25 @@ def get_span_for_verb_auxiliaries(verb: Token) -> Tuple[int, int]:
         for _ in itertools.takewhile(lambda x: x.dep_ in constants.AUX_DEPS, verb.rights)
     )
     return (min_i, max_i)
+
+
+def resolve_langlike(lang: types.LangLike) -> Language:
+    if isinstance(lang, Language):
+        return lang
+    elif isinstance(lang, (str, pathlib.Path)):
+        return core.load_spacy_lang(lang)
+    else:
+        raise TypeError(errors.type_invalid_msg("lang", type(lang), types.LangLike))
+
+
+def resolve_langlikeincontext(text: str, lang: types.LangLikeInContext) -> Language:
+    if isinstance(lang, Language):
+        return lang
+    elif isinstance(lang, (str, pathlib.Path)):
+        return core.load_spacy_lang(lang)
+    elif callable(lang):
+        return resolve_langlikeincontext(text, lang(text))
+    else:
+        raise TypeError(
+            errors.type_invalid_msg("lang", type(lang), types.LangLikeInContext)
+        )
