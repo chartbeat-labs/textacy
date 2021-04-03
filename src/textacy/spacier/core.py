@@ -7,7 +7,6 @@ from __future__ import annotations
 import functools
 import logging
 import pathlib
-from typing import Callable, Tuple, Union
 
 import spacy
 from cachetools import cached
@@ -15,14 +14,10 @@ from cachetools.keys import hashkey
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from .. import cache, errors, utils
+from .. import cache, errors, types, utils
 
 
 LOGGER = logging.getLogger(__name__)
-
-# TODO: consider making a top-level "types.py" module for stuff like this?
-DocData = Union[str, Tuple[str, dict], Doc]
-LangLike = Union[str, Language, Callable[[str], str], Callable[[str], Language]]
 
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "spacy_lang"))
@@ -68,7 +63,7 @@ def load_spacy_lang(name: str | pathlib.Path, **kwargs) -> Language:
     return spacy_lang
 
 
-def make_spacy_doc(data: DocData, lang: LangLike) -> Doc:
+def make_spacy_doc(data: types.DocData, lang: types.LangLikeInContext) -> Doc:
     """
     Make a :class:`spacy.tokens.Doc` from valid inputs, and automatically
     load/validate :class:`spacy.language.Language` pipelines to process ``data``.
@@ -135,10 +130,10 @@ def make_spacy_doc(data: DocData, lang: LangLike) -> Doc:
     elif utils.is_record(data):
         return _make_spacy_doc_from_record(data, lang)
     else:
-        raise TypeError(errors.type_invalid_msg("data", type(data), DocData))
+        raise TypeError(errors.type_invalid_msg("data", type(data), types.DocData))
 
 
-def _resolve_spacy_lang(text: str, lang: LangLike) -> Language:
+def _resolve_spacy_lang(text: str, lang: types.LangLikeInContext) -> Language:
     if isinstance(lang, str):
         return load_spacy_lang(lang)
     elif isinstance(lang, Language):
@@ -146,16 +141,20 @@ def _resolve_spacy_lang(text: str, lang: LangLike) -> Language:
     elif callable(lang):
         return _resolve_spacy_lang(text, lang(text))
     else:
-        raise TypeError(errors.type_invalid_msg("lang", type(lang), LangLike))
+        raise TypeError(
+            errors.type_invalid_msg("lang", type(lang), types.LangLikeInContext)
+        )
 
 
-def _make_spacy_doc_from_text(text: str, lang: LangLike) -> Doc:
+def _make_spacy_doc_from_text(text: str, lang: types.LangLikeInContext) -> Doc:
     spacy_lang = _resolve_spacy_lang(text, lang)
     doc = spacy_lang(text)
     return doc
 
 
-def _make_spacy_doc_from_record(record: Tuple[str, dict], lang: LangLike) -> Doc:
+def _make_spacy_doc_from_record(
+    record: types.Record, lang: types.LangLikeInContext
+) -> Doc:
     text, meta = record
     spacy_lang = _resolve_spacy_lang(text, lang)
     doc = spacy_lang(text)
@@ -163,7 +162,7 @@ def _make_spacy_doc_from_record(record: Tuple[str, dict], lang: LangLike) -> Doc
     return doc
 
 
-def _make_spacy_doc_from_doc(doc: Doc, lang: LangLike) -> Doc:
+def _make_spacy_doc_from_doc(doc: Doc, lang: types.LangLikeInContext) -> Doc:
     spacy_lang = _resolve_spacy_lang(doc.text, lang)
     # we want to make sure that the language used to create `doc` is the same as
     # the one passed here; however, the best we can do (bc of spaCy's API) is ensure
