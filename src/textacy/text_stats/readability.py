@@ -1,6 +1,9 @@
 """
-:mod:`textacy.text_stats.readability`: Functions for computing various measures
-of text "readability".
+Readability Stats
+-----------------
+
+:mod:`textacy.text_stats.readability`: Low-level functions for computing various measures
+of text "readability", typically accessed via :class:`textacy.text_stats.TextStats`.
 """
 import logging
 import statistics

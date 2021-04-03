@@ -40,6 +40,8 @@ Text Statistics
 
 .. automodule:: textacy.text_stats.readability
 
+.. automodule:: textacy.text_stats.components
+
 Similarity
 ----------
 

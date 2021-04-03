@@ -1,5 +1,8 @@
 """
-:mod:`textacy.spacier.components`: Custom components to add to a spaCy language pipeline.
+Pipeline Components
+-------------------
+
+:mod:`textacy.text_stats.components`: Custom components to add to a spaCy language pipeline.
 """
 # TODO: figure out why this breaks the code...
 # from __future__ import annotations

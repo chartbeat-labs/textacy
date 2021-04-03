@@ -1,5 +1,9 @@
 """
-:mod:`textacy.text_stats.basics`: Functions for computing basic text statistics.
+Basic Stats
+-----------
+
+:mod:`textacy.text_stats.basics`: Low-level functions for computing basic text statistics,
+typically accessed via :class:`textacy.text_stats.TextStats`.
 """
 import logging
 import math
