@@ -11,7 +11,7 @@ import re
 from typing import Callable, Dict, Iterable, List, Optional, Pattern, Union
 
 from spacy.matcher import Matcher
-from spacy.tokens import Doc, Span
+from spacy.tokens import Span
 
 from .. import constants, errors, types
 
