@@ -2,15 +2,16 @@
 :mod:`textacy.io.http`: Functions for reading data from URLs via streaming HTTP requests
 and either reading it into memory or writing it directly to disk.
 """
+from __future__ import annotations
+
 import logging
-import pathlib
 from contextlib import closing
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple
 
 import requests
 from tqdm import tqdm
 
-from .. import utils
+from .. import types, utils
 from . import utils as io_utils
 
 LOGGER = logging.getLogger(__name__)
@@ -23,7 +24,7 @@ def read_http_stream(
     decode_unicode: bool = False,
     chunk_size: int = 1024,
     auth: Optional[Tuple[str, str]] = None,
-) -> Union[Iterable[str], Iterable[bytes]]:
+) -> Iterable[str] | Iterable[bytes]:
     """
     Read data from ``url`` in a stream, either all at once or line-by-line.
 
@@ -64,7 +65,7 @@ def read_http_stream(
 
 def write_http_stream(
     url: str,
-    filepath: Union[str, pathlib.Path],
+    filepath: types.PathLike,
     *,
     mode: str = "wt",
     encoding: Optional[str] = None,

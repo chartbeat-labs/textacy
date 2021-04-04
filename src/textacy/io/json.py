@@ -2,17 +2,19 @@
 :mod:`textacy.io.json`: Functions for reading from and writing to disk records in JSON format,
 as one record per file or one record per *line* in a file.
 """
+from __future__ import annotations
+
 import datetime
 import functools
 import json
-import pathlib
 from typing import Any, Iterable, Optional, Tuple, Union
 
+from .. import types
 from . import utils as io_utils
 
 
 def read_json(
-    filepath: Union[str, pathlib.Path],
+    filepath: types.PathLike,
     *,
     mode: str = "rt",
     encoding: Optional[str] = None,
@@ -44,7 +46,7 @@ def read_json(
 
 
 def read_json_mash(
-    filepath: Union[str, pathlib.Path],
+    filepath: types.PathLike,
     *,
     mode: str = "rt",
     encoding: Optional[str] = None,
@@ -87,7 +89,7 @@ def read_json_mash(
 
 def write_json(
     data: Any,
-    filepath: Union[str, pathlib.Path],
+    filepath: types.PathLike,
     *,
     mode: str = "wt",
     encoding: Optional[str] = None,
@@ -96,7 +98,7 @@ def write_json(
     ensure_ascii: bool = False,
     separators: Tuple[str, str] = (",", ":"),
     sort_keys: bool = False,
-    indent: Optional[Union[int, str]] = None,
+    indent: Optional[int | str] = None,
 ) -> None:
     """
     Write JSON ``data`` to disk at ``filepath``, either all at once

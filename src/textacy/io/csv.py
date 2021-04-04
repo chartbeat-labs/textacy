@@ -3,22 +3,24 @@
 where CSVs may be delimited not only by commas (the default) but tabs, pipes, and
 other valid one-char delimiters.
 """
+from __future__ import annotations
+
 import csv
-import pathlib
 from typing import Any, Dict, Iterable, Iterator, Optional, Sequence, Type, Union
 
+from .. import types
 from . import utils as io_utils
 
 
 def read_csv(
-    filepath: Union[str, pathlib.Path],
+    filepath: types.PathLike,
     *,
     encoding: Optional[str] = None,
-    fieldnames: Optional[Union[str, Sequence[str]]] = None,
-    dialect: Union[str, Type[csv.Dialect]] = "excel",
+    fieldnames: Optional[str | Sequence[str]] = None,
+    dialect: str | Type[csv.Dialect] = "excel",
     delimiter: str = ",",
     quoting: int = csv.QUOTE_NONNUMERIC,
-) -> Iterable[Union[list, dict]]:
+) -> Iterable[list] | Iterable[dict]:
     """
     Read the contents of a CSV file at ``filepath``, streaming line-by-line,
     where each line is a list of strings and/or floats whose values
@@ -98,8 +100,8 @@ def read_csv(
 
 
 def write_csv(
-    data: Union[Iterable[Dict[str, Any]], Iterable[Iterable]],
-    filepath: Union[str, pathlib.Path],
+    data: Iterable[Dict[str, Any]] | Iterable[Iterable],
+    filepath: types.PathLike,
     *,
     encoding: Optional[str] = None,
     make_dirs: bool = False,

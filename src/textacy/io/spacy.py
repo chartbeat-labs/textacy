@@ -15,7 +15,7 @@ from . import utils as io_utils
 
 
 def read_spacy_docs(
-    filepath: str | pathlib.Path,
+    filepath: types.PathLike,
     *,
     format: str = "binary",
     lang: Optional[types.LangLike] = None,
@@ -73,7 +73,7 @@ def read_spacy_docs(
 
 def write_spacy_docs(
     data: Doc | Iterable[Doc],
-    filepath: str | pathlib.Path,
+    filepath: types.PathLike,
     *,
     make_dirs: bool = False,
     format: str = "binary",
