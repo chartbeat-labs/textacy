@@ -61,7 +61,3 @@ def keyword_in_context(
             post_context = post_context.ljust(window_width)
 
         yield (pre_context, match.group(), post_context)
-
-
-KWIC = keyword_in_context
-"""Alias of :func:`keyword_in_context()`."""
