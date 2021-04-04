@@ -185,15 +185,15 @@ class TestSpacyIO:
         ]
         assert observed == expected
 
-    def test_read_write_docs_binary_exclude(self, tmpdir, spacy_doc):
-        expected = [tok.lower_ for tok in spacy_doc]
+    def test_read_write_docs_binary_attrs(self, tmpdir, spacy_doc):
+        expected = [tok.tag_ for tok in spacy_doc]
         filepath = str(tmpdir.join("test_read_write_spacy_docs_binary_exclude.bin"))
         io.write_spacy_docs(
             spacy_doc, filepath, make_dirs=True,
-            format="binary", exclude=["sentiment", "user_data"],
+            format="binary", attrs=["ORTH", "TAG"], store_user_data=False,
         )
         observed = [
-            tok.lower_
+            tok.tag_
             for doc in io.read_spacy_docs(filepath, format="binary", lang="en_core_web_sm")
             for tok in doc
         ]
