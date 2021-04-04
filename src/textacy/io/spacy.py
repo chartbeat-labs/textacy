@@ -2,20 +2,20 @@
 :mod:`textacy.io.spacy`: Functions for reading from and writing to disk spacy documents
 in either pickle or binary format. Be warned: Both formats have pros and cons.
 """
+from __future__ import annotations
+
 import pathlib
 import pickle
-from typing import Iterable, Optional, Sequence, Union
+from typing import Iterable, Optional
 
-from srsly import msgpack
-from spacy.language import Language
 from spacy.tokens import Doc, DocBin
 
-from .. import errors, spacier, types, utils
+from .. import errors, spacier, types
 from . import utils as io_utils
 
 
 def read_spacy_docs(
-    filepath: Union[str, pathlib.Path],
+    filepath: str | pathlib.Path,
     *,
     format: str = "binary",
     lang: Optional[types.LangLike] = None,
@@ -72,8 +72,8 @@ def read_spacy_docs(
 
 
 def write_spacy_docs(
-    data: Union[Doc, Iterable[Doc]],
-    filepath: Union[str, pathlib.Path],
+    data: Doc | Iterable[Doc],
+    filepath: str | pathlib.Path,
     *,
     make_dirs: bool = False,
     format: str = "binary",
