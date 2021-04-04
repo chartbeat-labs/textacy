@@ -1,6 +1,32 @@
 from spacy.tokens import Doc
 
-from . import acros, basics, keyterms, matches, triples
+from . import acros, basics, keyterms, kwic, matches, triples
+from .. import errors
+
+
+def extract_keyterms(doc: Doc, method: str, **kwargs):
+    """
+    Extract keyterms from a document using one of several different methods.
+    For full detail, see the underlying functions listed below.
+
+    See Also:
+        - :func:`textacy.extract.keyterms.scake()`
+        - :func:`textacy.extract.keyterms.sgrank()`
+        - :func:`textacy.extract.keyterms.textrank()`
+        - :func:`textacy.extract.keyterms.yake()`
+    """
+    if method == "scake":
+        return keyterms.scake(doc, **kwargs)
+    elif method == "sgrank":
+        return keyterms.sgrank(doc, **kwargs)
+    elif method == "textrank":
+        return keyterms.textrank(doc, **kwargs)
+    elif method == "yake":
+        return keyterms.yake(doc, **kwargs)
+    else:
+        raise errors.value_invalid_msg(
+            "method", method, {"scake", "sgrank", "textrank", "yake"}
+        )
 
 
 DOC_EXTENSIONS = {
@@ -15,15 +41,10 @@ DOC_EXTENSIONS = {
     "extract_direct_quotations": {"method": triples.direct_quotations},
     "extract_acronyms": {"method": acros.acronyms},
     "extract_acronyms_and_definitions": {"method": acros.acronyms_and_definitions},
+    "extract_keyword_in_context": {"method": kwic.keyword_in_context},
+    "extract_keyterms": {"method": extract_keyterms},
 }
 
-
-# TODO: update/add funcs to make this convenient via doc extension
-#    kwic.keyword_in_context
-#    keyterms.textrank
-#    keyterms.yake
-#    keyterms.scake
-#    keyterms.sgrank
 
 def set_doc_extensions():
     """
