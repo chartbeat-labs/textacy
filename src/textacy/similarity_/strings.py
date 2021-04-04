@@ -4,10 +4,32 @@ import re
 
 import sklearn.feature_extraction
 import sklearn.metrics
-from jellyfish import levenshtein_distance as _levenshtein
+from jellyfish import hamming_distance as _hamming, levenshtein_distance as _levenshtein
 
 
 RE_ALNUM = re.compile(r"[^\W_]+")
+
+
+def hamming(str1: str, str2: str) -> float:
+    """
+    Compute the similarity between two strings using Hamming distance,
+    which gives the number of characters at corresponding string indices that differ,
+    including chars in the longer string that have no correspondents in the shorter.
+
+    Args:
+        str1
+        str2
+
+    Returns:
+        Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
+        where larger values correspond to more similar strings
+    """
+    distance = _hamming(str1, str2)
+    max_len = max(len(str1), len(str2))
+    try:
+        return 1.0 - (distance / max_len)
+    except ZeroDivisionError:
+        return 0.0
 
 
 def levenshtein(str1: str, str2: str) -> float:
