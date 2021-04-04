@@ -1,14 +1,16 @@
+from __future__ import annotations
+
 import collections
 import functools
 import itertools
 import string
-from typing import Iterable, List, Tuple, Union
+from typing import Iterable, List, Tuple
 
 from cachetools import cached
 from cachetools.keys import hashkey
 from spacy.tokens import Doc, Span
 
-from .. import cache, datasets, errors, resources
+from .. import cache, datasets, errors, resources, types
 
 
 concept_net = resources.ConceptNet()
@@ -18,25 +20,25 @@ AugTok = collections.namedtuple("AugTok", ["text", "ws", "pos", "is_word", "syns
 """tuple: Minimal token data required for data augmentation transforms."""
 
 
-def to_aug_toks(spacy_obj: Union[Doc, Span]) -> List[AugTok]:
+def to_aug_toks(doclike: types.DocLike) -> List[AugTok]:
     """
     Transform a spaCy ``Doc`` or ``Span`` into a list of ``AugTok`` objects,
     suitable for use in data augmentation transform functions.
     """
-    if not isinstance(spacy_obj, (Doc, Span)):
+    if not isinstance(doclike, (Doc, Span)):
         raise TypeError(
-            errors.type_invalid_msg("spacy_obj", type(spacy_obj), Union[Doc, Span])
+            errors.type_invalid_msg("spacy_obj", type(doclike), types.DocLike)
         )
-    lang = spacy_obj.vocab.lang
+    lang = doclike.vocab.lang
     toks_syns: Iterable[List[str]]
     if concept_net.filepath is None or lang not in concept_net.synonyms:
-        toks_syns = ([] for _ in spacy_obj)
+        toks_syns = ([] for _ in doclike)
     else:
         toks_syns = (
             concept_net.get_synonyms(tok.text, lang=lang, sense=tok.pos_)
             if not (tok.is_punct or tok.is_space)
             else []
-            for tok in spacy_obj
+            for tok in doclike
         )
     return [
         AugTok(
@@ -46,7 +48,7 @@ def to_aug_toks(spacy_obj: Union[Doc, Span]) -> List[AugTok]:
             is_word=(not (tok.is_punct or tok.is_space)),
             syns=syns,
         )
-        for tok, syns in zip(spacy_obj, toks_syns)
+        for tok, syns in zip(doclike, toks_syns)
     ]
 
 

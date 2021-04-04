@@ -1,6 +1,5 @@
 """
-:mod:`textacy.text_stats.api`: Compute various basic counts and readability statistics
-for documents.
+:mod:`textacy.text_stats.api`: Compute basic and readability statistics of documents.
 """
 import functools
 import logging

@@ -19,7 +19,7 @@ from spacy.symbols import (
 from spacy.tokens import Doc, Span, Token
 
 from . import matches
-from .. import constants, utils
+from .. import constants, types, utils
 
 
 _NOMINAL_SUBJ_DEPS = {nsubj, nsubjpass}
@@ -33,7 +33,7 @@ DQ = collections.namedtuple("DQ", ["speaker", "cue", "content"])
 
 
 def subject_verb_object_triples(
-    doclike: Doc | Span,
+    doclike: types.DocLike,
 ) -> Iterable[Tuple[List[Token], List[Token], List[Token]]]:
     """
     Extract an ordered sequence of subject-verb-object triples from a document
@@ -110,7 +110,7 @@ def subject_verb_object_triples(
 
 
 def semistructured_statements(
-    doclike: Doc | Span,
+    doclike: types.DocLike,
     *,
     entity: str | Pattern,
     cue: str,

@@ -13,6 +13,8 @@ prepended by an underscore:
     >>> print(doc._.preview)
     Doc(6 tokens: "This is a short text.")
 """
+from __future__ import annotations
+
 from typing import (
     cast,
     Callable,
@@ -40,9 +42,7 @@ __all__ = [
     "set_doc_extensions",
     "get_doc_extensions",
     "remove_doc_extensions",
-    "get_lang",
     "get_preview",
-    "get_tokens",
     "get_meta",
     "set_meta",
     "get_n_tokens",
@@ -83,14 +83,6 @@ def remove_doc_extensions():
         _ = spacy.tokens.Doc.remove_extension(name)
 
 
-def get_lang(doc: Doc) -> str:
-    """
-    Get the standard, two-letter language code assigned to ``Doc``
-    and its associated :class:`spacy.vocab.Vocab`.
-    """
-    return doc.vocab.lang
-
-
 def get_preview(doc: Doc) -> str:
     """
     Get a short preview of the ``Doc``, including the number of tokens
@@ -99,13 +91,7 @@ def get_preview(doc: Doc) -> str:
     snippet = doc.text[:50].replace("\n", " ")
     if len(snippet) == 50:
         snippet = snippet[:47] + "..."
-    return 'Doc({} tokens: "{}")'.format(len(doc), snippet)
-
-
-def get_tokens(doc: Doc) -> Iterable[Token]:
-    """Yield the tokens in ``Doc``, one at a time."""
-    for tok in doc:
-        yield tok
+    return f'Doc({len(doc)} tokens: "{snippet}")'
 
 
 def get_n_tokens(doc: Doc) -> int:
@@ -166,12 +152,12 @@ def to_tagged_text(doc: Doc) -> List[List[Tuple[str, str]]]:
 def to_terms_list(
     doc: Doc,
     *,
-    ngrams: Optional[Union[int, Collection[int]]] = (1, 2, 3),
+    ngrams: Optional[int | Collection[int]] = (1, 2, 3),
     entities: Optional[bool] = True,
-    normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]] = "lemma",
+    normalize: Optional[str | Callable[[Union[Span, Token]], str]] = "lemma",
     as_strings: bool = False,
     **kwargs,
-) -> Union[Iterable[int], Iterable[str]]:
+) -> Iterable[int] | Iterable[str]:
     """
     Transform ``Doc`` into a sequence of ngrams and/or entities — not necessarily
     in order of appearance — where each appears in the sequence as many times as
@@ -316,13 +302,13 @@ def to_terms_list(
 def to_bag_of_terms(
     doc: Doc,
     *,
-    ngrams: Optional[Union[int, Collection[int]]] = (1, 2, 3),
+    ngrams: Optional[int | Collection[int]] = (1, 2, 3),
     entities: Optional[bool] = True,
-    normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]] = "lemma",
+    normalize: Optional[str | Callable[[Union[Span, Token]], str]] = "lemma",
     weighting: str = "count",
     as_strings: bool = False,
     **kwargs,
-) -> Dict[Union[int, str], Union[int, float]]:
+) -> Dict[int | str, int | float]:
     """
     Transform ``Doc`` into a bag-of-terms: the set of unique terms in ``Doc``
     mapped to their frequency of occurrence, where "terms" includes ngrams and/or entities.
@@ -398,7 +384,7 @@ def to_bag_of_words(
     filter_stops: bool = True,
     filter_punct: bool = True,
     filter_nums: bool = False,
-) -> Dict[Union[int, str], Union[int, float]]:
+) -> Dict[int | str, int | float]:
     """
     Transform ``Doc`` into a bag-of-words: the set of unique words in ``Doc``
     mapped to their absolute, relative, or binary frequency of occurrence.
@@ -479,7 +465,7 @@ def to_semantic_network(
     doc: Doc,
     *,
     nodes: str = "words",
-    normalize: Optional[Union[str, Callable[[Union[Span, Token]], str]]] = "lemma",
+    normalize: Optional[str | Callable[[Union[Span, Token]], str]] = "lemma",
     edge_weighting: str = "default",
     window_width: int = 10,
 ) -> nx.Graph:
@@ -535,9 +521,7 @@ def to_semantic_network(
 
 _doc_extensions = {
     # property extensions
-    "lang": {"getter": get_lang},
     "preview": {"getter": get_preview},
-    "tokens": {"getter": get_tokens},
     "meta": {"getter": get_meta, "setter": set_meta},
     "n_tokens": {"getter": get_n_tokens},
     "n_sents": {"getter": get_n_sents},

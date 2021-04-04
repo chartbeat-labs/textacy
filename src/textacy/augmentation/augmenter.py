@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import random
-from typing import Callable, Optional, Sequence, Union
+from typing import Callable, List, Optional, Sequence, Tuple
 
 from spacy.tokens import Doc
 
-from .. import spacier, utils
+from .. import spacier, types, utils
 from . import utils as aug_utils
+
+
+AugTransform = Callable[[List[aug_utils.AugTok]], List[aug_utils.AugTok]]
 
 
 class Augmenter:
@@ -24,12 +29,12 @@ class Augmenter:
     Apply transforms to a given ``Doc`` to produce new documents::
 
         >>> text = "The quick brown fox jumps over the lazy dog."
-        >>> doc = textacy.make_spacy_doc(text, lang="en")
-        >>> augmenter.apply_transforms(doc)
+        >>> doc = textacy.make_spacy_doc(text, lang="en_core_web_sm")
+        >>> augmenter.apply_transforms(doc, lang="en_core_web_sm")
         The quick brown ox jupms over the lazy dog.
-        >>> augmenter.apply_transforms(doc)
+        >>> augmenter.apply_transforms(doc, lang="en_core_web_sm")
         The quikc brown fox over the lazy dog.
-        >>> augmenter.apply_transforms(doc)
+        >>> augmenter.apply_transforms(doc, lang="en_core_web_sm")
         quick brown fox jumps over teh lazy dog.
 
     Parameters for individual transforms may be specified when initializing ``Augmenter``
@@ -38,10 +43,10 @@ class Augmenter:
         >>> from functools import partial
         >>> tfs = [partial(transforms.delete_words, num=3), transforms.swap_chars]
         >>> augmenter = Augmenter(tfs)
-        >>> augmenter.apply_transforms(doc)
+        >>> augmenter.apply_transforms(doc, lang="en_core_web_sm")
         brown fox jumps over layz dog.
-        >>> augmenter.apply_transforms(doc, lang=doc.lang)  # (not actually needed for these tfs)
-        quick brown fox over teh lazy.
+        >>> augmenter.apply_transforms(doc, lang="en_core_web_sm", pos={"NOUN", "ADJ"})
+        The jumps over the lazy odg.
 
     Args:
         transforms: Ordered sequence of callables that must take List[:obj:`AugTok`]
@@ -67,20 +72,21 @@ class Augmenter:
 
     def __init__(
         self,
-        transforms: Sequence[Callable],
+        transforms: Sequence[AugTransform],
         *,
-        num: Optional[Union[int, float, Sequence[float]]] = None,
+        num: Optional[int | float | Sequence[float]] = None,
     ):
         self.tfs = self._validate_transforms(transforms)
         self.num = self._validate_num(num)
 
-    def apply_transforms(self, doc: Doc, **kwargs) -> Doc:
+    def apply_transforms(self, doc: Doc, lang: types.LangLike, **kwargs) -> Doc:
         """
         Sequentially apply some subset of data augmentation transforms to ``doc``,
-        then return a new ``Doc`` created from the augmented text.
+        then return a new ``Doc`` created from the augmented text using ``lang``.
 
         Args:
             doc
+            lang
             **kwargs: If, for whatever reason, you have to pass keyword argument values
                 into transforms that vary or depend on characteristics of ``doc``,
                 specify them here. The transforms' call signatures will be inspected,
@@ -93,7 +99,6 @@ class Augmenter:
             nested_aug_toks = [aug_utils.to_aug_toks(sent) for sent in doc.sents]
         else:
             nested_aug_toks = [aug_utils.to_aug_toks(doc)]
-        lang = kwargs.get("lang") or doc.vocab.lang
         tfs = self._get_random_transforms()
         new_nested_aug_toks = []
         for aug_toks in nested_aug_toks:
@@ -108,7 +113,9 @@ class Augmenter:
             new_nested_aug_toks.append(aug_toks)
         return self._make_new_spacy_doc(new_nested_aug_toks, lang)
 
-    def _validate_transforms(self, transforms):
+    def _validate_transforms(
+        self, transforms: Sequence[AugTransform]
+    ) -> Tuple[AugTransform]:
         transforms = tuple(transforms)
         if not transforms:
             raise ValueError("at least one transform callable must be specified")
@@ -117,7 +124,9 @@ class Augmenter:
         else:
             return transforms
 
-    def _validate_num(self, num):
+    def _validate_num(
+        self, num: Optional[int | float | Sequence[float]]
+    ) -> int | float | Tuple[float]:
         if num is None:
             return len(self.tfs)
         elif isinstance(num, int) and 0 <= num <= len(self.tfs):
@@ -136,7 +145,7 @@ class Augmenter:
                 "or a list of floats of length equal to given transforms"
             )
 
-    def _get_random_transforms(self):
+    def _get_random_transforms(self) -> List[AugTransform]:
         num = self.num
         if isinstance(num, int):
             rand_idxs = random.sample(range(len(self.tfs)), min(num, len(self.tfs)))
@@ -149,7 +158,7 @@ class Augmenter:
             ]
         return rand_tfs
 
-    def _make_new_spacy_doc(self, nested_aug_tokens, lang):
+    def _make_new_spacy_doc(self, nested_aug_tokens, lang: types.LangLike) -> Doc:
         # TODO: maybe collect words, spaces, and array vals
         # then directly instantiate a new Doc object?
         # this would require adding an array field to AugTok

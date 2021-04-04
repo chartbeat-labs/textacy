@@ -11,15 +11,13 @@ from typing import Collection, Iterable, Optional, Set, Union
 
 from cytoolz import itertoolz
 from spacy.parts_of_speech import DET
-from spacy.tokens import Doc, Span, Token
+from spacy.tokens import Span, Token
 
-from .. import constants
-from .. import errors
-from .. import utils
+from .. import constants, errors, types, utils
 
 
 def words(
-    doclike: Doc | Span,
+    doclike: types.DocLike,
     *,
     filter_stops: bool = True,
     filter_punct: bool = True,
@@ -79,7 +77,7 @@ def words(
 
 
 def ngrams(
-    doclike: Doc | Span,
+    doclike: types.DocLike,
     n: int,
     *,
     filter_stops: bool = True,
@@ -153,7 +151,7 @@ def ngrams(
 
 
 def entities(
-    doclike: Doc | Span,
+    doclike: types.DocLike,
     *,
     include_types: Optional[str | Collection[str]] = None,
     exclude_types: Optional[str | Collection[str]] = None,
@@ -258,7 +256,7 @@ def _parse_ent_types(
 
 
 def noun_chunks(
-    doclike: Doc | Span, *, drop_determiners: bool = True, min_freq: int = 1,
+    doclike: types.DocLike, *, drop_determiners: bool = True, min_freq: int = 1,
 ) -> Iterable[Span]:
     """
     Extract an ordered sequence of noun chunks from a spacy-parsed doc, optionally

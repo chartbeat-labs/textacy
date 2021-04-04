@@ -2,6 +2,7 @@ import re
 
 import pytest
 
+import textacy
 from textacy import extract
 
 
@@ -13,7 +14,18 @@ def text():
     )
 
 
+@pytest.fixture(scope="module")
+def doc(text):
+    nlp = textacy.load_spacy_lang("en_core_web_sm")
+    return nlp(text)
+
+
 class TestKeywordInContext:
+
+    def test_doc_type(self, text, doc):
+        text_result = list(extract.keyword_in_context(text, "you"))
+        doc_result = list(extract.keyword_in_context(doc, "you"))
+        assert text_result == doc_result
 
     @pytest.mark.parametrize(
         "keyword, ignore_case",

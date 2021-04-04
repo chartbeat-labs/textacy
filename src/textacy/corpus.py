@@ -30,6 +30,7 @@ from spacy.tokens import Doc, DocBin
 from . import io as tio
 from . import errors, spacier, utils
 
+
 LOGGER = logging.getLogger(__name__)
 
 CorpusData = Union[
@@ -43,14 +44,14 @@ class Corpus:
     and sharing the same :class:`spacy.language.Language` processing pipeline
     and vocabulary, with data held *in-memory*.
 
-    Initialize from a language / ``Language`` and (optionally) one or a stream
+    Initialize from a ``Language`` name or instance and (optionally) one or a stream
     of texts or (text, metadata) pairs:
 
     .. code-block:: pycon
 
         >>> ds = textacy.datasets.CapitolWords()
         >>> records = ds.records(limit=50)
-        >>> corpus = textacy.Corpus("en", data=records)
+        >>> corpus = textacy.Corpus("en_core_web_sm", data=records)
         >>> print(corpus)
         Corpus(50 docs, 32175 tokens)
 
@@ -113,8 +114,8 @@ class Corpus:
 
     .. code-block:: pycon
 
-        >>> corpus.save("~/Desktop/capitol_words_sample.bin.gz")
-        >>> corpus = textacy.Corpus.load("en", "~/Desktop/capitol_words_sample.bin.gz")
+        >>> corpus.save("./capitol_words_sample.bin.gz")
+        >>> corpus = textacy.Corpus.load("en_core_web_sm", "./capitol_words_sample.bin.gz")
         >>> print(corpus)
         Corpus(56 docs, 41573 tokens)
 
@@ -123,14 +124,13 @@ class Corpus:
             Language with which spaCy processes (or processed) all documents
             added to the corpus, whether as ``data`` now or later.
 
-            Pass a standard 2-letter language code (e.g. "en"),
-            or the name of a spacy language pipeline (e.g. "en_core_web_md"),
+            Pass the name of a spacy language pipeline (e.g. "en_core_web_sm"),
             or an already-instantiated :class:`spacy.language.Language` object.
 
             A given / detected language string is then used to instantiate
             a corresponding ``Language`` with all default components enabled.
-        data (obj or Iterable[obj]): One or a stream of texts, records,
-            or :class:`spacy.tokens.Doc` s to be added to the corpus.
+        data: One or a stream of texts, records, or :class:`spacy.tokens.Doc` s
+            to be added to the corpus.
 
             .. seealso:: :meth:`Corpus.add()`
 

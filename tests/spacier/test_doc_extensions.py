@@ -16,7 +16,7 @@ Many different classes of machine learning algorithms have been applied to NLP t
 
 
 @pytest.fixture(scope="module")
-def doc(request):
+def doc():
     return make_spacy_doc((TEXT, {"foo": "bar"}), lang="en_core_web_sm")
 
 
@@ -31,19 +31,10 @@ def test_set_remove_extensions():
 
 class TestDocExtensions:
 
-    def test_lang(self, doc):
-        lang = doc._.lang
-        assert isinstance(lang, str)
-        assert lang == doc.vocab.lang
-
     def test_preview(self, doc):
         preview = doc._.preview
         assert isinstance(preview, str)
         assert preview.startswith("Doc")
-
-    def test_tokens(self, doc):
-        tokens = list(doc._.tokens)[:5]
-        assert all(isinstance(token, spacy.tokens.Token) for token in tokens)
 
     def test_n_tokens(self, doc):
         n_tokens = doc._.n_tokens
@@ -77,7 +68,7 @@ class TestDocExtensions:
 
     def test_to_tokenized_text_nosents(self):
         spacy_lang = load_spacy_lang("en_core_web_sm")
-        with spacy_lang.disable_pipes("parser"):
+        with spacy_lang.select_pipes(disable="parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tokenized_text = doc._.to_tokenized_text()
         assert isinstance(tokenized_text, list)
@@ -95,7 +86,7 @@ class TestDocExtensions:
 
     def test_to_tagged_text_nosents(self):
         spacy_lang = load_spacy_lang("en_core_web_sm")
-        with spacy_lang.disable_pipes("parser"):
+        with spacy_lang.select_pipes(disable="parser"):
             doc = spacy_lang("This is sentence #1. This is sentence #2.")
         tagged_text = doc._.to_tagged_text()
         assert isinstance(tagged_text, list)

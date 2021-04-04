@@ -9,11 +9,9 @@ spaCy extensions
 .. autosummary::
    :nosignatures:
 
-   get_lang
    get_preview
    get_meta
    set_meta
-   get_tokens
    get_n_tokens
    get_n_sents
    to_tokenized_text
@@ -24,11 +22,6 @@ spaCy extensions
    to_semantic_network
 
 .. automodule:: textacy.spacier.doc_extensions
-
-Pipeline Components
--------------------
-
-.. automodule:: textacy.spacier.components
 
 spaCy Utils
 -----------
