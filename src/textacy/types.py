@@ -21,3 +21,5 @@ Record = Tuple[str, dict]
 DocData = Union[str, Record, Doc]
 
 CorpusData = Union[str, Doc, Record, Iterable[str], Iterable[Doc], Iterable[Record]]
+
+PathLike = Union[str, Path]
