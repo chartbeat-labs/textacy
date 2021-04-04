@@ -10,9 +10,11 @@ from __future__ import annotations
 import re
 from typing import Iterable, Pattern, Tuple
 
+from spacy.tokens import Doc
+
 
 def keyword_in_context(
-    text: str,
+    doc: Doc | str,
     keyword: str | Pattern,
     *,
     ignore_case: bool = True,
@@ -20,11 +22,14 @@ def keyword_in_context(
     pad_context: bool = False,
 ) -> Iterable[Tuple[str, str, str]]:
     """
-    Search for ``keyword`` matches in ``text`` via regular expression and yield matches
+    Search for ``keyword`` matches in ``doc`` via regular expression and yield matches
     along with ``window_width`` characters of context before and after occurrence.
 
     Args:
-        text: Text in which to search for ``keyword``.
+        doc: spaCy ``Doc`` or raw text in which to search for ``keyword``. If a ``Doc``,
+            constituent text is grabbed via :attr:`spacy.tokens.Doc.text`. Note that
+            spaCy annotations aren't used at all here, they're just a convenient
+            owner of document text.
         keyword: String or regular expression pattern defining the keyword(s) to match.
             Typically, this is a single word or short phrase ("spam", "spam and eggs"),
             but to account for variations, use regex (``r"[Ss]pam (and|&) [Ee]ggs?"``),
@@ -42,6 +47,7 @@ def keyword_in_context(
     Yields:
         Next matching triple of (pre-context, keyword match, post-context).
     """
+    text = doc.text if isinstance(doc, Doc) else doc
     if isinstance(keyword, str):
         flags = re.IGNORECASE if ignore_case is True else 0
         matches = re.finditer(keyword, text, flags=flags)
