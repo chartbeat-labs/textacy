@@ -1,6 +1,8 @@
 """
 :mod:`textacy.io.utils`: Functions to help read and write data to disk in a variety of formats.
 """
+from __future__ import annotations
+
 import bz2
 import gzip
 import io
@@ -18,9 +20,8 @@ from typing import IO, Iterable, Optional, Tuple, Union
 
 from cytoolz import itertoolz
 
-from .. import constants
+from .. import constants, types, utils
 from .. import errors as errors_
-from .. import utils
 from .http import write_http_stream
 
 
@@ -30,7 +31,7 @@ _ext_to_compression = {".bz2": "bz2", ".gz": "gzip", ".xz": "xz", ".zip": "zip"}
 
 
 def open_sesame(
-    filepath: Union[str, pathlib.Path],
+    filepath: types.PathLike,
     *,
     mode: str = "rt",
     encoding: Optional[str] = None,
@@ -180,7 +181,7 @@ def _validate_write_mode(mode):
         )
 
 
-def coerce_content_type(content: Union[str, bytes], file_mode: str) -> Union[str, bytes]:
+def coerce_content_type(content: str | bytes, file_mode: str) -> str | bytes:
     """
     If the `content` to be written to file and the `file_mode` used to open it
     are incompatible (either bytes with text mode or unicode with bytes mode),
@@ -194,7 +195,7 @@ def coerce_content_type(content: Union[str, bytes], file_mode: str) -> Union[str
 
 
 def split_records(
-    items: Iterable, content_field: Union[str, int], itemwise: bool = False,
+    items: Iterable, content_field: str | int, itemwise: bool = False,
 ) -> Iterable:
     """
     Split records' content (text) from associated metadata, but keep them paired
@@ -255,7 +256,7 @@ def unzip(seq: Iterable) -> Tuple:
 
 
 def get_filepaths(
-    dirpath: Union[str, pathlib.Path],
+    dirpath: types.PathLike,
     *,
     match_regex: Optional[str] = None,
     ignore_regex: Optional[str] = None,
@@ -327,7 +328,7 @@ def download_file(
     url: str,
     *,
     filename: str = None,
-    dirpath: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR,
+    dirpath: types.PathLike = constants.DEFAULT_DATA_DIR,
     force: bool = False,
 ) -> Optional[str]:
     """
@@ -373,8 +374,8 @@ def get_filename_from_url(url: str) -> str:
 
 
 def unpack_archive(
-    filepath: Union[str, pathlib.Path], *, extract_dir: Union[str, pathlib.Path] = None,
-) -> Union[str, pathlib.Path]:
+    filepath: types.PathLike, *, extract_dir: Optional[types.PathLike] = None,
+) -> types.PathLike:
     """
     Extract data from a zip or tar archive file into a directory
     (or do nothing if the file isn't an archive).

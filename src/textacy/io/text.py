@@ -2,14 +2,16 @@
 :mod:`textacy.io.text`: Functions for reading from and writing to disk records in
 plain text format, either as one text per file or one text per *line* in a file.
 """
-import pathlib
+from __future__ import annotations
+
 from typing import Iterable, Optional, Union
 
+from .. import types
 from . import utils as io_utils
 
 
 def read_text(
-    filepath: Union[str, pathlib.Path],
+    filepath: types.PathLike,
     *,
     mode: str = "rt",
     encoding: Optional[str] = None,
@@ -43,8 +45,8 @@ def read_text(
 
 
 def write_text(
-    data: Union[str, Iterable[str]],
-    filepath: Union[str, pathlib.Path],
+    data: str | Iterable[str],
+    filepath: types.PathLike,
     *,
     mode: str = "wt",
     encoding: Optional[str] = None,

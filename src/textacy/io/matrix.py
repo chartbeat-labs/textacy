@@ -2,19 +2,20 @@
 :mod:`textacy.io.matrix`: Functions for reading from and writing to disk CSC and CSR
 sparse matrices in numpy binary format.
 """
-import pathlib
+from __future__ import annotations
+
 from typing import Union
 
 import numpy as np
 import scipy.sparse as sp
 
-from .. import errors, utils
+from .. import errors, types, utils
 from . import utils as io_utils
 
 
 def read_sparse_matrix(
-    filepath: Union[str, pathlib.Path], *, kind: str = "csc",
-) -> Union[sp.csc_matrix, sp.csr_matrix]:
+    filepath: types.PathLike, *, kind: str = "csc",
+) -> sp.csc_matrix | sp.csr_matrix:
     """
     Read the data, indices, indptr, and shape arrays from a ``.npz`` file on disk
     at ``filepath``, and return an instantiated sparse matrix.
@@ -45,8 +46,8 @@ def read_sparse_matrix(
 
 
 def write_sparse_matrix(
-    data: Union[sp.csc_matrix, sp.csr_matrix],
-    filepath: Union[str, pathlib.Path],
+    data: sp.csc_matrix | sp.csr_matrix,
+    filepath: types.PathLike,
     *,
     compressed: bool = True,
     make_dirs: bool = False,
