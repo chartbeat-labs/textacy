@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Sequence
+from typing import Callable, Sequence
 
 from . import edits
 from .. import constants
@@ -40,3 +40,40 @@ def _to_prepared_str(s: str | Sequence[str]) -> str:
         else [tok.lower().strip() for tok in s]
     )
     return "".join(sorted(tokens))
+
+
+def monge_elkan(
+    seq1: Sequence[str],
+    seq2: Sequence[str],
+    simfunc: Callable[[str, str], float] = edits.levenshtein,
+) -> float:
+    """
+    Measure the similarity between two sequences of strings using the (symmetric)
+    Monge-Elkan method, which takes the average of the maximum pairwise similarity
+    between the tokens in each sequence as compared to those in the other sequence.
+
+    Args:
+        seq1
+        seq2
+        simfunc: Callable that computes a string-to-string similarity metric;
+            by default, Levenshtein edit distance.
+
+    Returns:
+        Similarity between ``s1`` and ``s2`` in the interval [0.0, 1.0],
+        where larger values correspond to more similar strings.
+
+    See Also:
+        :func:`textacy.similarity_.edits.levenshtein()`
+    """
+    if not seq1 or not seq2:
+        return 0.0
+
+    sum_maxsim1 = sum(
+        max(simfunc(tok1, tok2) for tok2 in seq2)
+        for tok1 in seq1
+    )
+    sum_maxsim2 = sum(
+        max(simfunc(tok2, tok1) for tok1 in seq1)
+        for tok2 in seq2
+    )
+    return ((sum_maxsim1 / len(seq1)) + (sum_maxsim2 / len(seq2))) / 2

@@ -27,3 +27,24 @@ def test_token_sort_ratio(s1, s2, exp):
     assert isinstance(obs, float)
     assert 0.0 <= obs <= 1.0
     assert obs == pytest.approx(exp, rel=0.01)
+
+
+@pytest.mark.parametrize(
+    "s1, s2, exp",
+    [
+        (["abcd", "efgh", "ijkl"], ["abcd", "efgh", "ijkl"], 1.0),
+        (["abcd", "efgh", "ijkl"], ["opqr", "stuv", "wxyz"], 0.0),
+        (["abcd", "efgh", "ijkl"], [], 0.0),
+        ([], [], 0.0),
+        (["abcd", "efgh", "ijkl"], ["Abcd", "efgh", "ijkl"], 0.9166),
+        (["abcd", "efgh", "ijkl"], ["Abcd", "Efgh", "Ijkl"], 0.75),
+        (["abcd", "efgh", "ijkl"], ["abcd", "efgh"], 0.8333),
+        (["abcd", "efgh"], ["abcd", "efgh", "ijkl"], 0.8333),
+        (["abcd", "efgh", "ijkl"], ["ABCD", "EFGH", "IJKL"], 0.0),
+    ]
+)
+def test_monge_elkan(s1, s2, exp):
+    obs = hybrid.monge_elkan(s1, s2)
+    assert isinstance(obs, float)
+    assert 0.0 <= obs <= 1.0
+    assert obs == pytest.approx(exp, rel=0.01)
