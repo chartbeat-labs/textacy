@@ -8,14 +8,22 @@ needed to transform one string into another.
 """
 from __future__ import annotations
 
-import re
+from typing import Optional
 
 import sklearn.feature_extraction
 import sklearn.metrics
 from jellyfish import hamming_distance as _hamming, levenshtein_distance as _levenshtein
 
+from .. import constants
 
-RE_ALNUM = re.compile(r"[^\W_]+")
+
+def _shortcut(str1: str, str2: str) -> Optional[float]:
+    if not str1 or not str2:
+        return 0.0
+    elif str1 == str2:
+        return 1.0
+    else:
+        return None
 
 
 def hamming(str1: str, str2: str) -> float:
@@ -62,38 +70,6 @@ def levenshtein(str1: str, str2: str) -> float:
         return 0.0
 
 
-def token_sort_ratio(str1: str, str2: str) -> float:
-    """
-    Measure the similarity between two strings based on :func:`levenshtein()`,
-    only with non-alphanumeric characters removed and the ordering of words
-    in each string sorted before comparison.
-
-    Args:
-        str1
-        str2
-
-    Returns:
-        Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
-        where larger values correspond to more similar strings.
-    """
-    if not str1 or not str2:
-        return 0.0
-    str1_proc = _process_and_sort(str1)
-    str2_proc = _process_and_sort(str2)
-    return levenshtein(str1_proc, str2_proc)
-
-
-def _process_and_sort(s: str) -> str:
-    """
-    Remove all characters from ``s`` except letters and numbers, strip whitespace,
-    and force everything to lower-case; then sort tokens before re-joining into
-    a single string.
-    """
-    if not s:
-        return ""
-    return " ".join(sorted(RE_ALNUM.findall(s.lower())))
-
-
 def character_ngrams(str1: str, str2: str) -> float:
     """
     Measure the similarity between two strings using a character ngrams similarity
@@ -116,7 +92,7 @@ def character_ngrams(str1: str, str2: str) -> float:
     """
     # TODO: figure out where this method falls -- not edit-based??
     vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(
-        preprocessor=lambda s: " ".join(RE_ALNUM.findall(s.lower())),
+        preprocessor=lambda s: " ".join(constants.RE_ALNUM.findall(s.lower())),
         analyzer="char",
         token_pattern="(?u)\\b\\w+\\b",
         ngram_range=(3, 3),
