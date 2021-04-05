@@ -9,8 +9,6 @@ import collections
 import math
 from typing import Iterable
 
-from . import edits
-
 
 def jaccard(seq1: Iterable[str], seq2: Iterable[str]) -> float:
     """
