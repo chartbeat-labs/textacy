@@ -43,3 +43,23 @@ def test_levenshtein(str1, str2, exp):
     assert isinstance(obs, float)
     assert 0.0 <= obs <= 1.0
     assert obs == pytest.approx(exp, rel=0.01)
+
+
+@pytest.mark.parametrize(
+    "str1, str2, exp",
+    [
+        ("abcd", "abcd", 1.0),
+        ("abdc", "wxyz", 0.0),
+        ("abcd", "", 0.0),
+        ("", "", 0.0),
+        ("abcd", "abcD", 0.8333),
+        ("Abcd", "abcd", 0.8333),
+        ("abcd", "abcdefgh", 0.8333),
+        ("abcdefgh", "abcd", 0.8333),
+    ]
+)
+def test_jaro(str1, str2, exp):
+    obs = edits.jaro(str1, str2)
+    assert isinstance(obs, float)
+    assert 0.0 <= obs <= 1.0
+    assert obs == pytest.approx(exp, rel=0.01)
