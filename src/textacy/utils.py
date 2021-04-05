@@ -294,3 +294,22 @@ def get_kwargs_for_func(func: Callable, kwargs: Dict[str, Any]) -> Dict[str, Any
         kwarg: value for kwarg, value in kwargs.items() if kwarg in func_params
     }
     return func_kwargs
+
+
+def text_to_char_ngrams(text: str, n: int, *, pad: bool = False) -> Tuple[str, ...]:
+    """
+    Convert a text string into an ordered sequence of character ngrams.
+
+    Args:
+        text
+        n: Number of characters to concatenate in each ``n``-gram.
+        pad: If True, pad ``text`` by adding ``n - 1`` "_" characters on either side;
+            if False, leave ``text`` as-is.
+
+    Returns:
+        Ordered sequence of character ngrams.
+    """
+    if pad is True and n > 1:
+        pad_chars = "_" * (n - 1)
+        text = f"{pad_chars}{text}{pad_chars}"
+    return tuple(text[i : i + n] for i in range(len(text) - n + 1))
