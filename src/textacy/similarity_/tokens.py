@@ -3,7 +3,8 @@ Token-based Similarity
 ----------------------
 
 :mod:`textacy.similarity_.edits`: Normalized similarity metrics built on token-based
-algorithms that identify and count similar tokens between one sequence and another.
+algorithms that identify and count similar tokens between one sequence and another,
+and don't rely on the *ordering* of those tokens.
 """
 import collections
 import math
@@ -59,7 +60,7 @@ def sorensen_dice(seq1: Iterable[str], seq2: Iterable[str]) -> float:
 
 
 def tversky(
-    seq1: Iterable[str], seq2: Iterable[str], alpha: float = 1.0, beta: float = 1.0
+    seq1: Iterable[str], seq2: Iterable[str], *, alpha: float = 1.0, beta: float = 1.0
 ) -> float:
     """
     Measure the similarity between two sequences of strings as sets
@@ -86,7 +87,10 @@ def tversky(
     set2_not_set1 = len(set2 - set1)
     a = min(set1_not_set2, set2_not_set1)
     b = max(set1_not_set2, set2_not_set1)
-    return intersection / (intersection + (beta * ((alpha * a) + ((1 - alpha) * b))))
+    try:
+        return intersection / (intersection + (beta * (alpha * a + (1 - alpha) * b)))
+    except ZeroDivisionError:
+        return 0.0
 
 
 def cosine(seq1: Iterable[str], seq2: Iterable[str]) -> float:
