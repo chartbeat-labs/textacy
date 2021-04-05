@@ -5,6 +5,8 @@ Token-based Similarity
 :mod:`textacy.similarity_.edits`: Normalized similarity metrics built on token-based
 algorithms that identify and count similar tokens between one sequence and another.
 """
+import collections
+import math
 from typing import Iterable
 
 from . import edits
@@ -122,9 +124,48 @@ def tversky(
     return intersection / (intersection + (beta * ((alpha * a) + ((1 - alpha) * b))))
 
 
-def cosine():
-    ...
+def cosine(seq1: Iterable[str], seq2: Iterable[str]) -> float:
+    """
+    Measure the similarity between two sequences of strings using the Otsuka-Ochiai
+    variation of cosine similarity (which is equivalent to the usual formulation when
+    values are binary).
+
+    Args:
+        seq1
+        seq2
+
+    Returns:
+        Similarity between ``seq1`` and ``seq2`` in the interval [0.0, 1.0],
+        where larger values correspond to more similar sequences
+
+    Reference:
+        https://en.wikipedia.org/wiki/Cosine_similarity#Otsuka-Ochiai_coefficient
+    """
+    set1 = set(seq1)
+    set2 = set(seq2)
+    try:
+        return len(set1 & set2) / math.sqrt(len(set1) * len(set2))
+    except ZeroDivisionError:
+        return 0.0
 
 
-def bag():
-    ...
+def bag(seq1: Iterable[str], seq2: Iterable[str]) -> float:
+    """
+    Measure the similarity between two sequences of strings using the TODO
+
+    Args:
+        seq1
+        seq2
+
+    Returns:
+        Similarity between ``seq1`` and ``seq2`` in the interval [0.0, 1.0],
+        where larger values correspond to more similar sequences
+    """
+    bag1 = collections.Counter(seq1)
+    bag2 = collections.Counter(seq2)
+    max_set_diff = max(sum((bag1 - bag2).values()), sum((bag2 - bag1).values()))
+    max_len = max(sum(bag1.values()), sum(bag2.values()))
+    try:
+        return 1.0 - (max_set_diff / max_len)
+    except ZeroDivisionError:
+        return 0.0
