@@ -18,7 +18,7 @@ from .. import constants
 
 
 def _shortcut(str1: str, str2: str) -> Optional[float]:
-    if not str1 or not str2:
+    if not str1 and not str2:
         return 0.0
     elif str1 == str2:
         return 1.0
@@ -40,6 +40,10 @@ def hamming(str1: str, str2: str) -> float:
         Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings
     """
+    shortcut = _shortcut(str1, str2)
+    if shortcut:
+        return shortcut
+
     distance = _hamming(str1, str2)
     max_len = max(len(str1), len(str2))
     try:
@@ -62,6 +66,10 @@ def levenshtein(str1: str, str2: str) -> float:
         Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings
     """
+    shortcut = _shortcut(str1, str2)
+    if shortcut:
+        return shortcut
+
     distance = _levenshtein(str1, str2)
     max_len = max(len(str1), len(str2))
     try:
