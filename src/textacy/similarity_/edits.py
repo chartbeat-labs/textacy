@@ -1,3 +1,11 @@
+"""
+Edit-based Similarity
+---------------------
+
+:mod:`textacy.similarity_.edits`: Normalized similarity metrics built on edit-based
+algorithms that compute the number of operations (additions, subtractions, ...)
+needed to transform one string into another.
+"""
 from __future__ import annotations
 
 import re
@@ -106,6 +114,7 @@ def character_ngrams(str1: str, str2: str) -> float:
         At the very least, it is *slow* on shorter texts relative to the other
         similarity measures.
     """
+    # TODO: figure out where this method falls -- not edit-based??
     vectorizer = sklearn.feature_extraction.text.TfidfVectorizer(
         preprocessor=lambda s: " ".join(RE_ALNUM.findall(s.lower())),
         analyzer="char",
