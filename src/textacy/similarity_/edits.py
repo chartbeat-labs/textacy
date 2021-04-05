@@ -12,7 +12,11 @@ from typing import Optional
 
 import sklearn.feature_extraction
 import sklearn.metrics
-from jellyfish import hamming_distance as _hamming, levenshtein_distance as _levenshtein
+from jellyfish import (
+    hamming_distance as _hamming,
+    levenshtein_distance as _levenshtein,
+    jaro_similarity as _jaro_similarity,
+)
 
 from .. import constants
 
@@ -76,6 +80,30 @@ def levenshtein(str1: str, str2: str) -> float:
         return 1.0 - (distance / max_len)
     except ZeroDivisionError:
         return 0.0
+
+
+def jaro(str1: str, str2: str) -> float:
+    """
+    Measure the similarity between two strings using Jaro (*not* Jaro-Winkler) distance,
+    which searches for common characters while taking transpositions and string lengths
+    into account.
+
+    Args:
+        str1
+        str2
+
+    Returns:
+        Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
+        where larger values correspond to more similar strings
+    """
+    # NOTE: I usually try to avoid wrapping other packages' functionality in one-liners
+    # but this is here for consistency with levenshtein and hamming,
+    # which do extra work to get normalized similarity values
+    shortcut = _shortcut(str1, str2)
+    if shortcut:
+        return shortcut
+
+    return _jaro_similarity(str1, str2)
 
 
 def character_ngrams(str1: str, str2: str) -> float:
