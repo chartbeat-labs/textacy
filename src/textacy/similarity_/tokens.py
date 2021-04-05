@@ -12,67 +12,34 @@ from typing import Iterable
 from . import edits
 
 
-def jaccard(
-    seq1: Iterable[str],
-    seq2: Iterable[str],
-    fuzzy_match: bool = False,
-    match_threshold: float = 0.8,
-) -> float:
+def jaccard(seq1: Iterable[str], seq2: Iterable[str]) -> float:
     """
-    Measure the similarity between two sequences of strings using Jaccard metric,
-    with optional fuzzy matching of not-identical pairs.
+    Measure the similarity between two sequences of strings as sets
+    using the Jaccard index.
 
     Args:
         seq1
         seq2
-        fuzzy_match: If True, allow for fuzzy matching in addition to the
-            usual identical matching of pairs between input vectors
-        match_threshold: Value in the interval [0.0, 1.0]; fuzzy comparisons
-            with a score >= this value will be considered matches
 
     Returns:
         Similarity between ``seq1`` and ``seq2`` in the interval [0.0, 1.0],
-        where larger values correspond to more similar strings or sequences of strings
-
-    Raises:
-        ValueError: if ``match_threshold`` is not a valid float
+        where larger values correspond to more similar sequences of strings
 
     Reference:
         https://en.wikipedia.org/wiki/Jaccard_index
     """
-    # TODO: maybe get rid of the fuzzy matching stuff?
-    if not 0.0 <= match_threshold <= 1.0:
-        raise ValueError(
-            f"match_threshold={match_threshold} is invalid; "
-            "it must be a float in the interval [0.0, 1.0]"
-        )
     set1 = set(seq1)
     set2 = set(seq2)
-    intersection = len(set1 & set2)
-    union = len(set1 | set2)
-    if fuzzy_match is True:
-        for item1 in set1.difference(set2):
-            if (
-                max(edits.token_sort_ratio(item1, item2) for item2 in set2) >=
-                match_threshold
-            ):
-                intersection += 1
-        for item2 in set2.difference(set1):
-            if (
-                max(edits.token_sort_ratio(item2, item1) for item1 in set1) >=
-                match_threshold
-            ):
-                intersection += 1
-    elif fuzzy_match is True:
-        raise ValueError("fuzzy matching not possible with str inputs")
-
-    return intersection / union
+    try:
+        return len(set1 & set2) / len(set1 | set2)
+    except ZeroDivisionError:
+        return 0.0
 
 
 def sorensen_dice(seq1: Iterable[str], seq2: Iterable[str]) -> float:
     """
-    Measure the similarity between two sequences of strings using Sørensen-Dice index,
-    which TODO
+    Measure the similarity between two sequences of strings as sets
+    using the Sørensen-Dice index, which is similar to the Jaccard index.
 
     Args:
         seq1
@@ -87,15 +54,19 @@ def sorensen_dice(seq1: Iterable[str], seq2: Iterable[str]) -> float:
     """
     set1 = set(seq1)
     set2 = set(seq2)
-    return 2 * len(set1 & set2) / (len(set1) + len(set2))
+    try:
+        return 2 * len(set1 & set2) / (len(set1) + len(set2))
+    except ZeroDivisionError:
+        return 0.0
 
 
 def tversky(
     seq1: Iterable[str], seq2: Iterable[str], alpha: float = 1.0, beta: float = 1.0
 ) -> float:
     """
-    Measure the similarity between two sequences of strings using the (symmetric)
-    Tversky index, which TODO
+    Measure the similarity between two sequences of strings as sets
+    using the (symmetric) Tversky index, which is a generalization of
+    Jaccard (``alpha=0.5, beta=2.0``) and Sørensen-Dice (``alpha=0.5, beta=1.0``).
 
     Args:
         seq1
@@ -106,10 +77,6 @@ def tversky(
     Returns:
         Similarity between ``seq1`` and ``seq2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar sequences
-
-    Note:
-        This metric is a generalization of Jaccard (``alpha=0.5``, ``beta=2.0``) and
-        Sørensen-Dice (``alpha=0.5``, ``beta=1.0``).
 
     Reference:
         https://en.wikipedia.org/wiki/Tversky_index
@@ -126,9 +93,9 @@ def tversky(
 
 def cosine(seq1: Iterable[str], seq2: Iterable[str]) -> float:
     """
-    Measure the similarity between two sequences of strings using the Otsuka-Ochiai
-    variation of cosine similarity (which is equivalent to the usual formulation when
-    values are binary).
+    Measure the similarity between two sequences of strings as sets
+    using the Otsuka-Ochiai variation of cosine similarity (which is equivalent
+    to the usual formulation when values are binary).
 
     Args:
         seq1
@@ -151,7 +118,9 @@ def cosine(seq1: Iterable[str], seq2: Iterable[str]) -> float:
 
 def bag(seq1: Iterable[str], seq2: Iterable[str]) -> float:
     """
-    Measure the similarity between two sequences of strings using the TODO
+    Measure the similarity between two sequences of strings (*not* as sets)
+    using the "bag distance" measure, which can be considered an approximation
+    of edit distance.
 
     Args:
         seq1
@@ -160,12 +129,17 @@ def bag(seq1: Iterable[str], seq2: Iterable[str]) -> float:
     Returns:
         Similarity between ``seq1`` and ``seq2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar sequences
+
+    Reference:
+        Bartolini, Ilaria, Paolo Ciaccia, and Marco Patella. "String matching with
+        metric trees using an approximate distance." International Symposium on String
+        Processing and Information Retrieval. Springer, Berlin, Heidelberg, 2002.
     """
     bag1 = collections.Counter(seq1)
     bag2 = collections.Counter(seq2)
-    max_set_diff = max(sum((bag1 - bag2).values()), sum((bag2 - bag1).values()))
+    max_diff = max(sum((bag1 - bag2).values()), sum((bag2 - bag1).values()))
     max_len = max(sum(bag1.values()), sum(bag2.values()))
     try:
-        return 1.0 - (max_set_diff / max_len)
+        return 1.0 - (max_diff / max_len)
     except ZeroDivisionError:
         return 0.0
