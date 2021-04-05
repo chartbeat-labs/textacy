@@ -1,1 +1,1 @@
-from . import strings
+from . import edits
