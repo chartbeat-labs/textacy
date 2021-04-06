@@ -28,3 +28,18 @@ Datasets
 .. automodule:: textacy.datasets.imdb
 
 .. automodule:: textacy.datasets.udhr
+
+Resources
+=========
+
+.. currentmodule:: textacy.resources
+
+.. autosummary::
+   :nosignatures:
+
+   concept_net.ConceptNet
+   depeche_mood.DepecheMood
+
+.. automodule:: textacy.resources.concept_net
+
+.. automodule:: textacy.resources.depeche_mood

@@ -6,8 +6,7 @@ API Reference
 
    lang_doc_corpus
    spacier
-   datasets
-   resources
+   datasets_resources
    text_processing
    information_extraction
    similarity
