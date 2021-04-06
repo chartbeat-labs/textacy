@@ -19,10 +19,10 @@ Document Similarity
    hybrid.token_sort_ratio
    hybrid.monge_elkan
 
-.. automodule:: textacy.extract.edits
+.. automodule:: textacy.similarity.edits
 
-.. automodule:: textacy.extract.tokens
+.. automodule:: textacy.similarity.tokens
 
-.. automodule:: textacy.extract.sequences
+.. automodule:: textacy.similarity.sequences
 
-.. automodule:: textacy.extract.hybrid
+.. automodule:: textacy.similarity.hybrid

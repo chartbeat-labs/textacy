@@ -197,7 +197,7 @@ Doc(20 tokens; "Spent an entire day translating structured data...")
 
 Okay, let's not *actually* analyze my ramblings on social media...
 
-Instead, let's consider a more complicated dataset: a compressed JSON file in the mostly-standard "lines" format, in which each line is a separate record with both text data and metadata fields. As an example, we can use the "Capitol Words" dataset integrated into textacy (see [Datasets](api_reference/datasets) for details). The data is downloadable from the [textacy-data GitHub repository](https://github.com/bdewilde/textacy-data/releases/tag/capitol_words_py3_v1.0>).
+Instead, let's consider a more complicated dataset: a compressed JSON file in the mostly-standard "lines" format, in which each line is a separate record with both text data and metadata fields. As an example, we can use the "Capitol Words" dataset integrated into textacy (see [Datasets and Resources](api_reference/datasets_resources) for details). The data is downloadable from the [textacy-data GitHub repository](https://github.com/bdewilde/textacy-data/releases/tag/capitol_words_py3_v1.0>).
 
 ```pycon
 >>> records = textacy.io.read_json(
