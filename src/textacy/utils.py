@@ -1,3 +1,7 @@
+"""
+:mod:`textacy.utils`: Variety of general-purpose utility functions for inspecting /
+validating / transforming args and facilitating meta package tasks.
+"""
 import inspect
 import logging
 import pathlib

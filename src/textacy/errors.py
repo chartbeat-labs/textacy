@@ -1,3 +1,6 @@
+"""
+:mod:`textacy.errors`: Helper functions for making consistent errors.
+"""
 from typing import Any, Collection, Type
 
 

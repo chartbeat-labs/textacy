@@ -1,6 +1,6 @@
 """
-Functionality for caching language data and other NLP resources. Loading data
-from disk can be slow; let's just do it once and forget about it. :)
+:mod:`textacy.cache`: Functionality for caching language data and other NLP resources.
+Loading data from disk can be slow; let's just do it once and forget about it. :)
 """
 import inspect
 import os
@@ -40,7 +40,7 @@ def _get_size(obj, seen=None):
 
 
 LRU_CACHE = LRUCache(
-    os.environ.get("TEXTACY_MAX_CACHE_SIZE", 2147483648), getsizeof=_get_size
+    int(os.environ.get("TEXTACY_MAX_CACHE_SIZE", 2147483648)), getsizeof=_get_size
 )
 """:class:`cachetools.LRUCache`: Least Recently Used (LRU) cache for loaded data.
 
