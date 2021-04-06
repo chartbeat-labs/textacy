@@ -1,4 +1,7 @@
 """
+Replace
+-------
+
 :mod:`textacy.preprocessing.replace`: Replace parts of raw text that are semantically
 important as members of a group but not so much in the individual instances. Can also
 be used to remove such parts by specifying ``repl=""`` in function calls.

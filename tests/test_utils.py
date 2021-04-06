@@ -218,3 +218,38 @@ def _func_kw_only_args(*, kwarg1, kwarg2):
 )
 def test_get_kwargs_for_func(func, kwargs, expected):
     assert utils.get_kwargs_for_func(func, kwargs) == expected
+
+
+@pytest.mark.parametrize(
+    "text, n, pad, exp",
+    [
+        (
+            "testing 123",
+            1,
+            False,
+            ('t', 'e', 's', 't', 'i', 'n', 'g', ' ', '1', '2', '3'),
+        ),
+        (
+            "testing 123",
+            1,
+            True,
+            ('t', 'e', 's', 't', 'i', 'n', 'g', ' ', '1', '2', '3'),
+        ),
+        (
+            "testing 123",
+            2,
+            False,
+            ('te', 'es', 'st', 'ti', 'in', 'ng', 'g ', ' 1', '12', '23'),
+        ),
+        (
+            "testing 123",
+            2,
+            True,
+            ('_t', 'te', 'es', 'st', 'ti', 'in', 'ng', 'g ', ' 1', '12', '23', '3_'),
+        ),
+    ]
+)
+def test_text_to_char_ngrams(text, n, pad, exp):
+    obs = utils.text_to_char_ngrams(text, n, pad=pad)
+    assert all(isinstance(cng, str) and len(cng) == n for cng in obs)
+    assert obs == exp

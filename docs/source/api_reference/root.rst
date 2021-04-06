@@ -6,13 +6,13 @@ API Reference
 
    lang_doc_corpus
    spacier
-   datasets
-   resources
-   text_processing
-   information_extraction
+   datasets_resources
+   preprocessing
+   extract
+   text_stats
+   similarity
    vsm_and_tm
    io
    viz
    augmentation
-   utils
    misc

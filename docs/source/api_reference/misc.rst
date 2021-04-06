@@ -1,63 +1,35 @@
 Miscellany
 ==========
 
-Text Statistics
----------------
-
-.. currentmodule:: textacy.text_stats
+.. currentmodule:: textacy
 
 .. autosummary::
    :nosignatures:
 
-   api.TextStats
-   basics.n_sents
-   basics.n_words
-   basics.n_unique_words
-   basics.n_chars_per_word
-   basics.n_chars
-   basics.n_long_words
-   basics.n_syllables_per_word
-   basics.n_syllables
-   basics.n_monosyllable_words
-   basics.n_polysyllable_words
-   basics.entropy
-   readability.automated_readability_index
-   readability.automatic_arabic_readability_index
-   readability.coleman_liau_index
-   readability.flesch_kincaid_grade_level
-   readability.flesch_reading_ease
-   readability.gulpease_index
-   readability.gunning_fog_index
-   readability.lix
-   readability.mu_legibility_index
-   readability.perspicuity_index
-   readability.smog_index
-   readability.wiener_sachtextformel
+   lang_id.lang_identifier.identify_lang
+   lang_id.lang_identifier.identify_topn_langs
+   utils.get_config
+   utils.print_markdown
+   utils.is_record
+   utils.to_collection
+   utils.to_bytes
+   utils.to_unicode
+   utils.to_path
+   utils.validate_set_members
+   utils.validate_and_clip_range
 
-.. automodule:: textacy.text_stats.api
+.. automodule:: textacy.lang_id.lang_identifier
 
-.. automodule:: textacy.text_stats.basics
+Utilities
+---------
 
-.. automodule:: textacy.text_stats.readability
+.. automodule:: textacy.utils
 
-.. automodule:: textacy.text_stats.components
+.. automodule:: textacy.types
 
-Similarity
-----------
+.. automodule:: textacy.errors
 
-.. currentmodule:: textacy.similarity
-
-.. autosummary::
-   :nosignatures:
-
-   word_movers
-   word2vec
-   jaccard
-   levenshtein
-   token_sort_ratio
-   character_ngrams
-
-.. automodule:: textacy.similarity
+.. automodule:: textacy.cache
 
 Semantic Networks
 -----------------

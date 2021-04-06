@@ -1,3 +1,6 @@
+"""
+:mod:`textacy.types`: Definitions for common object types used throughout the package.
+"""
 from pathlib import Path
 from typing import Callable, Iterable, Tuple, Union
 
@@ -21,3 +24,5 @@ Record = Tuple[str, dict]
 DocData = Union[str, Record, Doc]
 
 CorpusData = Union[str, Doc, Record, Iterable[str], Iterable[Doc], Iterable[Record]]
+
+PathLike = Union[str, Path]

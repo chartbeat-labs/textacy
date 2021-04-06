@@ -37,7 +37,7 @@ def keyword_in_context(
         ignore_case: If True, ignore letter case in ``keyword`` matching; otherwise,
             use case-sensitive matching. Note that this argument is only used if
             ``keyword`` is a string; for pre-compiled regular expressions,
-            the ``re.IGNORECASE` flag is left as-is.
+            the ``re.IGNORECASE`` flag is left as-is.
         window_width: Number of characters on either side of ``keyword``
             to include as "context".
         pad_context: If True, pad pre- and post-context strings to ``window_width``

@@ -3,11 +3,12 @@
 Includes functionality for easily adding, getting, and removing documents;
 saving to / loading their data from disk; and tracking basic corpus statistics.
 """
+from __future__ import annotations
+
 import collections
 import itertools
 import logging
 import math
-import pathlib
 from typing import (
     Any,
     Callable,
@@ -17,7 +18,6 @@ from typing import (
     Iterator,
     List,
     Optional,
-    Tuple,
     Union,
 )
 
@@ -28,14 +28,10 @@ from spacy.language import Language
 from spacy.tokens import Doc, DocBin
 
 from . import io as tio
-from . import errors, spacier, utils
+from . import errors, spacier, types, utils
 
 
 LOGGER = logging.getLogger(__name__)
-
-CorpusData = Union[
-    str, Doc, Tuple[str, dict], Iterable[str], Iterable[Doc], Iterable[Tuple[str, dict]]
-]
 
 
 class Corpus:
@@ -151,10 +147,8 @@ class Corpus:
     n_sents: int
     n_tokens: int
 
-    def __init__(
-        self, lang: Union[str, Language], data: Optional[CorpusData] = None,
-    ) -> None:
-        self.spacy_lang = _get_spacy_lang(lang)
+    def __init__(self, lang: types.LangLike, data: Optional[types.CorpusData] = None):
+        self.spacy_lang = spacier.utils.resolve_langlike(lang)
         self.lang = self.spacy_lang.lang
         self.docs = []
         self._doc_ids = []
@@ -182,7 +176,7 @@ class Corpus:
     def __getitem__(self, idx_or_slice):
         return self.docs[idx_or_slice]
 
-    def __delitem__(self, idx_or_slice: Union[int, slice]):
+    def __delitem__(self, idx_or_slice: int | slice):
         if isinstance(idx_or_slice, int):
             self._remove_one_doc_by_index(idx_or_slice)
         elif isinstance(idx_or_slice, slice):
@@ -198,7 +192,7 @@ class Corpus:
 
     # add documents
 
-    def add(self, data: CorpusData, batch_size: int = 1000, n_process: int = 1,) -> None:
+    def add(self, data: types.CorpusData, batch_size: int = 1000, n_process: int = 1):
         """
         Add one or a stream of texts, records, or :class:`spacy.tokens.Doc` s
         to the corpus, ensuring that all processing is or has already been done
@@ -236,9 +230,13 @@ class Corpus:
             elif utils.is_record(first):
                 self.add_records(data, batch_size=batch_size, n_process=n_process)
             else:
-                raise TypeError(errors.type_invalid_msg("data", type(data), CorpusData))
+                raise TypeError(
+                    errors.type_invalid_msg("data", type(data), types.CorpusData)
+                )
         else:
-            raise TypeError(errors.type_invalid_msg("data", type(data), CorpusData))
+            raise TypeError(
+                errors.type_invalid_msg("data", type(data), types.CorpusData)
+            )
 
     def add_text(self, text: str) -> None:
         """
@@ -278,7 +276,7 @@ class Corpus:
             ):
                 self._add_valid_doc(doc)
 
-    def add_record(self, record: Tuple[str, Dict[Any, Any]]) -> None:
+    def add_record(self, record: types.Record) -> None:
         """
         Add one record to the corpus, processing it into a :class:`spacy.tokens.Doc`
         using the :attr:`Corpus.spacy_lang` pipeline.
@@ -292,7 +290,7 @@ class Corpus:
 
     def add_records(
         self,
-        records: Iterable[Tuple[str, dict]],
+        records: Iterable[types.Record],
         batch_size: int = 1000,
         n_process: int = 1,
     ) -> None:
@@ -461,7 +459,7 @@ class Corpus:
         filter_stops: bool = True,
         filter_punct: bool = True,
         filter_nums: bool = False,
-    ) -> Dict[Union[int, str], Union[int, float]]:
+    ) -> Dict[int | str, int | float]:
         """
         Map the set of unique words in :class:`Corpus` to their counts as
         absolute, relative, or binary frequencies of occurence, similar to
@@ -532,7 +530,7 @@ class Corpus:
         filter_stops: bool = True,
         filter_punct: bool = True,
         filter_nums: bool = True,
-    ) -> Dict[Union[int, str], Union[int, float]]:
+    ) -> Dict[int | str, int | float]:
         """
         Map the set of unique words in :class:`Corpus` to their *document* counts
         as absolute, relative, inverse, or binary frequencies of occurence.
@@ -608,9 +606,7 @@ class Corpus:
 
     # file io
 
-    def save(
-        self, filepath: Union[str, pathlib.Path], store_user_data: bool = True,
-    ) -> None:
+    def save(self, filepath: types.PathLike, store_user_data: bool = True):
         """
         Save :class:`Corpus` to disk as binary data.
 
@@ -649,8 +645,8 @@ class Corpus:
     @classmethod
     def load(
         cls,
-        lang: Union[str, Language],
-        filepath: Union[str, pathlib.Path],
+        lang: types.LangLike,
+        filepath: types.PathLike,
         store_user_data: bool = True,
     ) -> "Corpus":
         """
@@ -672,19 +668,8 @@ class Corpus:
             - :meth:`Corpus.save()`
             - :class:`spacy.tokens.DocBin`
         """
-        spacy_lang = _get_spacy_lang(lang)
+        spacy_lang = spacier.utils.resolve_langlike(lang)
         with tio.open_sesame(filepath, mode="rb") as f:
             bytes_data = f.read()
         doc_bin = DocBin(store_user_data=store_user_data).from_bytes(bytes_data)
         return cls(spacy_lang, data=doc_bin.get_docs(spacy_lang.vocab))
-
-
-def _get_spacy_lang(lang: Union[str, Language]) -> Language:
-    if isinstance(lang, str):
-        return spacier.core.load_spacy_lang(lang)
-    elif isinstance(lang, Language):
-        return lang
-    else:
-        raise TypeError(
-            errors.type_invalid_msg("lang", type(lang), Union[str, Language])
-        )

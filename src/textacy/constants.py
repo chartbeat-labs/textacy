@@ -165,3 +165,5 @@ RE_WEIRD_HYPHEN_SPACE_TERM: Pattern = re.compile(
 RE_WEIRD_APOSTR_SPACE_TERM: Pattern = re.compile(
     r"([^\W\d]+) ('[a-z]{1,2}\b)", flags=re.UNICODE
 )
+
+RE_ALNUM: Pattern = re.compile(r"[^\W_]+")
