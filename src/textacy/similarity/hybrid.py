@@ -1,3 +1,10 @@
+"""
+Hybrid Metrics
+--------------
+
+:mod:`textacy.similarity.hybrid`: Normalized similarity metrics that combine edit-,
+token-, and/or sequence-based algorithms.
+"""
 from __future__ import annotations
 
 from typing import Callable, Sequence
@@ -21,7 +28,7 @@ def token_sort_ratio(s1: str | Sequence[str], s2: str | Sequence[str]) -> float:
         where larger values correspond to more similar strings.
 
     See Also:
-        :func:`textacy.similarity_.edits.levenshtein()`
+        :func:`textacy.similarity.edits.levenshtein()`
     """
     str1 = _to_prepared_str(s1)
     str2 = _to_prepared_str(s2)
@@ -63,7 +70,7 @@ def monge_elkan(
         where larger values correspond to more similar strings.
 
     See Also:
-        :func:`textacy.similarity_.edits.levenshtein()`
+        :func:`textacy.similarity.edits.levenshtein()`
     """
     if not seq1 or not seq2:
         return 0.0
