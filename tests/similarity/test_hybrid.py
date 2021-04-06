@@ -17,9 +17,9 @@ from textacy.similarity import hybrid
         ("abcdefgh", "abcd", 0.5),
         (list("abcd"), list("abcd"), 1.0),
         (list("abcd"), list("ABCD"), 1.0),
-        ("abcd", "abcd efgh", 0.5),
-        (["abcd"], ["abcd", "efgh"], 0.5),
-        (["abcd", "wxyz"], ["abcd", "efgh"], 0.5),
+        ("abcd", "abcd efgh", 0.4444),
+        (["abcd"], ["abcd", "efgh"], 0.4444),
+        (["abcd", "wxyz"], ["abcd", "efgh"], 0.5555),
     ]
 )
 def test_token_sort_ratio(s1, s2, exp):
