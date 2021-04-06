@@ -1,6 +1,6 @@
 import logging
 
-from textacy.about import __version__
+from textacy._version import __version__
 from textacy.constants import DEFAULT_DATA_DIR
 from textacy.corpus import Corpus
 from textacy.lang_id import identify_lang
