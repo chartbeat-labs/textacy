@@ -46,7 +46,7 @@ def _to_prepared_str(s: str | Sequence[str]) -> str:
         if isinstance(s, str)
         else [tok.lower().strip() for tok in s]
     )
-    return "".join(sorted(tokens))
+    return " ".join(sorted(tokens))
 
 
 def monge_elkan(
