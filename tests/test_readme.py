@@ -4,13 +4,11 @@ import scipy.sparse as sp
 from spacy.tokens import Doc, Span
 
 import textacy.datasets
-from textacy import Corpus, TextStats
-from textacy import (
-    extract,
-    preprocessing,
-)
+from textacy import Corpus
+from textacy import extract, preprocessing
 from textacy import load_spacy_lang, make_spacy_doc
 from textacy.extract import keyterms as kt
+from textacy.text_stats import TextStats
 from textacy.tm import TopicModel
 from textacy.vsm import Vectorizer
 
