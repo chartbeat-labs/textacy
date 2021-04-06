@@ -9,6 +9,7 @@ API Reference
    datasets_resources
    preprocessing
    information_extraction
+   text_stats
    similarity
    vsm_and_tm
    io
