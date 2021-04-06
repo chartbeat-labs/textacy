@@ -42,23 +42,6 @@ Text Statistics
 
 .. automodule:: textacy.text_stats.components
 
-Similarity
-----------
-
-.. currentmodule:: textacy.similarity
-
-.. autosummary::
-   :nosignatures:
-
-   word_movers
-   word2vec
-   jaccard
-   levenshtein
-   token_sort_ratio
-   character_ngrams
-
-.. automodule:: textacy.similarity
-
 Semantic Networks
 -----------------
 

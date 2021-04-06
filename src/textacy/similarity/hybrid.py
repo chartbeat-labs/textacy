@@ -66,7 +66,7 @@ def monge_elkan(
             by default, Levenshtein edit distance.
 
     Returns:
-        Similarity between ``s1`` and ``s2`` in the interval [0.0, 1.0],
+        Similarity between ``seq1`` and ``seq2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings.
 
     See Also:
