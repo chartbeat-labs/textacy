@@ -26,22 +26,10 @@ Text (Pre-)Processing
    replace.urls
    replace.user_handles
 
-Pipeline
---------
-
 .. automodule:: textacy.preprocessing.pipeline
-
-Normalize
----------
 
 .. automodule:: textacy.preprocessing.normalize
 
-Remove
-------
-
 .. automodule:: textacy.preprocessing.remove
-
-Replace
--------
 
 .. automodule:: textacy.preprocessing.replace
