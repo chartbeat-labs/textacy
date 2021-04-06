@@ -8,12 +8,11 @@ API Reference
    spacier
    datasets_resources
    preprocessing
-   information_extraction
+   extract
    text_stats
    similarity
    vsm_and_tm
    io
    viz
    augmentation
-   utils
    misc

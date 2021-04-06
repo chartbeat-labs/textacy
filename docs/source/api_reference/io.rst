@@ -1,5 +1,5 @@
-I/O
-===
+File I/O
+========
 
 .. currentmodule:: textacy.io
 
@@ -36,8 +36,5 @@ I/O
 .. automodule:: textacy.io.spacy
 
 .. automodule:: textacy.io.http
-
-I/O Utils
----------
 
 .. automodule:: textacy.io.utils
