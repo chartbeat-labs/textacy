@@ -1,5 +1,5 @@
-Text (Pre-)Processing
-=====================
+Text Preprocessing
+==================
 
 .. currentmodule:: textacy.preprocessing
 
