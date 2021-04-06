@@ -1,4 +1,7 @@
 """
+ConceptNet
+----------
+
 ConceptNet is a multilingual knowledge base, representing common words and phrases
 and the common-sense relationships between them. This information is collected from
 a variety of sources, including crowd-sourced resources (e.g. Wiktionary, Open Mind
