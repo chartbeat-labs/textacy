@@ -1,5 +1,5 @@
-Datasets
-========
+Datasets and Resources
+======================
 
 .. currentmodule:: textacy.datasets
 
@@ -15,6 +15,14 @@ Datasets
    imdb.IMDB
    udhr.UDHR
 
+.. currentmodule:: textacy.resources
+
+.. autosummary::
+   :nosignatures:
+
+   concept_net.ConceptNet
+   depeche_mood.DepecheMood
+
 .. automodule:: textacy.datasets.capitol_words
 
 .. automodule:: textacy.datasets.supreme_court
@@ -28,17 +36,6 @@ Datasets
 .. automodule:: textacy.datasets.imdb
 
 .. automodule:: textacy.datasets.udhr
-
-Resources
-=========
-
-.. currentmodule:: textacy.resources
-
-.. autosummary::
-   :nosignatures:
-
-   concept_net.ConceptNet
-   depeche_mood.DepecheMood
 
 .. automodule:: textacy.resources.concept_net
 

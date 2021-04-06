@@ -37,7 +37,7 @@ $ python -m spacy download en_core_web_sm
 $ python -m spacy link en_core_web_sm en
 ```
 
-`textacy` itself features convenient access to several datasets comprised of thousands of text + metadata records, as well as a couple linguistic resources. Data can be downloaded via the `.download()` method on corresponding dataset/resource classes (see [Datasets](api_reference/datasets) and [Resources](api_reference/resources) for details) or directly from the command line.
+`textacy` itself features convenient access to several datasets comprised of thousands of text + metadata records, as well as a couple linguistic resources. Data can be downloaded via the `.download()` method on corresponding dataset/resource classes (see [Datasets and Resources](api_reference/datasets_resources) for details) or directly from the command line.
 
 ```zsh
 $ python -m textacy download capitol_words
