@@ -19,7 +19,9 @@ def ts_en():
         "white and enormous, like prehistoric eggs. The world was so recent that many "
         "things lacked names, and in order to indicate them it was necessary to point."
     )
-    return textacy.TextStats(textacy.make_spacy_doc(text, lang="en_core_web_sm"))
+    return textacy.text_stats.TextStats(
+        textacy.make_spacy_doc(text, lang="en_core_web_sm")
+    )
 
 
 @pytest.fixture(scope="module")
@@ -33,7 +35,9 @@ def ts_es():
         "El mundo era tan reciente, que muchas cosas carecían de nombre, y para "
         "mencionarlas había que señalarlas con el dedo."
     )
-    return textacy.TextStats(textacy.make_spacy_doc(text, lang="es_core_news_sm"))
+    return textacy.text_stats.TextStats(
+        textacy.make_spacy_doc(text, lang="es_core_news_sm")
+    )
 
 
 @pytest.mark.parametrize(
