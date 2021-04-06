@@ -1,5 +1,9 @@
 """
-:mod:`textacy.io.utils`: Functions to help read and write data to disk in a variety of formats.
+I/O Utils
+---------
+
+:mod:`textacy.io.utils`: Functions to help read and write data to disk
+in a variety of formats.
 """
 from __future__ import annotations
 

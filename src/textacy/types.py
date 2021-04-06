@@ -1,3 +1,6 @@
+"""
+:mod:`textacy.types`: Definitions for common object types used throughout the package.
+"""
 from pathlib import Path
 from typing import Callable, Iterable, Tuple, Union
 
