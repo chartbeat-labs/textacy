@@ -1,6 +1,6 @@
 """
-Edit-based Similarity
----------------------
+Edit-based Metrics
+------------------
 
 :mod:`textacy.similarity.edits`: Normalized similarity metrics built on edit-based
 algorithms that compute the number of operations (additions, subtractions, ...)

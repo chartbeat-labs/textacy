@@ -1,6 +1,6 @@
 """
-Sequence-based Similarity
--------------------------
+Sequence-based Metrics
+----------------------
 
 :mod:`textacy.similarity.sequences`: Normalized similarity metrics built on
 sequence-based algorithms that identify and measure the subsequences common to each.

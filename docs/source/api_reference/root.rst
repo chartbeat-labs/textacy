@@ -10,6 +10,7 @@ API Reference
    resources
    text_processing
    information_extraction
+   similarity
    vsm_and_tm
    io
    viz
