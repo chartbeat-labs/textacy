@@ -2,7 +2,7 @@
 Sequence-based Similarity
 -------------------------
 
-:mod:`textacy.similarity_.sequences`: Normalized similarity metrics built on
+:mod:`textacy.similarity.sequences`: Normalized similarity metrics built on
 sequence-based algorithms that identify and measure the subsequences common to each.
 """
 import difflib

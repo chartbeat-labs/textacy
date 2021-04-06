@@ -1,6 +1,6 @@
 import pytest
 
-from textacy.similarity_ import edits
+from textacy.similarity import edits
 
 
 @pytest.mark.parametrize(

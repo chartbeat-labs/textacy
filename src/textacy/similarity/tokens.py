@@ -2,7 +2,7 @@
 Token-based Similarity
 ----------------------
 
-:mod:`textacy.similarity_.edits`: Normalized similarity metrics built on token-based
+:mod:`textacy.similarity.edits`: Normalized similarity metrics built on token-based
 algorithms that identify and count similar tokens between one sequence and another,
 and don't rely on the *ordering* of those tokens.
 """
