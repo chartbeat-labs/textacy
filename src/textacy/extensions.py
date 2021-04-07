@@ -132,7 +132,7 @@ def get_doc_extensions() -> Dict[str, Dict[str, Any]]:
     Get textacy's custom property and method doc extensions
     that can be set on or removed from the global :class:`spacy.tokens.Doc`.
     """
-    return DOC_EXTENSIONS
+    return _DOC_EXTENSIONS
 
 
 def set_doc_extensions():
@@ -141,8 +141,8 @@ def set_doc_extensions():
     on the global :class:`spacy.tokens.Doc`.
     """
     for name, kwargs in get_doc_extensions().items():
-        if not spacy.tokens.Doc.has_extension(name):
-            spacy.tokens.Doc.set_extension(name, **kwargs)
+        if not Doc.has_extension(name):
+            Doc.set_extension(name, **kwargs)
 
 
 def remove_doc_extensions():
@@ -151,10 +151,10 @@ def remove_doc_extensions():
     from the global :class:`spacy.tokens.Doc`.
     """
     for name in get_doc_extensions().keys():
-        _ = spacy.tokens.Doc.remove_extension(name)
+        _ = Doc.remove_extension(name)
 
 
-DOC_EXTENSIONS: Dict[str, Dict[str, Any]] = {
+_DOC_EXTENSIONS: Dict[str, Dict[str, Any]] = {
     # property extensions
     "preview": {"getter": get_preview},
     "meta": {"getter": get_meta, "setter": set_meta},

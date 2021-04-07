@@ -1,3 +1,5 @@
+from typing import Any, Dict
+
 from spacy.tokens import Doc
 
 from . import acros, basics, keyterms, kwic, matches, triples
@@ -29,11 +31,39 @@ def extract_keyterms(doc: Doc, method: str, **kwargs):
         )
 
 
-DOC_EXTENSIONS = {
+def get_doc_extensions() -> Dict[str, Dict[str, Any]]:
+    """
+    Get :mod:`textacy.extract` custom property and method doc extensions
+    that can be set on or removed from the global :class:`spacy.tokens.Doc`.
+    """
+    return _DOC_EXTENSIONS
+
+
+def set_doc_extensions():
+    """
+    Set :mod:`textacy.extract` custom property and method doc extensions
+    on the global :class:`spacy.tokens.Doc`.
+    """
+    for name, kwargs in get_doc_extensions().items():
+        if not Doc.has_extension(name):
+            Doc.set_extension(name, **kwargs)
+
+
+def remove_doc_extensions():
+    """
+    Remove :mod:`textacy.extract` custom property and method doc extensions
+    from the global :class:`spacy.tokens.Doc`.
+    """
+    for name in get_doc_extensions().keys():
+        _ = Doc.remove_extension(name)
+
+
+_DOC_EXTENSIONS: Dict[str, Dict[str, Any]] = {
     "extract_words": {"method": basics.words},
     "extract_ngrams": {"method": basics.ngrams},
     "extract_entities": {"method": basics.entities},
     "extract_noun_chunks": {"method": basics.noun_chunks},
+    "extract_terms": {"method": basics.terms},
     "extract_token_matches": {"method": matches.token_matches},
     "extract_regex_matches": {"method": matches.regex_matches},
     "extract_subject_verb_object_triples": {"method": triples.subject_verb_object_triples},
@@ -44,22 +74,3 @@ DOC_EXTENSIONS = {
     "extract_keyword_in_context": {"method": kwic.keyword_in_context},
     "extract_keyterms": {"method": extract_keyterms},
 }
-
-
-def set_doc_extensions():
-    """
-    Set :mod:`textacy.extract` custom property and method doc extensions
-    on the global :class:`spacy.tokens.Doc`.
-    """
-    for name, kwargs in DOC_EXTENSIONS.items():
-        if not Doc.has_extension(name):
-            Doc.set_extension(name, **kwargs)
-
-
-def remove_doc_extensions():
-    """
-    Remove :mod:`textacy.extract` custom property and method doc extensions
-    from the global :class:`spacy.tokens.Doc`.
-    """
-    for name in DOC_EXTENSIONS.keys():
-        _ = Doc.remove_extension(name)
