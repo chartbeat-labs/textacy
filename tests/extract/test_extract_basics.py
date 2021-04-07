@@ -57,15 +57,23 @@ class TestWords:
 
 class TestNGrams:
 
+    @pytest.mark.parametrize("n", [1, 2])
+    def test_n(self, n, spacy_doc):
+        result = list(extract.ngrams(spacy_doc, n))
+        assert all(isinstance(span, Span) for span in result)
+        assert all(len(span) == n for span in result)
+
+    @pytest.mark.parametrize("ns", [[1, 2], [1, 2, 3]])
+    def test_multiple_ns(self, ns, spacy_doc):
+        result = list(extract.ngrams(spacy_doc, ns))
+        assert all(isinstance(span, Span) for span in result)
+        minn = min(ns)
+        maxn = max(ns)
+        assert all(minn <= len(span) <= maxn for span in result)
+
     def test_n_less_than_1(self, spacy_doc):
         with pytest.raises(ValueError):
             _ = list(extract.ngrams(spacy_doc, 0))
-
-    def test_n(self, spacy_doc):
-        for n in (1, 2):
-            result = list(extract.ngrams(spacy_doc, n))
-            assert all(isinstance(span, Span) for span in result)
-            assert all(len(span) == n for span in result)
 
     def test_filter(self, spacy_doc):
         result = list(

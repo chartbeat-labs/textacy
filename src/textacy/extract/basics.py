@@ -78,7 +78,7 @@ def words(
 
 def ngrams(
     doclike: types.DocLike,
-    n: int,
+    n: int | Collection[int],
     *,
     filter_stops: bool = True,
     filter_punct: bool = True,
@@ -88,29 +88,32 @@ def ngrams(
     min_freq: int = 1,
 ) -> Iterable[Span]:
     """
-    Extract an ordered sequence of n-grams (``n`` consecutive words) from a
-    spacy-parsed doc, optionally filtering n-grams by the types and
-    parts-of-speech of the constituent words.
+    Extract an ordered sequence of n-grams (``n`` consecutive tokens) from a spaCy
+    ``Doc`` or ``Span``, for one or multiple ``n`` values, optionally filtering n-grams
+    by the types and parts-of-speech of the constituent tokens.
 
     Args:
         doclike
-        n: Number of tokens per n-gram; 2 => bigrams, 3 => trigrams, etc.
-        filter_stops: If True, remove ngrams that start or end with a stop word
-        filter_punct: If True, remove ngrams that contain any punctuation-only tokens
+        n: Number of tokens included per n-gram; for example, ``2`` yields bigrams
+            and ``3`` yields trigrams. If multiple values are specified, then the
+            collections of n-grams are concatenated together; for example, ``(2, 3)``
+            yields bigrams and then trigrams.
+        filter_stops: If True, remove ngrams that start or end with a stop word.
+        filter_punct: If True, remove ngrams that contain any punctuation-only tokens.
         filter_nums: If True, remove ngrams that contain any numbers
-            or number-like tokens (e.g. 10, 'ten')
+            or number-like tokens (e.g. 10, 'ten').
         include_pos: Remove ngrams if any constituent tokens' part-of-speech tags
-            ARE NOT included in this param
+            ARE NOT included in this param.
         exclude_pos: Remove ngrams if any constituent tokens' part-of-speech tags
-            ARE included in this param
+            ARE included in this param.
         min_freq: Remove ngrams that occur in ``doclike`` fewer than ``min_freq`` times
 
     Yields:
         Next ngram from ``doclike`` passing all specified filters, in order of appearance
-        in the document
+        in the document.
 
     Raises:
-        ValueError: if ``n`` < 1
+        ValueError: if any ``n`` < 1
         TypeError: if ``include_pos`` or ``exclude_pos`` is not a str, a set of str,
             or a falsy value
 
@@ -118,36 +121,38 @@ def ngrams(
         Filtering by part-of-speech tag uses the universal POS tag set; for details,
         check spaCy's docs: https://spacy.io/api/annotation#pos-tagging
     """
-    if n < 1:
+    ns = utils.to_collection(n, int, tuple)
+    if any(n_ < 1 for n_ in ns):
         raise ValueError("n must be greater than or equal to 1")
 
-    ngrams_: Iterable[Span] = (doclike[i : i + n] for i in range(len(doclike) - n + 1))
-    ngrams_ = (ng for ng in ngrams_ if not any(w.is_space for w in ng))
-    if filter_stops is True:
-        ngrams_ = (ng for ng in ngrams_ if not ng[0].is_stop and not ng[-1].is_stop)
-    if filter_punct is True:
-        ngrams_ = (ng for ng in ngrams_ if not any(w.is_punct for w in ng))
-    if filter_nums is True:
-        ngrams_ = (ng for ng in ngrams_ if not any(w.like_num for w in ng))
     if include_pos:
         include_pos = {
-            pos.upper()
-            for pos in utils.to_collection(include_pos, str, set)
+            pos.upper() for pos in utils.to_collection(include_pos, str, set)
         }
-        ngrams_ = (ng for ng in ngrams_ if all(w.pos_ in include_pos for w in ng))
     if exclude_pos:
         exclude_pos = {
-            pos.upper()
-            for pos in utils.to_collection(exclude_pos, str, set)
+            pos.upper() for pos in utils.to_collection(exclude_pos, str, set)
         }
-        ngrams_ = (ng for ng in ngrams_ if not any(w.pos_ in exclude_pos for w in ng))
-    if min_freq > 1:
-        ngrams_ = list(ngrams_)
-        freqs = itertoolz.frequencies(ng.text.lower() for ng in ngrams_)
-        ngrams_ = (ng for ng in ngrams_ if freqs[ng.text.lower()] >= min_freq)
+    for n_ in ns:
+        ngrams_ = (doclike[i : i + n_] for i in range(len(doclike) - n_ + 1))
+        ngrams_ = (ng for ng in ngrams_ if not any(w.is_space for w in ng))
+        if filter_stops is True:
+            ngrams_ = (ng for ng in ngrams_ if not ng[0].is_stop and not ng[-1].is_stop)
+        if filter_punct is True:
+            ngrams_ = (ng for ng in ngrams_ if not any(w.is_punct for w in ng))
+        if filter_nums is True:
+            ngrams_ = (ng for ng in ngrams_ if not any(w.like_num for w in ng))
+        if include_pos:
+            ngrams_ = (ng for ng in ngrams_ if all(w.pos_ in include_pos for w in ng))
+        if exclude_pos:
+            ngrams_ = (ng for ng in ngrams_ if not any(w.pos_ in exclude_pos for w in ng))
+        if min_freq > 1:
+            ngrams_ = list(ngrams_)
+            freqs = itertoolz.frequencies(ng.text.lower() for ng in ngrams_)
+            ngrams_ = (ng for ng in ngrams_ if freqs[ng.text.lower()] >= min_freq)
 
-    for ngram in ngrams_:
-        yield ngram
+        for ngram in ngrams_:
+            yield ngram
 
 
 def entities(
