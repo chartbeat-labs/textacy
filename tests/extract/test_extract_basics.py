@@ -179,3 +179,42 @@ class TestNounChunks:
         text = spacy_doc.text.lower()
         result = list(extract.noun_chunks(spacy_doc, drop_determiners=True, min_freq=2))
         assert all(text.count(span.text.lower()) >= 2 for span in result)
+
+
+class TestTerms:
+
+    def test_default(self, spacy_doc):
+        with pytest.raises(ValueError):
+            _ = list(extract.terms(spacy_doc))
+
+    def test_simple_args(self, spacy_doc):
+        results = list(extract.terms(spacy_doc, ngs=2, ents=True, ncs=True))
+        assert results
+        assert all(isinstance(result, Span) for result in results)
+
+    def test_callable_args(self, spacy_doc):
+        results = list(
+            extract.terms(
+                spacy_doc,
+                ngs=lambda doc: extract.ngrams(doc, n=2),
+                ents=extract.entities,
+                ncs=extract.noun_chunks,
+            )
+        )
+        assert results
+        assert all(isinstance(result, Span) for result in results)
+
+    @pytest.mark.parametrize("dedupe", [True, False])
+    def test_dedupe(self, dedupe, spacy_doc):
+        results = list(extract.terms(spacy_doc, ngs=2, ents=True, ncs=True, dedupe=dedupe))
+        assert results
+        if dedupe is True:
+            assert (
+                len(results) ==
+                len(set((result.start, result.end) for result in results))
+            )
+        else:
+            assert (
+                len(results) >
+                len(set((result.start, result.end) for result in results))
+            )
