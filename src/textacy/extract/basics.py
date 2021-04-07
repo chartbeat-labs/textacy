@@ -7,13 +7,17 @@ via spaCy, with bells and whistles for filtering the results.
 """
 from __future__ import annotations
 
-from typing import Collection, Iterable, Optional, Set, Union
+from functools import partial
+from typing import Callable, Collection, Iterable, List, Optional, Set, Union
 
 from cytoolz import itertoolz
 from spacy.parts_of_speech import DET
 from spacy.tokens import Span, Token
 
 from .. import constants, errors, types, utils
+
+
+DocLikeToSpans = Callable[[types.DocLike], Iterable[Span]]
 
 
 def words(
@@ -286,3 +290,104 @@ def noun_chunks(
 
     for nc in ncs:
         yield nc
+
+
+def terms(
+    doclike: types.DocLike,
+    *,
+    ngs: Optional[int | Collection[int] | DocLikeToSpans] = None,
+    ents: Optional[bool | DocLikeToSpans] = None,
+    ncs: Optional[bool | DocLikeToSpans] = None,
+    dedupe: bool = True,
+) -> Iterable[Span]:
+    """
+    Extract one or multiple types of terms -- ngrams, entities, and/or noun chunks --
+    from ``doclike`` as a single, concatenated collection, with optional deduplication
+    of spans extracted by more than one type.
+
+    Args:
+        doclike
+        ngs: N-gram terms to be extracted.
+            If one or multiple ints, :func:`textacy.extract.ngrams(doclike, n=ngs)` is
+            used to extract terms; if a callable, ``ngs(doclike)`` is used to extract
+            terms; if None, no n-gram terms are extracted.
+        ents: Entity terms to be extracted.
+            If True, :func:`textacy.extract.entities(doclike)` is used to extract terms;
+            if a callable, ``ents(doclike)`` is used to extract terms;
+            if None, no entity terms are extracted.
+        ncs: Noun chunk terms to be extracted.
+            If True, :func:`textacy.extract.noun_chunks(doclike)` is used to extract
+            terms; if a callable, ``ncs(doclike)`` is used to extract terms;
+            if None, no nun chunk terms are extracted.
+        dedupe: If True, deduplicate terms whose spans are extracted by multiple types
+            (e.g. a span that is both an n-gram and an entity), as identified by
+            identical (start, stop) indexes in ``doclike``.
+
+    Returns:
+        Next term from ``doclike``, in order of n-grams then entities then noun chunks,
+        with each collection's terms given in order of appearance.
+
+    Note:
+        This function is *not* to be confused with keyterm extraction, which leverages
+        statistics and algorithms to quantify the "key"-ness of terms before returning
+        the top-ranking terms. There is no such scoring or ranking here.
+
+    See Also:
+        - :func:`textacy.extact.ngrams()`
+        - :func:`textacy.extact.entities()`
+        - :func:`textacy.extact.noun_chunks()`
+        - :mod:`textacy.extact.keyterms`
+    """
+    extractors = _get_extractors(ngs, ents, ncs)
+    terms_ = itertoolz.concat(extractor(doclike) for extractor in extractors)
+    if dedupe is True:
+        terms_ = itertoolz.unique(terms_, lambda span: (span.start, span.end))
+    for term in terms_:
+        yield term
+
+
+def _get_extractors(ngs, ents, ncs) -> List[DocLikeToSpans]:
+    all_extractors = [
+        _get_ngs_extractor(ngs), _get_ents_extractor(ents), _get_ncs_extractor(ncs)
+    ]
+    extractors = [extractor for extractor in all_extractors if extractor is not None]
+    if not extractors:
+        raise ValueError("at least one term extractor must be specified")
+    else:
+        return extractors
+
+
+def _get_ngs_extractor(ngs) -> Optional[DocLikeToSpans]:
+    if ngs is None:
+        return None
+    elif callable(ngs):
+        return ngs
+    elif (
+        isinstance(ngs, int) or
+        (isinstance(ngs, Collection) and all(isinstance(ng, int) for ng in ngs))
+    ):
+        return partial(ngrams, n=ngs)
+    else:
+        raise TypeError()
+
+
+def _get_ents_extractor(ents) -> Optional[DocLikeToSpans]:
+    if ents is None:
+        return None
+    elif callable(ents):
+        return ents
+    elif isinstance(ents, bool):
+        return entities
+    else:
+        raise TypeError()
+
+
+def _get_ncs_extractor(ncs) -> Optional[DocLikeToSpans]:
+    if ncs is None:
+        return None
+    elif callable(ncs):
+        return ncs
+    elif isinstance(ncs, bool):
+        return noun_chunks
+    else:
+        raise TypeError()
