@@ -148,7 +148,7 @@ def semistructured_statements(
         fragment_len_range = utils.validate_and_clip_range(
             fragment_len_range, (1, 1000), int
         )
-    for entity_cand in matches.regex_matches(doclike, entity, expand=False):
+    for entity_cand in matches.regex_matches(doclike, entity, alignment_mode="strict"):
         # is the entity candidate a nominal subject?
         if entity_cand.root.dep in _NOMINAL_SUBJ_DEPS:
             cue_cand = entity_cand.root.head
