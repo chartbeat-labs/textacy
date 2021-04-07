@@ -151,7 +151,7 @@ def regex_matches(
     doclike: types.DocLike,
     pattern: str | Pattern,
     *,
-    expand: bool = False,
+    alignment_mode: str = "strict",  # Literal["strict", "contract", "expand"]
 ) -> Iterable[Span]:
     """
     Extract ``Span`` s from a document or sentence whose full texts match against
@@ -161,30 +161,20 @@ def regex_matches(
         doclike
         pattern: Valid regular expression against which to match document text,
             either as a string or compiled pattern object.
-        expand: If True, automatically expand matches to include full overlapping tokens
-            in the case that matches don't exactly align with spaCy's tokenization
-            (i.e. one or both edges fall somewhere mid-token). Otherwise, only match
-            when edges are aligned with token boundaries.
+        alignment_mode: How character indices of regex matches snap to spaCy token
+            boundaries. If "strict", only exact alignments are included (no snapping);
+            if "contract", tokens completely within the character span are included;
+            if "expand", tokens at least partially covered by the character span
+            are included.
 
     Yields:
         Next matching ``Span``.
     """
-    if expand is True:
-        char_to_tok_idxs = {
-            char_idx: tok.i
-            for tok in doclike
-            for char_idx in range(tok.idx, tok.idx + len(tok.text))
-        }
     for match in re.finditer(pattern, doclike.text):
         start_char_idx, end_char_idx = match.span()
-        span = doclike.char_span(start_char_idx, end_char_idx)
-        # .char_span() returns None if character indices don’t map to a valid span
+        span = doclike.char_span(
+            start_char_idx, end_char_idx, alignment_mode=alignment_mode
+        )
+        # Doc.char_span() returns None if character indices don’t map to a valid span
         if span is not None:
             yield span
-        # in case of matches that don't align with token boundaries, we can expand out
-        # to capture the corresponding start/end tokens
-        elif expand is True:
-            start_tok_idx = char_to_tok_idxs.get(start_char_idx)
-            end_tok_idx = char_to_tok_idxs.get(end_char_idx)
-            if start_tok_idx is not None and end_tok_idx is not None:
-                yield doclike[start_tok_idx : end_tok_idx + 1]
