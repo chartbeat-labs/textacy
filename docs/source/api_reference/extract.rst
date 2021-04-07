@@ -10,6 +10,7 @@ Information Extraction
    basics.ngrams
    basics.entities
    basics.noun_chunks
+   basics.terms
    matches.token_matches
    matches.regex_matches
    triples.subject_verb_object_triples

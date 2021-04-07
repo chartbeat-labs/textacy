@@ -305,6 +305,13 @@ def terms(
     from ``doclike`` as a single, concatenated collection, with optional deduplication
     of spans extracted by more than one type.
 
+    .. code-block:: pycon
+
+        >>> extract.terms(doc, ngs=2, ents=True, ncs=True)
+        >>> extract.terms(doc, ngs=lambda doc: extract.ngrams(doc, n=2))
+        >>> extract.terms(doc, ents=extract.entities)
+        >>> extract.terms(doc, ents=partial(extract.entities, include_types="PERSON"))
+
     Args:
         doclike
         ngs: N-gram terms to be extracted.
@@ -318,10 +325,10 @@ def terms(
         ncs: Noun chunk terms to be extracted.
             If True, :func:`textacy.extract.noun_chunks(doclike)` is used to extract
             terms; if a callable, ``ncs(doclike)`` is used to extract terms;
-            if None, no nun chunk terms are extracted.
+            if None, no noun chunk terms are extracted.
         dedupe: If True, deduplicate terms whose spans are extracted by multiple types
             (e.g. a span that is both an n-gram and an entity), as identified by
-            identical (start, stop) indexes in ``doclike``.
+            identical (start, stop) indexes in ``doclike``; otherwise, don't.
 
     Returns:
         Next term from ``doclike``, in order of n-grams then entities then noun chunks,
