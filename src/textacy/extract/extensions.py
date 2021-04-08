@@ -26,8 +26,10 @@ def extract_keyterms(doc: Doc, method: str, **kwargs):
     elif method == "yake":
         return keyterms.yake(doc, **kwargs)
     else:
-        raise errors.value_invalid_msg(
-            "method", method, {"scake", "sgrank", "textrank", "yake"}
+        raise ValueError(
+            errors.value_invalid_msg(
+                "method", method, {"scake", "sgrank", "textrank", "yake"}
+            )
         )
 
 

@@ -19,7 +19,7 @@ def doc():
 
 
 def test_extensions_exist(doc):
-    for name in extract.extensions.DOC_EXTENSIONS.keys():
+    for name in extract.extensions.get_doc_extensions().keys():
         assert doc.has_extension(name)
 
 
@@ -30,6 +30,7 @@ def test_extensions_exist(doc):
         ("extract_ngrams", {"n": 2}),
         ("extract_entities", {}),
         ("extract_noun_chunks", {}),
+        ("extract_terms", {"ngs": 2, "ents": True, "ncs": True}),
         ("extract_token_matches", {"patterns": [{"POS": "NOUN"}]}),
         ("extract_regex_matches", {"pattern": "[Mm]any"}),
         ("extract_subject_verb_object_triples", {}),
@@ -41,7 +42,7 @@ def test_extensions_exist(doc):
 )
 def test_extensions_match(doc, ext_name, kwargs):
     ext = getattr(doc._, ext_name)
-    func = extract.extensions.DOC_EXTENSIONS[ext_name]["method"]
+    func = extract.extensions.get_doc_extensions()[ext_name]["method"]
     ext_val = ext(**kwargs)
     func_val = func(doc, **kwargs)
     if isinstance(func_val, dict):
