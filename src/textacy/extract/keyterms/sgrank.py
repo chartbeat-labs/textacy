@@ -116,7 +116,8 @@ def _get_candidates(
         ext_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos)
     )
     cand_texts = [
-        " ".join(ext_utils.normalize_terms(ctup, normalize)) for ctup in cand_tuples
+        " ".join(ext_utils.terms_to_strings(ctup, normalize or "orth"))
+        for ctup in cand_tuples
     ]
     cand_counts = collections.Counter(cand_texts)
     candidates = [

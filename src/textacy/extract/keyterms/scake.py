@@ -82,7 +82,7 @@ def scake(
             if not (word.is_stop or word.is_punct or word.is_space)
             and (not include_pos or word.pos_ in include_pos)
         )
-        window_words = ext_utils.normalize_terms(window_words, normalize)
+        window_words = ext_utils.terms_to_strings(window_words, normalize)
         cooc_mat.update(
             w1_w2
             for w1_w2 in itertools.combinations(sorted(window_words), 2)
@@ -148,7 +148,7 @@ def _compute_word_scores(
     }
     # "positional weight" component
     word_pos = collections.defaultdict(float)
-    for word, word_str in zip(doc, ext_utils.normalize_terms(doc, normalize)):
+    for word, word_str in zip(doc, ext_utils.terms_to_strings(doc, normalize)):
         word_pos[word_str] += 1 / (word.i + 1)
     return {
         w: word_pos[w] * max_truss_levels[w] * sem_strengths[w] * sem_connectivities[w]
@@ -175,7 +175,7 @@ def _get_candidates(
 
     candidates = ext_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(ext_utils.normalize_terms(candidate, normalize))
+        tuple(ext_utils.terms_to_strings(candidate, normalize))
         for candidate in candidates
     }
 

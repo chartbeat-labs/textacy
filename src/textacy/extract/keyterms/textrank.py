@@ -80,7 +80,7 @@ def textrank(
     word_pos: Optional[Dict[str, float]]
     if position_bias is True:
         word_pos = collections.defaultdict(float)
-        for word, norm_word in zip(doc, ext_utils.normalize_terms(doc, normalize)):
+        for word, norm_word in zip(doc, ext_utils.terms_to_strings(doc, normalize)):
             word_pos[norm_word] += 1 / (word.i + 1)
         sum_word_pos = sum(word_pos.values())
         word_pos = {word: pos / sum_word_pos for word, pos in word_pos.items()}
@@ -130,5 +130,5 @@ def _get_candidates(
 
     candidates = ext_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(ext_utils.normalize_terms(candidate, normalize)) for candidate in candidates
+        tuple(ext_utils.terms_to_strings(candidate, normalize)) for candidate in candidates
     }

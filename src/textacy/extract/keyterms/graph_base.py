@@ -83,7 +83,7 @@ def build_graph_from_terms(
         windows = itertoolz.sliding_window(window_size, terms)
     elif isinstance(first_term, (Span, Token)):
         windows = itertoolz.sliding_window(
-            window_size, ext_utils.normalize_terms(terms, normalize)
+            window_size, ext_utils.terms_to_strings(terms, normalize)
         )
     else:
         raise TypeError(
