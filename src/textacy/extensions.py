@@ -1,13 +1,25 @@
+"""
+:mod:`textacy.extensions`: Inspect, extend, and transform spaCy's core ``Doc``
+data structure, either directly via functions that take a ``Doc`` as their first arg
+or as custom attributes / methods on instantiated docs prepended by an underscore:
+
+.. code-block:: pycon
+
+    >>> doc = textacy.make_spacy_doc("This is a short text.", "en_core_web_sm")
+    >>> print(get_preview(doc))
+    Doc(6 tokens: "This is a short text.")
+    >>> print(doc._.preview)
+    Doc(6 tokens: "This is a short text.")
+"""
 from __future__ import annotations
 
 import operator
-from typing import Any, Callable, Collection, Dict, List, Optional
+from typing import Any, Collection, Dict, List, Optional
 
-import spacy
 import cytoolz
-from spacy.tokens import Doc, Span
+from spacy.tokens import Doc
 
-from . import errors, types
+from . import errors, extract, types
 
 
 def get_preview(doc: Doc) -> str:
@@ -72,7 +84,7 @@ def to_bag_of_words(
         doclike
         by: Attribute by which spaCy ``Token`` s are grouped before counting,
             as given by ``getattr(token, by)``.
-            If "lemma", tokens are counted by their base form w/o inflectional suffixes;
+            If "lemma", tokens are grouped by their base form w/o inflectional suffixes;
             if "lower", by the lowercase form of the token text;
             if "norm", by the normalized form of the token text;
             if "orth", by the token text exactly as it appears in ``doc``.
@@ -101,8 +113,6 @@ def to_bag_of_words(
     See Also:
         :func:`textacy.extract.words()`
     """
-    from . import extract  # HACK: hide the import, ugh
-
     words = extract.words(doclike, **kwargs)
     bow = cytoolz.recipes.countby(operator.attrgetter(by), words)
     bow = _reweight_bag(weighting, bow, doclike)
@@ -162,8 +172,6 @@ def to_bag_of_terms(
     See Also:
         :func:`textacy.extract.terms()`
     """
-    from . import extract  # HACK: hide the import, ugh
-
     terms = extract.terms(doclike, ngs=ngs, ents=ents, ncs=ncs, dedupe=dedupe)
     # spaCy made some awkward changes in the Span API, making it harder to get int ids
     # and adding inconsistencies with equivalent Token API
