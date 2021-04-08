@@ -19,7 +19,7 @@ LangLikeInContext = Union[
 ]
 
 DocLike = Union[Doc, Span]
-TokLike = Union[Token, Span]
+SpanLike = Union[Span, Token]
 
 Record = Tuple[str, dict]
 DocData = Union[str, Record, Doc]
