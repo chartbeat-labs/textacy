@@ -176,8 +176,8 @@ class TestCorpusMethods:
             n_docs = corpus.n_docs
 
     def test_word_counts(self, corpus):
-        abs_counts = corpus.word_counts(weighting="count", normalize="lower")
-        rel_counts = corpus.word_counts(weighting="freq", normalize="lower")
+        abs_counts = corpus.word_counts(weighting="count", by="lower")
+        rel_counts = corpus.word_counts(weighting="freq", by="lower")
         assert isinstance(abs_counts, dict)
         assert all(isinstance(count, int) for count in abs_counts.values())
         assert min(abs_counts.values()) > 0
@@ -190,9 +190,9 @@ class TestCorpusMethods:
             corpus.word_counts(weighting="foo")
 
     def test_word_doc_counts(self, corpus):
-        abs_counts = corpus.word_doc_counts(weighting="count", normalize="lower")
-        rel_counts = corpus.word_doc_counts(weighting="freq", normalize="lower")
-        inv_counts = corpus.word_doc_counts(weighting="idf", normalize="lower")
+        abs_counts = corpus.word_doc_counts(weighting="count", by="lower")
+        rel_counts = corpus.word_doc_counts(weighting="freq", by="lower")
+        inv_counts = corpus.word_doc_counts(weighting="idf", by="lower")
         assert isinstance(abs_counts, dict)
         assert all(isinstance(count, int) for count in abs_counts.values())
         assert min(abs_counts.values()) > 0
