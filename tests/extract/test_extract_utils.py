@@ -140,5 +140,5 @@ def test_aggregate_term_variants():
         ),
     ],
 )
-def test_clean_terms(input_, output_):
-    assert list(utils.clean_terms(input_)) == output_
+def test_clean_term_strings(input_, output_):
+    assert list(utils.clean_term_strings(input_)) == output_

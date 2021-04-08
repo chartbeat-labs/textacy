@@ -53,10 +53,11 @@ def terms_to_strings(
         yield term
 
 
-def clean_terms(terms: Iterable[str]) -> Iterable[str]:
+def clean_term_strings(terms: Iterable[str]) -> Iterable[str]:
     """
-    Clean up a sequence of single- or multi-word strings: strip leading/trailing
-    junk chars, handle dangling parens and odd hyphenation, etc.
+    Clean up a sequence of single- or multi-word terms as strings:
+    strip leading/trailing junk chars, handle dangling parens and odd hyphenation,
+    and normalize whitespace.
 
     Args:
         terms: Sequence of terms such as "environment", "plastic pollution",
