@@ -285,9 +285,8 @@ class TestIOUtils:
         )
 
     def test_get_filepaths_match_regex(self):
-        assert (
-            len(list(io.get_filepaths(TESTS_DIR, match_regex="io", extension=".py"))) == 1
-        )
+        result = list(io.get_filepaths(TESTS_DIR, match_regex="_io", extension=".py"))
+        assert len(result) == 1
 
     def test_get_filename_from_url(self):
         url_fnames = [
