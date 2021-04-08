@@ -1,6 +1,61 @@
 import pytest
 
+import textacy
 from textacy.extract import utils
+
+
+@pytest.fixture(scope="module")
+def doc():
+    lang = textacy.load_spacy_lang("en_core_web_sm")
+    text = (
+        "Many years later, as he faced the firing squad, Colonel Aureliano Buendía was "
+        "to remember that distant afternoon when his father took him to discover ice. "
+        "At that time Macondo was a village of twenty adobe houses, built on the bank "
+        "of a river of clear water that ran along a bed of polished stones, which were "
+        "white and enormous, like prehistoric eggs. The world was so recent that many "
+        "things lacked names, and in order to indicate them it was necessary to point."
+    )
+    return textacy.make_spacy_doc(text, lang=lang)
+
+
+@pytest.fixture(scope="module")
+def term_tokens(doc):
+    return list(textacy.extract.words(doc))
+
+
+@pytest.fixture(scope="module")
+def term_spans(doc):
+    return list(textacy.extract.ngrams(doc, 2))
+
+
+class TestTermsToStrings:
+
+    def test_term_spans(self, term_spans):
+        results = list(utils.terms_to_strings(term_spans, "orth"))
+        assert results
+        assert isinstance(results[0], str)
+
+    def test_term_tokens(self, term_tokens):
+        results = list(utils.terms_to_strings(term_tokens, "orth"))
+        assert results
+        assert isinstance(results[0], str)
+
+    @pytest.mark.parametrize("by", ["orth", "lower", "lemma"])
+    def test_by_str(self, by, term_spans):
+        results = list(utils.terms_to_strings(term_spans, by))
+        assert results
+        assert isinstance(results[0], str)
+
+    @pytest.mark.parametrize("by", [lambda term: term.text])
+    def test_by_callable(self, by, term_spans):
+        results = list(utils.terms_to_strings(term_spans, by))
+        assert results
+        assert isinstance(results[0], str)
+
+    @pytest.mark.parametrize("by", ["LEMMA", None, True])
+    def test_by_invalid(self, by, term_spans):
+        with pytest.raises(ValueError):
+            _ = list(utils.terms_to_strings(term_spans, by))
 
 
 def test_aggregate_term_variants():
