@@ -62,9 +62,7 @@ def to_bag_of_words(
     *,
     by: str = "lemma_",  # Literal["lemma", "lemma_", "lower", "lower_", "norm", "norm_", "orth", "orth_"]
     weighting: str = "count",  # Literal["count", "freq", "binary"]
-    filter_stops: bool = True,
-    filter_punct: bool = True,
-    filter_nums: bool = False,
+    **kwargs,
 ) -> Dict[int, int | float] | Dict[str, int | float]:
     """
     Transform a ``Doc`` or ``Span`` into a bag-of-words: the set of unique words therein
@@ -85,9 +83,10 @@ def to_bag_of_words(
             if "freq", weights are counts normalized by the total token count,
             giving their relative frequency of occurrence;
             if "binary", weights are set equal to 1.
-        filter_stops: If True, stop words are removed after counting.
-        filter_punct: If True, punctuation tokens are removed after counting.
-        filter_nums: If True, number-like tokens are removed after counting.
+        **kwargs: Passed directly on to :func:`textacy.extract.words()`
+            - filter_stops: If True, stop words are removed before counting.
+            - filter_punct: If True, punctuation tokens are removed before counting.
+            - filter_nums: If True, number-like tokens are removed before counting.
 
     Returns:
         Mapping of a unique word id or string (depending on the value of ``by``)
@@ -104,12 +103,7 @@ def to_bag_of_words(
     """
     from . import extract  # HACK: hide the import, ugh
 
-    words = extract.words(
-        doclike,
-        filter_stops=filter_stops,
-        filter_punct=filter_punct,
-        filter_nums=filter_nums,
-    )
+    words = extract.words(doclike, **kwargs)
     bow = cytoolz.recipes.countby(operator.attrgetter(by), words)
     bow = _reweight_bag(weighting, bow, doclike)
     return bow
@@ -171,12 +165,15 @@ def to_bag_of_terms(
     from . import extract  # HACK: hide the import, ugh
 
     terms = extract.terms(doclike, ngs=ngs, ents=ents, ncs=ncs, dedupe=dedupe)
+    # spaCy made some awkward changes in the Span API, making it harder to get int ids
+    # and adding inconsistencies with equivalent Token API
+    # so, here are some hacks to spare users that annoyance
     if by.startswith("lower"):
         bot = cytoolz.recipes.countby(lambda span: span.text.lower(), terms)
     else:
-        bot = cytoolz.recipes.countby(operator.attrgetter(by), terms)
-    # spaCy made some changes in the Span API, making it harder to get int ids
-    # so here we take the term strings and manually convert back to ints
+        by_ = by if by.endswith("_") else f"{by}_"
+        bot = cytoolz.recipes.countby(operator.attrgetter(by_), terms)
+    # if needed, here we take the term strings and manually convert back to ints
     if not by.endswith("_"):
         ss = doclike.vocab.strings
         bot = {ss.add(term_str): weight for term_str, weight in bot.items()}
