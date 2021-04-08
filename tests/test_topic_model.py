@@ -21,7 +21,7 @@ def term_lists():
     ]
     corpus = Corpus("en_core_web_sm", data=texts)
     term_lists_ = [
-        doc._.to_terms_list(ngrams=1, entities=None, as_strings=True)
+        (term.text.lower() for term in doc._.extract_terms(ngs=1, ents=None))
         for doc in corpus
     ]
     return term_lists_
