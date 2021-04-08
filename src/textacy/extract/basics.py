@@ -17,9 +17,6 @@ from spacy.tokens import Span, Token
 from .. import constants, errors, types, utils
 
 
-DocLikeToSpans = Callable[[types.DocLike], Iterable[Span]]
-
-
 def words(
     doclike: types.DocLike,
     *,
@@ -295,9 +292,9 @@ def noun_chunks(
 def terms(
     doclike: types.DocLike,
     *,
-    ngs: Optional[int | Collection[int] | DocLikeToSpans] = None,
-    ents: Optional[bool | DocLikeToSpans] = None,
-    ncs: Optional[bool | DocLikeToSpans] = None,
+    ngs: Optional[int | Collection[int] | types.DocLikeToSpans] = None,
+    ents: Optional[bool | types.DocLikeToSpans] = None,
+    ncs: Optional[bool | types.DocLikeToSpans] = None,
     dedupe: bool = True,
 ) -> Iterable[Span]:
     """
@@ -353,7 +350,7 @@ def terms(
         yield term
 
 
-def _get_extractors(ngs, ents, ncs) -> List[DocLikeToSpans]:
+def _get_extractors(ngs, ents, ncs) -> List[types.DocLikeToSpans]:
     all_extractors = [
         _get_ngs_extractor(ngs), _get_ents_extractor(ents), _get_ncs_extractor(ncs)
     ]
@@ -364,7 +361,7 @@ def _get_extractors(ngs, ents, ncs) -> List[DocLikeToSpans]:
         return extractors
 
 
-def _get_ngs_extractor(ngs) -> Optional[DocLikeToSpans]:
+def _get_ngs_extractor(ngs) -> Optional[types.DocLikeToSpans]:
     if ngs is None:
         return None
     elif callable(ngs):
@@ -378,7 +375,7 @@ def _get_ngs_extractor(ngs) -> Optional[DocLikeToSpans]:
         raise TypeError()
 
 
-def _get_ents_extractor(ents) -> Optional[DocLikeToSpans]:
+def _get_ents_extractor(ents) -> Optional[types.DocLikeToSpans]:
     if ents is None:
         return None
     elif callable(ents):
@@ -389,7 +386,7 @@ def _get_ents_extractor(ents) -> Optional[DocLikeToSpans]:
         raise TypeError()
 
 
-def _get_ncs_extractor(ncs) -> Optional[DocLikeToSpans]:
+def _get_ncs_extractor(ncs) -> Optional[types.DocLikeToSpans]:
     if ncs is None:
         return None
     elif callable(ncs):
