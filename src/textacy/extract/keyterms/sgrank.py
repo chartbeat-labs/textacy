@@ -10,7 +10,7 @@ import networkx as nx
 from spacy.tokens import Doc, Span
 
 from ... import utils
-from . import utils as kt_utils
+from .. import utils as ext_utils
 
 
 Candidate = collections.namedtuple("Candidate", ["text", "idx", "length", "count"])
@@ -97,7 +97,7 @@ def sgrank(
     term_ranks = nx.pagerank_scipy(graph, alpha=0.85, weight="weight")
     sorted_term_ranks = sorted(term_ranks.items(), key=itemgetter(1, 0), reverse=True)
 
-    return kt_utils.get_filtered_topn_terms(sorted_term_ranks, topn, match_threshold=0.8)
+    return ext_utils.get_filtered_topn_terms(sorted_term_ranks, topn, match_threshold=0.8)
 
 
 def _get_candidates(
@@ -113,10 +113,10 @@ def _get_candidates(
     """
     min_term_freq = min(max(len(doc) // 1000, 1), 4)
     cand_tuples = list(
-        kt_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos)
+        ext_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos)
     )
     cand_texts = [
-        " ".join(kt_utils.normalize_terms(ctup, normalize)) for ctup in cand_tuples
+        " ".join(ext_utils.normalize_terms(ctup, normalize)) for ctup in cand_tuples
     ]
     cand_counts = collections.Counter(cand_texts)
     candidates = [

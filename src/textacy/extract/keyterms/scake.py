@@ -20,7 +20,7 @@ from cytoolz import itertoolz
 from spacy.tokens import Doc, Token
 
 from ... import utils
-from . import utils as kt_utils
+from .. import utils as ext_utils
 
 
 def scake(
@@ -82,7 +82,7 @@ def scake(
             if not (word.is_stop or word.is_punct or word.is_space)
             and (not include_pos or word.pos_ in include_pos)
         )
-        window_words = kt_utils.normalize_terms(window_words, normalize)
+        window_words = ext_utils.normalize_terms(window_words, normalize)
         cooc_mat.update(
             w1_w2
             for w1_w2 in itertools.combinations(sorted(window_words), 2)
@@ -113,7 +113,7 @@ def scake(
     sorted_candidate_scores = sorted(
         candidate_scores.items(), key=itemgetter(1, 0), reverse=True
     )
-    return kt_utils.get_filtered_topn_terms(
+    return ext_utils.get_filtered_topn_terms(
         sorted_candidate_scores, topn, match_threshold=0.8
     )
 
@@ -148,7 +148,7 @@ def _compute_word_scores(
     }
     # "positional weight" component
     word_pos = collections.defaultdict(float)
-    for word, word_str in zip(doc, kt_utils.normalize_terms(doc, normalize)):
+    for word, word_str in zip(doc, ext_utils.normalize_terms(doc, normalize)):
         word_pos[word_str] += 1 / (word.i + 1)
     return {
         w: word_pos[w] * max_truss_levels[w] * sem_strengths[w] * sem_connectivities[w]
@@ -173,9 +173,9 @@ def _get_candidates(
             not include_pos or tok.pos_ in include_pos
         )
 
-    candidates = kt_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
+    candidates = ext_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(kt_utils.normalize_terms(candidate, normalize))
+        tuple(ext_utils.normalize_terms(candidate, normalize))
         for candidate in candidates
     }
 

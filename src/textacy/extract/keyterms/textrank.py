@@ -7,8 +7,8 @@ from typing import Callable, Collection, Dict, List, Optional, Set, Tuple
 from spacy.tokens import Doc, Token
 
 from ... import utils
+from .. import utils as ext_utils
 from . import graph_base
-from . import utils as kt_utils
 
 
 def textrank(
@@ -80,7 +80,7 @@ def textrank(
     word_pos: Optional[Dict[str, float]]
     if position_bias is True:
         word_pos = collections.defaultdict(float)
-        for word, norm_word in zip(doc, kt_utils.normalize_terms(doc, normalize)):
+        for word, norm_word in zip(doc, ext_utils.normalize_terms(doc, normalize)):
             word_pos[norm_word] += 1 / (word.i + 1)
         sum_word_pos = sum(word_pos.values())
         word_pos = {word: pos / sum_word_pos for word, pos in word_pos.items()}
@@ -108,7 +108,7 @@ def textrank(
     sorted_candidate_scores = sorted(
         candidate_scores.items(), key=itemgetter(1, 0), reverse=True
     )
-    return kt_utils.get_filtered_topn_terms(
+    return ext_utils.get_filtered_topn_terms(
         sorted_candidate_scores, topn, match_threshold=0.8
     )
 
@@ -128,7 +128,7 @@ def _get_candidates(
             include_pos is None or tok.pos_ in include_pos
         )
 
-    candidates = kt_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
+    candidates = ext_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(kt_utils.normalize_terms(candidate, normalize)) for candidate in candidates
+        tuple(ext_utils.normalize_terms(candidate, normalize)) for candidate in candidates
     }
