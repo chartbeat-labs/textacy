@@ -71,7 +71,7 @@ def test_tokenized_text(doc):
 class TestBagOfWords():
 
     def test_default(self, doc):
-        result = doc._.bag_of_words()
+        result = doc._.to_bag_of_words()
         assert isinstance(result, dict)
         assert all(
             isinstance(key, str) and isinstance(val, int) for key, val in result.items()
@@ -81,7 +81,7 @@ class TestBagOfWords():
         "by", ["lemma_", "lemma", "lower_", "lower", "norm_", "norm", "orth_", "orth"]
     )
     def test_by(self, by, doc):
-        result = doc._.bag_of_words(by=by)
+        result = doc._.to_bag_of_words(by=by)
         assert isinstance(result, dict)
         if by.endswith("_"):
             assert all(isinstance(key, str) for key in result.keys())
@@ -90,7 +90,7 @@ class TestBagOfWords():
 
     @pytest.mark.parametrize("weighting", ["count", "freq", "binary"])
     def test_weighting(self, weighting, doc):
-        result = doc._.bag_of_words(weighting=weighting)
+        result = doc._.to_bag_of_words(weighting=weighting)
         assert isinstance(result, dict)
         if weighting == "freq":
             assert all(isinstance(val, float) for val in result.values())
@@ -102,32 +102,32 @@ class TestBagOfWords():
         [{"filter_stops": True}, {"filter_punct": True}, {"filter_nums": True}],
     )
     def test_kwargs(self, kwargs, doc):
-        result = doc._.bag_of_words(**kwargs)
+        result = doc._.to_bag_of_words(**kwargs)
         assert isinstance(result, dict)
 
     @pytest.mark.parametrize("by", ["LEMMA", spacy.attrs.LEMMA, True])
     def test_invalid_by(self, by, doc):
         with pytest.raises((AttributeError, TypeError)):
-            _ = doc._.bag_of_words(by=by)
+            _ = doc._.to_bag_of_words(by=by)
 
     @pytest.mark.parametrize("weighting", ["COUNT", "frequency", True])
     def test_invalid_weighting(self, weighting, doc):
         with pytest.raises(ValueError):
-            _ = doc._.bag_of_words(weighting=weighting)
+            _ = doc._.to_bag_of_words(weighting=weighting)
 
 
 class TestBagOfTerms():
 
     def test_all_null(self, doc):
         with pytest.raises(ValueError):
-            _ = doc._.bag_of_terms()
+            _ = doc._.to_bag_of_terms()
 
     @pytest.mark.parametrize(
         "kwargs",
         [{"ngs": 2}, {"ngs": [2, 3], "ents": True}, {"ents": True, "ncs": True}],
     )
     def test_simple_kwargs(self, kwargs, doc):
-        result = doc._.bag_of_terms(**kwargs)
+        result = doc._.to_bag_of_terms(**kwargs)
         assert isinstance(result, dict)
         assert all(
             isinstance(key, str) and isinstance(val, int) for key, val in result.items()
@@ -137,7 +137,7 @@ class TestBagOfTerms():
         "by", ["lemma_", "lemma", "lower_", "lower", "orth_", "orth"]
     )
     def test_by(self, by, doc):
-        result = doc._.bag_of_terms(by=by, ngs=2)
+        result = doc._.to_bag_of_terms(by=by, ngs=2)
         assert isinstance(result, dict)
         if by.endswith("_"):
             assert all(isinstance(key, str) for key in result.keys())
@@ -146,7 +146,7 @@ class TestBagOfTerms():
 
     @pytest.mark.parametrize("weighting", ["count", "freq", "binary"])
     def test_weighting(self, weighting, doc):
-        result = doc._.bag_of_terms(weighting=weighting, ngs=2)
+        result = doc._.to_bag_of_terms(weighting=weighting, ngs=2)
         assert isinstance(result, dict)
         if weighting == "freq":
             assert all(isinstance(val, float) for val in result.values())
@@ -156,9 +156,9 @@ class TestBagOfTerms():
     @pytest.mark.parametrize("by", ["LEMMA", spacy.attrs.LEMMA, True])
     def test_invalid_by(self, by, doc):
         with pytest.raises((AttributeError, TypeError)):
-            _ = doc._.bag_of_terms(by=by, ngs=2)
+            _ = doc._.to_bag_of_terms(by=by, ngs=2)
 
     @pytest.mark.parametrize("weighting", ["COUNT", "frequency", True])
     def test_invalid_weighting(self, weighting, doc):
         with pytest.raises(ValueError):
-            _ = doc._.bag_of_terms(weighting=weighting, ngs=2)
+            _ = doc._.to_bag_of_terms(weighting=weighting, ngs=2)

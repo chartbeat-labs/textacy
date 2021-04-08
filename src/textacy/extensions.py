@@ -231,7 +231,7 @@ _DOC_EXTENSIONS: Dict[str, Dict[str, Any]] = {
     "preview": {"getter": get_preview},
     "meta": {"getter": get_meta, "setter": set_meta},
     # method extensions
-    "tokenized_text": {"method": to_tokenized_text},
-    "bag_of_words": {"method": to_bag_of_words},
-    "bag_of_terms": {"method": to_bag_of_terms},
+    "to_tokenized_text": {"method": to_tokenized_text},
+    "to_bag_of_words": {"method": to_bag_of_words},
+    "to_bag_of_terms": {"method": to_bag_of_terms},
 }
