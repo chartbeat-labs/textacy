@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import operator
 import re
 from typing import (
     Callable,
@@ -18,6 +19,38 @@ from spacy.tokens import Doc, Token
 
 from .. import constants, errors, types, utils
 from . import matches
+
+
+def terms_to_strings(
+    terms: Iterable[types.SpanLike], by: str | Callable[[types.SpanLike], str],
+) -> Iterable[str]:
+    """
+    Transform a sequence of terms as spaCy ``Token`` s or ``Span`` s into strings.
+
+    Args:
+        terms
+        by: Method by which terms are transformed into strings.
+            If "orth", terms are represented by their text exactly as written;
+            if "lower", by the lowercased form of their text;
+            if "lemma", by their base form w/o inflectional suffixes;
+            if a callable, must accept a ``Token`` or ``Span`` and return a string.
+
+    Yields:
+        Next term in ``terms``, as a string.
+    """
+    if by == "lower":
+        terms = (term.text.lower() for term in terms)
+    elif by in ("lemma", "orth"):
+        by_ = operator.attrgetter(f"{by}_")
+        terms = (by_(term) for term in terms)
+    elif callable(by):
+        terms = (by(term) for term in terms)
+    else:
+        raise ValueError(
+            errors.value_invalid_msg("by", by, {"orth", "lower", "lemma", Callable})
+        )
+    for term in terms:
+        yield term
 
 
 def clean_terms(terms: Iterable[str]) -> Iterable[str]:
@@ -68,42 +101,6 @@ def clean_terms(terms: Iterable[str]) -> Iterable[str]:
     for term in terms:
         if re.search(r"\w", term):
             yield term
-
-
-def normalize_terms(
-    terms: Iterable[types.SpanLike],
-    normalize: Optional[str | Callable[[types.SpanLike], str]],
-) -> Iterable[str]:
-    """
-    Transform a sequence of terms as spaCy ``Token`` s or ``Span`` s
-    into normalized strings.
-
-    Args:
-        terms
-        normalize: If "lemma", lemmatize terms; if "lower", lowercase terms;
-            if None, use the form of terms as they appear in ``terms``;
-            if a callable, must accept a ``Token`` or ``Span`` and return a str,
-            e.g. :func:`textacy.spacier.utils.get_normalized_text()`.
-
-    Yields:
-        str
-    """
-    if normalize == "lemma":
-        terms = (term.lemma_ for term in terms)
-    elif normalize == "lower":
-        terms = (term.text.lower() for term in terms)
-    elif normalize is None:
-        terms = (term.text for term in terms)
-    elif callable(normalize):
-        terms = (normalize(term) for term in terms)
-    else:
-        raise ValueError(
-            errors.value_invalid_msg(
-                "normalize", normalize, {"lemma", "lower", None, Callable}
-            )
-        )
-    for term in terms:
-        yield term
 
 
 def aggregate_term_variants(
