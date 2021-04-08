@@ -112,7 +112,7 @@ def make_spacy_doc(
         >>> make_spacy_doc(doc, lang="en_core_web_sm")
         >>> make_spacy_doc(doc, lang="es_core_news_sm")
         ...
-        ValueError: lang of spacy pipeline used to process document ('en_core_web_sm') must be the same as `lang` ('es_core_news_sm')
+        ValueError: `spacy.Vocab` used to process document must be the same as that used by the `lang` pipeline ('es_core_news_sm')
 
     Args:
         data: Make a :class:`spacy.tokens.Doc` from a text or (text, metadata) pair.
@@ -188,7 +188,7 @@ def _make_spacy_doc_from_doc(doc: Doc, lang: types.LangLikeInContext) -> Doc:
     # that they share the same vocab
     if doc.vocab is not spacy_lang.vocab:
         raise ValueError(
-            f"`spacy.vocab.Vocab` used to process document ({doc.vocab}) "
-            f"must be the same as that used by the `lang` pipeline ({spacy_lang.vocab})"
+            f"`spacy.Vocab` used to process document ({doc.vocab}) must be the same "
+            f"as that used by the `lang` pipeline ({spacy_lang.vocab})"
         )
     return doc

@@ -5,7 +5,6 @@ API Reference
    :maxdepth: 2
 
    lang_doc_corpus
-   spacier
    datasets_resources
    preprocessing
    extract

@@ -1,4 +1,7 @@
 """
+spaCy Utils
+-----------
+
 :mod:`textacy.spacier.utils`: Helper functions for working with / extending spaCy's
 core functionality.
 """
