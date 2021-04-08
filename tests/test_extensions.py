@@ -58,7 +58,7 @@ class TestMeta:
 
 
 def test_tokenized_text(doc):
-    result = doc._.tokenized_text()
+    result = doc._.to_tokenized_text()
     assert result
     assert (
         isinstance(result, list) and
