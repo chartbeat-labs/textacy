@@ -2,8 +2,8 @@ import pytest
 import numpy as np
 from scipy.sparse import coo_matrix
 
-from textacy import Corpus
-from textacy import representations
+import textacy
+from textacy import extract, representations
 
 
 @pytest.fixture(scope="module")
@@ -18,10 +18,10 @@ def tokenized_docs():
         "Why does the lamb love Mary so? The eager children cry.",
         "Mary loves the lamb, you know, the teacher did reply.",
     ]
-    corpus = Corpus("en_core_web_sm", data=texts)
+    nlp = textacy.load_spacy_lang("en_core_web_sm")
+    docs = list(nlp.pipe(texts))
     tokenized_docs = [
-        [term.text.lower() for term in doc._.extract_terms(ngs=1, ents=None)]
-        for doc in corpus
+        [term.text.lower() for term in extract.terms(doc, ngs=1)] for doc in docs
     ]
     return tokenized_docs
 
@@ -79,118 +79,133 @@ def lamb_and_children_idxs(vectorizer_and_dtm):
     return idx_lamb, idx_children
 
 
-def test_vectorizer_weighting_combinations(tokenized_docs):
-    init_params = [
-        dict(tf_type="linear"),
-        dict(tf_type="sqrt"),
-        dict(tf_type="sqrt", dl_type="sqrt"),
-        dict(tf_type="linear", idf_type="bm25"),
-        dict(tf_type="linear", idf_type="standard", norm="l1"),
-        dict(tf_type="linear", idf_type="standard", dl_type="sqrt"),
-        dict(tf_type="linear", idf_type="smooth", dl_type="log"),
-        dict(tf_type="bm25", idf_type="bm25"),
-        dict(tf_type="bm25", dl_type=None),
-        dict(tf_type="bm25", idf_type="bm25"),
-        dict(tf_type="bm25", idf_type="smooth", norm="l2"),
-    ]
-    for ip in init_params:
-        vectorizer = representations.Vectorizer(**ip)
-        doc_term_matrix = vectorizer.fit(tokenized_docs)
-        vectorizer.weighting
+class TestVectorizer:
 
-
-def test_vectorizer_id_to_term(vectorizer_and_dtm):
-    vectorizer, _ = vectorizer_and_dtm
-    assert isinstance(vectorizer.id_to_term, dict)
-    assert all(isinstance(key, int) for key in vectorizer.id_to_term)
-    assert all(
-        isinstance(val, str) for val in vectorizer.id_to_term.values()
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"tf_type": "linear"},
+            {"tf_type": "linear", "idf_type": "standard"},
+            {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear"},
+            {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear", "norm": "l1"},
+            {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear", "norm": "l2"},
+            {"tf_type": "sqrt", "idf_type": "smooth", "dl_type": "sqrt"},
+            {"tf_type": "log", "idf_type": "bm25", "dl_type": "log"},
+            {"tf_type": "binary", "idf_type": None, "dl_type": None},
+        ],
     )
-    assert len(vectorizer.id_to_term) == len(vectorizer.vocabulary_terms)
+    def test_weighting_combos(self, kwargs, tokenized_docs):
+        vectorizer = representations.Vectorizer(**kwargs)
+        _ = vectorizer.fit(tokenized_docs)
+        _ = vectorizer.weighting
 
-
-def test_vectorizer_terms_list(vectorizer_and_dtm):
-    vectorizer, dtm = vectorizer_and_dtm
-    assert isinstance(vectorizer.terms_list, list)
-    assert isinstance(vectorizer.terms_list[0], str)
-    assert len(vectorizer.terms_list) == len(vectorizer.vocabulary_terms)
-    assert len(vectorizer.terms_list) == dtm.shape[1]
-    assert vectorizer.terms_list == sorted(vectorizer.terms_list)
-
-
-def test_grp_vectorizer_id_to_grp(grp_vectorizer_and_gtm):
-    grp_vectorizer, _ = grp_vectorizer_and_gtm
-    assert isinstance(grp_vectorizer.id_to_grp, dict)
-    assert all(isinstance(key, int) for key in grp_vectorizer.id_to_grp)
-    assert all(
-        isinstance(val, str) for val in grp_vectorizer.id_to_grp.values()
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"min_df": -1},
+            {"max_df": -1},
+            {"max_n_terms": -1},
+            {"vocabulary_terms": "foo bar bat baz"},
+        ]
     )
-    assert len(grp_vectorizer.id_to_grp) == len(grp_vectorizer.vocabulary_grps)
-
-
-def test_grp_vectorizer_terms_and_grp_list(grp_vectorizer_and_gtm):
-    grp_vectorizer, gtm = grp_vectorizer_and_gtm
-    assert isinstance(grp_vectorizer.terms_list, list)
-    assert isinstance(grp_vectorizer.grps_list, list)
-    assert isinstance(grp_vectorizer.terms_list[0], str)
-    assert len(grp_vectorizer.terms_list) == len(grp_vectorizer.vocabulary_terms)
-    assert len(grp_vectorizer.terms_list) == gtm.shape[1]
-    assert grp_vectorizer.terms_list == sorted(grp_vectorizer.terms_list)
-    assert len(grp_vectorizer.grps_list) == len(grp_vectorizer.vocabulary_grps)
-    assert len(grp_vectorizer.grps_list) == gtm.shape[0]
-    assert grp_vectorizer.grps_list == sorted(grp_vectorizer.grps_list)
-
-
-def test_grp_vectorizer_2_fits(grp_vectorizer_and_gtm_2):
-    grp_vectorizer, _ = grp_vectorizer_and_gtm_2
-
-
-def test_vectorizer_fixed_vocab(tokenized_docs):
-    vocabulary_terms = ["lamb", "snow", "school", "rule", "teacher"]
-    vectorizer = representations.Vectorizer(vocabulary_terms=vocabulary_terms)
-    doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
-    assert len(vectorizer.vocabulary_terms) == len(vocabulary_terms)
-    assert doc_term_matrix.shape[1] == len(vocabulary_terms)
-    assert sorted(vectorizer.terms_list) == sorted(vocabulary_terms)
-
-
-def test_grp_vectorizer_fixed_vocab(tokenized_docs, groups):
-    vocabulary_terms = ["lamb", "snow", "school", "rule", "teacher"]
-    vocabulary_grps = ["a", "b"]
-    grp_vectorizer = representations.GroupVectorizer(
-        vocabulary_terms=vocabulary_terms, vocabulary_grps=vocabulary_grps
-    )
-    grp_term_matrix = grp_vectorizer.fit_transform(tokenized_docs, groups)
-    assert len(grp_vectorizer.vocabulary_terms) == len(vocabulary_terms)
-    assert grp_term_matrix.shape[1] == len(vocabulary_terms)
-    assert sorted(grp_vectorizer.terms_list) == sorted(vocabulary_terms)
-    assert len(grp_vectorizer.vocabulary_grps) == len(vocabulary_grps)
-    assert grp_term_matrix.shape[0] == len(vocabulary_grps)
-    assert sorted(grp_vectorizer.grps_list) == sorted(vocabulary_grps)
-
-
-def test_vectorizer_bad_init_params():
-    bad_init_params = (
-        {"min_df": -1},
-        {"max_df": -1},
-        {"max_n_terms": -1},
-        {"vocabulary_terms": "foo bar bat baz"},
-    )
-    for bad_init_param in bad_init_params:
+    def test_bad_init_params(self, kwargs):
         with pytest.raises(ValueError):
-            _ = representations.Vectorizer(**bad_init_param)
+            _ = representations.Vectorizer(**kwargs)
+
+    def test_id_to_term(self, vectorizer_and_dtm):
+        vectorizer, _ = vectorizer_and_dtm
+        assert isinstance(vectorizer.id_to_term, dict)
+        assert all(isinstance(key, int) for key in vectorizer.id_to_term.keys())
+        assert all(
+            isinstance(val, str) for val in vectorizer.id_to_term.values()
+        )
+        assert len(vectorizer.id_to_term) == len(vectorizer.vocabulary_terms)
+
+    def test_terms_list(self, vectorizer_and_dtm):
+        vectorizer, dtm = vectorizer_and_dtm
+        assert isinstance(vectorizer.terms_list, list)
+        assert isinstance(vectorizer.terms_list[0], str)
+        assert len(vectorizer.terms_list) == len(vectorizer.vocabulary_terms)
+        assert len(vectorizer.terms_list) == dtm.shape[1]
+        assert vectorizer.terms_list == sorted(vectorizer.terms_list)
+
+    def test_vectorizer_fixed_vocab(self, tokenized_docs):
+        vocabulary_terms = ["lamb", "snow", "school", "rule", "teacher"]
+        vectorizer = representations.Vectorizer(vocabulary_terms=vocabulary_terms)
+        doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
+        assert len(vectorizer.vocabulary_terms) == len(vocabulary_terms)
+        assert doc_term_matrix.shape[1] == len(vocabulary_terms)
+        assert sorted(vectorizer.terms_list) == sorted(vocabulary_terms)
+
+    def test_bad_transform(self, tokenized_docs):
+        vectorizer = representations.Vectorizer()
+        with pytest.raises(ValueError):
+            _ = vectorizer.transform(tokenized_docs)
 
 
-def test_vectorizer_bad_transform(tokenized_docs):
-    vectorizer = representations.Vectorizer()
-    with pytest.raises(ValueError):
-        _ = vectorizer.transform(tokenized_docs)
+class TestGroupVectorizer:
 
+    @pytest.mark.parametrize(
+        "kwargs",
+        [
+            {"tf_type": "linear"},
+            {"tf_type": "linear", "idf_type": "standard"},
+            {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear"},
+            {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear", "norm": "l1"},
+            {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear", "norm": "l2"},
+            {"tf_type": "sqrt", "idf_type": "smooth", "dl_type": "sqrt"},
+            {"tf_type": "log", "idf_type": "bm25", "dl_type": "log"},
+            {"tf_type": "binary", "idf_type": None, "dl_type": None},
+        ],
+    )
+    def test_weighting_combos(self, kwargs, tokenized_docs, groups):
+        vectorizer = representations.GroupVectorizer(**kwargs)
+        _ = vectorizer.fit(tokenized_docs, groups)
+        _ = vectorizer.weighting
 
-def test_grp_vectorizer_bad_transform(tokenized_docs, groups):
-    grp_vectorizer = representations.GroupVectorizer()
-    with pytest.raises(ValueError):
-        _ = grp_vectorizer.transform(tokenized_docs, groups)
+    def test_id_to_grp(self, grp_vectorizer_and_gtm):
+        grp_vectorizer, _ = grp_vectorizer_and_gtm
+        assert isinstance(grp_vectorizer.id_to_grp, dict)
+        assert all(isinstance(key, int) for key in grp_vectorizer.id_to_grp.keys())
+        assert all(
+            isinstance(val, str) for val in grp_vectorizer.id_to_grp.values()
+        )
+        assert len(grp_vectorizer.id_to_grp) == len(grp_vectorizer.vocabulary_grps)
+
+    def test_terms_and_grp_list(self, grp_vectorizer_and_gtm):
+        grp_vectorizer, gtm = grp_vectorizer_and_gtm
+        assert isinstance(grp_vectorizer.terms_list, list)
+        assert isinstance(grp_vectorizer.grps_list, list)
+        assert isinstance(grp_vectorizer.terms_list[0], str)
+        assert len(grp_vectorizer.terms_list) == len(grp_vectorizer.vocabulary_terms)
+        assert len(grp_vectorizer.terms_list) == gtm.shape[1]
+        assert grp_vectorizer.terms_list == sorted(grp_vectorizer.terms_list)
+        assert len(grp_vectorizer.grps_list) == len(grp_vectorizer.vocabulary_grps)
+        assert len(grp_vectorizer.grps_list) == gtm.shape[0]
+        assert grp_vectorizer.grps_list == sorted(grp_vectorizer.grps_list)
+
+    def test_alt_fits(self, grp_vectorizer_and_gtm_2):
+        grp_vectorizer, _ = grp_vectorizer_and_gtm_2
+        # TODO: is this all we need???
+
+    def test_fixed_vocab(self, tokenized_docs, groups):
+        vocabulary_terms = ["lamb", "snow", "school", "rule", "teacher"]
+        vocabulary_grps = ["a", "b"]
+        grp_vectorizer = representations.GroupVectorizer(
+            vocabulary_terms=vocabulary_terms, vocabulary_grps=vocabulary_grps
+        )
+        grp_term_matrix = grp_vectorizer.fit_transform(tokenized_docs, groups)
+        assert len(grp_vectorizer.vocabulary_terms) == len(vocabulary_terms)
+        assert grp_term_matrix.shape[1] == len(vocabulary_terms)
+        assert sorted(grp_vectorizer.terms_list) == sorted(vocabulary_terms)
+        assert len(grp_vectorizer.vocabulary_grps) == len(vocabulary_grps)
+        assert grp_term_matrix.shape[0] == len(vocabulary_grps)
+        assert sorted(grp_vectorizer.grps_list) == sorted(vocabulary_grps)
+
+    def test_grp_vectorizer_bad_transform(self, tokenized_docs, groups):
+        grp_vectorizer = representations.GroupVectorizer()
+        with pytest.raises(ValueError):
+            _ = grp_vectorizer.transform(tokenized_docs, groups)
 
 
 def test_get_term_freqs(vectorizer_and_dtm, lamb_and_children_idxs):
