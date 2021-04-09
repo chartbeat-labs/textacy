@@ -47,7 +47,7 @@ def build_cooccurrence_network(
 
     .. code-block:: pycon
 
-        >>> data = [[tok.text for tok in sent] for sent in doc.sents]
+        >>> data = [[tok.text for tok in sent] for sent in docs[0].sents]
         >>> graph = build_cooccurrence_network(data, window_size=2)
         >>> sorted(graph.adjacency())[0]
         ('.', {'lamb': {'weight': 1}, 'snow': {'weight': 1}})
@@ -129,8 +129,10 @@ def build_cooccurrence_network(
             (w1, w2, {"weight": weight}) for (w1, w2), weight in cooc_counts.items()
         )
     elif edge_weighting == "binary":
+        edge_data = {"weight": 1}
         graph.add_edges_from(
-            w1_w2 for window in windows for w1_w2 in itertools.combinations(window, 2)
+            (w1, w2, edge_data)
+            for window in windows for (w1, w2) in itertools.combinations(window, 2)
         )
     else:
         raise ValueError(
