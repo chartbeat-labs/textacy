@@ -13,12 +13,14 @@ with filtering and weighting functionality as described above.
 See the :class:`Vectorizer` and :class:`GroupVectorizer` docstrings for usage
 examples and explanations of the various weighting schemes.
 """
-from typing import Optional
+from __future__ import annotations
+
+from typing import Optional, Tuple
 
 import collections
 import operator
 from array import array
-from typing import Dict, List
+from typing import Dict, Iterable, List
 
 import numpy as np
 import scipy.sparse as sp
@@ -35,7 +37,7 @@ BM25_B = 0.75
 class Vectorizer:
     """
     Transform one or more tokenized documents into a sparse document-term matrix
-    of shape (# docs, # unique terms), with flexibly weighted and normalized values.
+    of shape (# docs, # unique terms), with flexible weighting/normalization of values.
 
     Stream a corpus with metadata from disk:
 
@@ -43,24 +45,24 @@ class Vectorizer:
 
         >>> ds = textacy.datasets.CapitolWords()
         >>> records = ds.records(limit=1000)
-        >>> corpus = textacy.Corpus("en", data=records)
-        >>> corpus
-        Corpus(1000 docs; 538172 tokens)
+        >>> corpus = textacy.Corpus("en_core_web_sm", data=records)
+        >>> print(corpus)
+        Corpus(1000 docs, 538397 tokens)
 
     Tokenize and vectorize the first 600 documents of this corpus:
 
     .. code-block:: pycon
 
         >>> tokenized_docs = (
-        ...     doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
+        ...     (term.lemma_ for term in textacy.extract.terms(doc, ngs=1, ents=True))
         ...     for doc in corpus[:600])
         >>> vectorizer = Vectorizer(
-        ...     apply_idf=True, norm="l2",
+        ...     tf_type="linear", idf_type="smooth", norm="l2",
         ...     min_df=3, max_df=0.95)
         >>> doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
         >>> doc_term_matrix
-        <600x4346 sparse matrix of type '<class 'numpy.float64'>'
-                with 69673 stored elements in Compressed Sparse Row format>
+        <600x4412 sparse matrix of type '<class 'numpy.float64'>'
+                with 65210 stored elements in Compressed Sparse Row format>
 
     Tokenize and vectorize the remaining 400 documents of the corpus, using only
     the groups, terms, and weights learned in the previous step:
@@ -68,12 +70,12 @@ class Vectorizer:
     .. code-block:: pycon
 
         >>> tokenized_docs = (
-        ...     doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
+        ...     (term.lemma_ for term in textacy.extract.terms(doc, ngs=1, ents=True))
         ...     for doc in corpus[600:])
         >>> doc_term_matrix = vectorizer.transform(tokenized_docs)
         >>> doc_term_matrix
-        <400x4346 sparse matrix of type '<class 'numpy.float64'>'
-                with 38756 stored elements in Compressed Sparse Row format>
+        <400x4412 sparse matrix of type '<class 'numpy.float64'>'
+                with 36212 stored elements in Compressed Sparse Row format>
 
     Inspect the terms associated with columns; they're sorted alphabetically:
 
@@ -83,7 +85,7 @@ class Vectorizer:
         ['', '$', '$ 1 million', '$ 1.2 billion', '$ 10 billion']
 
     (Btw: That empty string shouldn't be there. Somehow, spaCy is labeling it as
-    a named entity...)
+    a named entity...?)
 
     If known in advance, limit the terms included in vectorized outputs
     to a particular set of values:
@@ -91,16 +93,16 @@ class Vectorizer:
     .. code-block:: pycon
 
         >>> tokenized_docs = (
-        ...     doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
+        ...     (term.lemma_ for term in textacy.extract.terms(doc, ngs=1, ents=True))
         ...     for doc in corpus[:600])
         >>> vectorizer = Vectorizer(
-        ...     apply_idf=True, idf_type="smooth", norm="l2",
+        ...     idf_type="smooth", norm="l2",
         ...     min_df=3, max_df=0.95,
         ...     vocabulary_terms=["president", "bill", "unanimous", "distinguished", "american"])
         >>> doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
         >>> doc_term_matrix
         <600x5 sparse matrix of type '<class 'numpy.float64'>'
-                with 844 stored elements in Compressed Sparse Row format>
+                with 516 stored elements in Compressed Sparse Row format>
         >>> vectorizer.terms_list
         ['american', 'bill', 'distinguished', 'president', 'unanimous']
 
@@ -109,40 +111,45 @@ class Vectorizer:
 
     .. code-block:: pycon
 
-        >>> money_idx = vectorizer.vocabulary_terms["$"]
+        >>> tokenized_docs = [
+            [term.lemma_ for term in textacy.extract.terms(doc, ngs=1, ents=True)]
+            for doc in corpus[:600]]
         >>> doc_term_matrix = Vectorizer(
         ...     tf_type="linear", norm=None, min_df=3, max_df=0.95
-        ...     ).fit_transform(tokenized_docs)
-        >>> print(doc_term_matrix[0:7, money_idx].toarray())
+        ... ).fit_transform(tokenized_docs)
+        >>> print(doc_term_matrix[:8, vectorizer.vocabulary_terms["$"]].toarray())
         [[0]
          [0]
          [1]
          [4]
          [0]
          [0]
-         [2]]
+         [2]
+         [4]]
         >>> doc_term_matrix = Vectorizer(
-        ...     tf_type="sqrt", apply_dl=True, dl_type="sqrt", norm=None, min_df=3, max_df=0.95
-        ...     ).fit_transform(tokenized_docs)
-        >>> print(doc_term_matrix[0:7, money_idx].toarray())
+        ...     tf_type="sqrt", dl_type="sqrt", norm=None, min_df=3, max_df=0.95
+        ... ).fit_transform(tokenized_docs)
+        >>> print(doc_term_matrix[:8, vectorizer.vocabulary_terms["$"]].toarray())
         [[0.        ]
          [0.        ]
-         [0.10101525]
-         [0.26037782]
+         [0.10660036]
+         [0.2773501 ]
          [0.        ]
          [0.        ]
-         [0.11396058]]
+         [0.11704115]
+         [0.24806947]]
         >>> doc_term_matrix = Vectorizer(
-        ...     tf_type="bm25", apply_idf=True, idf_type="smooth", norm=None, min_df=3, max_df=0.95
-        ...     ).fit_transform(tokenized_docs)
-        >>> print(doc_term_matrix[0:7, money_idx].toarray())
+        ...     tf_type="bm25", idf_type="smooth", norm=None, min_df=3, max_df=0.95
+        ... ).fit_transform(tokenized_docs)
+        >>> print(doc_term_matrix[:8, vectorizer.vocabulary_terms["$"]].toarray())
         [[0.        ]
          [0.        ]
-         [3.28353965]
-         [5.82763722]
+         [2.68009606]
+         [4.97732126]
          [0.        ]
          [0.        ]
-         [4.83933924]]
+         [3.87124987]
+         [4.97732126]]
 
     If you're not sure what's going on mathematically, :attr:`Vectorizer.weighting`
     gives the formula being used to calculate weights, based on the parameters
@@ -193,54 +200,48 @@ class Vectorizer:
       Params: ``tf_type="bm25", apply_idf=True, idf_type="smooth", apply_dl=True, dl_type="linear"``
 
     Args:
-        tf_type ({"linear", "sqrt", "log", "binary"}): Type of term frequency (tf)
-            to use for weights' local component:
+        tf_type: Type of term frequency (tf) to use for weights' local component:
 
             - "linear": tf (tfs are already linear, so left as-is)
             - "sqrt": tf => sqrt(tf)
             - "log": tf => log(tf) + 1
             - "binary": tf => 1
 
-        apply_idf (bool): If True, apply global idfs to local term weights, i.e.
-            divide per-doc term frequencies by the (log of the) total number
-            of documents in which they appear; otherwise, don't.
-        idf_type ({"standard", "smooth", "bm25"}): Type of inverse document
-            frequency (idf) to use for weights' global component:
+        idf_type: Type of inverse document frequency (idf) to use for weights'
+            global component:
 
             - "standard": idf = log(n_docs / df) + 1.0
             - "smooth": idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
               to all document frequencies, as if a single document containing
-              every unique term was added to the corpus. This prevents zero divisions!
+              every unique term was added to the corpus.
             - "bm25": idf = log((n_docs - df + 0.5) / (df + 0.5)), which is
               a form commonly used in information retrieval that allows for
               very common terms to receive negative weights.
+            - None: no global weighting is applied to local term weights.
 
-        apply_dl (bool): If True, normalize local(+global) weights by doc length,
-            i.e. divide by the total number of in-vocabulary terms appearing
-            in a given doc; otherwise, don't.
-        dl_type ({"linear", "sqrt", "log"}): Type of document-length scaling
-            to use for weights' normalization component:
+        dl_type: Type of document-length scaling to use for weights'
+            normalization component:
 
             - "linear": dl (dls are already linear, so left as-is)
             - "sqrt": dl => sqrt(dl)
             - "log": dl => log(dl)
+            - None: no normalization is applied to local(*global?) weights
 
-        norm ({"l1", "l2"} or None): If "l1" or "l2", normalize weights by the
-            L1 or L2 norms, respectively, of row-wise vectors; otherwise, don't.
-        vocabulary_terms (Dict[str, int] or Iterable[str]): Mapping of unique term
-            string to unique term id, or an iterable of term strings that gets
-            converted into a suitable mapping. Note that, if specified, vectorized
-            outputs will include *only* these terms as columns.
-        min_df (float or int): If float, value is the fractional proportion of
-            the total number of documents, which must be in [0.0, 1.0]. If int,
-            value is the absolute number. Filter terms whose document frequency
-            is less than ``min_df``.
-        max_df (float or int): If float, value is the fractional proportion of
-            the total number of documents, which must be in [0.0, 1.0]. If int,
-            value is the absolute number. Filter terms whose document frequency
-            is greater than ``max_df``.
-        max_n_terms (int): Only include terms whose document frequency is within
+        norm: If "l1" or "l2", normalize weights by the L1 or L2 norms, respectively,
+            of row-wise vectors; otherwise, don't.
+        min_df: Minimum number of documents in which a term must appear for it to be
+            included in the vocabulary and as a column in a transformed doc-term matrix.
+            If float, value is the fractional proportion of the total number of docs,
+            which must be in [0.0, 1.0]; if int, value is the absolute number.
+        max_df: Maximum number of documents in which a term may appear for it to be
+            included in the vocabulary and as a column in a transformed doc-term matrix.
+            If float, value is the fractional proportion of the total number of docs,
+            which must be in [0.0, 1.0]; if int, value is the absolute number.
+        max_n_terms: If specified, only include terms whose document frequency is within
             the top ``max_n_terms``.
+        vocabulary_terms: Mapping of unique term string to unique term id, or
+            an iterable of term strings that gets converted into such a mapping.
+            Note that, if specified, vectorized outputs will include *only* these terms.
 
     Attributes:
         vocabulary_terms (Dict[str, int]): Mapping of unique term string to unique
@@ -254,11 +255,11 @@ class Vectorizer:
         tf_type: str = "linear",  # Literal["linear", "sqrt", "log", "binary"]
         idf_type: Optional[str] = None,  # Optional[Literal["standard", "smooth", "bm25"]]
         dl_type: Optional[str] = None,  # Optional[Literal["linear", "sqrt", "log"]]
-        norm=None,
-        min_df=1,
-        max_df=1.0,
-        max_n_terms=None,
-        vocabulary_terms=None,
+        norm: Optional[str] = None,  # Optional[Literal["l1", "l2"]]
+        min_df: int | float = 1,
+        max_df: int | float = 1.0,
+        max_n_terms: Optional[int] = None,
+        vocabulary_terms: Optional[Dict[str, int] | Iterable[str]] = None,
     ):
         # sanity check numeric arguments
         if min_df < 0 or max_df < 0:
@@ -275,7 +276,7 @@ class Vectorizer:
         self.vocabulary_terms, self._fixed_terms = self._validate_vocabulary(
             vocabulary_terms
         )
-        self.id_to_term_ = {}
+        self.id_to_term_: Dict[int, str] = {}
         self._idf_diag = None
         self._avg_doc_length = None
 
@@ -376,30 +377,28 @@ class Vectorizer:
             )
         ]
 
-    def fit(self, tokenized_docs):
+    def fit(self, tokenized_docs: Iterable[Iterable[str]]) -> "Vectorizer":
         """
         Count terms in ``tokenized_docs`` and, if not already provided, build up
         a vocabulary based those terms. Fit and store global weights (IDFs)
         and, if needed for term weighting, the average document length.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
-                documents, where each is a sequence of (str) terms. For example::
+            tokenized_docs: A sequence of tokenized documents, where each is
+                a sequence of term strings. For example::
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc._.to_terms_list(as_strings=True)
-                    ...  for doc in docs)
 
         Returns:
-            :class:`Vectorizer`: The instance that has just been fit.
+            Vectorizer instance that has just been fit.
         """
         _ = self._fit(tokenized_docs)
         return self
 
-    def fit_transform(self, tokenized_docs):
+    def fit_transform(self, tokenized_docs: Iterable[Iterable[str]]) -> sp.csr_matrix:
         """
         Count terms in ``tokenized_docs`` and, if not already provided, build up
         a vocabulary based those terms. Fit and store global weights (IDFs)
@@ -408,19 +407,17 @@ class Vectorizer:
         weighted according to the parameters in :class:`Vectorizer` initialization.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
-                documents, where each is a sequence of (str) terms. For example::
+            tokenized_docs: A sequence of tokenized documents, where each is
+                a sequence of term strings. For example::
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc._.to_terms_list(as_strings=True)
-                    ...  for doc in docs)
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`: The transformed document-term matrix.
-            Rows correspond to documents and columns correspond to terms.
+            The transformed document-term matrix, where rows correspond to documents
+            and columns correspond to terms, as a sparse row matrix.
         """
         # count terms and fit global weights
         doc_term_matrix = self._fit(tokenized_docs)
@@ -428,26 +425,24 @@ class Vectorizer:
         doc_term_matrix = self._reweight_values(doc_term_matrix)
         return doc_term_matrix
 
-    def transform(self, tokenized_docs):
+    def transform(self, tokenized_docs: Iterable[Iterable[str]]) -> sp.csr_matrix:
         """
         Transform ``tokenized_docs`` into a document-term matrix with values
         weighted according to the parameters in :class:`Vectorizer` initialization
         and the global weights computed by calling :meth:`Vectorizer.fit()`.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
-                documents, where each is a sequence of (str) terms. For example::
+            tokenized_docs: A sequence of tokenized documents, where each is
+                a sequence of term strings. For example::
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc._.to_terms_list(as_strings=True)
-                    ...  for doc in docs)
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`: The transformed document-term matrix.
-            Rows correspond to documents and columns correspond to terms.
+            The transformed document-term matrix, where rows correspond to documents
+            and columns correspond to terms, as a sparse row matrix.
 
         Note:
             For best results, the tokenization used to produce ``tokenized_docs``
@@ -462,7 +457,7 @@ class Vectorizer:
         doc_term_matrix, _ = self._count_terms(tokenized_docs, True)
         return self._reweight_values(doc_term_matrix)
 
-    def _fit(self, tokenized_docs):
+    def _fit(self, tokenized_docs: Iterable[Iterable[str]]) -> sp.csr_matrix:
         """
         Count terms and, if :attr:`Vectorizer.fixed_terms` is False, build up
         a vocabulary based on the terms found in ``tokenized_docs``. Transform
@@ -471,10 +466,10 @@ class Vectorizer:
         is not None, the average doc length.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]])
+            tokenized_docs
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`
+            Document-term matrix.
         """
         # count terms and, if not provided on init, build up a vocabulary
         doc_term_matrix, vocabulary_terms = self._count_terms(
@@ -512,18 +507,19 @@ class Vectorizer:
 
         return doc_term_matrix
 
-    def _count_terms(self, tokenized_docs, fixed_vocab):
+    def _count_terms(
+        self, tokenized_docs: Iterable[Iterable[str]], fixed_vocab: bool
+    ) -> Tuple[sp.csr_matrix, Dict[str, int]]:
         """
         Count terms found in ``tokenized_docs`` and, if ``fixed_vocab`` is False,
         build up a vocabulary based on those terms.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]])
-            fixed_vocab (bool)
+            tokenized_docs
+            fixed_vocab
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`
-            Dict[str, int]
+            Document-term matrix and vocabulary used to make it.
         """
         if fixed_vocab is False:
             # add a new value when a new term is seen
@@ -565,18 +561,19 @@ class Vectorizer:
 
         return doc_term_matrix, vocabulary
 
-    def _filter_terms(self, doc_term_matrix, vocabulary):
+    def _filter_terms(
+        self, doc_term_matrix: sp.csr_matrix, vocabulary: Dict[str, int]
+    ) -> Tuple[sp.csr_matrix, Dict[str, int]]:
         """
         Filter terms in ``vocabulary`` by their document frequency or information
         content, as specified in :class:`Vectorizer` initialization.
 
         Args:
-            doc_term_matrix (:class:`sp.sparse.csr_matrix`)
-            vocabulary (Dict[str, int])
+            doc_term_matrix
+            vocabulary
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`
-            Dict[str, int]
+            Filtered document-term matrix and filtered vocabulary to go with it.
         """
         if self.max_df != 1.0 or self.min_df != 1 or self.max_n_terms is not None:
             doc_term_matrix, vocabulary = filter_terms_by_df(
@@ -588,19 +585,18 @@ class Vectorizer:
             )
         return doc_term_matrix, vocabulary
 
-    def _sort_vocab_and_matrix(self, matrix, vocabulary, axis):
+    def _sort_vocab_and_matrix(
+        self, matrix: sp.csr_matrix, vocabulary: Dict[str, int], axis: str | int
+    ) -> sp.csr_matrix:
         """
         Sort terms in ``vocabulary`` alphabetically, modifying the vocabulary
         in-place, and returning a correspondingly reordered ``matrix`` along
         its rows or columns, depending on ``axis``.
 
         Args:
-            matrix (:class:`sp.sparse.csr_matrix`)
-            vocabulary (Dict[str, int])
-            axis ({'rows', 'columns'} or {0, 1})
-
-        Returns:
-            :class:`scipy.sparse.csr_matrix`
+            matrix
+            vocabulary
+            axis: "rows" or 0, "columns" or 1
         """
         sorted_vocab = sorted(vocabulary.items())
         new_idx_array = np.empty(len(sorted_vocab), dtype=np.int32)
@@ -617,17 +613,17 @@ class Vectorizer:
                 errors.value_invalid_msg("axis", axis, {"rows", "columns", 0, 1})
             )
 
-    def _reweight_values(self, doc_term_matrix):
+    def _reweight_values(self, doc_term_matrix: sp.csr_matrix) -> sp.csr_matrix:
         """
         Re-weight values in a doc-term matrix according to parameters specified
         in :class:`Vectorizer` initialization: binary or tf-idf weighting,
         sublinear term-frequency, document-normalized weights.
 
         Args:
-            doc_term_matrix (:class:`sp.sparse.csr_matrix`)
+            doc_term_matrix
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`
+            Reweighted doc-term matrix.
         """
         # re-weight the local components (term freqs)
         if self.tf_type == "binary":
@@ -686,9 +682,9 @@ class Vectorizer:
         return doc_term_matrix
 
     @property
-    def weighting(self):
+    def weighting(self) -> str:
         """
-        str: A mathematical representation of the overall weighting scheme
+        A mathematical representation of the overall weighting scheme
         used to determine values in the vectorized matrix, depending on the
         params used to initialize the :class:`Vectorizer`.
         """
@@ -739,42 +735,42 @@ class GroupVectorizer(Vectorizer):
 
         >>> ds = textacy.datasets.CapitolWords()
         >>> records = ds.records(limit=1000)
-        >>> corpus = textacy.Corpus("en", data=records)
+        >>> corpus = textacy.Corpus("en_core_web_sm", data=records)
         >>> corpus
-        Corpus(1000 docs; 538172 tokens)
+        Corpus(1000 docs, 538397 tokens)
 
     Tokenize and vectorize the first 600 documents of this corpus, where terms
     are grouped not by documents but by a categorical value in the docs' metadata::
 
         >>> tokenized_docs, groups = textacy.io.unzip(
-        ...     (doc._.to_terms_list(ngrams=1, entities=True, as_strings=True),
+        ...     ((term.lemma_ for term in textacy.extract.terms(doc, ngs=1, ents=True)),
         ...      doc._.meta["speaker_name"])
         ...     for doc in corpus[:600])
         >>> vectorizer = GroupVectorizer(
-        ...     apply_idf=True, idf_type="smooth", norm="l2",
+        ...     tf_type="linear", idf_type="smooth", norm="l2",
         ...     min_df=3, max_df=0.95)
         >>> grp_term_matrix = vectorizer.fit_transform(tokenized_docs, groups)
         >>> grp_term_matrix
-        <5x1793 sparse matrix of type '<class 'numpy.float64'>'
-                with 6075 stored elements in Compressed Sparse Row format>
+        <5x1822 sparse matrix of type '<class 'numpy.float64'>'
+                with 6139 stored elements in Compressed Sparse Row format>
 
     Tokenize and vectorize the remaining 400 documents of the corpus, using only
     the groups, terms, and weights learned in the previous step::
 
         >>> tokenized_docs, groups = textacy.io.unzip(
-        ...     (doc._.to_terms_list(ngrams=1, entities=True, as_strings=True),
+        ...     ((term.lemma_ for term in textacy.extract.terms(doc, ngs=1, ents=True)),
         ...      doc._.meta["speaker_name"])
         ...     for doc in corpus[600:])
         >>> grp_term_matrix = vectorizer.transform(tokenized_docs, groups)
         >>> grp_term_matrix
-        <5x1793 sparse matrix of type '<class 'numpy.float64'>'
-                with 4440 stored elements in Compressed Sparse Row format>
+        <5x1822 sparse matrix of type '<class 'numpy.float64'>'
+                with 4414 stored elements in Compressed Sparse Row format>
 
     Inspect the terms associated with columns and groups associated with rows;
     they're sorted alphabetically::
 
         >>> vectorizer.terms_list[:5]
-        ['$ 1 million', '$ 160 million', '$ 7 billion', '0', '1 minute']
+        ['', '$ 1 million', '$ 160 million', '$ 5 billion', '$ 7 billion']
         >>> vectorizer.grps_list
         ['Bernie Sanders', 'John Kasich', 'Joseph Biden', 'Lindsey Graham', 'Rick Santorum']
 
@@ -782,18 +778,18 @@ class GroupVectorizer(Vectorizer):
     to a particular set of values::
 
         >>> tokenized_docs, groups = textacy.io.unzip(
-        ...     (doc._.to_terms_list(ngrams=1, entities=True, as_strings=True),
+        ...     ((term.lemma_ for term in textacy.extract.terms(doc, ngs=1, ents=True)),
         ...      doc._.meta["speaker_name"])
         ...     for doc in corpus[:600])
         >>> vectorizer = GroupVectorizer(
-        ...     apply_idf=True, idf_type="smooth", norm="l2",
+        ...     tf_type="linear", idf_type="smooth", norm="l2",
         ...     min_df=3, max_df=0.95,
         ...     vocabulary_terms=["legislation", "federal government", "house", "constitutional"],
         ...     vocabulary_grps=["Bernie Sanders", "Lindsey Graham", "Rick Santorum"])
         >>> grp_term_matrix = vectorizer.fit_transform(tokenized_docs, groups)
         >>> grp_term_matrix
         <3x4 sparse matrix of type '<class 'numpy.float64'>'
-                with 12 stored elements in Compressed Sparse Row format>
+                with 9 stored elements in Compressed Sparse Row format>
         >>> vectorizer.terms_list
         ['constitutional', 'federal government', 'house', 'legislation']
         >>> vectorizer.grps_list
@@ -803,19 +799,15 @@ class GroupVectorizer(Vectorizer):
     out the :class:`Vectorizer` docstring.
 
     Args:
-        tf_type ({"linear", "sqrt", "log", "binary"}): Type of term frequency (tf)
-            to use for weights' local component:
+        tf_type: Type of term frequency (tf) to use for weights' local component:
 
             - "linear": tf (tfs are already linear, so left as-is)
             - "sqrt": tf => sqrt(tf)
             - "log": tf => log(tf) + 1
             - "binary": tf => 1
 
-        apply_idf (bool): If True, apply global idfs to local term weights, i.e.
-            divide per-doc term frequencies by the total number of documents
-            in which they appear (well, the log of that number); otherwise, don't.
-        idf_type ({"standard", "smooth", "bm25"}): Type of inverse document
-            frequency (idf) to use for weights' global component:
+        idf_type: Type of inverse document frequency (idf) to use for weights'
+            global component:
 
             - "standard": idf = log(n_docs / df) + 1.0
             - "smooth": idf = log(n_docs + 1 / df + 1) + 1.0, i.e. 1 is added
@@ -824,37 +816,34 @@ class GroupVectorizer(Vectorizer):
             - "bm25": idf = log((n_docs - df + 0.5) / (df + 0.5)), which is
               a form commonly used in information retrieval that allows for
               very common terms to receive negative weights.
+            - None: no global weighting is applied to local term weights.
 
-        apply_dl (bool): If True, normalize local(+global) weights by doc length,
-            i.e. divide by the total number of in-vocabulary terms appearing
-            in a given doc; otherwise, don't.
-        dl_type ({"linear", "sqrt", "log"}): Type of document-length scaling
-            to use for weights' normalization component:
+        dl_type: Type of document-length scaling to use for weights'
+            normalization component:
 
             - "linear": dl (dls are already linear, so left as-is)
             - "sqrt": dl => sqrt(dl)
             - "log": dl => log(dl)
+            - None: no normalization is applied to local(*global?) weights
 
-        norm ({"l1", "l2"} or None): If "l1" or "l2", normalize weights by the
-            L1 or L2 norms, respectively, of row-wise vectors; otherwise, don't.
-        vocabulary_terms (Dict[str, int] or Iterable[str]): Mapping of unique term
-            string to unique term id, or an iterable of term strings that gets
-            converted into a suitable mapping. Note that, if specified, vectorized
-            outputs will include *only* these terms as columns.
-        vocabulary_grps (Dict[str, int] or Iterable[str]): Mapping of unique group
-            string to unique group id, or an iterable of group strings that gets
-            converted into a suitable mapping. Note that, if specified, vectorized
-            outputs will include *only* these groups as rows.
-        min_df (float or int): If float, value is the fractional proportion of
-            the total number of documents, which must be in [0.0, 1.0]. If int,
-            value is the absolute number. Filter terms whose document frequency
-            is less than ``min_df``.
-        max_df (float or int): If float, value is the fractional proportion of
-            the total number of documents, which must be in [0.0, 1.0]. If int,
-            value is the absolute number. Filter terms whose document frequency
-            is greater than ``max_df``.
-        max_n_terms (int): Only include terms whose document frequency is within
+        norm: If "l1" or "l2", normalize weights by the L1 or L2 norms, respectively,
+            of row-wise vectors; otherwise, don't.
+        min_df: Minimum number of documents in which a term must appear for it to be
+            included in the vocabulary and as a column in a transformed doc-term matrix.
+            If float, value is the fractional proportion of the total number of docs,
+            which must be in [0.0, 1.0]; if int, value is the absolute number.
+        max_df: Maximum number of documents in which a term may appear for it to be
+            included in the vocabulary and as a column in a transformed doc-term matrix.
+            If float, value is the fractional proportion of the total number of docs,
+            which must be in [0.0, 1.0]; if int, value is the absolute number.
+        max_n_terms: If specified, only include terms whose document frequency is within
             the top ``max_n_terms``.
+        vocabulary_terms: Mapping of unique term string to unique term id, or
+            an iterable of term strings that gets converted into such a mapping.
+            Note that, if specified, vectorized output will include *only* these terms.
+        vocabulary_grps: Mapping of unique group string to unique group id, or
+            an iterable of group strings that gets converted into such a mapping.
+            Note that, if specified, vectorized output will include *only* these groups.
 
     Attributes:
         vocabulary_terms (Dict[str, int]): Mapping of unique term string to unique
@@ -863,11 +852,6 @@ class GroupVectorizer(Vectorizer):
         vocabulary_grps (Dict[str, int]): Mapping of unique group string to unique
             group id, either provided on instantiation or generated by calling
             :meth:`GroupVectorizer.fit()` on a collection of tokenized documents.
-        id_to_term (Dict[int, str]): Mapping of unique term id to unique term
-            string, i.e. the inverse of :attr:`GroupVectorizer.vocabulary_terms`.
-            This mapping is only generated as needed.
-        terms_list (List[str]): List of term strings in column order of
-            vectorized outputs.
 
     See Also:
         :class:`Vectorizer`
@@ -876,15 +860,15 @@ class GroupVectorizer(Vectorizer):
     def __init__(
         self,
         *,
-        tf_type: str = "linear",
-        idf_type: Optional[str] = None,
-        dl_type : Optional[str] = None,
-        norm=None,
-        min_df=1,
-        max_df=1.0,
-        max_n_terms=None,
-        vocabulary_terms=None,
-        vocabulary_grps=None,
+        tf_type: str = "linear",  # Literal["linear", "sqrt", "log", "binary"]
+        idf_type: Optional[str] = None,  # Optional[Literal["standard", "smooth", "bm25"]]
+        dl_type: Optional[str] = None,  # Optional[Literal["linear", "sqrt", "log"]]
+        norm: Optional[str] = None,  # Optional[Literal["l1", "l2"]]
+        min_df: int | float = 1,
+        max_df: int | float = 1.0,
+        max_n_terms: Optional[int] = None,
+        vocabulary_terms: Optional[Dict[str, int] | Iterable[str]] = None,
+        vocabulary_grps: Optional[Dict[str, int] | Iterable[str]] = None,
     ):
         super().__init__(
             tf_type=tf_type,
@@ -900,7 +884,7 @@ class GroupVectorizer(Vectorizer):
         self.vocabulary_grps, self._fixed_grps = self._validate_vocabulary(
             vocabulary_grps
         )
-        self.id_to_grp_ = {}
+        self.id_to_grp_: Dict[int, str] = {}
 
     @property
     def id_to_grp(self) -> Dict[int, str]:
@@ -937,7 +921,9 @@ class GroupVectorizer(Vectorizer):
             )
         ]
 
-    def fit(self, tokenized_docs, grps):
+    def fit(
+        self, tokenized_docs: Iterable[Iterable[str]], grps: Iterable[str]
+    ) -> "GroupVectorizer":
         """
         Count terms in ``tokenized_docs`` and, if not already provided, build up
         a vocabulary based those terms; do the same for the groups in ``grps``.
@@ -945,27 +931,27 @@ class GroupVectorizer(Vectorizer):
         the average document length.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
-                documents, where each is a sequence of (str) terms. For example::
+            tokenized_docs: A sequence of tokenized documents, where each is
+                a sequence of term strings. For example::
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc._.to_terms_list(as_strings=True)
-                    ...  for doc in docs)
 
-            grps (Iterable[str]): Sequence of group names by which the terms in
-                ``tokenized_docs`` are aggregated, where the first item in ``grps``
-                corresponds to the first item in ``tokenized_docs``, and so on.
+            grps: Sequence of group names by which the terms in ``tokenized_docs``
+                are aggregated, where the first item in ``grps`` corresponds to
+                the first item in ``tokenized_docs``, and so on.
 
         Returns:
-            :class:`GroupVectorizer`: The instance that has just been fit.
+            GroupVectorizer instance that has just been fit.
         """
         _ = self._fit(tokenized_docs, grps)
         return self
 
-    def fit_transform(self, tokenized_docs, grps):
+    def fit_transform(
+        self, tokenized_docs: Iterable[Iterable[str]], grps: Iterable[str]
+    ) -> sp.csr_matrix:
         """
         Count terms in ``tokenized_docs`` and, if not already provided, build up
         a vocabulary based those terms; do the same for the groups in ``grps``.
@@ -975,23 +961,21 @@ class GroupVectorizer(Vectorizer):
         :class:`GroupVectorizer` initialization.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
-                documents, where each is a sequence of (str) terms. For example::
+            tokenized_docs: A sequence of tokenized documents, where each is
+                a sequence of term strings. For example::
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc._.to_terms_list(as_strings=True)
-                    ...  for doc in docs)
 
-            grps (Iterable[str]): Sequence of group names by which the terms in
-                ``tokenized_docs`` are aggregated, where the first item in ``grps``
-                corresponds to the first item in ``tokenized_docs``, and so on.
+            grps: Sequence of group names by which the terms in ``tokenized_docs``
+                are aggregated, where the first item in ``grps`` corresponds to
+                the first item in ``tokenized_docs``, and so on.
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`: The transformed group-term matrix.
-            Rows correspond to groups and columns correspond to terms.
+            The transformed group-term matrix, where rows correspond to groups
+            and columns correspond to terms, as a sparse row matrix.
         """
         # count terms and fit global weights
         grp_term_matrix = self._fit(tokenized_docs, grps)
@@ -999,7 +983,9 @@ class GroupVectorizer(Vectorizer):
         grp_term_matrix = self._reweight_values(grp_term_matrix)
         return grp_term_matrix
 
-    def transform(self, tokenized_docs, grps):
+    def transform(
+        self, tokenized_docs: Iterable[Iterable[str]], grps: Iterable[str]
+    ) -> sp.csr_matrix:
         """
         Transform ``tokenized_docs`` and ``grps`` into a group-term matrix with
         values weighted according to the parameters in :class:`GroupVectorizer`
@@ -1007,23 +993,21 @@ class GroupVectorizer(Vectorizer):
         :meth:`GroupVectorizer.fit()`.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]]): A sequence of tokenized
-                documents, where each is a sequence of (str) terms. For example::
+            tokenized_docs: A sequence of tokenized documents, where each is
+                a sequence of term strings. For example::
 
                     >>> ([tok.lemma_ for tok in spacy_doc]
                     ...  for spacy_doc in spacy_docs)
                     >>> ((ne.text for ne in extract.entities(doc))
                     ...  for doc in corpus)
-                    >>> (doc._.to_terms_list(as_strings=True)
-                    ...  for doc in docs)
 
-            grps (Iterable[str]): Sequence of group names by which the terms in
-                ``tokenized_docs`` are aggregated, where the first item in ``grps``
-                corresponds to the first item in ``tokenized_docs``, and so on.
+            grps: Sequence of group names by which the terms in ``tokenized_docs``
+                are aggregated, where the first item in ``grps`` corresponds to
+                the first item in ``tokenized_docs``, and so on.
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`: The transformed group-term matrix.
-            Rows correspond to groups and columns correspond to terms.
+            The transformed group-term matrix, where rows correspond to groups
+            and columns correspond to terms, as a sparse row matrix.
 
         Note:
             For best results, the tokenization used to produce ``tokenized_docs``
@@ -1038,7 +1022,9 @@ class GroupVectorizer(Vectorizer):
         grp_term_matrix, _, _ = self._count_terms(tokenized_docs, grps, True, True)
         return self._reweight_values(grp_term_matrix)
 
-    def _fit(self, tokenized_docs, grps):
+    def _fit(
+        self, tokenized_docs: Iterable[Iterable[str]], grps: Iterable[str]
+    ) -> sp.csr_matrix:
         """
         Count terms and, if :attr:`Vectorizer.fixed_terms` is False, build up
         a vocabulary based on the terms found in ``tokenized_docs``. Transform
@@ -1047,11 +1033,11 @@ class GroupVectorizer(Vectorizer):
         is not None, the average doc length.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]])
-            grps (Iterable[str])
+            tokenized_docs
+            grps
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`
+            group-term matrix
         """
         # count terms and, if not provided on init, build up a vocabulary
         grp_term_matrix, vocabulary_terms, vocabulary_grps = self._count_terms(
@@ -1097,21 +1083,25 @@ class GroupVectorizer(Vectorizer):
 
         return grp_term_matrix
 
-    def _count_terms(self, tokenized_docs, grps, fixed_vocab_terms, fixed_vocab_grps):
+    def _count_terms(
+        self,
+        tokenized_docs: Iterable[Iterable[str]],
+        grps: Iterable[str],
+        fixed_vocab_terms: bool,
+        fixed_vocab_grps: bool,
+    ) -> Tuple[sp.csr_matrix, Dict[str, int], Dict[str, int]]:
         """
         Count terms and build up a vocabulary based on the terms found in the
         ``tokenized_docs`` and the groups found in ``grps``.
 
         Args:
-            tokenized_docs (Iterable[Iterable[str]])
-            grps (Iterable[str])
-            fixed_vocab_terms (bool)
-            fixed_vocab_grps (bool)
+            tokenized_docs
+            grps
+            fixed_vocab_terms
+            fixed_vocab_grps
 
         Returns:
-            :class:`scipy.sparse.csr_matrix`
-            Dict[str, int]
-            Dict[str, int]
+            Group-term matrix, terms vocabulary, groups vocabulary.
         """
         # TODO: can we adapt the optimization from `Vectorizer._count_terms()` here?
         if fixed_vocab_terms is False:
