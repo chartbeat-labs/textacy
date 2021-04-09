@@ -6,9 +6,8 @@ from typing import Callable, Collection, Dict, List, Optional, Set, Tuple
 
 from spacy.tokens import Doc, Token
 
-from ... import utils
+from ... import representations, utils
 from .. import utils as ext_utils
-from . import graph_base
 
 
 def textrank(
@@ -87,13 +86,12 @@ def textrank(
     else:
         word_pos = None
     # build a graph from all words in doc, then score them
-    graph = graph_base.build_graph_from_terms(
-        [word for word in doc],
-        normalize=normalize,
+    graph = representations.network.build_cooccurrence_network(
+        list(ext_utils.terms_to_strings(doc, normalize)),
         window_size=window_size,
         edge_weighting=edge_weighting,
     )
-    word_scores = graph_base.rank_nodes_by_pagerank(
+    word_scores = representations.network.rank_nodes_by_pagerank(
         graph, weight="weight", personalization=word_pos
     )
     # generate a list of candidate terms
