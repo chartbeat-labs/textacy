@@ -57,15 +57,23 @@ class TestWords:
 
 class TestNGrams:
 
+    @pytest.mark.parametrize("n", [1, 2])
+    def test_n(self, n, spacy_doc):
+        result = list(extract.ngrams(spacy_doc, n))
+        assert all(isinstance(span, Span) for span in result)
+        assert all(len(span) == n for span in result)
+
+    @pytest.mark.parametrize("ns", [[1, 2], [1, 2, 3]])
+    def test_multiple_ns(self, ns, spacy_doc):
+        result = list(extract.ngrams(spacy_doc, ns))
+        assert all(isinstance(span, Span) for span in result)
+        minn = min(ns)
+        maxn = max(ns)
+        assert all(minn <= len(span) <= maxn for span in result)
+
     def test_n_less_than_1(self, spacy_doc):
         with pytest.raises(ValueError):
             _ = list(extract.ngrams(spacy_doc, 0))
-
-    def test_n(self, spacy_doc):
-        for n in (1, 2):
-            result = list(extract.ngrams(spacy_doc, n))
-            assert all(isinstance(span, Span) for span in result)
-            assert all(len(span) == n for span in result)
 
     def test_filter(self, spacy_doc):
         result = list(
@@ -171,3 +179,42 @@ class TestNounChunks:
         text = spacy_doc.text.lower()
         result = list(extract.noun_chunks(spacy_doc, drop_determiners=True, min_freq=2))
         assert all(text.count(span.text.lower()) >= 2 for span in result)
+
+
+class TestTerms:
+
+    def test_default(self, spacy_doc):
+        with pytest.raises(ValueError):
+            _ = list(extract.terms(spacy_doc))
+
+    def test_simple_args(self, spacy_doc):
+        results = list(extract.terms(spacy_doc, ngs=2, ents=True, ncs=True))
+        assert results
+        assert all(isinstance(result, Span) for result in results)
+
+    def test_callable_args(self, spacy_doc):
+        results = list(
+            extract.terms(
+                spacy_doc,
+                ngs=lambda doc: extract.ngrams(doc, n=2),
+                ents=extract.entities,
+                ncs=extract.noun_chunks,
+            )
+        )
+        assert results
+        assert all(isinstance(result, Span) for result in results)
+
+    @pytest.mark.parametrize("dedupe", [True, False])
+    def test_dedupe(self, dedupe, spacy_doc):
+        results = list(extract.terms(spacy_doc, ngs=2, ents=True, ncs=True, dedupe=dedupe))
+        assert results
+        if dedupe is True:
+            assert (
+                len(results) ==
+                len(set((result.start, result.end) for result in results))
+            )
+        else:
+            assert (
+                len(results) >
+                len(set((result.start, result.end) for result in results))
+            )

@@ -10,7 +10,7 @@ from textacy import load_spacy_lang, make_spacy_doc
 from textacy.extract import keyterms as kt
 from textacy.text_stats import TextStats
 from textacy.tm import TopicModel
-from textacy.vsm import Vectorizer
+from textacy.representations import Vectorizer
 
 DATASET = textacy.datasets.CapitolWords()
 
@@ -48,7 +48,6 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
     top_n = 10
     vectorizer = Vectorizer(
         tf_type="linear",
-        apply_idf=True,
         idf_type="smooth",
         norm=None,
         min_df=2,
@@ -56,7 +55,7 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
     )
     doc_term_matrix = vectorizer.fit_transform(
         (
-            doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
+            (term.text for term in doc._.extract_terms(ngs=1, ents=True, ncs=True))
             for doc in corpus
         )
     )

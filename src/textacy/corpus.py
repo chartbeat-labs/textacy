@@ -28,7 +28,7 @@ from spacy.language import Language
 from spacy.tokens import Doc, DocBin
 
 from . import io as tio
-from . import errors, spacier, types, utils
+from . import errors, extensions, spacier, types, utils
 
 
 LOGGER = logging.getLogger(__name__)
@@ -453,43 +453,38 @@ class Corpus:
     def word_counts(
         self,
         *,
-        normalize: str = "lemma",
-        weighting: str = "count",
-        as_strings: bool = False,
-        filter_stops: bool = True,
-        filter_punct: bool = True,
-        filter_nums: bool = False,
-    ) -> Dict[int | str, int | float]:
+        by: str = "lemma",  # Literal["lemma", "lemma_", "lower", "lower_", "norm", "norm_", "orth", "orth_"]
+        weighting: str = "count",  # Literal["count", "freq"]
+        **kwargs,
+    ) -> Dict[int, int | float] | Dict[str, int | float]:
         """
         Map the set of unique words in :class:`Corpus` to their counts as
         absolute, relative, or binary frequencies of occurence, similar to
-        :meth:`Doc._.to_bag_of_words() <textacy.spacier.doc_extensions.to_bag_of_words>`
+        :meth:`Doc._.to_bag_of_words() <textacy.extensions.to_bag_of_words>`
         but aggregated over all docs.
 
         Args:
-            normalize: If "lemma", lemmatize words before counting; if
-                "lower", lowercase words before counting; otherwise, words are
-                counted using the form with which they appear.
-            weighting ({"count", "freq"}): Type of weight to assign to words.
-                If "count" (default), weights are the absolute number of
-                occurrences (count) of word in corpus.
-                If "freq", word counts are normalized by the total token count,
-                giving their relative frequencies of occurrence.
-
-                .. note:: The resulting set of frequencies won't (necessarily) sum
-                   to 1.0, since punctuation and stop words are filtered out after
-                   counts are normalized.
-
-            as_strings: If True, words are returned as strings; if False
-                (default), words are returned as their unique integer ids.
-            filter_stops: If True (default), stop word counts are removed.
-            filter_punct: If True (default), punctuation counts are removed.
-            filter_nums: If True, number counts are removed.
+            by: Attribute by which spaCy ``Token`` s are grouped before counting,
+                as given by ``getattr(token, by)``.
+                If "lemma", tokens are grouped by their base form w/o inflections;
+                if "lower", by the lowercase form of the token text;
+                if "norm", by the normalized form of the token text;
+                if "orth", by the token text exactly as it appears in documents.
+                To output keys as strings, simply append an underscore to any of these;
+                for example, "lemma_" creates a bag whose keys are token lemmas as strings.
+            weighting: Type of weighting to assign to unique words given by ``by``.
+                If "count", weights are the absolute number of occurrences (i.e. counts);
+                if "freq", weights are counts normalized by the total token count,
+                giving their relative frequency of occurrence.
+            **kwargs: Passed directly on to :func:`textacy.extract.words()`
+                - filter_stops: If True, stop words are removed before counting.
+                - filter_punct: If True, punctuation tokens are removed before counting.
+                - filter_nums: If True, number-like tokens are removed before counting.
 
         Returns:
-            Mapping of a unique word id or string (depending on the value
-            of ``as_strings``) to its absolute, relative, or binary frequency
-            of occurrence (depending on the value of ``weighting``).
+            Mapping of a unique word id or string (depending on the value of ``by``)
+            to its absolute, relative, or binary frequency of occurrence
+            (depending on the value of ``weighting``).
 
         See Also:
             :func:`textacy.vsm.get_term_freqs() <textacy.vsm.matrix_utils.get_term_freqs>`
@@ -498,14 +493,7 @@ class Corpus:
         word_counts_ = collections.Counter()
         for doc in self:
             word_counts_.update(
-                doc._.to_bag_of_words(
-                    normalize=normalize,
-                    weighting="count",
-                    as_strings=as_strings,
-                    filter_stops=filter_stops,
-                    filter_punct=filter_punct,
-                    filter_nums=filter_nums,
-                )
+                extensions.to_bag_of_words(doc, by=by, weighting="count", **kwargs)
             )
         if weighting == "count":
             word_counts_ = dict(word_counts_)
@@ -523,43 +511,40 @@ class Corpus:
     def word_doc_counts(
         self,
         *,
-        normalize: str = "lemma",
-        weighting: str = "count",
+        by: str = "lemma",  # Literal["lemma", "lemma_", "lower", "lower_", "norm", "norm_", "orth", "orth_"]
+        weighting: str = "count",  # Literal["count", "freq", "idf"]
         smooth_idf: bool = True,
-        as_strings: bool = False,
-        filter_stops: bool = True,
-        filter_punct: bool = True,
-        filter_nums: bool = True,
-    ) -> Dict[int | str, int | float]:
+        **kwargs
+    ) -> Dict[int, int | float] | Dict[str, int | float]:
         """
         Map the set of unique words in :class:`Corpus` to their *document* counts
-        as absolute, relative, inverse, or binary frequencies of occurence.
+        as absolute, relative, or inverse frequencies of occurence.
 
         Args:
-            normalize: If "lemma", lemmatize words before counting; if
-                "lower", lowercase words before counting; otherwise, words are
-                counted using the form with which they appear.
-            weighting ({"count", "freq", "idf"}): Type of weight to assign to words.
-                If "count" (default), weights are the absolute number (count)
-                of documents in which word appears. If "freq", word doc counts
-                are normalized by the total document count, giving their relative
-                frequencies of occurrence. If "idf", weights are the log of the
-                inverse relative frequencies: ``log(n_docs / word_doc_count)``
-                or (if ``smooth_idf`` is True) ``log(1 + (n_docs / word_doc_count))`` .
+            by: Attribute by which spaCy ``Token`` s are grouped before counting,
+                as given by ``getattr(token, by)``.
+                If "lemma", tokens are grouped by their base form w/o inflections;
+                if "lower", by the lowercase form of the token text;
+                if "norm", by the normalized form of the token text;
+                if "orth", by the token text exactly as it appears in documents.
+                To output keys as strings, simply append an underscore to any of these;
+                for example, "lemma_" creates a bag whose keys are token lemmas as strings.
+            weighting: Type of weighting to assign to unique words given by ``by``.
+                If "count", weights are the absolute number of occurrences (i.e. counts);
+                if "freq", weights are counts normalized by the total token count,
+                giving their relative frequency of occurrence;
+                if "idf", weights are the log of the inverse relative frequencies, i.e.
+                ``log(n_docs / word_doc_count)`` or, if ``smooth_idf`` is True,
+                ``log(1 + (n_docs / word_doc_count))``.
             smooth_idf: If True, add 1 to all word doc counts when
                 calculating "idf" weighting, equivalent to adding a single
                 document to the corpus containing every unique word.
-            as_strings: If True, words are returned as strings; if False
-                (default), words are returned as their unique integer ids
-            filter_stops: If True (default), stop word counts are removed.
-            filter_punct: If True (default), punctuation counts are removed.
-            filter_nums: If True (default), number counts are removed.
 
         Returns:
-            Mapping of a unique word id or string (depending on the value
-            of ``as_strings``) to the number of documents in which it appears
-            weighted as absolute, relative, or binary frequencies (depending
-            on the value of ``weighting``).
+            Mapping of a unique word id or string (depending on the value of ``by``)
+            to the number of documents in which it appears,
+            weighted as absolute, relative, or inverse frequency of occurrence
+            (depending on the value of ``weighting``).
 
         See Also:
             :func:`textacy.vsm.get_doc_freqs() <textacy.vsm.matrix_utils.get_doc_freqs>`
@@ -568,14 +553,7 @@ class Corpus:
         word_doc_counts_ = collections.Counter()
         for doc in self:
             word_doc_counts_.update(
-                doc._.to_bag_of_words(
-                    normalize=normalize,
-                    weighting="binary",
-                    as_strings=as_strings,
-                    filter_stops=filter_stops,
-                    filter_punct=filter_punct,
-                    filter_nums=filter_nums,
-                )
+                extensions.to_bag_of_words(doc, by=by, weighting="binary", **kwargs)
             )
         if weighting == "count":
             word_doc_counts_ = dict(word_doc_counts_)

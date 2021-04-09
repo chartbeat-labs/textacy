@@ -10,8 +10,8 @@ from typing import Collection, Dict, Iterable, List, Optional, Set, Tuple
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Token
 
-from . import utils as kt_utils
 from ... import errors, utils
+from .. import utils as ext_utils
 
 
 def yake(
@@ -101,7 +101,7 @@ def yake(
         )
     # now compute combined scores for higher-n ngram and candidates
     candidates = list(
-        kt_utils.get_ngram_candidates(
+        ext_utils.get_ngram_candidates(
             doc, [n for n in ngrams if n > 1], include_pos=include_pos,
         )
     )
@@ -118,7 +118,7 @@ def yake(
     sorted_term_scores = sorted(
         term_scores.items(), key=operator.itemgetter(1), reverse=False,
     )
-    return kt_utils.get_filtered_topn_terms(
+    return ext_utils.get_filtered_topn_terms(
         sorted_term_scores, topn, match_threshold=0.8
     )
 

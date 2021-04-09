@@ -22,12 +22,12 @@ class TopicModel:
 
     Prepare a vectorized corpus (i.e. document-term matrix) and corresponding
     vocabulary (i.e. mapping of term strings to column indices in the matrix).
-    See :class:`textacy.vsm.Vectorizer` for details. In short:
+    See :class:`textacy.representations.vectorizers.Vectorizer` for details. In short:
 
     .. code-block:: pycon
 
         >>> vectorizer = Vectorizer(
-        ...     tf_type="linear", apply_idf=True, idf_type="smooth", norm="l2",
+        ...     tf_type="linear", idf_type="smooth", norm="l2",
         ...     min_df=3, max_df=0.95, max_n_terms=100000)
         >>> doc_term_matrix = vectorizer.fit_transform(terms_list)
 

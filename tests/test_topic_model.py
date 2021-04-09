@@ -4,7 +4,7 @@ from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
 from textacy import Corpus
 from textacy.tm import TopicModel
-from textacy.vsm import Vectorizer
+from textacy.representations import Vectorizer
 
 
 @pytest.fixture(scope="module")
@@ -21,7 +21,7 @@ def term_lists():
     ]
     corpus = Corpus("en_core_web_sm", data=texts)
     term_lists_ = [
-        doc._.to_terms_list(ngrams=1, entities=None, as_strings=True)
+        (term.text.lower() for term in doc._.extract_terms(ngs=1, ents=None))
         for doc in corpus
     ]
     return term_lists_
@@ -31,7 +31,6 @@ def term_lists():
 def vectorizer():
     vectorizer_ = Vectorizer(
         tf_type="linear",
-        apply_idf=True,
         idf_type="smooth",
         norm=None,
         min_df=1,

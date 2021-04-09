@@ -31,6 +31,8 @@ Utilities
 
 .. automodule:: textacy.cache
 
+.. automodule:: textacy.spacier.utils
+
 Semantic Networks
 -----------------
 
