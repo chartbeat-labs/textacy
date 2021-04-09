@@ -10,6 +10,7 @@ API Reference
    extract
    text_stats
    similarity
+   representations
    vsm_and_tm
    io
    viz
