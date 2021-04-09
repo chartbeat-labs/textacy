@@ -1,3 +1,14 @@
+"""
+Sparse Vectors
+--------------
+
+:mod:`textacy.representations.sparse_vec`: Transform a collection of tokenized docs
+into a doc-term matrix of shape (# docs, # unique terms) or a group-term matrix
+of shape (# unique groups, # unique terms), with various ways to filter/limit
+included terms and flexible weighting/normalization schemes for their values.
+
+Intended primarily as a simpler- and higher-level API for sparse vectorization of docs.
+"""
 from typing import Dict, Iterable, Optional, Tuple
 
 import scipy.sparse as sp
