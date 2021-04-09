@@ -127,14 +127,6 @@ REPORTING_VERBS: Dict[str, Set[str]] = {
 
 MATCHER_VALID_OPS: Set[str] = {"!", "+", "?", "*"}
 
-POS_REGEX_PATTERNS: Dict[str, Dict[str, str]] = {
-    "en": {
-        "NP": r"<DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN>|<PROPN> <PART>?)+",
-        "PP": r"<ADP> <DET>? <NUM>* (<ADJ> <PUNCT>? <CONJ>?)* (<NOUN> <PART>?)+",
-        "VP": r"<AUX>* <ADV>* <VERB>",
-    }
-}
-
 RE_MATCHER_TOKPAT_DELIM: Pattern = re.compile(r"\s+")
 RE_MATCHER_SPECIAL_VAL: Pattern = re.compile(r"^(int|bool)\([^: ]+\)$", flags=re.UNICODE)
 
