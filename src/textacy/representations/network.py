@@ -1,6 +1,6 @@
 """
-Network
--------
+Networks
+--------
 
 :mod:`textacy.representations.network`: Represent document data as networks,
 where nodes are terms, sentences, or even full documents and edges between them
