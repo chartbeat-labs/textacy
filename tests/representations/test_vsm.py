@@ -35,7 +35,6 @@ def groups():
 def vectorizer_and_dtm(tokenized_docs):
     vectorizer = representations.Vectorizer(
         tf_type="linear",
-        idf_type="smooth",
         norm=None,
         min_df=1,
         max_df=1.0,
@@ -49,7 +48,6 @@ def vectorizer_and_dtm(tokenized_docs):
 def grp_vectorizer_and_gtm(tokenized_docs, groups):
     grp_vectorizer = representations.GroupVectorizer(
         tf_type="linear",
-        idf_type="smooth",
         norm=None,
         min_df=1,
         max_df=1.0,
@@ -63,9 +61,8 @@ def grp_vectorizer_and_gtm(tokenized_docs, groups):
 def grp_vectorizer_and_gtm_2(tokenized_docs, groups):
     grp_vectorizer = representations.GroupVectorizer(
         tf_type="bm25",
-        idf_type="smooth",
         norm=None,
-        apply_dl=True,
+        dl_type="sqrt",
         min_df=1,
         max_df=1.0,
         max_n_terms=None,
@@ -86,17 +83,15 @@ def test_vectorizer_weighting_combinations(tokenized_docs):
     init_params = [
         dict(tf_type="linear"),
         dict(tf_type="sqrt"),
-        dict(tf_type="sqrt", apply_dl=True),
-        dict(tf_type="sqrt", apply_dl=True, dl_type="sqrt"),
-        dict(tf_type="linear", apply_idf=True),
-        dict(tf_type="linear", apply_idf=True, idf_type="bm25"),
-        dict(tf_type="linear", apply_idf=True, idf_type="standard", norm="l1"),
-        dict(tf_type="linear", apply_idf=True, idf_type="standard", apply_dl=True),
-        dict(tf_type="linear", apply_idf=True, idf_type="smooth", apply_dl=True, dl_type="log"),
-        dict(tf_type="bm25", apply_idf=True, idf_type="bm25"),
-        dict(tf_type="bm25", apply_idf=True, apply_dl=False),
-        dict(tf_type="bm25", apply_idf=True, idf_type="bm25"),
-        dict(tf_type="bm25", apply_idf=True, idf_type="smooth", norm="l2"),
+        dict(tf_type="sqrt", dl_type="sqrt"),
+        dict(tf_type="linear", idf_type="bm25"),
+        dict(tf_type="linear", idf_type="standard", norm="l1"),
+        dict(tf_type="linear", idf_type="standard", dl_type="sqrt"),
+        dict(tf_type="linear", idf_type="smooth", dl_type="log"),
+        dict(tf_type="bm25", idf_type="bm25"),
+        dict(tf_type="bm25", dl_type=None),
+        dict(tf_type="bm25", idf_type="bm25"),
+        dict(tf_type="bm25", idf_type="smooth", norm="l2"),
     ]
     for ip in init_params:
         vectorizer = representations.Vectorizer(**ip)
