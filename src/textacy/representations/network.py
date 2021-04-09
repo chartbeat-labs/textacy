@@ -4,13 +4,14 @@ import collections
 import itertools
 import logging
 from operator import itemgetter
-from typing import Any, Collection, Dict, Optional, Sequence, Set
+from typing import Any, Collection, Dict, Optional, Sequence, Set, Union
 
 import networkx as nx
 import numpy as np
 from cytoolz import itertoolz
 
-from .. import errors
+from .. import errors, similarity
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -22,7 +23,7 @@ def build_cooccurrence_network(
     edge_weighting: str = "count",  # Literal["count", "binary"]
 ) -> nx.Graph:
     """
-    Transform an ordered sequence of strings (or a sequence of such sequences),
+    Transform an ordered sequence of strings (or a sequence of such sequences)
     into a graph, where each string is represented by a node with weighted edges
     linking it to other strings that co-occur within ``window_size`` elements of itself.
 
@@ -111,7 +112,11 @@ def build_cooccurrence_network(
             for subseq in data
         )
     else:
-        raise TypeError()
+        raise TypeError(
+            errors.type_invalid_msg(
+                "data", data, Union[Sequence[str], Sequence[Sequence[str]]]
+            )
+        )
 
     graph = nx.Graph()
     if edge_weighting == "count":
@@ -137,54 +142,98 @@ def build_cooccurrence_network(
     return graph
 
 
-def build_texts_similarity_network(
-    texts: Sequence[Sequence[str]],
-    *,
-    edge_weighting: str = "cosine",
+def build_similarity_network(
+    data: Sequence[str] | Sequence[Sequence[str]], edge_weighting: str,
 ) -> nx.Graph:
     """
-    Transform a sequence of texts into a similarity network, where each text is
-    represented by a node with edges linking it to other sentences weighted by
-    the (cosine or jaccard) similarity of their constituent tokens.
+    Transform a sequence of strings (or a sequence of such sequences) into a graph,
+    where each element of the top-level sequence is represented by a node
+    with edges linking it to all other elements weighted by their pairwise similarity.
+
+    Input ``data`` can take a variety of forms. For example, as a ``Sequence[str]``
+    where elements are sentence texts from a single document:
+
+    .. code-block:: pycon
+
+        >>> texts = [
+        ...     "Mary had a little lamb. Its fleece was white as snow.",
+        ...     "Everywhere that Mary went the lamb was sure to go.",
+        ... ]
+        >>> docs = [make_spacy_doc(text, lang="en_core_web_sm") for text in texts]
+        >>> data = [sent.text.lower() for sent in docs[0].sents]
+        >>> graph = build_similarity_network(data, "levenshtein")
+        >>> sorted(graph.adjacency())[0]
+        ('its fleece was white as snow.',
+         {'mary had a little lamb.': {'weight': 0.24137931034482762}})
+
+    Or as a ``Sequence[str]`` where elements are full texts from multiple documents:
+
+    .. code-block:: pycon
+
+        >>> data = [doc.text.lower() for doc in docs]
+        >>> graph = build_similarity_network(data, "jaro")
+        >>> sorted(graph.adjacency())[0]
+        ('everywhere that mary went the lamb was sure to go.',
+         {'mary had a little lamb. its fleece was white as snow.': {'weight': 0.6516002795248078}})
+
+    Or as a ``Sequence[Sequence[str]]`` where elements are tokenized texts from
+    multiple documents:
+
+    .. code-block:: pycon
+
+        >>> data = [[tok.lower_ for tok in doc] for doc in docs]
+        >>> graph = build_similarity_network(data, "jaccard")
+        >>> sorted(graph.adjacency())[0]
+        (('everywhere', 'that', 'mary', 'went', 'the', 'lamb', 'was', 'sure', 'to', 'go', '.'),
+         {('mary', 'had', 'a', 'little', 'lamb', '.', 'its', 'fleece', 'was', 'white', 'as', 'snow', '.'): {'weight': 0.21052631578947367}})
 
     Args:
-        texts
-        edge_weighting: Similarity metric to use for weighting edges between sentences.
-            If 'cosine', use the cosine similarity between sentences represented
-            as tf-idf word vectors; if 'jaccard', use the set intersection
-            divided by the set union of all words in a given sentence pair.
+        data
+        edge_weighting: Similarity metric to use for weighting edges between elements
+            in ``data``, represented as the name of a function available in
+            :mod:`textacy.similarity`.
+
+            .. note:: Different metrics are suited for different forms and contexts
+               of ``data``. You'll have to decide which method makes sense. For example,
+               when comparing a sequence of short strings, "levenshtein" is often
+               a reasonable bet; when comparing a sequence of sequences of somewhat
+               noisy strings (e.g. includes punctuation, cruft tokens), you might try
+               "matching_subsequences_ratio" to help filter out the noise.
 
     Returns:
-        Networkx graph whose nodes are the integer indexes of the sentences in ``sents``,
-        *not* the actual text of the sentences. Edges connect every node,
-        with weights determined by ``edge_weighting``.
+        Graph whose nodes correspond to top-level sequence elements in ``data``,
+        connected by edges to all other nodes with weights determined by
+        their pairwise similarity.
 
-    Note:
-        - If passing sentences as strings, be sure to filter out stopwords, punctuation,
-          certain parts of speech, etc. beforehand
-        - Consider normalizing the strings so that like terms are counted together
-          (see :func:`textacy.spacier.utils.get_normalized_text()`)
+    Reference:
+        https://en.wikipedia.org/wiki/Semantic_similarity_network -- this is *not*
+        the same as what's implemented here, but they're similar in spirit.
     """
-    from .. import vsm
+    if not data:
+        LOGGER.warning("input `data` is empty, so output graph is also empty")
+        return nx.Graph()
 
-    if edge_weighting == "cosine":
-        term_text_matrix = vsm.Vectorizer(
-            tf_type="linear", apply_idf=True, idf_type="smooth"
-        ).fit_transform(texts)
-    elif edge_weighting == "jaccard":
-        term_text_matrix = vsm.Vectorizer(
-            tf_type="binary", apply_idf=False
-        ).fit_transform(texts)
+    sim_func = getattr(similarity, edge_weighting)
+
+    if isinstance(data[0], str):
+        ele_pairs = itertools.combinations(data, 2)
+    elif isinstance(data[0], Sequence) and isinstance(data[0][0], str):
+        # nx graph nodes need to be *hashable*, so Sequence => Tuple
+        ele_pairs = (
+            (tuple(ele1), tuple(ele2))
+            for ele1, ele2 in itertools.combinations(data, 2)
+        )
     else:
-        raise ValueError(f"edge_weighting = {edge_weighting} is invalid")
-    weights = (term_text_matrix * term_text_matrix.T).A.tolist()
-    n_texts = len(weights)
+        raise TypeError(
+            errors.type_invalid_msg(
+                "data", data, Union[Sequence[str], Sequence[Sequence[str]]]
+            )
+        )
 
     graph = nx.Graph()
     graph.add_edges_from(
-        (i, j, {"weight": weights[i][j]})
-        for i in range(n_texts)
-        for j in range(i + 1, n_texts)
+        (ele1, ele2, {"weight": sim_func(ele1, ele2)})
+        for ele1, ele2 in ele_pairs
     )
     return graph
 
