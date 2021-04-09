@@ -3,7 +3,7 @@ import numpy as np
 from scipy.sparse import coo_matrix
 
 from textacy import Corpus
-from textacy import vsm
+from textacy import representations
 
 
 @pytest.fixture(scope="module")
@@ -33,7 +33,7 @@ def groups():
 
 @pytest.fixture(scope="module")
 def vectorizer_and_dtm(tokenized_docs):
-    vectorizer = vsm.Vectorizer(
+    vectorizer = representations.Vectorizer(
         tf_type="linear",
         idf_type="smooth",
         norm=None,
@@ -47,7 +47,7 @@ def vectorizer_and_dtm(tokenized_docs):
 
 @pytest.fixture(scope="module")
 def grp_vectorizer_and_gtm(tokenized_docs, groups):
-    grp_vectorizer = vsm.GroupVectorizer(
+    grp_vectorizer = representations.GroupVectorizer(
         tf_type="linear",
         idf_type="smooth",
         norm=None,
@@ -61,7 +61,7 @@ def grp_vectorizer_and_gtm(tokenized_docs, groups):
 
 @pytest.fixture(scope="module")
 def grp_vectorizer_and_gtm_2(tokenized_docs, groups):
-    grp_vectorizer = vsm.GroupVectorizer(
+    grp_vectorizer = representations.GroupVectorizer(
         tf_type="bm25",
         idf_type="smooth",
         norm=None,
@@ -99,7 +99,7 @@ def test_vectorizer_weighting_combinations(tokenized_docs):
         dict(tf_type="bm25", apply_idf=True, idf_type="smooth", norm="l2"),
     ]
     for ip in init_params:
-        vectorizer = vsm.Vectorizer(**ip)
+        vectorizer = representations.Vectorizer(**ip)
         doc_term_matrix = vectorizer.fit(tokenized_docs)
         vectorizer.weighting
 
@@ -152,7 +152,7 @@ def test_grp_vectorizer_2_fits(grp_vectorizer_and_gtm_2):
 
 def test_vectorizer_fixed_vocab(tokenized_docs):
     vocabulary_terms = ["lamb", "snow", "school", "rule", "teacher"]
-    vectorizer = vsm.Vectorizer(vocabulary_terms=vocabulary_terms)
+    vectorizer = representations.Vectorizer(vocabulary_terms=vocabulary_terms)
     doc_term_matrix = vectorizer.fit_transform(tokenized_docs)
     assert len(vectorizer.vocabulary_terms) == len(vocabulary_terms)
     assert doc_term_matrix.shape[1] == len(vocabulary_terms)
@@ -162,7 +162,7 @@ def test_vectorizer_fixed_vocab(tokenized_docs):
 def test_grp_vectorizer_fixed_vocab(tokenized_docs, groups):
     vocabulary_terms = ["lamb", "snow", "school", "rule", "teacher"]
     vocabulary_grps = ["a", "b"]
-    grp_vectorizer = vsm.GroupVectorizer(
+    grp_vectorizer = representations.GroupVectorizer(
         vocabulary_terms=vocabulary_terms, vocabulary_grps=vocabulary_grps
     )
     grp_term_matrix = grp_vectorizer.fit_transform(tokenized_docs, groups)
@@ -183,17 +183,17 @@ def test_vectorizer_bad_init_params():
     )
     for bad_init_param in bad_init_params:
         with pytest.raises(ValueError):
-            _ = vsm.Vectorizer(**bad_init_param)
+            _ = representations.Vectorizer(**bad_init_param)
 
 
 def test_vectorizer_bad_transform(tokenized_docs):
-    vectorizer = vsm.Vectorizer()
+    vectorizer = representations.Vectorizer()
     with pytest.raises(ValueError):
         _ = vectorizer.transform(tokenized_docs)
 
 
 def test_grp_vectorizer_bad_transform(tokenized_docs, groups):
-    grp_vectorizer = vsm.GroupVectorizer()
+    grp_vectorizer = representations.GroupVectorizer()
     with pytest.raises(ValueError):
         _ = grp_vectorizer.transform(tokenized_docs, groups)
 
@@ -201,7 +201,7 @@ def test_grp_vectorizer_bad_transform(tokenized_docs, groups):
 def test_get_term_freqs(vectorizer_and_dtm, lamb_and_children_idxs):
     _, doc_term_matrix = vectorizer_and_dtm
     idx_lamb, idx_children = lamb_and_children_idxs
-    term_freqs = vsm.get_term_freqs(doc_term_matrix, type_="linear")
+    term_freqs = representations.get_term_freqs(doc_term_matrix, type_="linear")
     assert len(term_freqs) == doc_term_matrix.shape[1]
     assert term_freqs.min() == 1
     assert term_freqs.max() == 5
@@ -212,9 +212,9 @@ def test_get_term_freqs(vectorizer_and_dtm, lamb_and_children_idxs):
 def test_get_term_freqs_sublinear(vectorizer_and_dtm, lamb_and_children_idxs):
     _, doc_term_matrix = vectorizer_and_dtm
     idx_lamb, idx_children = lamb_and_children_idxs
-    tfs = vsm.get_term_freqs(doc_term_matrix, type_="linear")
-    tfs_sqrt = vsm.get_term_freqs(doc_term_matrix, type_="sqrt")
-    tfs_log = vsm.get_term_freqs(doc_term_matrix, type_="log")
+    tfs = representations.get_term_freqs(doc_term_matrix, type_="linear")
+    tfs_sqrt = representations.get_term_freqs(doc_term_matrix, type_="sqrt")
+    tfs_log = representations.get_term_freqs(doc_term_matrix, type_="log")
     assert len(tfs) == len(tfs_sqrt) == len(tfs_log) == doc_term_matrix.shape[1]
     assert tfs_log.max() == pytest.approx(2.60943, abs=1e-3)
     assert tfs_log.min() == pytest.approx(1.0, abs=1e-3)
@@ -226,13 +226,13 @@ def test_get_term_freqs_sublinear(vectorizer_and_dtm, lamb_and_children_idxs):
 
 def test_get_term_freqs_exception():
     with pytest.raises(ValueError):
-        _ = vsm.get_term_freqs(coo_matrix((1, 1)).tocsr())
+        _ = representations.get_term_freqs(coo_matrix((1, 1)).tocsr())
 
 
 def test_get_doc_freqs(vectorizer_and_dtm, lamb_and_children_idxs):
     _, doc_term_matrix = vectorizer_and_dtm
     idx_lamb, idx_children = lamb_and_children_idxs
-    doc_freqs = vsm.get_doc_freqs(doc_term_matrix)
+    doc_freqs = representations.get_doc_freqs(doc_term_matrix)
     assert len(doc_freqs) == doc_term_matrix.shape[1]
     assert doc_freqs.max() == 5
     assert doc_freqs.min() == 1
@@ -242,12 +242,12 @@ def test_get_doc_freqs(vectorizer_and_dtm, lamb_and_children_idxs):
 
 def test_get_doc_freqs_exception():
     with pytest.raises(ValueError):
-        _ = vsm.get_doc_freqs(coo_matrix((1, 1)).tocsr())
+        _ = representations.get_doc_freqs(coo_matrix((1, 1)).tocsr())
 
 
 def test_get_doc_lengths(tokenized_docs, vectorizer_and_dtm):
     _, doc_term_matrix = vectorizer_and_dtm
-    dls = vsm.get_doc_lengths(doc_term_matrix, type_="linear")
+    dls = representations.get_doc_lengths(doc_term_matrix, type_="linear")
     assert len(dls) == doc_term_matrix.shape[0]
     for dl, td in zip(dls, tokenized_docs):
         assert dl == len(td)
@@ -255,9 +255,9 @@ def test_get_doc_lengths(tokenized_docs, vectorizer_and_dtm):
 
 def test_get_doc_lengths_type(vectorizer_and_dtm):
     _, doc_term_matrix = vectorizer_and_dtm
-    dls = vsm.get_doc_lengths(doc_term_matrix, type_="linear")
-    dls_sqrt = vsm.get_doc_lengths(doc_term_matrix, type_="sqrt")
-    dls_log = vsm.get_doc_lengths(doc_term_matrix, type_="log")
+    dls = representations.get_doc_lengths(doc_term_matrix, type_="linear")
+    dls_sqrt = representations.get_doc_lengths(doc_term_matrix, type_="sqrt")
+    dls_log = representations.get_doc_lengths(doc_term_matrix, type_="log")
     assert len(dls) == len(dls_sqrt) == len(dls_log) == doc_term_matrix.shape[0]
     assert (dls_sqrt == np.sqrt(dls)).all()
     assert (dls_log == np.log(dls) + 1.0).all()
@@ -266,13 +266,13 @@ def test_get_doc_lengths_type(vectorizer_and_dtm):
 def test_get_doc_lengths_exception(vectorizer_and_dtm):
     _, doc_term_matrix = vectorizer_and_dtm
     with pytest.raises(ValueError):
-        _ = vsm.get_doc_lengths(doc_term_matrix, type_="foo")
+        _ = representations.get_doc_lengths(doc_term_matrix, type_="foo")
 
 
 def test_get_information_content(vectorizer_and_dtm, lamb_and_children_idxs):
     _, doc_term_matrix = vectorizer_and_dtm
     idx_lamb, idx_children = lamb_and_children_idxs
-    ics = vsm.get_information_content(doc_term_matrix)
+    ics = representations.get_information_content(doc_term_matrix)
     assert len(ics) == doc_term_matrix.shape[1]
     assert ((0.0 <= ics) & (ics <= 1.0)).all()
     assert ics.max() > ics.min()
@@ -283,13 +283,13 @@ def test_get_information_content(vectorizer_and_dtm, lamb_and_children_idxs):
 def test_apply_idf_weighting(vectorizer_and_dtm):
     _, doc_term_matrix = vectorizer_and_dtm
     for type_ in ("standard", "smooth", "bm25"):
-        reweighted_matrix = vsm.apply_idf_weighting(doc_term_matrix, type_=type_)
+        reweighted_matrix = representations.apply_idf_weighting(doc_term_matrix, type_=type_)
         assert reweighted_matrix.shape == doc_term_matrix.shape
 
 
 def test_filter_terms_by_df_identity(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
-    dtm, vocab = vsm.filter_terms_by_df(
+    dtm, vocab = representations.filter_terms_by_df(
         doc_term_matrix,
         vectorizer.vocabulary_terms,
         max_df=1.0,
@@ -302,7 +302,7 @@ def test_filter_terms_by_df_identity(vectorizer_and_dtm):
 
 def test_filter_terms_by_df_max_n_terms(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
-    dtm, vocab = vsm.filter_terms_by_df(
+    dtm, vocab = representations.filter_terms_by_df(
         doc_term_matrix,
         vectorizer.vocabulary_terms,
         max_df=1.0,
@@ -317,7 +317,7 @@ def test_filter_terms_by_df_max_n_terms(vectorizer_and_dtm):
 
 def test_filter_terms_by_df_min_df(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
-    dtm, vocab = vsm.filter_terms_by_df(
+    dtm, vocab = representations.filter_terms_by_df(
         doc_term_matrix,
         vectorizer.vocabulary_terms,
         max_df=1.0,
@@ -332,7 +332,7 @@ def test_filter_terms_by_df_min_df(vectorizer_and_dtm):
 def test_filter_terms_by_df_exception(vectorizer_and_dtm):
     vectorizer, doc_term_matrix = vectorizer_and_dtm
     with pytest.raises(ValueError):
-        _ = vsm.filter_terms_by_df(
+        _ = representations.filter_terms_by_df(
             doc_term_matrix,
             vectorizer.vocabulary_terms,
             max_df=1.0,

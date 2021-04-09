@@ -4,7 +4,7 @@ from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
 from textacy import Corpus
 from textacy.tm import TopicModel
-from textacy.vsm import Vectorizer
+from textacy.representations import Vectorizer
 
 
 @pytest.fixture(scope="module")
