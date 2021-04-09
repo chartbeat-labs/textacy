@@ -1,6 +1,9 @@
 """
-:mod:`textacy.vsm.vectorizers`:  Transform a collection of tokenized documents into
-a document-term matrix of shape (# docs, # unique terms), with various ways to filter
+Vectorizers
+-----------
+
+:mod:`textacy.representations.vectorizers`:  Transform a collection of tokenized docs
+into a doc-term matrix of shape (# docs, # unique terms), with various ways to filter
 or limit included terms and flexible weighting schemes for their values.
 
 A second option aggregates terms in tokenized documents by provided group labels,
@@ -10,6 +13,8 @@ with filtering and weighting functionality as described above.
 See the :class:`Vectorizer` and :class:`GroupVectorizer` docstrings for usage
 examples and explanations of the various weighting schemes.
 """
+from typing import Optional
+
 import collections
 import operator
 from array import array
@@ -246,11 +251,9 @@ class Vectorizer:
     def __init__(
         self,
         *,
-        tf_type="linear",
-        apply_idf=False,
-        idf_type="smooth",
-        apply_dl=False,
-        dl_type="sqrt",
+        tf_type: str = "linear",  # Literal["linear", "sqrt", "log", "binary"]
+        idf_type: Optional[str] = None,  # Optional[Literal["standard", "smooth", "bm25"]]
+        dl_type: Optional[str] = None,  # Optional[Literal["linear", "sqrt", "log"]]
         norm=None,
         min_df=1,
         max_df=1.0,
@@ -263,9 +266,7 @@ class Vectorizer:
         if max_n_terms and max_n_terms < 0:
             raise ValueError("`max_n_terms` must be a positive integer or None")
         self.tf_type = tf_type
-        self.apply_idf = apply_idf
         self.idf_type = idf_type
-        self.apply_dl = apply_dl
         self.dl_type = dl_type
         self.norm = norm
         self.min_df = min_df
@@ -495,14 +496,14 @@ class Vectorizer:
 
         n_docs, n_terms = doc_term_matrix.shape
 
-        if self.apply_idf is True:
+        if self.idf_type:
             # store the global weights as a diagonal sparse matrix of idfs
             idfs = get_inverse_doc_freqs(doc_term_matrix, type_=self.idf_type)
             self._idf_diag = sp.spdiags(
                 idfs, diags=0, m=n_terms, n=n_terms, format="csr"
             )
 
-        if self.tf_type == "bm25" and self.apply_dl is True:
+        if self.tf_type == "bm25" and self.dl_type:
             # store the avg document length, used in bm25 weighting to normalize
             # term weights by the length of the containing documents
             self._avg_doc_length = get_doc_lengths(
@@ -632,7 +633,7 @@ class Vectorizer:
         if self.tf_type == "binary":
             doc_term_matrix.data.fill(1)
         elif self.tf_type == "bm25":
-            if self.apply_dl is False:
+            if not self.dl_type:
                 doc_term_matrix.data = (
                     doc_term_matrix.data
                     * (BM25_K1 + 1.0)
@@ -667,12 +668,12 @@ class Vectorizer:
             )
 
         # apply the global component (idfs), column-wise
-        if self.apply_idf is True:
+        if self.idf_type:
             doc_term_matrix = doc_term_matrix * self._idf_diag
 
         # apply normalizations, row-wise
         # unless we've already handled it for bm25-style tf
-        if self.apply_dl is True and self.tf_type != "bm25":
+        if self.dl_type and self.tf_type != "bm25":
             n_docs, _ = doc_term_matrix.shape
             dls = get_doc_lengths(doc_term_matrix, type_=self.dl_type)
             dl_diag = sp.spdiags(1.0 / dls, diags=0, m=n_docs, n=n_docs, format="csr")
@@ -713,12 +714,12 @@ class Vectorizer:
             "log": "1/log(length) + 1",
         }
         if self.tf_type == "bm25":
-            w.append(tf_types[self.tf_type][self.apply_dl])
+            w.append(tf_types[self.tf_type][bool(self.dl_type)])
         else:
             w.append(tf_types[self.tf_type])
-        if self.apply_idf:
+        if self.idf_type:
             w.append(idf_types[self.idf_type])
-        if self.apply_dl and self.tf_type != "bm25":
+        if self.dl_type and self.tf_type != "bm25":
             w.append(dl_types[self.dl_type])
         return " * ".join(w)
 
@@ -875,11 +876,9 @@ class GroupVectorizer(Vectorizer):
     def __init__(
         self,
         *,
-        tf_type="linear",
-        apply_idf=False,
-        idf_type="smooth",
-        apply_dl=False,
-        dl_type="linear",
+        tf_type: str = "linear",
+        idf_type: Optional[str] = None,
+        dl_type : Optional[str] = None,
         norm=None,
         min_df=1,
         max_df=1.0,
@@ -889,9 +888,7 @@ class GroupVectorizer(Vectorizer):
     ):
         super().__init__(
             tf_type=tf_type,
-            apply_idf=apply_idf,
             idf_type=idf_type,
-            apply_dl=apply_dl,
             dl_type=dl_type,
             norm=norm,
             min_df=min_df,
@@ -1084,14 +1081,14 @@ class GroupVectorizer(Vectorizer):
 
         n_grps, n_terms = grp_term_matrix.shape
 
-        if self.apply_idf is True:
+        if self.idf_type:
             # store the global weights as a diagonal sparse matrix of idfs
             idfs = get_inverse_doc_freqs(grp_term_matrix, type_=self.idf_type)
             self._idf_diag = sp.spdiags(
                 idfs, diags=0, m=n_terms, n=n_terms, format="csr"
             )
 
-        if self.tf_type == "bm25" and self.apply_dl is True:
+        if self.tf_type == "bm25" and self.dl_type:
             # store the avg document length, used in bm25 weighting to normalize
             # term weights by the length of the containing documents
             self._avg_doc_length = get_doc_lengths(
