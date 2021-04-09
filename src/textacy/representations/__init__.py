@@ -1,5 +1,6 @@
-from . import network, vectorizers
+from . import network, sparse_vec, vectorizers
 from .network import build_cooccurrence_network, build_similarity_network
+from .sparse_vec import build_doc_term_matrix, build_grp_term_matrix
 from .vectorizers import Vectorizer, GroupVectorizer
 from .matrix_utils import (
     get_term_freqs,
