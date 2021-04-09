@@ -1,4 +1,3 @@
-from . import keyterms
 from .acros import acronyms, acronyms_and_definitions
 from .basics import words, ngrams, entities, noun_chunks, terms
 from .kwic import keyword_in_context
