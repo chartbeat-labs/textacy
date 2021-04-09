@@ -64,7 +64,7 @@ def build_doc_term_matrix(
             - "log": dl => log(dl)
             - None: no normalization is applied to local(*global?) weights
 
-        **kwargs: Passed directly into :class:`textacy.representations.Vectorizer`
+        **kwargs: Passed directly into vectorizer class
 
     Returns:
         Document-term matrix as a sparse row matrix, and
@@ -73,10 +73,10 @@ def build_doc_term_matrix(
     Note:
         If you need to transform other sequences of tokenized documents in the same way,
         or if you need more access to the underlying vectorization process,
-        consider using :class:`textacy.representations.Vectorizer` directly.
+        consider using :class:`textacy.representations.vectorizers.Vectorizer` directly.
 
     See Also:
-        - :class:`textacy.representations.Vectorizer`
+        - :class:`textacy.representations.vectorizers.Vectorizer`
         - :class:`scipy.sparse.csr_matrix`
 
     Reference:
@@ -148,7 +148,7 @@ def build_grp_term_matrix(
             - "log": dl => log(dl)
             - None: no normalization is applied to local(*global?) weights
 
-        **kwargs: Passed directly into :class:`textacy.representations.GroupVectorizer`
+        **kwargs: Passed directly into vectorizer class
 
     Returns:
         Group-term matrix as a sparse row matrix, and
@@ -157,11 +157,11 @@ def build_grp_term_matrix(
 
     Note:
         If you need to transform other sequences of tokenized documents in the same way,
-        or if you need more access to the underlying vectorization process,
-        consider using :class:`textacy.representations.GroupVectorizer` directly.
+        or if you need more access to the underlying vectorization process, consider
+        using :class:`textacy.representations.vectorizers.GroupVectorizer` directly.
 
     See Also:
-        - :class:`textacy.representations.GroupVectorizer`
+        - :class:`textacy.representations.vectorizers.GroupVectorizer`
         - :class:`scipy.sparse.csr_matrix`
 
     Reference:
