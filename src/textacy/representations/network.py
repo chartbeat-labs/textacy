@@ -26,6 +26,9 @@ def build_cooccurrence_network(
     into a graph, where each string is represented by a node with weighted edges
     linking it to other strings that co-occur within ``window_size`` elements of itself.
 
+    Input ``data`` can take a variety of forms. For example, as a ``Sequence[str]``
+    where elements are token or term strings from a single document:
+
     .. code-block:: pycon
 
         >>> texts = [
@@ -33,26 +36,38 @@ def build_cooccurrence_network(
         ...     "Everywhere that Mary went the lamb was sure to go.",
         ... ]
         >>> docs = [make_spacy_doc(text, lang="en_core_web_sm") for text in texts]
-        >>> # Sequence[str]: tokens from a single document
-        >>> graph = build_cooccurrence_network([tok.text for tok in docs[0]], window_size=2)
+        >>> data = [tok.text for tok in docs[0]]
+        >>> graph = build_cooccurrence_network(data, window_size=2)
         >>> sorted(graph.adjacency())[0]
         ('.', {'lamb': {'weight': 1}, 'Its': {'weight': 1}, 'snow': {'weight': 1}})
-        >>> # Sequence[Sequence[str]]: tokens by sentence from a single document
-        >>> graph = build_cooccurrence_network(
-        ...     [[tok.text for tok in sent] for sent in doc.sents], window_size=2
-        ... )
+
+    Or as a ``Sequence[Sequence[str]]``, where elements are token or term strings
+    per sentence from a single document:
+
+    .. code-block:: pycon
+
+        >>> data = [[tok.text for tok in sent] for sent in doc.sents]
+        >>> graph = build_cooccurrence_network(data, window_size=2)
         >>> sorted(graph.adjacency())[0]
         ('.', {'lamb': {'weight': 1}, 'snow': {'weight': 1}})
-        >>> # Sequence[Sequence[str]]: tokens by document from multiple documents
-        >>> graph = build_cooccurrence_network(
-        ...     [[tok.text for tok in doc] for doc in docs], window_size=2
-        ... )
+
+    Or as a ``Sequence[Sequence[str]]``, where elements are token or term strings
+    per document from multiple documents:
+
+    .. code-block:: pycon
+
+        >>> data = [[tok.text for tok in doc] for doc in docs]
+        >>> graph = build_cooccurrence_network(data, window_size=2)
         >>> sorted(graph.adjacency())[0]
         ('.',
          {'lamb': {'weight': 1},
           'Its': {'weight': 1},
           'snow': {'weight': 1},
           'go': {'weight': 1}})
+
+    Note how the "." token's connections to other nodes change for each case. (Note
+    that in real usage, you'll probably want to remove stopwords, punctuation, etc.
+    so that nodes in the graph represent meaningful concepts.)
 
     Args:
         data
