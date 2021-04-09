@@ -31,7 +31,6 @@ def term_lists():
 def vectorizer():
     vectorizer_ = Vectorizer(
         tf_type="linear",
-        apply_idf=True,
         idf_type="smooth",
         norm=None,
         min_df=1,

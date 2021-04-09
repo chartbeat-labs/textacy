@@ -48,7 +48,6 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
     top_n = 10
     vectorizer = Vectorizer(
         tf_type="linear",
-        apply_idf=True,
         idf_type="smooth",
         norm=None,
         min_df=2,
