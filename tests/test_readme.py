@@ -10,7 +10,7 @@ from textacy import load_spacy_lang, make_spacy_doc
 from textacy.extract import keyterms as kt
 from textacy.text_stats import TextStats
 from textacy.tm import TopicModel
-from textacy.vsm import Vectorizer
+from textacy.representations import Vectorizer
 
 DATASET = textacy.datasets.CapitolWords()
 
