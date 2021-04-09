@@ -11,7 +11,7 @@ API Reference
    text_stats
    similarity
    representations
-   vsm_and_tm
+   tm
    io
    viz
    augmentation
