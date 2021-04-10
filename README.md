@@ -9,16 +9,15 @@
 
 ### features
 
-- Access spaCy through convenient methods for working with one or many documents and extend its functionality through custom extensions and automatic language identification for applying the right spaCy pipeline for the text
-- Download datasets with both text content and metadata, from Congressional speeches to historical literature to Reddit comments
-- Easily stream data to and from disk in many common formats
-- Clean, normalize, and explore raw text — before processing it with spaCy
-- Flexibly extract words, n-grams, noun chunks, entities, acronyms, key terms, and other elements of interest from processed documents
-- Compare strings, sets, and documents by a variety of similarity metrics
+- Access and extend spaCy's core functionality for working with one or many documents through convenient methods and custom extensions
+- Load prepared datasets with both text content and metadata, from Congressional speeches to historical literature to Reddit comments
+- Clean, normalize, and explore raw text before processing it with spaCy
+- Extract structured information from processed documents, including n-grams, entities, acronyms, keyterms, and SVO triples
+- Compare strings and sequences using a variety of similarity metrics
 - Tokenize and vectorize documents then train, interpret, and visualize topic models
-- Compute a variety of text readability statistics, including Flesch-Kincaid grade level, SMOG index, and multi-lingual Flesch Reading Ease
+- Compute text readability statistics, including Flesch-Kincaid grade level, SMOG index, and multi-lingual Flesch Reading Ease
 
-... *and more!*
+... *and much more!*
 
 ### links
 
@@ -31,4 +30,4 @@
 
 Howdy, y'all. 👋
 
-- Burton DeWilde (<burton@chartbeat.com>)
+- Burton DeWilde (<burtdewilde@gmail.com>)
