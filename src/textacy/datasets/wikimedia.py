@@ -366,7 +366,7 @@ class Wikimedia(Dataset):
         """
         filters = self._get_filters(category, wiki_link, min_len)
         for record in itertools.islice(self._filtered_iter(filters), limit):
-            yield record.pop("text"), record
+            yield types.Record(text=record.pop("text"), meta=record)
 
 
 class Wikipedia(Wikimedia):

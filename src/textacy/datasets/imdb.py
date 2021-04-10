@@ -291,7 +291,7 @@ class IMDB(Dataset):
         try:
             filters = self._get_filters(rating_range, min_len)
             for record in itertools.islice(self._filtered_iter(filters), limit):
-                yield record.pop("text"), record
+                yield types.Record(text=record.pop("text"), meta=record)
         finally:
             self._subset = None
             self._label = None

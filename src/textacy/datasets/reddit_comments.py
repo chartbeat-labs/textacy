@@ -343,7 +343,7 @@ class RedditComments(Dataset):
         try:
             filters = self._get_filters(subreddit, date_range, score_range, min_len)
             for record in itertools.islice(self._filtered_iter(filters), limit):
-                yield record.pop("body"), record
+                yield types.Record(text=record.pop("body"), meta=record)
         finally:
             self._date_range = None
 
