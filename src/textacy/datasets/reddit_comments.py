@@ -26,7 +26,7 @@ import urllib.parse
 from datetime import datetime
 from typing import Iterable, Optional, Set, Tuple, Union
 
-from .. import constants, utils
+from .. import constants, types, utils
 from .. import io as tio
 from .base import Dataset
 
@@ -307,7 +307,7 @@ class RedditComments(Dataset):
         score_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
-    ) -> Iterable[Tuple[str, dict]]:
+    ) -> Iterable[types.Record]:
         """
         Iterate over comments (including text and metadata) in 1 or more files
         of this dataset, optionally filtering by a variety of metadata and/or

@@ -29,7 +29,7 @@ import pathlib
 import urllib.parse
 from typing import Iterable, Optional, Set, Tuple, Union
 
-from .. import constants, utils
+from .. import constants, types, utils
 from .. import io as tio
 from .base import Dataset
 
@@ -275,7 +275,7 @@ class CapitolWords(Dataset):
         date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
-    ) -> Iterable[Tuple[str, dict]]:
+    ) -> Iterable[types.Record]:
         """
         Iterate over speeches in this dataset, optionally filtering by a variety
         of metadata and/or text length, and yield text + metadata pairs,

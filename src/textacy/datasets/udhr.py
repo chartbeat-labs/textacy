@@ -29,7 +29,7 @@ import pathlib
 import xml
 from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
 
-from .. import constants, preprocessing, utils
+from .. import constants, preprocessing, types, utils
 from .. import io as tio
 from .base import Dataset
 
@@ -227,7 +227,7 @@ class UDHR(Dataset):
         *,
         lang: Optional[Union[str, Set[str]]] = None,
         limit: Optional[int] = None,
-    ) -> Iterable[Tuple[str, dict]]:
+    ) -> Iterable[types.Record]:
         """
         Iterate over reocrds in this dataset, optionally filtering by a language,
         and yield text + metadata pairs.
