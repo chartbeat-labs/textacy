@@ -96,7 +96,7 @@ def print_markdown(items: Union[Dict[Any, Any], Iterable[Tuple[Any, Any]]]):
 def is_record(obj: Any) -> bool:
     """Check whether ``obj`` is a "record" -- that is, a (text, metadata) 2-tuple."""
     if (
-        isinstance(obj, (tuple, list))
+        isinstance(obj, tuple)
         and len(obj) == 2
         and isinstance(obj[0], str)
         and isinstance(obj[1], dict)

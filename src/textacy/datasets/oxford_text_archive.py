@@ -297,4 +297,4 @@ class OxfordTextArchive(Dataset):
         """
         filters = self._get_filters(author, date_range, min_len)
         for record in itertools.islice(self._filtered_iter(filters), limit):
-            yield record.pop("text"), record
+            yield types.Record(text=record.pop("text"), meta=record)

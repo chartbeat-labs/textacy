@@ -245,4 +245,4 @@ class UDHR(Dataset):
             ValueError: If any filtering options are invalid.
         """
         for record in itertools.islice(self._filtered_iter(lang), limit):
-            yield record.pop("text"), record
+            yield types.Record(text=record.pop("text"), meta=record)
