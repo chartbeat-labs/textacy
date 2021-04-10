@@ -28,7 +28,7 @@ import os
 import re
 from typing import Any, Dict, Iterable, Optional, Tuple
 
-from .. import constants, utils
+from .. import constants, types, utils
 from .. import io as tio
 from .base import Dataset
 
@@ -261,7 +261,7 @@ class IMDB(Dataset):
         rating_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
-    ) -> Iterable[Tuple[str, dict]]:
+    ) -> Iterable[types.Record]:
         """
         Iterate over movie reviews in this dataset, optionally filtering by
         a variety of metadata and/or text length, and yield text + metadata pairs.
