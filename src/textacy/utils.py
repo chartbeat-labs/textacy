@@ -58,7 +58,7 @@ def get_config() -> Dict[str, Any]:
     """
     from spacy.about import __version__ as spacy_version
     from spacy.util import get_data_path
-    from .about import __version__ as textacy_version
+    from ._version import __version__ as textacy_version
 
     return {
         "platform": sys.platform,
