@@ -156,10 +156,10 @@ topic 9: THE URGENT NEED TO OUTLAW POISON GAS   CHEMICAL WEAPONS CONVENTION   EX
 
 At first glance, most of these topics seem relatively interpretable: topic 1 looks to be about medical device manufacturing and liability, topic 6 is focused on the late 90s Kosovo War, topic 9 deals with chemical weapons and related treaties, etc. Seems reasonable!
 
-We can also visualize the relationship between terms and topics using a "termite" plot, where the area of each circle is proportional to a term's weight in a given topic. To aid the eye, we've highlighted a couple topics:
+We can also visualize the relationship between terms and topics using a "termite" plot, where the area of each circle is proportional to a term's weight in a given topic. To aid the eye, we've highlighted those topics called out above:
 
 ```pycon
->>> _ = model.termite_plot(doc_term_matrix, id_to_term, n_terms=30, highlight_topics=[1, 5])
+>>> _ = model.termite_plot(doc_term_matrix, id_to_term, n_terms=30, highlight_topics=[1, 6, 9])
 ```
 
 [doc-term matrix termite plot](_static/doc-term-matrix.png "doc-term matrix termite plot")

@@ -1,4 +1,4 @@
-# Context and description of workers in Congress
+# Context and Description of Workers in the U.S. Congress
 
 In this tutorial, we will explore how certain members of the U.S. Congress have spoken about workers, based on a dataset of thousands of speeches sourced from the Congressional Record.
 
@@ -14,7 +14,7 @@ First, let's initialize and download the dataset, which comes built-in with `tex
 >>> dataset.download()
 ```
 
-Each record in the dataset contains the full text of and basic metadata about the speech. Let's take a peek at the first one, to get our bearings:
+Each record in this dataset contains the full text of and basic metadata about the speech. Let's take a peek at the first one, to get our bearings:
 
 ```pycon
 >>> record = next(dataset.records(limit=1))
