@@ -2,7 +2,7 @@
 
 In this tutorial, we will explore the broad topics of discussion among certain members of the U.S. Congress, based on a dataset of thousands of their speeches delivered on the floor.
 
-First, let's initialize and download the dataset, which comes built-in with textacy:
+First, let's initialize and download the dataset, which comes built-in with `textacy`:
 
 ```pycon
 >>> import textacy.datasets
@@ -40,7 +40,7 @@ As we saw in another tutorial, this collection covers speeches given during the 
 ('1996-01-04', '1999-10-08')
 ```
 
-spaCy's base tokenization and annotations provide a flexible base from which we can perform a higher-level splitting of each document into semantically meaningful "terms". For example, let's extract all entities:
+spaCy's tokenization and annotations provide a flexible base from which we can perform a higher-level splitting of each document into semantically meaningful "terms". For example, let's extract all entities:
 
 ```pycon
 >>> import textacy.extract
@@ -162,7 +162,7 @@ We can also visualize the relationship between terms and topics using a "termite
 >>> _ = model.termite_plot(doc_term_matrix, id_to_term, n_terms=30, highlight_topics=[1, 6, 9])
 ```
 
-![doc-term matrix termite plot](_static/doc-term-matrix.png "doc-term matrix termite plot")
+![doc-term matrix termite plot](../../_static/doc-term-matrix.png "doc-term matrix termite plot")
 
 In this tutorial, we learned how to
 
