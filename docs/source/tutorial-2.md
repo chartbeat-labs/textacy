@@ -162,7 +162,7 @@ We can also visualize the relationship between terms and topics using a "termite
 >>> _ = model.termite_plot(doc_term_matrix, id_to_term, n_terms=30, highlight_topics=[1, 6, 9])
 ```
 
-[doc-term matrix termite plot](_static/doc-term-matrix.png "doc-term matrix termite plot")
+![doc-term matrix termite plot](_static/doc-term-matrix.png "doc-term matrix termite plot")
 
 In this tutorial, we learned how to
 
