@@ -582,6 +582,28 @@ class Corpus:
             )
         return word_doc_counts_
 
+    def agg_metadata(
+        self,
+        name: str,
+        agg_func: Callable[[Iterable[Any]], Any],
+        default: Optional[Any] = None,
+    ) -> Any:
+        """
+        Aggregate values for a particular metadata field over all documents
+        in :class:`Corpus`.
+
+        Args:
+            name: Name of metadata field (key) in :class:`Doc._.meta`.
+            agg_func: Callable that accepts an iterable of field values
+                and outputs a single, aggregated result.
+            default: Default field value to use if ``name`` is not found
+                in a given document's metadata.
+
+        Returns:
+            Aggregated value for metadata field.
+        """
+        return agg_func(doc._.meta.get(name, default) for doc in self)
+
     # file io
 
     def save(self, filepath: types.PathLike, store_user_data: bool = True):

@@ -2,7 +2,6 @@ import collections
 
 import numpy as np
 import pytest
-import spacy
 from spacy.tokens import Doc
 
 from textacy import Corpus
@@ -117,6 +116,19 @@ class TestCorpusProperties:
 
 
 class TestCorpusMethods:
+
+    # NOTE: this test must run before we add more docs that don't have valid metadata
+    @pytest.mark.parametrize(
+        "name, agg_func, exp_type",
+        [
+            ("date", min, str),
+            ("congress", max, int),
+            ("speaker_name", collections.Counter, dict),
+        ],
+    )
+    def test_agg_metadata(self, name, agg_func, exp_type, corpus):
+        result = corpus.agg_metadata(name, agg_func)
+        assert isinstance(result, exp_type)
 
     def test_add(self, corpus, en_core_web_sm):
         datas = (
