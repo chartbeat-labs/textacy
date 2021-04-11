@@ -62,5 +62,7 @@ contents
 
    installation
    quickstart
+   tutorial-1
+   tutorial-2
    api_reference/root
    changes
