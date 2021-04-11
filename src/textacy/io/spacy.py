@@ -4,7 +4,6 @@ in either pickle or binary format. Be warned: Both formats have pros and cons.
 """
 from __future__ import annotations
 
-import pathlib
 import pickle
 from typing import Iterable, Optional
 

@@ -127,8 +127,8 @@ class DSLCCDataset:
                 try:
                     text, lang = line.split("\t")
                     if (
-                        lang[:2] in langs and
-                        itertoolz.count(char for char in text if char.isalnum()) >= min_len
+                        lang[:2] in langs
+                        and itertoolz.count(c for c in text if c.isalnum()) >= min_len
                     ):
                         data.append((text, lang[:2]))
                 except Exception:
@@ -146,7 +146,7 @@ class TatoebaDataset:
     def __init__(self, data_dir: str | pathlib.Path):
         self.data_dir = textacy.utils.to_path(data_dir).resolve()
 
-    def download(self, force: bool =False):
+    def download(self, force: bool = False):
         """
         Args:
             force: If True, always download a new copy of the dataset; otherwise,

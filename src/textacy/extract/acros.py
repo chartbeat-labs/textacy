@@ -12,7 +12,7 @@ from operator import itemgetter
 from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 import numpy as np
-from spacy.tokens import Doc, Span, Token
+from spacy.tokens import Span, Token
 
 from .. import constants, types
 

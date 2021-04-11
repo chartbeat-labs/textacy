@@ -110,8 +110,8 @@ class Corpus:
 
     .. code-block:: pycon
 
-        >>> corpus.save("./capitol_words_sample.bin.gz")
-        >>> corpus = textacy.Corpus.load("en_core_web_sm", "./capitol_words_sample.bin.gz")
+        >>> corpus.save("./cw_sample.bin.gz")
+        >>> corpus = textacy.Corpus.load("en_core_web_sm", "./cw_sample.bin.gz")
         >>> print(corpus)
         Corpus(56 docs, 41573 tokens)
 
@@ -204,8 +204,8 @@ class Corpus:
             n_process: Number of parallel processors to run when processing.
                 If -1, this is set to ``multiprocessing.cpu_count()``.
 
-                .. note:: This feature is only available in spaCy 2.2.2+, and only applies
-                   when ``data`` is a sequence of texts or records.
+                .. note:: This feature is only applies when ``data`` is a sequence
+                   of texts or records.
 
         See Also:
             * :meth:`Corpus.add_text()`
@@ -453,7 +453,7 @@ class Corpus:
     def word_counts(
         self,
         *,
-        by: str = "lemma",  # Literal["lemma", "lemma_", "lower", "lower_", "norm", "norm_", "orth", "orth_"]
+        by: str = "lemma",  # Literal["lemma", "lower", "norm", "orth"]
         weighting: str = "count",  # Literal["count", "freq"]
         **kwargs,
     ) -> Dict[int, int | float] | Dict[str, int | float]:
@@ -470,8 +470,8 @@ class Corpus:
                 if "lower", by the lowercase form of the token text;
                 if "norm", by the normalized form of the token text;
                 if "orth", by the token text exactly as it appears in documents.
-                To output keys as strings, simply append an underscore to any of these;
-                for example, "lemma_" creates a bag whose keys are token lemmas as strings.
+                To output keys as strings, append an underscore to any of these options;
+                for example, "lemma_" groups tokens by their lemmas as strings.
             weighting: Type of weighting to assign to unique words given by ``by``.
                 If "count", weights are the absolute number of occurrences (i.e. counts);
                 if "freq", weights are counts normalized by the total token count,
@@ -487,7 +487,7 @@ class Corpus:
             (depending on the value of ``weighting``).
 
         See Also:
-            :func:`textacy.vsm.get_term_freqs() <textacy.vsm.matrix_utils.get_term_freqs>`
+            :func:`textacy.representations.matrix_utils.get_term_freqs()`
         """
         word_counts_: Union[Counter[Any], Dict[Any, Union[int, float]]]
         word_counts_ = collections.Counter()
@@ -511,7 +511,7 @@ class Corpus:
     def word_doc_counts(
         self,
         *,
-        by: str = "lemma",  # Literal["lemma", "lemma_", "lower", "lower_", "norm", "norm_", "orth", "orth_"]
+        by: str = "lemma",  # Literal["lemma", "lower", "norm", "orth"]
         weighting: str = "count",  # Literal["count", "freq", "idf"]
         smooth_idf: bool = True,
         **kwargs
@@ -527,8 +527,8 @@ class Corpus:
                 if "lower", by the lowercase form of the token text;
                 if "norm", by the normalized form of the token text;
                 if "orth", by the token text exactly as it appears in documents.
-                To output keys as strings, simply append an underscore to any of these;
-                for example, "lemma_" creates a bag whose keys are token lemmas as strings.
+                To output keys as strings, append an underscore to any of these options;
+                for example, "lemma_" groups tokens by their lemmas as strings.
             weighting: Type of weighting to assign to unique words given by ``by``.
                 If "count", weights are the absolute number of occurrences (i.e. counts);
                 if "freq", weights are counts normalized by the total token count,

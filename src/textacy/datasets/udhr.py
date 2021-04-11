@@ -27,7 +27,7 @@ import itertools
 import logging
 import pathlib
 import xml
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Set, Union
 
 from .. import constants, preprocessing, types, utils
 from .. import io as tio

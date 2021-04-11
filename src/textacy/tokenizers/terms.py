@@ -73,8 +73,8 @@ class TermsTokenizer:
         elif isinstance(ngrams, int):
             return partial(extract.ngrams, n=ngrams)
         elif (
-            isinstance(ngrams, Collection) and
-            all(isinstance(ng, int) for ng in ngrams)
+            isinstance(ngrams, Collection)
+            and all(isinstance(ng, int) for ng in ngrams)
         ):
             return partial(_concat_extract_ngrams, ns=ngrams)
         else:

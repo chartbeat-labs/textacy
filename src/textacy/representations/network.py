@@ -301,12 +301,12 @@ def rank_nodes_by_bestcoverage(
 
     # ranks: array of PageRank values, summing up to 1
     ranks = nx.pagerank_scipy(graph, alpha=0.85, max_iter=100, tol=1e-08, weight=weight)
-    sorted_ranks = sorted(ranks.items(), key=itemgetter(1), reverse=True)
-    avg_degree = sum(dict(graph.degree()).values()) / len(nodes_list)
+    # sorted_ranks = sorted(ranks.items(), key=itemgetter(1), reverse=True)
+    # avg_degree = sum(dict(graph.degree()).values()) / len(nodes_list)
     # relaxation parameter, k' in the paper
-    k_prime = int(k * avg_degree * c)
+    # k_prime = int(k * avg_degree * c)
 
-    top_k_sorted_ranks = sorted_ranks[:k_prime]
+    # top_k_sorted_ranks = sorted_ranks[:k_prime]
 
     def get_l_step_expanded_set(vertices: Collection[str], n_steps: int) -> Set[str]:
         """
@@ -333,9 +333,9 @@ def rank_nodes_by_bestcoverage(
         return s
 
     # TODO: someday, burton, figure out what you were going to do with this...
-    top_k_exp_vertices = get_l_step_expanded_set(
-        [item[0] for item in top_k_sorted_ranks], c
-    )  # noqa: F841
+    # top_k_exp_vertices = get_l_step_expanded_set(
+    #     [item[0] for item in top_k_sorted_ranks], c
+    # )
 
     # compute initial exprel contribution
     taken = collections.defaultdict(bool)

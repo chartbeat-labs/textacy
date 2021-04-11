@@ -36,8 +36,8 @@ def get_topn_preds_and_probs(
     #     return list(zip(pred_langs, pred_probs))
     # otherwise, do the full array sorts to get topn max
     # else:
-    idxs = np.argsort(preds, axis=1)[:,::-1][:,:topn]
-    pred_probs = np.sort(preds, axis=1)[:,::-1][:,:topn]
+    idxs = np.argsort(preds, axis=1)[:, ::-1][:, :topn]
+    pred_probs = np.sort(preds, axis=1)[:, ::-1][:, :topn]
     pred_langs = classes[idxs]
     return [
         list(zip(pred_langs[i], pred_probs[i]))
@@ -107,8 +107,8 @@ def MultiCharNgramsEmbedding(
     num_vectors = [num_vectors] * numn if isinstance(num_vectors, int) else num_vectors
     embed_dims = [embed_dims] * numn if isinstance(embed_dims, int) else embed_dims
     with Model.define_operators({">>": chain}):
-        model = concatenate(*
-            [
+        model = concatenate(
+            *[
                 CharNgramsEmbedding(
                     n=n,
                     max_chars=max_chars,

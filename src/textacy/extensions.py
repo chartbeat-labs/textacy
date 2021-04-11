@@ -72,7 +72,7 @@ def to_tokenized_text(doc: Doc) -> List[List[str]]:
 def to_bag_of_words(
     doclike: types.DocLike,
     *,
-    by: str = "lemma_",  # Literal["lemma", "lemma_", "lower", "lower_", "norm", "norm_", "orth", "orth_"]
+    by: str = "lemma_",  # Literal["lemma", "lower", "norm", "orth"]
     weighting: str = "count",  # Literal["count", "freq", "binary"]
     **kwargs,
 ) -> Dict[int, int | float] | Dict[str, int | float]:

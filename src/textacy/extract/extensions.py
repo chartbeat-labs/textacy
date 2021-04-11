@@ -68,7 +68,9 @@ _DOC_EXTENSIONS: Dict[str, Dict[str, Any]] = {
     "extract_terms": {"method": basics.terms},
     "extract_token_matches": {"method": matches.token_matches},
     "extract_regex_matches": {"method": matches.regex_matches},
-    "extract_subject_verb_object_triples": {"method": triples.subject_verb_object_triples},
+    "extract_subject_verb_object_triples": {
+        "method": triples.subject_verb_object_triples
+    },
     "extract_semistructured_statements": {"method": triples.semistructured_statements},
     "extract_direct_quotations": {"method": triples.direct_quotations},
     "extract_acronyms": {"method": acros.acronyms},

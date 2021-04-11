@@ -129,8 +129,8 @@ def aggregate_term_variants(
         Partly inspired by aggregation of variants discussed in
         Park, Youngja, Roy J. Byrd, and Branimir K. Boguraev.
         "Automatic glossary extraction: beyond terminology identification."
-        Proceedings of the 19th international conference on Computational linguistics-Volume 1.
-        Association for Computational Linguistics, 2002.
+        Proceedings of the 19th international conference on Computational linguistics-
+        Volume 1. Association for Computational Linguistics, 2002.
     """
     from .. import similarity  # ugh, hide import here
 
@@ -316,8 +316,8 @@ def get_filtered_topn_terms(
 
     Args:
         term_scores: Iterable of (term, score) pairs, sorted in order of score
-            from best to worst. Note that this may be from high to low value or low to high,
-            depending on the scoring algorithm.
+            from best to worst. Note that this may be from high to low value or
+            low to high, depending on the scoring algorithm.
         topn: Maximum number of top-scoring terms to get.
         match_threshold: Minimal edit distance between a term and previously seen terms,
             used to filter out terms that are sufficiently similar

@@ -27,7 +27,7 @@ import os
 import pathlib
 import re
 import urllib.parse
-from typing import Iterable, Optional, Set, Tuple, Union
+from typing import Iterable, Optional, Set, Union
 
 import requests
 from cytoolz import itertoolz

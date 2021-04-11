@@ -8,7 +8,7 @@ via spaCy, with bells and whistles for filtering the results.
 from __future__ import annotations
 
 from functools import partial
-from typing import Callable, Collection, Iterable, List, Optional, Set, Union
+from typing import Collection, Iterable, List, Optional, Set, Union
 
 from cytoolz import itertoolz
 from spacy.parts_of_speech import DET
@@ -253,7 +253,6 @@ def _parse_ent_types(
         else:
             return ent_types
     else:
-        allowed_types = (None, str, set, frozenset, list, tuple)
         raise TypeError(
             errors.type_invalid_msg(
                 f"{which}_types", type(ent_types), Optional[Union[str, Collection[str]]]
@@ -367,8 +366,8 @@ def _get_ngs_extractor(ngs) -> Optional[types.DocLikeToSpans]:
     elif callable(ngs):
         return ngs
     elif (
-        isinstance(ngs, int) or
-        (isinstance(ngs, Collection) and all(isinstance(ng, int) for ng in ngs))
+        isinstance(ngs, int)
+        or (isinstance(ngs, Collection) and all(isinstance(ng, int) for ng in ngs))
     ):
         return partial(ngrams, n=ngs)
     else:

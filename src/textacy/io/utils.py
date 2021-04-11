@@ -14,13 +14,12 @@ import itertools
 import logging
 import lzma
 import os
-import pathlib
 import re
 import shutil
 import tarfile
 import urllib
 import zipfile
-from typing import IO, Iterable, Optional, Tuple, Union
+from typing import IO, Iterable, Optional, Tuple
 
 from cytoolz import itertoolz
 

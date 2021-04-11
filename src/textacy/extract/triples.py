@@ -13,7 +13,7 @@ from typing import Iterable, List, Optional, Pattern, Tuple
 
 from cytoolz import itertoolz
 from spacy.symbols import (
-    AUX, NOUN, PROPN, VERB,
+    AUX, VERB,
     agent, attr, aux, auxpass, csubj, csubjpass, dobj, neg, nsubj, nsubjpass, obj, pobj, xcomp,
 )
 from spacy.tokens import Doc, Span, Token
@@ -79,8 +79,8 @@ def subject_verb_object_triples(
             # open clausal complement, but not as a secondary predicate
             elif tok.dep == xcomp:
                 if (
-                    head.pos == VERB and
-                    not any(child.dep == dobj for child in head.children)
+                    head.pos == VERB
+                    and not any(child.dep == dobj for child in head.children)
                 ):
                     # TODO: just the verb, or the whole tree?
                     # verb_sos[verb]["objects"].update(expand_verb(tok))
@@ -157,17 +157,17 @@ def semistructured_statements(
                 frag_cand = None
                 for tok in cue_cand.children:
                     if (
-                        tok.dep in {attr, dobj, obj} or
-                        tok.dep_ == "dative" or
-                        (
-                            tok.dep == xcomp and
-                            not any(child.dep == dobj for child in cue_cand.children)
+                        tok.dep in {attr, dobj, obj}
+                        or tok.dep_ == "dative"
+                        or (
+                            tok.dep == xcomp
+                            and not any(child.dep == dobj for child in cue_cand.children)
                         )
                     ):
                         subtoks = list(tok.subtree)
                         if (
-                            fragment_len_range is None or
-                            fragment_len_range[0] <= len(subtoks) < fragment_len_range[1]
+                            fragment_len_range is None
+                            or fragment_len_range[0] <= len(subtoks) < fragment_len_range[1]
                         ):
                             frag_cand = subtoks
                             break
@@ -179,7 +179,7 @@ def semistructured_statements(
                     )
 
 
-def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Span]]:
+def direct_quotations(doc: Doc) -> Iterable[Tuple[List[Token], List[Token], Span]]:
     """
     Extract direct quotations with an attributable speaker from a document
     using simple rules and patterns. Does not extract indirect or mixed quotations!
@@ -218,9 +218,9 @@ def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Spa
         if (
             # quotations should have at least a couple tokens
             # excluding the first/last quotation mark tokens
-            len(content) < 4 or
+            len(content) < 4
             # filter out titles of books and such, if possible
-            all(
+            or all(
                 tok.is_title
                 for tok in content
                 # if tok.pos in {NOUN, PROPN}
@@ -236,8 +236,8 @@ def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Spa
             for sent in doc.sents
             # these boundary cases are a subtle bit of work...
             if (
-                (sent.start < qtok_start_idx and sent.end >= qtok_start_idx - 1) or
-                (sent.start <= qtok_end_idx + 1 and sent.end > qtok_end_idx)
+                (sent.start < qtok_start_idx and sent.end >= qtok_start_idx - 1)
+                or (sent.start <= qtok_end_idx + 1 and sent.end > qtok_end_idx)
             )
         )
         # get candidate cue verbs in window
@@ -246,10 +246,10 @@ def direct_quotations(doc: Doc) ->  Iterable[Tuple[List[Token], List[Token], Spa
             for sent in window_sents
             for tok in sent
             if (
-                tok.pos == VERB and
-                tok.lemma_ in _reporting_verbs and
+                tok.pos == VERB
+                and tok.lemma_ in _reporting_verbs
                 # cue verbs must occur *outside* any quotation content
-                not any(
+                and not any(
                     qts_idx <= tok.i <= qte_idx
                     for qts_idx, qte_idx in qtok_pair_idxs
                 )
