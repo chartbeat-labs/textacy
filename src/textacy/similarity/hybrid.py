@@ -52,7 +52,7 @@ def _to_prepared_str(s: str | Sequence[str]) -> str:
 def monge_elkan(
     seq1: Sequence[str],
     seq2: Sequence[str],
-    simfunc: Callable[[str, str], float] = edits.levenshtein,
+    sim_func: Callable[[str, str], float] = edits.levenshtein,
 ) -> float:
     """
     Measure the similarity between two sequences of strings using the (symmetric)
@@ -62,7 +62,7 @@ def monge_elkan(
     Args:
         seq1
         seq2
-        simfunc: Callable that computes a string-to-string similarity metric;
+        sim_func: Callable that computes a string-to-string similarity metric;
             by default, Levenshtein edit distance.
 
     Returns:
@@ -76,11 +76,11 @@ def monge_elkan(
         return 0.0
 
     sum_maxsim1 = sum(
-        max(simfunc(tok1, tok2) for tok2 in seq2)
+        max(sim_func(tok1, tok2) for tok2 in seq2)
         for tok1 in seq1
     )
     sum_maxsim2 = sum(
-        max(simfunc(tok2, tok1) for tok1 in seq1)
+        max(sim_func(tok2, tok1) for tok1 in seq1)
         for tok2 in seq2
     )
     return ((sum_maxsim1 / len(seq1)) + (sum_maxsim2 / len(seq2))) / 2
