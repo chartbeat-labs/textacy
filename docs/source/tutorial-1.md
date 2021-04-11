@@ -1,3 +1,5 @@
+# Context and description of workers in Congress
+
 In this tutorial, we will explore how certain members of the U.S. Congress have spoken about workers, based on a dataset of thousands of speeches sourced from the Congressional Record.
 
 First, let's initialize and download the dataset, which comes built-in with `textacy`:
@@ -49,10 +51,10 @@ However, we should still take care to normalize common text data errors. Let's c
 
 ```pycon
 >>> preproc = textacy.preprocessing.make_pipeline(
-    textacy.preprocessing.normalize.unicode,
-    textacy.preprocessing.normalize.quotation_marks,
-    textacy.preprocessing.normalize.whitespace,
-)
+...     textacy.preprocessing.normalize.unicode,
+...     textacy.preprocessing.normalize.quotation_marks,
+...     textacy.preprocessing.normalize.whitespace,
+... )
 >>> preproc_text = preproc(record.text)
 >>> preproc_text[:200]
 'Mr. Speaker, 480,000 Federal employees are working without pay, a form of involuntary servitude; 280,000 Federal employees are not working, and they will be paid. Virtually all of these workers have m'
@@ -135,7 +137,7 @@ We see some familiar politicians, including current president Joe Biden and note
  ('every worker', 2)]
 ```
 
-Apparently, these speakers had a preoccupation with American workers, average workers, and _average American_ workers. To better understand the context of these mentions, we can extract keyterms (most important or "key" terms) from the documents in which they occured.
+Apparently, these speakers had a preoccupation with American workers, average workers, and _average American_ workers. To better understand the context of these mentions, we can extract keyterms (the most important or "key" terms) from the documents in which they occured.
 
 For example, here are the top 10 keyterms from that first Bernie speech in our dataset, extracted using a variation of the well-known TextRank algorithm:
 
@@ -187,10 +189,10 @@ kt_weights.most_common(20)
 
 Perhaps unsurprisingly, "average american worker" ranks at the top of the list, but we can see from the rest of the list that they're brought up in discussion of jobs, the minimum wage, and Social Security. Makes sense!
 
-In this tutorial, we've
+In this tutorial, we've learned how to
 
-- loaded text+metadata records from a dataset
-- inspected and preprocessed raw texts
-- added a collection of documents processed by spaCy into a corpus
-- inspected corpus metadata
-- extracted and aggregated different kinds of structured data from one and many documents
+- load text+metadata records from a dataset
+- inspect and preprocess raw texts
+- add a collection of documents processed by spaCy into a corpus
+- inspect aggregated corpus metadata
+- extract different kinds of structured data from one or many documents
