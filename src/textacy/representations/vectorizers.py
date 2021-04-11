@@ -15,7 +15,7 @@ examples and explanations of the various weighting schemes.
 """
 from __future__ import annotations
 
-from typing import Optional, Tuple
+from typing import DefaultDict, Dict, Optional, Tuple, Union
 
 import collections
 import operator
@@ -1106,7 +1106,7 @@ class GroupVectorizer(Vectorizer):
         # TODO: can we adapt the optimization from `Vectorizer._count_terms()` here?
         if fixed_vocab_terms is False:
             # add a new value when a new term is seen
-            vocabulary_terms = collections.defaultdict()
+            vocabulary_terms: Union[Dict, DefaultDict] = collections.defaultdict()
             vocabulary_terms.default_factory = vocabulary_terms.__len__
         else:
             vocabulary_terms = self.vocabulary_terms

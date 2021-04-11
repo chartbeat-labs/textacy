@@ -3,7 +3,7 @@
 """
 import functools
 import logging
-from typing import Tuple
+from typing import Optional, Tuple
 
 import pyphen
 from cachetools import cached
@@ -70,17 +70,17 @@ class TextStats:
         self.words = tuple(
             extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False)
         )
-        self._n_sents = None
-        self._n_words = None
-        self._n_unique_words = None
-        self._n_long_words = None
-        self._n_chars_per_word = None
-        self._n_chars = None
-        self._n_syllables_per_word = None
-        self._n_syllables = None
-        self._n_monosyllable_words = None
-        self._n_polysyllable_words = None
-        self._entropy = None
+        self._n_sents: Optional[int] = None
+        self._n_words: Optional[int] = None
+        self._n_unique_words: Optional[int] = None
+        self._n_long_words: Optional[int] = None
+        self._n_chars_per_word: Optional[Tuple[int, ...]] = None
+        self._n_chars: Optional[int] = None
+        self._n_syllables_per_word: Optional[Tuple[int, ...]] = None
+        self._n_syllables: Optional[int] = None
+        self._n_monosyllable_words: Optional[int] = None
+        self._n_polysyllable_words: Optional[int] = None
+        self._entropy: Optional[float] = None
 
     @property
     def n_sents(self) -> int:
