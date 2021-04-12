@@ -606,48 +606,60 @@ class Corpus:
 
     # file io
 
-    def save(self, filepath: types.PathLike, store_user_data: bool = True):
+    def save(
+        self,
+        filepath: types.PathLike,
+        attrs: Optional[str | Iterable[str]] = "auto",
+        store_user_data: bool = True,
+    ):
         """
         Save :class:`Corpus` to disk as binary data.
 
         Args:
-            filepath: Full path to file on disk where :class:`Corpus` data
+            filepath: Full path to file on disk where :class:`Corpus` docs data
                 will be saved as a binary file.
+            attrs: List of token attributes to serialize; if "auto", an appropriate list
+                is inferred from annotations found on the first ``Doc``; if None,
+                spaCy's default values are used (https://spacy.io/api/docbin#init)
             store_user_data: If True, store user data and values of
                 custom extension attributes along with core spaCy attributes.
 
         See Also:
             - :meth:`Corpus.load()`
+            - :func:`textacy.io.write_spacy_docs()`
             - :class:`spacy.tokens.DocBin`
         """
-        attrs = [
-            spacy.attrs.ORTH,
-            spacy.attrs.SPACY,
-        ]
-        if self[0].has_annotation("TAG"):
-            attrs.append(spacy.attrs.TAG)
-        if self[0].has_annotation("DEP"):
-            attrs.append(spacy.attrs.HEAD)
-            attrs.append(spacy.attrs.DEP)
-        # NOTE: HEAD sets sentence boundaries implicitly based on tree structure, so
-        # also setting SENT_START would potentially conflict with existing annotations.
-        elif self[0].has_annotation("SENT_START"):
-            attrs.append(spacy.attrs.SENT_START)
-        if self[0].has_annotation("ENT_IOB"):
-            attrs.append(spacy.attrs.ENT_IOB)
-            attrs.append(spacy.attrs.ENT_TYPE)
-        doc_bin = DocBin(attrs=attrs, store_user_data=store_user_data)
-        for doc in self:
-            doc_bin.add(doc)
-        with tio.open_sesame(filepath, mode="wb") as f:
-            f.write(doc_bin.to_bytes())
+        if attrs == "auto":
+            doc = self[0]
+            attrs = [spacy.attrs.ORTH, spacy.attrs.SPACY]
+            cand_attrs = [
+                "TAG", "POS", "ENT_IOB", "ENT_TYPE", "ENT_KB_ID", "LEMMA", "MORPH"
+            ]
+            for cand_attr in cand_attrs:
+                if doc.has_annotation(cand_attr):
+                    attrs.append(getattr(spacy.attrs, cand_attr))
+            # just to be safe, use special handling for dependency parse annotations
+            # to allow for multiple ways in which sentences may get segmented
+            # *either* use DEP and HEAD or SENT_START to avoid potential conflicts
+            # since HEAD implicitly sets sentence boundaries based on tree structure
+            if self[0].has_annotation("DEP"):
+                attrs.append(spacy.attrs.HEAD)
+                attrs.append(spacy.attrs.DEP)
+            elif self[0].has_annotation("SENT_START"):
+                attrs.append(spacy.attrs.SENT_START)
+        tio.write_spacy_docs(
+            self.docs,
+            filepath,
+            format="binary",
+            attrs=attrs,
+            store_user_data=store_user_data
+        )
 
     @classmethod
     def load(
         cls,
         lang: types.LangLike,
         filepath: types.PathLike,
-        store_user_data: bool = True,
     ) -> "Corpus":
         """
         Load previously saved :class:`Corpus` binary data, reproduce the original
@@ -658,18 +670,15 @@ class Corpus:
             lang
             filepath: Full path to file on disk where :class:`Corpus` data
                 was previously saved as a binary file.
-            store_user_data: If True, load stored user data and values
-                of custom extension attributes along with core spaCy attributes.
 
         Returns:
-            :class:`Corpus`
+            Initialized corpus.
 
         See Also:
             - :meth:`Corpus.save()`
+            - :func:`textacy.io.read_spacy_docs()`
             - :class:`spacy.tokens.DocBin`
         """
         spacy_lang = spacier.utils.resolve_langlike(lang)
-        with tio.open_sesame(filepath, mode="rb") as f:
-            bytes_data = f.read()
-        doc_bin = DocBin(store_user_data=store_user_data).from_bytes(bytes_data)
-        return cls(spacy_lang, data=doc_bin.get_docs(spacy_lang.vocab))
+        docs = tio.read_spacy_docs(filepath, format="binary", lang=spacy_lang)
+        return cls(spacy_lang, data=docs)
