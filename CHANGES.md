@@ -1,26 +1,26 @@
 ## Changes
 
-### 0.11.0 (in development)
+### 0.11.0 (2021-04-12)
 
 - **Refactored, standardized, and extended several areas of functionality**
   - text preprocessing (`textacy.preprocessing`)
-    - Added functions for normalizing bullet points in lists, removing html tags, and removing bracketed contents such as in-line citations.
-    - Added a `make_pipeline()` function for combining multiple preprocessors applied sequentially to input text into a single callable.
-    - Renamed functions for flexibility and clarity of use; in most cases, this will entail replacing an underscore with a period, e.g. `preprocessing.normalize_whitespace()` => `preprocessing.normalize.whitespace()`.
-    - Some funcs' args were likewise renamed and standardized; for example, all "replace" functions had their (optional) second argument renamed from `replace_with` => `repl`, and `remove.punctuation(text, marks=".?!")` => `remove.punctuation(text, only=[".", "?", "!"])`.
+    - Added functions for normalizing bullet points in lists (`normalize.bullet_points()`), removing HTML tags (`remove.html_tags()`), and removing bracketed contents such as in-line citations (`remove.brackets()`).
+    - Added `make_pipeline()` function for combining multiple preprocessors applied sequentially to input text into a single callable.
+    - Renamed functions for flexibility and clarity of use; in most cases, this entails replacing an underscore with a period, e.g. `preprocessing.normalize_whitespace()` => `preprocessing.normalize.whitespace()`.
+    - Renamed and standardized some funcs' args; for example, all "replace" functions had their (optional) second argument renamed from `replace_with` => `repl`, and `remove.punctuation(text, marks=".?!")` => `remove.punctuation(text, only=[".", "?", "!"])`.
   - structured information extraction (`textacy.extract`)
     - Consolidated and restructured functionality previously spread across the `extract.py` and `text_utils.py` modules and `ke` subpackage. For the latter two, imports have changed:
       - `from textacy import ke; ke.textrank()` => `from textacy import extract; extract.keyterms.textrank()`
       - `from textacy import text_utils; text_utils.keywords_in_context()` => `from textacy import extract; extract.keywords_in_context()`
     - Added new extraction functions:
-      - `extract.regex_matches()`: For matching regex patterns in a document's text that cross spaCy token boundaries, with various options for aligning matches back to those boundaries.
+      - `extract.regex_matches()`: For matching regex patterns in a document's text that cross spaCy token boundaries, with various options for aligning matches back to tokens.
       - `extract.acronyms()`: For extracting acronym-like tokens, without looking around for related definitions.
       - `extract.terms()`: For flexibly combining n-grams, entities, and noun chunks into a single collection, with optional deduplication.
-    - Improved the generality and quality of extracted "triples", and changed the structure of returned objects accordingly. Previously, only contiguous spans were permitted for each element, but this was overly restrictive: A sentence like "I did not really like the movie." would produce `("I", "like", "movie")` which is... misleading. The new approach uses lists of tokens that need not be adjacent; in this case, it produces `(["I"], ["did", "not", "like"], ["movie"])`. For convenience, triple results are all named tuples, so elements may be accessed by name or index (e.g. `svo.subject` == `svo[0]`).
-    - Changed `extract.keywords_in_context()` to always yield results, with optional padding of contexts, leaving printing of contexts up to users; extended it to accept `Doc` or `str` objects as input.
+    - Improved the generality and quality of extracted "triples" such as Subject-Verb-Objects, and changed the structure of returned objects accordingly. Previously, only contiguous spans were permitted for each element, but this was overly restrictive: A sentence like "I did not really like the movie." would produce an SVO of `("I", "like", "movie")` which is... misleading. The new approach uses lists of tokens that need not be adjacent; in this case, it produces `(["I"], ["did", "not", "like"], ["movie"])`. For convenience, triple results are all named tuples, so elements may be accessed by name or index (e.g. `svo.subject` == `svo[0]`).
+    - Changed `extract.keywords_in_context()` to always yield results, with optional padding of contexts, leaving printing of contexts up to users; also extended it to accept `Doc` or `str` objects as input.
     - Removed deprecated `extract.pos_regex_matches()` function, which is superseded by the more powerful `extract.token_matches()`.
   - string and sequence similarity metrics (`textacy.similarity`)
-    - Refactored top-level `similarity.py` module into a subpackage, with metrics split out by categories: edit-based, token-based, etc.
+    - Refactored top-level `similarity.py` module into a subpackage, with metrics split out into categories: edit-, token-, and sequence-based approaches, as well as hybrid metrics.
     - Added several similarity metrics:
       - edit-based Jaro (`similarity.jaro()`)
       - token-based Cosine (`similarity.cosine()`), Bag (`similarity.bag()`), and Tversky (`similarity.tvserky()`)
@@ -31,15 +31,15 @@
     - Consolidated and reworked networks functionality in `representations.network` module
       - Added `build_cooccurrence_network()` function to represent a sequence of strings (or a sequence of such sequences) as a graph with nodes for each unique string and edges to other strings that co-occurred.
       - Added `build_similarity_network()` function to represent a sequence of strings (or a sequence of such sequences) as a graph with nodes as top-level elements and edges to all others weighted by pairwise similarity.
-      - Removed obsolete `network.py` module and duplicative `extract.keyterms.graph_base.py` module
+      - Removed obsolete `network.py` module and duplicative `extract.keyterms.graph_base.py` module.
     - Refined vectorizer initialization, and moved from `vsm.vectorizers` to `representations.vectorizers` module.
       - For both `Vectorizer` and `GroupVectorizer`, applying global inverse document frequency weights is now handled by a single arg: `idf_type: Optional[str]`, rather than a combination of `apply_idf: bool, idf_type: str`; similarly, applying document-length weight normalizations is handled by `dl_type: Optional[str]` instead of `apply_dl: bool, dl_type: str`
-    - Added `representations.sparse_vec` module for higher-level access to document vectorization via `build_doc_term_matrix()` and `build_grp_term_matrix()` functions, for cases when a single fit+transform is all you need
+    - Added `representations.sparse_vec` module for higher-level access to document vectorization via `build_doc_term_matrix()` and `build_grp_term_matrix()` functions, for cases when a single fit+transform is all you need.
   - automatic language identification (`textacy.lang_id`)
     - Moved functionality from `lang_utils.py` module into a subpackage, and added the primary user interface (`identify_lang()` and `identify_topn_langs()`) as package-level imports.
-    - Implemented and trained a more accurate `thinc`-based language identification model that's closer to the original CLD3 inspiration, replacing the simpler `sklearn`-based pipeline
+    - Implemented and trained a more accurate `thinc`-based language identification model that's closer to the original CLD3 inspiration, replacing the simpler `sklearn`-based pipeline.
 - **Updated interface with spaCy for v3, and better leveraged the new functionality**
-  - Restricted `textacy.load_spacy_lang()` to only accept full spaCy language pipeline names or paths, in accordance with v3's removal of pipeline aliases and general tightening-up on this front. Unfortunately, `textacy` can no longer play fast and lose with automatic language identification => pipeline loading...
+  - Restricted `textacy.load_spacy_lang()` to only accept full spaCy language pipeline names or paths, in accordance with v3's removal of pipeline aliases and general tightening-up on this front. Unfortunately, `textacy` can no longer play fast and loose with automatic language identification => pipeline loading...
   - Extended `textacy.make_spacy_doc()` to accept a `chunk_size` arg that splits input text into chunks, processes each individually, then joins them into a single `Doc`; supersedes `spacier.utils.make_doc_from_text_chunks()`, which is now deprecated.
   - Moved core `Doc` extensions into a top-level `extensions.py` module, and improved/streamlined the collection
     - Refactored and improved performance of `Doc._.to_bag_of_words()` and `Doc._.to_bag_of_terms()`, leveraging related functionality in `extract.words()` and `extract.terms()`
@@ -47,25 +47,26 @@
       - `Doc._.lang` => use `Doc.lang_`
       - `Doc._.tokens` => use `iter(Doc)`
       - `Doc._.n_tokens` => `len(Doc)`
-      - `Doc._.to_terms_list()` => `Doc._.extract_terms()` or `extract.terms(doc)`
+      - `Doc._.to_terms_list()` => `extract.terms(doc)` or `Doc._.extract_terms()`
       - `Doc._.to_tagged_text()` => NA, this was an old holdover that's not used in practice anymore
       - `Doc._.to_semantic_network()` => NA, use a function in `textacy.representations.networks`
-  - Added `Doc` extensions for `textacy.extract` functions (see above for details), with most functions having direct analogues; for example, to extract acronyms, use either `textacy.extract.acronyms(doc)` or `doc._.extract_acronyms()`, while keyterm extraction functions share a single extension: `textacy.extract.keyterms.textrank(doc)` <> `doc._.extract_keyterms(method="textrank")`
+  - Added `Doc` extensions for `textacy.extract` functions (see above for details), with most functions having direct analogues; for example, to extract acronyms, use either `textacy.extract.acronyms(doc)` or `doc._.extract_acronyms()`. Keyterm extraction functions share a single extension: `textacy.extract.keyterms.textrank(doc)` <> `doc._.extract_keyterms(method="textrank")`
   - Leveraged spaCy's new `DocBin` for efficiently saving/loading `Doc`s in binary format, with corresponding arg changes in `io.write_spacy_docs()` and `Corpus.save()`+`.load()`
 - **Improved package documentation, tests, dependencies, and type annotations**
   - Added two beginner-oriented tutorials to documentation, showing how to use various aspects of the package in the context of specific tasks.
   - Reorganized API reference docs to put like functionality together and more consistently provide summary tables up top
   - Updated dependencies list and package versions
     - Removed: `pyemd` and `srsly`
-    - Un-capped: `numpy` and `scikit-learn`
-    - Bumped versions: `cytoolz`, `jellyfish`, `matplotlib`, and `pyphen`
+    - Un-capped max versions: `numpy` and `scikit-learn`
+    - Bumped min versions: `cytoolz`, `jellyfish`, `matplotlib`, `pyphen`, and `spacy` (v3.0+ only!)
+  - Bumped min Python version from 3.6 => 3.7, and added PY3.9 support
   - Removed `textacy.export` module, which had functions for exporting spaCy docs into other external formats; this was a soft dependency on `gensim` and CONLL-U that wasn't enforced or guaranteed, so better to remove.
   - Added `types.py` module for shared types, and used them everywhere. Also added/fixed type annotations throughout the code base.
   - Improved, added, and parametrized literally hundreds of tests.
 
 #### Contributors
 
-Many thanks to @timgates42, @datanizing, @8W9aG, @0x2b3bfa0, @gryBox for submitting PRs, either merged or used as inspiration for my own rework-in-progress.
+Many thanks to @timgates42, @datanizing, @8W9aG, @0x2b3bfa0, and @gryBox for submitting PRs, either merged or used as inspiration for my own rework-in-progress.
 
 
 ### 0.10.1 (2020-08-29)
