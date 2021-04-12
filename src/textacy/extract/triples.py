@@ -27,14 +27,18 @@ _CLAUSAL_SUBJ_DEPS = {csubj, csubjpass}
 _ACTIVE_SUBJ_DEPS = {csubj, nsubj}
 _VERB_MODIFIER_DEPS = {aux, auxpass, neg}
 
-SVO = collections.namedtuple("SVO", ["subject", "verb", "object"])
-SSS = collections.namedtuple("SSS", ["entity", "cue", "fragment"])
-DQ = collections.namedtuple("DQ", ["speaker", "cue", "content"])
+SVOTriple: Tuple[List[Token], List[Token], List[Token]] = collections.namedtuple(
+    "SVOTriple", ["subject", "verb", "object"]
+)
+SSSTriple: Tuple[List[Token], List[Token], List[Token]] = collections.namedtuple(
+    "SSSTriple", ["entity", "cue", "fragment"]
+)
+DQTriple: Tuple[List[Token], List[Token], Span] = collections.namedtuple(
+    "DQTriple", ["speaker", "cue", "content"]
+)
 
 
-def subject_verb_object_triples(
-    doclike: types.DocLike,
-) -> Iterable[Tuple[List[Token], List[Token], List[Token]]]:
+def subject_verb_object_triples(doclike: types.DocLike) -> Iterable[SVOTriple]:
     """
     Extract an ordered sequence of subject-verb-object triples from a document
     or sentence.
@@ -102,7 +106,7 @@ def subject_verb_object_triples(
         # expand verbs and restructure into svo triples
         for verb, so_dict in verb_sos.items():
             if so_dict["subjects"] and so_dict["objects"]:
-                yield SVO(
+                yield SVOTriple(
                     subject=sorted(so_dict["subjects"], key=attrgetter("i")),
                     verb=sorted(expand_verb(verb), key=attrgetter("i")),
                     object=sorted(so_dict["objects"], key=attrgetter("i")),
@@ -115,7 +119,7 @@ def semistructured_statements(
     entity: str | Pattern,
     cue: str,
     fragment_len_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
-) -> Iterable[Tuple[List[Token], List[Token], List[Token]]]:
+) -> Iterable[SSSTriple]:
     """
     Extract "semi-structured statements" from a document as a sequence of
     (entity, cue, fragment) triples.
@@ -172,14 +176,14 @@ def semistructured_statements(
                             frag_cand = subtoks
                             break
                 if frag_cand is not None:
-                    yield SSS(
+                    yield SSSTriple(
                         entity=list(entity_cand),
                         cue=sorted(expand_verb(cue_cand), key=attrgetter("i")),
                         fragment=sorted(frag_cand, key=attrgetter("i")),
                     )
 
 
-def direct_quotations(doc: Doc) -> Iterable[Tuple[List[Token], List[Token], Span]]:
+def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
     """
     Extract direct quotations with an attributable speaker from a document
     using simple rules and patterns. Does not extract indirect or mixed quotations!
@@ -269,7 +273,7 @@ def direct_quotations(doc: Doc) -> Iterable[Tuple[List[Token], List[Token], Span
                     speaker = expand_noun(speaker_cand)
                     break
         if content and cue and speaker:
-            yield DQ(
+            yield DQTriple(
                 speaker=sorted(speaker, key=attrgetter("i")),
                 cue=sorted(cue, key=attrgetter("i")),
                 content=content,
