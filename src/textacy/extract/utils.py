@@ -1,3 +1,9 @@
+"""
+Utils
+-----
+
+:mod:`textacy.extract.utils`: Functions for working with extraction results.
+"""
 from __future__ import annotations
 
 import itertools

@@ -44,4 +44,4 @@ Information Extraction
 
 .. automodule:: textacy.extract.keyterms.sgrank
 
-.. automodule:: textacy.extract.keyterms.utils
+.. automodule:: textacy.extract.utils

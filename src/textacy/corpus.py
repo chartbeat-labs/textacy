@@ -95,10 +95,10 @@ class Corpus:
 
         >>> corpus.n_docs, corpus.n_sents, corpus.n_tokens
         (56, 1771, 41573)
-        >>> word_counts = corpus.word_counts(as_strings=True)
+        >>> word_counts = corpus.word_counts(by="lemma_")
         >>> sorted(word_counts.items(), key=lambda x: x[1], reverse=True)[:5]
         [('-PRON-', 2553), ('people', 215), ('year', 148), ('Mr.', 139), ('$', 137)]
-        >>> word_doc_counts = corpus.word_doc_counts(weighting="freq", as_strings=True)
+        >>> word_doc_counts = corpus.word_doc_counts(by="lemma_", weighting="freq")
         >>> sorted(word_doc_counts.items(), key=lambda x: x[1], reverse=True)[:5]
         [('-PRON-', 0.9821428571428571),
          ('Mr.', 0.7678571428571429),

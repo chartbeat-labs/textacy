@@ -62,7 +62,7 @@ def build_doc_term_matrix(
             - "linear": dl (dls are already linear, so left as-is)
             - "sqrt": dl => sqrt(dl)
             - "log": dl => log(dl)
-            - None: no normalization is applied to local(*global?) weights
+            - None: no normalization is applied to local (+global?) weights
 
         **kwargs: Passed directly into vectorizer class
 
@@ -146,7 +146,7 @@ def build_grp_term_matrix(
             - "linear": dl (dls are already linear, so left as-is)
             - "sqrt": dl => sqrt(dl)
             - "log": dl => log(dl)
-            - None: no normalization is applied to local(*global?) weights
+            - None: no normalization is applied to local (+global?) weights
 
         **kwargs: Passed directly into vectorizer class
 

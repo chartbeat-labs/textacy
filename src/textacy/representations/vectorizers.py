@@ -225,7 +225,7 @@ class Vectorizer:
             - "linear": dl (dls are already linear, so left as-is)
             - "sqrt": dl => sqrt(dl)
             - "log": dl => log(dl)
-            - None: no normalization is applied to local(*global?) weights
+            - None: no normalization is applied to local (+global?) weights
 
         norm: If "l1" or "l2", normalize weights by the L1 or L2 norms, respectively,
             of row-wise vectors; otherwise, don't.
@@ -824,7 +824,7 @@ class GroupVectorizer(Vectorizer):
             - "linear": dl (dls are already linear, so left as-is)
             - "sqrt": dl => sqrt(dl)
             - "log": dl => log(dl)
-            - None: no normalization is applied to local(*global?) weights
+            - None: no normalization is applied to local (+global?) weights
 
         norm: If "l1" or "l2", normalize weights by the L1 or L2 norms, respectively,
             of row-wise vectors; otherwise, don't.
