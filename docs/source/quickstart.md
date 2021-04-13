@@ -135,7 +135,8 @@ We can also identify key terms in a document by a number of algorithms:
 Or we can compute various basic and readability statistics:
 
 ```pycon
->>> ts = textacy.TextStats(doc)
+>>> from textacy.text_stats import TextStats
+>>> ts = TextStats(doc)
 >>> ts.n_words, ts.n_syllables, ts.n_chars
 (73, 134, 414)
 >>> ts.entropy
