@@ -1,9 +1,7 @@
 import pytest
-
 import textacy
 from textacy import datasets
 from textacy.extract import keyterms as kt
-
 
 DATASET = datasets.CapitolWords()
 
@@ -34,6 +32,12 @@ def test_default(spacy_doc):
     )
 
 
+def test_normalize_none(spacy_doc):
+    result = kt.yake(spacy_doc, normalize=None)
+    assert len(result) > 0
+    assert all(term != term.lower() for term, _ in result)
+
+
 def test_normalize_lower(spacy_doc):
     result = kt.yake(spacy_doc, normalize="lower")
     assert len(result) > 0
@@ -42,6 +46,12 @@ def test_normalize_lower(spacy_doc):
 
 def test_normalize_lemma(spacy_doc):
     result = kt.yake(spacy_doc, normalize="lemma")
+    assert len(result) > 0
+    assert any(term != term.lower() for term, _ in result)
+
+
+def test_normalize_norm(spacy_doc):
+    result = kt.yake(spacy_doc, normalize="norm")
     assert len(result) > 0
     assert any(term != term.lower() for term, _ in result)
 
