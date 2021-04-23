@@ -25,7 +25,7 @@ class TextStats:
     .. code-block:: pycon
 
         >>> text = next(textacy.datasets.CapitolWords().texts(limit=1))
-        >>> doc = textacy.make_spacy_doc(text)
+        >>> doc = textacy.make_spacy_doc(text, lang="en_core_web_sm")
         >>> ts = textacy.text_stats.TextStats(doc)
         >>> ts.n_words
         136
