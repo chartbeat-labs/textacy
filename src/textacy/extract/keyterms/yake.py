@@ -30,6 +30,7 @@ def yake(
         doc: spaCy ``Doc`` from which to extract keyterms.
             Must be sentence-segmented; optionally POS-tagged.
         normalize: If "lemma", lemmatize terms; if "lower", lowercase terms;
+            if "norm", use the norm of the terms (as set in a language's tokenizer exceptions);
             if None, use the form of terms as they appeared in ``doc``.
 
             .. note:: Unlike the other keyterm extraction functions, this one
@@ -125,12 +126,12 @@ def yake(
 
 def _get_attr_name(normalize: Optional[str], as_strings: bool) -> str:
     if normalize is None:
-        attr_name = "norm"
-    elif normalize in ("lemma", "lower"):
+        attr_name = "orth"
+    elif normalize in ("lemma", "lower", "norm"):
         attr_name = normalize
     else:
         raise ValueError(
-            errors.value_invalid_msg("normalize", normalize, {"lemma", "lower", None})
+            errors.value_invalid_msg("normalize", normalize, {"lemma", "lower", "norm", None})
         )
     if as_strings is True:
         attr_name = attr_name + "_"
