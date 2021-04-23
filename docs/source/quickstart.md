@@ -47,12 +47,12 @@ Sometimes, "raw" text is messy and must be cleaned up before analysis; other tim
 Usually, though, we want to work with text that's been processed by spaCy: tokenized, part-of-speech tagged, parsed, and so on. Since spaCy's pipelines are language-dependent, we have to load a particular pipeline to match the text; when working with texts from multiple languages, this can be a pain. Fortunately, textacy includes automatic language detection to apply the right pipeline to the text, and it caches the loaded language data to minimize wait time and hassle. Making a `Doc` from text is easy:
 
 ```pycon
->>> doc = textacy.make_spacy_doc(text)
+>>> doc = textacy.make_spacy_doc(text, lang="en_core_web_sm")
 >>> doc._.preview
 'Doc(85 tokens: "Since the so-called "statistical revolution" in...")'
 ```
 
-Under the hood, the text has been identified as English, and the default English-language (`"en"`) pipeline has been loaded, cached, and applied to it. If you need to customize the pipeline, you can still easily load and cache it, then specify it yourself when initializing the doc:
+If you need to customize the pipeline, you can still easily load and cache it, then specify it yourself when initializing the doc:
 
 ```pycon
 >>> en = textacy.load_spacy_lang("en_core_web_sm", disable=("parser",))
@@ -69,7 +69,7 @@ Oftentimes, text data comes paired with metadata, such as a title, author, or pu
 ...     "url": "https://en.wikipedia.org/wiki/Natural-language_processing",
 ...     "source": "wikipedia",
 ... }
->>> doc = textacy.make_spacy_doc((text, metadata))
+>>> doc = textacy.make_spacy_doc((text, metadata), lang="en_core_web_sm")
 >>> doc._.meta["title"]
 'Natural-language processing'
 ```
@@ -188,7 +188,7 @@ In this case, the texts are tweets from my sporadic presence on Twitter --- a fi
 ```pycon
 >>> texts = textacy.io.read_text('~/Desktop/burton-tweets.txt', lines=True)
 >>> for text in texts:
-...     doc = textacy.make_spacy_doc(text)
+...     doc = textacy.make_spacy_doc(text, lang="en_core_web_sm")
 ...     print(doc._.preview)
 Doc(32 tokens; "I love Daylight Savings Time: It's a biannual o...")
 Doc(28 tokens; "Somewhere between "this is irritating but meh" ...")
@@ -205,7 +205,7 @@ Instead, let's consider a more complicated dataset: a compressed JSON file in th
 ...     "textacy/data/capitol_words/capitol-words-py3.json.gz",
 ...     mode="rt", lines=True)
 >>> for record in records:
-...     doc = textacy.make_spacy_doc((record["text"], {"title": record["title"]}))
+...     doc = textacy.make_spacy_doc((record["text"], {"title": record["title"]}), lang="en_core_web_sm")
 ...     print(doc._.preview)
 ...     print("meta:", doc._.meta)
 ...     # do stuff...
