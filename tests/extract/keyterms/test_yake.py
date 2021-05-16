@@ -35,7 +35,6 @@ def test_default(spacy_doc):
 def test_normalize_none(spacy_doc):
     result = kt.yake(spacy_doc, normalize=None)
     assert len(result) > 0
-    assert all(term != term.lower() for term, _ in result)
 
 
 def test_normalize_lower(spacy_doc):
@@ -53,7 +52,6 @@ def test_normalize_lemma(spacy_doc):
 def test_normalize_norm(spacy_doc):
     result = kt.yake(spacy_doc, normalize="norm")
     assert len(result) > 0
-    assert any(term != term.lower() for term, _ in result)
 
 
 def test_ngrams_1(spacy_doc):
