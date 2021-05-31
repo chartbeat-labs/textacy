@@ -32,6 +32,18 @@ def make_pipeline(*funcs: Callable[[str], str]) -> Callable[[str], str]:
         >>> preproc("hacking with my buddy Isaac Mewton 🥰 #PawProgramming")
         'hacking with my buddy Isaac Mewton _EMOJI_ _TAG_'
 
+    To specify arguments for individual preprocessors, use :func:`functools.partial`:
+
+    .. code-block:: pycon
+
+        >>> from functools import partial
+        >>> preproc = preprocessing.make_pipeline(
+        ...     partial(preprocessing.remove.punctuation, only=[".", "?", "!"]),
+        ...     partial(preprocessing.replace.user_handles, repl="TAG"),
+        ... )
+        >>> preproc("hey, @bjdewilde! when's the next release of textacy?")
+        "hey, TAG  when's the next release of textacy "
+
     Args:
         *funcs
 
