@@ -13,6 +13,9 @@ clean-test:
 
 clean: clean-build clean-py clean-test
 
+build: clean-build
+	python -m build --sdist --wheel
+
 test: clean-test
 	python -m pytest tests -v --cov=textacy --cov-report=term-missing
 
