@@ -8,5 +8,6 @@ include CHANGES.md
 include README.md
 include LICENSE.txt
 include pyproject.toml
+include src/textacy/py.typed
 
 global-exclude __pycache__ *.py[cod]
