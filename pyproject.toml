@@ -1,10 +1,10 @@
 [build-system]
-requires = ["setuptools >= 40.9.0", "wheel"]
+requires = ["setuptools >= 46.4.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.black]
 line-length = 89
-target-version = ["py36", "py37", "py38"]
+target-version = ["py37", "py38", "py39"]
 exclude = '''
 (
     src/textacy/preprocessing/resources.py
