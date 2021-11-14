@@ -11,6 +11,10 @@ exclude = '''
 )
 '''
 
+[tool.mypy]
+python_version = "3.8"
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 minversion = "6.0"
 addopts = "-ra -v"
