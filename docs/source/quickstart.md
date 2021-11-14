@@ -150,8 +150,7 @@ Or we can compute various basic and readability statistics:
 Lastly, we can transform a document into a "bag of terms", with flexible weighting and term inclusion criteria:
 
 ```pycon
->>> bot = doc._.to_bag_of_terms(
-...     ngrams=(1, 2, 3), entities=True, weighting="count", as_strings=True)
+>>> bot = doc._.to_bag_of_terms(ngs=(1, 2, 3), ents=True, weighting="count")
 >>> sorted(bot.items(), key=lambda x: x[1], reverse=True)[:15]
 [('call', 2),
  ('statistical', 2),
