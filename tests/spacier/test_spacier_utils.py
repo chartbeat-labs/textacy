@@ -21,9 +21,8 @@ def spacy_doc():
 def test_preserve_case(spacy_doc):
     results = [utils.preserve_case(tok) for tok in spacy_doc]
     assert all(isinstance(result, bool) for result in results)
-    assert (
-        sum(1 if result else 0 for result in results) <
-        sum(1 if not result else 0 for result in results)
+    assert sum(1 if result else 0 for result in results) < sum(
+        1 if not result else 0 for result in results
     )
 
 
@@ -33,7 +32,7 @@ def test_get_normalized_text(spacy_doc):
         "unit",
         "test",
         "be",
-        "n't",
+        "not",
         "go",
         "well",
         ".",
@@ -44,7 +43,7 @@ def test_get_normalized_text(spacy_doc):
         "but",
         "I",
         "do",
-        "n't",
+        "not",
         "love",
         "backwards",
         "incompatibility",
