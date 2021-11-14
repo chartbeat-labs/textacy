@@ -15,7 +15,8 @@ $ conda install -c conda-forge textacy
 If you prefer --- or are obliged --- you can download and unzip the source `tar.gz` from  PyPi, then install manually:
 
 ```zsh
-$ python setup.py install
+$ cd path/to/textacy
+$ pip install .
 ```
 
 Dependencies
