@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import Any, List, Optional, Protocol, Sequence, Tuple
 
 from spacy.tokens import Doc
 
@@ -9,7 +9,11 @@ from .. import spacier, types, utils
 from . import utils as aug_utils
 
 
-AugTransform = Callable[[List[aug_utils.AugTok]], List[aug_utils.AugTok]]
+class AugTransform(Protocol):
+    def __call__(
+        self, aug_toks: List[aug_utils.AugTok], **kwargs: Any
+    ) -> List[aug_utils.AugTok]:
+        ...
 
 
 class Augmenter:
@@ -115,7 +119,7 @@ class Augmenter:
 
     def _validate_transforms(
         self, transforms: Sequence[AugTransform]
-    ) -> Tuple[AugTransform]:
+    ) -> Tuple[AugTransform, ...]:
         transforms = tuple(transforms)
         if not transforms:
             raise ValueError("at least one transform callable must be specified")
@@ -126,7 +130,7 @@ class Augmenter:
 
     def _validate_num(
         self, num: Optional[int | float | Sequence[float]]
-    ) -> int | float | Tuple[float]:
+    ) -> int | float | Tuple[float, ...]:
         if num is None:
             return len(self.tfs)
         elif isinstance(num, int) and 0 <= num <= len(self.tfs):
@@ -154,7 +158,7 @@ class Augmenter:
             rand_tfs = [tf for tf in self.tfs if random.random() < num]
         else:
             rand_tfs = [
-                tf for tf, tf_num in zip(self.tfs, self.num) if random.random() < tf_num
+                tf for tf, tf_num in zip(self.tfs, num) if random.random() < tf_num
             ]
         return rand_tfs
 
