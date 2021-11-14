@@ -160,7 +160,9 @@ class ConceptNet(Resource):
             LOGGER.info(
                 "preparing data for '%s' relation; this may take a while...", relation
             )
-            rows = tio.read_csv(self.filepath, delimiter="\t", quoting=1)
+            rows = tio.read_csv(
+                self.filepath, encoding="utf-8", delimiter="\t", quoting=1
+            )
             with tqdm() as pbar:
                 for row in rows:
                     pbar.update(1)
