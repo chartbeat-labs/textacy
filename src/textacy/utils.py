@@ -2,6 +2,8 @@
 :mod:`textacy.utils`: Variety of general-purpose utility functions for inspecting /
 validating / transforming args and facilitating meta package tasks.
 """
+from __future__ import annotations
+
 import inspect
 import logging
 import pathlib
@@ -21,7 +23,7 @@ from typing import (
 )
 from typing import cast
 
-from . import errors as errors_
+from . import errors as errors_, types
 
 LOGGER = logging.getLogger(__name__)
 
@@ -74,7 +76,7 @@ def get_config() -> Dict[str, Any]:
     }
 
 
-def print_markdown(items: Union[Dict[Any, Any], Iterable[Tuple[Any, Any]]]):
+def print_markdown(items: Dict[Any, Any] | Iterable[Tuple[Any, Any]]):
     """
     Print ``items`` as a markdown-formatted list.
     Specifically useful when submitting config info on GitHub issues.
@@ -107,14 +109,16 @@ def is_record(obj: Any) -> bool:
 
 
 def to_collection(
-    val: Any, val_type: Union[Type[Any], Tuple[Type[Any], ...]], col_type: Type[Any],
-) -> Optional[Collection[Any]]:
+    val: types.AnyVal | Collection[types.AnyVal],
+    val_type: Type[Any] | Tuple[Type[Any], ...],
+    col_type: Type[Any],
+) -> Collection[types.AnyVal]:
     """
     Validate and cast a value or values to a collection.
 
     Args:
         val (object): Value or values to validate and cast.
-        val_type (type): Type of each value in collection, e.g. ``int`` or ``str``.
+        val_type (type): Type of each value in collection, e.g. ``int`` or ``(str, bytes)``.
         col_type (type): Type of collection to return, e.g. ``tuple`` or ``set``.
 
     Returns:
@@ -139,7 +143,7 @@ def to_collection(
 
 
 def to_bytes(
-    s: Union[str, bytes], *, encoding: str = "utf-8", errors: str = "strict",
+    s: str | bytes, *, encoding: str = "utf-8", errors: str = "strict"
 ) -> bytes:
     """Coerce string ``s`` to bytes."""
     if isinstance(s, str):
@@ -151,7 +155,7 @@ def to_bytes(
 
 
 def to_unicode(
-    s: Union[str, bytes], *, encoding: str = "utf-8", errors: str = "strict",
+    s: str | bytes, *, encoding: str = "utf-8", errors: str = "strict"
 ) -> str:
     """Coerce string ``s`` to unicode."""
     if isinstance(s, bytes):
@@ -162,7 +166,7 @@ def to_unicode(
         raise TypeError(errors_.type_invalid_msg("s", type(s), Union[str, bytes]))
 
 
-def to_path(path: Union[str, pathlib.Path]) -> pathlib.Path:
+def to_path(path: str | pathlib.Path) -> pathlib.Path:
     """
     Coerce ``path`` to a ``pathlib.Path``.
 
@@ -183,10 +187,10 @@ def to_path(path: Union[str, pathlib.Path]) -> pathlib.Path:
 
 
 def validate_set_members(
-    vals: Union[Any, Set[Any]],
-    val_type: Union[Type[Any], Tuple[Type[Any], ...]],
-    valid_vals: Optional[Set[Any]] = None,
-) -> Set[Any]:
+    vals: types.AnyVal | Set[types.AnyVal],
+    val_type: Type[Any] | Tuple[Type[Any], ...],
+    valid_vals: Optional[Set[types.AnyVal]] = None,
+) -> Set[types.AnyVal]:
     """
     Validate values that must be of a certain type and (optionally) found among
     a set of known valid values.
@@ -209,18 +213,17 @@ def validate_set_members(
             valid_vals = set(valid_vals)
         if not all(val in valid_vals for val in vals):
             raise ValueError(
-                "values {} are invalid; valid values are {}".format(
-                    vals.difference(valid_vals), valid_vals,
-                )
+                f"values {vals.difference(valid_vals)} are invalid; "
+                f"valid values are {valid_vals}"
             )
     return vals
 
 
 def validate_and_clip_range(
-    range_vals: Tuple[Any, Any],
-    full_range: Tuple[Any, Any],
-    val_type: Optional[Union[Type[Any], Tuple[Type[Any], ...]]] = None,
-) -> Tuple[Any, Any]:
+    range_vals: Tuple[types.AnyVal, types.AnyVal],
+    full_range: Tuple[types.AnyVal, types.AnyVal],
+    val_type: Optional[Type[Any] | Tuple[Type[Any], ...]] = None,
+) -> Tuple[types.AnyVal, types.AnyVal]:
     """
     Validate and clip range values.
 
@@ -255,9 +258,7 @@ def validate_and_clip_range(
             for val in range_:
                 if val is not None and not isinstance(val, val_type):
                     raise TypeError(
-                        "range value={} must be of type {}, not {}".format(
-                            val, val_type, type(val)
-                        )
+                        f"range value={val} must be of type {val_type}, not {type(val)}"
                     )
     if range_vals[0] is None:
         range_vals = (full_range[0], range_vals[1])
