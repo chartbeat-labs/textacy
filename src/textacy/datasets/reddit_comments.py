@@ -18,13 +18,14 @@ The raw data was originally collected by /u/Stuck_In_the_Matrix via Reddit's
 APIS, and stored for posterity by the `Internet Archive <https://archive.org>`_.
 For more details, refer to https://archive.org/details/2015_reddit_comments_corpus.
 """
+from __future__ import annotations
+
 import itertools
 import logging
-import pathlib
 import re
 import urllib.parse
 from datetime import datetime
-from typing import Iterable, Optional, Set, Tuple, Union
+from typing import ClassVar, Iterable, Optional, Set, Tuple
 
 from .. import constants, types, utils
 from .. import io as tio
@@ -93,12 +94,12 @@ class RedditComments(Dataset):
             are available, each as an ISO-formatted string (YYYY-MM-DD).
     """
 
-    full_date_range: Tuple[str, str] = ("2007-10-01", "2015-06-01")
-    _full_score_range: Tuple[int, int] = (-2147483647, 2147483647)
+    full_date_range: ClassVar[Tuple[str, str]] = ("2007-10-01", "2015-06-01")
+    _full_score_range: ClassVar[Tuple[int, int]] = (-2147483647, 2147483647)
 
     def __init__(
         self,
-        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+        data_dir: types.PathLike = constants.DEFAULT_DATA_DIR.joinpath(NAME),
     ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
@@ -255,7 +256,7 @@ class RedditComments(Dataset):
     def texts(
         self,
         *,
-        subreddit: Optional[Union[str, Set[str]]] = None,
+        subreddit: Optional[str | Set[str]] = None,
         date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
         score_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
         min_len: Optional[int] = None,
@@ -302,7 +303,7 @@ class RedditComments(Dataset):
     def records(
         self,
         *,
-        subreddit: Optional[Union[str, Set[str]]] = None,
+        subreddit: Optional[str | Set[str]] = None,
         date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
         score_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
         min_len: Optional[int] = None,
@@ -347,7 +348,7 @@ class RedditComments(Dataset):
         finally:
             self._date_range = None
 
-    def _convert_timestamp(self, timestamp):
+    def _convert_timestamp(self, timestamp) -> str:
         try:
             return datetime.utcfromtimestamp(int(timestamp)).strftime(
                 "%Y-%m-%dT%H:%M:%S"
@@ -355,7 +356,7 @@ class RedditComments(Dataset):
         except (ValueError, TypeError):
             return ""
 
-    def _clean_content(self, content):
+    def _clean_content(self, content: str) -> str:
         # strip out link markup, e.g. [foo](http://foo.com)
         content = RE_REDDIT_LINK.sub(r"\1", content)
         # clean up basic HTML cruft

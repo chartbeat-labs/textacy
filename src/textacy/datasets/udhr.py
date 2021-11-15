@@ -22,12 +22,13 @@ to texts in those other languages, you can find them at :attr:`UDHR._texts_dirpa
 
 For more details, go to https://unicode.org/udhr.
 """
+from __future__ import annotations
+
 import io
 import itertools
 import logging
-import pathlib
 import xml
-from typing import Any, Dict, Iterable, List, Optional, Set, Union
+from typing import Any, Dict, Iterable, List, Optional, Set
 
 from .. import constants, preprocessing, types, utils
 from .. import io as tio
@@ -90,14 +91,14 @@ class UDHR(Dataset):
 
     def __init__(
         self,
-        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+        data_dir: types.PathLike = constants.DEFAULT_DATA_DIR.joinpath(NAME),
     ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._texts_dirpath = self.data_dir.joinpath("udhr_txt")
         self._index_filepath = self._texts_dirpath.joinpath("index.xml")
-        self._index = None
-        self.langs = None
+        self._index: Optional[List[Dict[str, Any]]] = None
+        self.langs: Optional[Set[str]] = None
 
     def download(self, *, force: bool = False) -> None:
         """
@@ -109,7 +110,7 @@ class UDHR(Dataset):
                 on disk under ``data_dir``.
         """
         filepath = tio.download_file(
-            DOWNLOAD_URL, filename="udhr_txt.zip", dirpath=self.data_dir, force=force,
+            DOWNLOAD_URL, filename="udhr_txt.zip", dirpath=self.data_dir, force=force
         )
         if filepath:
             tio.unpack_archive(filepath, extract_dir=self.data_dir.joinpath("udhr_txt"))
@@ -137,7 +138,7 @@ class UDHR(Dataset):
                 LOGGER.error(e)
         return self._index
 
-    def _load_and_parse_index(self):
+    def _load_and_parse_index(self) -> List[Dict[str, Any]]:
         """
         Read in index xml file from :attr:`UDHR._index_filepath`; skip elements
         without valid ISO-639-1 language code or sufficient translation quality,
@@ -163,7 +164,7 @@ class UDHR(Dataset):
         self.langs = {item["lang"] for item in index}
         return index
 
-    def _load_and_parse_text_file(self, filepath):
+    def _load_and_parse_text_file(self, filepath) -> str:
         with io.open(filepath, mode="rt", encoding="utf-8") as f:
             text_lines = [line.strip() for line in f.readlines()]
         # chop off the header, if it exists
@@ -201,7 +202,7 @@ class UDHR(Dataset):
     def texts(
         self,
         *,
-        lang: Optional[Union[str, Set[str]]] = None,
+        lang: Optional[str | Set[str]] = None,
         limit: Optional[int] = None,
     ) -> Iterable[str]:
         """
@@ -225,7 +226,7 @@ class UDHR(Dataset):
     def records(
         self,
         *,
-        lang: Optional[Union[str, Set[str]]] = None,
+        lang: Optional[str | Set[str]] = None,
         limit: Optional[int] = None,
     ) -> Iterable[types.Record]:
         """

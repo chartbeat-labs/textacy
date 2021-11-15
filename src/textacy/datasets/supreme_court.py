@@ -47,11 +47,12 @@ weight as recall. Still, given occasionally baffling inconsistencies in case
 naming, citation ids, and decision dates, a very small percentage of texts
 may be incorrectly matched to metadata. (Sorry.)
 """
+from __future__ import annotations
+
 import itertools
 import logging
-import pathlib
 import urllib.parse
-from typing import Dict, Iterable, Optional, Set, Tuple, Union
+from typing import ClassVar, Dict, Iterable, Optional, Set, Tuple
 
 from .. import constants, types, utils
 from .. import io as tio
@@ -127,9 +128,13 @@ class SupremeCourt(Dataset):
             from id code to description.
     """
 
-    full_date_range: Tuple[str, str] = ("1946-11-18", "2016-06-27")
-    decision_directions: Set[str] = {"conservative", "liberal", "unspecifiable"}
-    opinion_author_codes: Dict[int, Optional[str]] = {
+    full_date_range: ClassVar[Tuple[str, str]] = ("1946-11-18", "2016-06-27")
+    decision_directions: ClassVar[Set[str]] = {
+        "conservative",
+        "liberal",
+        "unspecifiable",
+    }
+    opinion_author_codes: ClassVar[Dict[int, Optional[str]]] = {
         -1: None,
         1: "Jay, John",
         2: "Rutledge, John",
@@ -246,7 +251,7 @@ class SupremeCourt(Dataset):
         113: "Sotomayor, Sonia",
         114: "Kagan, Elena",
     }
-    issue_area_codes: Dict[int, Optional[str]] = {
+    issue_area_codes: ClassVar[Dict[int, Optional[str]]] = {
         -1: None,
         1: "Criminal Procedure",
         2: "Civil Rights",
@@ -263,7 +268,7 @@ class SupremeCourt(Dataset):
         13: "Miscellaneous",
         14: "Private Action",
     }
-    issue_codes: Dict[str, str] = {
+    issue_codes: ClassVar[Dict[str, str]] = {
         "100010": "federal-state ownership dispute (cf. Submerged Lands Act)",
         "100020": "federal pre-emption of state court jurisdiction",
         "100030": "federal pre-emption of state legislation or regulation. cf. state regulation of business. rarely involves union activity. Does not involve constitutional interpretation unless the Court says it does.",
@@ -546,7 +551,7 @@ class SupremeCourt(Dataset):
 
     def __init__(
         self,
-        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+        data_dir: types.PathLike = constants.DEFAULT_DATA_DIR.joinpath(NAME),
     ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
@@ -577,7 +582,7 @@ class SupremeCourt(Dataset):
         release_tag = f"supreme_court_py3_v{data_version}"
         url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
         tio.download_file(
-            url, filename=self._filename, dirpath=self.data_dir, force=force,
+            url, filename=self._filename, dirpath=self.data_dir, force=force
         )
 
     def __iter__(self):
@@ -590,7 +595,12 @@ class SupremeCourt(Dataset):
             yield record
 
     def _get_filters(
-        self, opinion_author, decision_direction, issue_area, date_range, min_len,
+        self,
+        opinion_author,
+        decision_direction,
+        issue_area,
+        date_range,
+        min_len,
     ):
         filters = []
         if min_len is not None:
@@ -640,9 +650,9 @@ class SupremeCourt(Dataset):
     def texts(
         self,
         *,
-        opinion_author: Optional[Union[int, Set[int]]] = None,
-        decision_direction: Optional[Union[str, Set[str]]] = None,
-        issue_area: Optional[Union[int, Set[int]]] = None,
+        opinion_author: Optional[int | Set[int]] = None,
+        decision_direction: Optional[str | Set[str]] = None,
+        issue_area: Optional[int | Set[int]] = None,
         date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
@@ -683,9 +693,9 @@ class SupremeCourt(Dataset):
     def records(
         self,
         *,
-        opinion_author: Optional[Union[int, Set[int]]] = None,
-        decision_direction: Optional[Union[str, Set[str]]] = None,
-        issue_area: Optional[Union[int, Set[int]]] = None,
+        opinion_author: Optional[int | Set[int]] = None,
+        decision_direction: Optional[str | Set[str]] = None,
+        issue_area: Optional[int | Set[int]] = None,
         date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
