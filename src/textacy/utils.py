@@ -59,19 +59,14 @@ def get_config() -> Dict[str, Any]:
         dict
     """
     from spacy.about import __version__ as spacy_version
-    from spacy.util import get_data_path
+    from spacy.util import get_installed_models
     from ._version import __version__ as textacy_version
 
     return {
         "platform": sys.platform,
         "python": sys.version,
         "spacy": spacy_version,
-        "spacy_models": [
-            d.parts[-1]
-            for d in get_data_path().iterdir()
-            if (d.is_dir() or d.is_symlink())
-            and d.parts[-1] not in {"__cache__", "__pycache__"}
-        ],
+        "spacy_models": get_installed_models(),
         "textacy": textacy_version,
     }
 
