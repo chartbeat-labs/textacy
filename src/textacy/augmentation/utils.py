@@ -16,11 +16,8 @@ from .. import cache, datasets, errors, resources, types
 concept_net = resources.ConceptNet()
 udhr = datasets.UDHR()
 
-AugTok = collections.namedtuple("AugTok", ["text", "ws", "pos", "is_word", "syns"])
-"""tuple: Minimal token data required for data augmentation transforms."""
 
-
-def to_aug_toks(doclike: types.DocLike) -> List[AugTok]:
+def to_aug_toks(doclike: types.DocLike) -> List[types.AugTok]:
     """
     Transform a spaCy ``Doc`` or ``Span`` into a list of ``AugTok`` objects,
     suitable for use in data augmentation transform functions.
@@ -41,7 +38,7 @@ def to_aug_toks(doclike: types.DocLike) -> List[AugTok]:
             for tok in doclike
         )
     return [
-        AugTok(
+        types.AugTok(
             text=tok.text,
             ws=tok.whitespace_,
             pos=tok.pos_,
