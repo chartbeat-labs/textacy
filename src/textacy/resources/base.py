@@ -1,3 +1,6 @@
+from typing import Optional
+
+
 class Resource:
     """
     Base class for textacy resources.
@@ -11,15 +14,15 @@ class Resource:
         meta (dict)
     """
 
-    def __init__(self, name, meta=None):
+    def __init__(self, name: str, meta: Optional[dict] = None):
         self.name = name
         self.meta = meta or {}
 
-    def __repr__(self):
-        return "Resource('{}')".format(self.name)
+    def __repr__(self) -> str:
+        return f"Resource('{self.name}')"
 
     @property
-    def info(self):
+    def info(self) -> dict:
         info = {"name": self.name}
         info.update(self.meta)
         return info

@@ -26,17 +26,18 @@ Italian terms are assigned weights to five emotions:
     - SODDISFATTO (~happy)
     - TRISTE (~sad)
 """
+from __future__ import annotations
+
 import collections
 import csv
 import io
 import statistics
+from typing import Any, ClassVar, Dict, Literal, Optional, Sequence, Tuple
 
 from spacy.parts_of_speech import ADJ, ADV, NOUN, VERB
 from spacy.tokens import Doc, Span, Token
 
-from .. import constants
-from .. import io as tio
-from .. import utils
+from .. import constants, io as tio, types, utils
 from .base import Resource
 
 
@@ -129,31 +130,31 @@ class DepecheMood(Resource):
          'SODDISFATTO': 0.23503447833219815}
 
     Args:
-        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
-            under which resource data is stored, i.e. ``/path/to/data_dir/depeche_mood``.
-        lang ({"en", "it"}): Standard two-letter code for the language of terms
+        data_dir: Path to directory on disk under which resource data is stored,
+            i.e. ``/path/to/data_dir/depeche_mood``.
+        lang: Standard two-letter code for the language of terms
             for which emotional valences are to be retrieved.
-        word_rep ({"token", "lemma", "lemmapos"}): Level of text processing used
-            in computing terms' emotion weights. "token" => tokenization only;
-            "lemma" => tokenization and lemmatization; "lemmapos" => tokenization,
-            lemmatization, and part-of-speech tagging.
-        min_freq (int): Minimum number of times that a given term must have appeared
+        word_rep: Level of text processing used in computing terms' emotion weights.
+            "token" => tokenization only;
+            "lemma" => tokenization and lemmatization;
+            "lemmapos" => tokenization, lemmatization, and part-of-speech tagging.
+        min_freq: Minimum number of times that a given term must have appeared
             in the source dataset for it to be included in the emotion weights dict.
             This can be used to remove noisy terms at the expense of reducing coverage.
             Researchers observed peak performance at 10, but anywhere between
             1 and 20 is reasonable.
     """
 
-    _lang_map = {"en": "english", "it": "italian"}
-    _pos_map = {NOUN: "n", VERB: "v", ADJ: "a", ADV: "r"}
-    _word_reps = ("token", "lemma", "lemmapos")
+    _lang_map: ClassVar[Dict[str, str]] = {"en": "english", "it": "italian"}
+    _pos_map: ClassVar[Dict[Any, str]] = {NOUN: "n", VERB: "v", ADJ: "a", ADV: "r"}
+    _word_reps: ClassVar[Tuple[str, str, str]] = ("token", "lemma", "lemmapos")
 
     def __init__(
         self,
-        data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME),
-        lang="en",
-        word_rep="lemmapos",
-        min_freq=3,
+        data_dir: types.PathLike = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+        lang: Literal["en", "it"] = "en",
+        word_rep: Literal["token", "lemma", "lemmapos"] = "lemmapos",
+        min_freq: int = 3,
     ):
         super().__init__(NAME, meta=META)
         if lang not in self._lang_map:
@@ -181,9 +182,9 @@ class DepecheMood(Resource):
         self._weights = None
 
     @property
-    def filepath(self):
+    def filepath(self) -> Optional[str]:
         """
-        str: Full path on disk for the DepecheMood tsv file
+        Full path on disk for the DepecheMood tsv file
         corresponding to the ``lang`` and ``word_rep``.
         """
         if self._filepath.is_file():
@@ -192,11 +193,11 @@ class DepecheMood(Resource):
             return None
 
     @property
-    def weights(self):
+    def weights(self) -> Dict[str, Dict[str, float]]:
         """
-        Dict[str, Dict[str, float]]: Mapping of term string (or term#POS,
-        if :attr:`DepecheMood.word_rep` is "lemmapos") to the terms' normalized weights
-        on a fixed set of affective dimensions (aka "emotions").
+        Mapping of term string (or term#POS, if :attr:`DepecheMood.word_rep` is "lemmapos")
+        to the terms' normalized weights on a fixed set of affective dimensions
+        (aka "emotions").
         """
         if not self._weights:
             if not self.filepath:
@@ -215,7 +216,7 @@ class DepecheMood(Resource):
             }
         return self._weights
 
-    def download(self, *, force=False):
+    def download(self, *, force: bool = False):
         """
         Download resource data as a zip archive file, then save it to disk
         and extract its contents under the ``data_dir`` directory.
@@ -225,19 +226,23 @@ class DepecheMood(Resource):
                 exists on disk under ``data_dir``.
         """
         filepath = tio.download_file(
-            DOWNLOAD_URL, filename=None, dirpath=self.data_dir, force=force,
+            DOWNLOAD_URL,
+            filename=None,
+            dirpath=self.data_dir,
+            force=force,
         )
         if filepath:
             tio.unpack_archive(filepath, extract_dir=None)
 
-    def get_emotional_valence(self, terms):
+    def get_emotional_valence(
+        self, terms: str | Token | Sequence[str] | Sequence[Token]
+    ) -> Dict[str, float]:
         """
         Get average emotional valence over all terms in ``terms`` for which
         emotion weights are available.
 
         Args:
-            terms (str or Sequence[str], ``Token`` or Sequence[``Token``]):
-                One or more terms over which to average emotional valences.
+            terms: One or more terms over which to average emotional valences.
                 Note that only nouns, adjectives, adverbs, and verbs are included.
 
                 .. note:: If the resource was initialized with ``word_rep="lemmapos"``,
@@ -246,7 +251,7 @@ class DepecheMood(Resource):
                    "r" => adverb are included in the data.
 
         Returns:
-            Dict[str, float]: Mapping of emotion to average weight.
+            Mapping of emotion to average weight.
         """
         if isinstance(terms, (Token, str)):
             return self._get_term_emotional_valence(terms)
@@ -259,14 +264,7 @@ class DepecheMood(Resource):
                 )
             )
 
-    def _get_term_emotional_valence(self, term):
-        """
-        Args:
-            term (str or :class:`spacy.tokens.Token`)
-
-        Returns:
-            Dict[str, float]
-        """
+    def _get_term_emotional_valence(self, term: str | Token) -> Dict[str, float]:
         try:
             if isinstance(term, str):
                 return self.weights[term]
@@ -286,14 +284,9 @@ class DepecheMood(Resource):
         except KeyError:
             return {}
 
-    def _get_terms_emotional_valence(self, terms):
-        """
-        Args:
-            term (Sequence[str] or Sequence[:class:`spacy.tokens.Token`])
-
-        Returns:
-            Dict[str, float]
-        """
+    def _get_terms_emotional_valence(
+        self, terms: Sequence[str] | Sequence[Token]
+    ) -> Dict[str, float]:
         all_emo_weights = collections.defaultdict(list)
         for term in terms:
             emo_weights = self._get_term_emotional_valence(term)
