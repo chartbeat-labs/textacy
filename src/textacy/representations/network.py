@@ -12,7 +12,7 @@ import collections
 import itertools
 import logging
 from operator import itemgetter
-from typing import Any, Collection, Dict, Optional, Sequence, Set, Union
+from typing import Any, Collection, Dict, Literal, Optional, Sequence, Set, Union
 
 import networkx as nx
 import numpy as np
@@ -28,7 +28,7 @@ def build_cooccurrence_network(
     data: Sequence[str] | Sequence[Sequence[str]],
     *,
     window_size: int = 2,
-    edge_weighting: str = "count",  # Literal["count", "binary"]
+    edge_weighting: Literal["count", "binary"] = "count",
 ) -> nx.Graph:
     """
     Transform an ordered sequence of strings (or a sequence of such sequences)
@@ -140,7 +140,8 @@ def build_cooccurrence_network(
         edge_data = {"weight": 1}
         graph.add_edges_from(
             (w1, w2, edge_data)
-            for window in windows for (w1, w2) in itertools.combinations(window, 2)
+            for window in windows
+            for (w1, w2) in itertools.combinations(window, 2)
         )
     else:
         raise ValueError(
@@ -153,7 +154,8 @@ def build_cooccurrence_network(
 
 
 def build_similarity_network(
-    data: Sequence[str] | Sequence[Sequence[str]], edge_weighting: str,
+    data: Sequence[str] | Sequence[Sequence[str]],
+    edge_weighting: str,
 ) -> nx.Graph:
     """
     Transform a sequence of strings (or a sequence of such sequences) into a graph,
@@ -230,8 +232,7 @@ def build_similarity_network(
     elif isinstance(data[0], Sequence) and isinstance(data[0][0], str):
         # nx graph nodes need to be *hashable*, so Sequence => Tuple
         ele_pairs = (
-            (tuple(ele1), tuple(ele2))
-            for ele1, ele2 in itertools.combinations(data, 2)
+            (tuple(ele1), tuple(ele2)) for ele1, ele2 in itertools.combinations(data, 2)
         )
     else:
         raise TypeError(
@@ -242,14 +243,15 @@ def build_similarity_network(
 
     graph = nx.Graph()
     graph.add_edges_from(
-        (ele1, ele2, {"weight": sim_func(ele1, ele2)})
-        for ele1, ele2 in ele_pairs
+        (ele1, ele2, {"weight": sim_func(ele1, ele2)}) for ele1, ele2 in ele_pairs
     )
     return graph
 
 
 def rank_nodes_by_pagerank(
-    graph: nx.Graph, weight: str = "weight", **kwargs,
+    graph: nx.Graph,
+    weight: str = "weight",
+    **kwargs,
 ) -> Dict[Any, float]:
     """
     Rank nodes in ``graph`` using the Pagegrank algorithm.
@@ -266,7 +268,11 @@ def rank_nodes_by_pagerank(
 
 
 def rank_nodes_by_bestcoverage(
-    graph: nx.Graph, k: int, c: int = 1, alpha: float = 1.0, weight: str = "weight",
+    graph: nx.Graph,
+    k: int,
+    c: int = 1,
+    alpha: float = 1.0,
+    weight: str = "weight",
 ) -> Dict[Any, float]:
     """
     Rank nodes in a network using the BestCoverage algorithm that attempts to

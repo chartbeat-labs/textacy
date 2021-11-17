@@ -9,7 +9,7 @@ included terms and flexible weighting/normalization schemes for their values.
 
 Intended primarily as a simpler- and higher-level API for sparse vectorization of docs.
 """
-from typing import Dict, Iterable, Optional, Tuple
+from typing import Dict, Iterable, Literal, Optional, Tuple
 
 import scipy.sparse as sp
 
@@ -19,10 +19,10 @@ from . import vectorizers
 def build_doc_term_matrix(
     tokenized_docs: Iterable[Iterable[str]],
     *,
-    tf_type: str = "linear",  # Literal["linear", "sqrt", "log", "binary"]
-    idf_type: Optional[str] = None,  # Optional[Literal["standard", "smooth", "bm25"]]
-    dl_type: Optional[str] = None,  # Optional[Literal["linear", "sqrt", "log"]]
-    **kwargs
+    tf_type: Literal["linear", "sqrt", "log", "binary"] = "linear",
+    idf_type: Optional[Literal["standard", "smooth", "bm25"]] = None,
+    dl_type: Optional[Literal["linear", "sqrt", "log"]] = None,
+    **kwargs,
 ) -> Tuple[sp.csr_matrix, Dict[str, int]]:
     """
     Transform one or more tokenized documents into a document-term matrix
@@ -93,11 +93,11 @@ def build_grp_term_matrix(
     tokenized_docs: Iterable[Iterable[str]],
     grps: Iterable[str],
     *,
-    tf_type: str = "linear",  # Literal["linear", "sqrt", "log", "binary"]
-    idf_type: Optional[str] = None,  # Optional[Literal["standard", "smooth", "bm25"]]
-    dl_type: Optional[str] = None,  # Optional[Literal["linear", "sqrt", "log"]]
-    **kwargs
-) -> sp.csr_matrix:
+    tf_type: Literal["linear", "sqrt", "log", "binary"] = "linear",
+    idf_type: Optional[Literal["standard", "smooth", "bm25"]] = None,
+    dl_type: Optional[Literal["linear", "sqrt", "log"]] = None,
+    **kwargs,
+) -> Tuple[sp.csr_matrix, Dict[str, int], Dict[str, int]]:
     """
     Transform one or more tokenized documents into a group-term matrix
     of shape (# unique groups, # unique terms),
