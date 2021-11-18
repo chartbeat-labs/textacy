@@ -2,13 +2,27 @@
 :mod:`textacy.tm.topic_model`: Convenient and consolidated topic-modeling,
 built on ``scikit-learn``.
 """
+from __future__ import annotations
+
 import logging
+from typing import (
+    ClassVar,
+    Dict,
+    Iterable,
+    List,
+    Literal,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+)
 
 import joblib
 import numpy as np
+import scipy.sparse as sp
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
-from .. import errors, viz
+from .. import errors, types, viz
 
 LOGGER = logging.getLogger(__name__)
 
@@ -93,8 +107,8 @@ class TopicModel:
         >>> model.save("nmf-10topics.pkl")
 
     Args:
-        model ({"nmf", "lda", "lsa"} or ``sklearn.decomposition.<model>``)
-        n_topics (int): number of topics in the model to be initialized
+        model: Name or instance of an sklearn decomposition model.
+        n_topics: Number of topics in the model to be initialized
         **kwargs:
             variety of parameters used to initialize the model; see individual
             sklearn pages for full details
@@ -109,9 +123,21 @@ class TopicModel:
         * http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
     """
 
-    _required_trained_model_attr = {"transform", "components_", "n_topics"}
+    _required_trained_model_attr: ClassVar[Set[str]] = {
+        "transform",
+        "components_",
+        "n_topics",
+    }
 
-    def __init__(self, model, n_topics=10, **kwargs):
+    def __init__(
+        self,
+        model: Literal["nmf", "lda", "lsa"]
+        | NMF
+        | LatentDirichletAllocation
+        | TruncatedSVD,
+        n_topics: int = 10,
+        **kwargs,
+    ):
         if isinstance(model, (NMF, LatentDirichletAllocation, TruncatedSVD)):
             self.model = model
         elif all(
@@ -154,17 +180,17 @@ class TopicModel:
                 errors.value_invalid_msg("model", model, {"nmf", "lda", "lsa"})
             )
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "TopicModel(n_topics={}, model={})".format(
             self.n_topics, str(self.model).split("(", 1)[0]
         )
 
-    def save(self, filepath):
+    def save(self, filepath: types.PathLike):
         _ = joblib.dump(self.model, filepath, compress=3)
         LOGGER.info("%s model saved to %s", self.model, filepath)
 
     @classmethod
-    def load(cls, filepath):
+    def load(cls, filepath: types.PathLike) -> "TopicModel":
         model = joblib.load(filepath)
         n_topics = (
             model.n_components if hasattr(model, "n_components") else model.n_topics
@@ -184,13 +210,15 @@ class TopicModel:
         return self.model.transform(doc_term_matrix)
 
     @property
-    def n_topics(self):
+    def n_topics(self) -> int:
         try:
             return self.model.n_components
         except AttributeError:
             return self.model.n_topics
 
-    def get_doc_topic_matrix(self, doc_term_matrix, *, normalize=True):
+    def get_doc_topic_matrix(
+        self, doc_term_matrix, *, normalize: bool = True
+    ) -> np.ndarray:
         """
         Transform a document-term matrix into a document-topic matrix, where rows
         correspond to documents and columns to the topics in the topic model.
@@ -199,11 +227,11 @@ class TopicModel:
             doc_term_matrix (array-like or sparse matrix): Corpus represented as a
                 document-term matrix with shape (n_docs, n_terms). LDA expects
                 tf-weighting, while NMF and LSA may do better with tfidf-weighting.
-            normalize (bool): if True, the values in each row are normalized,
-                i.e. topic weights on each document sum to 1
+            normalize: If True, the values in each row are normalized,
+                i.e. topic weights on each document sum to 1.
 
         Returns:
-            :class:`numpy.ndarray`: Document-topic matrix with shape (n_docs, n_topics).
+            Document-topic matrix with shape (n_docs, n_topics).
         """
         doc_topic_matrix = self.transform(doc_term_matrix)
         if normalize is True:
@@ -211,34 +239,42 @@ class TopicModel:
         else:
             return doc_topic_matrix
 
-    def top_topic_terms(self, id2term, *, topics=-1, top_n=10, weights=False):
+    def top_topic_terms(
+        self,
+        id2term: Sequence[str] | Dict[int, str],
+        *,
+        topics: int | Sequence[int] = -1,
+        top_n: int = 10,
+        weights: bool = False,
+    ) -> Iterable[Tuple[int, Tuple[str, ...]]] | Iterable[
+        Tuple[int, Tuple[Tuple[str, float], ...]]
+    ]:
         """
         Get the top ``top_n`` terms by weight per topic in ``model``.
 
         Args:
-            id2term (list(str) or dict): object that returns the term string corresponding
-                to term id ``i`` through ``id2term[i]``; could be a list of strings
-                where the index represents the term id, such as that returned by
+            id2term: Object that returns the term string corresponding to term id ``i``
+                through ``id2term[i]``; could be a list of strings where the index
+                represents the term id, such as that returned by
                 ``sklearn.feature_extraction.text.CountVectorizer.get_feature_names()``,
-                or a mapping of term id: term string
-            topics (int or Sequence[int]): topic(s) for which to return top terms;
-                if -1 (default), all topics' terms are returned
-            top_n (int): number of top terms to return per topic
-            weights (bool): if True, terms are returned with their corresponding
+                or a mapping of term id to term string.
+            topics: Topic(s) for which to return top terms;
+                if -1 (default), all topics' terms are returned.
+            top_n: Number of top terms to return per topic
+            weights: If True, terms are returned with their corresponding
                 topic weights; otherwise, terms are returned without weights
 
         Yields:
-            Tuple[int, Tuple[str]] or Tuple[int, Tuple[Tuple[str, float]]]:
-                next tuple corresponding to a topic; the first element is the topic's
-                index; if ``weights`` is False, the second element is a tuple of str
-                representing the top ``top_n`` related terms; otherwise, the second
-                is a tuple of (str, float) pairs representing the top ``top_n``
-                related terms and their associated weights wrt the topic; for example::
+            Next tuple corresponding to a topic; the first element is the topic's
+            index; if ``weights`` is False, the second element is a tuple of str
+            representing the top ``top_n`` related terms; otherwise, the second
+            is a tuple of (str, float) pairs representing the top ``top_n``
+            related terms and their associated weights wrt the topic; for example::
 
-                    >>> list(TopicModel.top_topic_terms(id2term, topics=(0, 1), top_n=2, weights=False))
-                    [(0, ('foo', 'bar')), (1, ('bat', 'baz'))]
-                    >>> list(TopicModel.top_topic_terms(id2term, topics=0, top_n=2, weights=True))
-                    [(0, (('foo', 0.1415), ('bar', 0.0986)))]
+                >>> list(TopicModel.top_topic_terms(id2term, topics=(0, 1), top_n=2, weights=False))
+                [(0, ('foo', 'bar')), (1, ('bat', 'baz'))]
+                >>> list(TopicModel.top_topic_terms(id2term, topics=0, top_n=2, weights=True))
+                [(0, (('foo', 0.1415), ('bar', 0.0986)))]
         """
         if topics == -1:
             topics = range(self.n_topics)
@@ -261,31 +297,39 @@ class TopicModel:
                     ),
                 )
 
-    def top_topic_docs(self, doc_topic_matrix, *, topics=-1, top_n=10, weights=False):
+    def top_topic_docs(
+        self,
+        doc_topic_matrix: np.ndarray,
+        *,
+        topics: int | Sequence[int] = -1,
+        top_n: int = 10,
+        weights: bool = False,
+    ) -> Iterable[Tuple[int, Tuple[int, ...]]] | Iterable[
+        Tuple[int, Tuple[Tuple[int, float], ...]]
+    ]:
         """
         Get the top ``top_n`` docs by weight per topic in ``doc_topic_matrix``.
 
         Args:
-            doc_topic_matrix (:class:`numpy.ndarray`): document-topic matrix with shape
-                (n_docs, n_topics), the result of calling :meth:`TopicModel.get_doc_topic_matrix()`
-            topics (int or Sequence[int]): topic(s) for which to return top docs;
-                if -1, all topics' docs are returned
-            top_n (int): number of top docs to return per topic
-            weights (bool): if True, docs are returned with their corresponding
-                (normalized) topic weights; otherwise, docs are returned without weights
+            doc_topic_matrix: Document-topic matrix with shape (n_docs, n_topics),
+                the result of calling :meth:`TopicModel.get_doc_topic_matrix()`
+            topics: Topic(s) for which to return top docs;
+                if -1, all topics' docs are returned.
+            top_n: Number of top docs to return per topic.
+            weights: If True, docs are returned with their corresponding (normalized)
+                topic weights; otherwise, docs are returned without weights.
 
         Yields:
-            Tuple[int, Tuple[int]] or Tuple[int, Tuple[Tuple[int, float]]]:
-                next tuple corresponding to a topic; the first element is the topic's
-                index; if ``weights`` is False, the second element is a tuple of ints
-                representing the top ``top_n`` related docs; otherwise, the second
-                is a tuple of (int, float) pairs representing the top ``top_n``
-                related docs and their associated weights wrt the topic; for example::
+            Next tuple corresponding to a topic; the first element is the topic's
+            index; if ``weights`` is False, the second element is a tuple of ints
+            representing the top ``top_n`` related docs; otherwise, the second
+            is a tuple of (int, float) pairs representing the top ``top_n``
+            related docs and their associated weights wrt the topic; for example::
 
-                    >>> list(TopicModel.top_doc_terms(dtm, topics=(0, 1), top_n=2, weights=False))
-                    [(0, (4, 2)), (1, (1, 3))]
-                    >>> list(TopicModel.top_doc_terms(dtm, topics=0, top_n=2, weights=True))
-                    [(0, ((4, 0.3217), (2, 0.2154)))]
+                >>> list(TopicModel.top_doc_terms(dtm, topics=(0, 1), top_n=2, weights=False))
+                [(0, (4, 2)), (1, (1, 3))]
+                >>> list(TopicModel.top_doc_terms(dtm, topics=0, top_n=2, weights=True))
+                [(0, ((4, 0.3217), (2, 0.2154)))]
         """
         if topics == -1:
             topics = range(self.n_topics)
@@ -305,31 +349,39 @@ class TopicModel:
                     ),
                 )
 
-    def top_doc_topics(self, doc_topic_matrix, *, docs=-1, top_n=3, weights=False):
+    def top_doc_topics(
+        self,
+        doc_topic_matrix: np.ndarray,
+        *,
+        docs: int | Sequence[int] = -1,
+        top_n: int = 3,
+        weights: bool = False,
+    ) -> Iterable[Tuple[int, Tuple[int, ...]]] | Iterable[
+        Tuple[int, Tuple[Tuple[int, float], ...]]
+    ]:
         """
         Get the top ``top_n`` topics by weight per doc for ``docs`` in ``doc_topic_matrix``.
 
         Args:
-            doc_topic_matrix (:class:`numpy.ndarray`): document-topic matrix with shape
-                (n_docs, n_topics), the result of calling :meth:`TopicModel.get_doc_topic_matrix()`
-            docs (int or Sequence[int]): docs for which to return top topics;
-                if -1, all docs' top topics are returned
-            top_n (int): number of top topics to return per doc
-            weights (bool): if True, docs are returned with their corresponding
-                (normalized) topic weights; otherwise, docs are returned without weights
+            doc_topic_matrix: Document-topic matrix with shape (n_docs, n_topics),
+                the result of calling :meth:`TopicModel.get_doc_topic_matrix()` .
+            docs: Docs for which to return top topics;
+                if -1, all docs' top topics are returned.
+            top_n: Number of top topics to return per doc.
+            weights If True, docs are returned with their corresponding (normalized)
+                topic weights; otherwise, docs are returned without weights.
 
         Yields:
-            Tuple[int, Tuple[int]] or Tuple[int, Tuple[Tuple[int, float]]]:
-                next tuple corresponding to a doc; the first element is the doc's
-                index; if ``weights`` is False, the second element is a tuple of ints
-                representing the top ``top_n`` related topics; otherwise, the second
-                is a tuple of (int, float) pairs representing the top ``top_n``
-                related topics and their associated weights wrt the doc; for example::
+            Next tuple corresponding to a doc; the first element is the doc's
+            index; if ``weights`` is False, the second element is a tuple of ints
+            representing the top ``top_n`` related topics; otherwise, the second
+            is a tuple of (int, float) pairs representing the top ``top_n``
+            related topics and their associated weights wrt the doc; for example::
 
-                    >>> list(TopicModel.top_doc_topics(dtm, docs=(0, 1), top_n=2, weights=False))
-                    [(0, (1, 4)), (1, (3, 2))]
-                    >>> list(TopicModel.top_doc_topics(dtm, docs=0, top_n=2, weights=True))
-                    [(0, ((1, 0.2855), (4, 0.2412)))]
+                >>> list(TopicModel.top_doc_topics(dtm, docs=(0, 1), top_n=2, weights=False))
+                [(0, (1, 4)), (1, (3, 2))]
+                >>> list(TopicModel.top_doc_topics(dtm, docs=0, top_n=2, weights=True))
+                [(0, ((1, 0.2855), (4, 0.2412)))]
         """
         if docs == -1:
             docs = range(doc_topic_matrix.shape[0])
@@ -349,18 +401,18 @@ class TopicModel:
                     ),
                 )
 
-    def topic_weights(self, doc_topic_matrix):
+    def topic_weights(self, doc_topic_matrix: np.ndarray) -> np.ndarray:
         """
         Get the overall weight of topics across an entire corpus. Note: Values depend
         on whether topic weights per document in ``doc_topic_matrix`` were normalized,
         or not. I suppose either way makes sense... o_O
 
         Args:
-            doc_topic_matrix (:class:`numpy.ndarray`): document-topic matrix with shape
-                (n_docs, n_topics), the result of calling :meth:`TopicModel.get_doc_topic_matrix()`
+            doc_topic_matrix: Document-topic matrix with shape (n_docs, n_topics),
+                the result of calling :meth:`TopicModel.get_doc_topic_matrix()`
 
         Returns:
-            :class:`numpy.ndarray`: the ith element is the ith topic's overall weight
+            Array, where the ith element is the ith topic's overall weight.
         """
         return doc_topic_matrix.sum(axis=0) / doc_topic_matrix.sum(axis=0).sum()
 
@@ -372,45 +424,44 @@ class TopicModel:
 
     def termite_plot(
         self,
-        doc_term_matrix,
-        id2term,
+        doc_term_matrix: np.ndarray | sp.csr_matrix,
+        id2term: List[str] | Dict[int, str],
         *,
-        topics=-1,
-        sort_topics_by="index",
-        highlight_topics=None,
-        n_terms=25,
-        rank_terms_by="topic_weight",
-        sort_terms_by="seriation",
-        save=False,
-        rc_params=None,
+        topics: int | Sequence[int] = -1,
+        sort_topics_by: Literal["index", "weight"] = "index",
+        highlight_topics: Optional[int | Sequence[int]] = None,
+        n_terms: int = 25,
+        rank_terms_by: Literal["topic_weight", "corpus_weight"] = "topic_weight",
+        sort_terms_by: Literal[
+            "seriation", "weight", "index", "alphabetical"
+        ] = "seriation",
+        save: Optional[str] = None,
+        rc_params: Optional[dict] = None,
     ):
         """
         Make a "termite" plot for assessing topic models using a tabular layout
         to promote comparison of terms both within and across topics.
 
         Args:
-            doc_term_matrix (:class:`numpy.ndarray` or sparse matrix): corpus
-                represented as a document-term matrix with shape (n_docs, n_terms);
-                may have tf- or tfidf-weighting
-            id2term (List[str] or dict): object that returns the term string corresponding
-                to term id ``i`` through ``id2term[i]``; could be a list of strings
-                where the index represents the term id, such as that returned by
+            doc_term_matrix: Corpus represented as a document-term matrix with shape
+                (n_docs, n_terms); may have tf- or tfidf-weighting.
+            id2term: Object that returns the term string corresponding to term id ``i``
+                through ``id2term[i]``. Could be a list of strings where the index
+                represents the term id, such as that returned by
                 ``sklearn.feature_extraction.text.CountVectorizer.get_feature_names()``,
-                or a mapping of term id: term string
-            topics (int or Sequence[int]): topic(s) to include in termite plot;
-                if -1, all topics are included
-            sort_topics_by ({'index', 'weight'}):
-            highlight_topics (int or Sequence[int]): indices for up to 6 topics
-                to visually highlight in the plot with contrasting colors
-            n_terms (int): number of top terms to include in termite plot
-            rank_terms_by ({'topic_weight', 'corpus_weight'}): value used
-                to rank terms; the top-ranked ``n_terms`` are included in the plot
-            sort_terms_by ({'seriation', 'weight', 'index', 'alphabetical'}):
-                method used to vertically sort the selected top ``n_terms`` terms;
-                the default ("seriation") groups similar terms together, which
-                facilitates cross-topic assessment
-            save (str): give the full /path/to/fname on disk to save figure
-                rc_params (dict, optional): allow passing parameters to rc_context in matplotlib.plyplot,
+                or a mapping of term id to term string.
+            topics: Topic(s) to include in termite plot; if -1, all topics are included.
+            sort_topics_by
+            highlight_topics: Indices for up to 6 topics to visually highlight
+                in the plot with contrasting colors.
+            n_terms: Number of top terms to include in termite plot.
+            rank_terms_by: Value used to rank terms; the top-ranked ``n_terms``
+                are included in the plot.
+            sort_terms_by: Method used to vertically sort the selected top ``n_terms``
+                terms; the default ("seriation") groups similar terms together, which
+                facilitates cross-topic assessment.
+            save: The full /path/to/fname on disk to save figure, or None.
+            rc_params: Allow passing parameters to rc_context in matplotlib.plyplot,
                 details in https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.rc_context.html
 
         Returns:
@@ -461,7 +512,9 @@ class TopicModel:
         else:
             raise ValueError(
                 errors.value_invalid_msg(
-                    "sort_topics_by", sort_topics_by, {"index", "weight"},
+                    "sort_topics_by",
+                    sort_topics_by,
+                    {"index", "weight"},
                 )
             )
 
@@ -485,7 +538,9 @@ class TopicModel:
         else:
             raise ValueError(
                 errors.value_invalid_msg(
-                    "rank_terms_by", rank_terms_by, {"corpus_weight", "topic_weight"},
+                    "rank_terms_by",
+                    rank_terms_by,
+                    {"corpus_weight", "topic_weight"},
                 )
             )
 

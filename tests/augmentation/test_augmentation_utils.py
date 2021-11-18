@@ -2,6 +2,7 @@ import pytest
 
 from textacy import make_spacy_doc
 from textacy.augmentation import utils
+from textacy.types import AugTok
 
 
 @pytest.fixture(scope="module")
@@ -17,7 +18,7 @@ def spacy_doc():
 
 
 def test_aug_tok():
-    aug_tok = utils.AugTok(text="text", ws=" ", pos="pos", is_word=True, syns=["doc"])
+    aug_tok = AugTok(text="text", ws=" ", pos="pos", is_word=True, syns=["doc"])
     assert isinstance(aug_tok, tuple)
     with pytest.raises(AttributeError):
         aug_tok.foo = "bar"
@@ -26,7 +27,7 @@ def test_aug_tok():
 def test_to_aug_toks(spacy_doc):
     aug_toks = utils.to_aug_toks(spacy_doc)
     assert isinstance(aug_toks, list)
-    assert all(isinstance(aug_tok, utils.AugTok) for aug_tok in aug_toks)
+    assert all(isinstance(aug_tok, AugTok) for aug_tok in aug_toks)
     assert len(aug_toks) == len(spacy_doc)
     for obj in ["foo bar bat baz", ["foo", "bar", "bat", "baz"]]:
         with pytest.raises(TypeError):
@@ -35,7 +36,8 @@ def test_to_aug_toks(spacy_doc):
 
 @pytest.mark.skipif(
     utils.udhr.index is None,
-    reason="UDHR dataset must be downloaded before running this test")
+    reason="UDHR dataset must be downloaded before running this test",
+)
 def test_get_char_weights():
     for lang in ("en", "es", "xx"):
         char_weights = utils.get_char_weights(lang)

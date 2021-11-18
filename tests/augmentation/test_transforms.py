@@ -1,8 +1,7 @@
-import collections
-
 from textacy import make_spacy_doc
 from textacy.augmentation import transforms
 from textacy.augmentation import utils as aug_utils
+from textacy.types import AugTok
 
 import pytest
 
@@ -29,7 +28,6 @@ def aug_toks(spacy_doc):
     reason="ConceptNet resource must be downloaded before running tests",
 )
 class TestSubstituteWordSynonyms:
-
     def test_noop(self, aug_toks):
         for num in [0, 0.0]:
             new_aug_toks = transforms.substitute_word_synonyms(aug_toks, num=num)
@@ -41,10 +39,7 @@ class TestSubstituteWordSynonyms:
             new_aug_toks = transforms.substitute_word_synonyms(aug_toks, num=num)
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) == len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
             assert any(
                 aug_tok.text != new_aug_tok.text
                 for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
@@ -56,14 +51,10 @@ class TestSubstituteWordSynonyms:
 
     def test_pos(self, aug_toks):
         for pos in ["NOUN", ("NOUN", "VERB", "ADJ", "ADV")]:
-            new_aug_toks = transforms.substitute_word_synonyms(
-                aug_toks, num=1, pos=pos)
+            new_aug_toks = transforms.substitute_word_synonyms(aug_toks, num=1, pos=pos)
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) == len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
             assert any(
                 aug_tok.text != new_aug_tok.text
                 for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
@@ -83,7 +74,6 @@ class TestSubstituteWordSynonyms:
     reason="ConceptNet resource must be downloaded before running tests",
 )
 class TestInsertWordSynonyms:
-
     def test_noop(self, aug_toks):
         for num in [0, 0.0]:
             new_aug_toks = transforms.insert_word_synonyms(aug_toks, num=num)
@@ -95,10 +85,7 @@ class TestInsertWordSynonyms:
             new_aug_toks = transforms.insert_word_synonyms(aug_toks, num=num)
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) > len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
 
     def test_num_float(self, aug_toks):
         for num in [0.1, 0.3]:
@@ -106,14 +93,10 @@ class TestInsertWordSynonyms:
 
     def test_pos(self, aug_toks):
         for pos in ["NOUN", ("NOUN", "VERB", "ADJ", "ADV")]:
-            new_aug_toks = transforms.insert_word_synonyms(
-                aug_toks, num=1, pos=pos)
+            new_aug_toks = transforms.insert_word_synonyms(aug_toks, num=1, pos=pos)
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) > len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
 
     def test_errors(self, aug_toks):
         for num in [-1, 2.0]:
@@ -125,7 +108,6 @@ class TestInsertWordSynonyms:
 
 
 class TestSwapWords:
-
     def test_noop(self, aug_toks):
         for num in [0, 0.0]:
             new_aug_toks = transforms.swap_words(aug_toks, num=num)
@@ -137,10 +119,7 @@ class TestSwapWords:
             new_aug_toks = transforms.swap_words(aug_toks, num=num)
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) == len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
             assert any(
                 aug_tok.text != new_aug_tok.text
                 for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
@@ -155,10 +134,7 @@ class TestSwapWords:
             new_aug_toks = transforms.swap_words(aug_toks, num=1, pos=pos)
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) == len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
             assert any(
                 aug_tok.text != new_aug_tok.text
                 for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
@@ -174,7 +150,6 @@ class TestSwapWords:
 
 
 class TestDeleteWords:
-
     def test_noop(self, aug_toks):
         for num in [0, 0.0]:
             new_aug_toks = transforms.delete_words(aug_toks, num=num)
@@ -186,10 +161,7 @@ class TestDeleteWords:
             new_aug_toks = transforms.delete_words(aug_toks, num=num)
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) < len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
 
     def test_num_float(self, aug_toks):
         for num in [0.1, 0.3]:
@@ -200,10 +172,7 @@ class TestDeleteWords:
             new_aug_toks = transforms.delete_words(aug_toks, num=1, pos=pos)
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) < len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
 
     def test_errors(self, aug_toks):
         for num in [-1, 2.0]:
@@ -219,7 +188,6 @@ class TestDeleteWords:
     reason="UDHR dataset must be downloaded before running tests",
 )
 class TestSubstituteChars:
-
     def test_noop(self, aug_toks):
         for num in [0, 0.0]:
             new_aug_toks = transforms.substitute_chars(aug_toks, num=num, lang="en")
@@ -233,10 +201,7 @@ class TestSubstituteChars:
             new_aug_toks = transforms.substitute_chars(aug_toks, num=num, lang="en")
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) == len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
             assert any(
                 aug_tok.text != new_aug_tok.text
                 for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
@@ -264,7 +229,6 @@ class TestSubstituteChars:
     reason="UDHR dataset must be downloaded before running tests",
 )
 class TestInsertChars:
-
     def test_noop(self, aug_toks):
         for num in [0, 0.0]:
             new_aug_toks = transforms.insert_chars(aug_toks, num=num, lang="en")
@@ -276,14 +240,11 @@ class TestInsertChars:
             new_aug_toks = transforms.insert_chars(aug_toks, num=num, lang="en")
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) == len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
             assert all(
                 (
-                    aug_tok.text == new_aug_tok.text or
-                    len(aug_tok.text) < len(new_aug_tok.text)
+                    aug_tok.text == new_aug_tok.text
+                    or len(aug_tok.text) < len(new_aug_tok.text)
                 )
                 for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
             )
@@ -302,7 +263,6 @@ class TestInsertChars:
 
 
 class TestSwapChars:
-
     def test_noop(self, aug_toks):
         for num in [0, 0.0]:
             new_aug_toks = transforms.swap_chars(aug_toks, num=num)
@@ -316,10 +276,7 @@ class TestSwapChars:
             new_aug_toks = transforms.swap_chars(aug_toks, num=num)
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) == len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
             assert any(
                 aug_tok.text != new_aug_tok.text
                 for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
@@ -343,7 +300,6 @@ class TestSwapChars:
 
 
 class TestDeleteChars:
-
     def test_noop(self, aug_toks):
         for num in [0, 0.0]:
             new_aug_toks = transforms.delete_chars(aug_toks, num=num)
@@ -355,14 +311,11 @@ class TestDeleteChars:
             new_aug_toks = transforms.delete_chars(aug_toks, num=num)
             assert isinstance(new_aug_toks, list)
             assert len(new_aug_toks) == len(aug_toks)
-            assert all(
-                isinstance(aug_tok, aug_utils.AugTok)
-                for aug_tok in new_aug_toks
-            )
+            assert all(isinstance(aug_tok, AugTok) for aug_tok in new_aug_toks)
             assert all(
                 (
-                    aug_tok.text == new_aug_tok.text or
-                    len(aug_tok.text) > len(new_aug_tok.text)
+                    aug_tok.text == new_aug_tok.text
+                    or len(aug_tok.text) > len(new_aug_tok.text)
                 )
                 for aug_tok, new_aug_tok in zip(aug_toks, new_aug_toks)
             )

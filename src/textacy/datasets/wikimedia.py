@@ -20,14 +20,15 @@ so they're dumped in Elasticsearch bulk insert format -- basically, a compressed
 JSON file with one record per line. For more information, refer to
 https://meta.wikimedia.org/wiki/Data_dumps.
 """
+from __future__ import annotations
+
 import datetime
 import itertools
 import logging
 import os
-import pathlib
 import re
 import urllib.parse
-from typing import Iterable, Optional, Set, Union
+from typing import Iterable, Optional, Set
 
 import requests
 from cytoolz import itertoolz
@@ -121,7 +122,14 @@ class Wikimedia(Dataset):
     """
 
     def __init__(
-        self, name, meta, project, data_dir, lang="en", version="current", namespace=0,
+        self,
+        name,
+        meta,
+        project,
+        data_dir,
+        lang="en",
+        version="current",
+        namespace=0,
     ):
         super().__init__(name, meta=meta)
         self.lang = lang
@@ -163,7 +171,7 @@ class Wikimedia(Dataset):
         """
         file_url = self._get_file_url()
         tio.download_file(
-            file_url, filename=self._filestub, dirpath=self.data_dir, force=force,
+            file_url, filename=self._filestub, dirpath=self.data_dir, force=force
         )
 
     def _get_file_url(self):
@@ -304,8 +312,8 @@ class Wikimedia(Dataset):
     def texts(
         self,
         *,
-        category: Optional[Union[str, Set[str]]] = None,
-        wiki_link: Optional[Union[str, Set[str]]] = None,
+        category: Optional[str | Set[str]] = None,
+        wiki_link: Optional[str | Set[str]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[str]:
@@ -337,8 +345,8 @@ class Wikimedia(Dataset):
     def records(
         self,
         *,
-        category: Optional[Union[str, Set[str]]] = None,
-        wiki_link: Optional[Union[str, Set[str]]] = None,
+        category: Optional[str | Set[str]] = None,
+        wiki_link: Optional[str | Set[str]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[types.Record]:
@@ -422,9 +430,7 @@ class Wikipedia(Wikimedia):
 
     def __init__(
         self,
-        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(
-            "wikipedia"
-        ),
+        data_dir: types.PathLike = constants.DEFAULT_DATA_DIR.joinpath("wikipedia"),
         lang: str = "en",
         version: str = "current",
         namespace: int = 0,
@@ -493,9 +499,7 @@ class Wikinews(Wikimedia):
 
     def __init__(
         self,
-        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(
-            "wikinews"
-        ),
+        data_dir: types.PathLike = constants.DEFAULT_DATA_DIR.joinpath("wikinews"),
         lang: str = "en",
         version: str = "current",
         namespace: int = 0,

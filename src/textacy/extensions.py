@@ -14,12 +14,17 @@ or as custom attributes / methods on instantiated docs prepended by an underscor
 from __future__ import annotations
 
 import operator
-from typing import Any, Collection, Dict, List, Optional
+from typing import Any, Collection, Dict, List, Literal, Optional, Union
 
 import cytoolz
 from spacy.tokens import Doc
 
 from . import errors, extract, types
+
+
+WeightingType = Literal["count", "freq", "binary"]
+SpanGroupByType = Literal["lemma", "lemma_", "lower", "lower_", "orth", "orth_"]
+TokenGroupByType = Union[SpanGroupByType, Literal["norm", "norm_"]]
 
 
 def get_preview(doc: Doc) -> str:
@@ -72,8 +77,8 @@ def to_tokenized_text(doc: Doc) -> List[List[str]]:
 def to_bag_of_words(
     doclike: types.DocLike,
     *,
-    by: str = "lemma_",  # Literal["lemma", "lower", "norm", "orth"]
-    weighting: str = "count",  # Literal["count", "freq", "binary"]
+    by: TokenGroupByType = "lemma_",
+    weighting: WeightingType = "count",
     **kwargs,
 ) -> Dict[int, int | float] | Dict[str, int | float]:
     """
@@ -122,8 +127,8 @@ def to_bag_of_words(
 def to_bag_of_terms(
     doclike: types.DocLike,
     *,
-    by: str = "lemma_",  # Literal["lemma_", "lemma", "lower_", "lower", "orth_", "orth"]
-    weighting: str = "count",  # Literal["count", "freq", "binary"]
+    by: SpanGroupByType = "lemma_",
+    weighting: WeightingType = "count",
     ngs: Optional[int | Collection[int] | types.DocLikeToSpans] = None,
     ents: Optional[bool | types.DocLikeToSpans] = None,
     ncs: Optional[bool | types.DocLikeToSpans] = None,
@@ -190,7 +195,7 @@ def to_bag_of_terms(
 
 
 def _reweight_bag(
-    weighting: str, bag: Dict[Any, int], doclike: types.DocLike
+    weighting: WeightingType, bag: Dict[Any, int], doclike: types.DocLike
 ) -> Dict[Any, int] | Dict[Any, float]:
     if weighting == "count":
         return bag
@@ -201,9 +206,7 @@ def _reweight_bag(
         return {term: 1 for term in bag.keys()}
     else:
         raise ValueError(
-            errors.value_invalid_msg(
-                "weighting", weighting, {"count", "freq", "binary"}
-            )
+            errors.value_invalid_msg("weighting", weighting, {"count", "freq", "binary"})
         )
 
 

@@ -16,15 +16,16 @@ that are useful in a variety of NLP tasks:
     - meronyms: terms that are parts of other terms
     - synonyms: terms that are sufficiently similar that they may be used interchangeably
 """
+from __future__ import annotations
+
 import collections
 import logging
+from typing import ClassVar, Dict, List, Optional, Tuple
 
 from spacy.tokens import Span, Token
 from tqdm import tqdm
 
-from .. import constants
-from .. import io as tio
-from .. import utils
+from .. import constants, io as tio, types, utils
 from .base import Resource
 
 
@@ -90,18 +91,29 @@ class ConceptNet(Resource):
         []
 
     Args:
-        data_dir (str or :class:`pathlib.Path`): Path to directory on disk
-            under which resource data is stored, i.e. ``/path/to/data_dir/concept_net``.
+        data_dir: Path to directory on disk under which resource data is stored,
+            i.e. ``/path/to/data_dir/concept_net``.
         version ({"5.7.0", "5.6.0", "5.5.5"}): Version string of the ConceptNet db
             to use. Since newer versions typically represent improvements over earlier
             versions, you'll probably want "5.7.0" (the default value).
     """
 
-    _version_years = {"5.7.0": 2019, "5.6.0": 2018, "5.5.5": 2017}
-    _pos_map = {"NOUN": "n", "VERB": "v", "ADJ": "a", "ADV": "r"}
+    _version_years: ClassVar[Dict[str, int]] = {
+        "5.7.0": 2019,
+        "5.6.0": 2018,
+        "5.5.5": 2017,
+    }
+    _pos_map: ClassVar[Dict[str, str]] = {
+        "NOUN": "n",
+        "VERB": "v",
+        "ADJ": "a",
+        "ADV": "r",
+    }
 
     def __init__(
-        self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME), version="5.7.0",
+        self,
+        data_dir: types.PathLike = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+        version: str = "5.7.0",
     ):
         super().__init__(NAME, meta=META)
         self.version = version
@@ -113,7 +125,7 @@ class ConceptNet(Resource):
         self._meronyms = None
         self._synonyms = None
 
-    def download(self, *, force=False):
+    def download(self, *, force: bool = False):
         """
         Download resource data as a gzipped csv file,
         then save it to disk under the :attr:`ConceptNet.data_dir` directory.
@@ -126,11 +138,14 @@ class ConceptNet(Resource):
             version=self.version, year=self._version_years[self.version]
         )
         tio.download_file(
-            url, filename=self._filename, dirpath=self.data_dir, force=force,
+            url,
+            filename=self._filename,
+            dirpath=self.data_dir,
+            force=force,
         )
 
     @property
-    def filepath(self):
+    def filepath(self) -> Optional[str]:
         """
         str: Full path on disk for the ConceptNet gzipped csv file
         corresponding to the given :attr:`ConceptNet.data_dir`.
@@ -140,7 +155,9 @@ class ConceptNet(Resource):
         else:
             return None
 
-    def _get_relation_data(self, relation, is_symmetric=False):
+    def _get_relation_data(
+        self, relation: str, is_symmetric: bool = False
+    ) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
         if not self.filepath:
             raise OSError(
                 "resource file {} not found;\n"
@@ -186,16 +203,13 @@ class ConceptNet(Resource):
             tio.write_json(rel_data, rel_fpath, mode="wt", encoding="utf-8")
             return rel_data
 
-    def _get_relation_values(self, rel_data, term, lang=None, sense=None):
-        """
-        Args:
-            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
-            lang (str)
-            sense (str)
-
-        Returns:
-            List[str]
-        """
+    def _get_relation_values(
+        self,
+        rel_data,
+        term: str | types.SpanLike,
+        lang: Optional[str] = None,
+        sense: Optional[str] = None,
+    ) -> List[str]:
         if lang is not None and lang not in rel_data:
             raise ValueError(
                 "lang='{}' is invalid; valid langs are {}".format(
@@ -248,13 +262,12 @@ class ConceptNet(Resource):
         return []
 
     @property
-    def antonyms(self):
+    def antonyms(self) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
         """
-        Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to
-        sense to set of term's antonyms -- opposites of the term in some relevant way,
-        like being at opposite ends of a scale or fundamentally similar but with
-        a key difference between them -- such as black <=> white or hot <=> cold. Note
-        that this relationship is symmetric.
+        Mapping of language code to term to sense to set of term's antonyms --
+        opposites of the term in some relevant way, like being at opposite ends
+        of a scale or fundamentally similar but with a key difference between them --
+        such as black <=> white or hot <=> cold. Note that this relationship is symmetric.
 
         Based on the "/r/Antonym" relation in ConceptNet.
         """
@@ -262,25 +275,28 @@ class ConceptNet(Resource):
             self._antonyms = self._get_relation_data("/r/Antonym", is_symmetric=True)
         return self._antonyms
 
-    def get_antonyms(self, term, *, lang=None, sense=None):
+    def get_antonyms(
+        self,
+        term: str | types.SpanLike,
+        *,
+        lang: Optional[str] = None,
+        sense: Optional[str] = None,
+    ) -> List[str]:
         """
         Args:
-            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
-            lang (str): Standard code for the language of ``term``.
-            sense (str): Sense in which ``term`` is used in context, which in practice
+            term
+            lang: Standard code for the language of ``term``.
+            sense: Sense in which ``term`` is used in context, which in practice
                 is just its part of speech. Valid values: "n" or "NOUN", "v" or "VERB",
                 "a" or "ADJ", "r" or "ADV".
-
-        Returns:
-            List[str]
         """
         return self._get_relation_values(self.antonyms, term, lang=lang, sense=sense)
 
     @property
-    def hyponyms(self):
+    def hyponyms(self) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
         """
-        Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to
-        sense to set of term's hyponyms -- subtypes or specific instances of the term --
+        Mapping of language code to term to sense to set of term's hyponyms --
+        subtypes or specific instances of the term --
         such as car => vehicle or Chicago => city. Every A is a B.
 
         Based on the "/r/IsA" relation in ConceptNet.
@@ -289,25 +305,28 @@ class ConceptNet(Resource):
             self._hyponyms = self._get_relation_data("/r/IsA", is_symmetric=False)
         return self._hyponyms
 
-    def get_hyponyms(self, term, *, lang=None, sense=None):
+    def get_hyponyms(
+        self,
+        term: str | types.SpanLike,
+        *,
+        lang: Optional[str] = None,
+        sense: Optional[str] = None,
+    ) -> List[str]:
         """
         Args:
-            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
-            lang (str): Standard code for the language of ``term``.
-            sense (str): Sense in which ``term`` is used in context, which in practice
+            term
+            lang: Standard code for the language of ``term``.
+            sense: Sense in which ``term`` is used in context, which in practice
                 is just its part of speech. Valid values: "n" or "NOUN", "v" or "VERB",
                 "a" or "ADJ", "r" or "ADV".
-
-        Returns:
-            List[str]
         """
         return self._get_relation_values(self.hyponyms, term, lang=lang, sense=sense)
 
     @property
-    def meronyms(self):
+    def meronyms(self) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
         """
-        Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to
-        sense to set of term's meronyms -- parts of the term -- such as gearshift => car.
+        Mapping of language code to term to sense to set of term's meronyms --
+        parts of the term -- such as gearshift => car.
 
         Based on the "/r/PartOf" relation in ConceptNet.
         """
@@ -315,12 +334,18 @@ class ConceptNet(Resource):
             self._meronyms = self._get_relation_data("/r/PartOf", is_symmetric=False)
         return self._meronyms
 
-    def get_meronyms(self, term, *, lang=None, sense=None):
+    def get_meronyms(
+        self,
+        term: str | types.SpanLike,
+        *,
+        lang: Optional[str] = None,
+        sense: Optional[str] = None,
+    ) -> List[str]:
         """
         Args:
-            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
-            lang (str): Standard code for the language of ``term``.
-            sense (str): Sense in which ``term`` is used in context, which in practice
+            term
+            lang: Standard code for the language of ``term``.
+            sense: Sense in which ``term`` is used in context, which in practice
                 is just its part of speech. Valid values: "n" or "NOUN", "v" or "VERB",
                 "a" or "ADJ", "r" or "ADV".
 
@@ -330,12 +355,11 @@ class ConceptNet(Resource):
         return self._get_relation_values(self.meronyms, term, lang=lang, sense=sense)
 
     @property
-    def synonyms(self):
+    def synonyms(self) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
         """
-        Dict[str, Dict[str, Dict[str, List[str]]]]: Mapping of language code to term to
-        sense to set of term's synonyms -- sufficiently similar concepts that they may
-        be used interchangeably -- such as sunlight <=> sunshine. Note that
-        this relationship is symmetric.
+        Mapping of language code to term to sense to set of term's synonyms --
+        sufficiently similar concepts that they may be used interchangeably --
+        such as sunlight <=> sunshine. Note that this relationship is symmetric.
 
         Based on the "/r/Synonym" relation in ConceptNet.
         """
@@ -343,49 +367,36 @@ class ConceptNet(Resource):
             self._synonyms = self._get_relation_data("/r/Synonym", is_symmetric=True)
         return self._synonyms
 
-    def get_synonyms(self, term, *, lang=None, sense=None):
+    def get_synonyms(
+        self,
+        term: str | types.SpanLike,
+        *,
+        lang: Optional[str] = None,
+        sense: Optional[str] = None,
+    ) -> List[str]:
         """
         Args:
-            term (str or :class:`spacy.tokens.Token` or :class:`spacy.tokens.Span`)
-            lang (str): Standard code for the language of ``term``.
-            sense (str): Sense in which ``term`` is used in context, which in practice
+            term
+            lang: Standard code for the language of ``term``.
+            sense: Sense in which ``term`` is used in context, which in practice
                 is just its part of speech. Valid values: "n" or "NOUN", "v" or "VERB",
                 "a" or "ADJ", "r" or "ADV".
-
-        Returns:
-            List[str]
         """
         return self._get_relation_values(self.synonyms, term, lang=lang, sense=sense)
 
 
-def _split_uri(uri):
-    """
-    Get slash-delimited parts of a ConceptNet URI.
-
-    Args:
-        uri (str)
-
-    Returns:
-        List[str]
-    """
+def _split_uri(uri: str) -> List[str]:
+    """Get slash-delimited parts of a ConceptNet URI."""
     uri = uri.lstrip("/")
     if not uri:
         return []
     return uri.split("/")
 
 
-def _parse_concept_uri(uri):
-    """
-    Extract language, term, and sense from a ConceptNet "concept" URI.
-
-    Args:
-        uri (str)
-
-    Returns:
-        Tuple[str, str, str]: Language, term, sense.
-    """
+def _parse_concept_uri(uri: str) -> Tuple[str, str, str]:
+    """Extract language, term, and sense from a ConceptNet "concept" URI."""
     if not uri.startswith("/c/"):
-        raise ValueError("invalid concept uri: {}".format(uri))
+        raise ValueError(f"invalid concept uri: {uri}")
     uri = _split_uri(uri)
     if len(uri) == 3:
         _, lang, term = uri
@@ -395,6 +406,6 @@ def _parse_concept_uri(uri):
     elif len(uri) > 4:
         _, lang, term, sense, *_ = uri
     elif len(uri) < 3:
-        raise ValueError("not enough parts in uri: {}".format(uri))
+        raise ValueError(f"not enough parts in uri: {uri}")
     term = term.replace("_", " ")
     return lang, term, sense

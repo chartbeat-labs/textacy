@@ -19,14 +19,15 @@ stored in his GitHub repo to avoid unnecessary scraping of the OTA site. It is
 downloaded from that repo, and excluding some light cleaning of its metadata,
 is reproduced exactly here.
 """
+from __future__ import annotations
+
 import csv
 import io
 import itertools
 import logging
-import pathlib
 import os
 import re
-from typing import Iterable, Optional, Set, Tuple, Union
+from typing import Any, ClassVar, Dict, Iterable, Optional, Set, Tuple
 
 from .. import constants, types, utils
 from .. import io as tio
@@ -94,17 +95,17 @@ class OxfordTextArchive(Dataset):
             dataset, e.g. "Shakespeare, William".
     """
 
-    full_date_range: Tuple[str, str] = ("0018-01-01", "1990-01-01")
+    full_date_range: ClassVar[Tuple[str, str]] = ("0018-01-01", "1990-01-01")
 
     def __init__(
         self,
-        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+        data_dir: types.PathLike = constants.DEFAULT_DATA_DIR.joinpath(NAME),
     ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
         self._text_dirpath = self.data_dir.joinpath("master", "text")
         self._metadata_filepath = self.data_dir.joinpath("master", "metadata.tsv")
-        self._metadata = None
+        self._metadata: Optional[Dict[str, Dict[str, Any]]] = None
 
     def download(self, *, force: bool = False) -> None:
         """
@@ -116,14 +117,13 @@ class OxfordTextArchive(Dataset):
                 on disk under ``data_dir``.
         """
         filepath = tio.download_file(
-            DOWNLOAD_URL, filename=None, dirpath=self.data_dir, force=force,
+            DOWNLOAD_URL, filename=None, dirpath=self.data_dir, force=force
         )
         if filepath:
             tio.unpack_archive(filepath, extract_dir=None)
 
     @property
-    def metadata(self):
-        """Dict[str, dict]"""
+    def metadata(self) -> Optional[Dict[str, Dict[str, Any]]]:
         if not self._metadata:
             try:
                 self._metadata = self._load_and_parse_metadata()
@@ -131,7 +131,7 @@ class OxfordTextArchive(Dataset):
                 LOGGER.error(e)
         return self._metadata
 
-    def _load_and_parse_metadata(self):
+    def _load_and_parse_metadata(self) -> Dict[str, Dict[str, Any]]:
         """
         Read in ``metadata.tsv`` file from :attr:`OxfordTextArchive._metadata_filepath``
         zip archive; convert into a dictionary keyed by record ID; clean up some
@@ -239,7 +239,7 @@ class OxfordTextArchive(Dataset):
     def texts(
         self,
         *,
-        author: Optional[Union[str, Set[str]]] = None,
+        author: Optional[str | Set[str]] = None,
         date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
@@ -270,7 +270,7 @@ class OxfordTextArchive(Dataset):
     def records(
         self,
         *,
-        author: Optional[Union[str, Set[str]]] = None,
+        author: Optional[str | Set[str]] = None,
         date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,

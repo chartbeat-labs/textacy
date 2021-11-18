@@ -5,16 +5,16 @@ from typing import List, Optional, Set
 
 from cytoolz import itertoolz
 
-from .. import errors, utils
+from .. import errors, types, utils
 from . import utils as aug_utils
 
 
 def substitute_word_synonyms(
-    aug_toks: List[aug_utils.AugTok],
+    aug_toks: List[types.AugTok],
     *,
     num: int | float = 1,
     pos: Optional[str | Set[str]] = None,
-) -> List[aug_utils.AugTok]:
+) -> List[types.AugTok]:
     """
     Randomly substitute words for which synonyms are available
     with a randomly selected synonym,
@@ -50,7 +50,7 @@ def substitute_word_synonyms(
     for idx, aug_tok in enumerate(aug_toks):
         if idx in rand_idxs:
             new_aug_toks.append(
-                aug_utils.AugTok(
+                types.AugTok(
                     text=random.choice(aug_tok.syns),
                     ws=aug_tok.ws,
                     pos=aug_tok.pos,
@@ -64,11 +64,11 @@ def substitute_word_synonyms(
 
 
 def insert_word_synonyms(
-    aug_toks: List[aug_utils.AugTok],
+    aug_toks: List[types.AugTok],
     *,
     num: int | float = 1,
     pos: Optional[str | Set[str]] = None,
-) -> List[aug_utils.AugTok]:
+) -> List[types.AugTok]:
     """
     Randomly insert random synonyms of tokens for which synonyms are available,
     up to ``num`` times or with a probability of ``num``.
@@ -106,7 +106,7 @@ def insert_word_synonyms(
         return aug_toks[:]
 
     rand_aug_toks = iter(rand_aug_toks)
-    new_aug_toks: List[aug_utils.AugTok] = []
+    new_aug_toks: List[types.AugTok] = []
     # NOTE: https://github.com/python/mypy/issues/5492
     padded_pairs = itertoolz.sliding_window(2, [None] + aug_toks)  # type: ignore
     for idx, (prev_tok, curr_tok) in enumerate(padded_pairs):
@@ -117,7 +117,7 @@ def insert_word_synonyms(
                 new_tok_ws = prev_tok.ws
                 if prev_tok.is_word and not prev_tok.ws:
                     # previous token should have whitespace, if a word
-                    new_aug_toks[-1] = aug_utils.AugTok(
+                    new_aug_toks[-1] = types.AugTok(
                         text=prev_tok.text,
                         ws=" ",
                         pos=prev_tok.pos,
@@ -127,7 +127,7 @@ def insert_word_synonyms(
             else:
                 new_tok_ws = " "
             new_aug_toks.append(
-                aug_utils.AugTok(
+                types.AugTok(
                     text=random.choice(rand_aug_tok.syns),
                     ws=new_tok_ws,
                     pos=rand_aug_tok.pos,
@@ -140,11 +140,11 @@ def insert_word_synonyms(
 
 
 def swap_words(
-    aug_toks: List[aug_utils.AugTok],
+    aug_toks: List[types.AugTok],
     *,
     num: int | float = 1,
     pos: Optional[str | Set[str]] = None,
-) -> List[aug_utils.AugTok]:
+) -> List[types.AugTok]:
     """
     Randomly swap the positions of two *adjacent* words,
     up to ``num`` times or with a probability of ``num``.
@@ -191,14 +191,14 @@ def swap_words(
     for idx1, idx2 in rand_idx_pairs:
         tok1 = new_aug_toks[idx1]
         tok2 = new_aug_toks[idx2]
-        new_aug_toks[idx1] = aug_utils.AugTok(
+        new_aug_toks[idx1] = types.AugTok(
             text=tok2.text,
             ws=tok1.ws,
             pos=tok2.pos,
             is_word=tok2.is_word,
             syns=tok2.syns,
         )
-        new_aug_toks[idx2] = aug_utils.AugTok(
+        new_aug_toks[idx2] = types.AugTok(
             text=tok1.text,
             ws=tok2.ws,
             pos=tok1.pos,
@@ -209,11 +209,11 @@ def swap_words(
 
 
 def delete_words(
-    aug_toks: List[aug_utils.AugTok],
+    aug_toks: List[types.AugTok],
     *,
     num: int | float = 1,
     pos: Optional[str | Set[str]] = None,
-) -> List[aug_utils.AugTok]:
+) -> List[types.AugTok]:
     """
     Randomly delete words,
     up to ``num`` times or with a probability of ``num``.
@@ -243,17 +243,17 @@ def delete_words(
     if not rand_idxs:
         return aug_toks[:]
 
-    new_aug_toks: List[aug_utils.AugTok] = []
+    new_aug_toks: List[types.AugTok] = []
     # NOTE: https://github.com/python/mypy/issues/5492
     padded_triplets = itertoolz.sliding_window(
-        3, [None] + aug_toks + [None],  # type: ignore
+        3, [None] + aug_toks + [None]  # type: ignore
     )
     for idx, (prev_tok, curr_tok, next_tok) in enumerate(padded_triplets):
         if idx in rand_idxs:
             # special case: word then [deleted word] then punctuation
             # give deleted word's whitespace to previous word
             if prev_tok and next_tok and prev_tok.is_word and not next_tok.is_word:
-                new_aug_toks[-1] = aug_utils.AugTok(
+                new_aug_toks[-1] = types.AugTok(
                     text=prev_tok.text,
                     ws=curr_tok.ws,
                     pos=prev_tok.pos,
@@ -266,11 +266,11 @@ def delete_words(
 
 
 def substitute_chars(
-    aug_toks: List[aug_utils.AugTok],
+    aug_toks: List[types.AugTok],
     *,
     num: int | float = 1,
     lang: Optional[str] = None,
-) -> List[aug_utils.AugTok]:
+) -> List[types.AugTok]:
     """
     Randomly substitute a single character in randomly-selected words with another,
     up to ``num`` times or with a probability of ``num``.
@@ -318,7 +318,7 @@ def substitute_chars(
             rand_char_idx = random.choice(range(len(text_list)))
             text_list[rand_char_idx] = next(rand_chars)
             new_aug_toks.append(
-                aug_utils.AugTok(
+                types.AugTok(
                     text="".join(text_list),
                     ws=aug_tok.ws,
                     pos=aug_tok.pos,
@@ -332,11 +332,11 @@ def substitute_chars(
 
 
 def insert_chars(
-    aug_toks: List[aug_utils.AugTok],
+    aug_toks: List[types.AugTok],
     *,
     num: int | float = 1,
     lang: Optional[str] = None,
-) -> List[aug_utils.AugTok]:
+) -> List[types.AugTok]:
     """
     Randomly insert a character into randomly-selected words,
     up to ``num`` times or with a probability of ``num``.
@@ -384,7 +384,7 @@ def insert_chars(
             rand_char_idx = random.choice(range(len(text_list)))
             text_list.insert(rand_char_idx, next(rand_chars))
             new_aug_toks.append(
-                aug_utils.AugTok(
+                types.AugTok(
                     text="".join(text_list),
                     ws=aug_tok.ws,
                     pos=aug_tok.pos,
@@ -398,8 +398,8 @@ def insert_chars(
 
 
 def swap_chars(
-    aug_toks: List[aug_utils.AugTok], *, num: int | float = 1,
-) -> List[aug_utils.AugTok]:
+    aug_toks: List[types.AugTok], *, num: int | float = 1
+) -> List[types.AugTok]:
     """
     Randomly swap two *adjacent* characters in randomly-selected words,
     up to ``num`` times or with a probability of ``num``.
@@ -429,7 +429,7 @@ def swap_chars(
             idx = random.choice(range(1, len(text_list)))
             text_list[idx - 1], text_list[idx] = text_list[idx], text_list[idx - 1]
             new_aug_toks.append(
-                aug_utils.AugTok(
+                types.AugTok(
                     text="".join(text_list),
                     ws=aug_tok.ws,
                     pos=aug_tok.pos,
@@ -443,8 +443,8 @@ def swap_chars(
 
 
 def delete_chars(
-    aug_toks: List[aug_utils.AugTok], *, num: int | float = 1,
-) -> List[aug_utils.AugTok]:
+    aug_toks: List[types.AugTok], *, num: int | float = 1
+) -> List[types.AugTok]:
     """
     Randomly delete a character in randomly-selected words,
     up to ``num`` times or with a probability of ``num``.
@@ -477,7 +477,7 @@ def delete_chars(
                 if char_idx != rand_char_idx
             )
             new_aug_toks.append(
-                aug_utils.AugTok(
+                types.AugTok(
                     text=text,
                     ws=aug_tok.ws,
                     pos=aug_tok.pos,
@@ -491,9 +491,9 @@ def delete_chars(
 
 
 def _validate_aug_toks(aug_toks):
-    if not (isinstance(aug_toks, list) and isinstance(aug_toks[0], aug_utils.AugTok)):
+    if not (isinstance(aug_toks, list) and isinstance(aug_toks[0], types.AugTok)):
         raise TypeError(
-            errors.type_invalid_msg("aug_toks", type(aug_toks), List[aug_utils.AugTok])
+            errors.type_invalid_msg("aug_toks", type(aug_toks), List[types.AugTok])
         )
 
 

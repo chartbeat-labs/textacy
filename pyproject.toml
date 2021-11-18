@@ -12,8 +12,13 @@ exclude = '''
 '''
 
 [tool.mypy]
+files = [
+  "src/**/*.py",
+  "tests/**/*.py",
+]
 python_version = "3.8"
 ignore_missing_imports = true
+follow_imports = "silent"
 
 [tool.pytest.ini_options]
 minversion = "6.0"

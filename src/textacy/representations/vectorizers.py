@@ -15,7 +15,7 @@ examples and explanations of the various weighting schemes.
 """
 from __future__ import annotations
 
-from typing import DefaultDict, Dict, Optional, Tuple, Union
+from typing import DefaultDict, Dict, Literal, Optional, Tuple, Union
 
 import collections
 import operator
@@ -252,10 +252,10 @@ class Vectorizer:
     def __init__(
         self,
         *,
-        tf_type: str = "linear",  # Literal["linear", "sqrt", "log", "binary"]
-        idf_type: Optional[str] = None,  # Optional[Literal["standard", "smooth", "bm25"]]
-        dl_type: Optional[str] = None,  # Optional[Literal["linear", "sqrt", "log"]]
-        norm: Optional[str] = None,  # Optional[Literal["l1", "l2"]]
+        tf_type: Literal["linear", "sqrt", "log", "binary"] = "linear",
+        idf_type: Optional[Literal["standard", "smooth", "bm25"]] = None,
+        dl_type: Optional[Literal["linear", "sqrt", "log"]] = None,
+        norm: Optional[Literal["l1", "l2"]] = None,
         min_df: int | float = 1,
         max_df: int | float = 1.0,
         max_n_terms: Optional[int] = None,
@@ -280,19 +280,14 @@ class Vectorizer:
         self._idf_diag = None
         self._avg_doc_length = None
 
-    def _validate_vocabulary(self, vocabulary):
+    def _validate_vocabulary(
+        self, vocabulary: Dict[str, int] | Iterable[str]
+    ) -> Tuple[Dict[str, int], bool]:
         """
         Validate an input vocabulary. If it's a mapping, ensure that term ids
         are unique and compact (i.e. without any gaps between 0 and the number
         of terms in ``vocabulary``. If it's a sequence, sort terms then assign
         integer ids in ascending order.
-
-        Args:
-            vocabulary_terms (Dict[str, int] or Iterable[str])
-
-        Returns:
-            Dict[str, int]
-            bool
         """
         if vocabulary is not None:
             if not isinstance(vocabulary, collections.abc.Mapping):
@@ -586,7 +581,10 @@ class Vectorizer:
         return doc_term_matrix, vocabulary
 
     def _sort_vocab_and_matrix(
-        self, matrix: sp.csr_matrix, vocabulary: Dict[str, int], axis: str | int
+        self,
+        matrix: sp.csr_matrix,
+        vocabulary: Dict[str, int],
+        axis: Literal["rows", 0] | Literal["columns", 1],
     ) -> sp.csr_matrix:
         """
         Sort terms in ``vocabulary`` alphabetically, modifying the vocabulary
@@ -596,7 +594,7 @@ class Vectorizer:
         Args:
             matrix
             vocabulary
-            axis: "rows" or 0, "columns" or 1
+            axis
         """
         sorted_vocab = sorted(vocabulary.items())
         new_idx_array = np.empty(len(sorted_vocab), dtype=np.int32)
@@ -860,10 +858,10 @@ class GroupVectorizer(Vectorizer):
     def __init__(
         self,
         *,
-        tf_type: str = "linear",  # Literal["linear", "sqrt", "log", "binary"]
-        idf_type: Optional[str] = None,  # Optional[Literal["standard", "smooth", "bm25"]]
-        dl_type: Optional[str] = None,  # Optional[Literal["linear", "sqrt", "log"]]
-        norm: Optional[str] = None,  # Optional[Literal["l1", "l2"]]
+        tf_type: Literal["linear", "sqrt", "log", "binary"] = "linear",
+        idf_type: Optional[Literal["standard", "smooth", "bm25"]] = None,
+        dl_type: Optional[Literal["linear", "sqrt", "log"]] = None,
+        norm: Optional[Literal["l1", "l2"]] = None,
         min_df: int | float = 1,
         max_df: int | float = 1.0,
         max_n_terms: Optional[int] = None,

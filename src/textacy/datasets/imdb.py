@@ -21,12 +21,14 @@ Reference: Andrew L. Maas, Raymond E. Daly, Peter T. Pham, Dan Huang, Andrew Y. 
 and Christopher Potts. (2011). Learning Word Vectors for Sentiment Analysis.
 The 49th Annual Meeting of the Association for Computational Linguistics (ACL 2011).
 """
+from __future__ import annotations
+
 import io
 import itertools
 import logging
 import os
 import re
-from typing import Any, Dict, Iterable, Optional, Tuple
+from typing import Any, ClassVar, Dict, Iterable, Optional, Tuple
 
 from .. import constants, types, utils
 from .. import io as tio
@@ -92,10 +94,11 @@ class IMDB(Dataset):
         full_rating_range: Lowest and highest ratings for which movie reviews are available.
     """
 
-    full_rating_range: Tuple[int, int] = (1, 10)
+    full_rating_range: ClassVar[Tuple[int, int]] = (1, 10)
 
     def __init__(
-        self, data_dir=constants.DEFAULT_DATA_DIR.joinpath(NAME),
+        self,
+        data_dir: types.PathLike = constants.DEFAULT_DATA_DIR.joinpath(NAME),
     ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
@@ -117,7 +120,7 @@ class IMDB(Dataset):
                 on disk under ``data_dir``.
         """
         filepath = tio.download_file(
-            DOWNLOAD_URL, filename="aclImdb.tar.gz", dirpath=self.data_dir, force=force,
+            DOWNLOAD_URL, filename="aclImdb.tar.gz", dirpath=self.data_dir, force=force
         )
         if filepath:
             tio.unpack_archive(filepath, extract_dir=None)

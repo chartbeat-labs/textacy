@@ -1,15 +1,12 @@
 from __future__ import annotations
 
 import random
-from typing import Callable, List, Optional, Sequence, Tuple
+from typing import List, Optional, Sequence, Tuple
 
 from spacy.tokens import Doc
 
 from .. import spacier, types, utils
 from . import utils as aug_utils
-
-
-AugTransform = Callable[[List[aug_utils.AugTok]], List[aug_utils.AugTok]]
 
 
 class Augmenter:
@@ -72,7 +69,7 @@ class Augmenter:
 
     def __init__(
         self,
-        transforms: Sequence[AugTransform],
+        transforms: Sequence[types.AugTransform],
         *,
         num: Optional[int | float | Sequence[float]] = None,
     ):
@@ -114,8 +111,8 @@ class Augmenter:
         return self._make_new_spacy_doc(new_nested_aug_toks, lang)
 
     def _validate_transforms(
-        self, transforms: Sequence[AugTransform]
-    ) -> Tuple[AugTransform]:
+        self, transforms: Sequence[types.AugTransform]
+    ) -> Tuple[types.AugTransform, ...]:
         transforms = tuple(transforms)
         if not transforms:
             raise ValueError("at least one transform callable must be specified")
@@ -126,7 +123,7 @@ class Augmenter:
 
     def _validate_num(
         self, num: Optional[int | float | Sequence[float]]
-    ) -> int | float | Tuple[float]:
+    ) -> int | float | Tuple[float, ...]:
         if num is None:
             return len(self.tfs)
         elif isinstance(num, int) and 0 <= num <= len(self.tfs):
@@ -145,7 +142,7 @@ class Augmenter:
                 "or a list of floats of length equal to given transforms"
             )
 
-    def _get_random_transforms(self) -> List[AugTransform]:
+    def _get_random_transforms(self) -> List[types.AugTransform]:
         num = self.num
         if isinstance(num, int):
             rand_idxs = random.sample(range(len(self.tfs)), min(num, len(self.tfs)))
@@ -154,7 +151,7 @@ class Augmenter:
             rand_tfs = [tf for tf in self.tfs if random.random() < num]
         else:
             rand_tfs = [
-                tf for tf, tf_num in zip(self.tfs, self.num) if random.random() < tf_num
+                tf for tf, tf_num in zip(self.tfs, num) if random.random() < tf_num
             ]
         return rand_tfs
 

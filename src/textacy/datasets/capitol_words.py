@@ -23,11 +23,12 @@ Records include the following data:
 This dataset was derived from data provided by the (now defunct) Sunlight
 Foundation's `Capitol Words API <http://sunlightlabs.github.io/Capitol-Words/>`_.
 """
+from __future__ import annotations
+
 import itertools
 import logging
-import pathlib
 import urllib.parse
-from typing import Iterable, Optional, Set, Tuple, Union
+from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Set, Tuple
 
 from .. import constants, types, utils
 from .. import io as tio
@@ -100,8 +101,8 @@ class CapitolWords(Dataset):
         congresses: All distinct numbers of the congresses in which speeches were given, e.g. 114.
     """
 
-    full_date_range: Tuple[str, str] = ("1996-01-01", "2016-06-30")
-    speaker_names: Set[str] = {
+    full_date_range: ClassVar[Tuple[str, str]] = ("1996-01-01", "2016-06-30")
+    speaker_names: ClassVar[Set[str]] = {
         "Barack Obama",
         "Bernie Sanders",
         "Hillary Clinton",
@@ -117,13 +118,25 @@ class CapitolWords(Dataset):
         "Rick Santorum",
         "Ted Cruz",
     }
-    speaker_parties: Set[str] = {"D", "I", "R"}
-    chambers: Set[str] = {"Extensions", "House", "Senate"}
-    congresses: Set[int] = {104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114}
+    speaker_parties: ClassVar[Set[str]] = {"D", "I", "R"}
+    chambers: ClassVar[Set[str]] = {"Extensions", "House", "Senate"}
+    congresses: ClassVar[Set[int]] = {
+        104,
+        105,
+        106,
+        107,
+        108,
+        109,
+        110,
+        111,
+        112,
+        113,
+        114,
+    }
 
     def __init__(
         self,
-        data_dir: Union[str, pathlib.Path] = constants.DEFAULT_DATA_DIR.joinpath(NAME),
+        data_dir: types.PathLike = constants.DEFAULT_DATA_DIR.joinpath(NAME),
     ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
@@ -154,7 +167,7 @@ class CapitolWords(Dataset):
         release_tag = f"capitol_words_py3_v{data_version}"
         url = urllib.parse.urljoin(DOWNLOAD_ROOT, release_tag + "/" + self._filename)
         tio.download_file(
-            url, filename=self._filename, dirpath=self.data_dir, force=force,
+            url, filename=self._filename, dirpath=self.data_dir, force=force
         )
 
     def __iter__(self):
@@ -168,13 +181,13 @@ class CapitolWords(Dataset):
 
     def _get_filters(
         self,
-        speaker_name: Optional[Union[str, Set[str]]] = None,
-        speaker_party: Optional[Union[str, Set[str]]] = None,
-        chamber: Optional[Union[str, Set[str]]] = None,
-        congress: Optional[Union[int, Set[int]]] = None,
+        speaker_name: Optional[str | Set[str]] = None,
+        speaker_party: Optional[str | Set[str]] = None,
+        chamber: Optional[str | Set[str]] = None,
+        congress: Optional[int | Set[int]] = None,
         date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
-    ):
+    ) -> List[Callable[[Dict[str, Any]], bool]]:
         filters = []
         if min_len is not None:
             if min_len < 1:
@@ -224,10 +237,10 @@ class CapitolWords(Dataset):
     def texts(
         self,
         *,
-        speaker_name: Optional[Union[str, Set[str]]] = None,
-        speaker_party: Optional[Union[str, Set[str]]] = None,
-        chamber: Optional[Union[str, Set[str]]] = None,
-        congress: Optional[Union[int, Set[int]]] = None,
+        speaker_name: Optional[str | Set[str]] = None,
+        speaker_party: Optional[str | Set[str]] = None,
+        chamber: Optional[str | Set[str]] = None,
+        congress: Optional[int | Set[int]] = None,
         date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
@@ -268,10 +281,10 @@ class CapitolWords(Dataset):
     def records(
         self,
         *,
-        speaker_name: Optional[Union[str, Set[str]]] = None,
-        speaker_party: Optional[Union[str, Set[str]]] = None,
-        chamber: Optional[Union[str, Set[str]]] = None,
-        congress: Optional[Union[int, Set[int]]] = None,
+        speaker_name: Optional[str | Set[str]] = None,
+        speaker_party: Optional[str | Set[str]] = None,
+        chamber: Optional[str | Set[str]] = None,
+        congress: Optional[int | Set[int]] = None,
         date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,

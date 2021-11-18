@@ -5,6 +5,8 @@ Basic Stats
 :mod:`textacy.text_stats.basics`: Low-level functions for computing basic text statistics,
 typically accessed via :class:`textacy.text_stats.TextStats`.
 """
+from __future__ import annotations
+
 import logging
 import math
 from typing import Iterable, Tuple, Union
@@ -22,7 +24,7 @@ LOGGER = logging.getLogger(__name__)
 _SENTENCIZER = spacy.pipeline.Sentencizer()
 
 
-def n_words(doc_or_words: Union[Doc, Iterable[Token]]) -> int:
+def n_words(doc_or_words: Doc | Iterable[Token]) -> int:
     """
     Compute the number of words in a document.
 
@@ -34,7 +36,7 @@ def n_words(doc_or_words: Union[Doc, Iterable[Token]]) -> int:
     return itertoolz.count(words)
 
 
-def n_unique_words(doc_or_words: Union[Doc, Iterable[Token]]) -> int:
+def n_unique_words(doc_or_words: Doc | Iterable[Token]) -> int:
     """
     Compute the number of *unique* words in a document.
 
@@ -49,7 +51,7 @@ def n_unique_words(doc_or_words: Union[Doc, Iterable[Token]]) -> int:
     return itertoolz.count(itertoolz.unique(word.lower for word in words))
 
 
-def n_chars_per_word(doc_or_words: Union[Doc, Iterable[Token]]) -> Tuple[int, ...]:
+def n_chars_per_word(doc_or_words: Doc | Iterable[Token]) -> Tuple[int, ...]:
     """
     Compute the number of characters for each word in a document.
 
@@ -86,7 +88,8 @@ def n_long_words(n_chars_per_word: Tuple[int, ...], min_n_chars: int = 7) -> int
 
 
 def n_syllables_per_word(
-    doc_or_words: Union[Doc, Iterable[Token]], lang: str,
+    doc_or_words: Doc | Iterable[Token],
+    lang: str,
 ) -> Tuple[int, ...]:
     """
     Compute the number of syllables for each word in a document.
@@ -129,7 +132,8 @@ def n_monosyllable_words(n_syllables_per_word: Tuple[int, ...]) -> int:
 
 
 def n_polysyllable_words(
-    n_syllables_per_word: Tuple[int, ...], min_n_syllables: int = 3,
+    n_syllables_per_word: Tuple[int, ...],
+    min_n_syllables: int = 3,
 ) -> int:
     """
     Compute the number of polysyllobic words in a document.
@@ -143,10 +147,13 @@ def n_polysyllable_words(
     return itertoolz.count(ns for ns in n_syllables_per_word if ns >= min_n_syllables)
 
 
-def _get_words(doc_or_words: Union[Doc, Iterable[Token]]) -> Iterable[Token]:
+def _get_words(doc_or_words: Doc | Iterable[Token]) -> Iterable[Token]:
     if isinstance(doc_or_words, Doc):
         return extract.words(
-            doc_or_words, filter_punct=True, filter_stops=False, filter_nums=False,
+            doc_or_words,
+            filter_punct=True,
+            filter_stops=False,
+            filter_nums=False,
         )
     else:
         return doc_or_words
@@ -169,7 +176,7 @@ def n_sents(doc: Doc) -> int:
     return itertoolz.count(doc.sents)
 
 
-def entropy(doc_or_words: Union[Doc, Iterable[Token]]) -> float:
+def entropy(doc_or_words: Doc | Iterable[Token]) -> float:
     """
     Compute the entropy of words in a document.
 

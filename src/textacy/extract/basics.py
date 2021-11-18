@@ -127,13 +127,9 @@ def ngrams(
         raise ValueError("n must be greater than or equal to 1")
 
     if include_pos:
-        include_pos = {
-            pos.upper() for pos in utils.to_collection(include_pos, str, set)
-        }
+        include_pos = {pos.upper() for pos in utils.to_collection(include_pos, str, set)}
     if exclude_pos:
-        exclude_pos = {
-            pos.upper() for pos in utils.to_collection(exclude_pos, str, set)
-        }
+        exclude_pos = {pos.upper() for pos in utils.to_collection(exclude_pos, str, set)}
     for n_ in ns:
         ngrams_ = (doclike[i : i + n_] for i in range(len(doclike) - n_ + 1))
         ngrams_ = (ng for ng in ngrams_ if not any(w.is_space for w in ng))
@@ -146,7 +142,9 @@ def ngrams(
         if include_pos:
             ngrams_ = (ng for ng in ngrams_ if all(w.pos_ in include_pos for w in ng))
         if exclude_pos:
-            ngrams_ = (ng for ng in ngrams_ if not any(w.pos_ in exclude_pos for w in ng))
+            ngrams_ = (
+                ng for ng in ngrams_ if not any(w.pos_ in exclude_pos for w in ng)
+            )
         if min_freq > 1:
             ngrams_ = list(ngrams_)
             freqs = itertoolz.frequencies(ng.text.lower() for ng in ngrams_)
@@ -233,7 +231,7 @@ def entities(
 
 
 def _parse_ent_types(
-    ent_types: Optional[str | Collection[str]], which: str,
+    ent_types: Optional[str | Collection[str]], which: str
 ) -> Optional[str | Set[str]]:
     if not ent_types:
         return None
@@ -261,7 +259,7 @@ def _parse_ent_types(
 
 
 def noun_chunks(
-    doclike: types.DocLike, *, drop_determiners: bool = True, min_freq: int = 1,
+    doclike: types.DocLike, *, drop_determiners: bool = True, min_freq: int = 1
 ) -> Iterable[Span]:
     """
     Extract an ordered sequence of noun chunks from a spacy-parsed doc, optionally
@@ -351,7 +349,9 @@ def terms(
 
 def _get_extractors(ngs, ents, ncs) -> List[types.DocLikeToSpans]:
     all_extractors = [
-        _get_ngs_extractor(ngs), _get_ents_extractor(ents), _get_ncs_extractor(ncs)
+        _get_ngs_extractor(ngs),
+        _get_ents_extractor(ents),
+        _get_ncs_extractor(ncs),
     ]
     extractors = [extractor for extractor in all_extractors if extractor is not None]
     if not extractors:
@@ -365,9 +365,8 @@ def _get_ngs_extractor(ngs) -> Optional[types.DocLikeToSpans]:
         return None
     elif callable(ngs):
         return ngs
-    elif (
-        isinstance(ngs, int)
-        or (isinstance(ngs, Collection) and all(isinstance(ng, int) for ng in ngs))
+    elif isinstance(ngs, int) or (
+        isinstance(ngs, Collection) and all(isinstance(ng, int) for ng in ngs)
     ):
         return partial(ngrams, n=ngs)
     else:

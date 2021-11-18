@@ -1,3 +1,6 @@
+from typing import Dict
+
+
 class Dataset:
     """
     Base class for textacy datasets.
@@ -19,7 +22,7 @@ class Dataset:
         return f"Dataset('{self.name}')"
 
     @property
-    def info(self):
+    def info(self) -> Dict[str, str]:
         info = {"name": self.name}
         info.update(self.meta)
         return info
