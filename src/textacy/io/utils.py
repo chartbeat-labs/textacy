@@ -19,7 +19,7 @@ import shutil
 import tarfile
 import urllib
 import zipfile
-from typing import IO, Iterable, Optional, Tuple
+from typing import IO, Iterable, Literal, Optional, Tuple
 
 from cytoolz import itertoolz
 
@@ -40,7 +40,7 @@ def open_sesame(
     encoding: Optional[str] = None,
     errors: Optional[str] = None,
     newline: Optional[str] = None,
-    compression: str = "infer",
+    compression: Literal["infer", "bz2", "gzip", "xz", "zip"] = "infer",
     make_dirs: bool = False,
 ) -> IO:
     """
@@ -121,7 +121,13 @@ def _get_compression(filepath, compression):
 
 
 def _get_file_handle(
-    filepath, mode, *, compression=None, encoding=None, errors=None, newline=None,
+    filepath,
+    mode,
+    *,
+    compression=None,
+    encoding=None,
+    errors=None,
+    newline=None,
 ):
     """
     Get a file handle for the given ``filepath`` and ``mode``, plus optional kwargs.
@@ -184,7 +190,7 @@ def _validate_write_mode(mode):
         )
 
 
-def coerce_content_type(content: str | bytes, file_mode: str) -> str | bytes:
+def coerce_content_type(content: types.AnyStr, file_mode: str) -> str | bytes:
     """
     If the `content` to be written to file and the `file_mode` used to open it
     are incompatible (either bytes with text mode or unicode with bytes mode),
@@ -198,7 +204,9 @@ def coerce_content_type(content: str | bytes, file_mode: str) -> str | bytes:
 
 
 def split_records(
-    items: Iterable, content_field: str | int, itemwise: bool = False,
+    items: Iterable,
+    content_field: str | int,
+    itemwise: bool = False,
 ) -> Iterable:
     """
     Split records' content (text) from associated metadata, but keep them paired
@@ -355,7 +363,8 @@ def download_file(
     filepath = utils.to_path(dirpath).resolve() / filename
     if filepath.is_file() and force is False:
         LOGGER.info(
-            "file '%s' already exists and force=False; skipping download...", filepath,
+            "file '%s' already exists and force=False; skipping download...",
+            filepath,
         )
         return None
     else:
@@ -377,7 +386,7 @@ def get_filename_from_url(url: str) -> str:
 
 
 def unpack_archive(
-    filepath: types.PathLike, *, extract_dir: Optional[types.PathLike] = None,
+    filepath: types.PathLike, *, extract_dir: Optional[types.PathLike] = None
 ) -> types.PathLike:
     """
     Extract data from a zip or tar archive file into a directory

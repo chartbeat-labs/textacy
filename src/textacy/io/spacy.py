@@ -5,7 +5,7 @@ in either pickle or binary format. Be warned: Both formats have pros and cons.
 from __future__ import annotations
 
 import pickle
-from typing import Iterable, Optional
+from typing import Iterable, Literal, Optional
 
 from spacy.tokens import Doc, DocBin
 
@@ -13,10 +13,13 @@ from .. import errors, spacier, types
 from . import utils as io_utils
 
 
+FormatType = Literal["binary", "pickle"]
+
+
 def read_spacy_docs(
     filepath: types.PathLike,
     *,
-    format: str = "binary",
+    format: FormatType = "binary",
     lang: Optional[types.LangLike] = None,
 ) -> Iterable[Doc]:
     """
@@ -24,8 +27,8 @@ def read_spacy_docs(
 
     Args:
         filepath: Path to file on disk from which data will be read.
-        format ({"binary", "pickle"}): Format of the data that was written to disk.
-            If "binary", uses :class:`spacy.tokens.DocBin` to deserialie data;
+        format: Format of the data that was written to disk.
+            If "binary", uses :class:`spacy.tokens.DocBin` to deserialize data;
             if "pickle", uses python's stdlib ``pickle``.
 
             .. warning:: Docs written in pickle format were saved all together
@@ -75,7 +78,7 @@ def write_spacy_docs(
     filepath: types.PathLike,
     *,
     make_dirs: bool = False,
-    format: str = "binary",
+    format: FormatType = "binary",
     attrs: Optional[Iterable[str]] = None,
     store_user_data: bool = False,
 ) -> None:
@@ -87,7 +90,7 @@ def write_spacy_docs(
         filepath: Path to file on disk to which data will be written.
         make_dirs: If True, automatically create (sub)directories
             if not already present in order to write ``filepath``.
-        format ({"pickle", "binary"}): Format of the data written to disk.
+        format: Format of the data written to disk.
             If "binary", uses :class:`spacy.tokens.DocBin` to serialie data;
             if "pickle", uses python's stdlib ``pickle``.
 
