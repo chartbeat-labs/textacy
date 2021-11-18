@@ -138,7 +138,7 @@ def to_collection(
 
 
 def to_bytes(
-    s: str | bytes, *, encoding: str = "utf-8", errors: str = "strict"
+    s: types.AnyStr, *, encoding: str = "utf-8", errors: str = "strict"
 ) -> bytes:
     """Coerce string ``s`` to bytes."""
     if isinstance(s, str):
@@ -150,7 +150,7 @@ def to_bytes(
 
 
 def to_unicode(
-    s: str | bytes, *, encoding: str = "utf-8", errors: str = "strict"
+    s: types.AnyStr, *, encoding: str = "utf-8", errors: str = "strict"
 ) -> str:
     """Coerce string ``s`` to unicode."""
     if isinstance(s, bytes):
@@ -161,7 +161,7 @@ def to_unicode(
         raise TypeError(errors_.type_invalid_msg("s", type(s), Union[str, bytes]))
 
 
-def to_path(path: str | pathlib.Path) -> pathlib.Path:
+def to_path(path: types.PathLike) -> pathlib.Path:
     """
     Coerce ``path`` to a ``pathlib.Path``.
 

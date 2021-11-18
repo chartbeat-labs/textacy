@@ -15,8 +15,8 @@ from typing import (
     Counter,
     Dict,
     Iterable,
-    Iterator,
     List,
+    Literal,
     Optional,
     Union,
 )
@@ -160,20 +160,20 @@ class Corpus:
 
     # dunder
 
-    def __str__(self):
+    def __str__(self) -> str:
         return f"Corpus({self.n_docs} docs, {self.n_tokens} tokens)"
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self.n_docs
 
-    def __iter__(self):
+    def __iter__(self) -> Iterable[Doc]:
         for doc in self.docs:
             yield doc
 
-    def __contains__(self, doc):
+    def __contains__(self, doc) -> bool:
         return id(doc) in self._doc_ids
 
-    def __getitem__(self, idx_or_slice):
+    def __getitem__(self, idx_or_slice) -> Doc:
         return self.docs[idx_or_slice]
 
     def __delitem__(self, idx_or_slice: int | slice):
@@ -249,7 +249,10 @@ class Corpus:
         self._add_valid_doc(self.spacy_lang(text))
 
     def add_texts(
-        self, texts: Iterable[str], batch_size: int = 1000, n_process: int = 1,
+        self,
+        texts: Iterable[str],
+        batch_size: int = 1000,
+        n_process: int = 1,
     ) -> None:
         """
         Add a stream of texts to the corpus, efficiently processing them into
@@ -265,14 +268,19 @@ class Corpus:
         """
         if spacy.__version__ >= "2.2.2":
             for doc in self.spacy_lang.pipe(
-                texts, as_tuples=False, batch_size=batch_size, n_process=n_process,
+                texts,
+                as_tuples=False,
+                batch_size=batch_size,
+                n_process=n_process,
             ):
                 self._add_valid_doc(doc)
         else:
             if n_process != 1:
                 LOGGER.warning("`n_process` is not available with spacy < 2.2.2")
             for doc in self.spacy_lang.pipe(
-                texts, as_tuples=False, batch_size=batch_size,
+                texts,
+                as_tuples=False,
+                batch_size=batch_size,
             ):
                 self._add_valid_doc(doc)
 
@@ -308,7 +316,10 @@ class Corpus:
         """
         if spacy.__version__ >= "2.2.2":
             for doc, meta in self.spacy_lang.pipe(
-                records, as_tuples=True, batch_size=batch_size, n_process=n_process,
+                records,
+                as_tuples=True,
+                batch_size=batch_size,
+                n_process=n_process,
             ):
                 doc._.meta = meta
                 self._add_valid_doc(doc)
@@ -316,7 +327,9 @@ class Corpus:
             if n_process != 1:
                 LOGGER.warning("`n_process` is not available with spacy < 2.2.2")
             for doc, meta in self.spacy_lang.pipe(
-                records, as_tuples=True, batch_size=batch_size,
+                records,
+                as_tuples=True,
+                batch_size=batch_size,
             ):
                 doc._.meta = meta
                 self._add_valid_doc(doc)
@@ -360,8 +373,10 @@ class Corpus:
     # get documents
 
     def get(
-        self, match_func: Callable[[Doc], bool], limit: Optional[int] = None,
-    ) -> Iterator[Doc]:
+        self,
+        match_func: Callable[[Doc], bool],
+        limit: Optional[int] = None,
+    ) -> Iterable[Doc]:
         """
         Get all (or N <= ``limit``) docs in :class:`Corpus` for which
         ``match_func(doc)`` is True.
@@ -393,7 +408,9 @@ class Corpus:
     # remove documents
 
     def remove(
-        self, match_func: Callable[[Doc], bool], limit: Optional[int] = None,
+        self,
+        match_func: Callable[[Doc], bool],
+        limit: Optional[int] = None,
     ) -> None:
         """
         Remove all (or N <= ``limit``) docs in :class:`Corpus` for which
@@ -453,8 +470,10 @@ class Corpus:
     def word_counts(
         self,
         *,
-        by: str = "lemma",  # Literal["lemma", "lower", "norm", "orth"]
-        weighting: str = "count",  # Literal["count", "freq"]
+        by: Literal[
+            "lemma", "lower", "norm", "orth", "lemma_", "lower_", "norm_", "orth_"
+        ] = "lemma",
+        weighting: Literal["count", "freq"] = "count",
         **kwargs,
     ) -> Dict[int, int | float] | Dict[str, int | float]:
         """
@@ -511,10 +530,12 @@ class Corpus:
     def word_doc_counts(
         self,
         *,
-        by: str = "lemma",  # Literal["lemma", "lower", "norm", "orth"]
-        weighting: str = "count",  # Literal["count", "freq", "idf"]
+        by: Literal[
+            "lemma", "lower", "norm", "orth", "lemma_", "lower_", "norm_", "orth_"
+        ] = "lemma",
+        weighting: Literal["count", "freq", "idf"] = "count",
         smooth_idf: bool = True,
-        **kwargs
+        **kwargs,
     ) -> Dict[int, int | float] | Dict[str, int | float]:
         """
         Map the set of unique words in :class:`Corpus` to their *document* counts
@@ -609,7 +630,7 @@ class Corpus:
     def save(
         self,
         filepath: types.PathLike,
-        attrs: Optional[str | Iterable[str]] = "auto",
+        attrs: Optional[str | Iterable[str] | Literal["auto"]] = "auto",
         store_user_data: bool = True,
     ):
         """
@@ -633,7 +654,13 @@ class Corpus:
             doc = self[0]
             attrs = [spacy.attrs.ORTH, spacy.attrs.SPACY]
             cand_attrs = [
-                "TAG", "POS", "ENT_IOB", "ENT_TYPE", "ENT_KB_ID", "LEMMA", "MORPH"
+                "TAG",
+                "POS",
+                "ENT_IOB",
+                "ENT_TYPE",
+                "ENT_KB_ID",
+                "LEMMA",
+                "MORPH",
             ]
             for cand_attr in cand_attrs:
                 if doc.has_annotation(cand_attr):
@@ -652,7 +679,7 @@ class Corpus:
             filepath,
             format="binary",
             attrs=attrs,
-            store_user_data=store_user_data
+            store_user_data=store_user_data,
         )
 
     @classmethod

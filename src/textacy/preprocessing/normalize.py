@@ -7,6 +7,7 @@ in problematic ways.
 """
 import re
 import unicodedata
+from typing import Literal
 
 from . import resources
 
@@ -56,19 +57,19 @@ def repeating_chars(text: str, *, chars: str, maxn: int = 1) -> str:
     return re.sub(r"({}){{{},}}".format(re.escape(chars), maxn + 1), chars * maxn, text)
 
 
-def unicode(text: str, *, form: str = "NFC") -> str:
+def unicode(text: str, *, form: Literal["NFC", "NFD", "NFKC", "NFKD"] = "NFC") -> str:
     """
     Normalize unicode characters in ``text`` into canonical forms.
 
     Args:
         text
-        form ({"NFC", "NFD", "NFKC", "NFKD"}): Form of normalization applied to
-            unicode characters. For example, an "e" with accute accent "´" can be
-            written as "e´" (canonical decomposition, "NFD") or "é" (canonical
-            composition, "NFC"). Unicode can be normalized to NFC form
-            without any change in meaning, so it's usually a safe bet. If "NFKC",
-            additional normalizations are applied that can change characters' meanings,
-            e.g. ellipsis characters are replaced with three periods.
+        form: Form of normalization applied to unicode characters.
+            For example, an "e" with accute accent "´" can be written as "e´"
+            (canonical decomposition, "NFD") or "é" (canonical composition, "NFC").
+            Unicode can be normalized to NFC form without any change in meaning,
+            so it's usually a safe bet. If "NFKC", additional normalizations are applied
+            that can change characters' meanings, e.g. ellipsis characters are replaced
+            with three periods.
 
     See Also:
         https://docs.python.org/3/library/unicodedata.html#unicodedata.normalize
