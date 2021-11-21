@@ -3,18 +3,111 @@
 """
 import functools
 import logging
-from typing import Dict, Optional, Tuple
+from typing import Callable, Dict, Literal, Optional, Tuple
 
 import pyphen
 from cachetools import cached
 from cachetools.keys import hashkey
-from spacy.tokens import Doc
+from spacy.tokens import Doc, Token
 
-from .. import cache, constants, extract
-from . import basics, morph, readability
+from .. import cache, constants, errors, extract
+from . import basics, diversity, morph, readability
 
 
 LOGGER = logging.getLogger(__name__)
+
+DiversityNameType = Literal["ttr", "log-ttr", "segmented-ttr", "mtld", "hdd"]
+ReadabilityNameType = Literal[
+    "automated-readability-index",
+    "automatic-arabic-readability-index",
+    "coleman-liau-index",
+    "flesch-kincaid-grade-level",
+    "flesch-reading-ease",
+    "gulpease-index",
+    "gunning-fog-index",
+    "lix",
+    "mu-legibility-index",
+    "perspicuity-index",
+    "smog-index",
+    "wiener-sachtextformel",
+]
+
+_DIVERSITY_NAME_TO_FUNC: Dict[str, Callable[..., float]] = {
+    "ttr": diversity.ttr,
+    "log-ttr": diversity.log_ttr,
+    "segmented-ttr": diversity.segmented_ttr,
+    "mtld": diversity.mtld,
+    "hdd": diversity.hdd,
+}
+_READABILITY_NAME_TO_FUNC_LANG: Dict[
+    str, Tuple[Callable[["TextStats"], float], Optional[str]]
+] = {
+    "automated-readability-index": (
+        lambda ts: readability.automated_readability_index(
+            ts.n_chars, ts.n_words, ts.n_sents
+        ),
+        None,
+    ),
+    "automatic-arabic-readability-index": (
+        lambda ts: readability.automatic_arabic_readability_index(
+            ts.n_chars, ts.n_words, ts.n_sents
+        ),
+        "ar",
+    ),
+    "coleman-liau-index": (
+        lambda ts: readability.coleman_liau_index(ts.n_chars, ts.n_words, ts.n_sents),
+        None,
+    ),
+    "flesch-kincaid-grade-level": (
+        lambda ts: readability.flesch_kincaid_grade_level(
+            ts.n_syllables, ts.n_words, ts.n_sents
+        ),
+        None,
+    ),
+    "flesch-reading-ease": (
+        lambda ts: readability.flesch_reading_ease(
+            ts.n_syllables, ts.n_words, ts.n_sents, lang=ts.lang
+        ),
+        None,
+    ),
+    "gulpease-index": (
+        lambda ts: readability.gulpease_index(ts.n_chars, ts.n_words, ts.n_sents),
+        "it",
+    ),
+    "gunning-fog-index": (
+        lambda ts: readability.gunning_fog_index(
+            ts.n_words, ts.n_polysyllable_words, ts.n_sents
+        ),
+        None,
+    ),
+    "lix": (
+        lambda ts: readability.lix(ts.n_words, ts.n_long_words, ts.n_sents),
+        None,
+    ),
+    "mu-legibility-index": (
+        lambda ts: readability.mu_legibility_index(ts.n_chars_per_word),
+        "es",
+    ),
+    "perspicuity-index": (
+        lambda ts: readability.perspicuity_index(ts.n_syllables, ts.n_words, ts.n_sents),
+        "es",
+    ),
+    "smog-index": (
+        lambda ts: readability.smog_index(ts.n_polysyllable_words, ts.n_sents),
+        None,
+    ),
+    "wiener-sachtextformel": (
+        lambda ts: readability.wiener_sachtextformel(
+            ts.n_words,
+            ts.n_polysyllable_words,
+            ts.n_monosyllable_words,
+            ts.n_long_words,
+            ts.n_sents,
+            variant=1,
+        ),
+        "de",
+    ),
+}
 
 
 class TextStats:
@@ -66,8 +159,8 @@ class TextStats:
 
     def __init__(self, doc: Doc):
         self.doc = doc
-        self.lang = doc.vocab.lang
-        self.words = tuple(
+        self.lang: str = doc.vocab.lang
+        self.words: Tuple[Token, ...] = tuple(
             extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False)
         )
         self._n_sents: Optional[int] = None
@@ -426,6 +519,51 @@ class TextStats:
             for morph_label, value_counts in mcs.items()
             if value_counts
         }
+
+    def readability(self, name: ReadabilityNameType) -> float:
+        """
+        Compute a measure of text readability using a method with specified ``name``.
+
+        See Also:
+            :mod:`textacy.text_stats.readability`
+        """
+        try:
+            func, lang = _READABILITY_NAME_TO_FUNC_LANG[name]
+            if lang and self.lang != lang:
+                LOGGER.warning(
+                    "doc lang = '%s', but '%s' readability is meant for use on "
+                    "'%s'-language texts only",
+                    self.lang,
+                    name,
+                    lang,
+                )
+        except KeyError:
+            raise ValueError(
+                errors.value_invalid_msg(
+                    "name", name, sorted(_READABILITY_NAME_TO_FUNC_LANG.keys())
+                )
+            )
+        return func(self)
+
+    def diversity(self, name: DiversityNameType, **kwargs) -> float:
+        """
+        Compute a measure of lexical diversity using a method with specified ``name`` ,
+        optionally specifying method variants and parameters.
+
+        Higher values => higher lexical diversity.
+
+        See Also:
+            :mod:`textacy.text_stats.diversity`
+        """
+        try:
+            func = _DIVERSITY_NAME_TO_FUNC[name]
+        except KeyError:
+            raise ValueError(
+                errors.value_invalid_msg(
+                    "name", name, sorted(_DIVERSITY_NAME_TO_FUNC.keys())
+                )
+            )
+        return func(self.words, **kwargs)
 
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
