@@ -3,15 +3,15 @@
 """
 import functools
 import logging
-from typing import Optional, Tuple
+from typing import Dict, Optional, Tuple
 
 import pyphen
 from cachetools import cached
 from cachetools.keys import hashkey
 from spacy.tokens import Doc
 
-from .. import cache, extract
-from . import basics, readability
+from .. import cache, constants, extract
+from . import basics, morph, readability
 
 
 LOGGER = logging.getLogger(__name__)
@@ -389,6 +389,30 @@ class TextStats:
             self.n_sents,
             variant=1,
         )
+
+    @property
+    def morph_counts(self) -> Dict[str, Dict[str, int]]:
+        """
+        Number of times each value for a given morphological label appears in document.
+
+        See Also:
+            :func:`textacy.text_stats.morph.get_morph_label_counts()`
+        """
+        # NOTE: afaict there is absolutely no way to get the spacy language pipeline
+        # used to produce a given document from the document itself
+        # so, we can't get the lang-specific set of morph labels here
+        # and instead just scan through all of the UD v2 default labels
+        # then filter out those that don't have any values in the document
+        # not ideal, but it's what we're stuck with
+        mcs = {
+            label: morph.get_morph_label_counts(label, self.doc)
+            for label in constants.UD_V2_MORPH_LABELS
+        }
+        return {
+            morph_label: value_counts
+            for morph_label, value_counts in mcs.items()
+            if value_counts
+        }
 
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
