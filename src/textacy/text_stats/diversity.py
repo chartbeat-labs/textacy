@@ -2,7 +2,8 @@
 Lexical Diversity
 -----------------
 
-:mod:`textacy.text_stats.diversity`: TODO
+:mod:`textacy.text_stats.diversity`: Low-level functions for computing various measures
+of lexical diversity, typically accessed via :meth:`textacy.text_stats.TextStats.diversity()`.
 """
 from __future__ import annotations
 
@@ -16,17 +17,6 @@ from toolz import itertoolz
 
 from .. import errors
 from . import basics
-
-
-def _compute_n_words_and_types(words: Iterable[Token]) -> Tuple[int, int]:
-    """
-    Compute the number of all words and number of unique words (aka types).
-
-    Returns:
-        (n_words, n_types)
-    """
-    word_counts = itertoolz.frequencies(word.lower for word in words)
-    return (sum(word_counts.values()), len(word_counts))
 
 
 def ttr(
@@ -130,7 +120,7 @@ def log_ttr(
 def segmented_ttr(
     doc_or_words: Doc | Iterable[Token],
     segment_size: int = 50,
-    variant: Literal["mean", "moving_avg"] = "mean",
+    variant: Literal["mean", "moving-avg"] = "mean",
 ) -> float:
     """
     Compute the Mean Segmental TTR (MS-TTR) or Moving Average TTR (MA-TTR)
@@ -140,6 +130,9 @@ def segmented_ttr(
     Args:
         doc_or_words
         segment_size: Number of consecutive words to include in each segment.
+        variant: Variant of segmented TTR to compute.
+            - "mean" => MS-TTR
+            - "moving-avg" => MA-TTR
 
     References:
         - Johnson, W. (1944). Studies in language behavior: I. A program of research.
@@ -150,17 +143,20 @@ def segmented_ttr(
     """
     words = list(basics._get_words(doc_or_words))
     if len(words) < segment_size:
-        raise ValueError()
+        raise ValueError(
+            f"number of words in document ({len(words)}) "
+            f"must be greater than segment size ({segment_size})"
+        )
 
     if variant == "mean":
         # TODO: keep or drop shorter last segments?
         segments = itertoolz.partition(segment_size, words)
         # segments = itertoolz.partition_all(segment_size, words)
-    elif variant == "moving_avg":
+    elif variant == "moving-avg":
         segments = itertoolz.sliding_window(segment_size, words)
     else:
         raise ValueError(
-            errors.value_invalid_msg("variant", variant, {"avg", "moving_avg"})
+            errors.value_invalid_msg("variant", variant, {"mean", "moving-avg"})
         )
     return statistics.mean(ttr(seg_words) for seg_words in segments)
 
@@ -243,10 +239,24 @@ def hdd(doc_or_words: Doc | Iterable[Token], sample_size: int = 42) -> float:
     type_counts = itertoolz.frequencies(word.lower for word in words)
     n_words = sum(type_counts.values())
     if n_words < sample_size:
-        raise ValueError()
+        raise ValueError(
+            f"number of words in document ({n_words}) "
+            f"must be greater than sample size ({sample_size})"
+        )
 
     type_contributions = (
         (1.0 - hypergeom.pmf(0, n_words, type_count, sample_size)) / sample_size
         for type_count in type_counts.values()
     )
     return sum(type_contributions)
+
+
+def _compute_n_words_and_types(words: Iterable[Token]) -> Tuple[int, int]:
+    """
+    Compute the number of all words and number of unique words (aka types).
+
+    Returns:
+        (n_words, n_types)
+    """
+    word_counts = itertoolz.frequencies(word.lower for word in words)
+    return (sum(word_counts.values()), len(word_counts))
