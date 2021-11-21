@@ -1,4 +1,5 @@
 from contextlib import ExitStack as does_not_raise
+
 # TODO: when only supporting PY3.7+, use this instead
 # from contextlib import nullcontext as does_not_raise
 
@@ -65,7 +66,7 @@ def ts_es():
         ("es", "n_monosyllable_words", int, None, 38),
         ("es", "n_polysyllable_words", int, None, 20),
         ("es", "entropy", float, None, 5.8269),
-    ]
+    ],
 )
 def test_basics_attrs(ts_en, ts_es, lang, attr_name, attr_type, attr_subtype, exp_val):
     # NOTE: this is awkward, and it seems like there should be a better way
@@ -83,39 +84,37 @@ def test_basics_attrs(ts_en, ts_es, lang, attr_name, attr_type, attr_subtype, ex
 
 
 @pytest.mark.parametrize(
-    "lang, attr_name, exp_val",
+    "lang, method_name, exp_val",
     [
-        ("en", "automated_readability_index", 13.42857),
-        ("en", "automatic_arabic_readability_index", 1261.21),
-        ("en", "coleman_liau_index", 9.1818),
-        ("en", "flesch_kincaid_grade_level", 10.92285),
-        ("en", "flesch_reading_ease", 66.6221),
-        ("en", "gulpease_index", 55.4285),
-        ("en", "gunning_fog_index", 15.00952),
+        ("en", "automated-readability-index", 13.42857),
+        ("en", "automatic-arabic-readability-index", 1261.21),
+        ("en", "coleman-liau-index", 9.1818),
+        ("en", "flesch-kincaid-grade-level", 10.92285),
+        ("en", "flesch-reading-ease", 66.6221),
+        ("en", "gulpease-index", 55.4285),
+        ("en", "gunning-fog-index", 15.00952),
         ("en", "lix", 44.6666),
-        ("en", "mu_legibility_index", 97.236),
-        ("en", "perspicuity_index", 96.5100),
-        ("en", "smog_index", 12.45797),
-        ("en", "wiener_sachtextformel", 5.2418),
-        ("es", "automated_readability_index", 15.56631),
-        ("es", "automatic_arabic_readability_index", 1393.424),
-        ("es", "coleman_liau_index", 11.6549),
-        ("es", "flesch_kincaid_grade_level", 17.6717),
-        ("es", "flesch_reading_ease", 64.9938),
-        ("es", "gulpease_index", 51.1176),
-        ("es", "gunning_fog_index", 20.74509),
+        ("en", "mu-legibility-index", 97.236),
+        ("en", "perspicuity-index", 96.5100),
+        ("en", "smog-index", 12.45797),
+        ("en", "wiener-sachtextformel", 5.2418),
+        ("es", "automated-readability-index", 15.56631),
+        ("es", "automatic-arabic-readability-index", 1393.424),
+        ("es", "coleman-liau-index", 11.6549),
+        ("es", "flesch-kincaid-grade-level", 17.6717),
+        ("es", "flesch-reading-ease", 64.9938),
+        ("es", "gulpease-index", 51.1176),
+        ("es", "gunning-fog-index", 20.74509),
         ("es", "lix", 56.5686),
-        ("es", "mu_legibility_index", 58.2734),
-        ("es", "perspicuity_index", 61.2310),
-        ("es", "smog_index", 17.87934),
-        ("es", "wiener_sachtextformel", 10.6155),
-    ]
+        ("es", "mu-legibility-index", 58.2734),
+        ("es", "perspicuity-index", 61.2310),
+        ("es", "smog-index", 17.87934),
+        ("es", "wiener-sachtextformel", 10.6155),
+    ],
 )
-def test_readability_attrs(ts_en, ts_es, lang, attr_name, exp_val):
-    # NOTE: this is awkward, and it seems like there should be a better way
+def test_readability_method(ts_en, ts_es, lang, method_name, exp_val):
     ts = ts_en if lang == "en" else ts_es
-    assert hasattr(ts, attr_name)
-    assert getattr(ts, attr_name) == pytest.approx(exp_val, rel=0.05)
+    assert ts.readability(method_name) == pytest.approx(exp_val, rel=0.05)
 
 
 @pytest.mark.parametrize(
@@ -124,7 +123,7 @@ def test_readability_attrs(ts_en, ts_es, lang, attr_name, exp_val):
         ("en", does_not_raise()),
         ("es", does_not_raise()),
         ("un", pytest.raises(KeyError)),
-    ]
+    ],
 )
 def test_load_hyphenator(lang, context):
     with context:
