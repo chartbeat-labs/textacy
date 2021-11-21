@@ -3,7 +3,7 @@ Readability Stats
 -----------------
 
 :mod:`textacy.text_stats.readability`: Low-level functions for computing various measures
-of text "readability", typically accessed via :class:`textacy.text_stats.TextStats`.
+of text "readability", typically accessed via :meth:`textacy.text_stats.TextStats.readability()`.
 """
 import logging
 import statistics
@@ -43,7 +43,7 @@ def automated_readability_index(n_chars: int, n_words: int, n_sents: int) -> flo
 
 
 def automatic_arabic_readability_index(
-    n_chars: int, n_words: int, n_sents: int,
+    n_chars: int, n_words: int, n_sents: int
 ) -> float:
     """
     Readability test for Arabic-language texts based on number of characters and
@@ -82,7 +82,7 @@ def flesch_kincaid_grade_level(n_syllables: int, n_words: int, n_sents: int) -> 
 
 
 def flesch_reading_ease(
-    n_syllables: int, n_words: int, n_sents: int, *, lang: Optional[str] = None,
+    n_syllables: int, n_words: int, n_sents: int, *, lang: Optional[str] = None
 ) -> float:
     """
     Readability test used as a general-purpose standard in several languages, based on

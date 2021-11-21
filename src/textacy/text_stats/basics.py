@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Tuple
 
 import spacy.pipeline
 from cytoolz import itertoolz
