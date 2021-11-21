@@ -129,7 +129,8 @@ class TextStats:
         # TODO: should we vary char threshold by lang?
         if self._n_long_words is None:
             self._n_long_words = basics.n_long_words(
-                self.n_chars_per_word, min_n_chars=7,
+                self.n_chars_per_word,
+                min_n_chars=7,
             )
         return self._n_long_words
 
@@ -167,7 +168,8 @@ class TextStats:
         """
         if self._n_syllables_per_word is None:
             self._n_syllables_per_word = basics.n_syllables_per_word(
-                self.words, self.lang,
+                self.words,
+                self.lang,
             )
         return self._n_syllables_per_word
 
@@ -208,7 +210,8 @@ class TextStats:
         # TODO: should we vary syllable threshold by lang?
         if self._n_polysyllable_words is None:
             self._n_polysyllable_words = basics.n_polysyllable_words(
-                self.n_syllables_per_word, min_n_syllables=3,
+                self.n_syllables_per_word,
+                min_n_syllables=3,
             )
         return self._n_polysyllable_words
 
@@ -233,7 +236,9 @@ class TextStats:
             :func:`textacy.text_stats.readability.automated_readability_index()`
         """
         return readability.automated_readability_index(
-            self.n_chars, self.n_words, self.n_sents,
+            self.n_chars,
+            self.n_words,
+            self.n_sents,
         )
 
     @property
@@ -250,7 +255,9 @@ class TextStats:
                 "for use on Arabic-language texts, only"
             )
         return readability.automatic_arabic_readability_index(
-            self.n_chars, self.n_words, self.n_sents,
+            self.n_chars,
+            self.n_words,
+            self.n_sents,
         )
 
     @property
@@ -272,7 +279,9 @@ class TextStats:
             :func:`textacy.text_stats.readability.flesch_kincaid_grade_level()`
         """
         return readability.flesch_kincaid_grade_level(
-            self.n_syllables, self.n_words, self.n_sents,
+            self.n_syllables,
+            self.n_words,
+            self.n_sents,
         )
 
     @property
@@ -312,7 +321,9 @@ class TextStats:
             :func:`textacy.text_stats.readability.gunning_fog_index()`
         """
         return readability.gunning_fog_index(
-            self.n_words, self.n_polysyllable_words, self.n_sents,
+            self.n_words,
+            self.n_polysyllable_words,
+            self.n_sents,
         )
 
     @property
@@ -355,7 +366,9 @@ class TextStats:
                 "Spanish-language texts, only"
             )
         return readability.perspicuity_index(
-            self.n_syllables, self.n_words, self.n_sents,
+            self.n_syllables,
+            self.n_words,
+            self.n_sents,
         )
 
     @property
