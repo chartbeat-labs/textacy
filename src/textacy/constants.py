@@ -125,6 +125,39 @@ REPORTING_VERBS: Dict[str, Set[str]] = {
     },
 }
 
+UD_V2_MORPH_LABELS: Set[str] = {
+    "Abbr",
+    "Animacy",
+    "Aspect",
+    "Case",
+    "Clusivity",
+    "Definite",
+    "Degree",
+    "Evident",
+    "Foreign",
+    "Gender",
+    "Mood",
+    "NounClass",
+    "NumType",
+    "Number",
+    "Person",
+    "Polarity",
+    "Polite",
+    "Poss",
+    "PronType",
+    "Reflex",
+    "Tense",
+    "Typo",
+    "VerbForm",
+    "Voice",
+}
+"""
+Lexical and grammatical properties of words, not covered by POS tags,
+added as Token annotations by spaCy's statistical :class:`Morphologizer` pipe
+or by rule-based processing in the :class:`Tagger` and :class:`AttributeRuler` pipes.
+Source: https://universaldependencies.org/u/feat/index.html
+"""
+
 MATCHER_VALID_OPS: Set[str] = {"!", "+", "?", "*"}
 
 RE_MATCHER_TOKPAT_DELIM: Pattern = re.compile(r"\s+")
