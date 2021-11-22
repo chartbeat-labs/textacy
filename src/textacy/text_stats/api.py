@@ -1,5 +1,5 @@
 """
-:mod:`textacy.text_stats.api`: Compute basic and readability statistics of documents.
+:mod:`textacy.text_stats.api`: Compute a variety of text statistics for documents.
 """
 import functools
 import logging
@@ -112,8 +112,8 @@ _READABILITY_NAME_TO_FUNC_LANG: Dict[
 
 class TextStats:
     """
-    Class to compute a variety of basic and readability statistics for a given doc,
-    where each stat is a lazily-computed attribute.
+    Class to compute a variety of basic, readability, morphological, and lexical diversity
+    statistics for a given document.
 
     .. code-block:: pycon
 
@@ -121,17 +121,18 @@ class TextStats:
         >>> doc = textacy.make_spacy_doc(text, lang="en_core_web_sm")
         >>> ts = textacy.text_stats.TextStats(doc)
         >>> ts.n_words
-        136
+        137
         >>> ts.n_unique_words
-        80
+        81
         >>> ts.entropy
-        6.00420319027642
-        >>> ts.flesch_kincaid_grade_level
-        11.817647058823532
-        >>> ts.flesch_reading_ease
-        50.707745098039254
+        6.02267943673824
+        >>> ts.readability("flesch-kincaid-grade-level")
+        11.40259124087591
+        >>> ts.diversity("ttr")
+        0.5912408759124088
 
-    Some stats vary by language or are designed for use with specific languages:
+    Some readability stats vary by language or are designed for use with
+    specific languages:
 
     .. code-block:: pycon
 
@@ -140,18 +141,16 @@ class TextStats:
         ...     "el coronel Aureliano Buendía había de recordar aquella tarde remota "
         ...     "en que su padre lo llevó a conocer el hielo."
         ... )
-        >>> doc = textacy.make_spacy_doc(text, lang="es")
+        >>> doc = textacy.make_spacy_doc(text, lang="es_core_news_sm")
         >>> ts = textacy.text_stats.TextStats(doc)
-        >>> ts.n_words
-        28
-        >>> ts.perspicuity_index
+        >>> ts.readability("perspicuity-index")
         56.46000000000002
-        >>> ts.mu_legibility_index
+        >>> ts.readability("mu-legibility-index")
         71.18644067796609
 
-    Each of these stats have stand-alone functions in :mod:`textacy.text_stats.basics`
-    and :mod:`textacy.text_stats.readability` with more detailed info and links
-    in the docstrings -- when in doubt, read the docs!
+    Each of these stats have stand-alone functions in :mod:`textacy.text_stats.basics` ,
+    :mod:`textacy.text_stats.readability` , and :mod:`textacy.text_stats.diversity`
+    with more detailed info and links in the docstrings -- when in doubt, read the docs!
 
     Args:
         doc: A text document tokenized and (optionally) sentence-segmented by spaCy.
@@ -347,6 +346,24 @@ class TextStats:
     def readability(self, name: ReadabilityNameType) -> float:
         """
         Compute a measure of text readability using a method with specified ``name``.
+
+        Higher values => more difficult text for the following methods:
+
+        - automated readability index
+        - automatic arabic readability index
+        - colman-liau index
+        - flesch-kincaid grade level
+        - gunning-fog index
+        - lix
+        - smog index
+        - wiener-sachtextformel
+
+        Higher values => less difficult text for the following methods:
+
+        - flesch reading ease
+        - gulpease index
+        - mu legibility index
+        - perspicuity index
 
         See Also:
             :mod:`textacy.text_stats.readability`

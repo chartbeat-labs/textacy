@@ -18,6 +18,11 @@ Text Statistics
    basics.n_monosyllable_words
    basics.n_polysyllable_words
    basics.entropy
+   diversity.ttr
+   diversity.log_ttr
+   diversity.segmented_ttr
+   diversity.mtld
+   diversity.hdd
    readability.automated_readability_index
    readability.automatic_arabic_readability_index
    readability.coleman_liau_index
@@ -34,6 +39,12 @@ Text Statistics
 .. automodule:: textacy.text_stats.api
 
 .. automodule:: textacy.text_stats.basics
+
+.. currentmodule:: textacy.text_stats.basics
+
+.. automodule:: textacy.text_stats.diversity
+
+.. automodule:: textacy.text_stats.morph
 
 .. automodule:: textacy.text_stats.readability
 
