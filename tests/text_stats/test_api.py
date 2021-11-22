@@ -1,7 +1,4 @@
-from contextlib import ExitStack as does_not_raise
-
-# TODO: when only supporting PY3.7+, use this instead
-# from contextlib import nullcontext as does_not_raise
+from contextlib import nullcontext as does_not_raise
 
 import pyphen
 import pytest
@@ -115,6 +112,26 @@ def test_basics_attrs(ts_en, ts_es, lang, attr_name, attr_type, attr_subtype, ex
 def test_readability_method(ts_en, ts_es, lang, method_name, exp_val):
     ts = ts_en if lang == "en" else ts_es
     assert ts.readability(method_name) == pytest.approx(exp_val, rel=0.05)
+
+
+@pytest.mark.parametrize(
+    "method_name, kwargs, exp_val",
+    [
+        ("ttr", {}, 0.785),
+        ("ttr", {"variant": "root"}, 7.202),
+        ("log-ttr", {}, 0.946),
+        ("log-ttr", {"variant": "dugast"}, 35.354),
+        ("segmented-ttr", {}, 0.840),
+        ("segmented-ttr", {"variant": "moving-avg"}, 0.820),
+        ("segmented-ttr", {"variant": "mean", "segment_size": 25}, 0.920),
+        ("mtld", {}, 109.759),
+        ("mtld", {"min_ttr": 0.75}, 98.0),
+        ("hdd", {}, 0.858),
+        ("hdd", {"sample_size": 50}, 0.840),
+    ],
+)
+def test_diversity_method(ts_en, method_name, kwargs, exp_val):
+    assert ts_en.diversity(method_name, **kwargs) == pytest.approx(exp_val, rel=0.05)
 
 
 @pytest.mark.parametrize(
