@@ -132,19 +132,19 @@ We can also identify key terms in a document by a number of algorithms:
  ('machine learning', 0.05536624437146417)]
 ```
 
-Or we can compute various basic and readability statistics:
+Or we can compute various basic, lexical diversity, and readability statistics:
 
 ```pycon
 >>> from textacy.text_stats import TextStats
 >>> ts = TextStats(doc)
 >>> ts.n_words, ts.n_syllables, ts.n_chars
-(73, 134, 414)
+(73, 119, 414)
 >>> ts.entropy
 5.8233192506312115
->>> ts.flesch_kincaid_grade_level, ts.flesch_reading_ease
-(15.56027397260274, 26.84351598173518)
->>> ts.lix
-65.42922374429223
+>>> ts.readability("flesch-kincaid-grade-level")
+13.135616438356163
+>>> ts.diversity("ttr")
+0.7808219178082192
 ```
 
 Lastly, we can transform a document into a "bag of terms", with flexible weighting and term inclusion criteria:
