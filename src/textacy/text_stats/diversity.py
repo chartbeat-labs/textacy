@@ -127,6 +127,8 @@ def segmented_ttr(
     of ``doc_or_words``, in which the TTR of tumbling or rolling segments of words,
     respectively, each with length ``segment_size``, are computed and then averaged.
 
+    Higher values indicate higher lexical diversity.
+
     Args:
         doc_or_words
         segment_size: Number of consecutive words to include in each segment.
@@ -167,6 +169,8 @@ def mtld(doc_or_words: Doc | Iterable[Token], min_ttr: float = 0.72) -> float:
     the average length of the longest consecutive sequences of words that maintain a TTR
     of at least ``min_ttr``.
 
+    Higher values indicate higher lexical diversity.
+
     Args:
         doc_or_words
         min_ttr: Minimum TTR for each segment in ``doc_or_words``. When an ongoing
@@ -185,30 +189,26 @@ def mtld(doc_or_words: Doc | Iterable[Token], min_ttr: float = 0.72) -> float:
 
 
 def _mtld_run(words: Iterable[Token], min_ttr: float) -> float:
-    type_set = set()
-    n_words = 0
-    n_factor_words = 0
     n_factors = 0.0
-    for word in words:
-        n_words += 1
+    n_factor_words = 0
+    factor_types = set()
+    for n, word in enumerate(words):
         n_factor_words += 1
-        type_set.add(word.lower)
-        ttr = len(type_set) / n_factor_words
+        factor_types.add(word.lower)
+        ttr = len(factor_types) / n_factor_words
         if ttr < min_ttr:
             n_factors += 1.0
             n_factor_words = 0
-            type_set.clear()
-    # TTR never falls below threshold, so we have a single, partial factor?
-    if n_factors == 0:
-        if ttr == 1:
-            n_factors = 1.0
-        else:
-            n_factors += (1.0 - ttr) / (1 - min_ttr)
-    # final, partial factor?
-    elif n_factor_words > 0:
+            factor_types.clear()
+    n_words = n + 1
+    # do we have a partial factor left over? don't throw it away!
+    # instead, add a fractional factor value corresponding to how far TTR is from 1.0
+    # compared to how far min_ttr is from 1.0
+    if n_factor_words > 0:
         n_factors += (1.0 - ttr) / (1 - min_ttr)
-
-    return n_words / n_factors
+    # to avoid ZeroDivisionError in case of a single, partial factor with TTR == 1.0
+    # we add a small constant; but tbh this is a weird case
+    return n_words / (n_factors + 1e-6)
 
 
 def hdd(doc_or_words: Doc | Iterable[Token], sample_size: int = 42) -> float:
