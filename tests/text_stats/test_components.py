@@ -1,13 +1,7 @@
 import pytest
 
 from textacy import load_spacy_lang
-from textacy.text_stats import components
-
-TEXT = (
-    "The year was 2081, and everybody was finally equal. "
-    "They weren't only equal before God and the law. "
-    "They were equal every which way."
-)
+from textacy import text_stats
 
 
 @pytest.fixture(scope="module")
@@ -23,7 +17,12 @@ def spacy_lang():
 
 @pytest.fixture(scope="module")
 def spacy_doc(spacy_lang):
-    spacy_doc = spacy_lang(TEXT)
+    text = (
+        "The year was 2081, and everybody was finally equal. "
+        "They weren't only equal before God and the law. "
+        "They were equal every which way."
+    )
+    spacy_doc = spacy_lang(text)
     return spacy_doc
 
 
@@ -35,21 +34,7 @@ def test_component_problems(spacy_lang):
     assert spacy_lang.analyze_pipes()["problems"]["textacy_text_stats"] == []
 
 
-@pytest.mark.parametrize(
-    "attrs",
-    [
-        None,
-        "flesch_kincaid_grade_level",
-        ["flesch_kincaid_grade_level", "flesch_reading_ease"],
-    ],
-)
-def test_component_attrs(attrs):
-    text_stats_component = components.TextStatsComponent(attrs=attrs)
-    assert isinstance(text_stats_component.attrs, tuple) is True
-
-
-def test_attrs_on_doc(spacy_lang, spacy_doc):
-    tsc = spacy_lang.get_pipe("textacy_text_stats")
-    for attr in tsc.attrs:
-        assert spacy_doc._.has(attr) is True
-        assert isinstance(spacy_doc._.get(attr), (int, float, tuple)) is True
+def test_doc_extension(spacy_doc):
+    assert spacy_doc.has_extension("text_stats")
+    assert isinstance(spacy_doc._.text_stats, text_stats.TextStats)
+    assert isinstance(spacy_doc._.text_stats.n_words, int)
