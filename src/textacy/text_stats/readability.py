@@ -6,11 +6,14 @@ Readability Stats
 of text "readability", typically accessed via :meth:`textacy.text_stats.TextStats.readability()`.
 """
 import logging
+import math
 import statistics
-from math import sqrt
-from typing import Collection, Optional
+from typing import Optional
+
+from spacy.tokens import Doc
 
 from .. import errors
+from . import basics, utils
 
 
 LOGGER = logging.getLogger(__name__)
@@ -28,71 +31,111 @@ _FRE_COEFS = {
 }
 
 
-def automated_readability_index(n_chars: int, n_words: int, n_sents: int) -> float:
+def automated_readability_index(doc: Doc) -> float:
     """
     Readability test for English-language texts, particularly for technical writing,
     whose value estimates the U.S. grade level required to understand a text.
     Similar to several other tests (e.g. :func:`flesch_kincaid_grade_level()`),
     but uses characters per word instead of syllables like :func:`coleman_liau_index()`.
+
     Higher value => more difficult text.
+
+    Args:
+        doc
 
     References:
         https://en.wikipedia.org/wiki/Automated_readability_index
     """
+    words = tuple(utils.get_words(doc))
+    n_sents = basics.n_sents(doc)
+    n_words = basics.n_words(words)
+    n_chars = basics.n_chars(words)
     return (4.71 * n_chars / n_words) + (0.5 * n_words / n_sents) - 21.43
 
 
-def automatic_arabic_readability_index(
-    n_chars: int, n_words: int, n_sents: int
-) -> float:
+def automatic_arabic_readability_index(doc: Doc) -> float:
     """
     Readability test for Arabic-language texts based on number of characters and
-    average word and sentence lengths. Higher value => more difficult text.
+    average word and sentence lengths.
+
+    Higher value => more difficult text.
+
+    Args:
+        doc
 
     References:
         Al Tamimi, Abdel Karim, et al. "AARI: automatic arabic readability index."
         Int. Arab J. Inf. Technol. 11.4 (2014): 370-378.
     """
+    if doc.lang_ != "ar":
+        LOGGER.warning(
+            "doc lang = '%s', but this readability statistic is intended for use on "
+            "'ar'-language texts only",
+            doc.lang_,
+        )
+    words = tuple(utils.get_words(doc))
+    n_sents = basics.n_sents(doc)
+    n_words = basics.n_words(words)
+    n_chars = basics.n_chars(words)
     return (3.28 * n_chars) + (1.43 * n_chars / n_words) + (1.24 * n_words / n_sents)
 
 
-def coleman_liau_index(n_chars: int, n_words: int, n_sents: int) -> float:
+def coleman_liau_index(doc: Doc) -> float:
     """
     Readability test whose value estimates the number of years of education
     required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
     and :func:`smog_index()`, but using characters per word instead of syllables.
+
     Higher value => more difficult text.
+
+    Args:
+        doc
 
     References:
         https://en.wikipedia.org/wiki/Coleman%E2%80%93Liau_index
     """
+    words = tuple(utils.get_words(doc))
+    n_sents = basics.n_sents(doc)
+    n_words = basics.n_words(words)
+    n_chars = basics.n_chars(words)
     return (5.879851 * n_chars / n_words) - (29.587280 * n_sents / n_words) - 15.800804
 
 
-def flesch_kincaid_grade_level(n_syllables: int, n_words: int, n_sents: int) -> float:
+def flesch_kincaid_grade_level(doc: Doc) -> float:
     """
     Readability test used widely in education, whose value estimates the U.S.
     grade level / number of years of education required to understand a text.
+
     Higher value => more difficult text.
+
+    Args:
+        doc
 
     References:
         https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch.E2.80.93Kincaid_grade_level
     """  # noqa: E501
+    words = tuple(utils.get_words(doc))
+    n_sents = basics.n_sents(doc)
+    n_words = basics.n_words(words)
+    n_syllables = basics.n_syllables(words, lang=doc.lang_)
     return (11.8 * n_syllables / n_words) + (0.39 * n_words / n_sents) - 15.59
 
 
-def flesch_reading_ease(
-    n_syllables: int, n_words: int, n_sents: int, *, lang: Optional[str] = None
-) -> float:
+def flesch_reading_ease(doc: Doc, *, lang: Optional[str] = None) -> float:
     """
     Readability test used as a general-purpose standard in several languages, based on
     a weighted combination of avg. sentence length and avg. word length. Values usually
     fall in the range [0, 100], but may be arbitrarily negative in extreme cases.
+
     Higher value => easier text.
+
+    Args:
+        doc
+        lang
 
     Note:
         Coefficients in this formula are language-dependent;
-        if ``lang`` is null, the English-language formulation is used.
+        if ``lang`` is null, the value of ``Doc.lang_`` is used.
 
     References:
         English: https://en.wikipedia.org/wiki/Flesch%E2%80%93Kincaid_readability_tests#Flesch_reading_ease
@@ -105,10 +148,17 @@ def flesch_reading_ease(
         Turkish: Atesman formulation
         Russian: https://ru.wikipedia.org/wiki/%D0%98%D0%BD%D0%B4%D0%B5%D0%BA%D1%81_%D1%83%D0%B4%D0%BE%D0%B1%D0%BE%D1%87%D0%B8%D1%82%D0%B0%D0%B5%D0%BC%D0%BE%D1%81%D1%82%D0%B8
     """  # noqa: E501
+    if lang is None:
+        lang = doc.lang_
     try:
-        coefs = _FRE_COEFS[lang or "en"]
+        coefs = _FRE_COEFS[lang]
     except KeyError:
         raise ValueError(errors.value_invalid_msg("lang", lang, list(_FRE_COEFS.keys())))
+
+    words = tuple(utils.get_words(doc))
+    n_sents = basics.n_sents(doc)
+    n_words = basics.n_words(words)
+    n_syllables = basics.n_syllables(words, lang=lang)
     return (
         coefs["base"]
         - (coefs["asl"] * n_words / n_sents)
@@ -116,51 +166,94 @@ def flesch_reading_ease(
     )
 
 
-def gulpease_index(n_chars: int, n_words: int, n_sents: int) -> float:
+def gulpease_index(doc: Doc) -> float:
     """
-    Readability test for Italian-language texts, whose value is in the range
-    [0, 100] similar to :func:`flesch_reading_ease()`. Higher value =>
-    easier text.
+    Readability test for Italian-language texts, whose value is in the range [0, 100]
+    similar to :func:`flesch_reading_ease()`.
+
+    Higher value => easier text.
+
+    Args:
+        doc
 
     References:
         https://it.wikipedia.org/wiki/Indice_Gulpease
     """
+    if doc.lang_ != "it":
+        LOGGER.warning(
+            "doc lang = '%s', but this readability statistic is intended for use on "
+            "'it'-language texts only",
+            doc.lang_,
+        )
+    words = tuple(utils.get_words(doc))
+    n_sents = basics.n_sents(doc)
+    n_words = basics.n_words(words)
+    n_chars = basics.n_chars(words)
     return (300 * n_sents / n_words) - (10 * n_chars / n_words) + 89
 
 
-def gunning_fog_index(n_words: int, n_polysyllable_words: int, n_sents: int) -> float:
+def gunning_fog_index(doc: Doc) -> float:
     """
     Readability test whose value estimates the number of years of education
     required to understand a text, similar to :func:`flesch_kincaid_grade_level()`
-    and :func:`smog_index()`. Higher value => more difficult text.
+    and :func:`smog_index()`.
+
+    Higher value => more difficult text.
+
+    Args:
+        doc
 
     References:
         https://en.wikipedia.org/wiki/Gunning_fog_index
     """
+    words = tuple(utils.get_words(doc))
+    n_sents = basics.n_sents(doc)
+    n_words = basics.n_words(words)
+    n_polysyllable_words = basics.n_polysyllable_words(words, lang=doc.lang_)
     return 0.4 * ((n_words / n_sents) + (100 * n_polysyllable_words / n_words))
 
 
-def lix(n_words: int, n_long_words: int, n_sents: int) -> float:
+def lix(doc: Doc) -> float:
     """
     Readability test commonly used in Sweden on both English- and non-English-language
     texts, whose value estimates the difficulty of reading a foreign text.
+
     Higher value => more difficult text.
+
+    Args:
+        doc
 
     References:
         https://en.wikipedia.org/wiki/Lix_(readability_test)
     """
+    words = tuple(utils.get_words(doc))
+    n_sents = basics.n_sents(doc)
+    n_words = basics.n_words(words)
+    n_long_words = basics.n_long_words(words)
     return (n_words / n_sents) + (100 * n_long_words / n_words)
 
 
-def mu_legibility_index(n_chars_per_word: Collection[int]) -> float:
+def mu_legibility_index(doc: Doc) -> float:
     """
     Readability test for Spanish-language texts based on number of words and
     the mean and variance of their lengths in characters, whose value is in the range
-    [0, 100]. Higher value => easier text.
+    [0, 100].
+
+    Higher value => easier text.
+
+    Args:
+        doc
 
     References:
         Muñoz, M., and J. Muñoz. "Legibilidad Mµ." Viña del Mar: CHL (2006).
     """
+    if doc.lang_ != "es":
+        LOGGER.warning(
+            "doc lang = '%s', but this readability statistic is intended for use on "
+            "'es'-language texts only",
+            doc.lang_,
+        )
+    n_chars_per_word = basics.n_chars_per_word(doc)
     n_words = len(n_chars_per_word)
     if n_words < 2:
         LOGGER.warning(
@@ -175,52 +268,85 @@ def mu_legibility_index(n_chars_per_word: Collection[int]) -> float:
     )
 
 
-def perspicuity_index(n_syllables: int, n_words: int, n_sents: int) -> float:
+def perspicuity_index(doc: Doc) -> float:
     """
     Readability test for Spanish-language texts, whose value is in the range [0, 100];
     very similar to the Spanish-specific formulation of :func:`flesch_reading_ease()`,
     but included additionally since it's become a common readability standard.
+
     Higher value => easier text.
+
+    Args:
+        doc
 
     References:
         Pazos, Francisco Szigriszt. Sistemas predictivos de legibilidad del mensaje
         escrito: fórmula de perspicuidad. Universidad Complutense de Madrid,
         Servicio de Reprografía, 1993.
     """
+    if doc.lang_ != "es":
+        LOGGER.warning(
+            "doc lang = '%s', but this readability statistic is intended for use on "
+            "'es'-language texts only",
+            doc.lang_,
+        )
+    words = tuple(utils.get_words(doc))
+    n_sents = basics.n_sents(doc)
+    n_words = basics.n_words(words)
+    n_syllables = basics.n_syllables(words, lang=doc.lang_)
     return 206.835 - (n_words / n_sents) - (62.3 * (n_syllables / n_words))
 
 
-def smog_index(n_polysyllable_words: int, n_sents: int) -> float:
+def smog_index(doc: Doc) -> float:
     """
     Readability test commonly used in medical writing and the healthcare industry,
     whose value estimates the number of years of education required to understand a text
     similar to :func:`flesch_kincaid_grade_level()` and intended as a substitute for
-    :func:`gunning_fog_index()`. Higher value => more difficult text.
+    :func:`gunning_fog_index()`.
+
+    Higher value => more difficult text.
+
+    Args:
+        doc
 
     References:
         https://en.wikipedia.org/wiki/SMOG
     """
+    n_sents = basics.n_sents(doc)
+    n_polysyllable_words = basics.n_polysyllable_words(doc, lang=doc.lang_)
     if n_sents < 30:
         LOGGER.warning("SMOG index may be unreliable for n_sents < 30")
-    return (1.0430 * sqrt(30 * n_polysyllable_words / n_sents)) + 3.1291
+    return (1.0430 * math.sqrt(30 * n_polysyllable_words / n_sents)) + 3.1291
 
 
-def wiener_sachtextformel(
-    n_words: int,
-    n_polysyllable_words: int,
-    n_monosyllable_words: int,
-    n_long_words: int,
-    n_sents: int,
-    *,
-    variant: int = 1,
-) -> float:
+def wiener_sachtextformel(doc: Doc, *, variant: int = 1) -> float:
     """
     Readability test for German-language texts, whose value estimates the grade
-    level required to understand a text. Higher value => more difficult text.
+    level required to understand a text.
+
+    Higher value => more difficult text.
+
+    Args:
+        doc
+        variant
 
     References:
         https://de.wikipedia.org/wiki/Lesbarkeitsindex#Wiener_Sachtextformel
     """
+    if doc.lang_ != "de":
+        LOGGER.warning(
+            "doc lang = '%s', but this readability statistic is intended for use on "
+            "'de'-language texts only",
+            doc.lang_,
+        )
+
+    words = tuple(utils.get_words(doc))
+    n_sents = basics.n_sents(doc)
+    n_words = basics.n_words(words)
+    n_long_words = basics.n_long_words(words)
+    n_polysyllable_words = basics.n_polysyllable_words(words, lang=doc.lang_)
+    n_monosyllable_words = basics.n_monosyllable_words(words, lang=doc.lang_)
+
     ms = 100 * n_polysyllable_words / n_words
     sl = n_words / n_sents
     iw = 100 * n_long_words / n_words
