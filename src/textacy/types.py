@@ -25,6 +25,7 @@ PathLike = Union[str, Path]
 DocLike = Union[Doc, Span]
 SpanLike = Union[Span, Token]
 DocLikeToSpans = Callable[[DocLike], Iterable[Span]]
+DocOrTokens = Union[Doc, Iterable[Token]]
 
 LangLike = Union[str, Path, Language]
 LangLikeInContext = Union[
