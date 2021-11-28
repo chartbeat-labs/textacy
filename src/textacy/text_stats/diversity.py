@@ -152,9 +152,12 @@ def segmented_ttr(
     """
     words = tuple(utils.get_words(doc_or_tokens))
     if len(words) < segment_size:
-        raise ValueError(
-            f"number of words in document ({len(words)}) "
-            f"must be greater than segment size ({segment_size})"
+        LOGGER.warning(
+            "number of words in document (%s) must be greater than segment size (%s) "
+            "to compute segmented-TTR; setting segment size equal to number of words, "
+            "which effectively reduces this method to standard TTR",
+            len(words),
+            segment_size,
         )
         segment_size = len(words)
     if variant == "mean":
@@ -248,9 +251,12 @@ def hdd(doc_or_tokens: types.DocOrTokens, sample_size: int = 42) -> float:
     type_counts = itertoolz.frequencies(word.lower for word in words)
     n_words = sum(type_counts.values())
     if n_words < sample_size:
-        raise ValueError(
-            f"number of words in document ({n_words}) "
-            f"must be greater than sample size ({sample_size})"
+        LOGGER.warning(
+            "number of words in document (%s) must be greater than sample size (%s) "
+            "to compute HD-D; setting sample size equal to number of words, "
+            "which effectively reduces this method to standard TTR",
+            n_words,
+            sample_size,
         )
         sample_size = n_words
 

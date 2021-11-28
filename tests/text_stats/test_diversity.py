@@ -54,9 +54,10 @@ def test_segmented_ttr(ttr_doc, variant, segment_size, exp_val):
     assert obs_val == pytest.approx(exp_val, rel=1e-2)
 
 
-def test_segmented_ttr_error(ttr_doc):
-    with pytest.raises(ValueError):
-        _ = diversity.segmented_ttr(ttr_doc, segment_size=30)
+def test_segmented_ttr_reduction(ttr_doc):
+    segmented_ttr = diversity.segmented_ttr(ttr_doc, segment_size=30)
+    ttr = diversity.ttr(ttr_doc)
+    assert segmented_ttr == pytest.approx(ttr, rel=1e-6)
 
 
 @pytest.mark.parametrize(
@@ -66,3 +67,9 @@ def test_segmented_ttr_error(ttr_doc):
 def test_mtld(mtld_doc, min_ttr, exp_val):
     obs_val = diversity.mtld(mtld_doc, min_ttr=min_ttr)
     assert obs_val == pytest.approx(exp_val, rel=1e-2)
+
+
+def test_hdd_reduction(ttr_doc):
+    hdd = diversity.hdd(ttr_doc, sample_size=30)
+    ttr = diversity.ttr(ttr_doc)
+    assert hdd == pytest.approx(ttr, rel=1e-6)
