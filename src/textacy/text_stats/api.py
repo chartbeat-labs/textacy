@@ -5,9 +5,6 @@ import functools
 import logging
 from typing import Callable, Dict, Literal, Optional, Tuple
 
-import pyphen
-from cachetools import cached
-from cachetools.keys import hashkey
 from spacy.tokens import Doc, Token
 
 from .. import cache, constants, errors, extract
@@ -400,20 +397,3 @@ class TextStats:
                 )
             )
         return func(self.words, **kwargs)
-
-
-@cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
-def load_hyphenator(lang: str):
-    """
-    Load an object that hyphenates words at valid points, as used in LaTex typesetting.
-
-    Args:
-        lang: Standard 2-letter language abbreviation. To get a list of valid values::
-
-            >>> import pyphen; pyphen.LANGUAGES
-
-    Returns:
-        :class:`pyphen.Pyphen()`
-    """
-    LOGGER.debug("loading '%s' language hyphenator", lang)
-    return pyphen.Pyphen(lang=lang)

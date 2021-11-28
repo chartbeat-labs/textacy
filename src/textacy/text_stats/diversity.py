@@ -7,30 +7,35 @@ of lexical diversity, typically accessed via :meth:`textacy.text_stats.TextStats
 """
 from __future__ import annotations
 
+import logging
 import math
 import statistics
-from typing import Iterable, Literal, Tuple
+from typing import Iterable, Literal
 
 from scipy.stats import hypergeom
-from spacy.tokens import Doc, Token
+from spacy.tokens import Token
 from toolz import itertoolz
 
-from .. import errors
-from . import basics
+from .. import errors, types
+from . import utils
+
+
+LOGGER = logging.getLogger(__name__)
 
 
 def ttr(
-    doc_or_words: Doc | Iterable[Token],
+    doc_or_tokens: types.DocOrTokens,
     variant: Literal["standard", "root", "corrected"] = "standard",
 ) -> float:
     """
-    Compute the Type-Token Ratio (TTR) of ``doc_or_words``,
+    Compute the Type-Token Ratio (TTR) of ``doc_or_tokens``,
     a direct ratio of the number of unique words (types) to all words (tokens).
 
     Higher values indicate higher lexical diversity.
 
     Args:
-        doc_or_words
+        doc_or_tokens: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
+            if an iterable of spaCy ``Token`` s, all non-punct elements are used.
         variant: Particular variant of TTR.
             - "standard" => ``n_types / n_words``
             - "root" => ``n_types / sqrt(n_words)``
@@ -46,7 +51,7 @@ def ttr(
         - RTTR: Guiraud 1954, 1960
         - CTTR: 1964 Carrol
     """
-    n_words, n_types = _compute_n_words_and_types(basics._get_words(doc_or_words))
+    n_words, n_types = utils.compute_n_words_and_types(utils.get_words(doc_or_tokens))
     try:
         if variant == "standard":
             return n_types / n_words
@@ -65,17 +70,18 @@ def ttr(
 
 
 def log_ttr(
-    doc_or_words: Doc | Iterable[Token],
+    doc_or_tokens: types.DocOrTokens,
     variant: Literal["herdan", "summer", "dugast"] = "herdan",
 ) -> float:
     """
-    Compute the logarithmic Type-Token Ratio (TTR) of ``doc_or_words``,
+    Compute the logarithmic Type-Token Ratio (TTR) of ``doc_or_tokens``,
     a modification of TTR that uses log functions to better adapt for text length.
 
     Higher values indicate higher lexical diversity.
 
     Args:
-        doc_or_words
+        doc_or_tokens: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
+            if an iterable of spaCy ``Token`` s, all non-punct elements are used.
         variant: Particular variant of log-TTR.
             - "herdan" => ``log(n_types) / log(n_words)``
             - "summer" => ``log(log(n_types)) / log(log(n_words))``
@@ -98,7 +104,7 @@ def log_ttr(
         - Dugast, D. (1978). Sur quoi se fonde la notion d’étendue théoretique du
           vocabulaire? Le Français Moderne, 46, 25-32.
     """
-    n_words, n_types = _compute_n_words_and_types(basics._get_words(doc_or_words))
+    n_words, n_types = utils.compute_n_words_and_types(utils.get_words(doc_or_tokens))
     try:
         if variant == "herdan":
             return math.log10(n_types) / math.log10(n_words)
@@ -118,19 +124,20 @@ def log_ttr(
 
 
 def segmented_ttr(
-    doc_or_words: Doc | Iterable[Token],
+    doc_or_tokens: types.DocOrTokens,
     segment_size: int = 50,
     variant: Literal["mean", "moving-avg"] = "mean",
 ) -> float:
     """
     Compute the Mean Segmental TTR (MS-TTR) or Moving Average TTR (MA-TTR)
-    of ``doc_or_words``, in which the TTR of tumbling or rolling segments of words,
+    of ``doc_or_tokens``, in which the TTR of tumbling or rolling segments of words,
     respectively, each with length ``segment_size``, are computed and then averaged.
 
     Higher values indicate higher lexical diversity.
 
     Args:
-        doc_or_words
+        doc_or_tokens: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
+            if an iterable of spaCy ``Token`` s, all non-punct elements are used.
         segment_size: Number of consecutive words to include in each segment.
         variant: Variant of segmented TTR to compute.
             - "mean" => MS-TTR
@@ -143,13 +150,13 @@ def segmented_ttr(
           The moving-average type–token ratio (MATTR). Journal of quantitative
           linguistics, 17(2), 94-100.
     """
-    words = list(basics._get_words(doc_or_words))
+    words = tuple(utils.get_words(doc_or_tokens))
     if len(words) < segment_size:
         raise ValueError(
             f"number of words in document ({len(words)}) "
             f"must be greater than segment size ({segment_size})"
         )
-
+        segment_size = len(words)
     if variant == "mean":
         # TODO: keep or drop shorter last segments?
         segments = itertoolz.partition(segment_size, words)
@@ -163,17 +170,18 @@ def segmented_ttr(
     return statistics.mean(ttr(seg_words) for seg_words in segments)
 
 
-def mtld(doc_or_words: Doc | Iterable[Token], min_ttr: float = 0.72) -> float:
+def mtld(doc_or_tokens: types.DocOrTokens, min_ttr: float = 0.72) -> float:
     """
-    Compute the Measure of Textual Lexical Diversity (MTLD) of ``doc_or_words``,
+    Compute the Measure of Textual Lexical Diversity (MTLD) of ``doc_or_tokens``,
     the average length of the longest consecutive sequences of words that maintain a TTR
     of at least ``min_ttr``.
 
     Higher values indicate higher lexical diversity.
 
     Args:
-        doc_or_words
-        min_ttr: Minimum TTR for each segment in ``doc_or_words``. When an ongoing
+        doc_or_tokens: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
+            if an iterable of spaCy ``Token`` s, all non-punct elements are used.
+        min_ttr: Minimum TTR for each segment in ``doc_or_tokens``. When an ongoing
             segment's TTR falls below this value, a new segment is started.
             Value should be in the range [0.66, 0.75].
 
@@ -182,7 +190,7 @@ def mtld(doc_or_words: Doc | Iterable[Token], min_ttr: float = 0.72) -> float:
         of sophisticated approaches to lexical diversity assessment. Behavior research
         methods, 42(2), 381-392.
     """
-    words = list(basics._get_words(doc_or_words))
+    words = tuple(utils.get_words(doc_or_tokens))
     return statistics.mean(
         [_mtld_run(words, min_ttr), _mtld_run(reversed(words), min_ttr)]
     )
@@ -211,15 +219,16 @@ def _mtld_run(words: Iterable[Token], min_ttr: float) -> float:
     return n_words / (n_factors + 1e-6)
 
 
-def hdd(doc_or_words: Doc | Iterable[Token], sample_size: int = 42) -> float:
+def hdd(doc_or_tokens: types.DocOrTokens, sample_size: int = 42) -> float:
     """
-    Compute the Hypergeometric Distribution Diversity (HD-D) of ``doc_or_words``,
+    Compute the Hypergeometric Distribution Diversity (HD-D) of ``doc_or_tokens``,
     which calculates the mean contribution that each unique word (aka type) makes
     to the TTR of all possible combinations of random samples of words of a given size,
     then sums all contributions together.
 
     Args:
-        doc_or_words
+        doc_or_tokens: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
+            if an iterable of spaCy ``Token`` s, all non-punct elements are used.
         sample_size: Number of words randomly sampled without replacement when
             computing unique word appearance probabilities.
             Value should be in the range [35, 50].
@@ -235,7 +244,7 @@ def hdd(doc_or_words: Doc | Iterable[Token], sample_size: int = 42) -> float:
         - McCarthy, P. M., & Jarvis, S. (2007). A theoretical and empirical evaluation
           of vocd. Language Testing, 24, 459-488.
     """
-    words = basics._get_words(doc_or_words)
+    words = utils.get_words(doc_or_tokens)
     type_counts = itertoolz.frequencies(word.lower for word in words)
     n_words = sum(type_counts.values())
     if n_words < sample_size:
@@ -243,20 +252,10 @@ def hdd(doc_or_words: Doc | Iterable[Token], sample_size: int = 42) -> float:
             f"number of words in document ({n_words}) "
             f"must be greater than sample size ({sample_size})"
         )
+        sample_size = n_words
 
     type_contributions = (
         (1.0 - hypergeom.pmf(0, n_words, type_count, sample_size)) / sample_size
         for type_count in type_counts.values()
     )
     return sum(type_contributions)
-
-
-def _compute_n_words_and_types(words: Iterable[Token]) -> Tuple[int, int]:
-    """
-    Compute the number of all words and number of unique words (aka types).
-
-    Returns:
-        (n_words, n_types)
-    """
-    word_counts = itertoolz.frequencies(word.lower for word in words)
-    return (sum(word_counts.values()), len(word_counts))

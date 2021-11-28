@@ -1,2 +1,3 @@
-from .api import TextStats, load_hyphenator
-from . import basics, components, diversity, morph, readability
+from .api import TextStats
+from .utils import load_hyphenator
+from . import basics, components, diversity, morph, readability, utils

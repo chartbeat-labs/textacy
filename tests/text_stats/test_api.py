@@ -144,5 +144,5 @@ def test_diversity_method(ts_en, method_name, kwargs, exp_val):
 )
 def test_load_hyphenator(lang, context):
     with context:
-        hyphenator = textacy.text_stats.load_hyphenator(lang=lang)
+        hyphenator = textacy.text_stats.utils.load_hyphenator(lang=lang)
         assert isinstance(hyphenator, pyphen.Pyphen)

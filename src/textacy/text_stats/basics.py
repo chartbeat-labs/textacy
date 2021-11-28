@@ -10,14 +10,14 @@ from __future__ import annotations
 import functools
 import logging
 import math
-from typing import Iterable, Optional, Tuple
+from typing import Optional, Tuple
 
 import spacy.pipeline
 from cytoolz import itertoolz
-from spacy.tokens import Doc, Token
+from spacy.tokens import Doc
 
-from .. import extract, types
-from . import api as _api
+from .. import types
+from . import utils
 
 
 LOGGER = logging.getLogger(__name__)
@@ -25,6 +25,7 @@ LOGGER = logging.getLogger(__name__)
 _SENTENCIZER = spacy.pipeline.Sentencizer()
 
 
+@functools.lru_cache(maxsize=128)
 def n_sents(doc: Doc) -> int:
     """
     Compute the number of sentences in a document.
@@ -53,7 +54,7 @@ def n_words(doc_or_tokens: types.DocOrTokens) -> int:
         doc_or_tokens: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
             if an iterable of spaCy ``Token`` s, all non-punct elements are used.
     """
-    words = _get_words(doc_or_tokens)
+    words = utils.get_words(doc_or_tokens)
     return itertoolz.count(words)
 
 
@@ -65,7 +66,7 @@ def n_unique_words(doc_or_tokens: types.DocOrTokens) -> int:
         doc_or_tokens: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
             if an iterable of spaCy ``Token`` s, all non-punct elements are used.
     """
-    words = _get_words(doc_or_tokens)
+    words = utils.get_words(doc_or_tokens)
     # NOTE: this stdlib solution is slower than itertoolz for docs with ~250+ words
     # so let's take a small hit on short docs for the sake of big wins on long docs
     # return len({word.lower for word in words})
@@ -86,7 +87,7 @@ def n_chars_per_word(doc_or_tokens: types.DocOrTokens) -> Tuple[int, ...]:
         to compute theirs. As such, ``doc_or_tokens`` must be hashable -- for example,
         it may be a ``Doc`` or ``Tuple[Token, ...]`` , but not a ``List[Token]`` .
     """
-    words = _get_words(doc_or_tokens)
+    words = utils.get_words(doc_or_tokens)
     return tuple(len(word) for word in words)
 
 
@@ -107,7 +108,7 @@ def n_chars(doc_or_tokens: types.DocOrTokens) -> int:
     # otherwise, let's get an iterable of words but cast it to a hashable tuple
     # so we can leverage the lru cache on this and related calls in, say, n_long_words
     else:
-        words = _get_words(doc_or_tokens)
+        words = utils.get_words(doc_or_tokens)
         ncpw = n_chars_per_word(tuple(words))
     return sum(ncpw)
 
@@ -128,7 +129,7 @@ def n_long_words(doc_or_tokens: types.DocOrTokens, *, min_n_chars: int = 7) -> i
     # otherwise, let's get an iterable of words but cast it to a hashable tuple
     # so we can leverage the lru cache on this and related calls in, say, n_long_words
     else:
-        words = _get_words(doc_or_tokens)
+        words = utils.get_words(doc_or_tokens)
         ncpw = n_chars_per_word(tuple(words))
     return itertoolz.count(nc for nc in ncpw if nc >= min_n_chars)
 
@@ -165,8 +166,8 @@ def n_syllables_per_word(
                 "`lang` must be specified when computing n syllables per word "
                 "from an iterable of tokens"
             )
-    hyphenator = _api.load_hyphenator(lang=lang)
-    words = _get_words(doc_or_tokens)
+    hyphenator = utils.load_hyphenator(lang=lang)
+    words = utils.get_words(doc_or_tokens)
     return tuple(len(hyphenator.positions(word.lower_)) + 1 for word in words)
 
 
@@ -190,7 +191,7 @@ def n_syllables(doc_or_tokens: types.DocOrTokens, *, lang: Optional[str] = None)
     # otherwise, let's get an iterable of words but cast it to a hashable tuple
     # so we can leverage the lru cache on this and related calls in, say, n_long_words
     else:
-        words = _get_words(doc_or_tokens)
+        words = utils.get_words(doc_or_tokens)
         nspw = n_syllables_per_word(tuple(words), lang=lang)
     return sum(nspw)
 
@@ -217,7 +218,7 @@ def n_monosyllable_words(
     # otherwise, let's get an iterable of words but cast it to a hashable tuple
     # so we can leverage the lru cache on this and related calls in, say, n_long_words
     else:
-        words = _get_words(doc_or_tokens)
+        words = utils.get_words(doc_or_tokens)
         nspw = n_syllables_per_word(tuple(words), lang=lang)
     return itertoolz.count(ns for ns in nspw if ns == 1)
 
@@ -249,7 +250,7 @@ def n_polysyllable_words(
     # otherwise, let's get an iterable of words but cast it to a hashable tuple
     # so we can leverage the lru cache on this and related calls in, say, n_long_words
     else:
-        words = _get_words(doc_or_tokens)
+        words = utils.get_words(doc_or_tokens)
         nspw = n_syllables_per_word(tuple(words), lang=lang)
     return itertoolz.count(ns for ns in nspw if ns >= min_n_syllables)
 
@@ -262,21 +263,8 @@ def entropy(doc_or_tokens: types.DocOrTokens) -> float:
         doc_or_tokens: If a spaCy ``Doc``, non-punctuation tokens (words) are extracted;
             if an iterable of spaCy ``Token`` s, all non-punct elements are used.
     """
-    words = _get_words(doc_or_tokens)
+    words = utils.get_words(doc_or_tokens)
     word_counts = itertoolz.frequencies(word.text for word in words)
     n_words = sum(word_counts.values())
     probs = (count / n_words for count in word_counts.values())
     return -sum(prob * math.log2(prob) for prob in probs)
-
-
-def _get_words(doc_or_tokens: types.DocOrTokens) -> Iterable[Token]:
-    if isinstance(doc_or_tokens, Doc):
-        words = extract.words(
-            doc_or_tokens,
-            filter_punct=True,
-            filter_stops=False,
-            filter_nums=False,
-        )
-    else:
-        words = (tok for tok in doc_or_tokens if not tok.is_punct)
-    yield from words
