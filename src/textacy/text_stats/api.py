@@ -158,7 +158,7 @@ class TextStats:
 
     def __init__(self, doc: Doc):
         self.doc = doc
-        self.lang: str = doc.vocab.lang
+        self.lang: str = doc.lang_
         self.words: Tuple[Token, ...] = tuple(
             extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False)
         )
@@ -220,10 +220,7 @@ class TextStats:
         """
         # TODO: should we vary char threshold by lang?
         if self._n_long_words is None:
-            self._n_long_words = basics.n_long_words(
-                self.n_chars_per_word,
-                min_n_chars=7,
-            )
+            self._n_long_words = basics.n_long_words(self.words, min_n_chars=7)
         return self._n_long_words
 
     @property
@@ -247,7 +244,7 @@ class TextStats:
             :func:`textacy.text_stats.basics.n_chars()`
         """
         if self._n_chars is None:
-            self._n_chars = basics.n_chars(self.n_chars_per_word)
+            self._n_chars = basics.n_chars(self.words)
         return self._n_chars
 
     @property
@@ -260,8 +257,7 @@ class TextStats:
         """
         if self._n_syllables_per_word is None:
             self._n_syllables_per_word = basics.n_syllables_per_word(
-                self.words,
-                self.lang,
+                self.words, lang=self.lang
             )
         return self._n_syllables_per_word
 
@@ -274,7 +270,7 @@ class TextStats:
             :func:`textacy.text_stats.basics.n_syllables()`
         """
         if self._n_syllables is None:
-            self._n_syllables = basics.n_syllables(self.n_syllables_per_word)
+            self._n_syllables = basics.n_syllables(self.words, lang=self.lang)
         return self._n_syllables
 
     @property
@@ -287,7 +283,7 @@ class TextStats:
         """
         if self._n_monosyllable_words is None:
             self._n_monosyllable_words = basics.n_monosyllable_words(
-                self.n_syllables_per_word,
+                self.words, lang=self.lang
             )
         return self._n_monosyllable_words
 
@@ -302,8 +298,7 @@ class TextStats:
         # TODO: should we vary syllable threshold by lang?
         if self._n_polysyllable_words is None:
             self._n_polysyllable_words = basics.n_polysyllable_words(
-                self.n_syllables_per_word,
-                min_n_syllables=3,
+                self.words, lang=self.lang, min_n_syllables=3
             )
         return self._n_polysyllable_words
 
