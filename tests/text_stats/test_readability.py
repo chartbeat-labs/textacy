@@ -1,93 +1,104 @@
-from contextlib import ExitStack as does_not_raise
-# TODO: when only supporting PY3.7+, use this instead
-# from contextlib import nullcontext as does_not_raise
+from contextlib import nullcontext as does_not_raise
 
 import pytest
 
+import textacy
 from textacy.text_stats import readability
 
 
 @pytest.fixture(scope="module")
-def basics():
-    return dict(
-        n_sents=3,
-        n_words=84,
-        n_unique_words=66,
-        n_chars=372,
-        n_long_words=14,
-        n_syllables=113,
-        n_monosyllable_words=63,
-        n_polysyllable_words=8,
+def en_doc_easy():
+    # https://simple.wikipedia.org/wiki/Climate_change
+    text = (
+        "Climate change means the climate of Earth changing. Climate change is now a big problem. "
+        "Climate change this century and last century is sometimes called global warming, "
+        "because the surface of the Earth is getting hotter. "
+        "At times in the past, the temperature was much cooler, with the Ice Age ending about ten thousand years ago. "
+        "Over very large time periods, climate change is caused by variations in the Earth's orbit around the Sun. "
+        "The Earth has been much warmer and much cooler than it is today."
     )
+    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
+
+
+@pytest.fixture(scope="module")
+def en_doc_hard():
+    # https://en.wikipedia.org/wiki/Climate_change
+    text = (
+        "Contemporary climate change includes both the global warming caused by humans, "
+        "and its impacts on Earth's weather patterns. There have been previous periods of climate change, "
+        "but the current changes are more rapid than any known events in Earth's history. "
+        "The main cause is the emission of greenhouse gases, mostly carbon dioxide (CO2) and methane. "
+        "Burning fossil fuels for energy use creates most of these emissions. "
+        "Agriculture, steel making, cement production, and forest loss are additional sources. "
+        "Temperature rise is also affected by climate feedbacks such as the loss of sunlight-reflecting snow cover, "
+        "and the release of carbon dioxide from drought-stricken forests. "
+        "Collectively, these amplify global warming."
+    )
+    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
+
+
+@pytest.fixture(scope="module")
+def es_doc():
+    # https://es.wikipedia.org/wiki/Calentamiento_global
+    text = (
+        "El calentamiento global es el aumento a largo plazo de la temperatura media del sistema climático "
+        "de la Tierra. Es un aspecto primordial del cambio climático actual, "
+        "demostrado por la medición directa de la temperatura y de varios efectos del calentamiento. "
+        "Los términos calentamiento global y cambio climático a menudo se usan indistintamente, "
+        "pero de forma más precisa calentamiento global es el incremento global en las temperaturas "
+        "de superficie y su aumento proyectado causado predominantemente por actividades humanas (antrópico), "
+        "mientras que cambio climático incluye tanto el calentamiento global como sus efectos en el clima. "
+        "Si bien ha habido periodos prehistóricos de calentamiento global,​ varios de los cambios observados "
+        "desde mediados del siglo XX no han tenido precedentes desde décadas a milenios."
+    )
+    return textacy.make_spacy_doc(text, lang="es_core_news_sm")
 
 
 @pytest.mark.parametrize(
-    "n_chars, n_words, n_sents, exp",
+    "name, exp_easy, exp_hard, warns_lang",
     [
-        (372, 84, 3, 13.4285),
-        (200, 100, 2, 12.99),
-        (1, 1, 1, -16.22),
-    ]
+        ("automated_readability_index", 7.6, 11.8, False),
+        ("automatic_arabic_readability_index", 1353.2, 1978.9, True),
+        ("coleman_liau_index", 9.2, 13.9, False),
+        ("flesch_kincaid_grade_level", 5.6, 8.6, False),
+        ("flesch_reading_ease", 81.4, 61.9, False),
+        ("gulpease_index", 63.4, 54.3, True),
+        ("gunning_fog_index", 6.3, 10.3, False),
+        ("lix", 35.1, 50.1, False),
+        ("smog_index", 5.5, 10.3, False),
+        ("wiener_sachtextformel", 2.1, 6.1, True),
+    ],
 )
-def test_automated_readability_index(n_chars, n_words, n_sents, exp):
-    obs = readability.automated_readability_index(n_chars, n_words, n_sents)
-    assert obs == pytest.approx(exp, rel=1e-2)
+def test_en_easy_hard(
+    caplog, en_doc_easy, en_doc_hard, name, exp_easy, exp_hard, warns_lang
+):
+    func = getattr(readability, name)
+    obs_easy = func(en_doc_easy)
+    obs_hard = func(en_doc_hard)
+    assert obs_easy == pytest.approx(exp_easy, abs=1.0)
+    assert obs_hard == pytest.approx(exp_hard, abs=1.0)
+    assert (
+        "but this readability statistic is intended for use on" in caplog.text
+    ) == warns_lang
 
 
 @pytest.mark.parametrize(
-    "n_chars, n_words, n_sents, exp",
+    "name, exp, warns_lang",
     [
-        (372, 84, 3, 1261.2128),
-        (200, 100, 2, 720.86),
-        (1, 1, 1, 5.95),
-    ]
+        ("flesch_reading_ease", 40.1, False),
+        ("mu_legibility_index", 42.7, False),
+        ("perspicuity_index", 35.5, False),
+    ],
 )
-def test_automatic_arabic_readability_index(n_chars, n_words, n_sents, exp):
-    obs = readability.automatic_arabic_readability_index(n_chars, n_words, n_sents)
-    assert obs == pytest.approx(exp, rel=1e-2)
+def test_es(caplog, es_doc, name, exp, warns_lang):
+    func = getattr(readability, name)
+    obs = func(es_doc)
+    assert obs == pytest.approx(exp, abs=1.0)
+    assert "but this readability statistic is intended for use on" not in caplog.text
 
 
 @pytest.mark.parametrize(
-    "n_chars, n_words, n_sents, exp",
-    [
-        (372, 84, 3, 9.1818),
-        (200, 100, 2, -4.6328),
-        (1, 1, 1, -39.5082),
-    ]
-)
-def test_coleman_liau_index(n_chars, n_words, n_sents, exp):
-    obs = readability.coleman_liau_index(n_chars, n_words, n_sents)
-    assert obs == pytest.approx(exp, rel=1e-2)
-
-
-@pytest.mark.parametrize(
-    "n_syllables, n_words, n_sents, exp",
-    [
-        (113, 84, 3, 11.2038),
-        (200, 100, 2, 27.51),
-        (1, 1, 1, -3.39999),
-    ]
-)
-def test_flesch_kincaid_grade_level(n_syllables, n_words, n_sents, exp):
-    obs = readability.flesch_kincaid_grade_level(n_syllables, n_words, n_sents)
-    assert obs == pytest.approx(exp, rel=1e-2)
-
-
-@pytest.mark.parametrize(
-    "n_syllables, n_words, n_sents, lang, exp",
-    [
-        (113, 84, 3, "en", 64.6078),
-        (200, 100, 2, "en", -13.1149),
-        (1, 1, 1, "en", 121.22),
-    ]
-)
-def test_flesch_reading_ease(n_syllables, n_words, n_sents, lang, exp):
-    obs = readability.flesch_reading_ease(n_syllables, n_words, n_sents, lang=lang)
-    assert obs == pytest.approx(exp, rel=1e-2)
-
-
-@pytest.mark.parametrize(
-    "lang,context",
+    "lang, context",
     [
         (None, does_not_raise()),
         ("en", does_not_raise()),
@@ -98,112 +109,20 @@ def test_flesch_reading_ease(n_syllables, n_words, n_sents, lang, exp):
         ("nl", does_not_raise()),
         ("pt", does_not_raise()),
         ("ru", does_not_raise()),
-        ("tr", does_not_raise()),
+        ("tr", pytest.raises(KeyError)),  # womp: pyphen lacks a turkish dictionary
         ("ja", pytest.raises(ValueError)),
         ("un", pytest.raises(ValueError)),
         ("zh", pytest.raises(ValueError)),
     ],
 )
-def test_flesch_reading_ease_lang(lang, context):
+def test_flesch_reading_ease_lang(en_doc_easy, lang, context):
     with context:
-        _ = readability.flesch_reading_ease(100, 50, 2, lang=lang)
+        _ = readability.flesch_reading_ease(en_doc_easy, lang=lang)
 
 
-@pytest.mark.parametrize(
-    "n_chars, n_words, n_sents, exp",
-    [
-        (372, 84, 3, 55.4285),
-        (200, 100, 2, 75.0),
-        (1, 1, 1, 379.0),
-    ]
-)
-def test_gulpease_index(n_chars, n_words, n_sents, exp):
-    obs = readability.gulpease_index(n_chars, n_words, n_sents)
-    assert obs == pytest.approx(exp, rel=1e-2)
-
-
-@pytest.mark.parametrize(
-    "n_words, n_polysyllable_words, n_sents, exp",
-    [
-        (84, 8, 3, 15.0095),
-        (50, 10, 2, 18.0),
-        (1, 1, 1, 40.40),
-    ]
-)
-def test_gunning_fog_index(n_words, n_polysyllable_words, n_sents, exp):
-    obs = readability.gunning_fog_index(n_words, n_polysyllable_words, n_sents)
-    assert obs == pytest.approx(exp, rel=1e-2)
-
-
-@pytest.mark.parametrize(
-    "n_words, n_long_words, n_sents, exp",
-    [
-        (84, 14, 3, 44.6666),
-        (50, 5, 2, 35.0),
-        (1, 1, 1, 101.0),
-    ]
-)
-def test_lix(n_words, n_long_words, n_sents, exp):
-    obs = readability.lix(n_words, n_long_words, n_sents)
-    assert obs == pytest.approx(exp, rel=1e-2)
-
-
-@pytest.mark.parametrize(
-    "n_chars_per_word, exp",
-    [
-        [(4, 5, 5, 2, 2, 5, 3, 6, 5, 7), 180.3278],
-        [(6, 4, 7, 6, 2, 7, 2, 12, 2, 7), 62.1468],
-        [(1, 2, 1, 2, 1, 2, 1, 2, 1, 2), 600.0],
-    ]
-)
-def test_mu_legibility_index(n_chars_per_word, exp):
-    obs = readability.mu_legibility_index(n_chars_per_word)
-    assert obs == pytest.approx(exp, rel=1e-2)
-
-
-@pytest.mark.parametrize(
-    "n_syllables, n_words, n_sents, exp",
-    [
-        (113, 84, 3, 95.02666),
-        (200, 100, 2, 32.2350),
-        (1, 1, 1, 143.5350),
-    ]
-)
-def test_perspicuity_index(n_syllables, n_words, n_sents, exp):
-    obs = readability.perspicuity_index(n_syllables, n_words, n_sents)
-    assert obs == pytest.approx(exp, rel=1e-2)
-
-
-@pytest.mark.parametrize(
-    "n_polysyllable_words, n_sents, exp",
-    [
-        (8, 3, 12.4579),
-        (10, 2, 15.9031),
-        (1, 1, 8.8418),
-    ]
-)
-def test_smog_index(n_polysyllable_words, n_sents, exp):
-    obs = readability.smog_index(n_polysyllable_words, n_sents)
-    assert obs == pytest.approx(exp, rel=1e-2)
-
-
-@pytest.mark.parametrize(
-    "n_words, n_polysyllable, n_monosyllable, n_long, n_sents, variant, exp",
-    [
-        (84, 8, 63, 14, 3, 1, 5.3586),
-        (84, 8, 63, 14, 3, 2, 6.1303),
-        (84, 8, 63, 14, 3, 3, 7.0415),
-        (84, 8, 63, 14, 3, 4, 8.3571),
-        (1, 1, 1, 1, 1, 1, 28.3422),
-    ]
-)
-def test_wiener_sachtextformel(
-    n_words, n_polysyllable, n_monosyllable, n_long, n_sents, variant, exp,
-):
-    obs = readability.wiener_sachtextformel(
-        n_words, n_polysyllable, n_monosyllable, n_long, n_sents, variant=variant,
-    )
-    assert obs == pytest.approx(exp, rel=1e-2)
+def test_mu_legibility_index_doclen(es_doc):
+    assert readability.mu_legibility_index(es_doc[:2].as_doc()) > 0.0
+    assert readability.mu_legibility_index(es_doc[:1].as_doc()) == 0.0
 
 
 @pytest.mark.parametrize(
@@ -215,8 +134,8 @@ def test_wiener_sachtextformel(
         (3, does_not_raise()),
         (4, does_not_raise()),
         (5, pytest.raises(ValueError)),
-    ]
+    ],
 )
-def test_wiener_sachtextformel_variant(variant, context):
+def test_wiener_sachtextformel_variant(en_doc_easy, variant, context):
     with context:
-        _ = readability.wiener_sachtextformel(84, 8, 63, 14, 3, variant=variant)
+        _ = readability.wiener_sachtextformel(en_doc_easy, variant=variant)
