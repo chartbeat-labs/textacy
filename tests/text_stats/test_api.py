@@ -2,13 +2,14 @@ from contextlib import nullcontext as does_not_raise
 
 import pyphen
 import pytest
+import spacy
 
 import textacy
 import textacy.text_stats
 
 
 @pytest.fixture(scope="module")
-def ts_en():
+def en_doc():
     text = (
         "Many years later, as he faced the firing squad, Colonel Aureliano Buendía was "
         "to remember that distant afternoon when his father took him to discover ice. "
@@ -17,9 +18,12 @@ def ts_en():
         "white and enormous, like prehistoric eggs. The world was so recent that many "
         "things lacked names, and in order to indicate them it was necessary to point."
     )
-    return textacy.text_stats.TextStats(
-        textacy.make_spacy_doc(text, lang="en_core_web_sm")
-    )
+    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
+
+
+@pytest.fixture(scope="module")
+def ts_en(en_doc):
+    return textacy.text_stats.TextStats(en_doc)
 
 
 @pytest.fixture(scope="module")
@@ -146,3 +150,30 @@ def test_load_hyphenator(lang, context):
     with context:
         hyphenator = textacy.text_stats.utils.load_hyphenator(lang=lang)
         assert isinstance(hyphenator, pyphen.Pyphen)
+
+
+def test_get_set_doc_extensions(en_doc):
+    for name in textacy.text_stats.get_doc_extensions().keys():
+        assert en_doc.has_extension(name) is False
+    textacy.text_stats.set_doc_extensions(force=True)
+    for name in textacy.text_stats.get_doc_extensions().keys():
+        assert en_doc.has_extension(name)
+
+
+@pytest.mark.parametrize(
+    "ext_name, func",
+    [
+        ("n_sents", textacy.text_stats.basics.n_sents),
+        ("n_words", textacy.text_stats.basics.n_words),
+        ("n_chars", textacy.text_stats.basics.n_chars),
+        ("n_syllables", textacy.text_stats.basics.n_syllables),
+    ],
+)
+def test_check_doc_extensions(en_doc, ext_name, func):
+    assert getattr(en_doc._, ext_name) == func(en_doc)
+
+
+def test_remove_doc_extensions(en_doc):
+    textacy.text_stats.remove_doc_extensions()
+    for name in textacy.text_stats.get_doc_extensions().keys():
+        assert en_doc.has_extension(name) is False
