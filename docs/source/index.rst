@@ -34,8 +34,8 @@ features
   acronyms, keyterms, and SVO triples
 - Compare strings and sequences using a variety of similarity metrics
 - Tokenize and vectorize documents then train, interpret, and visualize topic models
-- Compute text readability statistics, including Flesch-Kincaid grade level, SMOG index,
-  and multi-lingual Flesch Reading Ease
+- Compute text readability and lexical diversity statistics, including Flesch-Kincaid
+  grade level, multilingual Flesch Reading Ease, and Type-Token Ratio
 
 ... *and much more!*
 

@@ -1,6 +1,6 @@
 """
-Lexical Diversity
------------------
+Lexical Diversity Stats
+-----------------------
 
 :mod:`textacy.text_stats.diversity`: Low-level functions for computing various measures
 of lexical diversity, typically accessed via :meth:`textacy.text_stats.TextStats.diversity()`.

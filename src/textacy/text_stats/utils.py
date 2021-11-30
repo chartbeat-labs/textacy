@@ -1,3 +1,7 @@
+"""
+:mod:`textacy.text_stats.utils`: Utility functions for computing text statistics,
+called under the hood of many stats functions -- and not typically accessed by users.
+"""
 import functools
 import logging
 from typing import Iterable, Tuple

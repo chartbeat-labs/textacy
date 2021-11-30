@@ -7,6 +7,9 @@ Text Statistics
    :nosignatures:
 
    api.TextStats
+   api.get_doc_extensions
+   api.set_doc_extensions
+   api.remove_doc_extensions
    basics.n_sents
    basics.n_words
    basics.n_unique_words
@@ -35,12 +38,13 @@ Text Statistics
    readability.perspicuity_index
    readability.smog_index
    readability.wiener_sachtextformel
+   utils.get_words
+   utils.compute_n_words_and_types
+   utils.load_hyphenator
 
 .. automodule:: textacy.text_stats.api
 
 .. automodule:: textacy.text_stats.basics
-
-.. currentmodule:: textacy.text_stats.basics
 
 .. automodule:: textacy.text_stats.diversity
 
@@ -48,4 +52,4 @@ Text Statistics
 
 .. automodule:: textacy.text_stats.readability
 
-.. automodule:: textacy.text_stats.components
+.. automodule:: textacy.text_stats.utils
