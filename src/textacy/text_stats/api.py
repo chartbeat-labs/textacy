@@ -1,6 +1,8 @@
 """
 :mod:`textacy.text_stats.api`: Compute a variety of text statistics for documents.
 """
+from __future__ import annotations
+
 import inspect
 import logging
 from typing import Any, Dict, Literal, Optional, Tuple
@@ -8,11 +10,12 @@ from typing import Any, Dict, Literal, Optional, Tuple
 from spacy.tokens import Doc, Token
 
 from .. import constants, errors, extract
-from . import basics, diversity, morph, readability
+from . import basics, counts, diversity, readability
 
 
 LOGGER = logging.getLogger(__name__)
 
+CountsNameType = Literal["morph", "tag", "pos", "dep"]
 DiversityNameType = Literal["ttr", "log-ttr", "segmented-ttr", "mtld", "hdd"]
 ReadabilityNameType = Literal[
     "automated-readability-index",
@@ -258,6 +261,22 @@ class TextStats:
             if value_counts
         }
 
+    def counts(self, name: CountsNameType) -> Dict[str, int] | Dict[str, Dict[str, int]]:
+        """
+        Count the number of times each value for the feature specified by ``name``
+        appear as token annotations.
+
+        See Also:
+            :mod:`textacy.text_stats.counts`
+        """
+        try:
+            func = getattr(counts, name.lower())
+        except AttributeError:
+            raise ValueError(
+                errors.value_invalid_msg("name", name, ["morph", "tag", "pos", "dep"])
+            )
+        return func(self.doc)
+
     def readability(self, name: ReadabilityNameType, **kwargs) -> float:
         """
         Compute a measure of text readability using a method with specified ``name``.
@@ -385,6 +404,10 @@ _DOC_EXTENSIONS: Dict[str, Dict[str, Any]] = {
     "n_monosyllable_words": {"getter": basics.n_monosyllable_words},
     "n_polysyllable_words": {"getter": basics.n_polysyllable_words},
     "entropy": {"getter": basics.entropy},
+    "morph_counts": {"getter": counts.morph},
+    "tag_counts": {"getter": counts.tag},
+    "pos_counts": {"getter": counts.pos},
+    "dep_counts": {"getter": counts.dep},
     # method extensions
     "ttr": {"method": diversity.ttr},
     "log_ttr": {"method": diversity.log_ttr},
