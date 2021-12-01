@@ -7,21 +7,26 @@ core functionality.
 """
 from __future__ import annotations
 
+import functools
 import itertools
 import pathlib
-from typing import Iterable, List, Tuple, Union
+from typing import Iterable, List, Set, Tuple, Union
 
+from cachetools import cached
+from cachetools.keys import hashkey
 from spacy import attrs
 from spacy.language import Language
+from spacy.morphology import Morphology
+from spacy.pipeline import Morphologizer
 from spacy.symbols import PROPN, VERB
 from spacy.tokens import Doc, Span, Token
 
-from .. import constants, errors, types, utils
+from .. import cache, constants, errors, types, utils
 from . import core
 
 
 def make_doc_from_text_chunks(
-    text: str, lang: types.LangLike, chunk_size: int = 100000,
+    text: str, lang: types.LangLike, chunk_size: int = 100000
 ) -> Doc:
     """
     Make a single spaCy-processed document from 1 or more chunks of ``text``.
@@ -206,3 +211,36 @@ def resolve_langlikeincontext(text: str, lang: types.LangLikeInContext) -> Langu
         raise TypeError(
             errors.type_invalid_msg("lang", type(lang), types.LangLikeInContext)
         )
+
+
+@cached(cache.LRU_CACHE, key=functools.partial(hashkey, "spacy_lang_morph_labels"))
+def get_spacy_lang_morph_labels(lang: types.LangLike) -> Set[str]:
+    """
+    Get the full set of morphological feature labels assigned
+    by a spaCy language pipeline according to its "morphologizer" pipe's metadata,
+    or just get the default set of Universal Dependencies (v2) feature labels.
+
+    Args:
+        lang: Language with which spaCy processes text, represented as the full name
+            of a spaCy language pipeline, the path on disk to it,
+            or an already instantiated pipeline.
+
+    Returns:
+        Set of morphological feature labels assigned/assignable by ``lang``.
+    """
+    spacy_lang = resolve_langlike(lang)
+    if spacy_lang.has_pipe("morphologizer"):
+        morphologizer = spacy_lang.get_pipe("morphologizer")
+    elif any(isinstance(comp, Morphologizer) for _, comp in spacy_lang.pipeline):
+        for _, component in spacy_lang.pipeline:
+            if isinstance(component, Morphologizer):
+                morphologizer = component
+                break
+    else:
+        return constants.UD_V2_MORPH_LABELS
+
+    return {
+        feat_name
+        for label in morphologizer.labels
+        for feat_name in Morphology.feats_to_dict(label).keys()
+    }
