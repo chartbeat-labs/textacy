@@ -21,6 +21,10 @@ Text Statistics
    basics.n_monosyllable_words
    basics.n_polysyllable_words
    basics.entropy
+   counts.morph
+   counts.tag
+   counts.pos
+   counts.dep
    diversity.ttr
    diversity.log_ttr
    diversity.segmented_ttr
@@ -46,9 +50,9 @@ Text Statistics
 
 .. automodule:: textacy.text_stats.basics
 
-.. automodule:: textacy.text_stats.diversity
+.. automodule:: textacy.text_stats.counts
 
-.. automodule:: textacy.text_stats.morph
+.. automodule:: textacy.text_stats.diversity
 
 .. automodule:: textacy.text_stats.readability
 
