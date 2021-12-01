@@ -1,3 +1,4 @@
+import collections
 from contextlib import nullcontext as does_not_raise
 
 import pyphen
@@ -82,6 +83,128 @@ def test_basics_attrs(ts_en, ts_es, lang, attr_name, attr_type, attr_subtype, ex
             assert obs_val == pytest.approx(exp_val, rel=1e-2)
         else:
             assert obs_val == exp_val
+
+
+@pytest.mark.parametrize(
+    "lang, name, exp",
+    [
+        (
+            "en",
+            "pos",
+            {
+                "ADJ": 10,
+                "NOUN": 19,
+                "ADV": 2,
+                "PUNCT": 9,
+                "SCONJ": 4,
+                "PRON": 7,
+                "VERB": 9,
+                "DET": 7,
+                "PROPN": 5,
+                "AUX": 5,
+                "PART": 4,
+                "ADP": 9,
+                "NUM": 1,
+                "CCONJ": 2,
+            },
+        ),
+        (
+            "en",
+            "tag",
+            {
+                "JJ": 10,
+                "NNS": 6,
+                "RB": 2,
+                ",": 6,
+                "IN": 12,
+                "PRP": 4,
+                "VBD": 9,
+                "DT": 7,
+                "NN": 13,
+                "NNP": 5,
+                "TO": 4,
+                "VB": 4,
+                "WRB": 1,
+                "PRP$": 1,
+                ".": 3,
+                "CD": 1,
+                "VBN": 1,
+                "WDT": 2,
+                "CC": 2,
+            },
+        ),
+        (
+            "en",
+            "dep",
+            {
+                "amod": 6,
+                "npadvmod": 1,
+                "advmod": 3,
+                "punct": 9,
+                "mark": 2,
+                "nsubj": 9,
+                "advcl": 1,
+                "det": 8,
+                "compound": 4,
+                "dobj": 6,
+                "ROOT": 3,
+                "aux": 4,
+                "xcomp": 3,
+                "poss": 1,
+                "relcl": 3,
+                "prep": 8,
+                "pobj": 9,
+                "attr": 1,
+                "nummod": 1,
+                "acl": 2,
+                "acomp": 3,
+                "cc": 2,
+                "conj": 2,
+                "ccomp": 2,
+            },
+        ),
+        (
+            "en",
+            "morph",
+            {
+                "Degree": {"Pos": 10},
+                "Number": {"Plur": 7, "Sing": 27},
+                "PunctType": {"Comm": 6, "Peri": 3},
+                "Case": {"Nom": 2, "Acc": 2},
+                "Gender": {"Masc": 3, "Neut": 1},
+                "Person": {"3": 9},
+                "PronType": {"Prs": 5, "Art": 6, "Dem": 1, "Rel": 1},
+                "Tense": {"Past": 10},
+                "VerbForm": {"Fin": 9, "Inf": 4, "Part": 1},
+                "Definite": {"Def": 3, "Ind": 3},
+                "Mood": {"Ind": 5},
+                "Poss": {"Yes": 1},
+                "NumType": {"Card": 1},
+                "Aspect": {"Perf": 1},
+                "ConjType": {"Cmp": 2},
+            },
+        ),
+    ],
+)
+def test_counts_method(ts_en, ts_es, lang, name, exp):
+    # the expected values are very sensitive to spacy model's token annotations
+    # so we try to assess "more or less" equal counts
+    ts = ts_en if lang == "en" else ts_es
+    obs = ts.counts(name)
+    assert isinstance(obs, dict)
+    if name != "morph":
+        assert all(isinstance(val, int) for val in obs.values())
+        diffs = collections.Counter(ts.counts(name))
+        diffs.subtract(exp)
+        assert all(abs(val) <= 1 for val in diffs.values())
+    else:
+        assert all(isinstance(val_counts, dict) for val_counts in obs.values())
+        assert all(
+            isinstance(val, int)
+            for val_counts in obs.values()
+            for val in val_counts.values()
+        )
+        assert list(obs.keys()) == list(exp.keys())
 
 
 @pytest.mark.parametrize(
