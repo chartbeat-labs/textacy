@@ -237,30 +237,6 @@ class TextStats:
             self._entropy = basics.entropy(self.words)
         return self._entropy
 
-    @property
-    def morph_counts(self) -> Dict[str, Dict[str, int]]:
-        """
-        Number of times each value for a given morphological label appears in document.
-
-        See Also:
-            :func:`textacy.text_stats.morph.get_morph_label_counts()`
-        """
-        # NOTE: afaict there is absolutely no way to get the spacy language pipeline
-        # used to produce a given document from the document itself
-        # so, we can't get the lang-specific set of morph labels here
-        # and instead just scan through all of the UD v2 default labels
-        # then filter out those that don't have any values in the document
-        # not ideal, but it's what we're stuck with
-        mcs = {
-            label: morph.get_morph_label_counts(label, self.doc)
-            for label in constants.UD_V2_MORPH_LABELS
-        }
-        return {
-            morph_label: value_counts
-            for morph_label, value_counts in mcs.items()
-            if value_counts
-        }
-
     def counts(self, name: CountsNameType) -> Dict[str, int] | Dict[str, Dict[str, int]]:
         """
         Count the number of times each value for the feature specified by ``name``
