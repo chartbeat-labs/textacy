@@ -1,26 +1,42 @@
 """
-:mod:`textacy.text_stats.api`: Compute basic and readability statistics of documents.
+:mod:`textacy.text_stats.api`: Compute a variety of text statistics for documents.
 """
-import functools
+from __future__ import annotations
+
+import inspect
 import logging
-from typing import Optional, Tuple
+from typing import Any, Dict, Literal, Optional, Tuple
 
-import pyphen
-from cachetools import cached
-from cachetools.keys import hashkey
-from spacy.tokens import Doc
+from spacy.tokens import Doc, Token
 
-from .. import cache, extract
-from . import basics, readability
+from .. import constants, errors, extract
+from . import basics, counts, diversity, readability
 
 
 LOGGER = logging.getLogger(__name__)
 
+CountsNameType = Literal["morph", "tag", "pos", "dep"]
+DiversityNameType = Literal["ttr", "log-ttr", "segmented-ttr", "mtld", "hdd"]
+ReadabilityNameType = Literal[
+    "automated-readability-index",
+    "automatic-arabic-readability-index",
+    "coleman-liau-index",
+    "flesch-kincaid-grade-level",
+    "flesch-reading-ease",
+    "gulpease-index",
+    "gunning-fog-index",
+    "lix",
+    "mu-legibility-index",
+    "perspicuity-index",
+    "smog-index",
+    "wiener-sachtextformel",
+]
+
 
 class TextStats:
     """
-    Class to compute a variety of basic and readability statistics for a given doc,
-    where each stat is a lazily-computed attribute.
+    Class to compute a variety of basic, readability, morphological, and lexical diversity
+    statistics for a given document.
 
     .. code-block:: pycon
 
@@ -28,17 +44,18 @@ class TextStats:
         >>> doc = textacy.make_spacy_doc(text, lang="en_core_web_sm")
         >>> ts = textacy.text_stats.TextStats(doc)
         >>> ts.n_words
-        136
+        137
         >>> ts.n_unique_words
-        80
+        81
         >>> ts.entropy
-        6.00420319027642
-        >>> ts.flesch_kincaid_grade_level
-        11.817647058823532
-        >>> ts.flesch_reading_ease
-        50.707745098039254
+        6.02267943673824
+        >>> ts.readability("flesch-kincaid-grade-level")
+        11.40259124087591
+        >>> ts.diversity("ttr")
+        0.5912408759124088
 
-    Some stats vary by language or are designed for use with specific languages:
+    Some readability stats vary by language or are designed for use with
+    specific languages:
 
     .. code-block:: pycon
 
@@ -47,18 +64,16 @@ class TextStats:
         ...     "el coronel Aureliano Buendía había de recordar aquella tarde remota "
         ...     "en que su padre lo llevó a conocer el hielo."
         ... )
-        >>> doc = textacy.make_spacy_doc(text, lang="es")
+        >>> doc = textacy.make_spacy_doc(text, lang="es_core_news_sm")
         >>> ts = textacy.text_stats.TextStats(doc)
-        >>> ts.n_words
-        28
-        >>> ts.perspicuity_index
+        >>> ts.readability("perspicuity-index")
         56.46000000000002
-        >>> ts.mu_legibility_index
+        >>> ts.readability("mu-legibility-index")
         71.18644067796609
 
-    Each of these stats have stand-alone functions in :mod:`textacy.text_stats.basics`
-    and :mod:`textacy.text_stats.readability` with more detailed info and links
-    in the docstrings -- when in doubt, read the docs!
+    Each of these stats have stand-alone functions in :mod:`textacy.text_stats.basics` ,
+    :mod:`textacy.text_stats.readability` , and :mod:`textacy.text_stats.diversity`
+    with more detailed info and links in the docstrings -- when in doubt, read the docs!
 
     Args:
         doc: A text document tokenized and (optionally) sentence-segmented by spaCy.
@@ -66,8 +81,8 @@ class TextStats:
 
     def __init__(self, doc: Doc):
         self.doc = doc
-        self.lang = doc.vocab.lang
-        self.words = tuple(
+        self.lang: str = doc.lang_
+        self.words: Tuple[Token, ...] = tuple(
             extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False)
         )
         self._n_sents: Optional[int] = None
@@ -128,9 +143,7 @@ class TextStats:
         """
         # TODO: should we vary char threshold by lang?
         if self._n_long_words is None:
-            self._n_long_words = basics.n_long_words(
-                self.n_chars_per_word, min_n_chars=7,
-            )
+            self._n_long_words = basics.n_long_words(self.words, min_n_chars=7)
         return self._n_long_words
 
     @property
@@ -154,7 +167,7 @@ class TextStats:
             :func:`textacy.text_stats.basics.n_chars()`
         """
         if self._n_chars is None:
-            self._n_chars = basics.n_chars(self.n_chars_per_word)
+            self._n_chars = basics.n_chars(self.words)
         return self._n_chars
 
     @property
@@ -167,7 +180,7 @@ class TextStats:
         """
         if self._n_syllables_per_word is None:
             self._n_syllables_per_word = basics.n_syllables_per_word(
-                self.words, self.lang,
+                self.words, lang=self.lang
             )
         return self._n_syllables_per_word
 
@@ -180,7 +193,7 @@ class TextStats:
             :func:`textacy.text_stats.basics.n_syllables()`
         """
         if self._n_syllables is None:
-            self._n_syllables = basics.n_syllables(self.n_syllables_per_word)
+            self._n_syllables = basics.n_syllables(self.words, lang=self.lang)
         return self._n_syllables
 
     @property
@@ -193,7 +206,7 @@ class TextStats:
         """
         if self._n_monosyllable_words is None:
             self._n_monosyllable_words = basics.n_monosyllable_words(
-                self.n_syllables_per_word,
+                self.words, lang=self.lang
             )
         return self._n_monosyllable_words
 
@@ -208,7 +221,7 @@ class TextStats:
         # TODO: should we vary syllable threshold by lang?
         if self._n_polysyllable_words is None:
             self._n_polysyllable_words = basics.n_polysyllable_words(
-                self.n_syllables_per_word, min_n_syllables=3,
+                self.words, lang=self.lang, min_n_syllables=3
             )
         return self._n_polysyllable_words
 
@@ -224,185 +237,171 @@ class TextStats:
             self._entropy = basics.entropy(self.words)
         return self._entropy
 
-    @property
-    def automated_readability_index(self) -> float:
+    def counts(self, name: CountsNameType) -> Dict[str, int] | Dict[str, Dict[str, int]]:
         """
-        Readability test for English-language texts. Higher value => more difficult text.
+        Count the number of times each value for the feature specified by ``name``
+        appear as token annotations.
 
         See Also:
-            :func:`textacy.text_stats.readability.automated_readability_index()`
+            :mod:`textacy.text_stats.counts`
         """
-        return readability.automated_readability_index(
-            self.n_chars, self.n_words, self.n_sents,
-        )
-
-    @property
-    def automatic_arabic_readability_index(self) -> float:
-        """
-        Readability test for Arabic-language texts. Higher value => more difficult text.
-
-        See Also:
-            :func:`textacy.text_stats.readability.automatic_arabic_readability_index()`
-        """
-        if self.lang != "ar":
-            LOGGER.warning(
-                "doc lang = '%s', but automatic arabic readability index is meant "
-                "for use on Arabic-language texts, only"
+        try:
+            func = getattr(counts, name.lower())
+        except AttributeError:
+            raise ValueError(
+                errors.value_invalid_msg("name", name, ["morph", "tag", "pos", "dep"])
             )
-        return readability.automatic_arabic_readability_index(
-            self.n_chars, self.n_words, self.n_sents,
-        )
+        return func(self.doc)
 
-    @property
-    def coleman_liau_index(self) -> float:
+    def readability(self, name: ReadabilityNameType, **kwargs) -> float:
         """
-        Readability test, not language-specific. Higher value => more difficult text.
+        Compute a measure of text readability using a method with specified ``name``.
 
-        See Also:
-            :func:`textacy.text_stats.readability.coleman_liau_index()`
-        """
-        return readability.coleman_liau_index(self.n_chars, self.n_words, self.n_sents)
+        Higher values => more difficult text for the following methods:
 
-    @property
-    def flesch_kincaid_grade_level(self) -> float:
-        """
-        Readability test, not language-specific. Higher value => more difficult text.
+        - automated readability index
+        - automatic arabic readability index
+        - colman-liau index
+        - flesch-kincaid grade level
+        - gunning-fog index
+        - lix
+        - smog index
+        - wiener-sachtextformel
 
-        See Also:
-            :func:`textacy.text_stats.readability.flesch_kincaid_grade_level()`
-        """
-        return readability.flesch_kincaid_grade_level(
-            self.n_syllables, self.n_words, self.n_sents,
-        )
+        Higher values => less difficult text for the following methods:
 
-    @property
-    def flesch_reading_ease(self) -> float:
-        """
-        Readability test with several language-specific formulations.
-        Higher value => easier text.
+        - flesch reading ease
+        - gulpease index
+        - mu legibility index
+        - perspicuity index
 
         See Also:
-            :func:`textacy.text_stats.readability.flesch_reading_ease()`
+            :mod:`textacy.text_stats.readability`
         """
-        return readability.flesch_reading_ease(
-            self.n_syllables, self.n_words, self.n_sents, lang=self.lang
-        )
-
-    @property
-    def gulpease_index(self) -> float:
-        """
-        Readability test for Italian-language texts. Higher value => easier text.
-
-        See Also:
-            :func:`textacy.text_stats.readability.gulpease_index()`
-        """
-        if self.lang != "it":
-            LOGGER.warning(
-                "doc lang = '%s', but gulpease index is meant for use on "
-                "Italian-language texts, only"
+        # in case users prefer "flesch-reading-ease" or "flesch reading ease"
+        # to the underscored func-standard name "flesch_reading_ease"
+        name = name.replace("-", "_").replace(" ", "_")
+        try:
+            func = getattr(readability, name)
+        except AttributeError:
+            raise ValueError(
+                errors.value_invalid_msg(
+                    "name",
+                    name,
+                    [
+                        name
+                        for name, _ in inspect.getmembers(
+                            readability, inspect.isfunction
+                        )
+                        if not name.startswith("_")
+                    ],
+                )
             )
-        return readability.gulpease_index(self.n_chars, self.n_words, self.n_sents)
+        return func(self.doc, **kwargs)
 
-    @property
-    def gunning_fog_index(self) -> float:
+    def diversity(self, name: DiversityNameType, **kwargs) -> float:
         """
-        Readability test, not language-specific. Higher value => more difficult text.
+        Compute a measure of lexical diversity using a method with specified ``name`` ,
+        optionally specifying method variants and parameters.
 
-        See Also:
-            :func:`textacy.text_stats.readability.gunning_fog_index()`
-        """
-        return readability.gunning_fog_index(
-            self.n_words, self.n_polysyllable_words, self.n_sents,
-        )
-
-    @property
-    def lix(self) -> float:
-        """
-        Readability test for both English- and non-English-language texts.
-        Higher value => more difficult text.
+        Higher values => higher lexical diversity.
 
         See Also:
-            :func:`textacy.text_stats.readability.lix()`
+            :mod:`textacy.text_stats.diversity`
         """
-        return readability.lix(self.n_words, self.n_long_words, self.n_sents)
-
-    @property
-    def mu_legibility_index(self) -> float:
-        """
-        Readability test for Spanish-language texts. Higher value => easier text.
-
-        See Also:
-            :func:`textacy.text_stats.readability.mu_legibility_index()`
-        """
-        if self.lang != "es":
-            LOGGER.warning(
-                "doc lang = '%s', but mu legibility index is meant for use on "
-                "Spanish-language texts, only"
+        # in case users prefer "log-ttr" or "log ttr"
+        # to the underscored func-standard name "log_ttr"
+        name = name.replace("-", "_").replace(" ", "_")
+        try:
+            func = getattr(diversity, name)
+        except AttributeError:
+            raise ValueError(
+                errors.value_invalid_msg(
+                    "name",
+                    name,
+                    [
+                        name
+                        for name, _ in inspect.getmembers(diversity, inspect.isfunction)
+                        if not name.startswith("_")
+                    ],
+                )
             )
-        return readability.mu_legibility_index(self.n_chars_per_word)
-
-    @property
-    def perspicuity_index(self) -> float:
-        """
-        Readability test for Spanish-language texts. Higher value => easier text.
-
-        See Also:
-            :func:`textacy.text_stats.readability.perspicuity_index()`
-        """
-        if self.lang != "es":
-            LOGGER.warning(
-                "doc lang = '%s', but perspicuity index is meant for use on "
-                "Spanish-language texts, only"
-            )
-        return readability.perspicuity_index(
-            self.n_syllables, self.n_words, self.n_sents,
-        )
-
-    @property
-    def smog_index(self) -> float:
-        """
-        Readability test, not language-specific. Higher value => more difficult text.
-
-        See Also:
-            :func:`textacy.text_stats.readability.smog_index()`
-        """
-        return readability.smog_index(self.n_polysyllable_words, self.n_sents)
-
-    @property
-    def wiener_sachtextformel(self) -> float:
-        """
-        Readability test for German-language texts. Higher value => more difficult text.
-
-        See Also:
-            :func:`textacy.text_stats.readability.wiener_sachtextformel()`
-        """
-        if self.lang != "es":
-            LOGGER.warning(
-                "doc lang = '%s', but wiener sachtextformel is meant for use on "
-                "German-language texts, only"
-            )
-        return readability.wiener_sachtextformel(
-            self.n_words,
-            self.n_polysyllable_words,
-            self.n_monosyllable_words,
-            self.n_long_words,
-            self.n_sents,
-            variant=1,
-        )
+        return func(self.words, **kwargs)
 
 
-@cached(cache.LRU_CACHE, key=functools.partial(hashkey, "hyphenator"))
-def load_hyphenator(lang: str):
+def get_doc_extensions() -> Dict[str, Dict[str, Any]]:
     """
-    Load an object that hyphenates words at valid points, as used in LaTex typesetting.
+    Get textacy's text stats custom property and method doc extensions
+    that can be set on or removed from the global :class:`spacy.tokens.Doc`.
+    """
+    return _DOC_EXTENSIONS
+
+
+def set_doc_extensions(force: bool = True):
+    """
+    Set textacy's text stats custom property and method doc extensions
+    on the global :class:`spacy.tokens.Doc`.
 
     Args:
-        lang: Standard 2-letter language abbreviation. To get a list of valid values::
-
-            >>> import pyphen; pyphen.LANGUAGES
-
-    Returns:
-        :class:`pyphen.Pyphen()`
+        force: If True, set extensions even if existing extensions already exist;
+            otherwise, don't overwrite existing extensions.
     """
-    LOGGER.debug("loading '%s' language hyphenator", lang)
-    return pyphen.Pyphen(lang=lang)
+    for name, kwargs in get_doc_extensions().items():
+        if not Doc.has_extension(name):
+            Doc.set_extension(name, **kwargs)
+        elif force is True:
+            LOGGER.warning("%s `Doc` extension already exists; overwriting...", name)
+            Doc.set_extension(name, **kwargs, force=True)
+        else:
+            LOGGER.warning(
+                "%s `Doc` extension already exists, and was not overwritten", name
+            )
+
+
+def remove_doc_extensions():
+    """
+    Remove textacy's text stats custom property and method doc extensions
+    from the global :class:`spacy.tokens.Doc`.
+    """
+    for name in get_doc_extensions().keys():
+        _ = Doc.remove_extension(name)
+
+
+_DOC_EXTENSIONS: Dict[str, Dict[str, Any]] = {
+    # property extensions
+    "n_sents": {"getter": basics.n_sents},
+    "n_words": {"getter": basics.n_words},
+    "n_unique_words": {"getter": basics.n_unique_words},
+    "n_chars_per_word": {"getter": basics.n_chars_per_word},
+    "n_chars": {"getter": basics.n_chars},
+    "n_long_words": {"getter": basics.n_long_words},
+    "n_syllables_per_word": {"getter": basics.n_syllables_per_word},
+    "n_syllables": {"getter": basics.n_syllables},
+    "n_monosyllable_words": {"getter": basics.n_monosyllable_words},
+    "n_polysyllable_words": {"getter": basics.n_polysyllable_words},
+    "entropy": {"getter": basics.entropy},
+    "morph_counts": {"getter": counts.morph},
+    "tag_counts": {"getter": counts.tag},
+    "pos_counts": {"getter": counts.pos},
+    "dep_counts": {"getter": counts.dep},
+    # method extensions
+    "ttr": {"method": diversity.ttr},
+    "log_ttr": {"method": diversity.log_ttr},
+    "segmented_ttr": {"method": diversity.segmented_ttr},
+    "mtld": {"method": diversity.mtld},
+    "hdd": {"method": diversity.hdd},
+    "automated_readability_index": {"method": readability.automated_readability_index},
+    "automatic_arabic_readability_index": {
+        "method": readability.automatic_arabic_readability_index
+    },
+    "coleman_liau_index": {"method": readability.coleman_liau_index},
+    "flesch_kincaid_grade_level": {"method": readability.flesch_kincaid_grade_level},
+    "flesch_reading_ease": {"method": readability.flesch_reading_ease},
+    "gulpease_index": {"method": readability.gulpease_index},
+    "gunning_fog_index": {"method": readability.gunning_fog_index},
+    "lix": {"method": readability.lix},
+    "mu_legibility_index": {"method": readability.mu_legibility_index},
+    "perspicuity_index": {"method": readability.perspicuity_index},
+    "smog_index": {"method": readability.smog_index},
+    "wiener_sachtextformel": {"method": readability.wiener_sachtextformel},
+}

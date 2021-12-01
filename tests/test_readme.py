@@ -74,9 +74,7 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
 
 def test_corpus_functionality(corpus):
     assert isinstance(corpus[0], Doc)
-    assert list(
-        corpus.get(lambda doc: doc._.meta["speaker_name"] == "Bernie Sanders")
-    )
+    assert list(corpus.get(lambda doc: doc._.meta["speaker_name"] == "Bernie Sanders"))
 
 
 def test_plaintext_functionality(text):
@@ -108,9 +106,9 @@ def test_extract_functionality(doc):
         assert isinstance(trigram, Span)
         assert len(trigram) == 3
 
-    nes = list(
-        extract.entities(doc, drop_determiners=False, exclude_types="numeric")
-    )[:10]
+    nes = list(extract.entities(doc, drop_determiners=False, exclude_types="numeric"))[
+        :10
+    ]
     for ne in nes:
         assert isinstance(ne, Span)
         assert ne.label_
@@ -141,6 +139,11 @@ def test_text_stats_functionality(doc):
         assert hasattr(ts, attr)
         assert isinstance(getattr(ts, attr), int)
 
-    for attr in ["entropy", "flesch_kincaid_grade_level", "flesch_reading_ease", "lix"]:
-        assert hasattr(ts, attr)
-        assert isinstance(getattr(ts, attr), float)
+    assert hasattr(ts, "entropy")
+    assert isinstance(ts.entropy, float)
+
+    assert hasattr(ts, "readability")
+    assert isinstance(ts.readability("flesch-kincaid-grade-level"), float)
+
+    assert hasattr(ts, "diversity")
+    assert isinstance(ts.diversity("ttr"), float)
