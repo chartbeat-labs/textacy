@@ -3,6 +3,7 @@ import pytest
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
 from textacy import Corpus
+from textacy import extract
 from textacy.tm import TopicModel
 from textacy.representations import Vectorizer
 
@@ -21,7 +22,7 @@ def term_lists():
     ]
     corpus = Corpus("en_core_web_sm", data=texts)
     term_lists_ = [
-        (term.text.lower() for term in doc._.extract_terms(ngs=1, ents=None))
+        (term.text.lower() for term in extract.terms(doc, ngs=1, ents=None))
         for doc in corpus
     ]
     return term_lists_
@@ -59,13 +60,14 @@ def test_n_topics():
 
 
 def test_duck_typing():
-    class TrainedDummyModel():
+    class TrainedDummyModel:
         def __init__(self):
             self.n_topics = 5
-            self.components_ = np.array([[0,0,0,1], [1,0,0,0]])
+            self.components_ = np.array([[0, 0, 0, 1], [1, 0, 0, 0]])
 
         def transform(self, text):
             return text
+
     dummy = TrainedDummyModel()
     tmodel = TopicModel(dummy)
 
@@ -128,9 +130,7 @@ def test_top_topic_terms_topics(vectorizer, model):
 
 def test_top_topic_terms_top_n(vectorizer, model):
     assert (
-        len(
-            list(model.top_topic_terms(vectorizer.id_to_term, topics=0, top_n=10))[0][1]
-        )
+        len(list(model.top_topic_terms(vectorizer.id_to_term, topics=0, top_n=10))[0][1])
         == 10
     )
     assert (
@@ -152,15 +152,20 @@ def test_top_topic_terms_weights(vectorizer, model):
 def _xfailif():
     try:
         import matplotlib.pyplot as plt
+
         return False
     except ImportError:
         return True
 
 
 @pytest.mark.xfail(
-    _xfailif(),
-    reason="matplotlib is an optional dependency, but required for this viz")
+    _xfailif(), reason="matplotlib is an optional dependency, but required for this viz"
+)
 def test_termite_plot(model, vectorizer, doc_term_matrix):
     model.termite_plot(
-        doc_term_matrix, vectorizer.id_to_term,
-        topics=-1, n_terms=25, sort_terms_by="seriation")
+        doc_term_matrix,
+        vectorizer.id_to_term,
+        topics=-1,
+        n_terms=25,
+        sort_terms_by="seriation",
+    )
