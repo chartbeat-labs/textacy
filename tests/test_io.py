@@ -6,43 +6,31 @@ import numpy as np
 import pytest
 from scipy import sparse as sp
 
-from textacy import load_spacy_lang
 from textacy import io, utils
 
-TEXT = (
-    "The year was 2081, and everybody was finally equal. "
-    "They weren't only equal before God and the law. "
-    "They were equal every which way."
-)
+
 TESTS_DIR = os.path.split(__file__)[0]
 
 
-@pytest.fixture(scope="module")
-def spacy_doc():
-    spacy_lang = load_spacy_lang("en_core_web_sm")
-    spacy_doc = spacy_lang(TEXT)
-    return spacy_doc
-
-
 class TestTextIO:
-    def test_read_write_bytes(self, tmpdir):
-        expected = utils.to_bytes(TEXT)
+    def test_read_write_bytes(self, tmpdir, text_en):
+        expected = utils.to_bytes(text_en)
         for ext in (".txt", ".gz", ".bz2", ".xz"):
             filepath = str(tmpdir.join("test_read_write_file_bytes" + ext))
             io.write_text(expected, filepath, mode="wb", make_dirs=True)
             observed = next(io.read_text(filepath, mode="rb"))
             assert observed == expected
 
-    def test_read_write_unicode(self, tmpdir):
-        expected = TEXT
+    def test_read_write_unicode(self, tmpdir, text_en):
+        expected = text_en
         for ext in (".txt", ".gz", ".bz2", ".xz"):
             filepath = str(tmpdir.join("test_read_write_file_unicode" + ext))
             io.write_text(expected, filepath, mode="wt", make_dirs=True)
             observed = next(io.read_text(filepath, mode="rt"))
             assert observed == expected
 
-    def test_read_write_bytes_lines(self, tmpdir, spacy_doc):
-        expected = [utils.to_bytes(sent.text) for sent in spacy_doc.sents]
+    def test_read_write_bytes_lines(self, tmpdir, doc_en):
+        expected = [utils.to_bytes(sent.text) for sent in doc_en.sents]
         for ext in (".txt", ".gz", ".bz2", ".xz"):
             filepath = str(tmpdir.join("test_read_write_file_lines_bytes" + ext))
             io.write_text(expected, filepath, mode="wb", make_dirs=True, lines=True)
@@ -51,8 +39,8 @@ class TestTextIO:
             ]
             assert observed == expected
 
-    def test_read_write_unicode_lines(self, tmpdir, spacy_doc):
-        expected = [sent.text for sent in spacy_doc.sents]
+    def test_read_write_unicode_lines(self, tmpdir, doc_en):
+        expected = [sent.text for sent in doc_en.sents]
         for ext in (".txt", ".gz", ".bz2", ".xz"):
             filepath = str(tmpdir.join("test_read_write_file_lines_unicode" + ext))
             io.write_text(expected, filepath, mode="wt", make_dirs=True, lines=True)
@@ -63,29 +51,23 @@ class TestTextIO:
 
 
 class TestJSONIO:
-    def test_read_write_bytes(self, tmpdir, spacy_doc):
-        expected = [
-            {"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)
-        ]
+    def test_read_write_bytes(self, tmpdir, doc_en):
+        expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(doc_en.sents)]
         for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
             filepath = str(tmpdir.join("test_read_write_json_bytes" + ext))
             with pytest.raises(TypeError):
                 io.write_json(expected, filepath, "wb", make_dirs=True)
 
-    def test_read_write_unicode(self, tmpdir, spacy_doc):
-        expected = [
-            {"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)
-        ]
+    def test_read_write_unicode(self, tmpdir, doc_en):
+        expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(doc_en.sents)]
         for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
             filepath = str(tmpdir.join("test_read_write_json_unicode" + ext))
             io.write_json(expected, filepath, mode="wt", make_dirs=True)
             observed = next(io.read_json(filepath, mode="rt", lines=False))
             assert observed == expected
 
-    def test_read_write_bytes_lines(self, tmpdir, spacy_doc):
-        expected = [
-            {"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)
-        ]
+    def test_read_write_bytes_lines(self, tmpdir, doc_en):
+        expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(doc_en.sents)]
         for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
             filepath = str(tmpdir.join("test_read_write_json_lines_bytes" + ext))
             with pytest.raises(TypeError):
@@ -98,10 +80,8 @@ class TestJSONIO:
                     lines=True,
                 )
 
-    def test_read_write_unicode_lines(self, tmpdir, spacy_doc):
-        expected = [
-            {"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)
-        ]
+    def test_read_write_unicode_lines(self, tmpdir, doc_en):
+        expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(doc_en.sents)]
         for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
             filepath = str(tmpdir.join("test_read_write_json_lines_unicode" + ext))
             io.write_json(expected, filepath, mode="wt", make_dirs=True, lines=True)
@@ -166,20 +146,20 @@ class TestCSVIO:
 
 class TestSpacyIO:
     @pytest.mark.skip(reason="this takes wayyy too long now, reason unknown")
-    def test_read_write_docs(self, tmpdir, spacy_doc):
-        expected = [tok.lower_ for tok in spacy_doc]
+    def test_read_write_docs(self, tmpdir, doc_en):
+        expected = [tok.lower_ for tok in doc_en]
         for ext in (".pkl", ".pkl.gz", ".pkl.bz2", ".pkl.xz"):
             filepath = str(tmpdir.join("test_read_write_spacy_docs" + ext))
-            io.write_spacy_docs(spacy_doc, filepath, make_dirs=True)
+            io.write_spacy_docs(doc_en, filepath, make_dirs=True)
             observed = [
                 tok.lower_ for doc in io.read_spacy_docs(filepath) for tok in doc
             ]
             assert observed == expected
 
-    def test_read_write_docs_binary(self, tmpdir, spacy_doc):
-        expected = [tok.lower_ for tok in spacy_doc]
+    def test_read_write_docs_binary(self, tmpdir, doc_en):
+        expected = [tok.lower_ for tok in doc_en]
         filepath = str(tmpdir.join("test_read_write_spacy_docs_binary.bin"))
-        io.write_spacy_docs(spacy_doc, filepath, make_dirs=True, format="binary")
+        io.write_spacy_docs(doc_en, filepath, make_dirs=True, format="binary")
         with pytest.raises(ValueError):
             next(io.read_spacy_docs(filepath, format="binary", lang=None))
         observed = [
@@ -191,11 +171,11 @@ class TestSpacyIO:
         ]
         assert observed == expected
 
-    def test_read_write_docs_binary_attrs(self, tmpdir, spacy_doc):
-        expected = [tok.tag_ for tok in spacy_doc]
+    def test_read_write_docs_binary_attrs(self, tmpdir, doc_en):
+        expected = [tok.tag_ for tok in doc_en]
         filepath = str(tmpdir.join("test_read_write_spacy_docs_binary_exclude.bin"))
         io.write_spacy_docs(
-            spacy_doc,
+            doc_en,
             filepath,
             make_dirs=True,
             format="binary",

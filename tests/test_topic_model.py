@@ -9,8 +9,8 @@ from textacy.representations import Vectorizer
 
 
 @pytest.fixture(scope="module")
-def term_lists(lang_en, text_lines_en):
-    corpus = Corpus(lang_en, data=text_lines_en)
+def term_lists(lang_en, texts_short_en):
+    corpus = Corpus(lang_en, data=texts_short_en)
     term_lists_ = [
         (term.text.lower() for term in extract.terms(doc, ngs=1, ents=None))
         for doc in corpus

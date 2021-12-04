@@ -1,4 +1,5 @@
 import collections
+import itertools
 
 import numpy as np
 import pytest
@@ -6,14 +7,6 @@ from spacy.tokens import Doc
 
 from textacy import Corpus
 from textacy import load_spacy_lang
-from textacy.datasets.capitol_words import CapitolWords
-
-DATASET = CapitolWords()
-
-pytestmark = pytest.mark.skipif(
-    DATASET.filepath is None,
-    reason="CapitolWords dataset must be downloaded before running tests",
-)
 
 
 @pytest.fixture(scope="module")
@@ -22,8 +15,8 @@ def langs(lang_en):
 
 
 @pytest.fixture(scope="module")
-def corpus(lang_en):
-    return Corpus(lang_en, data=DATASET.records(limit=5))
+def corpus(lang_en, docs_en):
+    return Corpus(lang_en, data=docs_en)
 
 
 class TestCorpusInit:
@@ -36,27 +29,26 @@ class TestCorpusInit:
         with pytest.raises(TypeError):
             Corpus(lang)
 
-    def test_init_texts(self, lang_en):
+    def test_init_texts(self, lang_en, texts_en):
         limit = 3
-        texts = list(DATASET.texts(limit=limit))
+        texts = texts_en[:limit]
         corpus = Corpus(lang_en, data=texts)
         assert len(corpus) == len(corpus.docs) == limit
         assert all(doc.vocab is corpus.spacy_lang.vocab for doc in corpus)
         assert all(text == doc.text for text, doc in zip(texts, corpus))
 
-    def test_init_records(self, lang_en):
+    def test_init_records(self, lang_en, records_en):
         limit = 3
-        records = list(DATASET.records(limit=limit))
+        records = records_en[:limit]
         corpus = Corpus(lang_en, data=records)
         assert len(corpus) == len(corpus.docs) == limit
         assert all(doc.vocab is corpus.spacy_lang.vocab for doc in corpus)
         assert all(record[0] == doc.text for record, doc in zip(records, corpus))
         assert all(record[1] == doc._.meta for record, doc in zip(records, corpus))
 
-    def test_init_docs(self, lang_en):
+    def test_init_docs(self, lang_en, docs_en):
         limit = 3
-        texts = DATASET.texts(limit=limit)
-        docs = [lang_en(text) for text in texts]
+        docs = docs_en[:limit]
         corpus = Corpus(lang_en, data=docs)
         assert len(corpus) == len(corpus.docs) == limit
         assert all(doc.vocab is corpus.spacy_lang.vocab for doc in corpus)
@@ -113,9 +105,9 @@ class TestCorpusMethods:
     @pytest.mark.parametrize(
         "name, agg_func, exp_type",
         [
-            ("date", min, str),
-            ("congress", max, int),
-            ("speaker_name", collections.Counter, dict),
+            ("num_sections", sum, int),
+            ("title", max, str),
+            ("categories", lambda x: list(itertools.chain(x)), list),
         ],
     )
     def test_agg_metadata(self, name, agg_func, exp_type, corpus):
@@ -170,7 +162,7 @@ class TestCorpusMethods:
     def test_get(self, corpus):
         match_funcs = (
             lambda doc: True,
-            lambda doc: doc._.meta.get("speaker_name") == "Bernie Sanders",
+            lambda doc: "Pollution" in doc._.meta.get("categories", []),
         )
         for match_func in match_funcs:
             assert len(list(corpus.get(match_func))) > 0

@@ -5,8 +5,8 @@ from textacy import extract, representations
 
 
 @pytest.fixture(scope="module")
-def tokenized_docs(lang_en, text_lines_en):
-    docs = list(lang_en.pipe(text_lines_en))
+def tokenized_docs(lang_en, texts_short_en):
+    docs = list(lang_en.pipe(texts_short_en))
     tokenized_docs = [
         [term.text.lower() for term in extract.terms(doc, ngs=1)] for doc in docs
     ]

@@ -6,9 +6,9 @@ from textacy.representations import network
 
 
 @pytest.fixture(scope="module")
-def docs(lang_en, text_lines_en):
+def docs(lang_en, texts_short_en):
     # TODO: why only two lines?
-    return [textacy.make_spacy_doc(text, lang=lang_en) for text in text_lines_en[:2]]
+    return [textacy.make_spacy_doc(text, lang=lang_en) for text in texts_short_en[:2]]
 
 
 class TestCooccurrenceNetwork:
