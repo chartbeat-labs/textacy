@@ -25,10 +25,9 @@ import numpy as np
 import spacy
 from cytoolz import itertoolz
 from spacy.language import Language
-from spacy.tokens import Doc, DocBin
+from spacy.tokens import Doc
 
-from . import io as tio
-from . import errors, extensions, spacier, types, utils
+from . import errors, extract, io as tio, spacier, types, utils
 
 
 LOGGER = logging.getLogger(__name__)
@@ -479,7 +478,7 @@ class Corpus:
         """
         Map the set of unique words in :class:`Corpus` to their counts as
         absolute, relative, or binary frequencies of occurence, similar to
-        :meth:`Doc._.to_bag_of_words() <textacy.extensions.to_bag_of_words>`
+        :meth:`Doc._.to_bag_of_words() <textacy.extract.to_bag_of_words>`
         but aggregated over all docs.
 
         Args:
@@ -512,7 +511,7 @@ class Corpus:
         word_counts_ = collections.Counter()
         for doc in self:
             word_counts_.update(
-                extensions.to_bag_of_words(doc, by=by, weighting="count", **kwargs)
+                extract.to_bag_of_words(doc, by=by, weighting="count", **kwargs)
             )
         if weighting == "count":
             word_counts_ = dict(word_counts_)
@@ -574,7 +573,7 @@ class Corpus:
         word_doc_counts_ = collections.Counter()
         for doc in self:
             word_doc_counts_.update(
-                extensions.to_bag_of_words(doc, by=by, weighting="binary", **kwargs)
+                extract.to_bag_of_words(doc, by=by, weighting="binary", **kwargs)
             )
         if weighting == "count":
             word_doc_counts_ = dict(word_doc_counts_)

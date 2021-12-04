@@ -1,4 +1,5 @@
 from .acros import acronyms, acronyms_and_definitions
+from .bags import to_bag_of_words, to_bag_of_terms
 from .basics import words, ngrams, entities, noun_chunks, terms
 from .kwic import keyword_in_context
 from .matches import token_matches, regex_matches
