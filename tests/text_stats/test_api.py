@@ -3,7 +3,6 @@ from contextlib import nullcontext as does_not_raise
 
 import pyphen
 import pytest
-import spacy
 
 import textacy
 import textacy.text_stats
@@ -273,30 +272,3 @@ def test_load_hyphenator(lang, context):
     with context:
         hyphenator = textacy.text_stats.utils.load_hyphenator(lang=lang)
         assert isinstance(hyphenator, pyphen.Pyphen)
-
-
-def test_get_set_doc_extensions(en_doc):
-    for name in textacy.text_stats.get_doc_extensions().keys():
-        assert en_doc.has_extension(name) is False
-    textacy.text_stats.set_doc_extensions(force=True)
-    for name in textacy.text_stats.get_doc_extensions().keys():
-        assert en_doc.has_extension(name)
-
-
-@pytest.mark.parametrize(
-    "ext_name, func",
-    [
-        ("n_sents", textacy.text_stats.basics.n_sents),
-        ("n_words", textacy.text_stats.basics.n_words),
-        ("n_chars", textacy.text_stats.basics.n_chars),
-        ("n_syllables", textacy.text_stats.basics.n_syllables),
-    ],
-)
-def test_check_doc_extensions(en_doc, ext_name, func):
-    assert getattr(en_doc._, ext_name) == func(en_doc)
-
-
-def test_remove_doc_extensions(en_doc):
-    textacy.text_stats.remove_doc_extensions()
-    for name in textacy.text_stats.get_doc_extensions().keys():
-        assert en_doc.has_extension(name) is False
