@@ -278,7 +278,9 @@ class TestIOUtils:
         assert (
             len(
                 list(
-                    io.get_filepaths(TESTS_DIR, ignore_regex="test_", ignore_invisible=True)
+                    io.get_filepaths(
+                        TESTS_DIR, ignore_regex="(conf)?test", ignore_invisible=True
+                    )
                 )
             )
             == 0
