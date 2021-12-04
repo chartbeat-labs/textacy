@@ -9,4 +9,4 @@ from .triples import (
     subject_verb_object_triples,
 )
 from .utils import terms_to_strings, clean_term_strings, aggregate_term_variants
-from . import extensions
+from . import _exts
