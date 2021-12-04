@@ -1,9 +1,15 @@
-from typing import Any, Dict
+"""
+TODO
+"""
+from __future__ import annotations
+
+from typing import Dict
 
 from spacy.tokens import Doc
 
-from . import acros, basics, keyterms, kwic, matches, triples
-from .. import errors
+from . import acros, bags, basics, keyterms, kwic, matches, triples
+from .. import errors, types
+from ..spacier.extensions import doc_extensions_registry
 
 
 def extract_keyterms(doc: Doc, method: str, **kwargs):
@@ -33,48 +39,72 @@ def extract_keyterms(doc: Doc, method: str, **kwargs):
         )
 
 
-def get_doc_extensions() -> Dict[str, Dict[str, Any]]:
-    """
-    Get :mod:`textacy.extract` custom property and method doc extensions
-    that can be set on or removed from the global :class:`spacy.tokens.Doc`.
-    """
-    return _DOC_EXTENSIONS
+@doc_extensions_registry.register("extract.acros")
+def _get_doc_extensions_extract_acros() -> Dict[str, Dict[str, types.DocExtFunc]]:
+    return {
+        "extract_acronyms": {"method": acros.acronyms},
+        "extract_acronyms_and_definitions": {"method": acros.acronyms_and_definitions},
+    }
 
 
-def set_doc_extensions():
-    """
-    Set :mod:`textacy.extract` custom property and method doc extensions
-    on the global :class:`spacy.tokens.Doc`.
-    """
-    for name, kwargs in get_doc_extensions().items():
-        if not Doc.has_extension(name):
-            Doc.set_extension(name, **kwargs)
+@doc_extensions_registry.register("extract.bags")
+def _get_doc_extensions_extract_bags() -> Dict[str, Dict[str, types.DocExtFunc]]:
+    return {
+        "to_bag_of_words": {"method": bags.to_bag_of_words},
+        "to_bag_of_terms": {"method": bags.to_bag_of_terms},
+    }
 
 
-def remove_doc_extensions():
-    """
-    Remove :mod:`textacy.extract` custom property and method doc extensions
-    from the global :class:`spacy.tokens.Doc`.
-    """
-    for name in get_doc_extensions().keys():
-        _ = Doc.remove_extension(name)
+@doc_extensions_registry.register("extract.basics")
+def _get_doc_extensions_extract_basics() -> Dict[str, Dict[str, types.DocExtFunc]]:
+    return {
+        "extract_words": {"method": basics.words},
+        "extract_ngrams": {"method": basics.ngrams},
+        "extract_entities": {"method": basics.entities},
+        "extract_noun_chunks": {"method": basics.noun_chunks},
+        "extract_terms": {"method": basics.terms},
+    }
 
 
-_DOC_EXTENSIONS: Dict[str, Dict[str, Any]] = {
-    "extract_words": {"method": basics.words},
-    "extract_ngrams": {"method": basics.ngrams},
-    "extract_entities": {"method": basics.entities},
-    "extract_noun_chunks": {"method": basics.noun_chunks},
-    "extract_terms": {"method": basics.terms},
-    "extract_token_matches": {"method": matches.token_matches},
-    "extract_regex_matches": {"method": matches.regex_matches},
-    "extract_subject_verb_object_triples": {
-        "method": triples.subject_verb_object_triples
-    },
-    "extract_semistructured_statements": {"method": triples.semistructured_statements},
-    "extract_direct_quotations": {"method": triples.direct_quotations},
-    "extract_acronyms": {"method": acros.acronyms},
-    "extract_acronyms_and_definitions": {"method": acros.acronyms_and_definitions},
-    "extract_keyword_in_context": {"method": kwic.keyword_in_context},
-    "extract_keyterms": {"method": extract_keyterms},
-}
+@doc_extensions_registry.register("extract.kwic")
+def _get_doc_extensions_extract_kwic() -> Dict[str, Dict[str, types.DocExtFunc]]:
+    return {"extract_keyword_in_context": {"method": kwic.keyword_in_context}}
+
+
+@doc_extensions_registry.register("extract.matches")
+def _get_doc_extensions_extract_matches() -> Dict[str, Dict[str, types.DocExtFunc]]:
+    return {
+        "extract_token_matches": {"method": matches.token_matches},
+        "extract_regex_matches": {"method": matches.regex_matches},
+    }
+
+
+@doc_extensions_registry.register("extract.triples")
+def _get_doc_extensions_extract_triples() -> Dict[str, Dict[str, types.DocExtFunc]]:
+    return {
+        "extract_subject_verb_object_triples": {
+            "method": triples.subject_verb_object_triples
+        },
+        "extract_semistructured_statements": {
+            "method": triples.semistructured_statements
+        },
+        "extract_direct_quotations": {"method": triples.direct_quotations},
+    }
+
+
+@doc_extensions_registry.register("extract.keyterms")
+def _get_doc_extensions_extract_keyterms() -> Dict[str, Dict[str, types.DocExtFunc]]:
+    return {"extract_keyterms": {"method": extract_keyterms}}
+
+
+@doc_extensions_registry.register("extract")
+def _get_doc_extensions_extract() -> Dict[str, Dict[str, types.DocExtFunc]]:
+    return {
+        **_get_doc_extensions_extract_acros(),
+        **_get_doc_extensions_extract_bags(),
+        **_get_doc_extensions_extract_basics(),
+        **_get_doc_extensions_extract_kwic(),
+        **_get_doc_extensions_extract_matches(),
+        **_get_doc_extensions_extract_triples(),
+        **_get_doc_extensions_extract_keyterms(),
+    }
