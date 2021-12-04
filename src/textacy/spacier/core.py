@@ -7,7 +7,7 @@ from __future__ import annotations
 import functools
 import logging
 import pathlib
-from typing import Optional
+from typing import Dict, Optional
 
 import spacy
 from cachetools import cached
@@ -192,3 +192,30 @@ def _make_spacy_doc_from_doc(doc: Doc, lang: types.LangLikeInContext) -> Doc:
             f"as that used by the `lang` pipeline ({spacy_lang.vocab})"
         )
     return doc
+
+
+def get_doc_preview(doc: Doc) -> str:
+    """
+    Get a short preview of ``doc``, including the number of tokens
+    and an initial snippet.
+    """
+    snippet = doc.text[:50].replace("\n", " ")
+    if len(snippet) == 50:
+        snippet = snippet[:47] + "..."
+    return f'Doc({len(doc)} tokens: "{snippet}")'
+
+
+def get_doc_meta(doc: Doc) -> dict:
+    """Get custom metadata added to ``doc`` ."""
+    return doc.user_data.get("textacy", {}).get("meta", {})
+
+
+def set_doc_meta(doc: Doc, value: dict) -> None:
+    """Add custom metadata ``value`` to ``doc``."""
+    if not isinstance(value, dict):
+        raise TypeError(errors.type_invalid_msg("value", type(value), Dict))
+    try:
+        doc.user_data["textacy"]["meta"] = value
+    except KeyError:
+        # TODO: confirm that this is the same. it is, right??
+        doc.user_data["textacy"] = {"meta": value}
