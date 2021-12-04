@@ -28,6 +28,7 @@ Considering the number of speeches, we'd like to avoid a full read-through and i
 
 ```pycon
 >>> import textacy.extract
+>>> textacy.set_doc_extensions("extract")  # just setting these now -- we'll use them later!
 >>> list(textacy.extract.keyword_in_context(record.text, "work(ing|ers?)", window_width=35))
 [('ker, 480,000 Federal employees are ', 'working', ' without pay, a form of involuntary'),
  (' 280,000 Federal employees are not ', 'working', ', and they will be paid. Virtually '),

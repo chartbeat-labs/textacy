@@ -284,8 +284,8 @@ You can transform a corpus into a document-term matrix, with flexible tokenizati
 ...     tf_type="linear", apply_idf=True, idf_type="smooth", norm="l2",
 ...     min_df=2, max_df=0.95)
 >>> doc_term_matrix = vectorizer.fit_transform(
-...     (doc._.to_terms_list(ngrams=1, entities=True, as_strings=True)
-...      for doc in corpus))
+...     (term.text for term in extract.terms(ngs=1, ents=True, ncs=True)
+...     for doc in corpus))
 >>> print(repr(doc_term_matrix))
 <1240x12577 sparse matrix of type '<class 'numpy.float64'>'
     with 217067 stored elements in Compressed Sparse Row format>

@@ -89,7 +89,8 @@ def test_doc_extensions(doc):
 
 def test_extract_token_matches(doc):
     patterns = [
-        {"POS": {"IN": ["ADJ", "DET"]}, "OP": "+"}, {"ORTH": {"REGEX": "workers?"}}
+        {"POS": {"IN": ["ADJ", "DET"]}, "OP": "+"},
+        {"ORTH": {"REGEX": "workers?"}},
     ]
     results = list(textacy.extract.token_matches(doc, patterns))
     assert results and len(results) == 2
@@ -108,7 +109,8 @@ def test_corpus_metadata(corpus):
 
 def test_corpus_extract_token_matches(corpus):
     patterns = [
-        {"POS": {"IN": ["ADJ", "DET"]}, "OP": "+"}, {"ORTH": {"REGEX": "workers?"}}
+        {"POS": {"IN": ["ADJ", "DET"]}, "OP": "+"},
+        {"ORTH": {"REGEX": "workers?"}},
     ]
     matches = itertools.chain.from_iterable(
         textacy.extract.token_matches(doc, patterns) for doc in corpus
@@ -119,12 +121,11 @@ def test_corpus_extract_token_matches(corpus):
 
 
 def test_doc_extract_keyterms(doc):
+    textacy.set_doc_extensions("extract")
     result = doc._.extract_keyterms(
         "textrank", normalize="lemma", window_size=10, edge_weighting="count", topn=10
     )
     assert result and isinstance(result, list)
     assert all(isinstance(key, str) for key, _ in result)
     assert all(isinstance(val, float) for _, val in result)
-    assert (
-        sorted([val for _, val in result], reverse=True) == [val for _, val in result]
-    )
+    assert sorted([val for _, val in result], reverse=True) == [val for _, val in result]

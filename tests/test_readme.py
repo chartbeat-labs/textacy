@@ -55,7 +55,7 @@ def test_vectorization_and_topic_modeling_functionality(corpus):
     )
     doc_term_matrix = vectorizer.fit_transform(
         (
-            (term.text for term in doc._.extract_terms(ngs=1, ents=True, ncs=True))
+            (term.text for term in extract.terms(doc, ngs=1, ents=True, ncs=True))
             for doc in corpus
         )
     )
