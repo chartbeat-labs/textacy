@@ -15,7 +15,7 @@ from cachetools.keys import hashkey
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from . import utils as sputils
+from . import extensions, utils as sputils
 from .. import cache, errors, types, utils
 
 
@@ -219,3 +219,11 @@ def set_doc_meta(doc: Doc, value: dict) -> None:
     except KeyError:
         # TODO: confirm that this is the same. it is, right??
         doc.user_data["textacy"] = {"meta": value}
+
+
+@extensions.doc_extensions_registry.register("spacier")
+def _get_spacier_doc_extensions() -> Dict[str, Dict[str, types.DocExtFunc]]:
+    return {
+        "preview": {"getter": get_doc_preview},
+        "meta": {"getter": get_doc_meta, "setter": set_doc_meta},
+    }
