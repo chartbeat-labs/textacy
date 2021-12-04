@@ -1,13 +1,12 @@
 import pytest
-
 import spacy
 
 import textacy
+from textacy import extract
 
 
 @pytest.fixture(scope="module")
 def doc():
-    lang = textacy.load_spacy_lang("en_core_web_sm")
     text = (
         "Many years later, as he faced the firing squad, Colonel Aureliano Buendía was "
         "to remember that distant afternoon when his father took him to discover ice. "
@@ -17,61 +16,12 @@ def doc():
         "things lacked names, and in order to indicate them it was necessary to point."
     )
     meta = {"author": "Gabriel García Márquez", "title": "Cien años de soledad"}
-    return textacy.make_spacy_doc((text, meta), lang=lang)
+    return textacy.make_spacy_doc((text, meta), lang="en_core_web_sm")
 
 
-def test_extensions_exist(doc):
-    for name in textacy.get_doc_extensions().keys():
-        assert doc.has_extension(name)
-
-
-def test_set_remove_extensions(doc):
-    textacy.remove_doc_extensions()
-    for name in textacy.get_doc_extensions().keys():
-        assert doc.has_extension(name) is False
-    textacy.set_doc_extensions()
-    for name in textacy.get_doc_extensions().keys():
-        assert spacy.tokens.Doc.has_extension(name) is True
-
-
-def test_preview(doc):
-    preview = doc._.preview
-    assert isinstance(preview, str)
-    assert preview.startswith("Doc")
-
-
-class TestMeta:
-
-    def test_getter(self, doc):
-        meta = doc._.meta
-        assert meta
-        assert isinstance(meta, dict)
-
-    def test_setter(self, doc):
-        meta = {"foo": "bar"}
-        doc._.meta = meta
-        assert doc._.meta == meta
-
-    def test_setter_invalid(self, doc):
-        with pytest.raises(TypeError):
-            doc._.meta = None
-
-
-def test_tokenized_text(doc):
-    result = doc._.to_tokenized_text()
-    assert result
-    assert (
-        isinstance(result, list) and
-        isinstance(result[0], list) and
-        isinstance(result[0][0], str)
-    )
-    assert len(result) == sum(1 for _ in doc.sents)
-
-
-class TestBagOfWords():
-
+class TestBagOfWords:
     def test_default(self, doc):
-        result = doc._.to_bag_of_words()
+        result = extract.to_bag_of_words(doc)
         assert isinstance(result, dict)
         assert all(
             isinstance(key, str) and isinstance(val, int) for key, val in result.items()
@@ -81,7 +31,7 @@ class TestBagOfWords():
         "by", ["lemma_", "lemma", "lower_", "lower", "norm_", "norm", "orth_", "orth"]
     )
     def test_by(self, by, doc):
-        result = doc._.to_bag_of_words(by=by)
+        result = extract.to_bag_of_words(doc, by=by)
         assert isinstance(result, dict)
         if by.endswith("_"):
             assert all(isinstance(key, str) for key in result.keys())
@@ -90,7 +40,7 @@ class TestBagOfWords():
 
     @pytest.mark.parametrize("weighting", ["count", "freq", "binary"])
     def test_weighting(self, weighting, doc):
-        result = doc._.to_bag_of_words(weighting=weighting)
+        result = extract.to_bag_of_words(doc, weighting=weighting)
         assert isinstance(result, dict)
         if weighting == "freq":
             assert all(isinstance(val, float) for val in result.values())
@@ -102,32 +52,31 @@ class TestBagOfWords():
         [{"filter_stops": True}, {"filter_punct": True}, {"filter_nums": True}],
     )
     def test_kwargs(self, kwargs, doc):
-        result = doc._.to_bag_of_words(**kwargs)
+        result = extract.to_bag_of_words(doc, **kwargs)
         assert isinstance(result, dict)
 
     @pytest.mark.parametrize("by", ["LEMMA", spacy.attrs.LEMMA, True])
     def test_invalid_by(self, by, doc):
         with pytest.raises((AttributeError, TypeError)):
-            _ = doc._.to_bag_of_words(by=by)
+            _ = extract.to_bag_of_words(doc, by=by)
 
     @pytest.mark.parametrize("weighting", ["COUNT", "frequency", True])
     def test_invalid_weighting(self, weighting, doc):
         with pytest.raises(ValueError):
-            _ = doc._.to_bag_of_words(weighting=weighting)
+            _ = extract.to_bag_of_words(doc, weighting=weighting)
 
 
-class TestBagOfTerms():
-
+class TestBagOfTerms:
     def test_all_null(self, doc):
         with pytest.raises(ValueError):
-            _ = doc._.to_bag_of_terms()
+            _ = extract.to_bag_of_terms(doc)
 
     @pytest.mark.parametrize(
         "kwargs",
         [{"ngs": 2}, {"ngs": [2, 3], "ents": True}, {"ents": True, "ncs": True}],
     )
     def test_simple_kwargs(self, kwargs, doc):
-        result = doc._.to_bag_of_terms(**kwargs)
+        result = extract.to_bag_of_terms(doc, **kwargs)
         assert isinstance(result, dict)
         assert all(
             isinstance(key, str) and isinstance(val, int) for key, val in result.items()
@@ -137,7 +86,7 @@ class TestBagOfTerms():
         "by", ["lemma_", "lemma", "lower_", "lower", "orth_", "orth"]
     )
     def test_by(self, by, doc):
-        result = doc._.to_bag_of_terms(by=by, ngs=2)
+        result = extract.to_bag_of_terms(doc, by=by, ngs=2)
         assert isinstance(result, dict)
         if by.endswith("_"):
             assert all(isinstance(key, str) for key in result.keys())
@@ -146,7 +95,7 @@ class TestBagOfTerms():
 
     @pytest.mark.parametrize("weighting", ["count", "freq", "binary"])
     def test_weighting(self, weighting, doc):
-        result = doc._.to_bag_of_terms(weighting=weighting, ngs=2)
+        result = extract.to_bag_of_terms(doc, weighting=weighting, ngs=2)
         assert isinstance(result, dict)
         if weighting == "freq":
             assert all(isinstance(val, float) for val in result.values())
@@ -156,9 +105,9 @@ class TestBagOfTerms():
     @pytest.mark.parametrize("by", ["LEMMA", spacy.attrs.LEMMA, True])
     def test_invalid_by(self, by, doc):
         with pytest.raises((AttributeError, TypeError)):
-            _ = doc._.to_bag_of_terms(by=by, ngs=2)
+            _ = extract.to_bag_of_terms(doc, by=by, ngs=2)
 
     @pytest.mark.parametrize("weighting", ["COUNT", "frequency", True])
     def test_invalid_weighting(self, weighting, doc):
         with pytest.raises(ValueError):
-            _ = doc._.to_bag_of_terms(weighting=weighting, ngs=2)
+            _ = extract.to_bag_of_terms(doc, weighting=weighting, ngs=2)

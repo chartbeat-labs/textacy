@@ -18,9 +18,16 @@ def doc():
     return nlp(text)
 
 
-def test_extensions_exist(doc):
-    for name in extract.extensions.get_doc_extensions().keys():
-        assert doc.has_extension(name)
+@pytest.mark.parametrize("name", ["extract", "extract.basics", "extract.keyterms"])
+def test_set_get_remove_extensions(doc, name):
+    textacy.set_doc_extensions(name)
+    assert all(doc.has_extension(n) for n in textacy.get_doc_extensions(name).keys())
+    if "." in name:
+        assert not all(
+            doc.has_extension(n) for n in textacy.get_doc_extensions("extract").keys()
+        )
+    textacy.remove_doc_extensions(name)
+    assert not any(doc.has_extension(n) for n in textacy.get_doc_extensions(name).keys())
 
 
 @pytest.mark.parametrize(
@@ -38,14 +45,16 @@ def test_extensions_exist(doc):
         ("extract_direct_quotations", {}),
         ("extract_acronyms", {}),
         ("extract_keyword_in_context", {"keyword": "Macondo"}),
-    ]
+    ],
 )
 def test_extensions_match(doc, ext_name, kwargs):
+    textacy.set_doc_extensions("extract")
     ext = getattr(doc._, ext_name)
-    func = extract.extensions.get_doc_extensions()[ext_name]["method"]
+    func = textacy.get_doc_extensions("extract")[ext_name]["method"]
     ext_val = ext(**kwargs)
     func_val = func(doc, **kwargs)
     if isinstance(func_val, dict):
         assert ext_val == func_val
     else:
         assert list(ext_val) == list(func_val)
+    textacy.remove_doc_extensions("extract")

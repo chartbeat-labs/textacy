@@ -61,3 +61,8 @@ class AugTok(NamedTuple):
 class AugTransform(Protocol):
     def __call__(self, aug_toks: List[AugTok], **kwargs: Any) -> List[AugTok]:
         ...
+
+
+class DocExtFunc(Protocol):
+    def __call__(self, doc: Doc, *args: Any, **kwargs: Any) -> Any:
+        ...

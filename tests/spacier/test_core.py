@@ -6,7 +6,7 @@ from textacy import load_spacy_lang, make_spacy_doc
 
 # TODO: why are we using such a long text here??
 TEXT = (
-    "Since the so-called \"statistical revolution\" in the late 1980s and mid 1990s, "
+    'Since the so-called "statistical revolution" in the late 1980s and mid 1990s, '
     "much Natural Language Processing research has relied heavily on machine learning. "
     "Formerly, many language-processing tasks typically involved the direct hand coding "
     "of rules, which is not in general robust to natural language variation. "
@@ -15,7 +15,7 @@ TEXT = (
     "real-world examples (a corpus is a set of documents, possibly with human or "
     "computer annotations). Many different classes of machine learning algorithms "
     "have been applied to NLP tasks. These algorithms take as input a large set "
-    "of \"features\" that are generated from the input data. Some of the earliest-used "
+    'of "features" that are generated from the input data. Some of the earliest-used '
     "algorithms, such as decision trees, produced systems of hard if-then rules similar "
     "to the systems of hand-written rules that were then common. Increasingly, however, "
     "research has focused on statistical models, which make soft, probabilistic "
@@ -46,7 +46,6 @@ def langs():
 
 
 class TestLoadSpacyLang:
-
     @pytest.mark.parametrize("name", ["en_core_web_sm", "es_core_news_sm"])
     def test_load_model(self, name):
         assert isinstance(load_spacy_lang(name), spacy.language.Language)
@@ -70,7 +69,6 @@ class TestLoadSpacyLang:
 
 
 class TestMakeSpacyDoc:
-
     def test_text_data(self, langs):
         text = "This is an English sentence."
         for lang in langs:
@@ -92,7 +90,7 @@ class TestMakeSpacyDoc:
             # NOTE: I'm cheating with chunk size here, to align with sentence bounds
             ("This is an English sentence. And here is another!", 29),
             ("This is an English sentence. And here is another!", 1000),
-        ]
+        ],
     )
     def test_chunk_size(self, text, chunk_size, en_core_web_sm):
         doc_full = make_spacy_doc(text, en_core_web_sm)
@@ -125,8 +123,30 @@ class TestMakeSpacyDoc:
         [
             ("Hello, how are you my friend?", "es_core_news_sm"),
             ("Hello, how are you my friend?", lambda x: "es_core_news_sm"),
-        ]
+        ],
     )
     def test_invalid_data_lang_combo(self, data, lang, en_core_web_sm):
         with pytest.raises((ValueError, TypeError)):
             _ = make_spacy_doc(en_core_web_sm(data), lang=lang)
+
+
+def test_preview(doc):
+    preview = doc._.preview
+    assert isinstance(preview, str)
+    assert preview.startswith("Doc")
+
+
+class TestMeta:
+    def test_setter(self, doc):
+        meta = {"foo": "bar"}
+        doc._.meta = meta
+        assert doc._.meta == meta
+
+    def test_setter_invalid(self, doc):
+        with pytest.raises(TypeError):
+            doc._.meta = None
+
+    def test_getter(self, doc):
+        meta = doc._.meta
+        assert meta
+        assert isinstance(meta, dict)

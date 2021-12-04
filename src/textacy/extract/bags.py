@@ -1,77 +1,16 @@
-"""
-:mod:`textacy.extensions`: Inspect, extend, and transform spaCy's core ``Doc``
-data structure, either directly via functions that take a ``Doc`` as their first arg
-or as custom attributes / methods on instantiated docs prepended by an underscore:
-
-.. code-block:: pycon
-
-    >>> doc = textacy.make_spacy_doc("This is a short text.", "en_core_web_sm")
-    >>> print(get_preview(doc))
-    Doc(6 tokens: "This is a short text.")
-    >>> print(doc._.preview)
-    Doc(6 tokens: "This is a short text.")
-"""
 from __future__ import annotations
 
 import operator
-from typing import Any, Collection, Dict, List, Literal, Optional, Union
+from typing import Any, Collection, Dict, Literal, Optional, Union
 
 import cytoolz
-from spacy.tokens import Doc
 
-from . import errors, extract, types
-
+from .. import errors, types
+from . import basics
 
 WeightingType = Literal["count", "freq", "binary"]
 SpanGroupByType = Literal["lemma", "lemma_", "lower", "lower_", "orth", "orth_"]
 TokenGroupByType = Union[SpanGroupByType, Literal["norm", "norm_"]]
-
-
-def get_preview(doc: Doc) -> str:
-    """
-    Get a short preview of the ``Doc``, including the number of tokens
-    and an initial snippet.
-    """
-    snippet = doc.text[:50].replace("\n", " ")
-    if len(snippet) == 50:
-        snippet = snippet[:47] + "..."
-    return f'Doc({len(doc)} tokens: "{snippet}")'
-
-
-def get_meta(doc: Doc) -> dict:
-    """Get custom metadata added to ``Doc``."""
-    return doc.user_data.get("textacy", {}).get("meta", {})
-
-
-def set_meta(doc: Doc, value: dict) -> None:
-    """Add custom metadata to ``Doc``."""
-    if not isinstance(value, dict):
-        raise TypeError(errors.type_invalid_msg("value", type(value), Dict))
-    try:
-        doc.user_data["textacy"]["meta"] = value
-    except KeyError:
-        # TODO: confirm that this is the same. it is, right??
-        doc.user_data["textacy"] = {"meta": value}
-
-
-def to_tokenized_text(doc: Doc) -> List[List[str]]:
-    """
-    Transform ``doc`` into an ordered, nested list of token-texts for each sentence.
-
-    Args:
-        doc
-
-    Returns:
-        A list of tokens' texts for each sentence in ``doc``.
-
-    Note:
-        If ``doc`` hasn't been segmented into sentences, the entire document
-        is treated as a single sentence.
-    """
-    if doc.has_annotation("SENT_START"):
-        return [[token.text for token in sent] for sent in doc.sents]
-    else:
-        return [[token.text for token in doc]]
 
 
 def to_bag_of_words(
@@ -118,7 +57,7 @@ def to_bag_of_words(
     See Also:
         :func:`textacy.extract.words()`
     """
-    words = extract.words(doclike, **kwargs)
+    words = basics.words(doclike, **kwargs)
     bow = cytoolz.recipes.countby(operator.attrgetter(by), words)
     bow = _reweight_bag(weighting, bow, doclike)
     return bow
@@ -177,7 +116,7 @@ def to_bag_of_terms(
     See Also:
         :func:`textacy.extract.terms()`
     """
-    terms = extract.terms(doclike, ngs=ngs, ents=ents, ncs=ncs, dedupe=dedupe)
+    terms = basics.terms(doclike, ngs=ngs, ents=ents, ncs=ncs, dedupe=dedupe)
     # spaCy made some awkward changes in the Span API, making it harder to get int ids
     # and adding inconsistencies with equivalent Token API
     # so, here are some hacks to spare users that annoyance
@@ -208,41 +147,3 @@ def _reweight_bag(
         raise ValueError(
             errors.value_invalid_msg("weighting", weighting, {"count", "freq", "binary"})
         )
-
-
-def get_doc_extensions() -> Dict[str, Dict[str, Any]]:
-    """
-    Get textacy's custom property and method doc extensions
-    that can be set on or removed from the global :class:`spacy.tokens.Doc`.
-    """
-    return _DOC_EXTENSIONS
-
-
-def set_doc_extensions():
-    """
-    Set textacy's custom property and method doc extensions
-    on the global :class:`spacy.tokens.Doc`.
-    """
-    for name, kwargs in get_doc_extensions().items():
-        if not Doc.has_extension(name):
-            Doc.set_extension(name, **kwargs)
-
-
-def remove_doc_extensions():
-    """
-    Remove textacy's custom property and method doc extensions
-    from the global :class:`spacy.tokens.Doc`.
-    """
-    for name in get_doc_extensions().keys():
-        _ = Doc.remove_extension(name)
-
-
-_DOC_EXTENSIONS: Dict[str, Dict[str, Any]] = {
-    # property extensions
-    "preview": {"getter": get_preview},
-    "meta": {"getter": get_meta, "setter": set_meta},
-    # method extensions
-    "to_tokenized_text": {"method": to_tokenized_text},
-    "to_bag_of_words": {"method": to_bag_of_words},
-    "to_bag_of_terms": {"method": to_bag_of_terms},
-}
