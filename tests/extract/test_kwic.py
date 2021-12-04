@@ -15,13 +15,11 @@ def text():
 
 
 @pytest.fixture(scope="module")
-def doc(text):
-    nlp = textacy.load_spacy_lang("en_core_web_sm")
-    return nlp(text)
+def doc(text, lang_en):
+    return textacy.make_spacy_doc(text, lang_en)
 
 
 class TestKeywordInContext:
-
     def test_doc_type(self, text, doc):
         text_result = list(extract.keyword_in_context(text, "you"))
         doc_result = list(extract.keyword_in_context(doc, "you"))
@@ -36,7 +34,7 @@ class TestKeywordInContext:
             # ignore_case shouldn't affect anything when keyword is compiled regex
             (re.compile("you", flags=re.IGNORECASE), False),
             (re.compile("you(-er)", flags=re.IGNORECASE), True),
-        ]
+        ],
     )
     def test_keywords(self, text, keyword, ignore_case):
         obs = list(
@@ -61,7 +59,7 @@ class TestKeywordInContext:
             (10, True),
             (3, True),
             (3, False),
-        ]
+        ],
     )
     def test_contexts(self, text, window_width, pad_context):
         obs = list(
@@ -92,10 +90,10 @@ class TestKeywordInContext:
                 10,
                 False,
                 [
-                    ('Today ', 'you', ' are You! '),
-                    ('y you are ', 'You', '! That is '),
-                    ('ve who is ', 'You', '-er than y'),
-                    ('u-er than ', 'you', '!'),
+                    ("Today ", "you", " are You! "),
+                    ("y you are ", "You", "! That is "),
+                    ("ve who is ", "You", "-er than y"),
+                    ("u-er than ", "you", "!"),
                 ],
             ),
             (
@@ -104,8 +102,8 @@ class TestKeywordInContext:
                 10,
                 False,
                 [
-                    ('Today ', 'you', ' are You! '),
-                    ('u-er than ', 'you', '!'),
+                    ("Today ", "you", " are You! "),
+                    ("u-er than ", "you", "!"),
                 ],
             ),
             (
@@ -114,10 +112,10 @@ class TestKeywordInContext:
                 10,
                 True,
                 [
-                    ('    Today ', 'you', ' are You! '),
-                    ('y you are ', 'You', '! That is '),
-                    ('ve who is ', 'You', '-er than y'),
-                    ('u-er than ', 'you', '!         '),
+                    ("    Today ", "you", " are You! "),
+                    ("y you are ", "You", "! That is "),
+                    ("ve who is ", "You", "-er than y"),
+                    ("u-er than ", "you", "!         "),
                 ],
             ),
             (
@@ -126,10 +124,10 @@ class TestKeywordInContext:
                 10,
                 False,
                 [
-                    ('Today ', 'you', ' are You! '),
-                    ('y you are ', 'You', '! That is '),
-                    ('ve who is ', 'You', '-er than y'),
-                    ('u-er than ', 'you', '!'),
+                    ("Today ", "you", " are You! "),
+                    ("y you are ", "You", "! That is "),
+                    ("ve who is ", "You", "-er than y"),
+                    ("u-er than ", "you", "!"),
                 ],
             ),
             (
@@ -138,10 +136,10 @@ class TestKeywordInContext:
                 10,
                 False,
                 [
-                    ('Today ', 'you', ' are You! '),
-                    ('y you are ', 'You', '! That is '),
-                    ('ve who is ', 'You-er', ' than you!'),
-                    ('u-er than ', 'you', '!'),
+                    ("Today ", "you", " are You! "),
+                    ("y you are ", "You", "! That is "),
+                    ("ve who is ", "You-er", " than you!"),
+                    ("u-er than ", "you", "!"),
                 ],
             ),
             (
@@ -150,8 +148,8 @@ class TestKeywordInContext:
                 10,
                 False,
                 [
-                    ('Today ', 'you', ' are You! '),
-                    ('u-er than ', 'you', '!'),
+                    ("Today ", "you", " are You! "),
+                    ("u-er than ", "you", "!"),
                 ],
             ),
         ],

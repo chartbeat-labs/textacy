@@ -5,21 +5,21 @@ from textacy.text_stats import diversity
 
 
 @pytest.fixture(scope="module")
-def ttr_doc():
+def ttr_doc(lang_en):
     text = (
         "Mary had a little lamb, its fleece was white as snow. "
         "And everywhere that Mary went, the lamb was sure to go."
     )
-    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
+    return textacy.make_spacy_doc(text, lang=lang_en)
 
 
 @pytest.fixture(scope="module")
-def mtld_doc():
+def mtld_doc(lang_en):
     text = (
         "Burton loves cats, and cats love Burton. "
         "Burton loves dogs, not as much as cats, but dogs do not love Burton very much."
     )
-    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
+    return textacy.make_spacy_doc(text, lang=lang_en)
 
 
 @pytest.mark.parametrize(

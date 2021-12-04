@@ -25,7 +25,6 @@ def spacy_doc():
 
 
 class TestTextIO:
-
     def test_read_write_bytes(self, tmpdir):
         expected = utils.to_bytes(TEXT)
         for ext in (".txt", ".gz", ".bz2", ".xz"):
@@ -64,16 +63,19 @@ class TestTextIO:
 
 
 class TestJSONIO:
-
     def test_read_write_bytes(self, tmpdir, spacy_doc):
-        expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
+        expected = [
+            {"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)
+        ]
         for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
             filepath = str(tmpdir.join("test_read_write_json_bytes" + ext))
             with pytest.raises(TypeError):
                 io.write_json(expected, filepath, "wb", make_dirs=True)
 
     def test_read_write_unicode(self, tmpdir, spacy_doc):
-        expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
+        expected = [
+            {"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)
+        ]
         for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
             filepath = str(tmpdir.join("test_read_write_json_unicode" + ext))
             io.write_json(expected, filepath, mode="wt", make_dirs=True)
@@ -81,7 +83,9 @@ class TestJSONIO:
             assert observed == expected
 
     def test_read_write_bytes_lines(self, tmpdir, spacy_doc):
-        expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
+        expected = [
+            {"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)
+        ]
         for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
             filepath = str(tmpdir.join("test_read_write_json_lines_bytes" + ext))
             with pytest.raises(TypeError):
@@ -95,7 +99,9 @@ class TestJSONIO:
                 )
 
     def test_read_write_unicode_lines(self, tmpdir, spacy_doc):
-        expected = [{"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)]
+        expected = [
+            {"idx": i, "sent": sent.text} for i, sent in enumerate(spacy_doc.sents)
+        ]
         for ext in (".json", ".json.gz", ".json.bz2", ".json.xz"):
             filepath = str(tmpdir.join("test_read_write_json_lines_unicode" + ext))
             io.write_json(expected, filepath, mode="wt", make_dirs=True, lines=True)
@@ -104,7 +110,6 @@ class TestJSONIO:
 
 
 class TestCSVIO:
-
     def test_read_write_compressed(self, tmpdir):
         expected = [
             ["this is some text", "scandal", 42.0],
@@ -160,7 +165,6 @@ class TestCSVIO:
 
 
 class TestSpacyIO:
-
     @pytest.mark.skip(reason="this takes wayyy too long now, reason unknown")
     def test_read_write_docs(self, tmpdir, spacy_doc):
         expected = [tok.lower_ for tok in spacy_doc]
@@ -180,7 +184,9 @@ class TestSpacyIO:
             next(io.read_spacy_docs(filepath, format="binary", lang=None))
         observed = [
             tok.lower_
-            for doc in io.read_spacy_docs(filepath, format="binary", lang="en_core_web_sm")
+            for doc in io.read_spacy_docs(
+                filepath, format="binary", lang="en_core_web_sm"
+            )
             for tok in doc
         ]
         assert observed == expected
@@ -189,19 +195,24 @@ class TestSpacyIO:
         expected = [tok.tag_ for tok in spacy_doc]
         filepath = str(tmpdir.join("test_read_write_spacy_docs_binary_exclude.bin"))
         io.write_spacy_docs(
-            spacy_doc, filepath, make_dirs=True,
-            format="binary", attrs=["ORTH", "TAG"], store_user_data=False,
+            spacy_doc,
+            filepath,
+            make_dirs=True,
+            format="binary",
+            attrs=["ORTH", "TAG"],
+            store_user_data=False,
         )
         observed = [
             tok.tag_
-            for doc in io.read_spacy_docs(filepath, format="binary", lang="en_core_web_sm")
+            for doc in io.read_spacy_docs(
+                filepath, format="binary", lang="en_core_web_sm"
+            )
             for tok in doc
         ]
         assert observed == expected
 
 
 class TestMatrixIO:
-
     def test_read_write_sparse_csr(self, tmpdir):
         expected = sp.csr_matrix(
             (
@@ -256,7 +267,6 @@ class TestMatrixIO:
 
 
 class TestIOUtils:
-
     def test_get_filepaths(self):
         expected = sorted(
             os.path.join(TESTS_DIR, fname)
@@ -295,7 +305,7 @@ class TestIOUtils:
             ["http://www.foo.bar/bat.zip", "bat.zip"],
             ["www.foo.bar/bat.tar.gz", "bat.tar.gz"],
             ["foo.bar/bat.zip?q=test", "bat.zip"],
-            ["http%3A%2F%2Fwww.foo.bar%2Fbat.tar.gz", "bat.tar.gz"]
+            ["http%3A%2F%2Fwww.foo.bar%2Fbat.tar.gz", "bat.tar.gz"],
         ]
         for url, fname in url_fnames:
             assert io.get_filename_from_url(url) == fname

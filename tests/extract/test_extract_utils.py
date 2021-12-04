@@ -5,31 +5,16 @@ from textacy.extract import utils
 
 
 @pytest.fixture(scope="module")
-def doc():
-    lang = textacy.load_spacy_lang("en_core_web_sm")
-    text = (
-        "Many years later, as he faced the firing squad, Colonel Aureliano Buendía was "
-        "to remember that distant afternoon when his father took him to discover ice. "
-        "At that time Macondo was a village of twenty adobe houses, built on the bank "
-        "of a river of clear water that ran along a bed of polished stones, which were "
-        "white and enormous, like prehistoric eggs. The world was so recent that many "
-        "things lacked names, and in order to indicate them it was necessary to point."
-    )
-    return textacy.make_spacy_doc(text, lang=lang)
+def term_tokens(doc_en):
+    return list(textacy.extract.words(doc_en))
 
 
 @pytest.fixture(scope="module")
-def term_tokens(doc):
-    return list(textacy.extract.words(doc))
-
-
-@pytest.fixture(scope="module")
-def term_spans(doc):
-    return list(textacy.extract.ngrams(doc, 2))
+def term_spans(doc_en):
+    return list(textacy.extract.ngrams(doc_en, 2))
 
 
 class TestTermsToStrings:
-
     def test_term_spans(self, term_spans):
         results = list(utils.terms_to_strings(term_spans, "orth"))
         assert results
@@ -60,18 +45,21 @@ class TestTermsToStrings:
 
 def test_aggregate_term_variants():
     # TODO: the actual results are NOT what i'd expect; figure out why
-    terms = set([
-        "vice versa",
-        "vice-versa",
-        "vice/versa",
-        "BJD",
-        "Burton Jacob DeWilde",
-        "the big black cat named Rico",
-        "the black cat named Rico",
-    ])
+    terms = set(
+        [
+            "vice versa",
+            "vice-versa",
+            "vice/versa",
+            "BJD",
+            "Burton Jacob DeWilde",
+            "the big black cat named Rico",
+            "the black cat named Rico",
+        ]
+    )
     result1 = utils.aggregate_term_variants(terms)
     result2 = utils.aggregate_term_variants(
-        terms, acro_defs={"BJD": "Burton Jacob DeWilde"})
+        terms, acro_defs={"BJD": "Burton Jacob DeWilde"}
+    )
     assert len(result2) <= len(result1) <= len(terms)
 
 

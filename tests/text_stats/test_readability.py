@@ -7,7 +7,7 @@ from textacy.text_stats import readability
 
 
 @pytest.fixture(scope="module")
-def en_doc_easy():
+def en_doc_easy(lang_en):
     # https://simple.wikipedia.org/wiki/Climate_change
     text = (
         "Climate change means the climate of Earth changing. Climate change is now a big problem. "
@@ -17,11 +17,11 @@ def en_doc_easy():
         "Over very large time periods, climate change is caused by variations in the Earth's orbit around the Sun. "
         "The Earth has been much warmer and much cooler than it is today."
     )
-    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
+    return textacy.make_spacy_doc(text, lang=lang_en)
 
 
 @pytest.fixture(scope="module")
-def en_doc_hard():
+def en_doc_hard(lang_en):
     # https://en.wikipedia.org/wiki/Climate_change
     text = (
         "Contemporary climate change includes both the global warming caused by humans, "
@@ -34,11 +34,11 @@ def en_doc_hard():
         "and the release of carbon dioxide from drought-stricken forests. "
         "Collectively, these amplify global warming."
     )
-    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
+    return textacy.make_spacy_doc(text, lang=lang_en)
 
 
 @pytest.fixture(scope="module")
-def es_doc():
+def es_doc(lang_es):
     # https://es.wikipedia.org/wiki/Calentamiento_global
     text = (
         "El calentamiento global es el aumento a largo plazo de la temperatura media del sistema climático "
@@ -51,7 +51,7 @@ def es_doc():
         "Si bien ha habido periodos prehistóricos de calentamiento global,​ varios de los cambios observados "
         "desde mediados del siglo XX no han tenido precedentes desde décadas a milenios."
     )
-    return textacy.make_spacy_doc(text, lang="es_core_news_sm")
+    return textacy.make_spacy_doc(text, lang=lang_es)
 
 
 @pytest.mark.parametrize(

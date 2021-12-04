@@ -2,39 +2,43 @@ import re
 
 import pytest
 
-from textacy import load_spacy_lang
 from textacy import extract
 
 
 @pytest.fixture(scope="module")
-def en_nlp():
-    return load_spacy_lang("en_core_web_sm")
-
-
-@pytest.fixture(scope="module")
-def es_nlp():
-    return load_spacy_lang("es_core_news_sm")
-
-
-@pytest.fixture(scope="module")
-def sss_doc(en_nlp):
+def sss_doc(lang_en):
     text = (
         "In general, Burton DeWilde loves animals, but he does not love *all* animals. "
         "Burton loves his cats Rico and Isaac; Burton loved his cat Lucy. "
         "But Burton DeWilde definitely does not love snakes, spiders, or moths. "
         "Now you know that Burton loves animals and cats in particular."
     )
-    return en_nlp(text)
+    return lang_en(text)
 
 
 @pytest.mark.parametrize(
     "text, svos_exp",
     [
-        ("Burton loves cats.", [(["Burton"], ["loves"], ["cats"])],),
-        ("One of my cats was eating food.", [(["One"], ["was", "eating"], ["food"])],),
-        ("The first dog to arrive wins the treat.", [(["dog"], ["wins"], ["treat"])],),
-        ("Burton was loved by cats.", [(["Burton"], ["was", "loved"], ["cats"])],),
-        ("Food was eaten by my cat.", [(["Food"], ["was", "eaten"], ["cat"])],),
+        (
+            "Burton loves cats.",
+            [(["Burton"], ["loves"], ["cats"])],
+        ),
+        (
+            "One of my cats was eating food.",
+            [(["One"], ["was", "eating"], ["food"])],
+        ),
+        (
+            "The first dog to arrive wins the treat.",
+            [(["dog"], ["wins"], ["treat"])],
+        ),
+        (
+            "Burton was loved by cats.",
+            [(["Burton"], ["was", "loved"], ["cats"])],
+        ),
+        (
+            "Food was eaten by my cat.",
+            [(["Food"], ["was", "eaten"], ["cat"])],
+        ),
         (
             "The treat was won by the first dog to arrive.",
             [(["treat"], ["was", "won"], ["dog"])],
@@ -87,8 +91,8 @@ def sss_doc(en_nlp):
         ),
     ],
 )
-def test_subject_verb_object_triples(text, svos_exp, en_nlp):
-    doc = en_nlp(text)
+def test_subject_verb_object_triples(text, svos_exp, lang_en):
+    doc = lang_en(text)
     svos = list(extract.subject_verb_object_triples(doc))
     assert all(
         hasattr(svo, attr) for svo in svos for attr in ["subject", "verb", "object"]
@@ -180,7 +184,10 @@ def test_semistructured_statements(sss_doc, entity, cue, fragment_len_range, exp
 @pytest.mark.parametrize(
     "text, exp",
     [
-        ('Burton said, "I love cats!"', [(["Burton"], ["said"], '"I love cats!"')],),
+        (
+            'Burton said, "I love cats!"',
+            [(["Burton"], ["said"], '"I love cats!"')],
+        ),
         # NOTE: this case is failing as of spacy v3.2
         # let's hide it for now so that tests pass overall
         # (
@@ -206,11 +213,14 @@ def test_semistructured_statements(sss_doc, entity, cue, fragment_len_range, exp
             'Burton claims that his favorite book is "One Hundred Years of Solitude".',
             [],
         ),
-        ('Burton thinks that cats are "cuties".', [],),
+        (
+            'Burton thinks that cats are "cuties".',
+            [],
+        ),
     ],
 )
-def test_direct_quotations(en_nlp, text, exp):
-    obs = list(extract.direct_quotations(en_nlp(text)))
+def test_direct_quotations(lang_en, text, exp):
+    obs = list(extract.direct_quotations(lang_en(text)))
     assert all(hasattr(dq, attr) for dq in obs for attr in ["speaker", "cue", "content"])
     obs_text = [
         ([tok.text for tok in speaker], [tok.text for tok in cue], content.text)
@@ -232,8 +242,8 @@ def test_direct_quotations(en_nlp, text, exp):
         ),
     ],
 )
-def test_direct_quotations_spanish(es_nlp, text, exp):
-    obs = extract.direct_quotations(es_nlp(text))
+def test_direct_quotations_spanish(lang_es, text, exp):
+    obs = extract.direct_quotations(lang_es(text))
     obs_text = [
         ([tok.text for tok in speaker], [tok.text for tok in cue], content.text)
         for speaker, cue, content in obs

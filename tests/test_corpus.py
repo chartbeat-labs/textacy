@@ -17,22 +17,16 @@ pytestmark = pytest.mark.skipif(
 
 
 @pytest.fixture(scope="module")
-def en_core_web_sm():
-    return load_spacy_lang("en_core_web_sm")
+def langs(lang_en):
+    return ["en_core_web_sm", lang_en]
 
 
 @pytest.fixture(scope="module")
-def langs():
-    return ["en_core_web_sm", load_spacy_lang("en_core_web_sm")]
-
-
-@pytest.fixture(scope="module")
-def corpus(en_core_web_sm):
-    return Corpus(en_core_web_sm, data=DATASET.records(limit=5))
+def corpus(lang_en):
+    return Corpus(lang_en, data=DATASET.records(limit=5))
 
 
 class TestCorpusInit:
-
     def test_init_lang(self, langs):
         for lang in langs:
             assert isinstance(Corpus(lang), Corpus)
@@ -42,28 +36,28 @@ class TestCorpusInit:
         with pytest.raises(TypeError):
             Corpus(lang)
 
-    def test_init_texts(self, en_core_web_sm):
+    def test_init_texts(self, lang_en):
         limit = 3
         texts = list(DATASET.texts(limit=limit))
-        corpus = Corpus(en_core_web_sm, data=texts)
+        corpus = Corpus(lang_en, data=texts)
         assert len(corpus) == len(corpus.docs) == limit
         assert all(doc.vocab is corpus.spacy_lang.vocab for doc in corpus)
         assert all(text == doc.text for text, doc in zip(texts, corpus))
 
-    def test_init_records(self, en_core_web_sm):
+    def test_init_records(self, lang_en):
         limit = 3
         records = list(DATASET.records(limit=limit))
-        corpus = Corpus(en_core_web_sm, data=records)
+        corpus = Corpus(lang_en, data=records)
         assert len(corpus) == len(corpus.docs) == limit
         assert all(doc.vocab is corpus.spacy_lang.vocab for doc in corpus)
         assert all(record[0] == doc.text for record, doc in zip(records, corpus))
         assert all(record[1] == doc._.meta for record, doc in zip(records, corpus))
 
-    def test_init_docs(self, en_core_web_sm):
+    def test_init_docs(self, lang_en):
         limit = 3
         texts = DATASET.texts(limit=limit)
-        docs = [en_core_web_sm(text) for text in texts]
-        corpus = Corpus(en_core_web_sm, data=docs)
+        docs = [lang_en(text) for text in texts]
+        corpus = Corpus(lang_en, data=docs)
         assert len(corpus) == len(corpus.docs) == limit
         assert all(doc.vocab is corpus.spacy_lang.vocab for doc in corpus)
         assert all(doc1 is doc2 for doc1, doc2 in zip(docs, corpus))
@@ -76,7 +70,6 @@ class TestCorpusInit:
 
 
 class TestCorpusDunder:
-
     def test_str(self, corpus):
         cstr = str(corpus)
         assert cstr.startswith("Corpus")
@@ -101,7 +94,6 @@ class TestCorpusDunder:
 
 
 class TestCorpusProperties:
-
     def test_vectors(self, corpus):
         vectors = corpus.vectors
         assert isinstance(vectors, np.ndarray)
@@ -130,14 +122,20 @@ class TestCorpusMethods:
         result = corpus.agg_metadata(name, agg_func)
         assert isinstance(result, exp_type)
 
-    def test_add(self, corpus, en_core_web_sm):
+    def test_add(self, corpus, lang_en):
         datas = (
             "This is an english sentence.",
             ("This is an english sentence.", {"foo": "bar"}),
-            en_core_web_sm("This is an english sentence."),
+            lang_en("This is an english sentence."),
             ["This is one sentence.", "This is another sentence."],
-            [("This is sentence #1.", {"foo": "bar"}), ("This is sentence #2.", {"bat": "baz"})],
-            [en_core_web_sm("This is sentence #1"), en_core_web_sm("This is sentence #2")],
+            [
+                ("This is sentence #1.", {"foo": "bar"}),
+                ("This is sentence #2.", {"bat": "baz"}),
+            ],
+            [
+                lang_en("This is sentence #1"),
+                lang_en("This is sentence #2"),
+            ],
         )
         n_docs = corpus.n_docs
         for data in datas:
@@ -149,7 +147,10 @@ class TestCorpusMethods:
     def test_add_nprocess(self, corpus):
         datas = (
             ["This is one sentence.", "This is another sentence."],
-            [("This is sentence #1.", {"foo": "bar"}), ("This is sentence #2.", {"bat": "baz"})],
+            [
+                ("This is sentence #1.", {"foo": "bar"}),
+                ("This is sentence #2.", {"bat": "baz"}),
+            ],
         )
         n_docs = corpus.n_docs
         for data in datas:
@@ -218,10 +219,10 @@ class TestCorpusMethods:
         with pytest.raises(ValueError):
             corpus.word_doc_counts(weighting="foo")
 
-    def test_corpus_save_and_load(self, corpus, tmpdir, en_core_web_sm):
+    def test_corpus_save_and_load(self, corpus, tmpdir, lang_en):
         filepath = str(tmpdir.join("test_corpus_save_and_load.bin"))
         corpus.save(filepath)
-        loaded_corpus = Corpus.load(en_core_web_sm, filepath)
+        loaded_corpus = Corpus.load(lang_en, filepath)
         assert isinstance(loaded_corpus, Corpus)
         assert len(loaded_corpus) == len(corpus)
         assert loaded_corpus.spacy_lang.meta == corpus.spacy_lang.meta

@@ -9,37 +9,13 @@ import textacy.text_stats
 
 
 @pytest.fixture(scope="module")
-def en_doc():
-    text = (
-        "Many years later, as he faced the firing squad, Colonel Aureliano Buendía was "
-        "to remember that distant afternoon when his father took him to discover ice. "
-        "At that time Macondo was a village of twenty adobe houses, built on the bank "
-        "of a river of clear water that ran along a bed of polished stones, which were "
-        "white and enormous, like prehistoric eggs. The world was so recent that many "
-        "things lacked names, and in order to indicate them it was necessary to point."
-    )
-    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
+def ts_en(doc_en):
+    return textacy.text_stats.TextStats(doc_en)
 
 
 @pytest.fixture(scope="module")
-def ts_en(en_doc):
-    return textacy.text_stats.TextStats(en_doc)
-
-
-@pytest.fixture(scope="module")
-def ts_es():
-    text = (
-        "Muchos años después, frente al pelotón de fusilamiento, el coronel Aureliano "
-        "Buendía había de recordar aquella tarde remota en que su padre lo llevó a "
-        "conocer el hielo. Macondo era entonces una aldea de veinte casas de barro y "
-        "cañabrava construidas a la orilla de un río de aguas diáfanas que se precipitaban "
-        "por un lecho de piedras pulidas, blancas y enormes como huevos prehistóricos. "
-        "El mundo era tan reciente, que muchas cosas carecían de nombre, y para "
-        "mencionarlas había que señalarlas con el dedo."
-    )
-    return textacy.text_stats.TextStats(
-        textacy.make_spacy_doc(text, lang="es_core_news_sm")
-    )
+def ts_es(doc_es):
+    return textacy.text_stats.TextStats(doc_es)
 
 
 @pytest.mark.parametrize(

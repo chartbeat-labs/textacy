@@ -9,18 +9,8 @@ from textacy.representations import Vectorizer
 
 
 @pytest.fixture(scope="module")
-def term_lists():
-    texts = [
-        "Mary had a little lamb. Its fleece was white as snow.",
-        "Everywhere that Mary went the lamb was sure to go.",
-        "It followed her to school one day, which was against the rule.",
-        "It made the children laugh and play to see a lamb at school.",
-        "And so the teacher turned it out, but still it lingered near.",
-        "It waited patiently about until Mary did appear.",
-        "Why does the lamb love Mary so? The eager children cry.",
-        "Mary loves the lamb, you know, the teacher did reply.",
-    ]
-    corpus = Corpus("en_core_web_sm", data=texts)
+def term_lists(lang_en, text_lines_en):
+    corpus = Corpus(lang_en, data=text_lines_en)
     term_lists_ = [
         (term.text.lower() for term in extract.terms(doc, ngs=1, ents=None))
         for doc in corpus

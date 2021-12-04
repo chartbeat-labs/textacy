@@ -1,24 +1,12 @@
 import pytest
 import scipy.sparse as sp
 
-import textacy
 from textacy import extract, representations
 
 
 @pytest.fixture(scope="module")
-def tokenized_docs():
-    texts = [
-        "Mary had a little lamb. Its fleece was white as snow.",
-        "Everywhere that Mary went the lamb was sure to go.",
-        "It followed her to school one day, which was against the rule.",
-        "It made the children laugh and play to see a lamb at school.",
-        "And so the teacher turned it out, but still it lingered near.",
-        "It waited patiently about until Mary did appear.",
-        "Why does the lamb love Mary so? The eager children cry.",
-        "Mary loves the lamb, you know, the teacher did reply.",
-    ]
-    nlp = textacy.load_spacy_lang("en_core_web_sm")
-    docs = list(nlp.pipe(texts))
+def tokenized_docs(lang_en, text_lines_en):
+    docs = list(lang_en.pipe(text_lines_en))
     tokenized_docs = [
         [term.text.lower() for term in extract.terms(doc, ngs=1)] for doc in docs
     ]

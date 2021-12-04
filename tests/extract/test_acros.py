@@ -3,12 +3,6 @@ import pytest
 from spacy.tokens import Token
 
 from textacy import extract
-from textacy import load_spacy_lang
-
-
-@pytest.fixture(scope="module")
-def spacy_lang():
-    return load_spacy_lang("en_core_web_sm")
 
 
 @pytest.mark.parametrize(
@@ -30,7 +24,7 @@ def spacy_lang():
         "WASPs",
         "G-8",
         "A-TReC",
-    ]
+    ],
 )
 def test_is_acronym_good(token):
     assert extract.acros.is_acronym(token)
@@ -51,7 +45,7 @@ def test_is_acronym_good(token):
         "1",
         " ",
         "",
-    ]
+    ],
 )
 def test_is_acronym_bad(token):
     assert not extract.acros.is_acronym(token)
@@ -59,11 +53,7 @@ def test_is_acronym_bad(token):
 
 @pytest.mark.parametrize(
     "token,exclude,expected",
-    [
-        ("NASA", {"NASA"}, False),
-        ("NASA", {"CSA", "ISS"}, True),
-        ("NASA", None, True)
-    ]
+    [("NASA", {"NASA"}, False), ("NASA", {"CSA", "ISS"}, True), ("NASA", None, True)],
 )
 def test_is_acronym_exclude(token, exclude, expected):
     assert extract.acros.is_acronym(token, exclude=exclude) == expected
@@ -74,17 +64,16 @@ def test_is_acronym_exclude(token, exclude, expected):
     [
         ("I want to work for NASA when I grow up, but not NOAA.", ["NASA", "NOAA"]),
         ("I want to live in the U.S. Do you?", ["U.S."]),
-    ]
+    ],
 )
-def test_acronyms(spacy_lang, text, exp):
-    doc = spacy_lang(text)
+def test_acronyms(lang_en, text, exp):
+    doc = lang_en(text)
     obs = list(extract.acronyms(doc))
     assert all(isinstance(tok, Token) for tok in obs)
     assert [tok.text for tok in obs] == exp
 
 
 class TestAcronymsAndDefinitions:
-
     @pytest.mark.parametrize(
         "text, exp",
         [
@@ -116,10 +105,10 @@ class TestAcronymsAndDefinitions:
                 # {"W.A.S.P": "White Anglo Saxon Protestant"},
                 {"W.A.S.P.": ""},
             ),
-        ]
+        ],
     )
-    def test_default(self, spacy_lang, text, exp):
-        obs = extract.acronyms_and_definitions(spacy_lang(text))
+    def test_default(self, lang_en, text, exp):
+        obs = extract.acronyms_and_definitions(lang_en(text))
         assert obs == exp
 
     @pytest.mark.parametrize(
@@ -142,6 +131,6 @@ class TestAcronymsAndDefinitions:
             ),
         ],
     )
-    def test_default(self, spacy_lang, text, known, exp):
-        obs = extract.acronyms_and_definitions(spacy_lang(text), known_acro_defs=known)
+    def test_default(self, lang_en, text, known, exp):
+        obs = extract.acronyms_and_definitions(lang_en(text), known_acro_defs=known)
         assert obs == exp
