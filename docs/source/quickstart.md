@@ -1,6 +1,6 @@
 # Quickstart
 
-First things first: Import the package. Most functionality is available from this top-level import, but we'll see that some features require their own imports.
+First things first: Import the package. Some functionality is available from this top-level import, but we'll see that many features require their own imports.
 
 ```pycon
 >>> import textacy
@@ -8,7 +8,7 @@ First things first: Import the package. Most functionality is available from thi
 
 ## Working with Text
 
-Let's start with a single text document:
+Let's start with a single text:
 
 ```pycon
 >>> text = (
@@ -21,8 +21,6 @@ Let's start with a single text document:
 ...     "of typical real-world examples."
 ... )
 ```
-
-**Note:** In almost all cases, textacy (as well as spaCy) expects to be working with unicode text data. Throughout the code, this is indicated as `str` to be consistent with Python 3's default string type; users of Python 2, however, must be mindful to use `unicode`, and convert from the default (bytes) string type as needed.
 
 Before (or *in lieu of*) processing this text with spaCy, we can do a few things. First, let's look for keywords-in-context, as a quick way to assess, by eye, how a particular word or phrase is used in a body of text:
 
@@ -44,7 +42,7 @@ Sometimes, "raw" text is messy and must be cleaned up before analysis; other tim
 
 ## Make a Doc
 
-Usually, though, we want to work with text that's been processed by spaCy: tokenized, part-of-speech tagged, parsed, and so on. Since spaCy's pipelines are language-dependent, we have to load a particular pipeline to match the text; when working with texts from multiple languages, this can be a pain. Fortunately, textacy includes automatic language detection to apply the right pipeline to the text, and it caches the loaded language data to minimize wait time and hassle. Making a `Doc` from text is easy:
+In most cases, we want to work with text that's been processed by spaCy: tokenized, part-of-speech tagged, parsed, and so on. Since spaCy's pipelines are language-dependent and come in many variations, we have to load a particular pipeline to process the text. When working with texts from multiple languages, this can be a pain; fortunately, `textacy` caches the loaded language data to minimize wait time and hassle. Making a `Doc` from text is easy:
 
 ```pycon
 >>> doc = textacy.make_spacy_doc(text, lang="en_core_web_sm")
@@ -52,7 +50,7 @@ Usually, though, we want to work with text that's been processed by spaCy: token
 'Doc(85 tokens: "Since the so-called "statistical revolution" in...")'
 ```
 
-If you need to customize the pipeline, you can still easily load and cache it, then specify it yourself when initializing the doc:
+where `"en_core_web_sm"` is the name of an [installed spaCy pipeline](https://spacy.io/usage/models). If you want to interact directly with the pipeline (and perhaps customize it), just assign it to a variable, then pass it in when initializing the doc:
 
 ```pycon
 >>> en = textacy.load_spacy_lang("en_core_web_sm", disable=("parser",))
@@ -61,7 +59,7 @@ If you need to customize the pipeline, you can still easily load and cache it, t
 'Doc(85 tokens: "Since the so-called "statistical revolution" in...")'
 ```
 
-Oftentimes, text data comes paired with metadata, such as a title, author, or publication date, and we'd like to keep them together. textacy makes this easy:
+Oftentimes, text data comes paired with metadata, such as a title, author, or publication date, and we'd like to keep them together. `textacy` makes this easy:
 
 ```pycon
 >>> metadata = {
@@ -74,17 +72,15 @@ Oftentimes, text data comes paired with metadata, such as a title, author, or pu
 'Natural-language processing'
 ```
 
-`textacy` adds a variety of useful functionality to vanilla spaCy docs, accessible via its `._` "underscore" property. For example: `doc._.preview` gives a convenient preview of the doc's contents, and `doc._.meta` returns any metadata associated with the main text content. Consult the [spaCy docs](https://spacy.io/usage/processing-pipelines#custom-components-attributes) for implementation details.
-
-**Note:** Older versions of textacy (<0.7.0) used a `textacy.Doc` class as a convenient wrapper around an underlying spaCy `Doc`, with additional functionality available as class attributes and methods. Once spaCy started natively supporting custom extensions on `Doc` objects (as well as custom components in language processing pipelines), that approach was dropped.
+`textacy` can add a variety of useful functionality to vanilla spaCy docs, accessible via its `._` "underscore" property. For example: `doc._.preview` gives a convenient preview of the doc's contents, and `doc._.meta` returns any metadata associated with the main text content. Consult the [spaCy docs](https://spacy.io/usage/processing-pipelines#custom-components-attributes) for implementation details.
 
 ## Analyze a Doc
 
 There are many ways to understand the content of a `Doc`. For starters, let's extract various elements of interest:
 
 ```pycon
->>> list(textacy.extract.ngrams(
-...     doc, 3, filter_stops=True, filter_punct=True, filter_nums=False))
+>>> from textacy import extract
+>>> list(extract.ngrams(doc, 3, filter_punct=True)
 [1980s and mid,
  Natural Language Processing,
  Language Processing research,
@@ -103,17 +99,20 @@ There are many ways to understand the content of a `Doc`. For starters, let's ex
  learn such rules,
  analysis of large,
  corpora of typical]
->>> list(textacy.extract.ngrams(doc, 2, min_freq=2))
-[Natural Language, natural language]
->>> list(textacy.extract.entities(doc, drop_determiners=True))
-[late 1980s and mid 1990s]
+>>> list(extract.noun_chunks(doc, drop_determiners=True))[:5]
+[so-called "statistical revolution,
+ late 1980s,
+ mid 1990s,
+ much Natural Language Processing research,
+ machine learning]
+>>> list(extract.subject_verb_object_triples(doc))
+[SVOTriple(subject=[processing, tasks], verb=[involved], object=[hand, coding])]
 ```
 
 We can also identify key terms in a document by a number of algorithms:
 
 ```pycon
->>> from textacy.extract import keyterms as kt
->>> kt.textrank(doc, normalize="lemma", topn=10)
+>>> extract.keyterms.textrank(doc, normalize="lemma", topn=10)
 [('Natural Language Processing research', 0.059959246697826624),
  ('natural language variation', 0.04488350959275309),
  ('direct hand coding', 0.037736661821063354),
@@ -124,7 +123,7 @@ We can also identify key terms in a document by a number of algorithms:
  ('late 1980', 0.026499549123496648),
  ('general robust', 0.024835834233545625),
  ('large corpora', 0.024322049918545637)]
->>> kt.sgrank(doc, ngrams=(1, 2, 3, 4), normalize="lower", topn=0.1)
+>>> extract.keyterms.sgrank(doc, ngrams=(1, 2, 3, 4), normalize="lower", topn=0.1)
 [('natural language processing research', 0.31279919999041045),
  ('direct hand coding', 0.09373747682969617),
  ('natural language variation', 0.09229056171473927),
@@ -132,41 +131,30 @@ We can also identify key terms in a document by a number of algorithms:
  ('machine learning', 0.05536624437146417)]
 ```
 
-Or we can compute various basic, lexical diversity, and readability statistics:
+Or we can compute various basic, readability, and lexical diversity statistics:
 
 ```pycon
->>> from textacy.text_stats import TextStats
->>> ts = TextStats(doc)
->>> ts.n_words, ts.n_syllables, ts.n_chars
-(73, 119, 414)
->>> ts.entropy
-5.8233192506312115
->>> ts.readability("flesch-kincaid-grade-level")
+>>> from textacy import text_stats as ts
+>>> ts.basics.n_words(doc)
+73
+>>> ts.readability.flesch_kincaid_grade_level(doc)
 13.135616438356163
->>> ts.diversity("ttr")
+>>> ts.diversity.ttr(doc)
 0.7808219178082192
-```
-
-Lastly, we can transform a document into a "bag of terms", with flexible weighting and term inclusion criteria:
-
-```pycon
->>> bot = doc._.to_bag_of_terms(ngs=(1, 2, 3), ents=True, weighting="count")
->>> sorted(bot.items(), key=lambda x: x[1], reverse=True)[:15]
-[('call', 2),
- ('statistical', 2),
- ('machine', 2),
- ('language', 2),
- ('rule', 2),
- ('learn', 2),
- ('late 1980 and mid 1990', 1),
- ('revolution', 1),
- ('late', 1),
- ('1980', 1),
- ('mid', 1),
- ('1990', 1),
- ('Natural', 1),
- ('Language', 1),
- ('Processing', 1)]
+>>> ts.counts.pos(doc)
+{'SCONJ': 1,
+ 'DET': 5,
+ 'ADV': 6,
+ 'PUNCT': 12,
+ 'VERB': 7,
+ 'ADJ': 14,
+ 'NOUN': 22,
+ 'ADP': 9,
+ 'CCONJ': 1,
+ 'PROPN': 3,
+ 'AUX': 2,
+ 'PRON': 1,
+ 'PART': 2}
 ```
 
 ## Working with Many Texts
@@ -339,12 +327,12 @@ If you do need a `Corpus`, you can split the input texts by language into distin
 
 ```pycon
 >>> en_corpus = textacy.Corpus(
-...     "en", data=(
+...     "en_core_web_sm", data=(
 ...         text for text in texts
 ...         if textacy.identify_lang(text) == "en")
 ... )
 >>> es_corpus = textacy.Corpus(
-...     "es", data=(
+...     "es_core_news_sm", data=(
 ...         text for text in texts
 ...         if textacy.identify_lang(text) == "es")
 ... )
