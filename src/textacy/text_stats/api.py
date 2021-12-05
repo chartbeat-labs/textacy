@@ -3,13 +3,12 @@
 """
 from __future__ import annotations
 
-import inspect
 import logging
 from typing import Dict, Literal, Optional, Tuple
 
 from spacy.tokens import Doc, Token
 
-from .. import errors, extract
+from .. import errors, extract, utils
 from . import basics, counts, diversity, readability
 
 
@@ -77,9 +76,24 @@ class TextStats:
 
     Args:
         doc: A text document tokenized and (optionally) sentence-segmented by spaCy.
+
+    Warning:
+        The ``TextStats`` class is deprecated as of v0.12. Instead,
+        call the stats functions directly --
+        ``text_stats.TextStats(doc).n_sents`` => ``text_stats.n_sents(doc)`` --
+        or set them as custom doc extensions and access them from the ``Doc`` --
+        ``textacy.set_doc_extensions('text_stats'); doc._.n_sents`` .
     """
 
     def __init__(self, doc: Doc):
+        utils.deprecated(
+            "The `TextStats` class is deprecated as of v0.12. "
+            "Instead, call the stats functions directly -- "
+            "`text_stats.TextStats(doc).n_sents` => `text_stats.n_sents(doc)` --"
+            "or set them as custom doc extensions and access them on the ``Doc`` -- "
+            "`textacy.set_doc_extensions('text_stats'); doc._.n_sents` .",
+            action="once",
+        )
         self.doc = doc
         self.lang: str = doc.lang_
         self.words: Tuple[Token, ...] = tuple(
@@ -288,13 +302,7 @@ class TextStats:
                 errors.value_invalid_msg(
                     "name",
                     name,
-                    [
-                        name
-                        for name, _ in inspect.getmembers(
-                            readability, inspect.isfunction
-                        )
-                        if not name.startswith("_")
-                    ],
+                    list(utils.get_function_names(readability, ignore_private=True)),
                 )
             )
         return func(self.doc, **kwargs)
@@ -319,11 +327,7 @@ class TextStats:
                 errors.value_invalid_msg(
                     "name",
                     name,
-                    [
-                        name
-                        for name, _ in inspect.getmembers(diversity, inspect.isfunction)
-                        if not name.startswith("_")
-                    ],
+                    list(utils.get_function_names(diversity, ignore_private=True)),
                 )
             )
         return func(self.words, **kwargs)
