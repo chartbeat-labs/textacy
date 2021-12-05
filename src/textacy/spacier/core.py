@@ -196,8 +196,8 @@ def _make_spacy_doc_from_doc(doc: Doc, lang: types.LangLikeInContext) -> Doc:
 
 def get_doc_preview(doc: Doc) -> str:
     """
-    Get a short preview of ``doc``, including the number of tokens
-    and an initial snippet.
+    Get a short preview of ``doc``, including the number of tokens and a snippet.
+    Typically used as a custom extension, like ``doc._.preview`` .
     """
     snippet = doc.text[:50].replace("\n", " ")
     if len(snippet) == 50:
@@ -206,12 +206,18 @@ def get_doc_preview(doc: Doc) -> str:
 
 
 def get_doc_meta(doc: Doc) -> dict:
-    """Get custom metadata added to ``doc`` ."""
+    """
+    Get custom metadata added to ``doc`` .
+    Typically used as a custom extension, like ``doc._.meta`` .
+    """
     return doc.user_data.get("textacy", {}).get("meta", {})
 
 
 def set_doc_meta(doc: Doc, value: dict) -> None:
-    """Add custom metadata ``value`` to ``doc``."""
+    """
+    Add custom metadata ``value`` to ``doc`` .
+    Typically used as a custom extension, like ``doc._.meta = value`` .
+    """
     if not isinstance(value, dict):
         raise TypeError(errors.type_invalid_msg("value", type(value), Dict))
     try:
