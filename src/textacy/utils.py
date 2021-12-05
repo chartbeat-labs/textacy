@@ -313,3 +313,20 @@ def text_to_char_ngrams(text: str, n: int, *, pad: bool = False) -> Tuple[str, .
         pad_chars = "_" * (n - 1)
         text = f"{pad_chars}{text}{pad_chars}"
     return tuple(text[i : i + n] for i in range(len(text) - n + 1))
+
+
+def get_function_names(module, ignore_private: bool = True) -> Iterable[str]:
+    """
+    Get names of functions in ``module``, optionally ignoring private members.
+
+    Args:
+        module
+        ignore_private
+
+    Returns:
+        Alphabetically ordered sequence of function names.
+    """
+    names = (name for name, _ in inspect.getmembers(module, inspect.isfunction))
+    if ignore_private is True:
+        names = (name for name in names if not name.startswith("_"))
+    yield from names
