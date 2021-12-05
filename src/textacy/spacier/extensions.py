@@ -72,4 +72,7 @@ def remove_doc_extensions(name: str):
             For example, "extract" or "extract.keyterms".
     """
     for name in get_doc_extensions(name).keys():
-        _ = Doc.remove_extension(name)
+        if Doc.has_extension(name):
+            _ = Doc.remove_extension(name)
+        else:
+            LOGGER.warning("%s `Doc` extension not found; skipping removal...", name)
