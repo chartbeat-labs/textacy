@@ -1,5 +1,48 @@
 ## Changes
 
+### 0.12.0 (2021-12-06)
+
+- Refactored and extended text statistics functionality (PR #350)
+  - Added functions for computing measures of lexical diversity, such as the clasic Type-Token-Ratio and modern Hypergeometric Distribution Diversity
+  - Added functions for counting token-level attributes, including morphological features and parts-of-speech, in a convenient form
+  - Refactored all text stats functions to accept a `Doc` as their first positional arg, suitable for use as custom doc extensions (see below)
+  - Deprecated the `TextStats` class, since other methods for accessing the underlying functionality were made more accessible and convenient, and there's no longer need for a third method.
+- Standardized functionality for getting/setting/removing doc extensions (PR #352)
+  - Now, custom extensions are accessed by name, and users have more control over the process:
+
+    ```python
+    >>> import textacy
+    >>> from textacy import extract, text_stats
+    >>> textacy.set_doc_extensions("extract")
+    >>> textacy.set_doc_extensions("text_stats.readability")
+    >>> textacy.remove_doc_extensions("extract.matches")
+    >>> textacy.make_spacy_doc("This is a test.", "en_core_web_sm")._.flesch_reading_ease()
+    118.17500000000001
+    ```
+
+  - Moved top-level extensions into `spacier.core` and `extract.bags`
+  - Standardized `extract` and `text_stats` subpackage extensions to use the new setup, and made them more customizable
+- Improved package code, tests, and docs
+  - Fixed outdated code and comments in the "Quickstart" guide, then renamed it "Walkthrough" since it wasn't actually quick; added a new and, yes, quick "Quickstart" guide to fill the gap (PR #353)
+  - Added a `pytest` conftest file to improve maintainability and consistency of unit test suite (PR #353)
+  - Improved quality and consistency of type annotations, everywhere (PR #349)
+  - **Note:** Bumped Python version support from 3.7–3.9 to 3.8–3.10 in order to take advantage of new typing features in PY3.8 and formally support the current major version (PR #348)
+  - Modernized and streamlined package builds and configuration (PR #347)
+    - Removed deprecated `setup.py` and switched from `setuptools` to `build` for builds
+    - Consolidated tool configuration in `pyproject.toml`
+    - Extended and tidied up dev-oriented `Makefile`
+    - Addressed some CI/CD issues
+
+#### Fixed
+
+- Added missing import, args in `TextStats` docs (PR #331, Issue #334)
+- Fixed normalization in YAKE keyword extraction (PR #332)
+- Fixed text encoding issue when loading `ConceptNet` data on Windows systems (Issue #345)
+
+#### Contributors
+
+Thanks to @austinjp, @scarroll32, @MirkoLenz for their help!
+
 ### 0.11.0 (2021-04-12)
 
 - **Refactored, standardized, and extended several areas of functionality**
