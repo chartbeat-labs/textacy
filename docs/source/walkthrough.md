@@ -1,4 +1,4 @@
-# Quickstart
+# Walkthrough
 
 First things first: Import the package. Some functionality is available from this top-level import, but we'll see that many features require their own imports.
 
