@@ -128,7 +128,7 @@ Transform them into other representations for further analysis:
 ```pycon
 >>> from textacy.representations import Vectorizer
 >>> vectorizer = Vectorizer(tf_type="linear", idf_type="smooth")
->>> doc_term_matrix = Vectorizer().fit_transform(
+>>> doc_term_matrix = vectorizer.fit_transform(
 ...     ((term.lemma_ for term in extract.terms(doc, ngs=1, ents=True)) for doc in corpus)
 ... )
 >>> print(repr(doc_term_matrix))
