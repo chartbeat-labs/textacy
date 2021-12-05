@@ -62,6 +62,7 @@ contents
 
    installation
    quickstart
+   walkthrough
    tutorials/root
    api_reference/root
    changes

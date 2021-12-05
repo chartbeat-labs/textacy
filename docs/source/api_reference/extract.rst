@@ -11,6 +11,8 @@ Information Extraction
    basics.entities
    basics.noun_chunks
    basics.terms
+   bags.bag_of_words
+   bags.bag_of_terms
    matches.token_matches
    matches.regex_matches
    triples.subject_verb_object_triples
@@ -25,6 +27,8 @@ Information Extraction
    keyterms.sgrank
 
 .. automodule:: textacy.extract.basics
+
+.. automodule:: textacy.extract.bags
 
 .. automodule:: textacy.extract.matches
 

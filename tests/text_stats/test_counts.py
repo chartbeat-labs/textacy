@@ -5,9 +5,9 @@ import textacy.text_stats
 
 
 @pytest.fixture(scope="module")
-def doc():
+def doc(lang_en):
     text = "I write code. They wrote books."
-    return textacy.make_spacy_doc(text, lang="en_core_web_sm")
+    return textacy.make_spacy_doc(text, lang=lang_en)
 
 
 def test_morph(doc):

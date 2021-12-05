@@ -1,3 +1,10 @@
+"""
+Custom Extensions
+-----------------
+
+:mod:`textacy.spacier.extensions`: Functions for getting, setting, and removing
+collections of custom extensions on spaCy classes.
+"""
 import logging
 from typing import Dict
 
@@ -14,8 +21,13 @@ doc_extensions_registry = catalogue.create("textacy", "doc_extensions")
 
 def get_doc_extensions(name: str) -> Dict[str, Dict[str, types.DocExtFunc]]:
     """
-    Get a collection of custom doc extensions that can be set on or removed from
+    Get a collection of custom extensions that can be set on or removed from
     the global :class:`spacy.tokens.Doc` , specified by ``name`` .
+
+    Args:
+        name: Name of a function registered in :obj:`doc_extensions_registry`
+            that returns a collection of custom doc extensions as a dictionary.
+            For example, "extract" or "extract.keyterms".
 
     Note:
         If ``name`` isn't found, you may need to import the module from which it comes.
@@ -27,11 +39,13 @@ def get_doc_extensions(name: str) -> Dict[str, Dict[str, types.DocExtFunc]]:
 
 def set_doc_extensions(name: str, force: bool = True):
     """
-    Set a collection of custom doc extensions on the global :class:`spacy.tokens.Doc` ,
+    Set a collection of custom extensions on the global :class:`spacy.tokens.Doc` ,
     specified by ``name`` .
 
     Args:
-        name
+        name: Name of a function registered in :obj:`doc_extensions_registry`
+            that returns a collection of custom doc extensions as a dictionary.
+            For example, "extract" or "extract.keyterms".
         force: If True, set extensions even if existing extensions already exist;
             otherwise, don't overwrite existing extensions.
     """
@@ -49,8 +63,13 @@ def set_doc_extensions(name: str, force: bool = True):
 
 def remove_doc_extensions(name: str):
     """
-    Remove a collection of custom doc extensions from the global :class:`spacy.tokens.Doc` ,
+    Remove a collection of custom extensions from the global :class:`spacy.tokens.Doc` ,
     specified by ``name`` .
+
+    Args:
+        name: Name of a function registered in :obj:`doc_extensions_registry`
+            that returns a collection of custom doc extensions as a dictionary.
+            For example, "extract" or "extract.keyterms".
     """
     for name in get_doc_extensions(name).keys():
         _ = Doc.remove_extension(name)

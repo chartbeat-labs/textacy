@@ -2,24 +2,12 @@ import pytest
 import numpy as np
 from scipy.sparse import coo_matrix
 
-import textacy
 from textacy import extract, representations
 
 
 @pytest.fixture(scope="module")
-def tokenized_docs():
-    texts = [
-        "Mary had a little lamb. Its fleece was white as snow.",
-        "Everywhere that Mary went the lamb was sure to go.",
-        "It followed her to school one day, which was against the rule.",
-        "It made the children laugh and play to see a lamb at school.",
-        "And so the teacher turned it out, but still it lingered near.",
-        "It waited patiently about until Mary did appear.",
-        "Why does the lamb love Mary so? The eager children cry.",
-        "Mary loves the lamb, you know, the teacher did reply.",
-    ]
-    nlp = textacy.load_spacy_lang("en_core_web_sm")
-    docs = list(nlp.pipe(texts))
+def tokenized_docs(lang_en, texts_short_en):
+    docs = list(lang_en.pipe(texts_short_en))
     tokenized_docs = [
         [term.text.lower() for term in extract.terms(doc, ngs=1)] for doc in docs
     ]
@@ -75,20 +63,31 @@ def grp_vectorizer_and_gtm_2(tokenized_docs, groups):
 def lamb_and_children_idxs(vectorizer_and_dtm):
     vec, _ = vectorizer_and_dtm
     idx_lamb = [id_ for term, id_ in vec.vocabulary_terms.items() if term == "lamb"][0]
-    idx_children = [id_ for term, id_ in vec.vocabulary_terms.items() if term == "children"][0]
+    idx_children = [
+        id_ for term, id_ in vec.vocabulary_terms.items() if term == "children"
+    ][0]
     return idx_lamb, idx_children
 
 
 class TestVectorizer:
-
     @pytest.mark.parametrize(
         "kwargs",
         [
             {"tf_type": "linear"},
             {"tf_type": "linear", "idf_type": "standard"},
             {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear"},
-            {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear", "norm": "l1"},
-            {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear", "norm": "l2"},
+            {
+                "tf_type": "linear",
+                "idf_type": "standard",
+                "dl_type": "linear",
+                "norm": "l1",
+            },
+            {
+                "tf_type": "linear",
+                "idf_type": "standard",
+                "dl_type": "linear",
+                "norm": "l2",
+            },
             {"tf_type": "sqrt", "idf_type": "smooth", "dl_type": "sqrt"},
             {"tf_type": "log", "idf_type": "bm25", "dl_type": "log"},
             {"tf_type": "binary", "idf_type": None, "dl_type": None},
@@ -106,7 +105,7 @@ class TestVectorizer:
             {"max_df": -1},
             {"max_n_terms": -1},
             {"vocabulary_terms": "foo bar bat baz"},
-        ]
+        ],
     )
     def test_bad_init_params(self, kwargs):
         with pytest.raises(ValueError):
@@ -116,9 +115,7 @@ class TestVectorizer:
         vectorizer, _ = vectorizer_and_dtm
         assert isinstance(vectorizer.id_to_term, dict)
         assert all(isinstance(key, int) for key in vectorizer.id_to_term.keys())
-        assert all(
-            isinstance(val, str) for val in vectorizer.id_to_term.values()
-        )
+        assert all(isinstance(val, str) for val in vectorizer.id_to_term.values())
         assert len(vectorizer.id_to_term) == len(vectorizer.vocabulary_terms)
 
     def test_terms_list(self, vectorizer_and_dtm):
@@ -144,15 +141,24 @@ class TestVectorizer:
 
 
 class TestGroupVectorizer:
-
     @pytest.mark.parametrize(
         "kwargs",
         [
             {"tf_type": "linear"},
             {"tf_type": "linear", "idf_type": "standard"},
             {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear"},
-            {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear", "norm": "l1"},
-            {"tf_type": "linear", "idf_type": "standard", "dl_type": "linear", "norm": "l2"},
+            {
+                "tf_type": "linear",
+                "idf_type": "standard",
+                "dl_type": "linear",
+                "norm": "l1",
+            },
+            {
+                "tf_type": "linear",
+                "idf_type": "standard",
+                "dl_type": "linear",
+                "norm": "l2",
+            },
             {"tf_type": "sqrt", "idf_type": "smooth", "dl_type": "sqrt"},
             {"tf_type": "log", "idf_type": "bm25", "dl_type": "log"},
             {"tf_type": "binary", "idf_type": None, "dl_type": None},
@@ -167,9 +173,7 @@ class TestGroupVectorizer:
         grp_vectorizer, _ = grp_vectorizer_and_gtm
         assert isinstance(grp_vectorizer.id_to_grp, dict)
         assert all(isinstance(key, int) for key in grp_vectorizer.id_to_grp.keys())
-        assert all(
-            isinstance(val, str) for val in grp_vectorizer.id_to_grp.values()
-        )
+        assert all(isinstance(val, str) for val in grp_vectorizer.id_to_grp.values())
         assert len(grp_vectorizer.id_to_grp) == len(grp_vectorizer.vocabulary_grps)
 
     def test_terms_and_grp_list(self, grp_vectorizer_and_gtm):
@@ -293,7 +297,9 @@ def test_get_information_content(vectorizer_and_dtm, lamb_and_children_idxs):
 def test_apply_idf_weighting(vectorizer_and_dtm):
     _, doc_term_matrix = vectorizer_and_dtm
     for type_ in ("standard", "smooth", "bm25"):
-        reweighted_matrix = representations.apply_idf_weighting(doc_term_matrix, type_=type_)
+        reweighted_matrix = representations.apply_idf_weighting(
+            doc_term_matrix, type_=type_
+        )
         assert reweighted_matrix.shape == doc_term_matrix.shape
 
 
@@ -336,7 +342,9 @@ def test_filter_terms_by_df_min_df(vectorizer_and_dtm):
     )
     assert dtm.shape[0] == doc_term_matrix.shape[0]
     assert dtm.shape[1] < doc_term_matrix.shape[1]
-    assert all(term in vocab for term in ("children", "lamb", "mary", "school", "teacher"))
+    assert all(
+        term in vocab for term in ("children", "lamb", "mary", "school", "teacher")
+    )
 
 
 def test_filter_terms_by_df_exception(vectorizer_and_dtm):
