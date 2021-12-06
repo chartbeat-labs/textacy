@@ -43,8 +43,8 @@ As we saw in another tutorial, this collection covers speeches given during the 
 spaCy's tokenization and annotations provide a flexible base from which we can perform a higher-level splitting of each document into semantically meaningful "terms". For example, let's extract all entities:
 
 ```pycon
->>> import textacy.extract
->>> list(textacy.extract.entities(corpus[0]))
+>>> from textacy import extract
+>>> list(extract.entities(corpus[0]))
 [Speaker, 480,000, 280,000, Speaker, Newt Gingrich, Republican, House, American, 7-year, Georgia, Gingrich, Republican, Dole, Senate, Speaker, American]
 ```
 
@@ -52,10 +52,10 @@ Upon inspection, that seems like a mixed bag, so let's clean it up a bit by incl
 
 ```pycon
 >>> from functools import partial
->>> terms = list(textacy.extract.terms(
+>>> terms = list(extract.terms(
 ...     corpus[0],
-...     ngs=partial(textacy.extract.ngrams, n=2, include_pos={"NOUN", "ADJ"}),
-...     ents=partial(textacy.extract.entities, include_types={"PERSON", "ORG", "GPE", "LOC"}),
+...     ngs=partial(extract.ngrams, n=2, include_pos={"NOUN", "ADJ"}),
+...     ents=partial(extract.entities, include_types={"PERSON", "ORG", "GPE", "LOC"}),
 ...     dedupe=True))
 >>> terms
 [Federal employees, involuntary servitude, Federal employees, financial obligations, Republican leadership, American people, year balanced, balanced budget, budget plan, Republican leadership, American people, Speaker, Speaker, Newt Gingrich, House, Georgia, Gingrich, Dole, Senate, Speaker]
@@ -66,7 +66,7 @@ Note that "Speaker" (as in _Mr._ Speaker) shows up multiple times: the `dedupe` 
 Before building a document-term matrix representation of the corpus, we must first transform the terms' `Span` objects into strings. There are several options to choose from: use the text content as-is, lowercase it, or if available use lemmas (base forms without inflectional suffixes). To reduce sparsity of the matrix, let's lemmatize the terms:
 
 ```pycon
->>> list(textacy.extract.terms_to_strings(terms, by="lemma"))
+>>> list(extract.terms_to_strings(terms, by="lemma"))
 ['federal employee', 'involuntary servitude', 'federal employee', 'financial obligation', 'republican leadership', 'american people', 'year balanced', 'balanced budget', 'budget plan', 'republican leadership', 'american people', 'Speaker', 'Speaker', 'Newt Gingrich', 'House', 'Georgia', 'Gingrich', 'Dole', 'Senate', 'Speaker']
 ```
 
@@ -74,21 +74,21 @@ Looks good! Let's apply these steps to all docs in the corpus:
 
 ```pycon
 >>> docs_terms = (
-...     textacy.extract.terms(
+...     extract.terms(
 ...         doc,
-...         ngs=partial(textacy.extract.ngrams, n=2, include_pos={"NOUN", "ADJ"}),
-...         ents=partial(textacy.extract.entities, include_types={"PERSON", "ORG", "GPE", "LOC"}))
+...         ngs=partial(extract.ngrams, n=2, include_pos={"NOUN", "ADJ"}),
+...         ents=partial(extract.entities, include_types={"PERSON", "ORG", "GPE", "LOC"}))
 ...     for doc in corpus)
 >>> tokenized_docs = (
-...     textacy.extract.terms_to_strings(doc_terms, by="lemma")
+...     extract.terms_to_strings(doc_terms, by="lemma")
 ...     for doc_terms in docs_terms)
 ```
 
 Now we can vectorize the documents. Each row represents a document, each column a unique term, and individual values represent the "weight" of a term in a particular document. These weights may include combinations of local, global, and normalization components; for simplicity, let's use classic TF-IDF weighting, i.e. "Term Frequency" (local) multiplied by "Inverse Doc Frequency" (global).
 
 ```pycon
->>> import textacy.representations
->>> doc_term_matrix, vocab = textacy.representations.build_doc_term_matrix(tokenized_docs, tf_type="linear", idf_type="smooth")
+>>> from textacy import representations
+>>> doc_term_matrix, vocab = representations.build_doc_term_matrix(tokenized_docs, tf_type="linear", idf_type="smooth")
 >>> doc_term_matrix
 <2000x30177 sparse matrix of type '<class 'numpy.float64'>'
 	    with 58693 stored elements in Compressed Sparse Row format>

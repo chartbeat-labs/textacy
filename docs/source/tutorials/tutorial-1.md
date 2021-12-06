@@ -27,9 +27,9 @@ This speech was delivered by Bernie Sanders back in 1996, when he was a member o
 Considering the number of speeches, we'd like to avoid a full read-through and instead extract just the specific parts of interest. As a first step, let's use the `textacy.extract` subpackage to inspect our keywords in context.
 
 ```pycon
->>> import textacy.extract
+>>> from textacy import extract
 >>> textacy.set_doc_extensions("extract")  # just setting these now -- we'll use them later!
->>> list(textacy.extract.keyword_in_context(record.text, "work(ing|ers?)", window_width=35))
+>>> list(extract.keyword_in_context(record.text, "work(ing|ers?)", window_width=35))
 [('ker, 480,000 Federal employees are ', 'working', ' without pay, a form of involuntary'),
  (' 280,000 Federal employees are not ', 'working', ', and they will be paid. Virtually '),
  ('ll be paid. Virtually all of these ', 'workers', ' have mortgages to pay, children to'),
@@ -41,8 +41,8 @@ This is useful for developing our intuitions about how Bernie regards workers, b
 But first, we should preprocess the text to get rid of potential data quality issues (inconsistent quotation marks, whitespace, unicode characters, etc.) and other distractions that may affect our analysis. For example, maybe it would be better to replace all numbers with a constant placeholder value. For this, we'll use some of the functions available in `textacy.preprocessing`:
 
 ```pycon
->>> import textacy.preprocessing
->>> textacy.preprocessing.replace.numbers(record.text)
+>>> from textacy import preprocessing as preproc
+>>> preproc.replace.numbers(record.text)
 'Mr. Speaker, _NUMBER_ Federal employees are working without pay, a form of involuntary servitude; _NUMBER_ Federal employees are not working, and they will be paid. Virtually all of these workers have mortgages to pay, children to feed, and financial obligations to meet.\nMr. Speaker, what is happening to these workers is immoral, is wrong, and must be rectified immediately. Newt Gingrich and the Republican leadership must not continue to hold the House and the American people hostage while they push their disastrous _NUMBER_-year balanced budget plan. The gentleman from Georgia, Mr. Gingrich, and the Republican leadership must join Senator Dole and the entire Senate and pass a continuing resolution now, now to reopen Government.\nMr. Speaker, that is what the American people want, that is what they need, and that is what this body must do.'
 ```
 
@@ -51,12 +51,12 @@ Note that these changes are "destructive" — they've changed the data, and we c
 However, we should still take care to normalize common text data errors. Let's combine multiple such preprocessors into a lightweight, callable pipeline that applies each sequentially:
 
 ```pycon
->>> preproc = textacy.preprocessing.make_pipeline(
-...     textacy.preprocessing.normalize.unicode,
-...     textacy.preprocessing.normalize.quotation_marks,
-...     textacy.preprocessing.normalize.whitespace,
+>>> preprocessor = preproc.make_pipeline(
+...     preproc.normalize.unicode,
+...     preproc.normalize.quotation_marks,
+...     preproc.normalize.whitespace,
 ... )
->>> preproc_text = preproc(record.text)
+>>> preproc_text = preprocessor(record.text)
 >>> preproc_text[:200]
 'Mr. Speaker, 480,000 Federal employees are working without pay, a form of involuntary servitude; 280,000 Federal employees are not working, and they will be paid. Virtually all of these workers have m'
 ```
@@ -80,7 +80,7 @@ Now, using the annotated part-of-speech tags, we can extract just the adjectives
 
 ```pycon
 >>> patterns = [{"POS": {"IN": ["ADJ", "DET"]}, "OP": "+"}, {"ORTH": {"REGEX": "workers?"}}]
->>> list(textacy.extract.token_matches(doc, patterns))
+>>> list(extract.token_matches(doc, patterns))
 [these workers, these workers]
 ```
 
@@ -90,7 +90,7 @@ To accomplish that, let's load many records into a `textacy.Corpus`. *Note:* For
 
 ```pycon
 >>> records = dataset.records(limit=2000)
->>> preproc_records = ((preproc(text), meta) for text, meta in records)
+>>> preproc_records = ((preprocessor(text), meta) for text, meta in records)
 >>> corpus = textacy.Corpus("en_core_web_sm", data=preproc_records)
 >>> print(corpus)
 Corpus(2000 docs, 1049192 tokens)
@@ -114,7 +114,7 @@ We see some familiar politicians, including current president Joe Biden and note
 
 ```pycon
 >>> import itertools
->>> matches = itertools.chain.from_iterable(textacy.extract.token_matches(doc, patterns) for doc in corpus)
+>>> matches = itertools.chain.from_iterable(extract.token_matches(doc, patterns) for doc in corpus)
 >>> collections.Counter(match.lemma_ for match in matches).most_common(20)
 [('american worker', 95),
  ('average american worker', 21),
