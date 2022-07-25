@@ -2,6 +2,7 @@ graft src
 graft scripts
 graft tests
 graft docs
+prune src/textacy/data/
 prune docs/build/
 
 include CHANGES.md
