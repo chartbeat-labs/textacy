@@ -28,6 +28,7 @@ def scake(
     *,
     normalize: Optional[str | Callable[[Token], str]] = "lemma",
     include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
+    include_ner: Optional[str | Collection[str]] = None,
     topn: int | float = 10,
 ) -> List[Tuple[str, float]]:
     """
@@ -58,12 +59,10 @@ def scake(
     """
     # validate / transform args
     include_pos = utils.to_collection(include_pos, str, set)
+    include_ner = utils.to_collection(include_ner, str, set)
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
-            raise ValueError(
-                "topn={} is invalid; "
-                "must be an int, or a float between 0.0 and 1.0".format(topn)
-            )
+            raise ValueError("topn={} is invalid; " "must be an int, or a float between 0.0 and 1.0".format(topn))
 
     # bail out on empty docs
     if not doc:
@@ -81,41 +80,31 @@ def scake(
             for word in itertoolz.concat(window_sents)
             if not (word.is_stop or word.is_punct or word.is_space)
             and (not include_pos or word.pos_ in include_pos)
+            and (not include_ner or word.ent_type_ in include_ner)
         )
         window_words = ext_utils.terms_to_strings(window_words, normalize)
-        cooc_mat.update(
-            w1_w2
-            for w1_w2 in itertools.combinations(sorted(window_words), 2)
-            if w1_w2[0] != w1_w2[1]
-        )
+        cooc_mat.update(w1_w2 for w1_w2 in itertools.combinations(sorted(window_words), 2) if w1_w2[0] != w1_w2[1])
     # doc doesn't have any valid words...
     if not cooc_mat:
         return []
 
     graph = nx.Graph()
-    graph.add_edges_from(
-        (w1, w2, {"weight": weight}) for (w1, w2), weight in cooc_mat.items()
-    )
+    graph.add_edges_from((w1, w2, {"weight": weight}) for (w1, w2), weight in cooc_mat.items())
 
     word_scores = _compute_word_scores(doc, graph, cooc_mat, normalize)
     if not word_scores:
         return []
 
     # generate a list of candidate terms
-    candidates = _get_candidates(doc, normalize, include_pos)
+    candidates = _get_candidates(doc, normalize, include_pos, include_ner)
     if isinstance(topn, float):
         topn = int(round(len(set(candidates)) * topn))
     # rank candidates by aggregating constituent word scores
     candidate_scores = {
-        " ".join(candidate): sum(word_scores.get(word, 0.0) for word in candidate)
-        for candidate in candidates
+        " ".join(candidate): sum(word_scores.get(word, 0.0) for word in candidate) for candidate in candidates
     }
-    sorted_candidate_scores = sorted(
-        candidate_scores.items(), key=itemgetter(1, 0), reverse=True
-    )
-    return ext_utils.get_filtered_topn_terms(
-        sorted_candidate_scores, topn, match_threshold=0.8
-    )
+    sorted_candidate_scores = sorted(candidate_scores.items(), key=itemgetter(1, 0), reverse=True)
+    return ext_utils.get_filtered_topn_terms(sorted_candidate_scores, topn, match_threshold=0.8)
 
 
 def _compute_word_scores(
@@ -134,32 +123,25 @@ def _compute_word_scores(
 
     # "semantic strength of a word" component
     sem_strengths = {
-        w: sum(
-            cooc_mat[tuple(sorted([w, nbr]))] * max_truss_levels[nbr]
-            for nbr in graph.neighbors(w)
-        )
+        w: sum(cooc_mat[tuple(sorted([w, nbr]))] * max_truss_levels[nbr] for nbr in graph.neighbors(w))
         for w in word_strs
     }
     # "semantic connectivity" component
     sem_connectivities = {
-        w: len(set(max_truss_levels[nbr] for nbr in graph.neighbors(w)))
-        / max_truss_level
-        for w in word_strs
+        w: len(set(max_truss_levels[nbr] for nbr in graph.neighbors(w))) / max_truss_level for w in word_strs
     }
     # "positional weight" component
     word_pos = collections.defaultdict(float)
     for word, word_str in zip(doc, ext_utils.terms_to_strings(doc, normalize)):
         word_pos[word_str] += 1 / (word.i + 1)
-    return {
-        w: word_pos[w] * max_truss_levels[w] * sem_strengths[w] * sem_connectivities[w]
-        for w in word_strs
-    }
+    return {w: word_pos[w] * max_truss_levels[w] * sem_strengths[w] * sem_connectivities[w] for w in word_strs}
 
 
 def _get_candidates(
     doc: Doc,
     normalize: Optional[str | Callable[[Token], str]],
     include_pos: Set[str],
+    include_ner: Set[str],
 ) -> Set[Tuple[str, ...]]:
     """
     Get a set of candidate terms to be scored by joining the longest
@@ -168,16 +150,25 @@ def _get_candidates(
     normalized into strings.
     """
 
+    def _is_valid_ent(
+        tok,
+        include_pos,
+        include_ner,
+    ):
+        if (include_pos is None or tok.pos_ in include_pos) and (include_ner is None or tok.ent_type_ in include_ner):
+            return True
+        return False
+
     def _is_valid_tok(tok):
-        return not (tok.is_stop or tok.is_punct or tok.is_space) and (
-            not include_pos or tok.pos_ in include_pos
-        )
+        if tok.is_stop or tok.is_punct or tok.is_space:
+            return False
+        elif tok.ent_type_:
+            return _is_valid_ent(tok, include_pos, include_ner)
+        elif include_pos is None or tok.pos_ in include_pos:
+            return True
 
     candidates = ext_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
-    return {
-        tuple(ext_utils.terms_to_strings(candidate, normalize))
-        for candidate in candidates
-    }
+    return {tuple(ext_utils.terms_to_strings(candidate, normalize)) for candidate in candidates}
 
 
 def _compute_node_truss_levels(graph: nx.Graph) -> Dict[str, int]:
@@ -190,8 +181,7 @@ def _compute_node_truss_levels(graph: nx.Graph) -> Dict[str, int]:
     max_edge_ks = {}
     is_removed = collections.defaultdict(int)
     triangle_counts = {
-        edge: len(set(graph.neighbors(edge[0])) & set(graph.neighbors(edge[1])))
-        for edge in graph.edges()
+        edge: len(set(graph.neighbors(edge[0])) & set(graph.neighbors(edge[1]))) for edge in graph.edges()
     }
     # rather than iterating over all theoretical values of k
     # let's break out early once all edges have been removed
@@ -200,9 +190,7 @@ def _compute_node_truss_levels(graph: nx.Graph) -> Dict[str, int]:
     k = 1
     while True:
         to_remove = collections.deque(
-            edge
-            for edge, tcount in triangle_counts.items()
-            if tcount < k and not is_removed[edge]
+            edge for edge, tcount in triangle_counts.items() if tcount < k and not is_removed[edge]
         )
         while to_remove:
             edge = to_remove.popleft()
@@ -225,8 +213,5 @@ def _compute_node_truss_levels(graph: nx.Graph) -> Dict[str, int]:
             break
         else:
             k += 1
-    max_node_ks = {
-        node: max(k for edge, k in max_edge_ks.items() if node in edge)
-        for node in graph.nodes()
-    }
+    max_node_ks = {node: max(k for edge, k in max_edge_ks.items() if node in edge) for node in graph.nodes()}
     return max_node_ks
