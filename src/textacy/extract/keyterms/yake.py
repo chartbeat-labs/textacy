@@ -20,6 +20,7 @@ def yake(
     normalize: Optional[str] = "lemma",
     ngrams: int | Collection[int] = (1, 2, 3),
     include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
+    include_ner: Optional[str | Collection[str]] = None,
     window_size: int = 2,
     topn: int | float = 10,
 ) -> List[Tuple[str, float]]:
@@ -63,12 +64,10 @@ def yake(
     # validate / transform args
     ngrams = utils.to_collection(ngrams, int, tuple)
     include_pos = utils.to_collection(include_pos, str, set)
+    include_ner = utils.to_collection(include_ner, str, set)
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
-            raise ValueError(
-                f"topn = {topn} is invalid; "
-                "must be an int, or a float between 0.0 and 1.0"
-            )
+            raise ValueError(f"topn = {topn} is invalid; " "must be an int, or a float between 0.0 and 1.0")
 
     # bail out on empty docs
     if not doc:
@@ -77,9 +76,7 @@ def yake(
     stop_words: Set[str] = set()
     seen_candidates: Set[str] = set()
     # compute key values on a per-word basis
-    word_occ_vals = _get_per_word_occurrence_values(
-        doc, normalize, stop_words, window_size
-    )
+    word_occ_vals = _get_per_word_occurrence_values(doc, normalize, stop_words, window_size)
     # doc doesn't have any words...
     if not word_occ_vals:
         return []
@@ -90,7 +87,7 @@ def yake(
     term_scores: Dict[str, float] = {}
     # do single-word candidates separately; it's faster and simpler
     if 1 in ngrams:
-        candidates = _get_unigram_candidates(doc, include_pos)
+        candidates = _get_unigram_candidates(doc, include_pos, include_ner)
         _score_unigram_candidates(
             candidates,
             word_freqs,
@@ -103,25 +100,28 @@ def yake(
     # now compute combined scores for higher-n ngram and candidates
     candidates = list(
         ext_utils.get_ngram_candidates(
-            doc, [n for n in ngrams if n > 1], include_pos=include_pos,
+            doc, [n for n in ngrams if n > 1], include_pos=include_pos, include_ner=include_ner
         )
     )
     attr_name = _get_attr_name(normalize, True)
-    ngram_freqs = itertoolz.frequencies(
-        " ".join(getattr(word, attr_name) for word in ngram) for ngram in candidates
-    )
+    ngram_freqs = itertoolz.frequencies(" ".join(getattr(word, attr_name) for word in ngram) for ngram in candidates)
     _score_ngram_candidates(
-        candidates, ngram_freqs, word_scores, term_scores, seen_candidates, normalize,
+        candidates,
+        ngram_freqs,
+        word_scores,
+        term_scores,
+        seen_candidates,
+        normalize,
     )
     # build up a list of key terms in order of increasing score
     if isinstance(topn, float):
         topn = int(round(len(seen_candidates) * topn))
     sorted_term_scores = sorted(
-        term_scores.items(), key=operator.itemgetter(1), reverse=False,
+        term_scores.items(),
+        key=operator.itemgetter(1),
+        reverse=False,
     )
-    return ext_utils.get_filtered_topn_terms(
-        sorted_term_scores, topn, match_threshold=0.8
-    )
+    return ext_utils.get_filtered_topn_terms(sorted_term_scores, topn, match_threshold=0.8)
 
 
 def _get_attr_name(normalize: Optional[str], as_strings: bool) -> str:
@@ -130,16 +130,17 @@ def _get_attr_name(normalize: Optional[str], as_strings: bool) -> str:
     elif normalize in ("lemma", "lower", "norm"):
         attr_name = normalize
     else:
-        raise ValueError(
-            errors.value_invalid_msg("normalize", normalize, {"lemma", "lower", "norm", None})
-        )
+        raise ValueError(errors.value_invalid_msg("normalize", normalize, {"lemma", "lower", "norm", None}))
     if as_strings is True:
         attr_name = attr_name + "_"
     return attr_name
 
 
 def _get_per_word_occurrence_values(
-    doc: Doc, normalize: Optional[str], stop_words: Set[str], window_size: int,
+    doc: Doc,
+    normalize: Optional[str],
+    stop_words: Set[str],
+    window_size: int,
 ) -> Dict[int, Dict[str, list]]:
     """
     Get base values for each individual occurrence of a word, to be aggregated
@@ -166,14 +167,10 @@ def _get_per_word_occurrence_values(
             word_occ_vals[w_id]["is_uc"].append(_is_upper_cased(word))
             word_occ_vals[w_id]["sent_idx"].append(sent_idx)
             word_occ_vals[w_id]["l_context"].extend(
-                getattr(w, attr_name)
-                for w in lwords
-                if not (w is None or w.is_punct or w.is_space)
+                getattr(w, attr_name) for w in lwords if not (w is None or w.is_punct or w.is_space)
             )
             word_occ_vals[w_id]["r_context"].extend(
-                getattr(w, attr_name)
-                for w in rwords
-                if not (w is None or w.is_punct or w.is_space)
+                getattr(w, attr_name) for w in rwords if not (w is None or w.is_punct or w.is_space)
             )
     return word_occ_vals
 
@@ -197,9 +194,7 @@ def _compute_word_scores(
     for w_id, vals in word_occ_vals.items():
         freq = word_freqs[w_id]
         word_weights[w_id]["case"] = sum(vals["is_uc"]) / math.log2(1 + freq)
-        word_weights[w_id]["pos"] = math.log2(
-            math.log2(3 + statistics.mean(vals["sent_idx"]))
-        )
+        word_weights[w_id]["pos"] = math.log2(math.log2(3 + statistics.mean(vals["sent_idx"])))
         word_weights[w_id]["freq"] = freq / freq_baseline
         word_weights[w_id]["disp"] = len(set(vals["sent_idx"])) / n_sents
         n_unique_lc = len(set(vals["l_context"]))
@@ -218,19 +213,25 @@ def _compute_word_scores(
 
     # combine individual weights into per-word scores
     word_scores = {
-        w_id: (wts["rel"] * wts["pos"])
-        / (wts["case"] + (wts["freq"] / wts["rel"]) + (wts["disp"] / wts["rel"]))
+        w_id: (wts["rel"] * wts["pos"]) / (wts["case"] + (wts["freq"] / wts["rel"]) + (wts["disp"] / wts["rel"]))
         for w_id, wts in word_weights.items()
     }
     return word_scores
 
 
-def _get_unigram_candidates(doc: Doc, include_pos: Set[str]) -> Iterable[Token]:
-    candidates = (
-        word for word in doc if not (word.is_stop or word.is_punct or word.is_space)
-    )
+def _get_unigram_candidates(doc: Doc, include_pos: Set[str], include_ner: Set[str]) -> Iterable[Token]:
+    candidates = (word for word in doc if not (word.is_stop or word.is_punct or word.is_space))
     if include_pos:
         candidates = (word for word in candidates if word.pos_ in include_pos)
+    if include_ner:
+        candidates = []
+        for word in candidates:
+            if word.ent_type_ and word.ent_type_ in include_ner:
+                candidates.append(word)
+            elif not word.ent_type_:
+                candidates.append(word)
+
+    candidates = tuple(candidates)
     return candidates
 
 
