@@ -28,7 +28,8 @@ from . import matches
 
 
 def terms_to_strings(
-    terms: Iterable[types.SpanLike], by: str | Callable[[types.SpanLike], str],
+    terms: Iterable[types.SpanLike],
+    by: str | Callable[[types.SpanLike], str],
 ) -> Iterable[str]:
     """
     Transform a sequence of terms as spaCy ``Token`` s or ``Span`` s into strings.
@@ -52,9 +53,7 @@ def terms_to_strings(
     elif callable(by):
         terms = (by(term) for term in terms)
     else:
-        raise ValueError(
-            errors.value_invalid_msg("by", by, {"orth", "lower", "lemma", Callable})
-        )
+        raise ValueError(errors.value_invalid_msg("by", by, {"orth", "lower", "lemma", Callable}))
     for term in terms:
         yield term
 
@@ -93,16 +92,11 @@ def clean_term_strings(terms: Iterable[str]) -> Iterable[str]:
     terms = (
         term
         if "-" not in term
-        else constants.RE_NEG_DIGIT_TERM.sub(
-            r"\1\2", constants.RE_WEIRD_HYPHEN_SPACE_TERM.sub(r"\1", term)
-        )
+        else constants.RE_NEG_DIGIT_TERM.sub(r"\1\2", constants.RE_WEIRD_HYPHEN_SPACE_TERM.sub(r"\1", term))
         for term in terms
     )
     # handle oddly separated apostrophe'd words
-    terms = (
-        constants.RE_WEIRD_APOSTR_SPACE_TERM.sub(r"\1\2", term) if "'" in term else term
-        for term in terms
-    )
+    terms = (constants.RE_WEIRD_APOSTR_SPACE_TERM.sub(r"\1\2", term) if "'" in term else term for term in terms)
     # normalize whitespace
     terms = (constants.RE_NONBREAKING_SPACE.sub(" ", term).strip() for term in terms)
     for term in terms:
@@ -209,9 +203,7 @@ def aggregate_term_variants(
 
         # intense de-duping for sufficiently long terms
         if fuzzy_dedupe is True and len(term) >= 13:
-            for other_term in sorted(
-                terms.difference(seen_terms), key=len, reverse=True
-            ):
+            for other_term in sorted(terms.difference(seen_terms), key=len, reverse=True):
                 if len(other_term) < 13:
                     break
                 tsr = similarity.token_sort_ratio(term, other_term)
@@ -226,7 +218,8 @@ def aggregate_term_variants(
 
 
 def get_longest_subsequence_candidates(
-    doc: Doc, match_func: Callable[[Token], bool],
+    doc: Doc,
+    match_func: Callable[[Token], bool],
 ) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are longest consecutive
@@ -250,6 +243,7 @@ def get_ngram_candidates(
     ns: int | Collection[int],
     *,
     include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
+    include_ner: Optional[str | Collection[str]] = None,
 ) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are n-length sequences
@@ -271,23 +265,24 @@ def get_ngram_candidates(
     """
     ns = utils.to_collection(ns, int, tuple)
     include_pos = utils.to_collection(include_pos, str, set)
+    include_ner = utils.to_collection(include_ner, str, set)
     ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns)
     ngrams = (
         ngram
         for ngram in ngrams
-        if not (ngram[0].is_stop or ngram[-1].is_stop)
-        and not any(word.is_punct or word.is_space for word in ngram)
+        if not (ngram[0].is_stop or ngram[-1].is_stop) and not any(word.is_punct or word.is_space for word in ngram)
     )
     if include_pos:
-        ngrams = (
-            ngram for ngram in ngrams if all(word.pos_ in include_pos for word in ngram)
-        )
+        ngrams = (ngram for ngram in ngrams if all(word.pos_ in include_pos for word in ngram))
+    if include_ner:
+        ngrams = (ngram for ngram in ngrams if all(word.ent_type_ in include_ner for word in ngram if word.ent_type_))
     for ngram in ngrams:
         yield ngram
 
 
 def get_pattern_matching_candidates(
-    doc: Doc, patterns: str | List[str] | List[dict] | List[List[dict]],
+    doc: Doc,
+    patterns: str | List[str] | List[dict] | List[List[dict]],
 ) -> Iterable[Tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are sequences of tokens
@@ -339,9 +334,7 @@ def get_filtered_topn_terms(
         if any(term in st for st in seen_terms):
             continue
         # skip terms that are sufficiently similar to any higher-scoring term
-        if match_threshold and any(
-            sim_func(term, st) >= match_threshold for st in seen_terms
-        ):
+        if match_threshold and any(sim_func(term, st) >= match_threshold for st in seen_terms):
             continue
         seen_terms.add(term)
         topn_terms.append((term, score))
