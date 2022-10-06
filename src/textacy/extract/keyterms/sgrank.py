@@ -22,6 +22,7 @@ def sgrank(
     normalize: Optional[str | Callable[[Span], str]] = "lemma",
     ngrams: int | Collection[int] = (1, 2, 3, 4, 5, 6),
     include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
+    include_ner: Optional[str | Collection[str]] = None,
     window_size: int = 1500,
     topn: int | float = 10,
     idf: Dict[str, float] = None,
@@ -64,6 +65,7 @@ def sgrank(
     # validate / transform args
     ngrams = utils.to_collection(ngrams, int, tuple)
     include_pos = utils.to_collection(include_pos, str, set)
+    include_ner = utils.to_collection(include_ner, str, set)
     if window_size < 2:
         raise ValueError("`window_size` must be >= 2")
     if isinstance(topn, float):
@@ -76,17 +78,13 @@ def sgrank(
     if n_toks < 2:
         return []
 
-    candidates, candidate_counts = _get_candidates(doc, normalize, ngrams, include_pos)
+    candidates, candidate_counts = _get_candidates(doc, normalize, ngrams, include_pos, include_ner)
     # scale float topn based on total number of initial candidates
     if isinstance(topn, float):
         topn = int(round(len(candidate_counts) * topn))
-    candidates, unique_candidates = _prefilter_candidates(
-        candidates, candidate_counts, topn, idf
-    )
+    candidates, unique_candidates = _prefilter_candidates(candidates, candidate_counts, topn, idf)
 
-    term_weights = _compute_term_weights(
-        candidates, candidate_counts, unique_candidates, n_toks, idf
-    )
+    term_weights = _compute_term_weights(candidates, candidate_counts, unique_candidates, n_toks, idf)
     # filter terms to only those with positive weights
     candidates = [cand for cand in candidates if term_weights[cand.text] > 0]
     edge_weights = _compute_edge_weights(candidates, term_weights, window_size, n_toks)
@@ -105,6 +103,7 @@ def _get_candidates(
     normalize: Optional[str | Callable[[Span], str]],
     ngrams: Tuple[int, ...],
     include_pos: Set[str],
+    include_ner: Set[str],
 ) -> Tuple[List[Candidate], Counter[str]]:
     """
     Get n-gram candidate keyterms from ``doc``, with key information for each:
@@ -112,22 +111,15 @@ def _get_candidates(
     and frequency of occurrence.
     """
     min_term_freq = min(max(len(doc) // 1000, 1), 4)
-    cand_tuples = list(
-        ext_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos)
-    )
-    cand_texts = [
-        " ".join(ext_utils.terms_to_strings(ctup, normalize or "orth"))
-        for ctup in cand_tuples
-    ]
+    cand_tuples = list(ext_utils.get_ngram_candidates(doc, ngrams, include_pos=include_pos, include_ner=include_ner))
+    cand_texts = [" ".join(ext_utils.terms_to_strings(ctup, normalize or "orth")) for ctup in cand_tuples]
     cand_counts = collections.Counter(cand_texts)
     candidates = [
         Candidate(text=ctext, idx=ctup[0].i, length=len(ctup), count=cand_counts[ctext])
         for ctup, ctext in zip(cand_tuples, cand_texts)
     ]
     if min_term_freq > 1:
-        candidates = [
-            candidate for candidate in candidates if candidate.count >= min_term_freq
-        ]
+        candidates = [candidate for candidate in candidates if candidate.count >= min_term_freq]
     return candidates, cand_counts
 
 
@@ -143,20 +135,12 @@ def _prefilter_candidates(
     """
     topn_prefilter = max(3 * topn, 100)
     if idf:
-        mod_tfidfs = {
-            c.text: c.count * idf.get(c.text, 1) if " " not in c.text else c.count
-            for c in candidates
-        }
+        mod_tfidfs = {c.text: c.count * idf.get(c.text, 1) if " " not in c.text else c.count for c in candidates}
         unique_candidates = {
-            ctext
-            for ctext, _ in sorted(
-                mod_tfidfs.items(), key=itemgetter(1), reverse=True
-            )[:topn_prefilter]
+            ctext for ctext, _ in sorted(mod_tfidfs.items(), key=itemgetter(1), reverse=True)[:topn_prefilter]
         }
     else:
-        unique_candidates = {
-            ctext for ctext, _ in candidate_counts.most_common(topn_prefilter)
-        }
+        unique_candidates = {ctext for ctext, _ in candidate_counts.most_common(topn_prefilter)}
     candidates = [cand for cand in candidates if cand.text in unique_candidates]
     return candidates, unique_candidates
 
@@ -186,14 +170,7 @@ def _compute_term_weights(
         # TODO: do we want to sub-linear scale term len or not?
         clen = math.sqrt(cand.length)
         # subtract from subsum_count for the case when ctext == ctext2
-        subsum_count = (
-            sum(
-                candidate_counts[ctext2]
-                for ctext2 in unique_candidates
-                if cand.text in ctext2
-            )
-            - cand.count
-        )
+        subsum_count = sum(candidate_counts[ctext2] for ctext2 in unique_candidates if cand.text in ctext2) - cand.count
         term_freq_factor = cand.count - subsum_count
         if idf and clen == 1:
             term_freq_factor *= idf.get(cand.text, 1)
@@ -223,9 +200,7 @@ def _compute_edge_weights(
         for c1, c2 in itertools.combinations(window_cands, 2):
             n_coocs[c1.text][c2.text] += 1
             try:
-                sum_logdists[c1.text][c2.text] += log_(
-                    window_size / abs(c1.idx - c2.idx)
-                )
+                sum_logdists[c1.text][c2.text] += log_(window_size / abs(c1.idx - c2.idx))
             except ZeroDivisionError:
                 sum_logdists[c1.text][c2.text] += log_(window_size)
         if end_idx >= n_toks:
@@ -234,16 +209,10 @@ def _compute_edge_weights(
     edge_weights = collections.defaultdict(lambda: collections.defaultdict(float))
     for c1, c2_dict in sum_logdists.items():
         for c2, sum_logdist in c2_dict.items():
-            edge_weights[c1][c2] = (
-                ((1.0 + sum_logdist) / n_coocs[c1][c2])
-                * term_weights[c1]
-                * term_weights[c2]
-            )
+            edge_weights[c1][c2] = ((1.0 + sum_logdist) / n_coocs[c1][c2]) * term_weights[c1] * term_weights[c2]
     # normalize edge weights by sum of outgoing edge weights per term (node)
     norm_edge_weights: List[Tuple[str, str, Dict[str, float]]] = []
     for c1, c2s in edge_weights.items():
         sum_edge_weights = sum(c2s.values())
-        norm_edge_weights.extend(
-            (c1, c2, {"weight": weight / sum_edge_weights}) for c2, weight in c2s.items()
-        )
+        norm_edge_weights.extend((c1, c2, {"weight": weight / sum_edge_weights}) for c2, weight in c2s.items())
     return norm_edge_weights
