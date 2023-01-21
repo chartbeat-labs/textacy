@@ -152,7 +152,8 @@ class TopicModel:
         if model == "nmf":
             self.model = NMF(
                 n_components=n_topics,
-                alpha=kwargs.get("alpha", 0.1),
+                alpha_W=kwargs.get("alpha_W", 0.1),
+                alpha_H=kwargs.get("alpha_H", "same"),
                 l1_ratio=kwargs.get("l1_ratio", 0.5),
                 max_iter=kwargs.get("max_iter", 200),
                 random_state=kwargs.get("random_state", 1),
