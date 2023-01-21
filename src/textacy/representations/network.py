@@ -23,6 +23,11 @@ from .. import errors, similarity
 
 LOGGER = logging.getLogger(__name__)
 
+try:
+    nx_pagerank = nx.pagerank_scipy  # networkx < 3.0
+except AttributeError:
+    nx_pagerank = nx.pagerank  # networkx >= 3.0
+
 
 def build_cooccurrence_network(
     data: Sequence[str] | Sequence[Sequence[str]],
@@ -264,7 +269,7 @@ def rank_nodes_by_pagerank(
     Returns:
         Mapping of node object to Pagerank score.
     """
-    return nx.pagerank_scipy(graph, weight=weight, **kwargs)
+    return nx_pagerank(graph, weight=weight, **kwargs)
 
 
 def rank_nodes_by_bestcoverage(
@@ -306,7 +311,7 @@ def rank_nodes_by_bestcoverage(
         return {}
 
     # ranks: array of PageRank values, summing up to 1
-    ranks = nx.pagerank_scipy(graph, alpha=0.85, max_iter=100, tol=1e-08, weight=weight)
+    ranks = nx_pagerank(graph, alpha=0.85, max_iter=100, tol=1e-08, weight=weight)
     # sorted_ranks = sorted(ranks.items(), key=itemgetter(1), reverse=True)
     # avg_degree = sum(dict(graph.degree()).values()) / len(nodes_list)
     # relaxation parameter, k' in the paper
