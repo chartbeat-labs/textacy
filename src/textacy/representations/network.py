@@ -425,7 +425,12 @@ def rank_nodes_by_divrank(
     nodes_list = [node for node in graph]
     # create adjacency matrix, i.e.
     # n x n matrix where entry W_ij is the weight of the edge from V_i to V_j
-    W = nx.to_numpy_matrix(graph, nodelist=nodes_list, weight="weight").A
+    try:
+        # networkx < 3.0
+        W = nx.to_numpy_matrix(graph, nodelist=nodes_list, weight="weight").A
+    except AttributeError:
+        # networkx >= 3.0
+        W = nx.adjacency_matrix(graph, nodelist=nodes_list, weight="weight").toarray()
     n = W.shape[1]
     # create flat prior personalization vector if none given
     if r is None:
