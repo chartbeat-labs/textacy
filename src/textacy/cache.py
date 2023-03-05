@@ -3,17 +3,20 @@
 Loading data from disk can be slow; let's just do it once and forget about it. :)
 """
 import inspect
+import logging
 import os
 import sys
 
 from cachetools import LRUCache
 
 
+LOGGER = logging.getLogger(__name__)
+
 def _get_size(obj, seen=None):
     """
     Recursively find the actual size of an object, in bytes.
 
-    Taken as-is (with tweaked function name) from https://github.com/bosswissam/pysize.
+    Taken as-is (with tweaked function name and log level) from https://github.com/bosswissam/pysize.
     """
     size = sys.getsizeof(obj)
     if seen is None:
@@ -35,7 +38,13 @@ def _get_size(obj, seen=None):
         size += sum((_get_size(v, seen) for v in obj.values()))
         size += sum((_get_size(k, seen) for k in obj.keys()))
     elif hasattr(obj, "__iter__") and not isinstance(obj, (str, bytes, bytearray)):
-        size += sum((_get_size(i, seen) for i in obj))
+        try:
+            size += sum((_get_size(i, seen) for i in obj))
+        except TypeError:
+            LOGGER.warning("Unable to get size of %r. This may lead to incorrect sizes. Please report this error.", obj)
+    if hasattr(obj, "__slots__"): # can have __slots__ with __dict__
+        size += sum(_get_size(getattr(obj, s), seen) for s in obj.__slots__ if hasattr(obj, s))
+
     return size
 
 

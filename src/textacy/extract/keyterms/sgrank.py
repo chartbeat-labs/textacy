@@ -12,6 +12,11 @@ from spacy.tokens import Doc, Span
 from ... import utils
 from .. import utils as ext_utils
 
+try:
+    nx_pagerank = nx.pagerank_scipy  # networkx < 3.0
+except AttributeError:
+    nx_pagerank = nx.pagerank  # networkx >= 3.0
+
 
 Candidate = collections.namedtuple("Candidate", ["text", "idx", "length", "count"])
 
@@ -94,7 +99,7 @@ def sgrank(
     # build the weighted directed graph from edges, rank nodes by pagerank
     graph = nx.DiGraph()
     graph.add_edges_from(edge_weights)
-    term_ranks = nx.pagerank_scipy(graph, alpha=0.85, weight="weight")
+    term_ranks = nx_pagerank(graph, alpha=0.85, weight="weight")
     sorted_term_ranks = sorted(term_ranks.items(), key=itemgetter(1, 0), reverse=True)
 
     return ext_utils.get_filtered_topn_terms(sorted_term_ranks, topn, match_threshold=0.8)

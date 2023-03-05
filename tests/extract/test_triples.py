@@ -49,7 +49,7 @@ def sss_doc(lang_en):
             "He and I love house cats and big dogs.",
             [(["He", "I"], ["love"], ["house", "cats", "dogs"])],
         ),
-        # NOTE: this case is failing in spaCy v3.4.1
+        # NOTE: this case is failing as of spacy v3.5(?)
         # let's hide it for now so that tests pass overall
         # (
         #     "We do love and did hate small dogs.",
