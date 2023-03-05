@@ -47,11 +47,12 @@ Use an appropriate template (if available) when [creating your issue](https://gi
 
 1. **Implement your changes:** Use your preferred text editor to modify the `textacy` source code. Be sure to keep your changes focused and in scope, and follow the coding conventions described below! Document your code as you write it. Run your changes against any existing tests and add new ones as needed to validate your changes; make sure you don’t accidentally break existing functionality! Several common commands can be accessed via the package `Makefile`:
 
+        $ make download
         $ make test
         $ make lint
         $ make mypy
 
-    Or, to run all three at once, use
+    Or, to run three(`test`, `lint`, `mypy`) at once, use
 
         $ make check
 

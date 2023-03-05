@@ -26,3 +26,10 @@ mypy:
 	python -m mypy src
 
 check: test lint mypy
+
+download:
+	python -m spacy download en_core_web_sm
+	python -m spacy download es_core_news_sm
+	python -m spacy validate
+	python -m textacy download capitol_words
+	python -m textacy download lang_identifier --version 2.0
