@@ -45,7 +45,7 @@ viz = [
     "matplotlib >= 3.0.0",
 ]
 dev = [
-  "black",
+  "black ~= 23.0",
   "build",
   "flake8 >= 3.8.0",
   "mypy >= 0.900",
@@ -69,7 +69,7 @@ docs = [
   "sphinx >= 3.0.0, < 4.0.0",
 ]
 lint_and_format = [
-  "black",
+  "black ~= 23.0",
   "flake8 >= 3.8.0",
   "mypy >= 0.900",
 ]
@@ -92,9 +92,9 @@ version = { attr = "textacy._version.__version__" }
 where = ["src"]
 
 [tool.black]
-line-length = 89
-target-version = ["py38", "py39"]
-exclude = '''
+line-length = 88
+target-version = ["py38", "py39", "py310"]
+extend-exclude = '''
 (
     src/textacy/preprocessing/resources.py
 )
