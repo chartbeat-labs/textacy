@@ -7,7 +7,7 @@ name = "textacy"
 description = "NLP, before and after spaCy"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = {file = "LICENSE.txt"}
-requires_python = ">= 3.8"
+requires-python = ">= 3.8"
 maintainers = [{ name = "Burton DeWilde", email = "burtdewilde@gmail.com" }]
 dynamic = ["version"]
 keywords = ["spacy", "nlp", "text processing", "linguistics"]
@@ -40,7 +40,7 @@ dependencies = [
   "tqdm >= 4.19.6",
 ]
 
-[project.optional_dependencies]
+[project.optional-dependencies]
 viz = [
     "matplotlib >= 3.0.0",
 ]
