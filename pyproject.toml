@@ -48,6 +48,7 @@ dev = [
   "black ~= 23.0",
   "build",
   "flake8 >= 3.8.0",
+  "isort ~= 5.0",
   "mypy >= 0.900",
   "recommonmark >= 0.6.0, < 0.7.0",
   "sphinx >= 3.0.0, < 4.0.0",
@@ -71,6 +72,7 @@ docs = [
 lint_and_format = [
   "black ~= 23.0",
   "flake8 >= 3.8.0",
+  "isort ~= 5.0",
   "mypy >= 0.900",
 ]
 
@@ -99,6 +101,10 @@ extend-exclude = '''
     src/textacy/preprocessing/resources.py
 )
 '''
+
+[tool.isort]
+profile = "black"
+lines_after_imports = 2
 
 [tool.mypy]
 files = [
