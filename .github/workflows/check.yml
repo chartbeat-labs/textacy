@@ -33,7 +33,7 @@ jobs:
         make download
     - name: Test with pytest
       run: |
-        make test
+        python -m pytest tests --verbose --cov=textacy --cov-report=term-missing
 
   lint:
     runs-on: ubuntu-latest
