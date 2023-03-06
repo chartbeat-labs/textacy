@@ -47,12 +47,11 @@ viz = [
 dev = [
   "black ~= 23.0",
   "build",
-  "flake8 >= 3.8.0",
   "isort ~= 5.0",
-  "mypy >= 0.900",
+  "mypy ~= 1.0.0",
   "recommonmark >= 0.6.0, < 0.7.0",
   "sphinx >= 3.0.0, < 4.0.0",
-  "pytest ~= 6.0",
+  "pytest ~= 7.0",
   "pytest-cov",
   "ruff",
   "twine >= 3.0.0",
@@ -60,7 +59,7 @@ dev = [
 ]
 build_and_test = [
   "build",
-  "pytest ~= 6.0",
+  "pytest ~= 7.0",
   "pytest-cov",
   "twine >= 3.0.0",
   "wheel",
@@ -72,9 +71,8 @@ docs = [
 ]
 lint_and_format = [
   "black ~= 23.0",
-  "flake8 >= 3.8.0",
   "isort ~= 5.0",
-  "mypy >= 0.900",
+  "mypy ~= 1.0.0",
   "ruff",
 ]
 
@@ -109,17 +107,14 @@ profile = "black"
 lines_after_imports = 2
 
 [tool.mypy]
-files = [
-  "src/**/*.py",
-  "tests/**/*.py",
-]
+files = ["src/**/*.py"]
 python_version = "3.8"
+pretty = true
 ignore_missing_imports = true
 follow_imports = "silent"
 
 [tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-ra -v"
+addopts = "--verbose"
 testpaths = ["tests"]
 
 [tool.ruff]
