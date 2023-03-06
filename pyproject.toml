@@ -57,23 +57,18 @@ dev = [
   "twine >= 3.0.0",
   "wheel",
 ]
-build_and_test = [
-  "build",
+check = [
+  "black ~= 23.0",
+  "isort ~= 5.0",
+  "mypy ~= 1.0.0",
   "pytest ~= 7.0",
   "pytest-cov",
-  "twine >= 3.0.0",
-  "wheel",
+  "ruff",
 ]
 docs = [
   "Jinja2 < 3.1",
   "recommonmark >= 0.6.0, < 0.7.0",
   "sphinx >= 3.0.0, < 4.0.0",
-]
-lint_and_format = [
-  "black ~= 23.0",
-  "isort ~= 5.0",
-  "mypy ~= 1.0.0",
-  "ruff",
 ]
 
 [project.urls]
