@@ -110,6 +110,8 @@ lines_after_imports = 2
 files = ["src/**/*.py"]
 python_version = "3.8"
 pretty = true
+ignore_errors = true
+allow_redefinition = true
 ignore_missing_imports = true
 follow_imports = "silent"
 

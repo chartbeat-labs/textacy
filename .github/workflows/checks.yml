@@ -74,4 +74,4 @@ jobs:
         python -m pip install -e '.[lint_and_format]'
     - name: Check types with mypy
       run: |
-        python -m mypy src
+        python -m mypy --install-types --non-interactive src
