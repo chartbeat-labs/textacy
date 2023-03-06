@@ -1,8 +1,8 @@
 name: docs
 
 on:
-  push:  # run on every push to default branch
-    branches: [ $default-branch, main ]
+  push:
+    branches: [ main ]
   pull_request:  # run on all pull requests
 
 jobs:
@@ -10,29 +10,19 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        build-type: [ html, text ]
-
+        build-type: [html, text]
     steps:
-    - uses: actions/checkout@v2
-    - name: set up Python
+    - uses: actions/checkout@v3
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
         python-version: "3.8"
-    - name: get pip cache dir
-      id: pip-cache
-      run: |
-        echo "::set-output name=dir::$(pip cache dir)"
-    - name: set up pip cache
-      uses: actions/cache@v2
-      with:
-        path: ${{ steps.pip-cache.outputs.dir }}
-        key: ${{ matrix.os }}-pip-${{ hashFiles('setup.cfg') }}
-        restore-keys: |
-          ${{ matrix.os }}-pip-
-    - name: install package and dependencies
+        cache: "pip"
+        cache-dependency-path: "pyproject.toml"
+    - name: Install dependencies
       run: |
         python -m pip install --upgrade pip wheel
-        python -m pip install -e .[docs]
+        python -m pip install -e '.[docs]'
     - name: make ${{ matrix.build-type }} docs
       run: |
         cd docs && make ${{ matrix.build-type }}
