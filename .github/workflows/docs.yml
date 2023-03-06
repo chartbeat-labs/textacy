@@ -2,8 +2,7 @@ name: docs
 
 on:
   push:
-    branches: [ main ]
-  pull_request:  # run on all pull requests
+    branches: [ main, develop ]
 
 jobs:
   build:
