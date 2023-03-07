@@ -1,26 +1,128 @@
 [build-system]
-requires = ["setuptools >= 46.4.0", "wheel"]
+requires = ["setuptools >= 61.0.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
+[project]
+name = "textacy"
+description = "NLP, before and after spaCy"
+readme = { file = "README.md", content-type = "text/markdown" }
+license = {file = "LICENSE.txt"}
+requires-python = ">= 3.8"
+maintainers = [{ name = "Burton DeWilde", email = "burtdewilde@gmail.com" }]
+dynamic = ["version"]
+keywords = ["spacy", "nlp", "text processing", "linguistics"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: Apache Software License",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Natural Language :: English",
+  "Topic :: Text Processing :: Linguistic",
+]
+dependencies = [
+  "cachetools >= 4.0.0",
+  "catalogue ~= 2.0",
+  "cytoolz >= 0.10.1",
+  "jellyfish >= 0.8.0",
+  "joblib >= 0.13.0",
+  "networkx >= 2.7",
+  "numpy >= 1.17.0",
+  "pyphen >= 0.10.0",
+  "requests >= 2.10.0",
+  "scipy >= 1.8.0",
+  "scikit-learn >= 1.0",
+  "spacy ~= 3.0",
+  "tqdm >= 4.19.6",
+]
+
+[project.optional-dependencies]
+viz = [
+    "matplotlib >= 3.0.0",
+]
+dev = [
+  "black ~= 23.0",
+  "build",
+  "isort ~= 5.0",
+  "mypy ~= 1.0.0",
+  "recommonmark >= 0.6.0, < 0.7.0",
+  "sphinx >= 3.0.0, < 4.0.0",
+  "pytest ~= 7.0",
+  "pytest-cov",
+  "ruff",
+  "twine >= 3.0.0",
+  "wheel",
+]
+check = [
+  "black ~= 23.0",
+  "isort ~= 5.0",
+  "mypy ~= 1.0.0",
+  "pytest ~= 7.0",
+  "pytest-cov",
+  "ruff",
+]
+docs = [
+  "Jinja2 < 3.1",
+  "recommonmark >= 0.6.0, < 0.7.0",
+  "sphinx >= 3.0.0, < 4.0.0",
+]
+
+[project.urls]
+Docs = "https://textacy.readthedocs.io"
+Repo = "https://github.com/chartbeat-labs/textacy"
+Changelog = "https://github.com/chartbeat-labs/textacy/blob/main/CHANGES.md"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.dynamic]
+version = { attr = "textacy._version.__version__" }
+
+[tool.setuptools.package-data]
+"*" = ["py.typed"]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
 [tool.black]
-line-length = 89
-target-version = ["py38", "py39"]
-exclude = '''
+line-length = 88
+target-version = ["py38", "py39", "py310"]
+extend-exclude = '''
 (
     src/textacy/preprocessing/resources.py
 )
 '''
 
+[tool.isort]
+profile = "black"
+lines_after_imports = 2
+
 [tool.mypy]
-files = [
-  "src/**/*.py",
-  "tests/**/*.py",
-]
+files = ["src/**/*.py"]
 python_version = "3.8"
+pretty = true
+ignore_errors = true
+allow_redefinition = true
 ignore_missing_imports = true
 follow_imports = "silent"
 
 [tool.pytest.ini_options]
-minversion = "6.0"
-addopts = "-ra -v"
+addopts = "--verbose"
 testpaths = ["tests"]
+
+[tool.ruff]
+select = [
+  "E",  # pycodestyle rules
+  "F",  # pyflakes rules
+]
+ignore = ["E501"]
+line-length = 88
+target-version = "py38"
+src = ["src"]
+
+[tool.ruff.per-file-ignores]
+"__init__.py" = ["F401"]  # ignore unused imports in `__init__.py` files

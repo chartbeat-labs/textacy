@@ -1,0 +1,78 @@
+name: checks
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:  # run on all PRs
+  schedule:  # run weekly
+    - cron: "0 12 * * 0"
+
+jobs:
+
+  tests:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+        os: [macos-latest, ubuntu-latest]  # windows-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: "pip"
+        cache-dependency-path: "pyproject.toml"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip wheel
+        python -m pip install -e '.[check]'
+    - name: Download language data
+      run: |
+        make download
+    - name: Test with pytest
+      run: |
+        python -m pytest tests --verbose --cov=textacy --cov-report=term-missing
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.8"
+        cache: "pip"
+        cache-dependency-path: "pyproject.toml"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip wheel
+        python -m pip install -e '.[check]'
+    - name: Check formatting with black
+      run: |
+        python -m black --diff src
+    - name: Check imports with isort
+      run: |
+        python -m isort --diff src
+    - name: Check correctness with ruff
+      run: |
+        python -m ruff check --exit-zero src
+
+  types:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: "3.8"
+        cache: "pip"
+        cache-dependency-path: "pyproject.toml"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip wheel
+        python -m pip install -e '.[check]'
+    - name: Check types with mypy
+      run: |
+        python -m mypy --install-types --non-interactive src
