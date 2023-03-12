@@ -42,7 +42,7 @@ dependencies = [
 
 [project.optional-dependencies]
 viz = [
-    "matplotlib >= 3.0.0",
+    "matplotlib ~= 3.0",
 ]
 dev = [
   "black ~= 23.0",
@@ -50,11 +50,11 @@ dev = [
   "isort ~= 5.0",
   "mypy ~= 1.0.0",
   "recommonmark >= 0.6.0, < 0.7.0",
-  "sphinx >= 3.0.0, < 4.0.0",
+  "sphinx ~= 3.0",
   "pytest ~= 7.0",
   "pytest-cov",
   "ruff",
-  "twine >= 3.0.0",
+  "twine ~= 4.0",
   "wheel",
 ]
 check = [
@@ -68,7 +68,7 @@ check = [
 docs = [
   "Jinja2 < 3.1",
   "recommonmark >= 0.6.0, < 0.7.0",
-  "sphinx >= 3.0.0, < 4.0.0",
+  "sphinx ~= 3.0",
 ]
 
 [project.urls]
