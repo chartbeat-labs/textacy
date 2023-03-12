@@ -7,7 +7,7 @@ name = "textacy"
 description = "NLP, before and after spaCy"
 readme = { file = "README.md", content-type = "text/markdown" }
 license = {file = "LICENSE.txt"}
-requires-python = ">= 3.8"
+requires-python = ">= 3.9"
 maintainers = [{ name = "Burton DeWilde", email = "burtdewilde@gmail.com" }]
 dynamic = ["version"]
 keywords = ["spacy", "nlp", "text processing", "linguistics"]
@@ -18,9 +18,9 @@ classifiers = [
   "Intended Audience :: Science/Research",
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
-  "Programming Language :: Python :: 3.8",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
   "Natural Language :: English",
   "Topic :: Text Processing :: Linguistic",
 ]
@@ -42,7 +42,7 @@ dependencies = [
 
 [project.optional-dependencies]
 viz = [
-    "matplotlib >= 3.0.0",
+    "matplotlib ~= 3.0",
 ]
 dev = [
   "black ~= 23.0",
@@ -50,11 +50,11 @@ dev = [
   "isort ~= 5.0",
   "mypy ~= 1.0.0",
   "recommonmark >= 0.6.0, < 0.7.0",
-  "sphinx >= 3.0.0, < 4.0.0",
+  "sphinx ~= 3.0",
   "pytest ~= 7.0",
   "pytest-cov",
   "ruff",
-  "twine >= 3.0.0",
+  "twine ~= 4.0",
   "wheel",
 ]
 check = [
@@ -68,7 +68,7 @@ check = [
 docs = [
   "Jinja2 < 3.1",
   "recommonmark >= 0.6.0, < 0.7.0",
-  "sphinx >= 3.0.0, < 4.0.0",
+  "sphinx ~= 3.0",
 ]
 
 [project.urls]
@@ -90,7 +90,7 @@ where = ["src"]
 
 [tool.black]
 line-length = 88
-target-version = ["py38", "py39", "py310"]
+target-version = ["py39", "py310", "py311"]
 extend-exclude = '''
 (
     src/textacy/preprocessing/resources.py
@@ -103,7 +103,7 @@ lines_after_imports = 2
 
 [tool.mypy]
 files = ["src/**/*.py"]
-python_version = "3.8"
+python_version = "3.9"
 pretty = true
 ignore_errors = true
 allow_redefinition = true
@@ -121,7 +121,7 @@ select = [
 ]
 ignore = ["E501"]
 line-length = 88
-target-version = "py38"
+target-version = "py39"
 src = ["src"]
 
 [tool.ruff.per-file-ignores]
