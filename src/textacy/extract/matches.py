@@ -8,7 +8,7 @@ using spaCy's built-in matcher or regular expressions.
 from __future__ import annotations
 
 import re
-from typing import Callable, Dict, Iterable, List, Optional, Pattern, Union
+from typing import Callable, Iterable, Optional, Pattern, Union
 
 from spacy.matcher import Matcher
 from spacy.tokens import Span
@@ -18,7 +18,7 @@ from .. import constants, errors, types
 
 def token_matches(
     doclike: types.DocLike,
-    patterns: str | List[str] | List[Dict[str, str]] | List[List[Dict[str, str]]],
+    patterns: str | list[str] | list[dict[str, str]] | list[list[dict[str, str]]],
     *,
     on_match: Optional[Callable] = None,
 ) -> Iterable[Span]:
@@ -32,7 +32,7 @@ def token_matches(
             One or multiple patterns to match against ``doclike``
             using a :class:`spacy.matcher.Matcher`.
 
-            If List[dict] or List[List[dict]], each pattern is specified
+            If list[dict] or list[list[dict]], each pattern is specified
             as attr: value pairs per token, with optional quantity qualifiers:
 
             - ``[{"POS": "NOUN"}]`` matches singular or plural nouns,
@@ -44,7 +44,7 @@ def token_matches(
             - ``[{"POS": "PROPN", "OP": "+"}, {}]`` matches proper nouns and
               whatever word follows them, like "Burton DeWilde yaaasss"
 
-            If str or List[str], each pattern is specified as one or more
+            If str or list[str], each pattern is specified as one or more
             per-token patterns separated by whitespace where attribute, value,
             and optional quantity qualifiers are delimited by colons. Note that
             boolean and integer values have special syntax --- "bool(val)" and
@@ -58,7 +58,7 @@ def token_matches(
 
             Also note that these pattern strings don't support spaCy v2.1's
             "extended" pattern syntax; if you need such complex patterns, it's
-            probably better to use a List[dict] or List[List[dict]], anyway.
+            probably better to use a list[dict] or list[list[dict]], anyway.
 
         on_match: Callback function to act on matches.
             Takes the arguments ``matcher``, ``doclike``, ``i`` and ``matches``.
@@ -89,7 +89,7 @@ def token_matches(
                     "patterns",
                     type(patterns),
                     Union[
-                        str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]
+                        str, list[str], list[dict[str, str]], list[list[dict[str, str]]]
                     ],
                 )
             )
@@ -98,7 +98,7 @@ def token_matches(
             errors.type_invalid_msg(
                 "patterns",
                 type(patterns),
-                Union[str, List[str], List[Dict[str, str]], List[List[Dict[str, str]]]],
+                Union[str, list[str], list[dict[str, str]], list[list[dict[str, str]]]],
             )
         )
     matcher = Matcher(doclike.vocab)
@@ -107,7 +107,7 @@ def token_matches(
         yield match
 
 
-def _make_pattern_from_string(patstr: str) -> List[Dict[str, str]]:
+def _make_pattern_from_string(patstr: str) -> list[dict[str, str]]:
     pattern = []
     for tokpatstr in constants.RE_MATCHER_TOKPAT_DELIM.split(patstr):
         parts = tokpatstr.split(":")

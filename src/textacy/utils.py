@@ -9,21 +9,11 @@ import logging
 import pathlib
 import sys
 import warnings
-from typing import (
-    Any,
-    Callable,
-    Collection,
-    Dict,
-    Iterable,
-    Optional,
-    Set,
-    Tuple,
-    Type,
-    Union,
-)
-from typing import cast
+from typing import Any, Callable, Collection, Iterable, Optional, Type, Union, cast
 
-from . import errors as errors_, types
+from . import errors as errors_
+from . import types
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -51,7 +41,7 @@ def deprecated(message: str, *, action: str = "always"):
         warnings.warn(message, DeprecationWarning, stacklevel=2)
 
 
-def get_config() -> Dict[str, Any]:
+def get_config() -> dict[str, Any]:
     """
     Get key configuration info about dev environment: OS, python, spacy, and textacy.
 
@@ -60,6 +50,7 @@ def get_config() -> Dict[str, Any]:
     """
     from spacy.about import __version__ as spacy_version
     from spacy.util import get_installed_models
+
     from ._version import __version__ as textacy_version
 
     return {
@@ -71,7 +62,7 @@ def get_config() -> Dict[str, Any]:
     }
 
 
-def print_markdown(items: Dict[Any, Any] | Iterable[Tuple[Any, Any]]):
+def print_markdown(items: dict[Any, Any] | Iterable[tuple[Any, Any]]):
     """
     Print ``items`` as a markdown-formatted list.
     Specifically useful when submitting config info on GitHub issues.
@@ -105,7 +96,7 @@ def is_record(obj: Any) -> bool:
 
 def to_collection(
     val: types.AnyVal | Collection[types.AnyVal],
-    val_type: Type[Any] | Tuple[Type[Any], ...],
+    val_type: Type[Any] | tuple[Type[Any], ...],
     col_type: Type[Any],
 ) -> Collection[types.AnyVal]:
     """
@@ -182,10 +173,10 @@ def to_path(path: types.PathLike) -> pathlib.Path:
 
 
 def validate_set_members(
-    vals: types.AnyVal | Set[types.AnyVal],
-    val_type: Type[Any] | Tuple[Type[Any], ...],
-    valid_vals: Optional[Set[types.AnyVal]] = None,
-) -> Set[types.AnyVal]:
+    vals: types.AnyVal | set[types.AnyVal],
+    val_type: Type[Any] | tuple[Type[Any], ...],
+    valid_vals: Optional[set[types.AnyVal]] = None,
+) -> set[types.AnyVal]:
     """
     Validate values that must be of a certain type and (optionally) found among
     a set of known valid values.
@@ -196,13 +187,13 @@ def validate_set_members(
         valid_vals: Set of valid values in which all ``vals`` must be found.
 
     Return:
-        Set[obj]: Validated values.
+        set[obj]: Validated values.
 
     Raises:
         TypeError
         ValueError
     """
-    vals = cast(Set, to_collection(vals, val_type, set))
+    vals = cast(set, to_collection(vals, val_type, set))
     if valid_vals is not None:
         if not isinstance(valid_vals, set):
             valid_vals = set(valid_vals)
@@ -215,10 +206,10 @@ def validate_set_members(
 
 
 def validate_and_clip_range(
-    range_vals: Tuple[types.AnyVal, types.AnyVal],
-    full_range: Tuple[types.AnyVal, types.AnyVal],
-    val_type: Optional[Type[Any] | Tuple[Type[Any], ...]] = None,
-) -> Tuple[types.AnyVal, types.AnyVal]:
+    range_vals: tuple[types.AnyVal, types.AnyVal],
+    full_range: tuple[types.AnyVal, types.AnyVal],
+    val_type: Optional[Type[Any] | tuple[Type[Any], ...]] = None,
+) -> tuple[types.AnyVal, types.AnyVal]:
     """
     Validate and clip range values.
 
@@ -273,10 +264,10 @@ def validate_and_clip_range(
             full_range[1],
         )
         range_vals = (range_vals[0], full_range[1])
-    return cast(Tuple[Any, Any], tuple(range_vals))
+    return cast(tuple[Any, Any], tuple(range_vals))
 
 
-def get_kwargs_for_func(func: Callable, kwargs: Dict[str, Any]) -> Dict[str, Any]:
+def get_kwargs_for_func(func: Callable, kwargs: dict[str, Any]) -> dict[str, Any]:
     """
     Get the set of keyword arguments from ``kwargs`` that are used by ``func``.
     Useful when calling a func from another func and inferring its signature
@@ -296,7 +287,7 @@ def get_kwargs_for_func(func: Callable, kwargs: Dict[str, Any]) -> Dict[str, Any
     return func_kwargs
 
 
-def text_to_char_ngrams(text: str, n: int, *, pad: bool = False) -> Tuple[str, ...]:
+def text_to_char_ngrams(text: str, n: int, *, pad: bool = False) -> tuple[str, ...]:
     """
     Convert a text string into an ordered sequence of character ngrams.
 

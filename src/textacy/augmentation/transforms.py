@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import List, Optional, Set
+from typing import Optional
 
 from cytoolz import itertoolz
 
@@ -10,11 +10,11 @@ from . import utils as aug_utils
 
 
 def substitute_word_synonyms(
-    aug_toks: List[types.AugTok],
+    aug_toks: list[types.AugTok],
     *,
     num: int | float = 1,
-    pos: Optional[str | Set[str]] = None,
-) -> List[types.AugTok]:
+    pos: Optional[str | set[str]] = None,
+) -> list[types.AugTok]:
     """
     Randomly substitute words for which synonyms are available
     with a randomly selected synonym,
@@ -64,11 +64,11 @@ def substitute_word_synonyms(
 
 
 def insert_word_synonyms(
-    aug_toks: List[types.AugTok],
+    aug_toks: list[types.AugTok],
     *,
     num: int | float = 1,
-    pos: Optional[str | Set[str]] = None,
-) -> List[types.AugTok]:
+    pos: Optional[str | set[str]] = None,
+) -> list[types.AugTok]:
     """
     Randomly insert random synonyms of tokens for which synonyms are available,
     up to ``num`` times or with a probability of ``num``.
@@ -106,7 +106,7 @@ def insert_word_synonyms(
         return aug_toks[:]
 
     rand_aug_toks = iter(rand_aug_toks)
-    new_aug_toks: List[types.AugTok] = []
+    new_aug_toks: list[types.AugTok] = []
     # NOTE: https://github.com/python/mypy/issues/5492
     padded_pairs = itertoolz.sliding_window(2, [None] + aug_toks)  # type: ignore
     for idx, (prev_tok, curr_tok) in enumerate(padded_pairs):
@@ -140,11 +140,11 @@ def insert_word_synonyms(
 
 
 def swap_words(
-    aug_toks: List[types.AugTok],
+    aug_toks: list[types.AugTok],
     *,
     num: int | float = 1,
-    pos: Optional[str | Set[str]] = None,
-) -> List[types.AugTok]:
+    pos: Optional[str | set[str]] = None,
+) -> list[types.AugTok]:
     """
     Randomly swap the positions of two *adjacent* words,
     up to ``num`` times or with a probability of ``num``.
@@ -209,11 +209,11 @@ def swap_words(
 
 
 def delete_words(
-    aug_toks: List[types.AugTok],
+    aug_toks: list[types.AugTok],
     *,
     num: int | float = 1,
-    pos: Optional[str | Set[str]] = None,
-) -> List[types.AugTok]:
+    pos: Optional[str | set[str]] = None,
+) -> list[types.AugTok]:
     """
     Randomly delete words,
     up to ``num`` times or with a probability of ``num``.
@@ -243,7 +243,7 @@ def delete_words(
     if not rand_idxs:
         return aug_toks[:]
 
-    new_aug_toks: List[types.AugTok] = []
+    new_aug_toks: list[types.AugTok] = []
     # NOTE: https://github.com/python/mypy/issues/5492
     padded_triplets = itertoolz.sliding_window(
         3, [None] + aug_toks + [None]  # type: ignore
@@ -266,11 +266,11 @@ def delete_words(
 
 
 def substitute_chars(
-    aug_toks: List[types.AugTok],
+    aug_toks: list[types.AugTok],
     *,
     num: int | float = 1,
     lang: Optional[str] = None,
-) -> List[types.AugTok]:
+) -> list[types.AugTok]:
     """
     Randomly substitute a single character in randomly-selected words with another,
     up to ``num`` times or with a probability of ``num``.
@@ -332,11 +332,11 @@ def substitute_chars(
 
 
 def insert_chars(
-    aug_toks: List[types.AugTok],
+    aug_toks: list[types.AugTok],
     *,
     num: int | float = 1,
     lang: Optional[str] = None,
-) -> List[types.AugTok]:
+) -> list[types.AugTok]:
     """
     Randomly insert a character into randomly-selected words,
     up to ``num`` times or with a probability of ``num``.
@@ -398,8 +398,8 @@ def insert_chars(
 
 
 def swap_chars(
-    aug_toks: List[types.AugTok], *, num: int | float = 1
-) -> List[types.AugTok]:
+    aug_toks: list[types.AugTok], *, num: int | float = 1
+) -> list[types.AugTok]:
     """
     Randomly swap two *adjacent* characters in randomly-selected words,
     up to ``num`` times or with a probability of ``num``.
@@ -443,8 +443,8 @@ def swap_chars(
 
 
 def delete_chars(
-    aug_toks: List[types.AugTok], *, num: int | float = 1
-) -> List[types.AugTok]:
+    aug_toks: list[types.AugTok], *, num: int | float = 1
+) -> list[types.AugTok]:
     """
     Randomly delete a character in randomly-selected words,
     up to ``num`` times or with a probability of ``num``.
@@ -493,18 +493,18 @@ def delete_chars(
 def _validate_aug_toks(aug_toks):
     if not (isinstance(aug_toks, list) and isinstance(aug_toks[0], types.AugTok)):
         raise TypeError(
-            errors.type_invalid_msg("aug_toks", type(aug_toks), List[types.AugTok])
+            errors.type_invalid_msg("aug_toks", type(aug_toks), list[types.AugTok])
         )
 
 
 def _select_random_candidates(cands, num):
     """
     Args:
-        cands (List[obj])
+        cands (list[obj])
         num (int or float)
 
     Returns:
-        List[obj]
+        list[obj]
     """
     if isinstance(num, int) and num >= 0:
         rand_cands = random.sample(cands, min(num, len(cands)))

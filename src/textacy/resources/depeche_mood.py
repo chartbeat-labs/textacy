@@ -32,12 +32,14 @@ import collections
 import csv
 import io
 import statistics
-from typing import Any, ClassVar, Dict, Literal, Optional, Sequence, Tuple
+from typing import Any, ClassVar, Literal, Optional, Sequence
 
 from spacy.parts_of_speech import ADJ, ADV, NOUN, VERB
 from spacy.tokens import Doc, Span, Token
 
-from .. import constants, io as tio, types, utils
+from .. import constants
+from .. import io as tio
+from .. import types, utils
 from .base import Resource
 
 
@@ -86,7 +88,7 @@ class DepecheMood(Resource):
          'INSPIRED': 0.37794768332634626,
          'SAD': 0.09435012744278205}
 
-    When passing multiple terms in the form of a List[str] or ``Span`` or ``Doc``,
+    When passing multiple terms in the form of a list[str] or ``Span`` or ``Doc``,
     emotion weights are averaged over all terms for which weights are available::
 
         >>> rs.get_emotional_valence(["disease#n", "heal#v"])
@@ -145,9 +147,9 @@ class DepecheMood(Resource):
             1 and 20 is reasonable.
     """
 
-    _lang_map: ClassVar[Dict[str, str]] = {"en": "english", "it": "italian"}
-    _pos_map: ClassVar[Dict[Any, str]] = {NOUN: "n", VERB: "v", ADJ: "a", ADV: "r"}
-    _word_reps: ClassVar[Tuple[str, str, str]] = ("token", "lemma", "lemmapos")
+    _lang_map: ClassVar[dict[str, str]] = {"en": "english", "it": "italian"}
+    _pos_map: ClassVar[dict[Any, str]] = {NOUN: "n", VERB: "v", ADJ: "a", ADV: "r"}
+    _word_reps: ClassVar[tuple[str, str, str]] = ("token", "lemma", "lemmapos")
 
     def __init__(
         self,
@@ -193,7 +195,7 @@ class DepecheMood(Resource):
             return None
 
     @property
-    def weights(self) -> Dict[str, Dict[str, float]]:
+    def weights(self) -> dict[str, dict[str, float]]:
         """
         Mapping of term string (or term#POS, if :attr:`DepecheMood.word_rep` is "lemmapos")
         to the terms' normalized weights on a fixed set of affective dimensions
@@ -236,7 +238,7 @@ class DepecheMood(Resource):
 
     def get_emotional_valence(
         self, terms: str | Token | Sequence[str] | Sequence[Token]
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """
         Get average emotional valence over all terms in ``terms`` for which
         emotion weights are available.
@@ -264,7 +266,7 @@ class DepecheMood(Resource):
                 )
             )
 
-    def _get_term_emotional_valence(self, term: str | Token) -> Dict[str, float]:
+    def _get_term_emotional_valence(self, term: str | Token) -> dict[str, float]:
         try:
             if isinstance(term, str):
                 return self.weights[term]
@@ -286,7 +288,7 @@ class DepecheMood(Resource):
 
     def _get_terms_emotional_valence(
         self, terms: Sequence[str] | Sequence[Token]
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         all_emo_weights = collections.defaultdict(list)
         for term in terms:
             emo_weights = self._get_term_emotional_valence(term)

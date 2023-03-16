@@ -19,12 +19,13 @@ import shutil
 import tarfile
 import urllib
 import zipfile
-from typing import IO, Iterable, Literal, Optional, Tuple
+from typing import IO, Iterable, Literal, Optional
 
 from cytoolz import itertoolz
 
-from .. import constants, types, utils
+from .. import constants
 from .. import errors as errors_
+from .. import types, utils
 from .http import write_http_stream
 
 
@@ -180,7 +181,9 @@ def _make_dirs(filepath, mode):
 
 def _validate_read_mode(mode):
     if "w" in mode or "a" in mode:
-        raise ValueError(f"mode = '{mode}' is invalid; file must be opened in read mode")
+        raise ValueError(
+            f"mode = '{mode}' is invalid; file must be opened in read mode"
+        )
 
 
 def _validate_write_mode(mode):
@@ -225,20 +228,20 @@ def split_records(
             a (iterable(content), iterable(metadata)) 2-tuple.
 
     Returns:
-        Generator(Tuple[str, dict]): If ``itemwise`` is True and ``items`` is Iterable[dict];
+        Generator(tuple[str, dict]): If ``itemwise`` is True and ``items`` is Iterable[dict];
         the first element in each tuple is the item's content,
         the second element is its metadata as a dictionary.
 
-        Generator(Tuple[str, list]): If ``itemwise`` is True and ``items`` is Iterable[list];
+        Generator(tuple[str, list]): If ``itemwise`` is True and ``items`` is Iterable[list];
         the first element in each tuple is the item's content,
         the second element is its metadata as a list.
 
-        Tuple[Iterable[str], Iterable[dict]]: If ``itemwise`` is False and
+        tuple[Iterable[str], Iterable[dict]]: If ``itemwise`` is False and
         ``items`` is Iterable[dict];
         the first element of the tuple is an iterable of items' contents,
         the second is an iterable of their metadata dicts.
 
-        Tuple[Iterable[str], Iterable[list]]: If ``itemwise`` is False and
+        tuple[Iterable[str], Iterable[list]]: If ``itemwise`` is False and
         ``items`` is Iterable[list];
         the first element of the tuple is an iterable of items' contents,
         the second is an iterable of their metadata lists.
@@ -249,7 +252,7 @@ def split_records(
         return unzip(((item.pop(content_field), item) for item in items))
 
 
-def unzip(seq: Iterable) -> Tuple:
+def unzip(seq: Iterable) -> tuple:
     """
     Borrowed from ``toolz.sandbox.core.unzip``, but using cytoolz instead of toolz
     to avoid the additional dependency.

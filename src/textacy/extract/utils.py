@@ -9,16 +9,7 @@ from __future__ import annotations
 import itertools
 import operator
 import re
-from typing import (
-    Callable,
-    Collection,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-)
+from typing import Callable, Collection, Iterable, Optional
 
 from cytoolz import itertoolz
 from spacy.tokens import Doc, Token
@@ -28,7 +19,8 @@ from . import matches
 
 
 def terms_to_strings(
-    terms: Iterable[types.SpanLike], by: str | Callable[[types.SpanLike], str],
+    terms: Iterable[types.SpanLike],
+    by: str | Callable[[types.SpanLike], str],
 ) -> Iterable[str]:
     """
     Transform a sequence of terms as spaCy ``Token`` s or ``Span`` s into strings.
@@ -111,11 +103,11 @@ def clean_term_strings(terms: Iterable[str]) -> Iterable[str]:
 
 
 def aggregate_term_variants(
-    terms: Set[str],
+    terms: set[str],
     *,
-    acro_defs: Optional[Dict[str, str]] = None,
+    acro_defs: Optional[dict[str, str]] = None,
     fuzzy_dedupe: bool = True,
-) -> List[Set[str]]:
+) -> list[set[str]]:
     """
     Take a set of unique terms and aggregate terms that are symbolic, lexical,
     and ordering variants of each other, as well as acronyms and fuzzy string matches.
@@ -141,7 +133,7 @@ def aggregate_term_variants(
     from .. import similarity  # ugh, hide import here
 
     agg_terms = []
-    seen_terms: Set[str] = set()
+    seen_terms: set[str] = set()
     for term in sorted(terms, key=len, reverse=True):
         if term in seen_terms:
             continue
@@ -226,8 +218,9 @@ def aggregate_term_variants(
 
 
 def get_longest_subsequence_candidates(
-    doc: Doc, match_func: Callable[[Token], bool],
-) -> Iterable[Tuple[Token, ...]]:
+    doc: Doc,
+    match_func: Callable[[Token], bool],
+) -> Iterable[tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are longest consecutive
     subsequences of tokens for which all ``match_func(token)`` is True.
@@ -250,7 +243,7 @@ def get_ngram_candidates(
     ns: int | Collection[int],
     *,
     include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
-) -> Iterable[Tuple[Token, ...]]:
+) -> Iterable[tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are n-length sequences
     of tokens (for all n in ``ns``) that don't start/end with a stop word or
@@ -287,8 +280,9 @@ def get_ngram_candidates(
 
 
 def get_pattern_matching_candidates(
-    doc: Doc, patterns: str | List[str] | List[dict] | List[List[dict]],
-) -> Iterable[Tuple[Token, ...]]:
+    doc: Doc,
+    patterns: str | list[str] | list[dict] | list[list[dict]],
+) -> Iterable[tuple[Token, ...]]:
     """
     Get candidate keyterms from ``doc``, where candidates are sequences of tokens
     that match any pattern in ``patterns``
@@ -299,7 +293,7 @@ def get_pattern_matching_candidates(
             a :class:`spacy.matcher.Matcher`.
 
     Yields:
-        Tuple[:class:`spacy.tokens.Token`]: Next pattern-matching candidate,
+        tuple[:class:`spacy.tokens.Token`]: Next pattern-matching candidate,
         as a tuple of constituent Tokens.
 
     See Also:
@@ -310,11 +304,11 @@ def get_pattern_matching_candidates(
 
 
 def get_filtered_topn_terms(
-    term_scores: Iterable[Tuple[str, float]],
+    term_scores: Iterable[tuple[str, float]],
     topn: int,
     *,
     match_threshold: Optional[float] = None,
-) -> List[Tuple[str, float]]:
+) -> list[tuple[str, float]]:
     """
     Build up a list of the ``topn`` terms, filtering out any that are substrings
     of better-scoring terms and optionally filtering out any that are sufficiently
@@ -332,7 +326,7 @@ def get_filtered_topn_terms(
     from .. import similarity  # ugh, hide import here
 
     topn_terms = []
-    seen_terms: Set[str] = set()
+    seen_terms: set[str] = set()
     sim_func = similarity.token_sort_ratio
     for term, score in term_scores:
         # skip terms that are substrings of any higher-scoring term
@@ -367,7 +361,7 @@ def get_filtered_topn_terms(
 #     *,
 #     max_n_terms: int = 1000,
 #     top_n_terms: int | float = 25,
-# ) -> Tuple[List[str], List[str]]:
+# ) -> tuple[list[str], list[str]]:
 #     """
 #     Given a collection of documents assigned to 1 of 2 exclusive groups, get the
 #     ``top_n_terms`` most discriminating terms for group1-and-not-group2 and

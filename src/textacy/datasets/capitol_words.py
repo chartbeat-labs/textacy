@@ -28,11 +28,13 @@ from __future__ import annotations
 import itertools
 import logging
 import urllib.parse
-from typing import Any, Callable, ClassVar, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Callable, ClassVar, Iterable, Optional
 
-from .. import constants, types, utils
+from .. import constants
 from .. import io as tio
+from .. import types, utils
 from .base import Dataset
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -101,8 +103,8 @@ class CapitolWords(Dataset):
         congresses: All distinct numbers of the congresses in which speeches were given, e.g. 114.
     """
 
-    full_date_range: ClassVar[Tuple[str, str]] = ("1996-01-01", "2016-06-30")
-    speaker_names: ClassVar[Set[str]] = {
+    full_date_range: ClassVar[tuple[str, str]] = ("1996-01-01", "2016-06-30")
+    speaker_names: ClassVar[set[str]] = {
         "Barack Obama",
         "Bernie Sanders",
         "Hillary Clinton",
@@ -118,9 +120,9 @@ class CapitolWords(Dataset):
         "Rick Santorum",
         "Ted Cruz",
     }
-    speaker_parties: ClassVar[Set[str]] = {"D", "I", "R"}
-    chambers: ClassVar[Set[str]] = {"Extensions", "House", "Senate"}
-    congresses: ClassVar[Set[int]] = {
+    speaker_parties: ClassVar[set[str]] = {"D", "I", "R"}
+    chambers: ClassVar[set[str]] = {"Extensions", "House", "Senate"}
+    congresses: ClassVar[set[int]] = {
         104,
         105,
         106,
@@ -181,13 +183,13 @@ class CapitolWords(Dataset):
 
     def _get_filters(
         self,
-        speaker_name: Optional[str | Set[str]] = None,
-        speaker_party: Optional[str | Set[str]] = None,
-        chamber: Optional[str | Set[str]] = None,
-        congress: Optional[int | Set[int]] = None,
-        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        speaker_name: Optional[str | set[str]] = None,
+        speaker_party: Optional[str | set[str]] = None,
+        chamber: Optional[str | set[str]] = None,
+        congress: Optional[int | set[int]] = None,
+        date_range: Optional[tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
-    ) -> List[Callable[[Dict[str, Any]], bool]]:
+    ) -> list[Callable[[dict[str, Any]], bool]]:
         filters = []
         if min_len is not None:
             if min_len < 1:
@@ -237,11 +239,11 @@ class CapitolWords(Dataset):
     def texts(
         self,
         *,
-        speaker_name: Optional[str | Set[str]] = None,
-        speaker_party: Optional[str | Set[str]] = None,
-        chamber: Optional[str | Set[str]] = None,
-        congress: Optional[int | Set[int]] = None,
-        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        speaker_name: Optional[str | set[str]] = None,
+        speaker_party: Optional[str | set[str]] = None,
+        chamber: Optional[str | set[str]] = None,
+        congress: Optional[int | set[int]] = None,
+        date_range: Optional[tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[str]:
@@ -281,11 +283,11 @@ class CapitolWords(Dataset):
     def records(
         self,
         *,
-        speaker_name: Optional[str | Set[str]] = None,
-        speaker_party: Optional[str | Set[str]] = None,
-        chamber: Optional[str | Set[str]] = None,
-        congress: Optional[int | Set[int]] = None,
-        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        speaker_name: Optional[str | set[str]] = None,
+        speaker_party: Optional[str | set[str]] = None,
+        chamber: Optional[str | set[str]] = None,
+        congress: Optional[int | set[int]] = None,
+        date_range: Optional[tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[types.Record]:

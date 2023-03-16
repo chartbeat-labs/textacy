@@ -6,7 +6,7 @@ other valid one-char delimiters.
 from __future__ import annotations
 
 import csv
-from typing import Any, Dict, Iterable, Iterator, Optional, Sequence, Type, Union
+from typing import Any, Iterable, Iterator, Optional, Sequence, Type, Union
 
 from .. import types
 from . import utils as io_utils
@@ -48,7 +48,7 @@ def read_csv(
 
         *or*
 
-        Dict[str, obj]: Next row, as an ordered dictionary of (key, value) pairs,
+        dict[str, obj]: Next row, as an ordered dictionary of (key, value) pairs,
         where keys are column names and values are the corresponding strings
         and/or floats. If ``fieldnames`` is a list of column names or 'infer'
         detects a header row.
@@ -93,14 +93,17 @@ def read_csv(
                 yield first_row
         else:
             csv_reader = csv.reader(
-                f, dialect=dialect, delimiter=delimiter, quoting=quoting,
+                f,
+                dialect=dialect,
+                delimiter=delimiter,
+                quoting=quoting,
             )
         for row in csv_reader:
             yield row
 
 
 def write_csv(
-    data: Iterable[Dict[str, Any]] | Iterable[Iterable],
+    data: Iterable[dict[str, Any]] | Iterable[Iterable],
     filepath: types.PathLike,
     *,
     encoding: Optional[str] = None,
@@ -155,11 +158,18 @@ def write_csv(
         csv_writer: Union[csv.DictWriter, Any]
         if fieldnames:
             csv_writer = csv.DictWriter(
-                f, fieldnames, dialect=dialect, delimiter=delimiter, quoting=quoting,
+                f,
+                fieldnames,
+                dialect=dialect,
+                delimiter=delimiter,
+                quoting=quoting,
             )
             csv_writer.writeheader()
         else:
             csv_writer = csv.writer(
-                f, dialect=dialect, delimiter=delimiter, quoting=quoting,
+                f,
+                dialect=dialect,
+                delimiter=delimiter,
+                quoting=quoting,
             )
         csv_writer.writerows(data)

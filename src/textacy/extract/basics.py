@@ -8,7 +8,7 @@ via spaCy, with bells and whistles for filtering the results.
 from __future__ import annotations
 
 from functools import partial
-from typing import Collection, Iterable, List, Optional, Set, Union
+from typing import Collection, Iterable, Optional, Union
 
 from cytoolz import itertoolz
 from spacy.parts_of_speech import DET
@@ -127,9 +127,13 @@ def ngrams(
         raise ValueError("n must be greater than or equal to 1")
 
     if include_pos:
-        include_pos = {pos.upper() for pos in utils.to_collection(include_pos, str, set)}
+        include_pos = {
+            pos.upper() for pos in utils.to_collection(include_pos, str, set)
+        }
     if exclude_pos:
-        exclude_pos = {pos.upper() for pos in utils.to_collection(exclude_pos, str, set)}
+        exclude_pos = {
+            pos.upper() for pos in utils.to_collection(exclude_pos, str, set)
+        }
     for n_ in ns:
         ngrams_ = (doclike[i : i + n_] for i in range(len(doclike) - n_ + 1))
         ngrams_ = (ng for ng in ngrams_ if not any(w.is_space for w in ng))
@@ -232,7 +236,7 @@ def entities(
 
 def _parse_ent_types(
     ent_types: Optional[str | Collection[str]], which: str
-) -> Optional[str | Set[str]]:
+) -> Optional[str | set[str]]:
     if not ent_types:
         return None
     elif isinstance(ent_types, str):
@@ -347,7 +351,7 @@ def terms(
         yield term
 
 
-def _get_extractors(ngs, ents, ncs) -> List[types.DocLikeToSpans]:
+def _get_extractors(ngs, ents, ncs) -> list[types.DocLikeToSpans]:
     all_extractors = [
         _get_ngs_extractor(ngs),
         _get_ents_extractor(ents),

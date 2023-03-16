@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import collections
 from operator import itemgetter
-from typing import Dict, Iterable, List, Optional, Set, Tuple
+from typing import Iterable, Optional
 
 import numpy as np
 from spacy.tokens import Span, Token
@@ -35,8 +35,8 @@ def acronyms(doclike: types.DocLike) -> Iterable[Token]:
 
 def acronyms_and_definitions(
     doclike: types.DocLike,
-    known_acro_defs: Optional[Dict[str, str]] = None,
-) -> Dict[str, List[str]]:
+    known_acro_defs: Optional[dict[str, str]] = None,
+) -> dict[str, list[str]]:
     """
     Extract a collection of acronyms and their most likely definitions, if available,
     from a spacy-parsed doc. If multiple definitions are found for a given acronym,
@@ -56,7 +56,7 @@ def acronyms_and_definitions(
         International Journal on Document Analysis and Recognition 1.4 (1999): 191-198.
     """
     # process function arguments
-    acro_defs: Dict[str, List[Tuple[str, float]]] = collections.defaultdict(list)
+    acro_defs: dict[str, list[tuple[str, float]]] = collections.defaultdict(list)
     if not known_acro_defs:
         known_acronyms = set()
     else:
@@ -74,7 +74,6 @@ def acronyms_and_definitions(
         max_ind = len(sent) - 1
 
         for i, token in enumerate(sent):
-
             token_ = token.text
             if token_ in known_acronyms or is_acronym(token_) is False:
                 continue
@@ -127,8 +126,10 @@ def acronyms_and_definitions(
 
 
 def _get_acronym_definition(
-    acronym: str, window: Span, threshold: float = 0.8,
-) -> Tuple[str, float]:
+    acronym: str,
+    window: Span,
+    threshold: float = 0.8,
+) -> tuple[str, float]:
     """
     Identify most likely definition for an acronym given a list of tokens.
 
@@ -177,7 +178,9 @@ def _get_acronym_definition(
                             vec[l] = k
                         vectors.append(vec)
                     else:
-                        parse_lcs_matrix(b, i + 1, j + 1, lcs_length - 1, stack, vectors)
+                        parse_lcs_matrix(
+                            b, i + 1, j + 1, lcs_length - 1, stack, vectors
+                        )
                     stack = []
         return vectors
 
@@ -282,7 +285,7 @@ def _get_acronym_definition(
     return (definition, confidence)
 
 
-def is_acronym(token: str, exclude: Optional[Set[str]] = None) -> bool:
+def is_acronym(token: str, exclude: Optional[set[str]] = None) -> bool:
     """
     Pass single token as a string, return True/False if is/is not valid acronym.
 

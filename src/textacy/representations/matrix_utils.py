@@ -5,7 +5,7 @@ and filtering terms from a matrix by their document frequency.
 """
 from __future__ import annotations
 
-from typing import Dict, Literal, Optional, Tuple
+from typing import Literal, Optional
 
 import numpy as np
 import scipy.sparse as sp
@@ -214,12 +214,12 @@ def apply_idf_weighting(
 
 def filter_terms_by_df(
     doc_term_matrix: sp.csr_matrix,
-    term_to_id: Dict[str, int],
+    term_to_id: dict[str, int],
     *,
     min_df: float | int = 1,
     max_df: float | int = 1.0,
     max_n_terms: Optional[int] = None,
-) -> Tuple[sp.csr_matrix, Dict[str, int]]:
+) -> tuple[sp.csr_matrix, dict[str, int]]:
     """
     Filter out terms that are too common and/or too rare (by document frequency),
     and compactify the top ``max_n_terms`` in the ``id_to_term`` mapping accordingly.
@@ -294,11 +294,11 @@ def filter_terms_by_df(
 
 def filter_terms_by_ic(
     doc_term_matrix: sp.csr_matrix,
-    term_to_id: Dict[str, int],
+    term_to_id: dict[str, int],
     *,
     min_ic: float = 0.0,
     max_n_terms: Optional[int] = None,
-) -> Tuple[sp.csr_matrix, Dict[str, int]]:
+) -> tuple[sp.csr_matrix, dict[str, int]]:
     """
     Filter out terms that are too common and/or too rare (by information content),
     and compactify the top ``max_n_terms`` in the ``id_to_term`` mapping accordingly.

@@ -9,17 +9,30 @@ from __future__ import annotations
 
 import collections
 from operator import attrgetter
-from typing import Iterable, List, Optional, Pattern, Tuple
+from typing import Iterable, Optional, Pattern
 
 from cytoolz import itertoolz
 from spacy.symbols import (
-    AUX, VERB,
-    agent, attr, aux, auxpass, csubj, csubjpass, dobj, neg, nsubj, nsubjpass, obj, pobj, xcomp,
+    AUX,
+    VERB,
+    agent,
+    attr,
+    aux,
+    auxpass,
+    csubj,
+    csubjpass,
+    dobj,
+    neg,
+    nsubj,
+    nsubjpass,
+    obj,
+    pobj,
+    xcomp,
 )
 from spacy.tokens import Doc, Span, Token
 
-from . import matches
 from .. import constants, types, utils
+from . import matches
 
 
 _NOMINAL_SUBJ_DEPS = {nsubj, nsubjpass}
@@ -27,13 +40,13 @@ _CLAUSAL_SUBJ_DEPS = {csubj, csubjpass}
 _ACTIVE_SUBJ_DEPS = {csubj, nsubj}
 _VERB_MODIFIER_DEPS = {aux, auxpass, neg}
 
-SVOTriple: Tuple[List[Token], List[Token], List[Token]] = collections.namedtuple(
+SVOTriple: tuple[list[Token], list[Token], list[Token]] = collections.namedtuple(
     "SVOTriple", ["subject", "verb", "object"]
 )
-SSSTriple: Tuple[List[Token], List[Token], List[Token]] = collections.namedtuple(
+SSSTriple: tuple[list[Token], list[Token], list[Token]] = collections.namedtuple(
     "SSSTriple", ["entity", "cue", "fragment"]
 )
-DQTriple: Tuple[List[Token], List[Token], Span] = collections.namedtuple(
+DQTriple: tuple[list[Token], list[Token], Span] = collections.namedtuple(
     "DQTriple", ["speaker", "cue", "content"]
 )
 
@@ -82,9 +95,8 @@ def subject_verb_object_triples(doclike: types.DocLike) -> Iterable[SVOTriple]:
                     verb_sos[head.head]["objects"].update(expand_noun(tok))
             # open clausal complement, but not as a secondary predicate
             elif tok.dep == xcomp:
-                if (
-                    head.pos == VERB
-                    and not any(child.dep == dobj for child in head.children)
+                if head.pos == VERB and not any(
+                    child.dep == dobj for child in head.children
                 ):
                     # TODO: just the verb, or the whole tree?
                     # verb_sos[verb]["objects"].update(expand_verb(tok))
@@ -118,7 +130,7 @@ def semistructured_statements(
     *,
     entity: str | Pattern,
     cue: str,
-    fragment_len_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
+    fragment_len_range: Optional[tuple[Optional[int], Optional[int]]] = None,
 ) -> Iterable[SSSTriple]:
     """
     Extract "semi-structured statements" from a document as a sequence of
@@ -165,13 +177,17 @@ def semistructured_statements(
                         or tok.dep_ == "dative"
                         or (
                             tok.dep == xcomp
-                            and not any(child.dep == dobj for child in cue_cand.children)
+                            and not any(
+                                child.dep == dobj for child in cue_cand.children
+                            )
                         )
                     ):
                         subtoks = list(tok.subtree)
                         if (
                             fragment_len_range is None
-                            or fragment_len_range[0] <= len(subtoks) < fragment_len_range[1]
+                            or fragment_len_range[0]
+                            <= len(subtoks)
+                            < fragment_len_range[1]
                         ):
                             frag_cand = subtoks
                             break
@@ -254,8 +270,7 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
                 and tok.lemma_ in _reporting_verbs
                 # cue verbs must occur *outside* any quotation content
                 and not any(
-                    qts_idx <= tok.i <= qte_idx
-                    for qts_idx, qte_idx in qtok_pair_idxs
+                    qts_idx <= tok.i <= qte_idx for qts_idx, qte_idx in qtok_pair_idxs
                 )
             )
         ]
@@ -280,7 +295,7 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
             )
 
 
-def expand_noun(tok: Token) -> List[Token]:
+def expand_noun(tok: Token) -> list[Token]:
     """Expand a noun token to include all associated conjunct and compound nouns."""
     tok_and_conjuncts = [tok] + list(tok.conjuncts)
     compounds = [
@@ -293,7 +308,7 @@ def expand_noun(tok: Token) -> List[Token]:
     return tok_and_conjuncts + compounds
 
 
-def expand_verb(tok: Token) -> List[Token]:
+def expand_verb(tok: Token) -> list[Token]:
     """Expand a verb token to include all associated auxiliary and negation tokens."""
     verb_modifiers = [
         child for child in tok.children if child.dep in _VERB_MODIFIER_DEPS

@@ -5,17 +5,7 @@ built on ``scikit-learn``.
 from __future__ import annotations
 
 import logging
-from typing import (
-    ClassVar,
-    Dict,
-    Iterable,
-    List,
-    Literal,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-)
+from typing import ClassVar, Iterable, Literal, Optional, Sequence
 
 import joblib
 import numpy as np
@@ -23,6 +13,7 @@ import scipy.sparse as sp
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
 from .. import errors, types, viz
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -123,7 +114,7 @@ class TopicModel:
         * http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
     """
 
-    _required_trained_model_attr: ClassVar[Set[str]] = {
+    _required_trained_model_attr: ClassVar[set[str]] = {
         "transform",
         "components_",
         "n_topics",
@@ -242,14 +233,15 @@ class TopicModel:
 
     def top_topic_terms(
         self,
-        id2term: Sequence[str] | Dict[int, str],
+        id2term: Sequence[str] | dict[int, str],
         *,
         topics: int | Sequence[int] = -1,
         top_n: int = 10,
         weights: bool = False,
-    ) -> Iterable[Tuple[int, Tuple[str, ...]]] | Iterable[
-        Tuple[int, Tuple[Tuple[str, float], ...]]
-    ]:
+    ) -> (
+        Iterable[tuple[int, tuple[str, ...]]]
+        | Iterable[tuple[int, tuple[tuple[str, float], ...]]]
+    ):
         """
         Get the top ``top_n`` terms by weight per topic in ``model``.
 
@@ -305,9 +297,10 @@ class TopicModel:
         topics: int | Sequence[int] = -1,
         top_n: int = 10,
         weights: bool = False,
-    ) -> Iterable[Tuple[int, Tuple[int, ...]]] | Iterable[
-        Tuple[int, Tuple[Tuple[int, float], ...]]
-    ]:
+    ) -> (
+        Iterable[tuple[int, tuple[int, ...]]]
+        | Iterable[tuple[int, tuple[tuple[int, float], ...]]]
+    ):
         """
         Get the top ``top_n`` docs by weight per topic in ``doc_topic_matrix``.
 
@@ -357,9 +350,10 @@ class TopicModel:
         docs: int | Sequence[int] = -1,
         top_n: int = 3,
         weights: bool = False,
-    ) -> Iterable[Tuple[int, Tuple[int, ...]]] | Iterable[
-        Tuple[int, Tuple[Tuple[int, float], ...]]
-    ]:
+    ) -> (
+        Iterable[tuple[int, tuple[int, ...]]]
+        | Iterable[tuple[int, tuple[tuple[int, float], ...]]]
+    ):
         """
         Get the top ``top_n`` topics by weight per doc for ``docs`` in ``doc_topic_matrix``.
 
@@ -426,7 +420,7 @@ class TopicModel:
     def termite_plot(
         self,
         doc_term_matrix: np.ndarray | sp.csr_matrix,
-        id2term: List[str] | Dict[int, str],
+        id2term: list[str] | dict[int, str],
         *,
         topics: int | Sequence[int] = -1,
         sort_topics_by: Literal["index", "weight"] = "index",

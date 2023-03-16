@@ -3,12 +3,12 @@ Collection of regular expressions and other (small, generally useful) constants.
 """
 import pathlib
 import re
-from typing import Dict, Pattern, Set
+from typing import Pattern
 
 
 DEFAULT_DATA_DIR: pathlib.Path = pathlib.Path(__file__).parent.resolve() / "data"
 
-NUMERIC_ENT_TYPES: Set[str] = {
+NUMERIC_ENT_TYPES: set[str] = {
     "ORDINAL",
     "CARDINAL",
     "MONEY",
@@ -17,11 +17,11 @@ NUMERIC_ENT_TYPES: Set[str] = {
     "TIME",
     "DATE",
 }
-SUBJ_DEPS: Set[str] = {"agent", "csubj", "csubjpass", "expl", "nsubj", "nsubjpass"}
-OBJ_DEPS: Set[str] = {"attr", "dobj", "dative", "oprd"}
-AUX_DEPS: Set[str] = {"aux", "auxpass", "neg"}
+SUBJ_DEPS: set[str] = {"agent", "csubj", "csubjpass", "expl", "nsubj", "nsubjpass"}
+OBJ_DEPS: set[str] = {"attr", "dobj", "dative", "oprd"}
+AUX_DEPS: set[str] = {"aux", "auxpass", "neg"}
 
-REPORTING_VERBS: Dict[str, Set[str]] = {
+REPORTING_VERBS: dict[str, set[str]] = {
     "en": {
         "according",
         "accuse",
@@ -125,7 +125,7 @@ REPORTING_VERBS: Dict[str, Set[str]] = {
     },
 }
 
-UD_V2_MORPH_LABELS: Set[str] = {
+UD_V2_MORPH_LABELS: set[str] = {
     "Abbr",
     "Animacy",
     "Aspect",
@@ -158,10 +158,12 @@ or by rule-based processing in the :class:`Tagger` and :class:`AttributeRuler` p
 Source: https://universaldependencies.org/u/feat/index.html
 """
 
-MATCHER_VALID_OPS: Set[str] = {"!", "+", "?", "*"}
+MATCHER_VALID_OPS: set[str] = {"!", "+", "?", "*"}
 
 RE_MATCHER_TOKPAT_DELIM: Pattern = re.compile(r"\s+")
-RE_MATCHER_SPECIAL_VAL: Pattern = re.compile(r"^(int|bool)\([^: ]+\)$", flags=re.UNICODE)
+RE_MATCHER_SPECIAL_VAL: Pattern = re.compile(
+    r"^(int|bool)\([^: ]+\)$", flags=re.UNICODE
+)
 
 RE_ACRONYM: Pattern = re.compile(
     r"(?:^|(?<=\W))"
@@ -181,7 +183,9 @@ RE_NONBREAKING_SPACE: Pattern = re.compile(r"[^\S\n\v]+", flags=re.UNICODE)
 RE_DANGLING_PARENS_TERM: Pattern = re.compile(
     r"(?:\s|^)(\()\s{1,2}(.*?)\s{1,2}(\))(?:\s|$)", flags=re.UNICODE
 )
-RE_LEAD_TAIL_CRUFT_TERM: Pattern = re.compile(r"^[^\w(-]+|[^\w).!?]+$", flags=re.UNICODE)
+RE_LEAD_TAIL_CRUFT_TERM: Pattern = re.compile(
+    r"^[^\w(-]+|[^\w).!?]+$", flags=re.UNICODE
+)
 RE_LEAD_HYPHEN_TERM: Pattern = re.compile(r"^-([^\W\d_])", flags=re.UNICODE)
 RE_NEG_DIGIT_TERM: Pattern = re.compile(r"(-) (\d)", flags=re.UNICODE)
 RE_WEIRD_HYPHEN_SPACE_TERM: Pattern = re.compile(

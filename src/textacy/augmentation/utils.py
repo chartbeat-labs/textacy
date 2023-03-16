@@ -4,7 +4,7 @@ import collections
 import functools
 import itertools
 import string
-from typing import Iterable, List, Tuple
+from typing import Iterable
 
 from cachetools import cached
 from cachetools.keys import hashkey
@@ -17,7 +17,7 @@ concept_net = resources.ConceptNet()
 udhr = datasets.UDHR()
 
 
-def to_aug_toks(doclike: types.DocLike) -> List[types.AugTok]:
+def to_aug_toks(doclike: types.DocLike) -> list[types.AugTok]:
     """
     Transform a spaCy ``Doc`` or ``Span`` into a list of ``AugTok`` objects,
     suitable for use in data augmentation transform functions.
@@ -27,7 +27,7 @@ def to_aug_toks(doclike: types.DocLike) -> List[types.AugTok]:
             errors.type_invalid_msg("spacy_obj", type(doclike), types.DocLike)
         )
     lang = doclike.vocab.lang
-    toks_syns: Iterable[List[str]]
+    toks_syns: Iterable[list[str]]
     if concept_net.filepath is None or lang not in concept_net.synonyms:
         toks_syns = ([] for _ in doclike)
     else:
@@ -50,7 +50,7 @@ def to_aug_toks(doclike: types.DocLike) -> List[types.AugTok]:
 
 
 @cached(cache.LRU_CACHE, key=functools.partial(hashkey, "char_weights"))
-def get_char_weights(lang: str) -> List[Tuple[str, int]]:
+def get_char_weights(lang: str) -> list[tuple[str, int]]:
     """
     Get lang-specific character weights for use in certain data augmentation transforms,
     based on texts in :class:`textacy.datasets.UDHR`.
@@ -65,7 +65,10 @@ def get_char_weights(lang: str) -> List[Tuple[str, int]]:
     try:
         char_weights = list(
             collections.Counter(
-                char for text in udhr.texts(lang=lang) for char in text if char.isalnum()
+                char
+                for text in udhr.texts(lang=lang)
+                for char in text
+                if char.isalnum()
             ).items()
         )
     except ValueError:

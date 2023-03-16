@@ -9,17 +9,7 @@ import collections
 import itertools
 import logging
 import math
-from typing import (
-    Any,
-    Callable,
-    Counter,
-    Dict,
-    Iterable,
-    List,
-    Literal,
-    Optional,
-    Union,
-)
+from typing import Any, Callable, Counter, Iterable, Literal, Optional, Union
 
 import numpy as np
 import spacy
@@ -27,7 +17,9 @@ from cytoolz import itertoolz
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from . import errors, extract, io as tio, spacier, types, utils
+from . import errors, extract
+from . import io as tio
+from . import spacier, types, utils
 
 
 LOGGER = logging.getLogger(__name__)
@@ -140,8 +132,8 @@ class Corpus:
 
     lang: str
     spacy_lang: Language
-    docs: List[Doc]
-    _doc_ids: List[int]
+    docs: list[Doc]
+    _doc_ids: list[int]
     n_docs: int
     n_sents: int
     n_tokens: int
@@ -436,7 +428,8 @@ class Corpus:
         """
         matched_docs = (doc for doc in self if match_func(doc) is True)
         self._remove_many_docs_by_index(
-            self._doc_ids.index(id(doc)) for doc in itertools.islice(matched_docs, limit)
+            self._doc_ids.index(id(doc))
+            for doc in itertools.islice(matched_docs, limit)
         )
 
     def _remove_many_docs_by_index(self, idxs: Iterable[int]) -> None:
@@ -474,7 +467,7 @@ class Corpus:
         ] = "lemma",
         weighting: Literal["count", "freq"] = "count",
         **kwargs,
-    ) -> Dict[int, int | float] | Dict[str, int | float]:
+    ) -> dict[int, int | float] | dict[str, int | float]:
         """
         Map the set of unique words in :class:`Corpus` to their counts as
         absolute, relative, or binary frequencies of occurence, similar to
@@ -507,7 +500,7 @@ class Corpus:
         See Also:
             :func:`textacy.representations.matrix_utils.get_term_freqs()`
         """
-        word_counts_: Union[Counter[Any], Dict[Any, Union[int, float]]]
+        word_counts_: Union[Counter[Any], dict[Any, Union[int, float]]]
         word_counts_ = collections.Counter()
         for doc in self:
             word_counts_.update(
@@ -535,7 +528,7 @@ class Corpus:
         weighting: Literal["count", "freq", "idf"] = "count",
         smooth_idf: bool = True,
         **kwargs,
-    ) -> Dict[int, int | float] | Dict[str, int | float]:
+    ) -> dict[int, int | float] | dict[str, int | float]:
         """
         Map the set of unique words in :class:`Corpus` to their *document* counts
         as absolute, relative, or inverse frequencies of occurence.
@@ -569,7 +562,7 @@ class Corpus:
         See Also:
             :func:`textacy.vsm.get_doc_freqs() <textacy.vsm.matrix_utils.get_doc_freqs>`
         """
-        word_doc_counts_: Union[Counter[Any], Dict[Any, Union[int, float]]]
+        word_doc_counts_: Union[Counter[Any], dict[Any, Union[int, float]]]
         word_doc_counts_ = collections.Counter()
         for doc in self:
             word_doc_counts_.update(

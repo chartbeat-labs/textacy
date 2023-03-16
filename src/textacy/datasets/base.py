@@ -1,4 +1,4 @@
-from typing import Dict
+from typing import Optional
 
 
 class Dataset:
@@ -14,7 +14,7 @@ class Dataset:
         meta (dict)
     """
 
-    def __init__(self, name: str, meta: dict = None):
+    def __init__(self, name: str, meta: Optional[dict] = None):
         self.name = name
         self.meta = meta or {}
 
@@ -22,7 +22,7 @@ class Dataset:
         return f"Dataset('{self.name}')"
 
     @property
-    def info(self) -> Dict[str, str]:
+    def info(self) -> dict[str, str]:
         info = {"name": self.name}
         info.update(self.meta)
         return info
