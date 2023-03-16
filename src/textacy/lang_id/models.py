@@ -4,6 +4,8 @@ from typing import Callable, List, Optional, Sequence, Tuple
 
 import numpy as np
 import thinc
+import thinc.layers
+import thinc.types
 from cytoolz import itertoolz
 from thinc.api import Model, chain, concatenate
 
@@ -39,10 +41,7 @@ def get_topn_preds_and_probs(
     idxs = np.argsort(preds, axis=1)[:, ::-1][:, :topn]
     pred_probs = np.sort(preds, axis=1)[:, ::-1][:, :topn]
     pred_langs = classes[idxs]
-    return [
-        list(zip(pred_langs[i], pred_probs[i]))
-        for i in range(pred_probs.shape[0])
-    ]
+    return [list(zip(pred_langs[i], pred_probs[i])) for i in range(pred_probs.shape[0])]
 
 
 def LangIdentifierModelV2(
@@ -181,15 +180,14 @@ def text_to_char_ngrams(
         model: Model, texts: List[str], is_train: bool
     ) -> Tuple[List[List[str]], Callable]:
         if lower is True:
-            texts = (text[:max_chars].lower() for text in texts)
+            texts = [text[:max_chars].lower() for text in texts]
         else:
-            texts = (text[:max_chars] for text in texts)
+            texts = [text[:max_chars] for text in texts]
         if n == 1:
             char_ngs = [list(text) for text in texts]
         else:
             char_ngs = [
-                [text[i : i + n] for i in range(len(text) - n + 1)]
-                for text in texts
+                [text[i : i + n] for i in range(len(text) - n + 1)] for text in texts
             ]
 
         def backprop(dY):

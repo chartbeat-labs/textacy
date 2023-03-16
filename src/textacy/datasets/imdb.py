@@ -104,8 +104,8 @@ class IMDB(Dataset):
     ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
-        self._movie_ids = {"train": {}, "test": {}}
-        self._subset_labels = {
+        self._movie_ids: dict[str, dict] = {"train": {}, "test": {}}
+        self._subset_labels: dict[str, tuple[str, ...]] = {
             "train": ("pos", "neg", "unsup"),
             "test": ("pos", "neg"),
         }

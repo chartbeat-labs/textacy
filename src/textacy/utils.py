@@ -9,7 +9,17 @@ import logging
 import pathlib
 import sys
 import warnings
-from typing import Any, Callable, Collection, Iterable, Optional, Type, Union, cast
+from typing import (
+    Any,
+    Callable,
+    Collection,
+    Iterable,
+    Literal,
+    Optional,
+    Type,
+    Union,
+    cast,
+)
 
 from . import errors as errors_
 from . import types
@@ -24,7 +34,13 @@ _KW_PARAM_KINDS = {
 }
 
 
-def deprecated(message: str, *, action: str = "always"):
+def deprecated(
+    message: str,
+    *,
+    action: Literal[
+        "default", "error", "ignore", "always", "module", "once"
+    ] = "always",
+):
     """
     Show a deprecation warning, optionally filtered.
 
@@ -94,11 +110,41 @@ def is_record(obj: Any) -> bool:
         return False
 
 
+def to_list(val: Any) -> list:
+    """Cast ``val`` into a list, if necessary and possible."""
+    if isinstance(val, list):
+        return val
+    elif isinstance(val, Iterable) and not isinstance(val, (str, bytes)):
+        return list(val)
+    else:
+        return [val]
+
+
+def to_set(val: Any) -> set:
+    """Cast ``val`` into a set, if necessary and possible."""
+    if isinstance(val, set):
+        return val
+    elif isinstance(val, Iterable) and not isinstance(val, (str, bytes)):
+        return set(val)
+    else:
+        return {val}
+
+
+def to_tuple(val: Any) -> tuple:
+    """Cast ``val`` into a tuple, if necessary and possible."""
+    if isinstance(val, tuple):
+        return val
+    elif isinstance(val, Iterable) and not isinstance(val, (str, bytes)):
+        return tuple(val)
+    else:
+        return (val,)
+
+
 def to_collection(
-    val: types.AnyVal | Collection[types.AnyVal],
+    val: Optional[types.AnyVal | Collection[types.AnyVal]],
     val_type: Type[Any] | tuple[Type[Any], ...],
     col_type: Type[Any],
-) -> Collection[types.AnyVal]:
+) -> Optional[Collection[types.AnyVal]]:
     """
     Validate and cast a value or values to a collection.
 
@@ -248,7 +294,7 @@ def validate_and_clip_range(
                     )
     if range_vals[0] is None:
         range_vals = (full_range[0], range_vals[1])
-    elif range_vals[0] < full_range[0]:
+    elif range_vals[0] < full_range[0]:  # type: ignore
         LOGGER.info(
             "start of range %s < minimum valid value %s; clipping...",
             range_vals[0],
@@ -257,7 +303,7 @@ def validate_and_clip_range(
         range_vals = (full_range[0], range_vals[1])
     if range_vals[1] is None:
         range_vals = (range_vals[0], full_range[1])
-    elif range_vals[1] > full_range[1]:
+    elif range_vals[1] > full_range[1]:  # type: ignore
         LOGGER.info(
             "end of range %s > maximum valid value %s; clipping...",
             range_vals[1],

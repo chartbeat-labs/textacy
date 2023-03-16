@@ -5,12 +5,13 @@ import operator
 import pathlib
 import random
 import re
-from typing import Dict, Iterable, List, Optional, Tuple, Set
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from cytoolz import itertoolz
 
 import textacy
 from textacy import io as tio
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -229,7 +230,7 @@ class Wili2018Dataset:
         Returns:
             Sequence of (text, lang) examples.
         """
-        data = []
+        data: list[tuple[str, str]] = []
         # we'll combine train/test from individual datasets
         # and instead split on the full, aggregated dataset
         for subset in ("train", "test"):
@@ -288,7 +289,7 @@ class UDDataset:
         Returns:
             Sequence of (text, lang) examples.
         """
-        data = []
+        data: list[tuple[str, str]] = []
         match_regex = r"ud-(train|test|dev)\.txt"
         for fpath in tio.get_filepaths(
             self.data_dir, match_regex=match_regex, recursive=True

@@ -16,6 +16,7 @@ examples and explanations of the various weighting schemes.
 from __future__ import annotations
 
 import collections
+import collections.abc
 import operator
 from array import array
 from typing import DefaultDict, Iterable, Literal, Optional, Union
@@ -289,7 +290,7 @@ class Vectorizer:
         """
         if vocabulary is not None:
             if not isinstance(vocabulary, collections.abc.Mapping):
-                vocab = {}
+                vocab: dict[str, int] = {}
                 for i, term in enumerate(sorted(vocabulary)):
                     if vocab.setdefault(term, i) != i:
                         raise ValueError(
@@ -322,7 +323,7 @@ class Vectorizer:
             is_fixed = True
         else:
             is_fixed = False
-        return vocabulary, is_fixed
+        return (vocabulary, is_fixed)
 
     def _check_vocabulary(self):
         """

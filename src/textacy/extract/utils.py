@@ -36,18 +36,19 @@ def terms_to_strings(
     Yields:
         Next term in ``terms``, as a string.
     """
+    terms_: Iterable[str]
     if by == "lower":
-        terms = (term.text.lower() for term in terms)
+        terms_ = (term.text.lower() for term in terms)
     elif by in ("lemma", "orth"):
         by_ = operator.attrgetter(f"{by}_")
-        terms = (by_(term) for term in terms)
+        terms_ = (by_(term) for term in terms)
     elif callable(by):
-        terms = (by(term) for term in terms)
+        terms_ = (by(term) for term in terms)
     else:
         raise ValueError(
             errors.value_invalid_msg("by", by, {"orth", "lower", "lemma", Callable})
         )
-    for term in terms:
+    for term in terms_:
         yield term
 
 
@@ -262,9 +263,8 @@ def get_ngram_candidates(
     See Also:
         :func:`textacy.extract.ngrams()`
     """
-    ns = utils.to_collection(ns, int, tuple)
-    include_pos = utils.to_collection(include_pos, str, set)
-    ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns)
+    ns_: tuple[int, ...] = utils.to_tuple(ns)
+    ngrams = itertoolz.concat(itertoolz.sliding_window(n, doc) for n in ns_)
     ngrams = (
         ngram
         for ngram in ngrams
@@ -272,8 +272,11 @@ def get_ngram_candidates(
         and not any(word.is_punct or word.is_space for word in ngram)
     )
     if include_pos:
+        include_pos_: set[str] = utils.to_set(include_pos)
         ngrams = (
-            ngram for ngram in ngrams if all(word.pos_ in include_pos for word in ngram)
+            ngram
+            for ngram in ngrams
+            if all(word.pos_ in include_pos_ for word in ngram)
         )
     for ngram in ngrams:
         yield ngram

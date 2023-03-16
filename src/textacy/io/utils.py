@@ -341,7 +341,7 @@ def get_filepaths(
 def download_file(
     url: str,
     *,
-    filename: str = None,
+    filename: Optional[str] = None,
     dirpath: types.PathLike = constants.DEFAULT_DATA_DIR,
     force: bool = False,
 ) -> Optional[str]:

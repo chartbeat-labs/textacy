@@ -29,6 +29,7 @@ import itertools
 import logging
 import xml
 from typing import Any, Iterable, Optional
+from xml.etree import ElementTree
 
 from .. import constants
 from .. import io as tio
@@ -147,7 +148,7 @@ class UDHR(Dataset):
         then convert into a list of dicts with key metadata, including filenames.
         """
         index = []
-        tree = xml.etree.ElementTree.parse(self._index_filepath)
+        tree = ElementTree.parse(self._index_filepath)
         root = tree.getroot()
         for ele in root.iterfind("udhr"):
             iso_lang_code = ele.get("bcp47", "").split("-", 1)[0]

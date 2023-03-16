@@ -392,7 +392,7 @@ class Corpus:
            Python's usual indexing and slicing: ``Corpus[0]`` gets the first
            document in the corpus; ``Corpus[:5]`` gets the first 5; etc.
         """
-        matched_docs = (doc for doc in self if match_func(doc) is True)
+        matched_docs = (doc for doc in self.docs if match_func(doc) is True)
         for doc in itertools.islice(matched_docs, limit):
             yield doc
 
@@ -426,7 +426,7 @@ class Corpus:
            first document in the corpus; ``del Corpus[:5]`` removes the first
            5; etc.
         """
-        matched_docs = (doc for doc in self if match_func(doc) is True)
+        matched_docs = (doc for doc in self.docs if match_func(doc) is True)
         self._remove_many_docs_by_index(
             self._doc_ids.index(id(doc))
             for doc in itertools.islice(matched_docs, limit)
@@ -450,12 +450,12 @@ class Corpus:
     @property
     def vectors(self) -> np.ndarray:
         """Constituent docs' word vectors stacked in a 2d array."""
-        return np.vstack([doc.vector for doc in self])
+        return np.vstack([doc.vector for doc in self.docs])
 
     @property
     def vector_norms(self) -> np.ndarray:
         """Constituent docs' L2-normalized word vectors stacked in a 2d array."""
-        return np.vstack([doc.vector_norm for doc in self])
+        return np.vstack([doc.vector_norm for doc in self.docs])
 
     # useful methods
 
@@ -502,7 +502,7 @@ class Corpus:
         """
         word_counts_: Union[Counter[Any], dict[Any, Union[int, float]]]
         word_counts_ = collections.Counter()
-        for doc in self:
+        for doc in self.docs:
             word_counts_.update(
                 extract.to_bag_of_words(doc, by=by, weighting="count", **kwargs)
             )
@@ -564,7 +564,7 @@ class Corpus:
         """
         word_doc_counts_: Union[Counter[Any], dict[Any, Union[int, float]]]
         word_doc_counts_ = collections.Counter()
-        for doc in self:
+        for doc in self.docs:
             word_doc_counts_.update(
                 extract.to_bag_of_words(doc, by=by, weighting="binary", **kwargs)
             )
@@ -615,7 +615,7 @@ class Corpus:
         Returns:
             Aggregated value for metadata field.
         """
-        return agg_func(doc._.meta.get(name, default) for doc in self)
+        return agg_func(doc._.meta.get(name, default) for doc in self.docs)
 
     # file io
 

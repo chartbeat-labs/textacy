@@ -8,7 +8,7 @@ using spaCy's built-in matcher or regular expressions.
 from __future__ import annotations
 
 import re
-from typing import Callable, Iterable, Optional, Pattern, Union
+from typing import Callable, Iterable, Literal, Optional, Pattern, Union
 
 from spacy.matcher import Matcher
 from spacy.tokens import Span
@@ -78,9 +78,9 @@ def token_matches(
         patterns = [_make_pattern_from_string(patterns)]
     elif isinstance(patterns, (list, tuple)):
         if all(isinstance(item, str) for item in patterns):
-            patterns = [_make_pattern_from_string(pattern) for pattern in patterns]
+            patterns = [_make_pattern_from_string(pattern) for pattern in patterns]  # type: ignore
         elif all(isinstance(item, dict) for item in patterns):
-            patterns = [patterns]
+            patterns = [patterns]  # type: ignore
         elif all(isinstance(item, (list, tuple)) for item in patterns):
             pass  # already in the right format!
         else:
@@ -151,7 +151,7 @@ def regex_matches(
     doclike: types.DocLike,
     pattern: str | Pattern,
     *,
-    alignment_mode: str = "strict",  # Literal["strict", "contract", "expand"]
+    alignment_mode: Literal["strict", "contract", "expand"] = "strict",
 ) -> Iterable[Span]:
     """
     Extract ``Span`` s from a document or sentence whose full texts match against

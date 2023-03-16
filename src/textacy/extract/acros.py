@@ -64,6 +64,7 @@ def acronyms_and_definitions(
             acro_defs[acro] = [(def_, 1.0)]
         known_acronyms = set(acro_defs.keys())
 
+    sents: Iterable[Span]
     if isinstance(doclike, Span):
         sents = [doclike]
     else:  # spacy.Doc
