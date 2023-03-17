@@ -68,9 +68,9 @@ RE_URL: Pattern = re.compile(
     r"(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))"
     r"|"
     # host name
-    r"(?:(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9]+)"
+    r"(?:(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9])"
     # domain name
-    r"(?:\.(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9]+)*"
+    r"(?:\.(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9])*"
     # TLD identifier
     r"(?:\.(?:[a-z\u00a1-\uffff]{2,}))"
     r")"

@@ -166,7 +166,7 @@ RE_MATCHER_SPECIAL_VAL: Pattern = re.compile(r"^(int|bool)\([^: ]+\)$", flags=re
 RE_ACRONYM: Pattern = re.compile(
     r"(?:^|(?<=\W))"
     r"(?:"
-    r"(?:(?:(?:[A-Z]\.?)+[a-z0-9&/-]?)+(?:[A-Z][s.]?|\ds?))"
+    r"(?:(?:(?:[A-Z]\.?)[a-z0-9&/-]?)+(?:[A-Z][s.]?|\ds?))"
     r"|"
     r"(?:\d(?:\-?[A-Z])+)"
     r")"
