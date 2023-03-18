@@ -1,5 +1,4 @@
 import pytest
-
 from spacy.tokens import Token
 
 from textacy import extract
@@ -131,6 +130,6 @@ class TestAcronymsAndDefinitions:
             ),
         ],
     )
-    def test_default(self, lang_en, text, known, exp):
+    def test_known(self, lang_en, text, known, exp):
         obs = extract.acronyms_and_definitions(lang_en(text), known_acro_defs=known)
         assert obs == exp

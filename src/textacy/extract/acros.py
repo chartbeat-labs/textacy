@@ -36,7 +36,7 @@ def acronyms(doclike: types.DocLike) -> Iterable[Token]:
 def acronyms_and_definitions(
     doclike: types.DocLike,
     known_acro_defs: Optional[dict[str, str]] = None,
-) -> dict[str, list[str]]:
+) -> dict[str, str]:
     """
     Extract a collection of acronyms and their most likely definitions, if available,
     from a spacy-parsed doc. If multiple definitions are found for a given acronym,
@@ -117,13 +117,14 @@ def acronyms_and_definitions(
                 acro_defs[token_].append(("", 0.0))
 
     # vote by confidence score in the case of multiple definitions
+    acro_defs_final: dict[str, str] = {}
     for acro, defs in acro_defs.items():
         if len(defs) == 1:
-            acro_defs[acro] = defs[0][0]
+            acro_defs_final[acro] = defs[0][0]
         else:
-            acro_defs[acro] = sorted(defs, key=itemgetter(1), reverse=True)[0][0]
+            acro_defs_final[acro] = sorted(defs, key=itemgetter(1), reverse=True)[0][0]
 
-    return dict(acro_defs)
+    return acro_defs_final
 
 
 def _get_acronym_definition(

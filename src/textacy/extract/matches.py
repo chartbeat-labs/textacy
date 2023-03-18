@@ -173,7 +173,7 @@ def regex_matches(
     for match in re.finditer(pattern, doclike.text):
         start_char_idx, end_char_idx = match.span()
         span = doclike.char_span(
-            start_char_idx, end_char_idx, alignment_mode=alignment_mode
+            start_char_idx, end_char_idx, alignment_mode=alignment_mode  # type: ignore
         )
         # Doc.char_span() returns None if character indices don’t map to a valid span
         if span is not None:

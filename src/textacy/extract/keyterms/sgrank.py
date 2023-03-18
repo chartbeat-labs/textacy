@@ -30,7 +30,7 @@ def sgrank(
     include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
     window_size: int = 1500,
     topn: int | float = 10,
-    idf: dict[str, float] = None,
+    idf: Optional[dict[str, float]] = None,
 ) -> list[tuple[str, float]]:
     """
     Extract key terms from a document using the SGRank algorithm.
@@ -68,8 +68,8 @@ def sgrank(
         Lexical and Computational Semantics (* SEM 2015) (2015): 117.
     """
     # validate / transform args
-    ngrams = utils.to_collection(ngrams, int, tuple)
-    include_pos = utils.to_collection(include_pos, str, set)
+    ngrams: tuple[int, ...] = utils.to_tuple(ngrams)
+    include_pos: Optional[set[str]] = utils.to_set(include_pos) if include_pos else None
     if window_size < 2:
         raise ValueError("`window_size` must be >= 2")
     if isinstance(topn, float):
@@ -112,7 +112,7 @@ def _get_candidates(
     doc: Doc,
     normalize: Optional[str | Callable[[Span], str]],
     ngrams: tuple[int, ...],
-    include_pos: set[str],
+    include_pos: Optional[set[str]],
 ) -> tuple[list[Candidate], Counter[str]]:
     """
     Get n-gram candidate keyterms from ``doc``, with key information for each:
@@ -220,8 +220,12 @@ def _compute_edge_weights(
     each other, then combine with statistical ``term_weights`` and normalize
     by the total number of outgoing edge weights.
     """
-    n_coocs = collections.defaultdict(lambda: collections.defaultdict(int))
-    sum_logdists = collections.defaultdict(lambda: collections.defaultdict(float))
+    n_coocs: collections.defaultdict = collections.defaultdict(
+        lambda: collections.defaultdict(int)
+    )
+    sum_logdists: collections.defaultdict = collections.defaultdict(
+        lambda: collections.defaultdict(float)
+    )
     # iterate over windows
     log_ = math.log  # localize this, for performance
     for start_idx in range(n_toks):
@@ -239,7 +243,9 @@ def _compute_edge_weights(
         if end_idx >= n_toks:
             break
     # compute edge weights between co-occurring terms (nodes)
-    edge_weights = collections.defaultdict(lambda: collections.defaultdict(float))
+    edge_weights: collections.defaultdict = collections.defaultdict(
+        lambda: collections.defaultdict(float)
+    )
     for c1, c2_dict in sum_logdists.items():
         for c2, sum_logdist in c2_dict.items():
             edge_weights[c1][c2] = (

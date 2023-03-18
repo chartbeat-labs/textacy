@@ -61,8 +61,8 @@ def yake(
         Lecture Notes in Computer Science, vol 10772, pp. 684-691.
     """
     # validate / transform args
-    ngrams = utils.to_collection(ngrams, int, tuple)
-    include_pos = utils.to_collection(include_pos, str, set)
+    ngrams: tuple[int, ...] = utils.to_tuple(ngrams)
+    include_pos: Optional[set[str]] = utils.to_set(include_pos) if include_pos else None
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -159,7 +159,9 @@ def _get_per_word_occurrence_values(
     Get base values for each individual occurrence of a word, to be aggregated
     and combined into a per-word score.
     """
-    word_occ_vals = collections.defaultdict(lambda: collections.defaultdict(list))
+    word_occ_vals: collections.defaultdict = collections.defaultdict(
+        lambda: collections.defaultdict(list)
+    )
 
     def _is_upper_cased(tok):
         return tok.is_upper or (tok.is_title and not tok.is_sent_start)
@@ -202,7 +204,7 @@ def _compute_word_scores(
     Aggregate values from per-word occurrence values, compute per-word weights
     of several components, then combine components into per-word scores.
     """
-    word_weights = collections.defaultdict(dict)
+    word_weights: collections.defaultdict = collections.defaultdict(dict)
     # compute summary stats for word frequencies
     freqs_nsw = [freq for w_id, freq in word_freqs.items() if w_id not in stop_words]
     freq_max = max(word_freqs.values())
@@ -239,7 +241,9 @@ def _compute_word_scores(
     return word_scores
 
 
-def _get_unigram_candidates(doc: Doc, include_pos: set[str]) -> Iterable[Token]:
+def _get_unigram_candidates(
+    doc: Doc, include_pos: Optional[set[str]]
+) -> Iterable[Token]:
     candidates = (
         word for word in doc if not (word.is_stop or word.is_punct or word.is_space)
     )

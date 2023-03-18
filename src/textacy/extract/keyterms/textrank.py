@@ -64,7 +64,7 @@ def textrank(
           pages 1105-1115.
     """
     # validate / transform args
-    include_pos = utils.to_collection(include_pos, str, set)
+    include_pos = utils.to_set(include_pos) if include_pos else None
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -130,6 +130,6 @@ def _get_candidates(
 
     candidates = ext_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(ext_utils.terms_to_strings(candidate, normalize))
+        tuple(ext_utils.terms_to_strings(candidate, normalize))  # type: ignore
         for candidate in candidates
     }

@@ -47,7 +47,7 @@ def scake(
         https://arxiv.org/abs/1811.10831v1
     """
     # validate / transform args
-    include_pos = utils.to_collection(include_pos, str, set)
+    include_pos: Optional[set[str]] = utils.to_set(include_pos) if include_pos else None
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -149,7 +149,7 @@ def _compute_word_scores(
 def _get_candidates(
     doc: Doc,
     normalize: Optional[str | Callable[[Token], str]],
-    include_pos: set[str],
+    include_pos: Optional[set[str]],
 ) -> set[tuple[str, ...]]:
     """
     Get a set of candidate terms to be scored by joining the longest

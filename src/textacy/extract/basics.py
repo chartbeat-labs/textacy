@@ -271,6 +271,7 @@ def noun_chunks(
     Yields:
         Next noun chunk from ``doclike`` in order of appearance in the document
     """
+    ncs: Iterable[Span]
     ncs = doclike.noun_chunks
     if drop_determiners is True:
         ncs = (nc if nc[0].pos != DET else nc[1:] for nc in ncs)

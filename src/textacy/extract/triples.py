@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import collections
 from operator import attrgetter
-from typing import Iterable, Optional, Pattern
+from typing import Iterable, Mapping, Optional, Pattern
 
 from cytoolz import itertoolz
 from spacy.symbols import (
@@ -62,6 +62,7 @@ def subject_verb_object_triples(doclike: types.DocLike) -> Iterable[SVOTriple]:
     Yields:
         Next SVO triple as (subject, verb, object), in approximate order of appearance.
     """
+    sents: Iterable[Span]
     if isinstance(doclike, Span):
         sents = [doclike]
     else:
@@ -70,7 +71,9 @@ def subject_verb_object_triples(doclike: types.DocLike) -> Iterable[SVOTriple]:
     for sent in sents:
         # connect subjects/objects to direct verb heads
         # and expand them to include conjuncts, compound nouns, ...
-        verb_sos = collections.defaultdict(lambda: collections.defaultdict(set))
+        verb_sos: Mapping = collections.defaultdict(
+            lambda: collections.defaultdict(set)
+        )
         for tok in sent:
             head = tok.head
             # ensure entry for all verbs, even if empty

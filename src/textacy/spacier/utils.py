@@ -238,9 +238,12 @@ def get_spacy_lang_morph_labels(lang: types.LangLike) -> set[str]:
             if isinstance(component, Morphologizer):
                 morphologizer = component
                 break
+        else:
+            return constants.UD_V2_MORPH_LABELS  # mypy not smart enough to know better
     else:
         return constants.UD_V2_MORPH_LABELS
 
+    assert isinstance(morphologizer, Morphologizer)  # type guard
     return {
         feat_name
         for label in morphologizer.labels
