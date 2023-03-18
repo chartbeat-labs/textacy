@@ -1,4 +1,4 @@
-# type: ignore
+# mypy: ignore-errors
 # TODO: figure out typing on these DocExtFuncs that satisfies mypy
 from .. import types
 from ..spacier.extensions import doc_extensions_registry

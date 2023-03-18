@@ -109,8 +109,8 @@ class IMDB(Dataset):
             "train": ("pos", "neg", "unsup"),
             "test": ("pos", "neg"),
         }
-        self._subset = None
-        self._label = None
+        self._subset: Optional[tuple[str, ...]] = None
+        self._label: Optional[tuple[str, ...]] = None
 
     def download(self, *, force: bool = False) -> None:
         """
@@ -248,8 +248,8 @@ class IMDB(Dataset):
         Raises:
             ValueError: If any filtering options are invalid.
         """
-        self._subset = utils.to_collection(subset, (str, bytes), tuple)
-        self._label = utils.to_collection(label, (str, bytes), tuple)
+        self._subset = utils.to_tuple(subset) if subset is not None else None
+        self._label = utils.to_tuple(label) if label is not None else None
         try:
             filters = self._get_filters(rating_range, min_len)
             for record in itertools.islice(self._filtered_iter(filters), limit):
@@ -291,8 +291,8 @@ class IMDB(Dataset):
         Raises:
             ValueError: If any filtering options are invalid.
         """
-        self._subset = utils.to_collection(subset, (str, bytes), tuple)
-        self._label = utils.to_collection(label, (str, bytes), tuple)
+        self._subset = utils.to_tuple(subset) if subset is not None else None
+        self._label = utils.to_tuple(label) if label is not None else None
         try:
             filters = self._get_filters(rating_range, min_len)
             for record in itertools.islice(self._filtered_iter(filters), limit):

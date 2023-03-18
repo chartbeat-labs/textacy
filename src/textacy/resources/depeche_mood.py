@@ -181,7 +181,7 @@ class DepecheMood(Resource):
                 lang=self._lang_map[lang], word_rep=word_rep
             ),
         )
-        self._weights = None
+        self._weights: Optional[dict[str, dict[str, float]]] = None
 
     @property
     def filepath(self) -> Optional[str]:

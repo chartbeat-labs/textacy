@@ -6,6 +6,7 @@ saving to / loading their data from disk; and tracking basic corpus statistics.
 from __future__ import annotations
 
 import collections
+import collections.abc
 import itertools
 import logging
 import math
@@ -13,6 +14,7 @@ from typing import Any, Callable, Counter, Iterable, Literal, Optional, Union
 
 import numpy as np
 import spacy
+import spacy.attrs
 from cytoolz import itertoolz
 from spacy.language import Language
 from spacy.tokens import Doc
@@ -140,7 +142,7 @@ class Corpus:
 
     def __init__(self, lang: types.LangLike, data: Optional[types.CorpusData] = None):
         self.spacy_lang = spacier.utils.resolve_langlike(lang)
-        self.lang = self.spacy_lang.lang
+        self.lang = self.spacy_lang.lang  # type: ignore
         self.docs = []
         self._doc_ids = []
         self.n_docs = 0
@@ -257,23 +259,13 @@ class Corpus:
 
                 .. note:: This feature is only available in spaCy 2.2.2+.
         """
-        if spacy.__version__ >= "2.2.2":
-            for doc in self.spacy_lang.pipe(
-                texts,
-                as_tuples=False,
-                batch_size=batch_size,
-                n_process=n_process,
-            ):
-                self._add_valid_doc(doc)
-        else:
-            if n_process != 1:
-                LOGGER.warning("`n_process` is not available with spacy < 2.2.2")
-            for doc in self.spacy_lang.pipe(
-                texts,
-                as_tuples=False,
-                batch_size=batch_size,
-            ):
-                self._add_valid_doc(doc)
+        for doc in self.spacy_lang.pipe(
+            texts,
+            as_tuples=False,
+            batch_size=batch_size,
+            n_process=n_process,
+        ):
+            self._add_valid_doc(doc)
 
     def add_record(self, record: types.Record) -> None:
         """
@@ -305,25 +297,14 @@ class Corpus:
 
                 .. note:: This feature is only available in spaCy 2.2.2+.
         """
-        if spacy.__version__ >= "2.2.2":
-            for doc, meta in self.spacy_lang.pipe(
-                records,
-                as_tuples=True,
-                batch_size=batch_size,
-                n_process=n_process,
-            ):
-                doc._.meta = meta
-                self._add_valid_doc(doc)
-        else:
-            if n_process != 1:
-                LOGGER.warning("`n_process` is not available with spacy < 2.2.2")
-            for doc, meta in self.spacy_lang.pipe(
-                records,
-                as_tuples=True,
-                batch_size=batch_size,
-            ):
-                doc._.meta = meta
-                self._add_valid_doc(doc)
+        for doc, meta in self.spacy_lang.pipe(
+            records,
+            as_tuples=True,
+            batch_size=batch_size,
+            n_process=n_process,
+        ):
+            doc._.meta = meta
+            self._add_valid_doc(doc)
 
     def add_doc(self, doc: Doc) -> None:
         """

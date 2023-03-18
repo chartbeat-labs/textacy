@@ -6,6 +6,7 @@ Annotation Counts
 of morphological, part-of-speech, and dependency features on the tokens in a document.
 """
 import collections
+import collections.abc
 
 from .. import types
 
@@ -24,7 +25,7 @@ def morph(doclike: types.DocLike) -> dict[str, dict[str, int]]:
     See Also:
         :class:`spacy.tokens.MorphAnalysis`
     """
-    morph_counts = collections.defaultdict(collections.Counter)
+    morph_counts: collections.abc.Mapping = collections.defaultdict(collections.Counter)
     for tok in doclike:
         for label, val in tok.morph.to_dict().items():
             morph_counts[label][val] += 1

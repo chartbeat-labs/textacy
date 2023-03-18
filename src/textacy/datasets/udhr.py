@@ -147,7 +147,7 @@ class UDHR(Dataset):
         without valid ISO-639-1 language code or sufficient translation quality,
         then convert into a list of dicts with key metadata, including filenames.
         """
-        index = []
+        index: list[dict] = []
         tree = ElementTree.parse(self._index_filepath)
         root = tree.getroot()
         for ele in root.iterfind("udhr"):
@@ -180,6 +180,7 @@ class UDHR(Dataset):
 
     def __iter__(self):
         self._check_data()
+        assert self.index is not None  # type guard
         for item in self.index:
             filepath = self._texts_dirpath.joinpath(item["filename"])
             record = item.copy()
@@ -191,6 +192,7 @@ class UDHR(Dataset):
         # so we might as well avoid loading texts in unwanted languages
         if lang:
             self._check_data()
+            assert self.index is not None  # type guard
             lang = utils.validate_set_members(lang, str, valid_vals=self.langs)
             for item in self.index:
                 if item["lang"] in lang:

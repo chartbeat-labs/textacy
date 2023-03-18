@@ -486,6 +486,7 @@ class TopicModel:
                 raise ValueError("no more than 6 topics may be highlighted at once")
 
         # get topics indices
+        topic_inds: tuple[int, ...]
         if topics == -1:
             topic_inds = tuple(range(self.n_topics))
         elif isinstance(topics, int):
@@ -495,7 +496,7 @@ class TopicModel:
 
         # get topic indices in sorted order
         if sort_topics_by == "index":
-            topic_inds = sorted(topic_inds)
+            topic_inds = tuple(sorted(topic_inds))
         elif sort_topics_by == "weight":
             topic_inds = tuple(
                 topic_ind
@@ -522,14 +523,15 @@ class TopicModel:
             highlight_cols = None
 
         # get top term indices
+        term_inds: list[int]
         if rank_terms_by == "corpus_weight":
             term_inds = np.argsort(np.ravel(doc_term_matrix.sum(axis=0)))[
                 : -n_terms - 1 : -1
-            ]
+            ].tolist()
         elif rank_terms_by == "topic_weight":
             term_inds = np.argsort(self.model.components_.sum(axis=0))[
                 : -n_terms - 1 : -1
-            ]
+            ].tolist()
         else:
             raise ValueError(
                 errors.value_invalid_msg(

@@ -194,37 +194,38 @@ class CapitolWords(Dataset):
         if min_len is not None:
             if min_len < 1:
                 raise ValueError("`min_len` must be at least 1")
-            filters.append(lambda record: len(record.get("text", "")) >= min_len)
+            min_len_ = min_len  # doing this so mypy stops complaining
+            filters.append(lambda record: len(record.get("text", "")) >= min_len_)
         if date_range is not None:
-            date_range = utils.validate_and_clip_range(
-                date_range, self.full_date_range, val_type=(str, bytes)
+            date_range_: tuple[str, str] = utils.validate_and_clip_range(
+                date_range, self.full_date_range, val_type=(str, bytes)  # type: ignore
             )
             filters.append(
                 lambda record: (
                     record.get("date")
-                    and date_range[0] <= record["date"] < date_range[1]
+                    and date_range_[0] <= record["date"] < date_range_[1]
                 )
             )
         if speaker_name is not None:
-            speaker_name = utils.validate_set_members(
+            speaker_name_ = utils.validate_set_members(
                 speaker_name, (str, bytes), valid_vals=self.speaker_names
             )
-            filters.append(lambda record: record.get("speaker_name") in speaker_name)
+            filters.append(lambda record: record.get("speaker_name") in speaker_name_)
         if speaker_party is not None:
-            speaker_party = utils.validate_set_members(
+            speaker_party_ = utils.validate_set_members(
                 speaker_party, (str, bytes), valid_vals=self.speaker_parties
             )
-            filters.append(lambda record: record.get("speaker_party") in speaker_party)
+            filters.append(lambda record: record.get("speaker_party") in speaker_party_)
         if chamber is not None:
-            chamber = utils.validate_set_members(
+            chamber_ = utils.validate_set_members(
                 chamber, (str, bytes), valid_vals=self.chambers
             )
-            filters.append(lambda record: record.get("chamber") in chamber)
+            filters.append(lambda record: record.get("chamber") in chamber_)
         if congress is not None:
-            congress = utils.validate_set_members(
+            congress_ = utils.validate_set_members(
                 congress, int, valid_vals=self.congresses
             )
-            filters.append(lambda record: record.get("congress") in congress)
+            filters.append(lambda record: record.get("congress") in congress_)
         return filters
 
     def _filtered_iter(self, filters):

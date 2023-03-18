@@ -231,6 +231,6 @@ def set_doc_meta(doc: Doc, value: dict) -> None:
 @extensions.doc_extensions_registry.register("spacier")
 def _get_spacier_doc_extensions() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
-        "preview": {"getter": get_doc_preview},
-        "meta": {"getter": get_doc_meta, "setter": set_doc_meta},
+        "preview": {"getter": get_doc_preview},  # type: ignore
+        "meta": {"getter": get_doc_meta, "setter": set_doc_meta},  # type: ignore
     }
