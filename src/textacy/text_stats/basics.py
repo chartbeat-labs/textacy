@@ -10,7 +10,7 @@ from __future__ import annotations
 import functools
 import logging
 import math
-from typing import Optional, Tuple
+from typing import Optional
 
 import spacy.pipeline
 from cytoolz import itertoolz
@@ -74,7 +74,7 @@ def n_unique_words(doc_or_tokens: types.DocOrTokens) -> int:
 
 
 @functools.lru_cache(maxsize=128)
-def n_chars_per_word(doc_or_tokens: types.DocOrTokens) -> Tuple[int, ...]:
+def n_chars_per_word(doc_or_tokens: types.DocOrTokens) -> tuple[int, ...]:
     """
     Compute the number of characters for each word in a document.
 
@@ -85,7 +85,7 @@ def n_chars_per_word(doc_or_tokens: types.DocOrTokens) -> Tuple[int, ...]:
     Note:
         This function is cached, since other functions rely upon its outputs
         to compute theirs. As such, ``doc_or_tokens`` must be hashable -- for example,
-        it may be a ``Doc`` or ``Tuple[Token, ...]`` , but not a ``List[Token]`` .
+        it may be a ``Doc`` or ``tuple[Token, ...]`` , but not a ``List[Token]`` .
     """
     words = utils.get_words(doc_or_tokens)
     return tuple(len(word) for word in words)
@@ -137,7 +137,7 @@ def n_long_words(doc_or_tokens: types.DocOrTokens, *, min_n_chars: int = 7) -> i
 @functools.lru_cache(maxsize=128)
 def n_syllables_per_word(
     doc_or_tokens: types.DocOrTokens, *, lang: Optional[str] = None
-) -> Tuple[int, ...]:
+) -> tuple[int, ...]:
     """
     Compute the number of syllables for each word in a document.
 
@@ -156,7 +156,7 @@ def n_syllables_per_word(
 
         Also: This function is cached, since other functions rely upon its outputs
         to compute theirs. As such, ``doc_or_tokens`` must be hashable -- for example,
-        it may be a ``Doc`` or ``Tuple[Token, ...]`` , but not a ``List[Token]`` .
+        it may be a ``Doc`` or ``tuple[Token, ...]`` , but not a ``List[Token]`` .
     """
     if lang is None:
         if isinstance(doc_or_tokens, Doc):

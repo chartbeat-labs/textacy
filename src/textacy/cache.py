@@ -12,6 +12,7 @@ from cachetools import LRUCache
 
 LOGGER = logging.getLogger(__name__)
 
+
 def _get_size(obj, seen=None):
     """
     Recursively find the actual size of an object, in bytes.
@@ -41,17 +42,23 @@ def _get_size(obj, seen=None):
         try:
             size += sum((_get_size(i, seen) for i in obj))
         except TypeError:
-            LOGGER.warning("Unable to get size of %r. This may lead to incorrect sizes. Please report this error.", obj)
-    if hasattr(obj, "__slots__"): # can have __slots__ with __dict__
-        size += sum(_get_size(getattr(obj, s), seen) for s in obj.__slots__ if hasattr(obj, s))
+            LOGGER.warning(
+                "Unable to get size of %r. This may lead to incorrect sizes. Please report this error.",
+                obj,
+            )
+    if hasattr(obj, "__slots__"):  # can have __slots__ with __dict__
+        size += sum(
+            _get_size(getattr(obj, s), seen) for s in obj.__slots__ if hasattr(obj, s)
+        )
 
     return size
 
 
-LRU_CACHE = LRUCache(
+LRU_CACHE: LRUCache = LRUCache(
     int(os.environ.get("TEXTACY_MAX_CACHE_SIZE", 2147483648)), getsizeof=_get_size
 )
-""":class:`cachetools.LRUCache`: Least Recently Used (LRU) cache for loaded data.
+"""
+Least Recently Used (LRU) cache for loaded data.
 
 The max cache size may be set by the `TEXTACY_MAX_CACHE_SIZE` environment variable,
 where the value must be an integer (in bytes). Otherwise, the max size is 2GB.

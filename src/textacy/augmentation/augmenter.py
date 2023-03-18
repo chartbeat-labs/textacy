@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import random
-from typing import List, Optional, Sequence, Tuple
+from typing import Optional, Sequence
 
 from spacy.tokens import Doc
 
@@ -46,8 +46,8 @@ class Augmenter:
         The jumps over the lazy odg.
 
     Args:
-        transforms: Ordered sequence of callables that must take List[:obj:`AugTok`]
-            as their first positional argument and return another List[:obj:`AugTok`].
+        transforms: Ordered sequence of callables that must take list[:obj:`AugTok`]
+            as their first positional argument and return another list[:obj:`AugTok`].
 
             .. note:: Although the particular transforms applied may vary doc-by-doc,
                they are applied *in order* as listed here. Since some transforms may
@@ -112,7 +112,7 @@ class Augmenter:
 
     def _validate_transforms(
         self, transforms: Sequence[types.AugTransform]
-    ) -> Tuple[types.AugTransform, ...]:
+    ) -> tuple[types.AugTransform, ...]:
         transforms = tuple(transforms)
         if not transforms:
             raise ValueError("at least one transform callable must be specified")
@@ -123,7 +123,7 @@ class Augmenter:
 
     def _validate_num(
         self, num: Optional[int | float | Sequence[float]]
-    ) -> int | float | Tuple[float, ...]:
+    ) -> int | float | tuple[float, ...]:
         if num is None:
             return len(self.tfs)
         elif isinstance(num, int) and 0 <= num <= len(self.tfs):
@@ -142,7 +142,7 @@ class Augmenter:
                 "or a list of floats of length equal to given transforms"
             )
 
-    def _get_random_transforms(self) -> List[types.AugTransform]:
+    def _get_random_transforms(self) -> list[types.AugTransform]:
         num = self.num
         if isinstance(num, int):
             rand_idxs = random.sample(range(len(self.tfs)), min(num, len(self.tfs)))

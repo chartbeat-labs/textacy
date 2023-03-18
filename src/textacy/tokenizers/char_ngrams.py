@@ -31,7 +31,7 @@ class CharNgramsTokenizer:
         pad: bool = False,
         normalize: Optional[str | Callable[[str], str]] = None,
     ):
-        self.ns = utils.to_collection(ns, int, tuple)
+        self.ns: tuple[int, ...] = utils.to_tuple(ns)
         self.pad = pad
         self.normalize = self._init_normalize(normalize)
 

@@ -7,7 +7,7 @@ from __future__ import annotations
 import functools
 import logging
 import pathlib
-from typing import Dict, Optional
+from typing import Optional
 
 import spacy
 from cachetools import cached
@@ -15,8 +15,9 @@ from cachetools.keys import hashkey
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from . import extensions, utils as sputils
 from .. import cache, errors, types, utils
+from . import extensions
+from . import utils as sputils
 
 
 LOGGER = logging.getLogger(__name__)
@@ -219,7 +220,7 @@ def set_doc_meta(doc: Doc, value: dict) -> None:
     Typically used as a custom extension, like ``doc._.meta = value`` .
     """
     if not isinstance(value, dict):
-        raise TypeError(errors.type_invalid_msg("value", type(value), Dict))
+        raise TypeError(errors.type_invalid_msg("value", type(value), dict))
     try:
         doc.user_data["textacy"]["meta"] = value
     except KeyError:
@@ -228,8 +229,8 @@ def set_doc_meta(doc: Doc, value: dict) -> None:
 
 
 @extensions.doc_extensions_registry.register("spacier")
-def _get_spacier_doc_extensions() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_spacier_doc_extensions() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
-        "preview": {"getter": get_doc_preview},
-        "meta": {"getter": get_doc_meta, "setter": set_doc_meta},
+        "preview": {"getter": get_doc_preview},  # type: ignore
+        "meta": {"getter": get_doc_meta, "setter": set_doc_meta},  # type: ignore
     }

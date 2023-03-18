@@ -1,15 +1,14 @@
+# mypy: ignore-errors
 """
 TODO
 """
 from __future__ import annotations
 
-from typing import Dict
-
 from spacy.tokens import Doc
 
-from . import acros, bags, basics, keyterms, kwic, matches, triples
 from .. import errors, types
 from ..spacier.extensions import doc_extensions_registry
+from . import acros, bags, basics, keyterms, kwic, matches, triples
 
 
 def extract_keyterms(doc: Doc, method: str, **kwargs):
@@ -40,7 +39,7 @@ def extract_keyterms(doc: Doc, method: str, **kwargs):
 
 
 @doc_extensions_registry.register("extract.acros")
-def _get_doc_extensions_extract_acros() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_extract_acros() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
         "extract_acronyms": {"method": acros.acronyms},
         "extract_acronyms_and_definitions": {"method": acros.acronyms_and_definitions},
@@ -48,7 +47,7 @@ def _get_doc_extensions_extract_acros() -> Dict[str, Dict[str, types.DocExtFunc]
 
 
 @doc_extensions_registry.register("extract.bags")
-def _get_doc_extensions_extract_bags() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_extract_bags() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
         "to_bag_of_words": {"method": bags.to_bag_of_words},
         "to_bag_of_terms": {"method": bags.to_bag_of_terms},
@@ -56,7 +55,7 @@ def _get_doc_extensions_extract_bags() -> Dict[str, Dict[str, types.DocExtFunc]]
 
 
 @doc_extensions_registry.register("extract.basics")
-def _get_doc_extensions_extract_basics() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_extract_basics() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
         "extract_words": {"method": basics.words},
         "extract_ngrams": {"method": basics.ngrams},
@@ -67,12 +66,12 @@ def _get_doc_extensions_extract_basics() -> Dict[str, Dict[str, types.DocExtFunc
 
 
 @doc_extensions_registry.register("extract.kwic")
-def _get_doc_extensions_extract_kwic() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_extract_kwic() -> dict[str, dict[str, types.DocExtFunc]]:
     return {"extract_keyword_in_context": {"method": kwic.keyword_in_context}}
 
 
 @doc_extensions_registry.register("extract.matches")
-def _get_doc_extensions_extract_matches() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_extract_matches() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
         "extract_token_matches": {"method": matches.token_matches},
         "extract_regex_matches": {"method": matches.regex_matches},
@@ -80,7 +79,7 @@ def _get_doc_extensions_extract_matches() -> Dict[str, Dict[str, types.DocExtFun
 
 
 @doc_extensions_registry.register("extract.triples")
-def _get_doc_extensions_extract_triples() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_extract_triples() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
         "extract_subject_verb_object_triples": {
             "method": triples.subject_verb_object_triples
@@ -93,12 +92,12 @@ def _get_doc_extensions_extract_triples() -> Dict[str, Dict[str, types.DocExtFun
 
 
 @doc_extensions_registry.register("extract.keyterms")
-def _get_doc_extensions_extract_keyterms() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_extract_keyterms() -> dict[str, dict[str, types.DocExtFunc]]:
     return {"extract_keyterms": {"method": extract_keyterms}}
 
 
 @doc_extensions_registry.register("extract")
-def _get_doc_extensions_extract() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_extract() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
         **_get_doc_extensions_extract_acros(),
         **_get_doc_extensions_extract_bags(),

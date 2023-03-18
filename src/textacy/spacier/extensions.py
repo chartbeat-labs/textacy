@@ -6,7 +6,6 @@ Custom Extensions
 collections of custom extensions on spaCy classes.
 """
 import logging
-from typing import Dict
 
 import catalogue
 from spacy.tokens import Doc
@@ -19,7 +18,7 @@ LOGGER = logging.getLogger(__name__)
 doc_extensions_registry = catalogue.create("textacy", "doc_extensions")
 
 
-def get_doc_extensions(name: str) -> Dict[str, Dict[str, types.DocExtFunc]]:
+def get_doc_extensions(name: str) -> dict[str, dict[str, types.DocExtFunc]]:
     """
     Get a collection of custom extensions that can be set on or removed from
     the global :class:`spacy.tokens.Doc` , specified by ``name`` .

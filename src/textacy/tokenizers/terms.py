@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import operator
 from functools import partial
-from typing import Callable, Collection, Iterable, Optional, Tuple
+from typing import Callable, Collection, Iterable, Optional
 
 from cytoolz import itertoolz
 from spacy.tokens import Span
@@ -49,7 +49,7 @@ class TermsTokenizer:
 
     def _init_tokenizers(
         self, ngrams, entities, noun_chunks
-    ) -> Tuple[DocLikeToSpans, ...]:
+    ) -> tuple[DocLikeToSpans, ...]:
         ngs_tokenizer = self._init_ngrams_tokenizer(ngrams)
         ents_tokenizer = self._init_entities_tokenizer(entities)
         ncs_tokenizer = self._init_noun_chunks_tokenizer(noun_chunks)
@@ -72,9 +72,8 @@ class TermsTokenizer:
             return ngrams
         elif isinstance(ngrams, int):
             return partial(extract.ngrams, n=ngrams)
-        elif (
-            isinstance(ngrams, Collection)
-            and all(isinstance(ng, int) for ng in ngrams)
+        elif isinstance(ngrams, Collection) and all(
+            isinstance(ng, int) for ng in ngrams
         ):
             return partial(_concat_extract_ngrams, ns=ngrams)
         else:
@@ -122,7 +121,7 @@ class TermsTokenizer:
     def fit(self, doclikes: Iterable[types.DocLike]) -> "TermsTokenizer":
         return self
 
-    def transform(self, doclikes: Iterable[types.DocLike]) -> Iterable[Tuple[str, ...]]:
+    def transform(self, doclikes: Iterable[types.DocLike]) -> Iterable[tuple[str, ...]]:
         """
         Convert a sequence of spaCy Docs or Spans into an ordered, nested sequence
         of terms as strings.
@@ -135,13 +134,17 @@ class TermsTokenizer:
         """
         normalize_ = self.normalize
         for doclike in doclikes:
-            terms = itertoolz.concat(tokenizer(doclike) for tokenizer in self.tokenizers)
+            terms = itertoolz.concat(
+                tokenizer(doclike) for tokenizer in self.tokenizers
+            )
             if self.dedupe is True:
                 terms = itertoolz.unique(terms, lambda span: (span.start, span.end))
             yield tuple(normalize_(term) for term in terms)
 
 
-def _concat_extract_ngrams(doclike: types.DocLike, ns: Collection[int]) -> Iterable[Span]:
+def _concat_extract_ngrams(
+    doclike: types.DocLike, ns: Collection[int]
+) -> Iterable[Span]:
     for n in ns:
         ngrams = extract.ngrams(doclike, n=n)
         for ngram in ngrams:

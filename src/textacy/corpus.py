@@ -6,28 +6,22 @@ saving to / loading their data from disk; and tracking basic corpus statistics.
 from __future__ import annotations
 
 import collections
+import collections.abc
 import itertools
 import logging
 import math
-from typing import (
-    Any,
-    Callable,
-    Counter,
-    Dict,
-    Iterable,
-    List,
-    Literal,
-    Optional,
-    Union,
-)
+from typing import Any, Callable, Counter, Iterable, Literal, Optional, Union
 
 import numpy as np
 import spacy
+import spacy.attrs
 from cytoolz import itertoolz
 from spacy.language import Language
 from spacy.tokens import Doc
 
-from . import errors, extract, io as tio, spacier, types, utils
+from . import errors, extract
+from . import io as tio
+from . import spacier, types, utils
 
 
 LOGGER = logging.getLogger(__name__)
@@ -140,15 +134,15 @@ class Corpus:
 
     lang: str
     spacy_lang: Language
-    docs: List[Doc]
-    _doc_ids: List[int]
+    docs: list[Doc]
+    _doc_ids: list[int]
     n_docs: int
     n_sents: int
     n_tokens: int
 
     def __init__(self, lang: types.LangLike, data: Optional[types.CorpusData] = None):
         self.spacy_lang = spacier.utils.resolve_langlike(lang)
-        self.lang = self.spacy_lang.lang
+        self.lang = self.spacy_lang.lang  # type: ignore
         self.docs = []
         self._doc_ids = []
         self.n_docs = 0
@@ -265,23 +259,13 @@ class Corpus:
 
                 .. note:: This feature is only available in spaCy 2.2.2+.
         """
-        if spacy.__version__ >= "2.2.2":
-            for doc in self.spacy_lang.pipe(
-                texts,
-                as_tuples=False,
-                batch_size=batch_size,
-                n_process=n_process,
-            ):
-                self._add_valid_doc(doc)
-        else:
-            if n_process != 1:
-                LOGGER.warning("`n_process` is not available with spacy < 2.2.2")
-            for doc in self.spacy_lang.pipe(
-                texts,
-                as_tuples=False,
-                batch_size=batch_size,
-            ):
-                self._add_valid_doc(doc)
+        for doc in self.spacy_lang.pipe(
+            texts,
+            as_tuples=False,
+            batch_size=batch_size,
+            n_process=n_process,
+        ):
+            self._add_valid_doc(doc)
 
     def add_record(self, record: types.Record) -> None:
         """
@@ -313,25 +297,14 @@ class Corpus:
 
                 .. note:: This feature is only available in spaCy 2.2.2+.
         """
-        if spacy.__version__ >= "2.2.2":
-            for doc, meta in self.spacy_lang.pipe(
-                records,
-                as_tuples=True,
-                batch_size=batch_size,
-                n_process=n_process,
-            ):
-                doc._.meta = meta
-                self._add_valid_doc(doc)
-        else:
-            if n_process != 1:
-                LOGGER.warning("`n_process` is not available with spacy < 2.2.2")
-            for doc, meta in self.spacy_lang.pipe(
-                records,
-                as_tuples=True,
-                batch_size=batch_size,
-            ):
-                doc._.meta = meta
-                self._add_valid_doc(doc)
+        for doc, meta in self.spacy_lang.pipe(
+            records,
+            as_tuples=True,
+            batch_size=batch_size,
+            n_process=n_process,
+        ):
+            doc._.meta = meta
+            self._add_valid_doc(doc)
 
     def add_doc(self, doc: Doc) -> None:
         """
@@ -400,7 +373,7 @@ class Corpus:
            Python's usual indexing and slicing: ``Corpus[0]`` gets the first
            document in the corpus; ``Corpus[:5]`` gets the first 5; etc.
         """
-        matched_docs = (doc for doc in self if match_func(doc) is True)
+        matched_docs = (doc for doc in self.docs if match_func(doc) is True)
         for doc in itertools.islice(matched_docs, limit):
             yield doc
 
@@ -434,9 +407,10 @@ class Corpus:
            first document in the corpus; ``del Corpus[:5]`` removes the first
            5; etc.
         """
-        matched_docs = (doc for doc in self if match_func(doc) is True)
+        matched_docs = (doc for doc in self.docs if match_func(doc) is True)
         self._remove_many_docs_by_index(
-            self._doc_ids.index(id(doc)) for doc in itertools.islice(matched_docs, limit)
+            self._doc_ids.index(id(doc))
+            for doc in itertools.islice(matched_docs, limit)
         )
 
     def _remove_many_docs_by_index(self, idxs: Iterable[int]) -> None:
@@ -457,12 +431,12 @@ class Corpus:
     @property
     def vectors(self) -> np.ndarray:
         """Constituent docs' word vectors stacked in a 2d array."""
-        return np.vstack([doc.vector for doc in self])
+        return np.vstack([doc.vector for doc in self.docs])
 
     @property
     def vector_norms(self) -> np.ndarray:
         """Constituent docs' L2-normalized word vectors stacked in a 2d array."""
-        return np.vstack([doc.vector_norm for doc in self])
+        return np.vstack([doc.vector_norm for doc in self.docs])
 
     # useful methods
 
@@ -474,7 +448,7 @@ class Corpus:
         ] = "lemma",
         weighting: Literal["count", "freq"] = "count",
         **kwargs,
-    ) -> Dict[int, int | float] | Dict[str, int | float]:
+    ) -> dict[int, int | float] | dict[str, int | float]:
         """
         Map the set of unique words in :class:`Corpus` to their counts as
         absolute, relative, or binary frequencies of occurence, similar to
@@ -507,9 +481,9 @@ class Corpus:
         See Also:
             :func:`textacy.representations.matrix_utils.get_term_freqs()`
         """
-        word_counts_: Union[Counter[Any], Dict[Any, Union[int, float]]]
+        word_counts_: Union[Counter[Any], dict[Any, Union[int, float]]]
         word_counts_ = collections.Counter()
-        for doc in self:
+        for doc in self.docs:
             word_counts_.update(
                 extract.to_bag_of_words(doc, by=by, weighting="count", **kwargs)
             )
@@ -535,7 +509,7 @@ class Corpus:
         weighting: Literal["count", "freq", "idf"] = "count",
         smooth_idf: bool = True,
         **kwargs,
-    ) -> Dict[int, int | float] | Dict[str, int | float]:
+    ) -> dict[int, int | float] | dict[str, int | float]:
         """
         Map the set of unique words in :class:`Corpus` to their *document* counts
         as absolute, relative, or inverse frequencies of occurence.
@@ -569,9 +543,9 @@ class Corpus:
         See Also:
             :func:`textacy.vsm.get_doc_freqs() <textacy.vsm.matrix_utils.get_doc_freqs>`
         """
-        word_doc_counts_: Union[Counter[Any], Dict[Any, Union[int, float]]]
+        word_doc_counts_: Union[Counter[Any], dict[Any, Union[int, float]]]
         word_doc_counts_ = collections.Counter()
-        for doc in self:
+        for doc in self.docs:
             word_doc_counts_.update(
                 extract.to_bag_of_words(doc, by=by, weighting="binary", **kwargs)
             )
@@ -622,7 +596,7 @@ class Corpus:
         Returns:
             Aggregated value for metadata field.
         """
-        return agg_func(doc._.meta.get(name, default) for doc in self)
+        return agg_func(doc._.meta.get(name, default) for doc in self.docs)
 
     # file io
 

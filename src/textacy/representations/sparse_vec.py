@@ -9,7 +9,7 @@ included terms and flexible weighting/normalization schemes for their values.
 
 Intended primarily as a simpler- and higher-level API for sparse vectorization of docs.
 """
-from typing import Dict, Iterable, Literal, Optional, Tuple
+from typing import Iterable, Literal, Optional
 
 import scipy.sparse as sp
 
@@ -23,7 +23,7 @@ def build_doc_term_matrix(
     idf_type: Optional[Literal["standard", "smooth", "bm25"]] = None,
     dl_type: Optional[Literal["linear", "sqrt", "log"]] = None,
     **kwargs,
-) -> Tuple[sp.csr_matrix, Dict[str, int]]:
+) -> tuple[sp.csr_matrix, dict[str, int]]:
     """
     Transform one or more tokenized documents into a document-term matrix
     of shape (# docs, # unique terms), with flexible weighting/normalization of values.
@@ -97,7 +97,7 @@ def build_grp_term_matrix(
     idf_type: Optional[Literal["standard", "smooth", "bm25"]] = None,
     dl_type: Optional[Literal["linear", "sqrt", "log"]] = None,
     **kwargs,
-) -> Tuple[sp.csr_matrix, Dict[str, int], Dict[str, int]]:
+) -> tuple[sp.csr_matrix, dict[str, int], dict[str, int]]:
     """
     Transform one or more tokenized documents into a group-term matrix
     of shape (# unique groups, # unique terms),

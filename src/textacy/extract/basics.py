@@ -8,7 +8,7 @@ via spaCy, with bells and whistles for filtering the results.
 from __future__ import annotations
 
 from functools import partial
-from typing import Collection, Iterable, List, Optional, Set, Union
+from typing import Collection, Iterable, Optional, Union
 
 from cytoolz import itertoolz
 from spacy.parts_of_speech import DET
@@ -61,13 +61,11 @@ def words(
     if filter_nums is True:
         words_ = (w for w in words_ if not w.like_num)
     if include_pos:
-        include_pos = utils.to_collection(include_pos, str, set)
-        include_pos = {pos.upper() for pos in include_pos}
-        words_ = (w for w in words_ if w.pos_ in include_pos)
+        include_pos_: set[str] = {pos.upper() for pos in utils.to_set(include_pos)}
+        words_ = (w for w in words_ if w.pos_ in include_pos_)
     if exclude_pos:
-        exclude_pos = utils.to_collection(exclude_pos, str, set)
-        exclude_pos = {pos.upper() for pos in exclude_pos}
-        words_ = (w for w in words_ if w.pos_ not in exclude_pos)
+        exclude_pos_: set[str] = {pos.upper() for pos in utils.to_set(exclude_pos)}
+        words_ = (w for w in words_ if w.pos_ not in exclude_pos_)
     if min_freq > 1:
         words_ = list(words_)
         freqs = itertoolz.frequencies(w.lower_ for w in words_)
@@ -122,15 +120,12 @@ def ngrams(
         Filtering by part-of-speech tag uses the universal POS tag set; for details,
         check spaCy's docs: https://spacy.io/api/annotation#pos-tagging
     """
-    ns = utils.to_collection(n, int, tuple)
-    if any(n_ < 1 for n_ in ns):
+    ns_: tuple[int, ...] = utils.to_tuple(n)
+    if any(n_ < 1 for n_ in ns_):
         raise ValueError("n must be greater than or equal to 1")
 
-    if include_pos:
-        include_pos = {pos.upper() for pos in utils.to_collection(include_pos, str, set)}
-    if exclude_pos:
-        exclude_pos = {pos.upper() for pos in utils.to_collection(exclude_pos, str, set)}
-    for n_ in ns:
+    ngrams_: Iterable[Span]
+    for n_ in ns_:
         ngrams_ = (doclike[i : i + n_] for i in range(len(doclike) - n_ + 1))
         ngrams_ = (ng for ng in ngrams_ if not any(w.is_space for w in ng))
         if filter_stops is True:
@@ -140,10 +135,12 @@ def ngrams(
         if filter_nums is True:
             ngrams_ = (ng for ng in ngrams_ if not any(w.like_num for w in ng))
         if include_pos:
-            ngrams_ = (ng for ng in ngrams_ if all(w.pos_ in include_pos for w in ng))
+            include_pos_: set[str] = {pos.upper() for pos in utils.to_set(include_pos)}
+            ngrams_ = (ng for ng in ngrams_ if all(w.pos_ in include_pos_ for w in ng))
         if exclude_pos:
+            exclude_pos_: set[str] = {pos.upper() for pos in utils.to_set(exclude_pos)}
             ngrams_ = (
-                ng for ng in ngrams_ if not any(w.pos_ in exclude_pos for w in ng)
+                ng for ng in ngrams_ if not any(w.pos_ in exclude_pos_ for w in ng)
             )
         if min_freq > 1:
             ngrams_ = list(ngrams_)
@@ -222,7 +219,7 @@ def entities(
             for ent in ents
         )
     if min_freq > 1:
-        ents = list(ents)
+        ents = list(ents)  # type: ignore
         freqs = itertoolz.frequencies(ent.text.lower() for ent in ents)
         ents = (ent for ent in ents if freqs[ent.text.lower()] >= min_freq)
 
@@ -232,7 +229,7 @@ def entities(
 
 def _parse_ent_types(
     ent_types: Optional[str | Collection[str]], which: str
-) -> Optional[str | Set[str]]:
+) -> Optional[str | set[str]]:
     if not ent_types:
         return None
     elif isinstance(ent_types, str):
@@ -274,6 +271,7 @@ def noun_chunks(
     Yields:
         Next noun chunk from ``doclike`` in order of appearance in the document
     """
+    ncs: Iterable[Span]
     ncs = doclike.noun_chunks
     if drop_determiners is True:
         ncs = (nc if nc[0].pos != DET else nc[1:] for nc in ncs)
@@ -347,7 +345,7 @@ def terms(
         yield term
 
 
-def _get_extractors(ngs, ents, ncs) -> List[types.DocLikeToSpans]:
+def _get_extractors(ngs, ents, ncs) -> list[types.DocLikeToSpans]:
     all_extractors = [
         _get_ngs_extractor(ngs),
         _get_ents_extractor(ents),

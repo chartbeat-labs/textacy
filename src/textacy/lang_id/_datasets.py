@@ -1,3 +1,4 @@
+# type: ignore
 from __future__ import annotations
 
 import logging
@@ -5,12 +6,13 @@ import operator
 import pathlib
 import random
 import re
-from typing import Dict, Iterable, List, Optional, Tuple, Set
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 from cytoolz import itertoolz
 
 import textacy
 from textacy import io as tio
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +25,9 @@ class IsoLangResource:
     Source: https://iso639-3.sil.org/code_tables/639/data
     """
 
-    download_url = "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab"
+    download_url = (
+        "https://iso639-3.sil.org/sites/iso639-3/files/downloads/iso-639-3.tab"
+    )
     filename = "iso-639-3.tsv"
 
     def __init__(self, data_dir: str | pathlib.Path):
@@ -140,7 +144,6 @@ class DSLCCDataset:
 
 
 class TatoebaDataset:
-
     download_url = "http://downloads.tatoeba.org/exports/sentences.tar.bz2"
 
     def __init__(self, data_dir: str | pathlib.Path):
@@ -182,7 +185,8 @@ class TatoebaDataset:
             (row["text"], iso_lang_map[row["iso-639-3"]])
             for row in rows
             if row["iso-639-3"] in iso_lang_map
-            and itertoolz.count(char for char in row["text"] if char.isalnum()) >= min_len
+            and itertoolz.count(char for char in row["text"] if char.isalnum())
+            >= min_len
         ]
         LOGGER.info("loaded TatoebaDataset data:\n%s ...", data[:3])
         return data
@@ -210,9 +214,7 @@ class Wili2018Dataset:
             force: If True, always download a new copy of the dataset; otherwise,
                 only download dataset if it doesn't already exist on disk.
         """
-        fpath = tio.download_file(
-            self.download_url, dirpath=self.data_dir, force=force
-        )
+        fpath = tio.download_file(self.download_url, dirpath=self.data_dir, force=force)
         if fpath:
             tio.unpack_archive(fpath, extract_dir=self.data_dir)
 
@@ -229,7 +231,7 @@ class Wili2018Dataset:
         Returns:
             Sequence of (text, lang) examples.
         """
-        data = []
+        data: list[tuple[str, str]] = []
         # we'll combine train/test from individual datasets
         # and instead split on the full, aggregated dataset
         for subset in ("train", "test"):
@@ -273,9 +275,7 @@ class UDDataset:
             force: If True, always download a new copy of the dataset; otherwise,
                 only download dataset if it doesn't already exist on disk.
         """
-        fpath = tio.download_file(
-            self.download_url, dirpath=self.data_dir, force=force
-        )
+        fpath = tio.download_file(self.download_url, dirpath=self.data_dir, force=force)
         if fpath:
             tio.unpack_archive(fpath, extract_dir=self.data_dir)
 
@@ -288,7 +288,7 @@ class UDDataset:
         Returns:
             Sequence of (text, lang) examples.
         """
-        data = []
+        data: list[tuple[str, str]] = []
         match_regex = r"ud-(train|test|dev)\.txt"
         for fpath in tio.get_filepaths(
             self.data_dir, match_regex=match_regex, recursive=True
@@ -325,4 +325,4 @@ def _randomly_segment_text(text: str, len_range: Tuple[int, int]) -> Iterable[st
         idx += random.randint(min_len, max_len)
     idxs.append(len(text))
     for idx_start, idx_end in itertoolz.sliding_window(2, idxs):
-        yield text[idx_start : idx_end]
+        yield text[idx_start:idx_end]

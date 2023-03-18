@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import collections
 from operator import itemgetter
-from typing import Callable, Collection, Dict, List, Optional, Set, Tuple
+from typing import Callable, Collection, Optional
 
 from spacy.tokens import Doc, Token
 
@@ -19,7 +19,7 @@ def textrank(
     edge_weighting: str = "binary",
     position_bias: bool = False,
     topn: int | float = 10,
-) -> List[Tuple[str, float]]:
+) -> list[tuple[str, float]]:
     """
     Extract key terms from a document using the TextRank algorithm, or
     a variation thereof. For example:
@@ -64,7 +64,7 @@ def textrank(
           pages 1105-1115.
     """
     # validate / transform args
-    include_pos = utils.to_collection(include_pos, str, set)
+    include_pos = utils.to_set(include_pos) if include_pos else None
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -76,7 +76,7 @@ def textrank(
     if not doc:
         return []
 
-    word_pos: Optional[Dict[str, float]]
+    word_pos: Optional[dict[str, float]]
     if position_bias is True:
         word_pos = collections.defaultdict(float)
         for word, norm_word in zip(doc, ext_utils.terms_to_strings(doc, normalize)):
@@ -112,8 +112,10 @@ def textrank(
 
 
 def _get_candidates(
-    doc: Doc, normalize: Optional[str | Callable], include_pos: Optional[Set[str]],
-) -> Set[Tuple[str, ...]]:
+    doc: Doc,
+    normalize: Optional[str | Callable],
+    include_pos: Optional[set[str]],
+) -> set[tuple[str, ...]]:
     """
     Get a set of candidate terms to be scored by joining the longest
     subsequences of valid words -- non-stopword and non-punct, filtered to
@@ -128,5 +130,6 @@ def _get_candidates(
 
     candidates = ext_utils.get_longest_subsequence_candidates(doc, _is_valid_tok)
     return {
-        tuple(ext_utils.terms_to_strings(candidate, normalize)) for candidate in candidates
+        tuple(ext_utils.terms_to_strings(candidate, normalize))  # type: ignore
+        for candidate in candidates
     }

@@ -6,13 +6,14 @@ from __future__ import annotations
 
 import logging
 from contextlib import closing
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional
 
 import requests
 from tqdm import tqdm
 
 from .. import types, utils
 from . import utils as io_utils
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -23,7 +24,7 @@ def read_http_stream(
     lines: bool = False,
     decode_unicode: bool = False,
     chunk_size: int = 1024,
-    auth: Optional[Tuple[str, str]] = None,
+    auth: Optional[tuple[str, str]] = None,
 ) -> Iterable[str] | Iterable[bytes]:
     """
     Read data from ``url`` in a stream, either all at once or line-by-line.
@@ -71,7 +72,7 @@ def write_http_stream(
     encoding: Optional[str] = None,
     make_dirs: bool = False,
     chunk_size: int = 1024,
-    auth: Optional[Tuple[str, str]] = None,
+    auth: Optional[tuple[str, str]] = None,
 ) -> None:
     """
     Download data from ``url`` in a stream, and write successive chunks

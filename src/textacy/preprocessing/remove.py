@@ -11,8 +11,8 @@ import re
 import unicodedata
 from typing import Collection, Optional
 
-from . import resources
 from .. import utils
+from . import resources
 
 
 def accents(text: str, *, fast: bool = False) -> str:
@@ -77,7 +77,7 @@ def brackets(
         It should be fine removing structured bracketed contents, as is often used,
         for instance, to denote in-text citations.
     """
-    only = utils.to_collection(only, val_type=str, col_type=set)
+    only = utils.to_set(only) if only is not None else None
     if only is None or "curly" in only:
         text = resources.RE_BRACKETS_CURLY.sub("", text)
     if only is None or "square" in only:
@@ -131,8 +131,8 @@ def punctuation(
         used to remove punctuation; otherwise, a regular expression is used.
         The former's performance can be up to an order of magnitude faster.
     """
+    only = utils.to_set(only) if only is not None else None
     if only is not None:
-        only = utils.to_collection(only, val_type=str, col_type=set)
         return re.sub("[{}]+".format(re.escape("".join(only))), " ", text)
     else:
         return text.translate(resources.PUNCT_TRANSLATION_TABLE)

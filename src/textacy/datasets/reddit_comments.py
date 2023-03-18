@@ -25,11 +25,13 @@ import logging
 import re
 import urllib.parse
 from datetime import datetime
-from typing import ClassVar, Iterable, Optional, Set, Tuple
+from typing import ClassVar, Iterable, Optional
 
-from .. import constants, types, utils
+from .. import constants
 from .. import io as tio
+from .. import types, utils
 from .base import Dataset
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -94,8 +96,8 @@ class RedditComments(Dataset):
             are available, each as an ISO-formatted string (YYYY-MM-DD).
     """
 
-    full_date_range: ClassVar[Tuple[str, str]] = ("2007-10-01", "2015-06-01")
-    _full_score_range: ClassVar[Tuple[int, int]] = (-2147483647, 2147483647)
+    full_date_range: ClassVar[tuple[str, str]] = ("2007-10-01", "2015-06-01")
+    _full_score_range: ClassVar[tuple[int, int]] = (-2147483647, 2147483647)
 
     def __init__(
         self,
@@ -103,10 +105,10 @@ class RedditComments(Dataset):
     ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
-        self._date_range: Optional[Tuple[Optional[str], Optional[str]]] = None
+        self._date_range: Optional[tuple[Optional[str], Optional[str]]] = None
 
     @property
-    def filepaths(self) -> Tuple[str, ...]:
+    def filepaths(self) -> tuple[str, ...]:
         """
         Full paths on disk for all Reddit comments files found under
         :attr:`RedditComments.data_dir` directory, sorted in chronological order.
@@ -128,7 +130,7 @@ class RedditComments(Dataset):
     def download(
         self,
         *,
-        date_range: Tuple[Optional[str], Optional[str]] = (None, None),
+        date_range: tuple[Optional[str], Optional[str]] = (None, None),
         force: bool = False,
     ) -> None:
         """
@@ -256,9 +258,9 @@ class RedditComments(Dataset):
     def texts(
         self,
         *,
-        subreddit: Optional[str | Set[str]] = None,
-        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
-        score_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
+        subreddit: Optional[str | set[str]] = None,
+        date_range: Optional[tuple[Optional[str], Optional[str]]] = None,
+        score_range: Optional[tuple[Optional[int], Optional[int]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[str]:
@@ -303,9 +305,9 @@ class RedditComments(Dataset):
     def records(
         self,
         *,
-        subreddit: Optional[str | Set[str]] = None,
-        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
-        score_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
+        subreddit: Optional[str | set[str]] = None,
+        date_range: Optional[tuple[Optional[str], Optional[str]]] = None,
+        score_range: Optional[tuple[Optional[int], Optional[int]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[types.Record]:
