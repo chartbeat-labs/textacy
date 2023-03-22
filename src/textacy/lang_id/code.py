@@ -1,11 +1,11 @@
 from typing import Optional
 
-import spacy
 from spacy.tokens import Doc
+from spacy.util import DummyTokenizer, registry
 from spacy.vocab import Vocab
 
 
-class CharTokenizer:
+class CharTokenizer(DummyTokenizer):
     def __init__(
         self, vocab: Vocab, max_chars: Optional[int] = None, lower_case: bool = False
     ):
@@ -23,7 +23,7 @@ class CharTokenizer:
         return Doc(self.vocab, words=words, spaces=spaces)
 
 
-@spacy.registry.tokenizers("textacy.char_tokenizer")
+@registry.tokenizers("textacy.char_tokenizer.v1")
 def create_char_tokenizer(max_chars: Optional[int], lower_case: bool):
     def create_tokenizer(nlp):
         return CharTokenizer(nlp.vocab, max_chars=max_chars, lower_case=lower_case)
