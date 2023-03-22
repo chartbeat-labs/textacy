@@ -255,7 +255,7 @@ class Wili2018Dataset:
 
 class UDDataset:
     """
-    Source: https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-3424
+    Source: https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-4923
 
     References:
         Zeman, Daniel; Nivre, Joakim; Abrams, Mitchell; et al., 2020, Universal Dependencies 2.7,
@@ -264,7 +264,7 @@ class UDDataset:
         http://hdl.handle.net/11234/1-3424.
     """
 
-    download_url = "https://lindat.mff.cuni.cz/repository/xmlui/bitstream/handle/11234/1-3424/ud-treebanks-v2.7.tgz"
+    download_url = "https://lindat.mff.cuni.cz/repository/xmlui/bitstream/handle/11234/1-4923/ud-treebanks-v2.11.tgz"
 
     def __init__(self, data_dir: str | pathlib.Path):
         self.data_dir = textacy.utils.to_path(data_dir).resolve()
