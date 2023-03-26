@@ -31,17 +31,15 @@ import xml
 from typing import Any, Iterable, Optional
 from xml.etree import ElementTree
 
-from .. import constants
+from .. import constants, preprocessing, types, utils
 from .. import io as tio
-from .. import preprocessing, types, utils
 from .base import Dataset
-
 
 LOGGER = logging.getLogger(__name__)
 
 NAME = "udhr"
 META = {
-    "site_url": "http://www.ohchr.org/EN/UDHR",
+    "site_url": "https://www.ohchr.org/en/human-rights/universal-declaration/universal-declaration-human-rights/about-universal-declaration-human-rights-translation-project",
     "description": (
         "A collection of translations of the Universal Declaration of Human Rights (UDHR), "
         "a milestone document in the history of human rights that first, formally established "
