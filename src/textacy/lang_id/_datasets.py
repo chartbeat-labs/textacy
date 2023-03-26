@@ -11,6 +11,7 @@ from typing import Dict, Iterable, List, Optional, Set, Tuple
 from cytoolz import itertoolz
 
 import textacy
+import textacy.utils
 from textacy import io as tio
 
 
@@ -88,6 +89,12 @@ class DSLCCDataset:
     to correctly identify.
 
     Source: http://ttg.uni-saarland.de/resources/DSLCC
+
+    References:
+        Liling Tan, Marcos Zampieri, Nikola Ljubešić, Jörg Tiedemann (2014)
+        Merging Comparable Data Sources for the Discrimination of Similar Languages:
+        The DSL Corpus Collection. Proceedings of the 7th Workshop on Building
+        and Using Comparable Corpora (BUCC). pp. 6-10. Reykjavik, Iceland.
     """
 
     def __init__(self, data_dir: str | pathlib.Path):
@@ -192,6 +199,77 @@ class TatoebaDataset:
         return data
 
 
+class Ted2020:
+    """
+    Source: https://opus.nlpl.eu/TED2020.php
+
+    References:
+        Reimers, Nils, and Iryna Gurevych. "Making monolingual sentence embeddings multilingual
+        using knowledge distillation." arXiv preprint arXiv:2004.09813 (2020).
+    """
+
+    download_url_tmpl = "https://object.pouta.csc.fi/OPUS-TED2020/v1/mono/{lang}.txt.gz"
+    langs = """
+    af am ar arq as ast az
+    be bg bi bn bo bs
+    ca ceb cs
+    da de dz
+    el en eo es et eu
+    fa fi fil fr fr_ca
+    ga gl gu
+    ha he hi hr ht hu hup hy
+    id ig inh is it
+    ja
+    ka kk km kn ko ku ky
+    la lb lo lt ltg lv
+    mg mk ml mn mr ms mt my
+    nb ne nl nn
+    oc
+    pa pl ps pt pt_br
+    ro ru
+    sh si sk sl so sq sr srp sv sq szl
+    ta te tg th tk tl tlh tr tt
+    ug uk ur uz
+    vi
+    zh zh_cn zh_tw
+    """.split()
+
+    def __init__(self, data_dir: str | pathlib.Path):
+        self.data_dir = textacy.utils.to_path(data_dir).resolve()
+
+    def download(self, force: bool = False):
+        """
+        Args:
+            force: If True, always download a new copy of the dataset; otherwise,
+                only download dataset if it doesn't already exist on disk.
+        """
+        for lang in self.langs:
+            download_url = self.download_url_tmpl.format(lang=lang)
+            _ = tio.download_file(download_url, dirpath=self.data_dir, force=force)
+
+    def load(self, valid_langs: set[str], min_len: int = 25) -> list[tuple[str, str]]:
+        data: list[tuple[str, str]] = []
+        for lang in self.langs:
+            fpath = self.data_dir / f"{lang}.txt.gz"
+            if not fpath.exists():
+                print(f"can't find file for lang={lang}; skipping ...")
+                continue
+
+            file_lang = fpath.name.removesuffix("".join(fpath.suffixes))
+            if "_" in file_lang:
+                file_lang, _ = file_lang.split("_", maxsplit=1)
+            if file_lang not in valid_langs:
+                continue
+
+            lines = tio.read_text(fpath, lines=True)
+            data.extend(
+                (line.strip(), file_lang) for line in lines if len(line) >= min_len
+            )
+
+        LOGGER.info("loaded Ted2020 dataset: %s rows\n%s ...", len(data), data[:3])
+        return data
+
+
 class Wili2018Dataset:
     """
     Dataset based on paragraphs from Wikipedia in 230+ languages.
@@ -258,10 +336,10 @@ class UDDataset:
     Source: https://lindat.mff.cuni.cz/repository/xmlui/handle/11234/1-4923
 
     References:
-        Zeman, Daniel; Nivre, Joakim; Abrams, Mitchell; et al., 2020, Universal Dependencies 2.7,
+        Zeman, Daniel; et al., 2022, Universal Dependencies 2.11,
         LINDAT/CLARIAH-CZ digital library at the Institute of Formal and Applied Linguistics (ÚFAL),
         Faculty of Mathematics and Physics, Charles University,
-        http://hdl.handle.net/11234/1-3424.
+        http://hdl.handle.net/11234/1-4923.
     """
 
     download_url = "https://lindat.mff.cuni.cz/repository/xmlui/bitstream/handle/11234/1-4923/ud-treebanks-v2.11.tgz"
