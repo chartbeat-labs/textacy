@@ -150,6 +150,54 @@ class DSLCCDataset:
         return data
 
 
+class SETimes:
+    """
+    Source: https://opus.nlpl.eu/SETIMES.php
+
+    References:
+        J. Tiedemann, 2012, Parallel Data, Tools and Interfaces in OPUS.
+        In Proceedings of the 8th International Conference on Language Resources and Evaluation (LREC 2012)
+    """
+
+    download_url_tmpl = "https://object.pouta.csc.fi/OPUS-SETIMES/v2/mono/{lang}.txt.gz"
+    langs = ["bg", "bs", "el", "en", "hr", "mk", "ro", "sq", "sr", "tr"]
+
+    def __init__(self, data_dir: str | pathlib.Path):
+        self.data_dir = textacy.utils.to_path(data_dir).resolve()
+
+    def download(self, force: bool = False):
+        """
+        Args:
+            force: If True, always download a new copy of the dataset; otherwise,
+                only download dataset if it doesn't already exist on disk.
+        """
+        for lang in self.langs:
+            download_url = self.download_url_tmpl.format(lang=lang)
+            _ = tio.download_file(download_url, dirpath=self.data_dir, force=force)
+
+    def load(self, valid_langs: set[str], min_len: int = 25) -> list[tuple[str, str]]:
+        data: list[tuple[str, str]] = []
+        for lang in self.langs:
+            fpath = self.data_dir / f"{lang}.txt.gz"
+            if not fpath.exists():
+                print(f"can't find file for lang={lang}; skipping ...")
+                continue
+
+            file_lang = fpath.name.removesuffix("".join(fpath.suffixes))
+            if "_" in file_lang:
+                file_lang, _ = file_lang.split("_", maxsplit=1)
+            if file_lang not in valid_langs:
+                continue
+
+            lines = tio.read_text(fpath, lines=True)
+            data.extend(
+                (line.strip(), file_lang) for line in lines if len(line) >= min_len
+            )
+
+        LOGGER.info("loaded SETimes dataset: %s rows\n%s ...", len(data), data[:3])
+        return data
+
+
 class TatoebaDataset:
     download_url = "http://downloads.tatoeba.org/exports/sentences.tar.bz2"
 
