@@ -53,14 +53,13 @@ from __future__ import annotations
 
 import logging
 import pathlib
-import urllib
-from typing import List, Tuple
+import urllib.parse
 
-from thinc.api import Model
+import floret
+from floret.floret import _floret
 
-from . import models
-from .. import constants, utils
-
+from .. import utils
+from ..constants import DEFAULT_DATA_DIR
 
 LOGGER = logging.getLogger(__name__)
 
@@ -70,7 +69,6 @@ class LangIdentifier:
     Args:
         version
         data_dir
-        model_base
 
     Attributes:
         model
@@ -79,15 +77,14 @@ class LangIdentifier:
 
     def __init__(
         self,
-        version: float | str,
-        data_dir: str | pathlib.Path = constants.DEFAULT_DATA_DIR.joinpath("lang_identifier"),
-        model_base: Model = models.LangIdentifierModelV2(),
+        version: str = "3.0",
+        data_dir: str | pathlib.Path = DEFAULT_DATA_DIR.joinpath("lang_identifier"),
     ):
         self.data_dir = utils.to_path(data_dir)
-        self.version = str(version)
-        self._model_base = model_base
+        self.version = version
         self._model = None
         self._classes = None
+        self._label_prefix = "__label__"
 
     @property
     def model_id(self) -> str:
@@ -98,30 +95,34 @@ class LangIdentifier:
         return self.data_dir.joinpath(f"{self.model_id}.bin")
 
     @property
-    def model(self) -> Model:
+    def model(self) -> _floret:
         if self._model is None:
-            self._model = self.load_model()
+            self._model = floret.load_model(self.model_fpath)
+            if hasattr(self._model, "label"):
+                self._label_prefix = self._model.label
         return self._model
 
     @property
-    def classes(self):
+    def classes(self) -> list[str]:
         if self._classes is None:
-            self._classes = self.model.layers[-1].attrs["classes"]
+            labels = self.model.labels
+            assert isinstance(labels, list)  # type guard
+            self._classes = sorted(self._to_lang(label) for label in labels)
         return self._classes
 
-    def save_model(self):
-        """Save trained :attr:`LangIdentifier.model` to disk, as bytes."""
-        LOGGER.info("saving LangIdentifier model to %s", self.model_fpath)
-        self.model.to_disk(self.model_fpath)
+    def _to_lang(self, label: str) -> str:
+        return label.removeprefix(self._label_prefix)
 
-    def load_model(self) -> Model:
-        """
-        Load trained model from bytes on disk, using :attr:`LangIdentifier.model_base`
-        as the framework into which the data is fit.
-        """
+    def save_model(self):
+        """Save trained :attr:`LangIdentifier.model` to disk."""
+        LOGGER.info("saving LangIdentifier model to %s", self.model_fpath)
+        self.model.save_model(self.model_fpath)
+
+    def load_model(self) -> _floret:
+        """Load trained model from disk."""
         try:
             LOGGER.debug("loading LangIdentifier model from %s", self.model_fpath)
-            return self._model_base.from_disk(self.model_fpath)
+            return floret.load_model(self.model_fpath)
         except FileNotFoundError:
             LOGGER.exception(
                 "LangIdentifier model not found at %s -- have you downloaded it yet?",
@@ -147,14 +148,12 @@ class LangIdentifier:
             self.model_id + "/" + model_fname,
         )
         tio.utils.download_file(
-            url, filename=model_fname, dirpath=self.data_dir, force=force,
+            url, filename=model_fname, dirpath=self.data_dir, force=force
         )
 
     def identify_lang(
-        self,
-        text: str,
-        with_probs: bool = False,
-    ) -> str | Tuple[str, float]:
+        self, text: str, with_probs: bool = False
+    ) -> str | tuple[str, float]:
         """
         Identify the most probable language identified in ``text``,
         with or without the corresponding probability.
@@ -170,10 +169,11 @@ class LangIdentifier:
         if not self._is_valid_text(text):
             result = ("un", 1.0)
         else:
-            text_ = utils.to_collection(text, str, list)
-            result = models.get_topn_preds_and_probs(
-                self.model.predict(text_), 1, self.classes
-            )[0][0]
+            result_ = self.model.predict(text, k=1)
+            result: tuple[str, float] = (
+                self._to_lang(result_[0][0]),  # type: ignore
+                float(result_[1][0]),
+            )
         return result[0] if with_probs is False else result
 
     def identify_topn_langs(
@@ -181,7 +181,7 @@ class LangIdentifier:
         text: str,
         topn: int = 3,
         with_probs: bool = False,
-    ) -> List[str] | List[Tuple[str, float]]:
+    ) -> list[str] | list[tuple[str, float]]:
         """
         Identify the ``topn`` most probable languages identified in ``text``,
         with or without the corresponding probabilities.
@@ -192,16 +192,17 @@ class LangIdentifier:
             with_probs
 
         Returns:
-            ISO 639-1 standard language code and optionally with its probability
+            ISO 639-1 standard language code, optionally with its probability,
             of the ``topn`` most probable languages.
         """
         if not self._is_valid_text(text):
             results = [("un", 1.0)]
         else:
-            text_ = utils.to_collection(text, str, list)
-            results = models.get_topn_preds_and_probs(
-                self.model.predict(text_), topn, self.classes
-            )[0]
+            results_ = self.model.predict(text, k=topn)
+            results: list[tuple[str, float]] = [
+                (self._to_lang(result[0]), float(result[1]))
+                for result in zip(results_[0], results_[1])
+            ]
         return [lang for lang, _ in results] if with_probs is False else results
 
     def _is_valid_text(self, text: str) -> bool:
@@ -209,9 +210,7 @@ class LangIdentifier:
 
 
 lang_identifier = LangIdentifier(
-    version="2.0",
-    data_dir=constants.DEFAULT_DATA_DIR.joinpath("lang_identifier"),
-    model_base=models.LangIdentifierModelV2(),
+    version="3.0", data_dir=DEFAULT_DATA_DIR.joinpath("lang_identifier")
 )
 # expose this as primary user-facing API
 # TODO: there's gotta be a better way, this whole setup feels clunky
