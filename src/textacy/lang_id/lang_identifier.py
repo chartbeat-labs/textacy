@@ -97,7 +97,7 @@ class LangIdentifier:
     @property
     def model(self) -> _floret:
         if self._model is None:
-            self._model = floret.load_model(self.model_fpath)
+            self._model = floret.load_model(str(self.model_fpath))
             if hasattr(self._model, "label"):
                 self._label_prefix = self._model.label
         return self._model
@@ -116,13 +116,13 @@ class LangIdentifier:
     def save_model(self):
         """Save trained :attr:`LangIdentifier.model` to disk."""
         LOGGER.info("saving LangIdentifier model to %s", self.model_fpath)
-        self.model.save_model(self.model_fpath)
+        self.model.save_model(str(self.model_fpath))
 
     def load_model(self) -> _floret:
         """Load trained model from disk."""
         try:
             LOGGER.debug("loading LangIdentifier model from %s", self.model_fpath)
-            return floret.load_model(self.model_fpath)
+            return floret.load_model(str(self.model_fpath))
         except FileNotFoundError:
             LOGGER.exception(
                 "LangIdentifier model not found at %s -- have you downloaded it yet?",
