@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import operator
-from typing import Any, Collection, Dict, Literal, Optional, Union
+from typing import Any, Collection, Literal, Optional, Union
 
 import cytoolz
 
 from .. import errors, types
 from . import basics
+
 
 WeightingType = Literal["count", "freq", "binary"]
 SpanGroupByType = Literal["lemma", "lemma_", "lower", "lower_", "orth", "orth_"]
@@ -19,7 +20,7 @@ def to_bag_of_words(
     by: TokenGroupByType = "lemma_",
     weighting: WeightingType = "count",
     **kwargs,
-) -> Dict[int, int | float] | Dict[str, int | float]:
+) -> dict[int, int | float] | dict[str, int | float]:
     """
     Transform a ``Doc`` or ``Span`` into a bag-of-words: the set of unique words therein
     mapped to their absolute, relative, or binary frequencies of occurrence.
@@ -72,7 +73,7 @@ def to_bag_of_terms(
     ents: Optional[bool | types.DocLikeToSpans] = None,
     ncs: Optional[bool | types.DocLikeToSpans] = None,
     dedupe: bool = True,
-) -> Dict[str, int] | Dict[str, float]:
+) -> dict[str, int] | dict[str, float]:
     """
     Transform a ``Doc`` or ``Span`` into a bag-of-terms: the set of unique terms therein
     mapped to their absolute, relative, or binary frequencies of occurrence,
@@ -134,8 +135,8 @@ def to_bag_of_terms(
 
 
 def _reweight_bag(
-    weighting: WeightingType, bag: Dict[Any, int], doclike: types.DocLike
-) -> Dict[Any, int] | Dict[Any, float]:
+    weighting: WeightingType, bag: dict[Any, int], doclike: types.DocLike
+) -> dict[Any, int] | dict[Any, float]:
     if weighting == "count":
         return bag
     elif weighting == "freq":
@@ -145,5 +146,7 @@ def _reweight_bag(
         return {term: 1 for term in bag.keys()}
     else:
         raise ValueError(
-            errors.value_invalid_msg("weighting", weighting, {"count", "freq", "binary"})
+            errors.value_invalid_msg(
+                "weighting", weighting, {"count", "freq", "binary"}
+            )
         )

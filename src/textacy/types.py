@@ -2,16 +2,7 @@
 :mod:`textacy.types`: Definitions for common object types used throughout the package.
 """
 from pathlib import Path
-from typing import (
-    Any,
-    Callable,
-    Iterable,
-    List,
-    NamedTuple,
-    Protocol,
-    TypeVar,
-    Union,
-)
+from typing import Any, Callable, Iterable, NamedTuple, Protocol, TypeVar, Union
 
 from spacy.language import Language
 from spacy.tokens import Doc, Span, Token
@@ -55,11 +46,11 @@ class AugTok(NamedTuple):
     ws: str
     pos: str
     is_word: bool
-    syns: List[str]
+    syns: list[str]
 
 
 class AugTransform(Protocol):
-    def __call__(self, aug_toks: List[AugTok], **kwargs: Any) -> List[AugTok]:
+    def __call__(self, aug_toks: list[AugTok], **kwargs: Any) -> list[AugTok]:
         ...
 
 

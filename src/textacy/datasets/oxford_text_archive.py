@@ -27,11 +27,13 @@ import itertools
 import logging
 import os
 import re
-from typing import Any, ClassVar, Dict, Iterable, Optional, Set, Tuple
+from typing import Any, ClassVar, Iterable, Optional
 
-from .. import constants, types, utils
+from .. import constants
 from .. import io as tio
+from .. import types, utils
 from .base import Dataset
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -91,11 +93,11 @@ class OxfordTextArchive(Dataset):
     Attributes:
         full_date_range: First and last dates for which works are available,
             each as an ISO-formatted string (YYYY-MM-DD).
-        authors (Set[str]): Full names of all distinct authors included in this
+        authors (set[str]): Full names of all distinct authors included in this
             dataset, e.g. "Shakespeare, William".
     """
 
-    full_date_range: ClassVar[Tuple[str, str]] = ("0018-01-01", "1990-01-01")
+    full_date_range: ClassVar[tuple[str, str]] = ("0018-01-01", "1990-01-01")
 
     def __init__(
         self,
@@ -105,7 +107,7 @@ class OxfordTextArchive(Dataset):
         self.data_dir = utils.to_path(data_dir).resolve()
         self._text_dirpath = self.data_dir.joinpath("master", "text")
         self._metadata_filepath = self.data_dir.joinpath("master", "metadata.tsv")
-        self._metadata: Optional[Dict[str, Dict[str, Any]]] = None
+        self._metadata: Optional[dict[str, dict[str, Any]]] = None
 
     def download(self, *, force: bool = False) -> None:
         """
@@ -123,7 +125,7 @@ class OxfordTextArchive(Dataset):
             tio.unpack_archive(filepath, extract_dir=None)
 
     @property
-    def metadata(self) -> Optional[Dict[str, Dict[str, Any]]]:
+    def metadata(self) -> Optional[dict[str, dict[str, Any]]]:
         if not self._metadata:
             try:
                 self._metadata = self._load_and_parse_metadata()
@@ -131,7 +133,7 @@ class OxfordTextArchive(Dataset):
                 LOGGER.error(e)
         return self._metadata
 
-    def _load_and_parse_metadata(self) -> Dict[str, Dict[str, Any]]:
+    def _load_and_parse_metadata(self) -> dict[str, dict[str, Any]]:
         """
         Read in ``metadata.tsv`` file from :attr:`OxfordTextArchive._metadata_filepath``
         zip archive; convert into a dictionary keyed by record ID; clean up some
@@ -239,8 +241,8 @@ class OxfordTextArchive(Dataset):
     def texts(
         self,
         *,
-        author: Optional[str | Set[str]] = None,
-        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        author: Optional[str | set[str]] = None,
+        date_range: Optional[tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[str]:
@@ -249,7 +251,7 @@ class OxfordTextArchive(Dataset):
         of metadata and/or text length, and yield texts only.
 
         Args:
-            author: Filter texts by the authors' name. For multiple values (Set[str]),
+            author: Filter texts by the authors' name. For multiple values (set[str]),
                 ANY rather than ALL of the authors must be found among a given works's authors.
             date_range: Filter texts by the date on which it was published;
                 both start and end date must be specified, but a null value for either
@@ -270,8 +272,8 @@ class OxfordTextArchive(Dataset):
     def records(
         self,
         *,
-        author: Optional[str | Set[str]] = None,
-        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        author: Optional[str | set[str]] = None,
+        date_range: Optional[tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[types.Record]:
@@ -280,7 +282,7 @@ class OxfordTextArchive(Dataset):
         of metadata and/or text length, and yield text + metadata pairs.
 
         Args:
-            author: Filter texts by the authors' name. For multiple values (Set[str]),
+            author: Filter texts by the authors' name. For multiple values (set[str]),
                 ANY rather than ALL of the authors must be found among a given works's authors.
             date_range: Filter texts by the date on which it was published;
                 both start and end date must be specified, but a null value for either

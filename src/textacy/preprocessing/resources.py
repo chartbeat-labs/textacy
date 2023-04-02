@@ -3,7 +3,7 @@ import html.parser
 import re
 import sys
 import unicodedata
-from typing import Any, Dict, Pattern
+from typing import Any, Pattern
 
 
 class HTMLTextExtractor(html.parser.HTMLParser):
@@ -45,6 +45,7 @@ RE_BULLET_POINTS = re.compile(
 )
 
 # source: https://gist.github.com/dperini/729294
+# fmt: off
 RE_URL: Pattern = re.compile(
     r"(?:^|(?<![\w/.]))"
     # protocol identifier
@@ -68,9 +69,9 @@ RE_URL: Pattern = re.compile(
     r"(?:\.(?:[1-9]\d?|1\d\d|2[0-4]\d|25[0-4]))"
     r"|"
     # host name
-    r"(?:(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9]+)"
+    r"(?:(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9])"
     # domain name
-    r"(?:\.(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9]+)*"
+    r"(?:\.(?:[a-z\u00a1-\uffff0-9]-?)*[a-z\u00a1-\uffff0-9])*"
     # TLD identifier
     r"(?:\.(?:[a-z\u00a1-\uffff]{2,}))"
     r")"
@@ -94,6 +95,7 @@ RE_SHORT_URL: Pattern = re.compile(
     r"(?:$|(?![\w?!+&/]))",
     flags=re.IGNORECASE,
 )
+# fmt: on
 
 RE_EMAIL: Pattern = re.compile(
     r"(?:mailto:)?"
@@ -131,7 +133,7 @@ RE_CURRENCY_SYMBOL: Pattern = re.compile(
 )
 
 RE_EMOJI: Pattern
-if sys.maxunicode < 0x10ffff:
+if sys.maxunicode < 0x10FFFF:
     RE_EMOJI = re.compile(
         r"[\u2600-\u26FF\u2700-\u27BF]",
         flags=re.IGNORECASE,
@@ -151,7 +153,7 @@ RE_HYPHENATED_WORD: Pattern = re.compile(
 # build mapping of unicode punctuation symbol ordinals to their replacements
 # and lazy-load the big one, since it's relatively expensive to compute
 
-QUOTE_TRANSLATION_TABLE: Dict[int, int] = {
+QUOTE_TRANSLATION_TABLE: dict[int, int] = {
     ord(x): ord(y)
     for x, y in [
         ("ʼ", "'"),
@@ -160,7 +162,7 @@ QUOTE_TRANSLATION_TABLE: Dict[int, int] = {
         ("´", "'"),
         ("`", "'"),
         ("“", '"'),
-        ("”", '"')
+        ("”", '"'),
     ]
 }
 
@@ -169,10 +171,11 @@ QUOTE_TRANSLATION_TABLE: Dict[int, int] = {
 def _get_punct_translation_table():
     return dict.fromkeys(
         (
-            i for i in range(sys.maxunicode)
+            i
+            for i in range(sys.maxunicode)
             if unicodedata.category(chr(i)).startswith("P")
         ),
-        " "
+        " ",
     )
 
 

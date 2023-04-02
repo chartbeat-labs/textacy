@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 import logging
-from typing import Dict, Literal, Optional, Tuple
+from typing import Literal, Optional
 
 from spacy.tokens import Doc, Token
 
@@ -96,16 +96,16 @@ class TextStats:
         )
         self.doc = doc
         self.lang: str = doc.lang_
-        self.words: Tuple[Token, ...] = tuple(
+        self.words: tuple[Token, ...] = tuple(
             extract.words(doc, filter_punct=True, filter_stops=False, filter_nums=False)
         )
         self._n_sents: Optional[int] = None
         self._n_words: Optional[int] = None
         self._n_unique_words: Optional[int] = None
         self._n_long_words: Optional[int] = None
-        self._n_chars_per_word: Optional[Tuple[int, ...]] = None
+        self._n_chars_per_word: Optional[tuple[int, ...]] = None
         self._n_chars: Optional[int] = None
-        self._n_syllables_per_word: Optional[Tuple[int, ...]] = None
+        self._n_syllables_per_word: Optional[tuple[int, ...]] = None
         self._n_syllables: Optional[int] = None
         self._n_monosyllable_words: Optional[int] = None
         self._n_polysyllable_words: Optional[int] = None
@@ -161,7 +161,7 @@ class TextStats:
         return self._n_long_words
 
     @property
-    def n_chars_per_word(self) -> Tuple[int, ...]:
+    def n_chars_per_word(self) -> tuple[int, ...]:
         """
         Number of characters for each word in document.
 
@@ -185,7 +185,7 @@ class TextStats:
         return self._n_chars
 
     @property
-    def n_syllables_per_word(self) -> Tuple[int, ...]:
+    def n_syllables_per_word(self) -> tuple[int, ...]:
         """
         Number of syllables for each word in document.
 
@@ -251,7 +251,9 @@ class TextStats:
             self._entropy = basics.entropy(self.words)
         return self._entropy
 
-    def counts(self, name: CountsNameType) -> Dict[str, int] | Dict[str, Dict[str, int]]:
+    def counts(
+        self, name: CountsNameType
+    ) -> dict[str, int] | dict[str, dict[str, int]]:
         """
         Count the number of times each value for the feature specified by ``name``
         appear as token annotations.

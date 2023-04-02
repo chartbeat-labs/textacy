@@ -3,17 +3,7 @@ from __future__ import annotations
 import collections
 import itertools
 from operator import itemgetter
-from typing import (
-    Callable,
-    Collection,
-    Counter,
-    Dict,
-    Iterable,
-    List,
-    Optional,
-    Set,
-    Tuple,
-)
+from typing import Callable, Collection, Counter, Iterable, Optional
 
 import networkx as nx
 from cytoolz import itertoolz
@@ -29,7 +19,7 @@ def scake(
     normalize: Optional[str | Callable[[Token], str]] = "lemma",
     include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
     topn: int | float = 10,
-) -> List[Tuple[str, float]]:
+) -> list[tuple[str, float]]:
     """
     Extract key terms from a document using the sCAKE algorithm.
 
@@ -57,7 +47,7 @@ def scake(
         https://arxiv.org/abs/1811.10831v1
     """
     # validate / transform args
-    include_pos = utils.to_collection(include_pos, str, set)
+    include_pos: Optional[set[str]] = utils.to_set(include_pos) if include_pos else None
     if isinstance(topn, float):
         if not 0.0 < topn <= 1.0:
             raise ValueError(
@@ -70,7 +60,7 @@ def scake(
         return []
 
     # build up a graph of good words, edges weighting by adjacent sentence co-occurrence
-    cooc_mat: Counter[Tuple[str, str]] = collections.Counter()
+    cooc_mat: Counter[tuple[str, str]] = collections.Counter()
     # handle edge case where doc only has 1 sentence
     n_sents = itertoolz.count(doc.sents)
     for window_sents in itertoolz.sliding_window(min(2, n_sents), doc.sents):
@@ -121,10 +111,10 @@ def scake(
 def _compute_word_scores(
     doc: Doc,
     graph: nx.Graph,
-    cooc_mat: Dict[Tuple[str, str], int],
+    cooc_mat: dict[tuple[str, str], int],
     normalize: Optional[str | Callable[[Token], str]],
-) -> Dict[str, float]:
-    word_strs: List[str] = list(graph.nodes())
+) -> dict[str, float]:
+    word_strs: list[str] = list(graph.nodes())
     # "level of hierarchy" component
     max_truss_levels = _compute_node_truss_levels(graph)
     max_truss_level = max(max_truss_levels.values())
@@ -159,8 +149,8 @@ def _compute_word_scores(
 def _get_candidates(
     doc: Doc,
     normalize: Optional[str | Callable[[Token], str]],
-    include_pos: Set[str],
-) -> Set[Tuple[str, ...]]:
+    include_pos: Optional[set[str]],
+) -> set[tuple[str, ...]]:
     """
     Get a set of candidate terms to be scored by joining the longest
     subsequences of valid words -- non-stopword and non-punct, filtered to
@@ -180,7 +170,7 @@ def _get_candidates(
     }
 
 
-def _compute_node_truss_levels(graph: nx.Graph) -> Dict[str, int]:
+def _compute_node_truss_levels(graph: nx.Graph) -> dict[str, int]:
     """
     Reference:
         Burkhardt, Paul & Faber, Vance & G. Harris, David. (2018).

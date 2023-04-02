@@ -1,3 +1,4 @@
+# mypy: ignore-errors
 """
 ConceptNet
 ----------
@@ -20,12 +21,14 @@ from __future__ import annotations
 
 import collections
 import logging
-from typing import ClassVar, Dict, List, Optional, Tuple
+from typing import ClassVar, Optional
 
 from spacy.tokens import Span, Token
 from tqdm import tqdm
 
-from .. import constants, io as tio, types, utils
+from .. import constants
+from .. import io as tio
+from .. import types, utils
 from .base import Resource
 
 
@@ -98,12 +101,12 @@ class ConceptNet(Resource):
             versions, you'll probably want "5.7.0" (the default value).
     """
 
-    _version_years: ClassVar[Dict[str, int]] = {
+    _version_years: ClassVar[dict[str, int]] = {
         "5.7.0": 2019,
         "5.6.0": 2018,
         "5.5.5": 2017,
     }
-    _pos_map: ClassVar[Dict[str, str]] = {
+    _pos_map: ClassVar[dict[str, str]] = {
         "NOUN": "n",
         "VERB": "v",
         "ADJ": "a",
@@ -157,7 +160,7 @@ class ConceptNet(Resource):
 
     def _get_relation_data(
         self, relation: str, is_symmetric: bool = False
-    ) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+    ) -> dict[str, dict[str, dict[str, list[str]]]]:
         if not self.filepath:
             raise OSError(
                 "resource file {} not found;\n"
@@ -209,7 +212,7 @@ class ConceptNet(Resource):
         term: str | types.SpanLike,
         lang: Optional[str] = None,
         sense: Optional[str] = None,
-    ) -> List[str]:
+    ) -> list[str]:
         if lang is not None and lang not in rel_data:
             raise ValueError(
                 "lang='{}' is invalid; valid langs are {}".format(
@@ -250,7 +253,9 @@ class ConceptNet(Resource):
                     return []
         else:
             raise TypeError(
-                "`term` must be one of {}, not {}".format({str, Span, Token}, type(term))
+                "`term` must be one of {}, not {}".format(
+                    {str, Span, Token}, type(term)
+                )
             )
         # TODO: implement an out-of-vocabulary strategy? for example,
         # https://github.com/commonsense/conceptnet-numberbatch#out-of-vocabulary-strategy
@@ -262,7 +267,7 @@ class ConceptNet(Resource):
         return []
 
     @property
-    def antonyms(self) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+    def antonyms(self) -> dict[str, dict[str, dict[str, list[str]]]]:
         """
         Mapping of language code to term to sense to set of term's antonyms --
         opposites of the term in some relevant way, like being at opposite ends
@@ -281,7 +286,7 @@ class ConceptNet(Resource):
         *,
         lang: Optional[str] = None,
         sense: Optional[str] = None,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Args:
             term
@@ -293,7 +298,7 @@ class ConceptNet(Resource):
         return self._get_relation_values(self.antonyms, term, lang=lang, sense=sense)
 
     @property
-    def hyponyms(self) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+    def hyponyms(self) -> dict[str, dict[str, dict[str, list[str]]]]:
         """
         Mapping of language code to term to sense to set of term's hyponyms --
         subtypes or specific instances of the term --
@@ -311,7 +316,7 @@ class ConceptNet(Resource):
         *,
         lang: Optional[str] = None,
         sense: Optional[str] = None,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Args:
             term
@@ -323,7 +328,7 @@ class ConceptNet(Resource):
         return self._get_relation_values(self.hyponyms, term, lang=lang, sense=sense)
 
     @property
-    def meronyms(self) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+    def meronyms(self) -> dict[str, dict[str, dict[str, list[str]]]]:
         """
         Mapping of language code to term to sense to set of term's meronyms --
         parts of the term -- such as gearshift => car.
@@ -340,7 +345,7 @@ class ConceptNet(Resource):
         *,
         lang: Optional[str] = None,
         sense: Optional[str] = None,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Args:
             term
@@ -350,12 +355,12 @@ class ConceptNet(Resource):
                 "a" or "ADJ", "r" or "ADV".
 
         Returns:
-            List[str]
+            list[str]
         """
         return self._get_relation_values(self.meronyms, term, lang=lang, sense=sense)
 
     @property
-    def synonyms(self) -> Dict[str, Dict[str, Dict[str, List[str]]]]:
+    def synonyms(self) -> dict[str, dict[str, dict[str, list[str]]]]:
         """
         Mapping of language code to term to sense to set of term's synonyms --
         sufficiently similar concepts that they may be used interchangeably --
@@ -373,7 +378,7 @@ class ConceptNet(Resource):
         *,
         lang: Optional[str] = None,
         sense: Optional[str] = None,
-    ) -> List[str]:
+    ) -> list[str]:
         """
         Args:
             term
@@ -385,7 +390,7 @@ class ConceptNet(Resource):
         return self._get_relation_values(self.synonyms, term, lang=lang, sense=sense)
 
 
-def _split_uri(uri: str) -> List[str]:
+def _split_uri(uri: str) -> list[str]:
     """Get slash-delimited parts of a ConceptNet URI."""
     uri = uri.lstrip("/")
     if not uri:
@@ -393,7 +398,7 @@ def _split_uri(uri: str) -> List[str]:
     return uri.split("/")
 
 
-def _parse_concept_uri(uri: str) -> Tuple[str, str, str]:
+def _parse_concept_uri(uri: str) -> tuple[str, str, str]:
     """Extract language, term, and sense from a ConceptNet "concept" URI."""
     if not uri.startswith("/c/"):
         raise ValueError(f"invalid concept uri: {uri}")

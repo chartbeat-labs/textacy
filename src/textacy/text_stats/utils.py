@@ -4,13 +4,13 @@ called under the hood of many stats functions -- and not typically accessed by u
 """
 import functools
 import logging
-from typing import Iterable, Tuple
+from typing import Iterable
 
 import pyphen
 from cachetools import cached
 from cachetools.keys import hashkey
-from toolz import itertoolz
 from spacy.tokens import Token
+from toolz import itertoolz
 
 from .. import cache, types
 
@@ -27,7 +27,7 @@ def get_words(doc_or_tokens: types.DocOrTokens) -> Iterable[Token]:
     yield from words
 
 
-def compute_n_words_and_types(words: Iterable[Token]) -> Tuple[int, int]:
+def compute_n_words_and_types(words: Iterable[Token]) -> tuple[int, int]:
     """
     Compute the number of words and the number of unique words (aka types).
 

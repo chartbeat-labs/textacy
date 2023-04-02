@@ -1,4 +1,4 @@
-.PHONY: clean-build clean-py clean-test clean test lint check-types
+.PHONY: clean-build clean-py clean-test clean check-tests check-lint check-types check build download
 
 clean-build:
 	rm -rf dist build .egg .eggs **/*.egg-info
@@ -13,16 +13,25 @@ clean-test:
 
 clean: clean-build clean-py clean-test
 
+check-tests: clean-test
+	python -m pytest tests --verbose --cov=textacy --cov-report=term-missing
+
+check-lint:
+	python -m black --diff src
+	python -m isort --diff src
+	python -m ruff check src
+
+check-types:
+	python -m mypy src
+
+check: check-tests check-lint check-types
+
 build: clean-build
 	python -m build --sdist --wheel
 
-test: clean-test
-	python -m pytest tests -v --cov=textacy --cov-report=term-missing
-
-lint:
-	python -m flake8 src
-
-mypy:
-	python -m mypy src
-
-check: test lint mypy
+download:
+	python -m spacy download en_core_web_sm
+	python -m spacy download es_core_news_sm
+	python -m spacy validate
+	python -m textacy download capitol_words
+	python -m textacy download lang_identifier --version 3.0

@@ -12,11 +12,9 @@ from typing import Optional
 
 import sklearn.feature_extraction
 import sklearn.metrics
-from jellyfish import (
-    hamming_distance as _hamming,
-    levenshtein_distance as _levenshtein,
-    jaro_similarity as _jaro_similarity,
-)
+from jellyfish import hamming_distance as _hamming
+from jellyfish import jaro_similarity as _jaro_similarity
+from jellyfish import levenshtein_distance as _levenshtein
 
 from .. import constants
 

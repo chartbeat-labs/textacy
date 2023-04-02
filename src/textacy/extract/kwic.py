@@ -8,7 +8,7 @@ a text document using regular expressions.
 from __future__ import annotations
 
 import re
-from typing import Iterable, Pattern, Tuple
+from typing import Iterable, Pattern
 
 from spacy.tokens import Doc
 
@@ -20,7 +20,7 @@ def keyword_in_context(
     ignore_case: bool = True,
     window_width: int = 50,
     pad_context: bool = False,
-) -> Iterable[Tuple[str, str, str]]:
+) -> Iterable[tuple[str, str, str]]:
     """
     Search for ``keyword`` matches in ``doc`` via regular expression and yield matches
     along with ``window_width`` characters of context before and after occurrence.

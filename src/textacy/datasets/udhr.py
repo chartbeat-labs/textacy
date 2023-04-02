@@ -28,7 +28,8 @@ import io
 import itertools
 import logging
 import xml
-from typing import Any, Dict, Iterable, List, Optional, Set
+from typing import Any, Iterable, Optional
+from xml.etree import ElementTree
 
 from .. import constants, preprocessing, types, utils
 from .. import io as tio
@@ -38,7 +39,7 @@ LOGGER = logging.getLogger(__name__)
 
 NAME = "udhr"
 META = {
-    "site_url": "http://www.ohchr.org/EN/UDHR",
+    "site_url": "https://www.ohchr.org/en/human-rights/universal-declaration/universal-declaration-human-rights/about-universal-declaration-human-rights-translation-project",
     "description": (
         "A collection of translations of the Universal Declaration of Human Rights (UDHR), "
         "a milestone document in the history of human rights that first, formally established "
@@ -85,7 +86,7 @@ class UDHR(Dataset):
             under which the data is stored, i.e. ``/path/to/data_dir/udhr``.
 
     Attributes:
-        langs (Set[str]): All distinct language codes with texts in this dataset,
+        langs (set[str]): All distinct language codes with texts in this dataset,
             e.g. "en" for English.
     """
 
@@ -97,8 +98,8 @@ class UDHR(Dataset):
         self.data_dir = utils.to_path(data_dir).resolve()
         self._texts_dirpath = self.data_dir.joinpath("udhr_txt")
         self._index_filepath = self._texts_dirpath.joinpath("index.xml")
-        self._index: Optional[List[Dict[str, Any]]] = None
-        self.langs: Optional[Set[str]] = None
+        self._index: Optional[list[dict[str, Any]]] = None
+        self.langs: Optional[set[str]] = None
 
     def download(self, *, force: bool = False) -> None:
         """
@@ -130,7 +131,7 @@ class UDHR(Dataset):
             )
 
     @property
-    def index(self) -> Optional[List[Dict[str, Any]]]:
+    def index(self) -> Optional[list[dict[str, Any]]]:
         if not self._index:
             try:
                 self._index = self._load_and_parse_index()
@@ -138,14 +139,14 @@ class UDHR(Dataset):
                 LOGGER.error(e)
         return self._index
 
-    def _load_and_parse_index(self) -> List[Dict[str, Any]]:
+    def _load_and_parse_index(self) -> list[dict[str, Any]]:
         """
         Read in index xml file from :attr:`UDHR._index_filepath`; skip elements
         without valid ISO-639-1 language code or sufficient translation quality,
         then convert into a list of dicts with key metadata, including filenames.
         """
-        index = []
-        tree = xml.etree.ElementTree.parse(self._index_filepath)
+        index: list[dict] = []
+        tree = ElementTree.parse(self._index_filepath)
         root = tree.getroot()
         for ele in root.iterfind("udhr"):
             iso_lang_code = ele.get("bcp47", "").split("-", 1)[0]
@@ -177,6 +178,7 @@ class UDHR(Dataset):
 
     def __iter__(self):
         self._check_data()
+        assert self.index is not None  # type guard
         for item in self.index:
             filepath = self._texts_dirpath.joinpath(item["filename"])
             record = item.copy()
@@ -188,6 +190,7 @@ class UDHR(Dataset):
         # so we might as well avoid loading texts in unwanted languages
         if lang:
             self._check_data()
+            assert self.index is not None  # type guard
             lang = utils.validate_set_members(lang, str, valid_vals=self.langs)
             for item in self.index:
                 if item["lang"] in lang:
@@ -202,7 +205,7 @@ class UDHR(Dataset):
     def texts(
         self,
         *,
-        lang: Optional[str | Set[str]] = None,
+        lang: Optional[str | set[str]] = None,
         limit: Optional[int] = None,
     ) -> Iterable[str]:
         """
@@ -226,7 +229,7 @@ class UDHR(Dataset):
     def records(
         self,
         *,
-        lang: Optional[str | Set[str]] = None,
+        lang: Optional[str | set[str]] = None,
         limit: Optional[int] = None,
     ) -> Iterable[types.Record]:
         """

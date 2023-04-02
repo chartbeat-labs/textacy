@@ -52,11 +52,13 @@ from __future__ import annotations
 import itertools
 import logging
 import urllib.parse
-from typing import ClassVar, Dict, Iterable, Optional, Set, Tuple
+from typing import ClassVar, Dict, Iterable, Optional
 
-from .. import constants, types, utils
+from .. import constants
 from .. import io as tio
+from .. import types, utils
 from .base import Dataset
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -128,8 +130,8 @@ class SupremeCourt(Dataset):
             from id code to description.
     """
 
-    full_date_range: ClassVar[Tuple[str, str]] = ("1946-11-18", "2016-06-27")
-    decision_directions: ClassVar[Set[str]] = {
+    full_date_range: ClassVar[tuple[str, str]] = ("1946-11-18", "2016-06-27")
+    decision_directions: ClassVar[set[str]] = {
         "conservative",
         "liberal",
         "unspecifiable",
@@ -650,10 +652,10 @@ class SupremeCourt(Dataset):
     def texts(
         self,
         *,
-        opinion_author: Optional[int | Set[int]] = None,
-        decision_direction: Optional[str | Set[str]] = None,
-        issue_area: Optional[int | Set[int]] = None,
-        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        opinion_author: Optional[int | set[int]] = None,
+        decision_direction: Optional[str | set[str]] = None,
+        issue_area: Optional[int | set[int]] = None,
+        date_range: Optional[tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[str]:
@@ -693,10 +695,10 @@ class SupremeCourt(Dataset):
     def records(
         self,
         *,
-        opinion_author: Optional[int | Set[int]] = None,
-        decision_direction: Optional[str | Set[str]] = None,
-        issue_area: Optional[int | Set[int]] = None,
-        date_range: Optional[Tuple[Optional[str], Optional[str]]] = None,
+        opinion_author: Optional[int | set[int]] = None,
+        decision_direction: Optional[str | set[str]] = None,
+        issue_area: Optional[int | set[int]] = None,
+        date_range: Optional[tuple[Optional[str], Optional[str]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[types.Record]:

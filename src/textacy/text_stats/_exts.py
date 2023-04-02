@@ -1,12 +1,12 @@
-from typing import Dict
-
-from . import basics, counts, diversity, readability
+# mypy: ignore-errors
+# TODO: figure out typing on these DocExtFuncs that satisfies mypy
 from .. import types
 from ..spacier.extensions import doc_extensions_registry
+from . import basics, counts, diversity, readability
 
 
 @doc_extensions_registry.register("text_stats.basics")
-def _get_doc_extensions_text_stats_basics() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_text_stats_basics() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
         "n_sents": {"getter": basics.n_sents},
         "n_words": {"getter": basics.n_words},
@@ -23,7 +23,7 @@ def _get_doc_extensions_text_stats_basics() -> Dict[str, Dict[str, types.DocExtF
 
 
 @doc_extensions_registry.register("text_stats.counts")
-def _get_doc_extensions_text_stats_counts() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_text_stats_counts() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
         "morph_counts": {"getter": counts.morph},
         "tag_counts": {"getter": counts.tag},
@@ -33,7 +33,9 @@ def _get_doc_extensions_text_stats_counts() -> Dict[str, Dict[str, types.DocExtF
 
 
 @doc_extensions_registry.register("text_stats.diversity")
-def _get_doc_extensions_text_stats_diversity() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_text_stats_diversity() -> (
+    dict[str, dict[str, types.DocExtFunc]]
+):
     return {
         "ttr": {"method": diversity.ttr},
         "log_ttr": {"method": diversity.log_ttr},
@@ -44,9 +46,9 @@ def _get_doc_extensions_text_stats_diversity() -> Dict[str, Dict[str, types.DocE
 
 
 @doc_extensions_registry.register("text_stats.readability")
-def _get_doc_extensions_text_stats_readability() -> Dict[
-    str, Dict[str, types.DocExtFunc]
-]:
+def _get_doc_extensions_text_stats_readability() -> (
+    dict[str, dict[str, types.DocExtFunc]]
+):
     return {
         "automated_readability_index": {
             "method": readability.automated_readability_index
@@ -55,7 +57,9 @@ def _get_doc_extensions_text_stats_readability() -> Dict[
             "method": readability.automatic_arabic_readability_index
         },
         "coleman_liau_index": {"method": readability.coleman_liau_index},
-        "flesch_kincaid_grade_level": {"method": readability.flesch_kincaid_grade_level},
+        "flesch_kincaid_grade_level": {
+            "method": readability.flesch_kincaid_grade_level
+        },
         "flesch_reading_ease": {"method": readability.flesch_reading_ease},
         "gulpease_index": {"method": readability.gulpease_index},
         "gunning_fog_index": {"method": readability.gunning_fog_index},
@@ -68,7 +72,7 @@ def _get_doc_extensions_text_stats_readability() -> Dict[
 
 
 @doc_extensions_registry.register("text_stats")
-def _get_doc_extensions_text_stats() -> Dict[str, Dict[str, types.DocExtFunc]]:
+def _get_doc_extensions_text_stats() -> dict[str, dict[str, types.DocExtFunc]]:
     return {
         **_get_doc_extensions_text_stats_basics(),
         **_get_doc_extensions_text_stats_counts(),

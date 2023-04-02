@@ -28,11 +28,13 @@ import itertools
 import logging
 import os
 import re
-from typing import Any, ClassVar, Dict, Iterable, Optional, Tuple
+from typing import Any, ClassVar, Iterable, Optional
 
-from .. import constants, types, utils
+from .. import constants
 from .. import io as tio
+from .. import types, utils
 from .base import Dataset
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -94,7 +96,7 @@ class IMDB(Dataset):
         full_rating_range: Lowest and highest ratings for which movie reviews are available.
     """
 
-    full_rating_range: ClassVar[Tuple[int, int]] = (1, 10)
+    full_rating_range: ClassVar[tuple[int, int]] = (1, 10)
 
     def __init__(
         self,
@@ -102,13 +104,13 @@ class IMDB(Dataset):
     ):
         super().__init__(NAME, meta=META)
         self.data_dir = utils.to_path(data_dir).resolve()
-        self._movie_ids = {"train": {}, "test": {}}
-        self._subset_labels = {
+        self._movie_ids: dict[str, dict] = {"train": {}, "test": {}}
+        self._subset_labels: dict[str, tuple[str, ...]] = {
             "train": ("pos", "neg", "unsup"),
             "test": ("pos", "neg"),
         }
-        self._subset = None
-        self._label = None
+        self._subset: Optional[tuple[str, ...]] = None
+        self._label: Optional[tuple[str, ...]] = None
 
     def download(self, *, force: bool = False) -> None:
         """
@@ -161,7 +163,7 @@ class IMDB(Dataset):
             for filepath in tio.get_filepaths(dirpath, match_regex=r"^\d+_\d+\.txt$"):
                 yield self._load_record(filepath)
 
-    def _load_record(self, filepath: str) -> Dict[str, Any]:
+    def _load_record(self, filepath: str) -> dict[str, Any]:
         dirpath, filename = os.path.split(filepath)
         dirpath, label = os.path.split(dirpath)
         _, subset = os.path.split(dirpath)
@@ -219,7 +221,7 @@ class IMDB(Dataset):
         *,
         subset: Optional[str] = None,
         label: Optional[str] = None,
-        rating_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
+        rating_range: Optional[tuple[Optional[int], Optional[int]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[str]:
@@ -246,8 +248,8 @@ class IMDB(Dataset):
         Raises:
             ValueError: If any filtering options are invalid.
         """
-        self._subset = utils.to_collection(subset, (str, bytes), tuple)
-        self._label = utils.to_collection(label, (str, bytes), tuple)
+        self._subset = utils.to_tuple(subset) if subset is not None else None
+        self._label = utils.to_tuple(label) if label is not None else None
         try:
             filters = self._get_filters(rating_range, min_len)
             for record in itertools.islice(self._filtered_iter(filters), limit):
@@ -261,7 +263,7 @@ class IMDB(Dataset):
         *,
         subset: Optional[str] = None,
         label: Optional[str] = None,
-        rating_range: Optional[Tuple[Optional[int], Optional[int]]] = None,
+        rating_range: Optional[tuple[Optional[int], Optional[int]]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[types.Record]:
@@ -289,8 +291,8 @@ class IMDB(Dataset):
         Raises:
             ValueError: If any filtering options are invalid.
         """
-        self._subset = utils.to_collection(subset, (str, bytes), tuple)
-        self._label = utils.to_collection(label, (str, bytes), tuple)
+        self._subset = utils.to_tuple(subset) if subset is not None else None
+        self._label = utils.to_tuple(label) if label is not None else None
         try:
             filters = self._get_filters(rating_range, min_len)
             for record in itertools.islice(self._filtered_iter(filters), limit):

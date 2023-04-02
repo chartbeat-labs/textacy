@@ -4,13 +4,19 @@ import collections
 import itertools
 import math
 from operator import itemgetter
-from typing import Callable, Collection, Counter, Dict, List, Optional, Set, Tuple
+from typing import Callable, Collection, Counter, Optional
 
 import networkx as nx
 from spacy.tokens import Doc, Span
 
 from ... import utils
 from .. import utils as ext_utils
+
+
+try:
+    nx_pagerank = nx.pagerank_scipy  # networkx < 3.0
+except AttributeError:
+    nx_pagerank = nx.pagerank  # networkx >= 3.0
 
 
 Candidate = collections.namedtuple("Candidate", ["text", "idx", "length", "count"])
@@ -24,8 +30,8 @@ def sgrank(
     include_pos: Optional[str | Collection[str]] = ("NOUN", "PROPN", "ADJ"),
     window_size: int = 1500,
     topn: int | float = 10,
-    idf: Dict[str, float] = None,
-) -> List[Tuple[str, float]]:
+    idf: Optional[dict[str, float]] = None,
+) -> list[tuple[str, float]]:
     """
     Extract key terms from a document using the SGRank algorithm.
 
@@ -62,8 +68,8 @@ def sgrank(
         Lexical and Computational Semantics (* SEM 2015) (2015): 117.
     """
     # validate / transform args
-    ngrams = utils.to_collection(ngrams, int, tuple)
-    include_pos = utils.to_collection(include_pos, str, set)
+    ngrams: tuple[int, ...] = utils.to_tuple(ngrams)
+    include_pos: Optional[set[str]] = utils.to_set(include_pos) if include_pos else None
     if window_size < 2:
         raise ValueError("`window_size` must be >= 2")
     if isinstance(topn, float):
@@ -94,18 +100,20 @@ def sgrank(
     # build the weighted directed graph from edges, rank nodes by pagerank
     graph = nx.DiGraph()
     graph.add_edges_from(edge_weights)
-    term_ranks = nx.pagerank_scipy(graph, alpha=0.85, weight="weight")
+    term_ranks = nx_pagerank(graph, alpha=0.85, weight="weight")
     sorted_term_ranks = sorted(term_ranks.items(), key=itemgetter(1, 0), reverse=True)
 
-    return ext_utils.get_filtered_topn_terms(sorted_term_ranks, topn, match_threshold=0.8)
+    return ext_utils.get_filtered_topn_terms(
+        sorted_term_ranks, topn, match_threshold=0.8
+    )
 
 
 def _get_candidates(
     doc: Doc,
     normalize: Optional[str | Callable[[Span], str]],
-    ngrams: Tuple[int, ...],
-    include_pos: Set[str],
-) -> Tuple[List[Candidate], Counter[str]]:
+    ngrams: tuple[int, ...],
+    include_pos: Optional[set[str]],
+) -> tuple[list[Candidate], Counter[str]]:
     """
     Get n-gram candidate keyterms from ``doc``, with key information for each:
     its normalized text string, position within the doc, number of constituent words,
@@ -132,11 +140,11 @@ def _get_candidates(
 
 
 def _prefilter_candidates(
-    candidates: List[Candidate],
+    candidates: list[Candidate],
     candidate_counts: Counter[str],
     topn: int,
-    idf: Optional[Dict[str, float]],
-) -> Tuple[List[Candidate], Set[str]]:
+    idf: Optional[dict[str, float]],
+) -> tuple[list[Candidate], set[str]]:
     """
     Filter initial set of candidates to only those with sufficiently high TF or
     (if available) modified TF*IDF.
@@ -149,9 +157,9 @@ def _prefilter_candidates(
         }
         unique_candidates = {
             ctext
-            for ctext, _ in sorted(
-                mod_tfidfs.items(), key=itemgetter(1), reverse=True
-            )[:topn_prefilter]
+            for ctext, _ in sorted(mod_tfidfs.items(), key=itemgetter(1), reverse=True)[
+                :topn_prefilter
+            ]
         }
     else:
         unique_candidates = {
@@ -162,12 +170,12 @@ def _prefilter_candidates(
 
 
 def _compute_term_weights(
-    candidates: List[Candidate],
-    candidate_counts: Dict[str, int],
-    unique_candidates: Set[str],
+    candidates: list[Candidate],
+    candidate_counts: dict[str, int],
+    unique_candidates: set[str],
     n_toks: int,
-    idf: Optional[Dict[str, float]],
-) -> Dict[str, float]:
+    idf: Optional[dict[str, float]],
+) -> dict[str, float]:
     """
     Compute term weights from statistical attributes: position of first occurrence,
     not subsumed frequency, and number of constituent words.
@@ -202,18 +210,22 @@ def _compute_term_weights(
 
 
 def _compute_edge_weights(
-    candidates: List[Candidate],
-    term_weights: Dict[str, float],
+    candidates: list[Candidate],
+    term_weights: dict[str, float],
     window_size: int,
     n_toks: int,
-) -> List[Tuple[str, str, Dict[str, float]]]:
+) -> list[tuple[str, str, dict[str, float]]]:
     """
     Compute weights between candidates that occur within a sliding window(s) of
     each other, then combine with statistical ``term_weights`` and normalize
     by the total number of outgoing edge weights.
     """
-    n_coocs = collections.defaultdict(lambda: collections.defaultdict(int))
-    sum_logdists = collections.defaultdict(lambda: collections.defaultdict(float))
+    n_coocs: collections.defaultdict = collections.defaultdict(
+        lambda: collections.defaultdict(int)
+    )
+    sum_logdists: collections.defaultdict = collections.defaultdict(
+        lambda: collections.defaultdict(float)
+    )
     # iterate over windows
     log_ = math.log  # localize this, for performance
     for start_idx in range(n_toks):
@@ -231,7 +243,9 @@ def _compute_edge_weights(
         if end_idx >= n_toks:
             break
     # compute edge weights between co-occurring terms (nodes)
-    edge_weights = collections.defaultdict(lambda: collections.defaultdict(float))
+    edge_weights: collections.defaultdict = collections.defaultdict(
+        lambda: collections.defaultdict(float)
+    )
     for c1, c2_dict in sum_logdists.items():
         for c2, sum_logdist in c2_dict.items():
             edge_weights[c1][c2] = (
@@ -240,10 +254,11 @@ def _compute_edge_weights(
                 * term_weights[c2]
             )
     # normalize edge weights by sum of outgoing edge weights per term (node)
-    norm_edge_weights: List[Tuple[str, str, Dict[str, float]]] = []
+    norm_edge_weights: list[tuple[str, str, dict[str, float]]] = []
     for c1, c2s in edge_weights.items():
         sum_edge_weights = sum(c2s.values())
         norm_edge_weights.extend(
-            (c1, c2, {"weight": weight / sum_edge_weights}) for c2, weight in c2s.items()
+            (c1, c2, {"weight": weight / sum_edge_weights})
+            for c2, weight in c2s.items()
         )
     return norm_edge_weights

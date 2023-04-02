@@ -28,14 +28,16 @@ import logging
 import os
 import re
 import urllib.parse
-from typing import Iterable, Optional, Set
+from typing import Iterable, Optional
 
 import requests
 from cytoolz import itertoolz
 
-from .. import constants, types, utils
+from .. import constants
 from .. import io as tio
+from .. import types, utils
 from .base import Dataset
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -80,7 +82,7 @@ is_bad_category_funcs = {
     },
     "wikinews": {
         "de": lambda cat: cat in {"Artikelstatus: Fertig", "Veröffentlicht"},
-        "en": lambda cat: cat in {"Archived", "Published", "AutoArchived", "No publish"},
+        "en": lambda cat: cat in {"Archived", "Published", "AutoArchived", "No publish"},  # fmt: skip
         "es": lambda cat: cat in {"Archivado", "Artículos publicados"},
         "fr": lambda cat: cat in {"Article archivé", "Article publié"},
         "it": lambda cat: cat in {"Pubblicati"},
@@ -247,7 +249,9 @@ class Wikimedia(Dataset):
             # do minimal cleaning of categories and wiki links, if available
             if is_bad_category:
                 categories = tuple(
-                    cat for cat in source.get("category", []) if not is_bad_category(cat)
+                    cat
+                    for cat in source.get("category", [])
+                    if not is_bad_category(cat)
                 )
             else:
                 categories = tuple(source.get("category", []))
@@ -312,8 +316,8 @@ class Wikimedia(Dataset):
     def texts(
         self,
         *,
-        category: Optional[str | Set[str]] = None,
-        wiki_link: Optional[str | Set[str]] = None,
+        category: Optional[str | set[str]] = None,
+        wiki_link: Optional[str | set[str]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[str]:
@@ -324,10 +328,10 @@ class Wikimedia(Dataset):
 
         Args:
             category: Filter wiki pages by the categories to which they've been assigned.
-                For multiple values (Set[str]), ANY rather than ALL of the values
+                For multiple values (set[str]), ANY rather than ALL of the values
                 must be found among a given page's categories.
             wiki_link: Filter wiki pages by the other wiki pages to which they've been linked.
-                For multiple values (Set[str]), ANY rather than ALL of the values
+                For multiple values (set[str]), ANY rather than ALL of the values
                 must be found among a given page's wiki links.
             min_len: Filter wiki pages by the length (# characters) of their text content.
             limit: Yield no more than ``limit`` wiki pages that match all specified filters.
@@ -345,8 +349,8 @@ class Wikimedia(Dataset):
     def records(
         self,
         *,
-        category: Optional[str | Set[str]] = None,
-        wiki_link: Optional[str | Set[str]] = None,
+        category: Optional[str | set[str]] = None,
+        wiki_link: Optional[str | set[str]] = None,
         min_len: Optional[int] = None,
         limit: Optional[int] = None,
     ) -> Iterable[types.Record]:
@@ -357,10 +361,10 @@ class Wikimedia(Dataset):
 
         Args:
             category: Filter wiki pages by the categories to which they've been assigned.
-                For multiple values (Set[str]), ANY rather than ALL of the values
+                For multiple values (set[str]), ANY rather than ALL of the values
                 must be found among a given page's categories.
             wiki_link: Filter wiki pages by the other wiki pages to which they've been linked.
-                For multiple values (Set[str]), ANY rather than ALL of the values
+                For multiple values (set[str]), ANY rather than ALL of the values
                 must be found among a given page's wiki links.
             min_len: Filter wiki pages by the length (# characters) of their text content.
             limit: Yield no more than ``limit`` wiki pages that match all specified filters.

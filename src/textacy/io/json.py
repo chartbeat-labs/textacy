@@ -7,7 +7,7 @@ from __future__ import annotations
 import datetime
 import functools
 import json
-from typing import Any, Iterable, Optional, Tuple, Union
+from typing import Any, Iterable, Optional, Union
 
 from .. import types
 from . import utils as io_utils
@@ -96,7 +96,7 @@ def write_json(
     make_dirs: bool = False,
     lines: bool = False,
     ensure_ascii: bool = False,
-    separators: Tuple[str, str] = (",", ":"),
+    separators: tuple[str, str] = (",", ":"),
     sort_keys: bool = False,
     indent: Optional[int | str] = None,
 ) -> None:

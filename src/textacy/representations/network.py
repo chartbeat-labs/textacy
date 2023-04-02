@@ -12,7 +12,7 @@ import collections
 import itertools
 import logging
 from operator import itemgetter
-from typing import Any, Collection, Dict, Literal, Optional, Sequence, Set, Union
+from typing import Any, Collection, Literal, Optional, Sequence, Union
 
 import networkx as nx
 import numpy as np
@@ -22,6 +22,11 @@ from .. import errors, similarity
 
 
 LOGGER = logging.getLogger(__name__)
+
+try:
+    nx_pagerank = nx.pagerank_scipy  # networkx < 3.0
+except AttributeError:
+    nx_pagerank = nx.pagerank  # networkx >= 3.0
 
 
 def build_cooccurrence_network(
@@ -252,7 +257,7 @@ def rank_nodes_by_pagerank(
     graph: nx.Graph,
     weight: str = "weight",
     **kwargs,
-) -> Dict[Any, float]:
+) -> dict[Any, float]:
     """
     Rank nodes in ``graph`` using the Pagegrank algorithm.
 
@@ -264,7 +269,7 @@ def rank_nodes_by_pagerank(
     Returns:
         Mapping of node object to Pagerank score.
     """
-    return nx.pagerank_scipy(graph, weight=weight, **kwargs)
+    return nx_pagerank(graph, weight=weight, **kwargs)
 
 
 def rank_nodes_by_bestcoverage(
@@ -273,7 +278,7 @@ def rank_nodes_by_bestcoverage(
     c: int = 1,
     alpha: float = 1.0,
     weight: str = "weight",
-) -> Dict[Any, float]:
+) -> dict[Any, float]:
     """
     Rank nodes in a network using the BestCoverage algorithm that attempts to
     balance between node centrality and diversity.
@@ -306,7 +311,7 @@ def rank_nodes_by_bestcoverage(
         return {}
 
     # ranks: array of PageRank values, summing up to 1
-    ranks = nx.pagerank_scipy(graph, alpha=0.85, max_iter=100, tol=1e-08, weight=weight)
+    ranks = nx_pagerank(graph, alpha=0.85, max_iter=100, tol=1e-08, weight=weight)
     # sorted_ranks = sorted(ranks.items(), key=itemgetter(1), reverse=True)
     # avg_degree = sum(dict(graph.degree()).values()) / len(nodes_list)
     # relaxation parameter, k' in the paper
@@ -314,7 +319,7 @@ def rank_nodes_by_bestcoverage(
 
     # top_k_sorted_ranks = sorted_ranks[:k_prime]
 
-    def get_l_step_expanded_set(vertices: Collection[str], n_steps: int) -> Set[str]:
+    def get_l_step_expanded_set(vertices: Collection[str], n_steps: int) -> set[str]:
         """
         Args:
             vertices: vertices to be expanded
@@ -389,7 +394,7 @@ def rank_nodes_by_divrank(
     r: Optional[np.ndarray] = None,
     lambda_: float = 0.5,
     alpha: float = 0.5,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """
     Rank nodes in a network using the DivRank algorithm that attempts to
     balance between node centrality and diversity.
@@ -420,7 +425,12 @@ def rank_nodes_by_divrank(
     nodes_list = [node for node in graph]
     # create adjacency matrix, i.e.
     # n x n matrix where entry W_ij is the weight of the edge from V_i to V_j
-    W = nx.to_numpy_matrix(graph, nodelist=nodes_list, weight="weight").A
+    try:
+        # networkx < 3.0
+        W = nx.to_numpy_matrix(graph, nodelist=nodes_list, weight="weight").A
+    except AttributeError:
+        # networkx >= 3.0
+        W = nx.adjacency_matrix(graph, nodelist=nodes_list, weight="weight").toarray()
     n = W.shape[1]
     # create flat prior personalization vector if none given
     if r is None:

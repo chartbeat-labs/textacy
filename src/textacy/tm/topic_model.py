@@ -5,17 +5,7 @@ built on ``scikit-learn``.
 from __future__ import annotations
 
 import logging
-from typing import (
-    ClassVar,
-    Dict,
-    Iterable,
-    List,
-    Literal,
-    Optional,
-    Sequence,
-    Set,
-    Tuple,
-)
+from typing import ClassVar, Iterable, Literal, Optional, Sequence
 
 import joblib
 import numpy as np
@@ -23,6 +13,7 @@ import scipy.sparse as sp
 from sklearn.decomposition import NMF, LatentDirichletAllocation, TruncatedSVD
 
 from .. import errors, types, viz
+
 
 LOGGER = logging.getLogger(__name__)
 
@@ -123,7 +114,7 @@ class TopicModel:
         * http://scikit-learn.org/stable/modules/generated/sklearn.decomposition.TruncatedSVD.html
     """
 
-    _required_trained_model_attr: ClassVar[Set[str]] = {
+    _required_trained_model_attr: ClassVar[set[str]] = {
         "transform",
         "components_",
         "n_topics",
@@ -152,7 +143,8 @@ class TopicModel:
         if model == "nmf":
             self.model = NMF(
                 n_components=n_topics,
-                alpha=kwargs.get("alpha", 0.1),
+                alpha_W=kwargs.get("alpha_W", 0.1),
+                alpha_H=kwargs.get("alpha_H", "same"),
                 l1_ratio=kwargs.get("l1_ratio", 0.5),
                 max_iter=kwargs.get("max_iter", 200),
                 random_state=kwargs.get("random_state", 1),
@@ -241,14 +233,15 @@ class TopicModel:
 
     def top_topic_terms(
         self,
-        id2term: Sequence[str] | Dict[int, str],
+        id2term: Sequence[str] | dict[int, str],
         *,
         topics: int | Sequence[int] = -1,
         top_n: int = 10,
         weights: bool = False,
-    ) -> Iterable[Tuple[int, Tuple[str, ...]]] | Iterable[
-        Tuple[int, Tuple[Tuple[str, float], ...]]
-    ]:
+    ) -> (
+        Iterable[tuple[int, tuple[str, ...]]]
+        | Iterable[tuple[int, tuple[tuple[str, float], ...]]]
+    ):
         """
         Get the top ``top_n`` terms by weight per topic in ``model``.
 
@@ -304,9 +297,10 @@ class TopicModel:
         topics: int | Sequence[int] = -1,
         top_n: int = 10,
         weights: bool = False,
-    ) -> Iterable[Tuple[int, Tuple[int, ...]]] | Iterable[
-        Tuple[int, Tuple[Tuple[int, float], ...]]
-    ]:
+    ) -> (
+        Iterable[tuple[int, tuple[int, ...]]]
+        | Iterable[tuple[int, tuple[tuple[int, float], ...]]]
+    ):
         """
         Get the top ``top_n`` docs by weight per topic in ``doc_topic_matrix``.
 
@@ -356,9 +350,10 @@ class TopicModel:
         docs: int | Sequence[int] = -1,
         top_n: int = 3,
         weights: bool = False,
-    ) -> Iterable[Tuple[int, Tuple[int, ...]]] | Iterable[
-        Tuple[int, Tuple[Tuple[int, float], ...]]
-    ]:
+    ) -> (
+        Iterable[tuple[int, tuple[int, ...]]]
+        | Iterable[tuple[int, tuple[tuple[int, float], ...]]]
+    ):
         """
         Get the top ``top_n`` topics by weight per doc for ``docs`` in ``doc_topic_matrix``.
 
@@ -425,7 +420,7 @@ class TopicModel:
     def termite_plot(
         self,
         doc_term_matrix: np.ndarray | sp.csr_matrix,
-        id2term: List[str] | Dict[int, str],
+        id2term: list[str] | dict[int, str],
         *,
         topics: int | Sequence[int] = -1,
         sort_topics_by: Literal["index", "weight"] = "index",
@@ -491,6 +486,7 @@ class TopicModel:
                 raise ValueError("no more than 6 topics may be highlighted at once")
 
         # get topics indices
+        topic_inds: tuple[int, ...]
         if topics == -1:
             topic_inds = tuple(range(self.n_topics))
         elif isinstance(topics, int):
@@ -500,7 +496,7 @@ class TopicModel:
 
         # get topic indices in sorted order
         if sort_topics_by == "index":
-            topic_inds = sorted(topic_inds)
+            topic_inds = tuple(sorted(topic_inds))
         elif sort_topics_by == "weight":
             topic_inds = tuple(
                 topic_ind
@@ -527,14 +523,15 @@ class TopicModel:
             highlight_cols = None
 
         # get top term indices
+        term_inds: list[int]
         if rank_terms_by == "corpus_weight":
             term_inds = np.argsort(np.ravel(doc_term_matrix.sum(axis=0)))[
                 : -n_terms - 1 : -1
-            ]
+            ].tolist()
         elif rank_terms_by == "topic_weight":
             term_inds = np.argsort(self.model.components_.sum(axis=0))[
                 : -n_terms - 1 : -1
-            ]
+            ].tolist()
         else:
             raise ValueError(
                 errors.value_invalid_msg(
