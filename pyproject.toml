@@ -28,6 +28,7 @@ dependencies = [
   "cachetools >= 4.0.0",
   "catalogue ~= 2.0",
   "cytoolz >= 0.10.1",
+  "floret ~= 0.10.0",
   "jellyfish >= 0.8.0",
   "joblib >= 0.13.0",
   "networkx >= 2.7",
