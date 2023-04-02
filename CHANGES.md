@@ -1,6 +1,6 @@
 ## Changes
 
-### 0.13.0 (in development)
+### 0.13.0 (2023-04-02)
 
 - upgraded built-in language identification model (PR #375)
   - replaced v2 thinc/cld3 model with v3 floret/fasttext model, which has much faster predictions and comparable but more consistent performance
