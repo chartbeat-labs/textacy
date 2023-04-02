@@ -1,5 +1,25 @@
 ## Changes
 
+### 0.13.0 (in development)
+
+- upgraded built-in language identification model (PR #375)
+  - replaced v2 thinc/cld3 model with v3 floret/fasttext model, which has much faster predictions and comparable but more consistent performance
+- modernized and improved Python packaging for faster, simpler installation and testing (PR #368 and #369)
+  - all package metadata and configuration moved into a single `pyproject.toml` file
+  - code formatting and linting updated to use `ruff` plus newer versions of `mypy` and `black`, and their use in GitHub Actions CI has been consolidated
+  - bumped supported Python versions range from 3.8–3.10 to 3.9–3.11 (PR #369)
+  - added full CI testing matrix for PY 3.9/3.10/3.11 x Linux/macOS/Windows, and removed extraneous AppVeyor integration
+- updated and improved type hints throughout, reducing number of `mypy` complaints by ~80% (PR #372)
+
+#### fixes
+
+- fix ReDoS bugs in regex patterns (PR #371)
+- fix breaking API issues with newer networkx/scikit-learn versions (PR #367)
+- improved dev workflow documentation and code to better incorporate language data (PR #363)
+- updated caching code with a fix from upstream pysize library, which was preventing Russian-language spaCy model from loading properly (PR #358)
+
+Big thanks to contributors @jonwiggins, @Hironsan, amnd @kevinbackhouse.
+
 ### 0.12.0 (2021-12-06)
 
 - Refactored and extended text statistics functionality (PR #350)
