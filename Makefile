@@ -34,4 +34,4 @@ download:
 	python -m spacy download es_core_news_sm
 	python -m spacy validate
 	python -m textacy download capitol_words
-	python -m textacy download lang_identifier --version 2.0
+	python -m textacy download lang_identifier --version 3.0
