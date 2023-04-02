@@ -4,23 +4,21 @@ Language Identification
 
 :mod:`textacy.lang_id`: Interface for de/serializing a language identification model,
 and using it to identify the most probable language(s) of a given text. Inspired by
-Google's Compact Language Detector v3 (https://github.com/google/cld3) and
-implemented with ``thinc`` v8.0.
+-- and using the same methodology as -- Facebook's fastText
+(https://fasttext.cc/blog/2017/10/02/blog-post.html).
 
 Model
 ^^^^^
 
-Character unigrams, bigrams, and trigrams are extracted separately from the first
-1000 characters of lower-cased input text. Each collection of ngrams is hash-embedded
-into a 100-dimensional space, then averaged. The resulting feature vectors are
-concatenated into a single embedding layer, then passed on to a dense layer with
-ReLu activation and finally a Softmax output layer. The model's predictions give
-the probabilities for a text to be written in ~140 ISO 639-1 languages.
+Text is tokenized into a bag of word 1- and 2-grams and character 1- through 5-grams.
+The collection of n-grams is embedded into a 128-dimensional space, then averaged.
+The resulting features are fed into a linear classifier with a hierarchical softmax output
+to compute (approximate) language probabilities for 140 ISO 639-1 languages.
 
 Dataset
 ^^^^^^^
 
-The model was trained on a randomized, stratified subset of ~375k texts
+The model was trained on a randomized, stratified subset of ~2.9M texts
 drawn from several sources:
 
 - **WiLi:** A public dataset of short text extracts from Wikipedias in over 230
@@ -38,16 +36,23 @@ drawn from several sources:
   of language groups that are highly similar to each other. Style is relatively formal;
   subject matter is current events.
   Source: http://ttg.uni-saarland.de/resources/DSLCC/
+- **Ted 2020**: A crawl of nearly 4000 TED and TED-X transcripts from 2020,
+   translated by a global community of volunteers into more than 100 languages.
+   Style is conversational, covering a broad range of subjects.
+   Source: https://opus.nlpl.eu/TED2020.php
+- **SETimes**: A corpus of news articles in Balkan languages, originally extracted
+  from http://www.setimes.com and compiled by Nikola Ljubešić.
+  Source: https://opus.nlpl.eu/SETIMES.php
 
 Performance
 ^^^^^^^^^^^
 
 The trained model achieved F1 = 0.97 when averaged over all languages.
 
-A few languages have worse performance; for example, the two Norwegians ("nb" and "no"),
+A few languages have worse performance; most notably, the two sub-Norwegians ("nb" and "no"),
 as well as Bosnian ("bs"), Serbian ("sr"), and Croatian ("hr"), which are extremely
 similar to each other. See the textacy-data releases for more details:
-https://github.com/bdewilde/textacy-data/releases/tag/lang-identifier-v2.0
+https://github.com/bdewilde/textacy-data/releases/tag/lang-identifier-v3.0
 """
 from __future__ import annotations
 
@@ -60,6 +65,7 @@ from floret.floret import _floret
 
 from .. import utils
 from ..constants import DEFAULT_DATA_DIR
+
 
 LOGGER = logging.getLogger(__name__)
 

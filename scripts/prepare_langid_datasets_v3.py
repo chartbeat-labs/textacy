@@ -14,7 +14,6 @@ from toolz import itertoolz
 import textacy.datasets
 import textacy.io as tio
 import textacy.lang_id._datasets  # oof, naming
-import textacy.lang_id.code
 import textacy.preprocessing
 
 
