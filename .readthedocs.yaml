@@ -4,14 +4,11 @@
 version: 2
 
 python:
-  version: 3.8
   install:
     - method: pip
       path: .
-    - method: pip
-      path: .
       extra_requirements:
-        - dev
+        - docs
   system_packages: true
 
 sphinx:
@@ -23,4 +20,6 @@ formats:
   - pdf
 
 build:
-  image: latest
+  os: ubuntu-22.04
+  tools:
+    python: "3.9"
