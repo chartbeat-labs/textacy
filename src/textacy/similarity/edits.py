@@ -34,7 +34,7 @@ def hamming(str1: str, str2: str) -> float:
     if not str1 and not str2:
         return 0.0
 
-    return Hamming.normalized_similarity(s1, s2)
+    return Hamming.normalized_similarity(str1, str2)
 
 
 def levenshtein(str1: str, str2: str) -> float:
