@@ -12,20 +12,9 @@ from typing import Optional
 
 import sklearn.feature_extraction
 import sklearn.metrics
-from jellyfish import hamming_distance as _hamming
-from jellyfish import jaro_similarity as _jaro_similarity
-from jellyfish import levenshtein_distance as _levenshtein
+from rapidfuzz.distance import Hamming, Jaro, Levenshtein
 
 from .. import constants
-
-
-def _shortcut(str1: str, str2: str) -> Optional[float]:
-    if not str1 and not str2:
-        return 0.0
-    elif str1 == str2:
-        return 1.0
-    else:
-        return None
 
 
 def hamming(str1: str, str2: str) -> float:
@@ -42,16 +31,10 @@ def hamming(str1: str, str2: str) -> float:
         Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings
     """
-    shortcut = _shortcut(str1, str2)
-    if shortcut:
-        return shortcut
-
-    distance = _hamming(str1, str2)
-    max_len = max(len(str1), len(str2))
-    try:
-        return 1.0 - (distance / max_len)
-    except ZeroDivisionError:
+    if not str1 and not str2:
         return 0.0
+
+    return Hamming.normalized_similarity(s1, s2)
 
 
 def levenshtein(str1: str, str2: str) -> float:
@@ -68,16 +51,10 @@ def levenshtein(str1: str, str2: str) -> float:
         Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings
     """
-    shortcut = _shortcut(str1, str2)
-    if shortcut:
-        return shortcut
-
-    distance = _levenshtein(str1, str2)
-    max_len = max(len(str1), len(str2))
-    try:
-        return 1.0 - (distance / max_len)
-    except ZeroDivisionError:
+    if not str1 and not str2:
         return 0.0
+
+    return Levenshtein.normalized_similarity(str1, str2)
 
 
 def jaro(str1: str, str2: str) -> float:
@@ -94,14 +71,10 @@ def jaro(str1: str, str2: str) -> float:
         Similarity between ``str1`` and ``str2`` in the interval [0.0, 1.0],
         where larger values correspond to more similar strings
     """
-    # NOTE: I usually try to avoid wrapping other packages' functionality in one-liners
-    # but this is here for consistency with levenshtein and hamming,
-    # which do extra work to get normalized similarity values
-    shortcut = _shortcut(str1, str2)
-    if shortcut:
-        return shortcut
+    if not str1 and not str2:
+        return 0.0
 
-    return _jaro_similarity(str1, str2)
+    return Jaro.normalized_similarity(str1, str2)
 
 
 def character_ngrams(str1: str, str2: str) -> float:
