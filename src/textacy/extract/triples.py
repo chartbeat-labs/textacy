@@ -243,7 +243,7 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
         if (
             # quotations should have at least a couple tokens
             # excluding the first/last quotation mark tokens
-            len(content) < 3
+            len(content) < 4
             # filter out titles of books and such, if possible
             or all(
                 tok.is_title
