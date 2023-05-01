@@ -21,6 +21,29 @@ SUBJ_DEPS: set[str] = {"agent", "csubj", "csubjpass", "expl", "nsubj", "nsubjpas
 OBJ_DEPS: set[str] = {"attr", "dobj", "dative", "oprd"}
 AUX_DEPS: set[str] = {"aux", "auxpass", "neg"}
 
+"""
+Ordinal points of the token.is_quote characters, matched up by start and end.
+
+source:
+switch = "\"\'"
+start = "“‘```“‘«‹「『„‚"
+end = "”’’’’”’»›」』”’"
+
+"""
+QUOTATION_MARK_PAIRS = {
+    (34, 34),
+    (39, 39),
+    (96, 8217),
+    (171, 187),
+    (8216, 8217),
+    (8218, 8217),
+    (8220, 8221),
+    (8222, 8221),
+    (8249, 8250),
+    (12300, 12301),
+    (12302, 12303)
+    }
+
 REPORTING_VERBS: dict[str, set[str]] = {
     "en": {
         "according",
@@ -44,6 +67,7 @@ REPORTING_VERBS: dict[str, set[str]] = {
         "conclude",
         "confirm",
         "contend",
+        "continue",
         "criticize",
         "declare",
         "decline",
@@ -63,6 +87,7 @@ REPORTING_VERBS: dict[str, set[str]] = {
         "order",
         "predict",
         "promise",
+        "read",
         "recall",
         "recommend",
         "reply",
@@ -74,6 +99,7 @@ REPORTING_VERBS: dict[str, set[str]] = {
         "tell",
         "testify",
         "think",
+        "tweet",
         "urge",
         "warn",
         "worry",

@@ -11,7 +11,6 @@ import collections
 from operator import attrgetter
 from typing import Iterable, Mapping, Optional, Pattern
 
-from cytoolz import itertoolz
 from spacy.symbols import (
     AUX,
     VERB,
@@ -225,14 +224,17 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
             f"direct quotation extraction is not implemented for lang='{doc.lang_}', "
             f"only {sorted(constants.REPORTING_VERBS.keys())}"
         )
-    qtok_idxs = [tok.i for tok in doc if tok.is_quote]
-    if len(qtok_idxs) % 2 != 0:
-        raise ValueError(
-            f"{len(qtok_idxs)} quotation marks found, indicating an unclosed quotation; "
-            "given the limitations of this method, it's safest to bail out "
-            "rather than guess which quotation is unclosed"
-        )
-    qtok_pair_idxs = list(itertoolz.partition(2, qtok_idxs))
+    
+    # pairs up quotation-like characters based on acceptable start/end combos
+    # see constants for more info
+    qtok = [tok for tok in doc if tok.is_quote]
+    qtok_pair_idxs = []
+    for n, q in enumerate(qtok):
+        if q.i not in [q_[1] for q_ in qtok_pair_idxs]:
+            for q_ in qtok[n+1:]:
+                if (ord(q.text), ord(q_.text)) in constants.QUOTATION_MARK_PAIRS:
+                    qtok_pair_idxs.append((q.i, q_.i))
+                    break
     for qtok_start_idx, qtok_end_idx in qtok_pair_idxs:
         content = doc[qtok_start_idx : qtok_end_idx + 1]
         cue = None
@@ -241,7 +243,7 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
         if (
             # quotations should have at least a couple tokens
             # excluding the first/last quotation mark tokens
-            len(content) < 4
+            len(content) < 3
             # filter out titles of books and such, if possible
             or all(
                 tok.is_title
