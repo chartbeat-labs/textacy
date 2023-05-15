@@ -92,7 +92,7 @@ def sss_doc(lang_en):
                 (["She", "friend"], ["sell"], ["sea", "shells"]),
                 (["She", "friend"], ["throw"], ["sea", "shells"]),
             ],
-        ),
+        )
     ],
 )
 def test_subject_verb_object_triples(text, svos_exp, lang_en):

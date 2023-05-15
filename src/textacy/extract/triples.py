@@ -14,6 +14,7 @@ from typing import Iterable, Mapping, Optional, Pattern
 from spacy.symbols import (
     AUX,
     VERB,
+    PUNCT,
     agent,
     attr,
     aux,
@@ -216,7 +217,6 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
         Loosely inspired by Krestel, Bergler, Witte. "Minding the Source: Automatic
         Tagging of Reported Speech in Newspaper Articles".
     """
-    # TODO: train a model to do this instead, maybe similar to entity recognition
     try:
         _reporting_verbs = constants.REPORTING_VERBS[doc.lang_]
     except KeyError:
@@ -224,7 +224,6 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
             f"direct quotation extraction is not implemented for lang='{doc.lang_}', "
             f"only {sorted(constants.REPORTING_VERBS.keys())}"
         )
-    
     # pairs up quotation-like characters based on acceptable start/end combos
     # see constants for more info
     qtok = [tok for tok in doc if tok.is_quote]
@@ -235,6 +234,12 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
                 if (ord(q.text), ord(q_.text)) in constants.QUOTATION_MARK_PAIRS:
                     qtok_pair_idxs.append((q.i, q_.i))
                     break
+    
+    def filter_quote_tokens(tok):
+        return any(
+                qts_idx <= tok.i <= qte_idx for qts_idx, qte_idx in qtok_pair_idxs
+            )
+
     for qtok_start_idx, qtok_end_idx in qtok_pair_idxs:
         content = doc[qtok_start_idx : qtok_end_idx + 1]
         cue = None
@@ -251,53 +256,47 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
                 # if tok.pos in {NOUN, PROPN}
                 if not (tok.is_punct or tok.is_stop)
             )
-            # TODO: require closing punctuation before the quotation mark?
-            # content[-2].is_punct is False
         ):
             continue
-        # get window of adjacent/overlapping sentences
-        window_sents = (
-            sent
-            for sent in doc.sents
-            # these boundary cases are a subtle bit of work...
-            if (
-                (sent.start < qtok_start_idx and sent.end >= qtok_start_idx - 1)
-                or (sent.start <= qtok_end_idx + 1 and sent.end > qtok_end_idx)
-            )
-        )
+
+        triple = None
+        for n, window_sents in enumerate([
+            windower(qtok_start_idx, qtok_end_idx, doc, True), 
+            windower(qtok_start_idx, qtok_end_idx, doc)
+        ]):
         # get candidate cue verbs in window
-        cue_cands = [
-            tok
-            for sent in window_sents
-            for tok in sent
-            if (
-                tok.pos == VERB
-                and tok.lemma_ in _reporting_verbs
-                # cue verbs must occur *outside* any quotation content
-                and not any(
-                    qts_idx <= tok.i <= qte_idx for qts_idx, qte_idx in qtok_pair_idxs
-                )
+            cue_cands = [
+                tok
+                for sent in window_sents
+                for tok in sent
+                if not filter_quote_tokens(tok)
+                and filter_cue_candidates(tok, _reporting_verbs)
+            ]
+            # sort candidates by proximity to quote content
+            cue_cands = sorted(
+                cue_cands,
+                key=lambda cc: min(abs(cc.i - qtok_start_idx), abs(cc.i - qtok_end_idx)),
             )
-        ]
-        # sort candidates by proximity to quote content
-        cue_cands = sorted(
-            cue_cands,
-            key=lambda cc: min(abs(cc.i - qtok_start_idx), abs(cc.i - qtok_end_idx)),
-        )
-        for cue_cand in cue_cands:
-            if cue is not None:
-                break
-            for speaker_cand in cue_cand.children:
-                if speaker_cand.dep in _ACTIVE_SUBJ_DEPS:
-                    cue = expand_verb(cue_cand)
-                    speaker = expand_noun(speaker_cand)
+            for cue_cand in cue_cands:
+                if cue is not None:
                     break
-        if content and cue and speaker:
-            yield DQTriple(
-                speaker=sorted(speaker, key=attrgetter("i")),
-                cue=sorted(cue, key=attrgetter("i")),
-                content=content,
-            )
+                speaker_cands = [
+                    speaker_cand for speaker_cand in cue_cand.children
+                    if not filter_quote_tokens(speaker_cand)
+                    and filter_speaker_candidates(speaker_cand, qtok_start_idx, qtok_end_idx)
+                ]
+                for speaker_cand in speaker_cands:
+                    if speaker_cand.dep in _ACTIVE_SUBJ_DEPS:
+                        cue = expand_verb(cue_cand)
+                        speaker = expand_noun(speaker_cand)
+                        break
+            if content and cue and speaker:
+                yield DQTriple(
+                    speaker=sorted(speaker, key=attrgetter("i")),
+                    cue=sorted(cue, key=attrgetter("i")),
+                    content=content,
+                )
+                break
 
 
 def expand_noun(tok: Token) -> list[Token]:
@@ -319,3 +318,64 @@ def expand_verb(tok: Token) -> list[Token]:
         child for child in tok.children if child.dep in _VERB_MODIFIER_DEPS
     ]
     return [tok] + verb_modifiers
+
+def filter_cue_candidates(tok, verbs):
+    return all([
+        tok.pos == VERB,
+        tok.lemma_ in verbs
+    ])
+
+# def get_cue_candidates(window_sents, verbs):
+#     return [
+#             tok
+#             for sent in window_sents
+#             for tok in sent
+#             if filter_cue_candidates(tok, verbs)
+#         ]
+
+def filter_speaker_candidates(candidate, i, j):
+    """
+    Evaluates whether the candidate is not punctuation and that it is outside of the quote. 
+    """
+    return all([
+            candidate.pos!=PUNCT,
+            ((candidate.i >= i and candidate.i >= j) or (candidate.i <= i and candidate.i <= j)),
+        ])
+
+def line_break_window(i, j, doc):
+    """
+    Finds the boundaries of the paragraph containing doc[i:j].
+    """
+    for i_, j_ in list(zip(
+        [tok.i for tok in doc if tok.text=="\n"],
+        [tok.i for tok in doc if tok.text=="\n"][1:])
+        ):
+            if i_ <= i and j_ >= j:
+                return (i_, j_)
+    else:
+        return (None, None)
+    
+def windower(i, j, doc, para=False) -> Iterable:
+    """
+    Two ways to search for cue and speaker: the old way, and a new way based on line breaks.
+    """
+    if para:
+        i_, j_ = line_break_window(i, j, doc)
+        if i_:
+            return (
+                sent 
+                for sent in doc[i_+1:j_-1].sents
+            )
+        else:
+            return []
+    else:
+        # get window of adjacent/overlapping sentences
+        return (
+            sent
+            for sent in doc.sents
+            # these boundary cases are a subtle bit of work...
+            if (
+                (sent.start < i and sent.end >= i - 1)
+                or (sent.start <= j + 1 and sent.end > j)
+            )
+        )
