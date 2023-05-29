@@ -414,7 +414,7 @@ class Wikipedia(Wikimedia):
 
     Stream wiki pages into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=ds.records(min_len=2000, limit=50))
+        >>> textacy.Corpus("en_core_web_sm", data=ds.records(min_len=2000, limit=50))
         Corpus(50 docs; 72368 tokens)
 
     Args:
@@ -483,7 +483,7 @@ class Wikinews(Wikimedia):
 
     Stream wiki pages into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=ds.records(limit=100))
+        >>> textacy.Corpus("en_core_web_sm", data=ds.records(limit=100))
         Corpus(100 docs; 33092 tokens)
 
     Args:

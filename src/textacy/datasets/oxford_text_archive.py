@@ -83,7 +83,7 @@ class OxfordTextArchive(Dataset):
 
     Stream literary works into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=ds.records(limit=5))
+        >>> textacy.Corpus("en_core_web_sm", data=ds.records(limit=5))
         Corpus(5 docs; 182289 tokens)
 
     Args:

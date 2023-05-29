@@ -223,7 +223,7 @@ For this and a few other datasets, convenient `Dataset` classes are already impl
 A `textacy.Corpus` is an ordered collection of spaCy `Doc` s, all processed by the same language pipeline. Let's continue with the Capitol Words dataset and make a corpus from a stream of records. (**Note:** This may take a few minutes.)
 
 ```pycon
->>> corpus = textacy.Corpus("en", data=records)
+>>> corpus = textacy.Corpus("en_core_web_sm", data=records)
 >>> corpus
 Corpus(1240 docs, 857548 tokens)
 ```

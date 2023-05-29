@@ -83,7 +83,7 @@ class RedditComments(Dataset):
 
     Stream comments into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=ds.records(limit=1000))
+        >>> textacy.Corpus("en_core_web_sm", data=ds.records(limit=1000))
         Corpus(1000 docs; 27582 tokens)
 
     Args:

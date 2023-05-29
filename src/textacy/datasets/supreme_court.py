@@ -111,7 +111,7 @@ class SupremeCourt(Dataset):
 
     Stream decisions into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=ds.records(limit=25))
+        >>> textacy.Corpus("en_core_web_sm", data=ds.records(limit=25))
         Corpus(25 docs; 136696 tokens)
 
     Args:

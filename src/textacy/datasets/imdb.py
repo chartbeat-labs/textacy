@@ -85,7 +85,7 @@ class IMDB(Dataset):
 
     Stream movie reviews into a :class:`textacy.Corpus <textacy.corpus.Corpus>`::
 
-        >>> textacy.Corpus("en", data=ds.records(limit=100))
+        >>> textacy.Corpus("en_core_web_sm", data=ds.records(limit=100))
         Corpus(100 docs; 24340 tokens)
 
     Args:
