@@ -228,21 +228,15 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
         )
     # pairs up quotation-like characters based on acceptable start/end combos
     # see constants for more info
-    qtoks = [tok for tok in doc if tok.is_quote]
-    linebreaks = [t.i for t in doc if t.is_space and t.text == "\n"]
+    qtoks = [tok for tok in doc if tok.is_quote or (tok.is_space and tok.text == "\n")]
     qtok_idx_pairs = [(-1,-1)]
-    for q in qtoks:
+    for n, q in enumerate(qtoks):
         if (
             not bool(q.whitespace_)
             and q.i not in [q_[1] for q_ in qtok_idx_pairs] 
             and q.i > qtok_idx_pairs[-1][1]
             ):
-            try:
-                lb = next(l for l in linebreaks if l >= q.i)
-                q_range = [q_ for q_ in qtoks if q_.i > q.i and q_.i <= lb]
-            except StopIteration:
-                q_range = [q_ for q_ in qtoks if q_.i > q.i]
-            for q_ in q_range:
+            for q_ in qtoks[n+1:]:
                 if (ord(q.text), ord(q_.text)) in constants.QUOTATION_MARK_PAIRS:
                     qtok_idx_pairs.append((q.i, q_.i))
                     break
