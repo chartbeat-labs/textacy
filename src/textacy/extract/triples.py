@@ -27,9 +27,10 @@ from spacy.symbols import (
     nsubjpass,
     obj,
     pobj,
-    xcomp,
+    xcomp
 )
 from spacy.tokens import Doc, Span, Token
+import regex as re
 
 from .. import constants, types, utils
 from . import matches
@@ -209,6 +210,7 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
 
     Args:
         doc
+        min_quote_length - minimum distance (in tokens) between potentially paired quotation marks.
 
     Yields:
         Next direct quotation in ``doc`` as a (speaker, cue, content) triple.
@@ -226,21 +228,29 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
         )
     # pairs up quotation-like characters based on acceptable start/end combos
     # see constants for more info
-    qtok = [tok for tok in doc if tok.is_quote]
-    qtok_pair_idxs = []
-    for n, q in enumerate(qtok):
-        if q.i not in [q_[1] for q_ in qtok_pair_idxs]:
-            for q_ in qtok[n+1:]:
+    qtoks = [tok for tok in doc if tok.is_quote]
+    linebreaks = [t.i for t in doc if t.is_space and t.text == "\n"]
+    qtok_idx_pairs = [(-1,-1)]
+    for q in qtoks:
+        if (
+            not bool(q.whitespace_)
+            and q.i not in [q_[1] for q_ in qtok_idx_pairs] 
+            and q.i > qtok_idx_pairs[-1][1]
+            ):
+            try:
+                lb = next(l for l in linebreaks if l >= q.i)
+                q_range = [q_ for q_ in qtoks if q_.i > q.i and q_.i <= lb]
+            except StopIteration:
+                q_range = [q_ for q_ in qtoks if q_.i > q.i]
+            for q_ in q_range:
                 if (ord(q.text), ord(q_.text)) in constants.QUOTATION_MARK_PAIRS:
-                    qtok_pair_idxs.append((q.i, q_.i))
+                    qtok_idx_pairs.append((q.i, q_.i))
                     break
     
     def filter_quote_tokens(tok):
-        return any(
-                qts_idx <= tok.i <= qte_idx for qts_idx, qte_idx in qtok_pair_idxs
-            )
+        return any(qts_idx <= tok.i <= qte_idx for qts_idx, qte_idx in qtok_idx_pairs)
 
-    for qtok_start_idx, qtok_end_idx in qtok_pair_idxs:
+    for qtok_start_idx, qtok_end_idx in qtok_idx_pairs:
         content = doc[qtok_start_idx : qtok_end_idx + 1]
         cue = None
         speaker = None
@@ -248,7 +258,7 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
         if (
             # quotations should have at least a couple tokens
             # excluding the first/last quotation mark tokens
-            len(content) < 4
+            len(content) < constants.MIN_QUOTE_LENGTH
             # filter out titles of books and such, if possible
             or all(
                 tok.is_title
@@ -259,31 +269,31 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
         ):
             continue
 
-        triple = None
-        for n, window_sents in enumerate([
+        for window_sents in [
             windower(qtok_start_idx, qtok_end_idx, doc, True), 
             windower(qtok_start_idx, qtok_end_idx, doc)
-        ]):
+        ]:
         # get candidate cue verbs in window
-            cue_cands = [
-                tok
-                for sent in window_sents
-                for tok in sent
-                if not filter_quote_tokens(tok)
-                and filter_cue_candidates(tok, _reporting_verbs)
-            ]
-            # sort candidates by proximity to quote content
-            cue_cands = sorted(
-                cue_cands,
-                key=lambda cc: min(abs(cc.i - qtok_start_idx), abs(cc.i - qtok_end_idx)),
+            cue_candidates = [
+                    tok
+                    for sent in window_sents
+                    for tok in sent
+                    if tok.pos == VERB 
+                    and tok.lemma_ in _reporting_verbs
+                    and not filter_quote_tokens(tok)
+                ]
+            cue_candidates = sorted(cue_candidates,
+                key=lambda cc: min(abs(cc.i - qtok_start_idx), abs(cc.i - qtok_end_idx))
             )
-            for cue_cand in cue_cands:
+            for cue_cand in cue_candidates:
                 if cue is not None:
                     break
                 speaker_cands = [
                     speaker_cand for speaker_cand in cue_cand.children
-                    if not filter_quote_tokens(speaker_cand)
-                    and filter_speaker_candidates(speaker_cand, qtok_start_idx, qtok_end_idx)
+                    if speaker_cand.pos!=PUNCT
+                    and not filter_quote_tokens(speaker_cand)
+                    and ((speaker_cand.i >= qtok_end_idx) 
+                        or (speaker_cand.i <= qtok_start_idx ))
                 ]
                 for speaker_cand in speaker_cands:
                     if speaker_cand.dep in _ACTIVE_SUBJ_DEPS:
@@ -298,7 +308,6 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
                 )
                 break
 
-
 def expand_noun(tok: Token) -> list[Token]:
     """Expand a noun token to include all associated conjunct and compound nouns."""
     tok_and_conjuncts = [tok] + list(tok.conjuncts)
@@ -306,11 +315,9 @@ def expand_noun(tok: Token) -> list[Token]:
         child
         for tc in tok_and_conjuncts
         for child in tc.children
-        # TODO: why doesn't compound import from spacy.symbols?
         if child.dep_ == "compound"
     ]
     return tok_and_conjuncts + compounds
-
 
 def expand_verb(tok: Token) -> list[Token]:
     """Expand a verb token to include all associated auxiliary and negation tokens."""
@@ -318,54 +325,15 @@ def expand_verb(tok: Token) -> list[Token]:
         child for child in tok.children if child.dep in _VERB_MODIFIER_DEPS
     ]
     return [tok] + verb_modifiers
-
-def filter_cue_candidates(tok, verbs):
-    return all([
-        tok.pos == VERB,
-        tok.lemma_ in verbs
-    ])
-
-# def get_cue_candidates(window_sents, verbs):
-#     return [
-#             tok
-#             for sent in window_sents
-#             for tok in sent
-#             if filter_cue_candidates(tok, verbs)
-#         ]
-
-def filter_speaker_candidates(candidate, i, j):
-    """
-    Evaluates whether the candidate is not punctuation and that it is outside of the quote. 
-    """
-    return all([
-            candidate.pos!=PUNCT,
-            ((candidate.i >= i and candidate.i >= j) or (candidate.i <= i and candidate.i <= j)),
-        ])
-
-def line_break_window(i, j, doc):
-    """
-    Finds the boundaries of the paragraph containing doc[i:j].
-    """
-    for i_, j_ in list(zip(
-        [tok.i for tok in doc if tok.text=="\n"],
-        [tok.i for tok in doc if tok.text=="\n"][1:])
-        ):
-            if i_ <= i and j_ >= j:
-                return (i_, j_)
-    else:
-        return (None, None)
     
-def windower(i, j, doc, para=False) -> Iterable:
+def windower(i, j, doc, by_linebreak: bool=False) -> Iterable:
     """
     Two ways to search for cue and speaker: the old way, and a new way based on line breaks.
     """
-    if para:
+    if by_linebreak:
         i_, j_ = line_break_window(i, j, doc)
-        if i_:
-            return (
-                sent 
-                for sent in doc[i_+1:j_-1].sents
-            )
+        if i_ is not None:
+            return (sent for sent in doc[i_+1:j_-1].sents)
         else:
             return []
     else:
@@ -379,3 +347,64 @@ def windower(i, j, doc, para=False) -> Iterable:
                 or (sent.start <= j + 1 and sent.end > j)
             )
         )
+
+def line_break_window(i, j, doc):
+    """
+    Finds the boundaries of the paragraph containing doc[i:j].
+    """
+    lb_tok_idxs = [tok.i for tok in doc if tok.text == "\n"]
+    for i_, j_ in zip(lb_tok_idxs, lb_tok_idxs[1:]):
+        if i_ <= i and j_ >= j:
+            return (i_, j_)
+    else:
+        return (None, None)
+    
+def prep_text_for_quote_detection(t: str, fix_plural_possessives: bool=True) -> str:
+    """
+    Sorts out some common issues that trip up the quote detector. Works best one paragraph at a time -- use prep_document_for_quote_detection for the whole doc.
+
+    - replaces consecutive apostrophes with a double quote (no idea why this happens but it does)
+    - adds spaces before or after double quotes that don't have them
+    - if enabled, fixes plural possessives by adding an "x", because the hanging apostrophe can trigger quote detection. 
+    - adds a double quote to the end of paragraphs that are continuations of quotes and thus traditionally don't end with quotation marks
+
+    Input:
+        t (str) - text to be prepped, preferably one paragraph
+        fix_plural_possessives (bool) - enables fix_plural_possessives
+    
+    Output:
+        t (str) - text prepped for quote detection
+    """
+    if not t:
+        return
+    
+    t = t.replace("\'\'", "\"")
+    if fix_plural_possessives:
+        t = re.sub(r"(.{3,8}s\')(\s)", r"\1x\2", t)
+    while re.search(constants.DOUBLE_QUOTES_NOSPACE_REGEX, p):
+        match = re.search(constants.DOUBLE_QUOTES_NOSPACE_REGEX, p)
+        if len(re.findall(constants.ANY_DOUBLE_QUOTE_REGEX, p[:match.start()])) % 2 != 0:
+            replacer = '" '
+        else:
+            replacer = ' "'
+        p = p[:match.start()] + replacer + p[match.end():]
+    if (
+        not (p[0] == "'" and p[-1] == "'") 
+        and p[0] in constants.ALL_QUOTES 
+        and len(re.findall(constants.ANY_DOUBLE_QUOTE_REGEX, p[1:])) % 2 == 0
+        ):
+        p += '"'
+    return p.strip()
+
+def prep_document_for_quote_detection(t: str, para_char: str="\n") -> str:
+    """
+    Splits text into paragraphs (on para_char), runs prep_text_for_quote_detection on all paragraphs, then reassembles with para_char.
+
+    Input:
+        t (str) - document to prep for quote detection
+        para_char (str) - paragraph boundary in t
+
+    Output:
+        document prepped for quote detection
+    """
+    return para_char.join([prep_text_for_quote_detection(t) for t in t.split(para_char) if t])

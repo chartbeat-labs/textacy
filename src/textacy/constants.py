@@ -21,38 +21,49 @@ SUBJ_DEPS: set[str] = {"agent", "csubj", "csubjpass", "expl", "nsubj", "nsubjpas
 OBJ_DEPS: set[str] = {"attr", "dobj", "dative", "oprd"}
 AUX_DEPS: set[str] = {"aux", "auxpass", "neg"}
 
-"""
-Ordinal points of the token.is_quote characters, matched up by start and end.
+MIN_QUOTE_LENGTH: int=4
 
-source:
-switch = "\"\'"
-start = "“‘```“‘«‹「『„‚"
-end = "”’’’’”’»›」』”’"
-
-"""
 QUOTATION_MARK_PAIRS = {
-    (34, 34),
-    (39, 39),
-    (96, 8217),
-    (171, 187),
-    (8216, 8217),
-    (8218, 8217),
-    (8220, 8221),
-    (8222, 8221),
-    (8249, 8250),
-    (12300, 12301),
-    (12302, 12303),
-    (8220, 34),
-    (8216, 34),
-    (96, 34),
-    (8216, 34),
-    (171, 34),
-    (8249, 34),
-    (12300, 34),
-    (12302, 34),
-    (8222, 34),
-    (8218, 34),
-    (34, 8221)
+    # """
+    # Ordinal points of the token.is_quote characters, matched up by start and end.
+
+    # Some of these pairs are from weirdly formatted newspaper uploads, so could be some noise!
+
+    # source:
+    # switch = "\"\'"
+    # start = "“‘```“‘«‹「『„‚"
+    # end = "”’’’’”’»›」』”’"
+    # """
+    (34, 34),       # " "
+    (39, 39),       # ' '
+    (96, 8217),     # ` ’
+    (171, 187),     # « »
+    (8216, 8217),   # ‘ ’
+    (8218, 8217),   # ‚ ’
+    (8220, 8221),   # “ ”
+    (8222, 8221),   # „ ”
+    (8249, 8250),   # ‹ ›
+    (12300, 12301), #「 」 
+    (12302, 12303), #『 』
+    (8220, 34),     # “ "
+    (8216, 34),     # ‘ "
+    (96, 34),       # ` "
+    (8216, 34),     # ‘ "
+    (171, 34),      # « "
+    (8249, 34),     # ‹ "
+    (12300, 34),    #「 "
+    (12302, 34),    #『 "
+    (8222, 34),     # „ "
+    (8218, 34),     # ‚ "
+    (34, 8221),      # " ”
+    (34, 8217), # " ’
+    (34, 10),
+    (39, 10),
+    (96, 10),
+    (171, 10),
+    (8216, 10),
+    (8218, 10),
+    (8249, 10)
     }
 
 REPORTING_VERBS: dict[str, set[str]] = {
@@ -230,3 +241,9 @@ RE_WEIRD_APOSTR_SPACE_TERM: Pattern = re.compile(
 )
 
 RE_ALNUM: Pattern = re.compile(r"[^\W_]+")
+
+# regexes for quote detection prep
+ALL_QUOTES = '‹「`»」‘"„›”‚’\'』『«“'
+DOUBLE_QUOTES = '‹「」»"„『”‚』›«“'
+ANY_DOUBLE_QUOTE_REGEX = r"[{}]".format(DOUBLE_QUOTES)
+DOUBLE_QUOTES_NOSPACE_REGEX = r"(?<=\S)([{}])(?=\S)".format(DOUBLE_QUOTES)
