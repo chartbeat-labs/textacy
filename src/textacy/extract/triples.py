@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import collections
 from operator import attrgetter
-from typing import Iterable, Mapping, Optional, Pattern
+from typing import Iterable, Mapping, Optional, Pattern, Literal
 
 from spacy.symbols import (
     AUX,
@@ -228,7 +228,7 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
         )
     # pairs up quotation-like characters based on acceptable start/end combos
     # see constants for more info
-    qtoks = [tok for tok in doc if tok.is_quote or (tok.is_space and tok.text == "\n")]
+    qtoks = [tok for tok in doc if tok.is_quote or (re.match(r"\n", tok.text))]
     qtok_idx_pairs = [(-1,-1)]
     for n, q in enumerate(qtoks):
         if (
@@ -239,34 +239,29 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
             for q_ in qtoks[n+1:]:
                 if (ord(q.text), ord(q_.text)) in constants.QUOTATION_MARK_PAIRS:
                     qtok_idx_pairs.append((q.i, q_.i))
-                    break
+                    break  
+    qtok_idx_pairs = qtok_idx_pairs[1:]
     
     def filter_quote_tokens(tok):
         return any(qts_idx <= tok.i <= qte_idx for qts_idx, qte_idx in qtok_idx_pairs)
 
     for qtok_start_idx, qtok_end_idx in qtok_idx_pairs:
-        content = doc[qtok_start_idx : qtok_end_idx + 1]
+        content = doc[qtok_start_idx : qtok_end_idx]
         cue = None
         speaker = None
-        # filter quotations by content
+
         if (
-            # quotations should have at least a couple tokens
-            # excluding the first/last quotation mark tokens
-            len(content) < constants.MIN_QUOTE_LENGTH
+            len(content.text.split()) < constants.MIN_QUOTE_LENGTH
             # filter out titles of books and such, if possible
             or all(
                 tok.is_title
                 for tok in content
-                # if tok.pos in {NOUN, PROPN}
                 if not (tok.is_punct or tok.is_stop)
             )
         ):
             continue
 
-        for window_sents in [
-            windower(qtok_start_idx, qtok_end_idx, doc, True), 
-            windower(qtok_start_idx, qtok_end_idx, doc)
-        ]:
+        for window_sents in [windower(content, "overlap"), windower(content, "linebreaks")]:
         # get candidate cue verbs in window
             cue_candidates = [
                     tok
@@ -298,7 +293,7 @@ def direct_quotations(doc: Doc) -> Iterable[DQTriple]:
                 yield DQTriple(
                     speaker=sorted(speaker, key=attrgetter("i")),
                     cue=sorted(cue, key=attrgetter("i")),
-                    content=content,
+                    content=doc[qtok_start_idx:qtok_end_idx+1],
                 )
                 break
 
@@ -320,38 +315,47 @@ def expand_verb(tok: Token) -> list[Token]:
     ]
     return [tok] + verb_modifiers
     
-def windower(i, j, doc, by_linebreak: bool=False) -> Iterable:
+def windower(quote: Span, method: Literal["overlap", "linebreaks"]):
     """
-    Two ways to search for cue and speaker: the old way, and a new way based on line breaks.
-    """
-    if by_linebreak:
-        i_, j_ = line_break_window(i, j, doc)
-        if i_ is not None:
-            return (sent for sent in doc[i_+1:j_-1].sents)
-        else:
-            return []
-    else:
-        # get window of adjacent/overlapping sentences
-        return (
-            sent
-            for sent in doc.sents
-            # these boundary cases are a subtle bit of work...
-            if (
-                (sent.start < i and sent.end >= i - 1)
-                or (sent.start <= j + 1 and sent.end > j)
-            )
-        )
+    Finds the range of sentences in which to look for quote attribution.
 
-def line_break_window(i, j, doc):
+    3 ways:
+    - "overlap": any sentences that overlap with the quote span
+    - "linebreaks": overlap sentences +/- one sentence, without crossing linebreaks after the quote
+    - None: overlap sentences +/- one sentence,
+
+    Input:
+        quote (Span) - quote to be attributed
+        method (str) - how the sentence range will be determined
+
+    Output:
+        sents (list) - list of sentences
     """
-    Finds the boundaries of the paragraph containing doc[i:j].
-    """
-    lb_tok_idxs = [tok.i for tok in doc if tok.text == "\n"]
-    for i_, j_ in zip(lb_tok_idxs, lb_tok_idxs[1:]):
-        if i_ <= i and j_ >= j:
-            return (i_, j_)
+    if method == "overlap":
+        return [
+                sent for sent in quote.doc.sents
+                if (sent.start < quote.start < sent.end)
+                or (sent.start < quote.end < sent.end)
+            ]
     else:
-        return (None, None)
+        sent_indexes = [
+            n for n, s in enumerate(quote.doc.sents) 
+            if (s.start <= quote.start <= s.end) 
+            or (s.start <= quote.end <= s.end)
+            ]
+        
+        i_sent = sent_indexes[0] - 1 if sent_indexes[0] > 0 else 0
+        j_sent = sent_indexes[-1]+2
+        sents = list(quote.doc.sents)[i_sent:j_sent]
+        if method == "linebreaks":
+            linebreaks = [0] + [tok.i for tok in quote.doc if re.match(r"\n", tok.text)] + [quote.doc[-1].i]
+            linebreak_limits = [
+                lb for lb in linebreaks
+                if sents[0].start < lb <= quote.end + 1
+                ]
+            if linebreak_limits:
+                return [s for s in sents if s.end <= max(linebreak_limits)]
+        return sents  
     
 def prep_text_for_quote_detection(t: str, fix_plural_possessives: bool=True) -> str:
     """
