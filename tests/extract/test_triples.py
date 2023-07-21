@@ -92,10 +92,9 @@ def sss_doc(lang_en):
                 (["She", "friend"], ["sell"], ["sea", "shells"]),
                 (["She", "friend"], ["throw"], ["sea", "shells"]),
             ],
-        )
+        ),
     ],
 )
-
 def test_subject_verb_object_triples(text, svos_exp, lang_en):
     doc = lang_en(text)
     svos = list(extract.subject_verb_object_triples(doc))
@@ -228,7 +227,9 @@ def test_semistructured_statements(sss_doc, entity, cue, fragment_len_range, exp
 )
 def test_direct_quotations(lang_en, text, exp):
     obs = list(extract.direct_quotations(lang_en(text)))
-    assert all(hasattr(dq, attr) for dq in obs for attr in ["speaker", "cue", "content"])
+    assert all(
+        hasattr(dq, attr) for dq in obs for attr in ["speaker", "cue", "content"]
+    )
     obs_text = [
         ([tok.text for tok in speaker], [tok.text for tok in cue], content.text)
         for speaker, cue, content in obs
@@ -259,35 +260,42 @@ def test_direct_quotations_spanish(lang_es, text, exp):
 
 
 @pytest.mark.parametrize(
-        "text, speakers",
-        [
-        ( # tests that odd numbers of quotation marks can be parsed
-        """He approached the stable. "Where are the horses' carrots?" he asked.""",
-        ['he']
+    "text, speakers",
+    [
+        (  # tests that odd numbers of quotation marks can be parsed
+            """He approached the stable. "Where are the horses' carrots?" he asked.""",
+            ["he"],
         ),
-        ( # tests that overlapping quotes are ignored
-        "The stranger was eating a burger. He told everyone, \"This 'hamburger with extra cheese and pickles' is good.\"",
-        ['He']
+        (  # tests that overlapping quotes are ignored
+            "The stranger was eating a burger. He told everyone, \"This 'hamburger with extra cheese and pickles' is good.\"",
+            ["He"],
         ),
-        ( # tests ending quotes at linebreaks
-        "\'uneasy\' on Gilmer street\"\nPolice are investigating a shooting. They did not identify the 17-year-old because he is a minor.\n\"Detectives are looking into it,\" Richmond police said in a news release Tuesday morning.",
-        ['Richmond', 'police']
+        ( #  tests parsing of quotes where linebreaks function as closing quotation marks
+            """Payroll taxes remain fully deductible under the new federal tax law. Similarly, Cuomo's charitable entities would allow taxpayers to pay taxes to local governments and school districts as charitable donations, which remain fully deductible.\n"We will maintain our wait-and-see approach to the state's SALT-mitigation plan," said Heather C. Briccetti, president and CEO of The Business Council of New York State. "In our own discussions with employers, we did not receive positive feedback on the payroll tax proposal, although we do appreciate that the final language made it optional.\n"The effect of the charitable giving gambit is ultimately dependent on IRS determination as to its deductibility," Briccetti said.\nThe New Yorkers who may benefit most from the state's plan are big earners who are important to state finances.""",
+            ['Heather', 'C.', 'Briccetti', 'Heather', 'C.', 'Briccetti', 'Briccetti']
         ),
-        ( # tests second use of windower
-        'He pounces on counters and jabs the gun at tellers, only 2 pounds of pressure preventing that gun from firing.\n"He\'s going to hurt somebody because he\'s carrying a revolver with the hammer cocked back. He\'s saying he\'s going to kill people," said Paul Martin, a Pinellas sheriff\'s detective who has been chasing the robber for two years. "He\'s pointed guns at people\'s heads."\nThey call him the crowbar robber.',
-        ['Paul', 'Martin', 'Paul', 'Martin']
+        (  # tests ending quotes at linebreaks
+            '\'uneasy\' on Gilmer street"\nPolice are investigating a shooting. They did not identify the 17-year-old because he is a minor.\n"Detectives are looking into it," Richmond police said in a news release Tuesday morning.',
+            ["Richmond", "police"],
         ),
-        ( # checks that attributions don't leak over linebreaks (if they aren't supposed to) 
-        "And despite perhaps sometimes seeming like superheroes, sandwich aritsts are just like everyone else in society. Conney said in order to be what the people need, the job requires them to \"do their best to deal with it and fix whatever problem there is at that moment.\"\nThe chief said being involved in violence is never easy for anyone, but added that a sandwich artists' work isn't necessarily done when they leave the scene.",
-        ['Conney']
+        (  # tests second use of windower
+            "He pounces on counters and jabs the gun at tellers, only 2 pounds of pressure preventing that gun from firing.\n\"He's going to hurt somebody because he's carrying a revolver with the hammer cocked back. He's saying he's going to kill people,\" said Paul Martin, a Pinellas sheriff's detective who has been chasing the robber for two years. \"He's pointed guns at people's heads.\"\nThey call him the crowbar robber.",
+            ["Paul", "Martin", "Paul", "Martin"],
         ),
-        ( # find quotes in last sentences
-        "Garnier said he also learned a lesson from the ordeal.\n\"Think before you act,\" the clown said. \"Your actions have repercussions. No matter how trivial and joking I thought it was, people took it seriously.\"",
-        ['clown', 'clown']
-        )
-        ]
-    )
-
+        (  # checks that attributions don't leak over linebreaks (if they aren't supposed to)
+            "And despite perhaps sometimes seeming like superheroes, sandwich aritsts are just like everyone else in society. Conney said in order to be what the people need, the job requires them to \"do their best to deal with it and fix whatever problem there is at that moment.\"\nThe chief said being involved in violence is never easy for anyone, but added that a sandwich artists' work isn't necessarily done when they leave the scene.",
+            ["Conney"],
+        ),
+        (  # find quotes in last sentences
+            'Garnier said he also learned a lesson from the ordeal.\n"Think before you act," the clown said. "Your actions have repercussions. No matter how trivial and joking I thought it was, people took it seriously."',
+            ["clown", "clown"],
+        ),
+    ],
+)
 def test_adjustment_for_quote_detection(lang_en, text, speakers):
     quotes = extract.direct_quotations(lang_en(text))
-    assert [speaker.text for quote in quotes for speaker in quote.speaker] == speakers
+    assert [
+        speaker.text 
+        for quote in quotes 
+        for speaker in quote.speaker
+        ] == speakers
