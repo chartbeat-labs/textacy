@@ -332,10 +332,10 @@ def terms(
         the top-ranking terms. There is no such scoring or ranking here.
 
     See Also:
-        - :func:`textacy.extact.ngrams()`
-        - :func:`textacy.extact.entities()`
-        - :func:`textacy.extact.noun_chunks()`
-        - :mod:`textacy.extact.keyterms`
+        - :func:`textacy.extract.ngrams()`
+        - :func:`textacy.extract.entities()`
+        - :func:`textacy.extract.noun_chunks()`
+        - :mod:`textacy.extract.keyterms`
     """
     extractors = _get_extractors(ngs, ents, ncs)
     terms_ = itertoolz.concat(extractor(doclike) for extractor in extractors)
